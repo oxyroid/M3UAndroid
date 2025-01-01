@@ -13,6 +13,7 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlin.time.Duration
 
@@ -22,6 +23,8 @@ interface MaskState {
     val locked: Boolean
     fun wake()
     fun sleep()
+    // Lock the mask until the [unlock] is called.
+    // While any key is not unlocked the mask will always visible
     fun lock(key: Any)
     fun unlock(key: Any, delay: Duration = Duration.ZERO)
     fun unlockAll(delay: Duration = Duration.ZERO)
@@ -83,6 +86,7 @@ private class MaskStateCoroutineImpl(
     override fun unlock(key: Any, delay: Duration) {
         unlockedJobs[key] = launch {
             delay(delay)
+            ensureActive()
             if (key in unlockedJobs) {
                 unlockImpl(key)
             }

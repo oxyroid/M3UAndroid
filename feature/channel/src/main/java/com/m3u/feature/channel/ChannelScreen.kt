@@ -38,6 +38,7 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.core.util.basic.title
+import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
 import com.m3u.feature.channel.components.CoverPlaceholder
@@ -82,6 +83,7 @@ fun ChannelRoute(
 
     val playerState: PlayerState by viewModel.playerState.collectAsStateWithLifecycle()
     val channel by viewModel.channel.collectAsStateWithLifecycle()
+    val adjacentChannels by viewModel.adjacentChannels.collectAsStateWithLifecycle()
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
     val devices = viewModel.devices
     val isDevicesVisible by viewModel.isDevicesVisible.collectAsStateWithLifecycle()
@@ -96,7 +98,7 @@ fun ChannelRoute(
         initialValue = false
     )
 
-    val channels = viewModel.channels.collectAsLazyPagingItems()
+    val channels = viewModel.pagingChannels.collectAsLazyPagingItems()
     val programmes = viewModel.programmes.collectAsLazyPagingItems()
     val programmeRange by viewModel.programmeRange.collectAsStateWithLifecycle()
 
@@ -119,7 +121,6 @@ fun ChannelRoute(
         with(helper) {
             isSystemBarUseDarkMode = true
             statusBarVisibility = false
-            navigationBarVisibility = false
             onPipModeChanged = OnPipModeChanged { info ->
                 isPipMode = info.isInPictureInPictureMode
                 if (!isPipMode) {
@@ -152,7 +153,7 @@ fun ChannelRoute(
         snapshotFlow { maskState.visible }
             .onEach { visible ->
                 helper.statusBarVisibility = visible
-                helper.navigationBarVisibility = false
+                helper.navigationBarVisibility = visible
             }
             .launchIn(this)
     }
@@ -184,7 +185,7 @@ fun ChannelRoute(
                     }
 
                     PullPanelLayoutValue.COLLAPSED -> {
-                        maskState.unlock(PullPanelLayoutValue.EXPANDED, 1800.milliseconds)
+                        maskState.unlock(PullPanelLayoutValue.EXPANDED, 2400.milliseconds)
                     }
                 }
             },
@@ -230,6 +231,7 @@ fun ChannelRoute(
                     maskState = maskState,
                     playerState = playerState,
                     playlist = playlist,
+                    adjacentChannels = adjacentChannels,
                     channel = channel,
                     hasTrack = tracks.isNotEmpty(),
                     isPanelExpanded = isPanelExpanded,
@@ -237,6 +239,8 @@ fun ChannelRoute(
                     onVolume = viewModel::onVolume,
                     brightness = brightness,
                     onBrightness = { brightness = it },
+                    onPreviousChannelClick = viewModel::getPreviousChannel,
+                    onNextChannelClick = viewModel::getNextChannel,
                     onEnterPipMode = {
                         helper.enterPipMode(playerState.videoSize)
                         maskState.unlockAll()
@@ -285,6 +289,7 @@ private fun ChannelPlayer(
     playerState: PlayerState,
     playlist: Playlist?,
     channel: Channel?,
+    adjacentChannels: AdjacentChannels?,
     isSeriesPlaylist: Boolean,
     hasTrack: Boolean,
     isPanelExpanded: Boolean,
@@ -296,6 +301,8 @@ private fun ChannelPlayer(
     openOrClosePanel: () -> Unit,
     onVolume: (Float) -> Unit,
     onBrightness: (Float) -> Unit,
+    onPreviousChannelClick: () -> Unit,
+    onNextChannelClick: () -> Unit,
     onEnterPipMode: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -307,12 +314,6 @@ private fun ChannelPlayer(
     val currentBrightness by rememberUpdatedState(brightness)
     val currentVolume by rememberUpdatedState(volume)
     val preferences = hiltPreferences()
-    var isBrightnessValueChange by remember {
-        mutableStateOf(false)
-    }
-    var isVolumeValueChange by remember {
-        mutableStateOf(false)
-    }
 
     Background(
         color = Color.Black,
@@ -330,14 +331,12 @@ private fun ChannelPlayer(
             )
             VerticalGestureArea(
                 percent = currentBrightness,
+                time = 0.65f,
                 onDragStart = {
                     gesture = MaskGesture.BRIGHTNESS
-                    isBrightnessValueChange = true
+                    maskState.sleep()
                 },
-                onDragEnd = {
-                    gesture = null
-                    isBrightnessValueChange = false
-                },
+                onDragEnd = { gesture = null },
                 onDrag = onBrightness,
                 onClick = maskState::toggle,
                 modifier = Modifier
@@ -347,14 +346,12 @@ private fun ChannelPlayer(
 
             VerticalGestureArea(
                 percent = currentVolume,
+                time = 0.35f,
                 onDragStart = {
                     gesture = MaskGesture.VOLUME
-                    isVolumeValueChange = true
+                    maskState.sleep()
                 },
-                onDragEnd = {
-                    gesture = null
-                    isVolumeValueChange = false
-                },
+                onDragEnd = { gesture = null },
                 onDrag = onVolume,
                 onClick = maskState::toggle,
                 modifier = Modifier
@@ -373,6 +370,7 @@ private fun ChannelPlayer(
             )
 
             ChannelMask(
+                adjacentChannels = adjacentChannels,
                 cover = cover,
                 title = title,
                 playlistTitle = playlistTitle,
@@ -390,6 +388,8 @@ private fun ChannelPlayer(
                 openOrClosePanel = openOrClosePanel,
                 onVolume = onVolume,
                 onEnterPipMode = onEnterPipMode,
+                onPreviousChannelClick = onPreviousChannelClick,
+                onNextChannelClick = onNextChannelClick,
                 gesture = gesture
             )
 

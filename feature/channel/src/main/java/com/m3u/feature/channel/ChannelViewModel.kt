@@ -20,6 +20,8 @@ import androidx.work.await
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
+import com.m3u.core.util.coroutine.flatmapCombined
+import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
@@ -30,6 +32,7 @@ import com.m3u.data.database.model.isVod
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.programme.ProgrammeRepository
+import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.PlayerManager
 import com.m3u.data.service.currentTracks
 import com.m3u.data.service.tracks
@@ -80,6 +83,25 @@ class ChannelViewModel @Inject constructor(
 
     internal val channel: StateFlow<Channel?> = playerManager.channel
     internal val playlist: StateFlow<Playlist?> = playerManager.playlist
+
+    val adjacentChannels: StateFlow<AdjacentChannels?> = flatmapCombined(
+        playlist,
+        channel
+    ) { playlist, channel ->
+        playlist ?: return@flatmapCombined flowOf(null)
+        channel ?: return@flatmapCombined flowOf(null)
+        channelRepository.observeAdjacentChannels(
+            channelId = channel.id,
+            playlistUrl = playlist.url,
+            category = channel.category
+        )
+    }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = null
+        )
+
 
     internal val isSeriesPlaylist: Flow<Boolean> = playlist.map { it?.isSeries ?: false }
 
@@ -224,6 +246,24 @@ class ChannelViewModel @Inject constructor(
 //        controlPoint?.setVolume((target * 100).roundToInt(), null)
     }
 
+    internal fun getPreviousChannel() {
+        viewModelScope.launch {
+            val previousChannelId = adjacentChannels.value?.prevId
+            if (adjacentChannels.value != null && previousChannelId != null) {
+                playerManager.play(MediaCommand.Common(previousChannelId))
+            }
+        }
+    }
+
+    internal fun getNextChannel() {
+        viewModelScope.launch {
+            val nextChannelId = adjacentChannels.value?.nextId
+            if (adjacentChannels.value != null && nextChannelId != null) {
+                playerManager.play(MediaCommand.Common(nextChannelId))
+            }
+        }
+    }
+
     fun destroy() {
         runCatching {
             controlPoint?.removeDiscoveryListener(this)
@@ -279,19 +319,26 @@ class ChannelViewModel @Inject constructor(
 
     // the channels which is in the same category with the current channel
     // or the episodes which is in the same series.
-    internal val channels: Flow<PagingData<Channel>> = playlist.flatMapLatest { playlist ->
+    internal val pagingChannels: Flow<PagingData<Channel>> = playlist.flatMapLatest { playlist ->
         playlist ?: return@flatMapLatest flowOf(PagingData.empty())
         Pager(PagingConfig(10)) {
             channelRepository.pagingAllByPlaylistUrl(
                 playlist.url,
                 channel.value?.category.orEmpty(),
                 "",
-                ChannelRepository.Sort.UNSPECIFIED
+                ChannelRepository.Sort.ASC
             )
         }
             .flow
     }
         .cachedIn(viewModelScope)
+
+    private val channels: Flow<List<Channel>> = playlist.flatMapLatest { playlist ->
+        playlist ?: return@flatMapLatest flowOf(emptyList())
+        channelRepository.observeAllByPlaylistUrl(
+            playlist.url,
+        )
+    }
 
     internal val programmes: Flow<PagingData<Programme>> = channel.flatMapLatest { channel ->
         channel ?: return@flatMapLatest flowOf(PagingData.empty())
