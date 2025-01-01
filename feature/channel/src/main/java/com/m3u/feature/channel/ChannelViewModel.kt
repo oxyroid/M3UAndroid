@@ -30,9 +30,9 @@ import com.m3u.data.database.model.isVod
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.programme.ProgrammeRepository
-import com.m3u.data.service.PlayerManager
-import com.m3u.data.service.currentTracks
-import com.m3u.data.service.tracks
+import com.m3u.data.service.player.PlayerManager
+import com.m3u.data.service.player.currentTracks
+import com.m3u.data.service.player.tracks
 import com.m3u.data.worker.ProgrammeReminder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay

@@ -57,7 +57,7 @@ import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.isSeries
 import com.m3u.data.database.model.isVod
 import com.m3u.data.database.model.type
-import com.m3u.data.service.MediaCommand
+import com.m3u.data.service.player.mediacommand.MediaCommand
 import com.m3u.feature.playlist.internal.SmartphonePlaylistScreenImpl
 import com.m3u.feature.playlist.internal.TvPlaylistScreenImpl
 import com.m3u.i18n.R.string

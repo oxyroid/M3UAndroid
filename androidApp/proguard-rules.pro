@@ -308,3 +308,4 @@
 
 # extension
 -keep class com.m3u.extension.api.** { *; }
+-keepnames class com.m3u.extension.api.** { *; }

@@ -38,7 +38,7 @@ import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.database.model.isSeries
-import com.m3u.data.service.MediaCommand
+import com.m3u.data.service.player.mediacommand.MediaCommand
 import com.m3u.feature.foryou.components.HeadlineBackground
 import com.m3u.feature.foryou.components.PlaylistGallery
 import com.m3u.feature.foryou.components.recommend.Recommend

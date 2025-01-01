@@ -3,7 +3,9 @@ package com.m3u.extension.app
 import android.util.Log
 import com.m3u.extension.api.Sample
 import com.m3u.extension.api.model.EPlaylist
+import com.m3u.extension.api.tool.JsonHolder
 import com.m3u.extension.api.tool.Logger
+import com.m3u.extension.api.tool.OkhttpClientHolder
 import com.m3u.extension.api.tool.Saver
 import com.m3u.extension.api.workflow.Input
 import com.m3u.extension.api.workflow.Resolver
@@ -18,8 +20,8 @@ class OnlyfansWorkflow(
     /**
      * @see com.m3u.extension.api.workflow.Workflow.AllowedType
      */
-    private val okHttpClient: OkHttpClient,
-    private val json: Json,
+    private val okhttpClientHolder: OkhttpClientHolder,
+    private val jsonHolder: JsonHolder,
     private val logger: Logger,
     private val saver: Saver
 ) : Workflow {
@@ -36,18 +38,13 @@ class OnlyfansWorkflow(
         Input(INPUT_LABEL_R18_ALLOWED, Input.BooleanType(false))
     )
 
-    //    @OptIn(ExperimentalSerializationApi::class)
-    override val resolver: Resolver = object : Resolver(okHttpClient, json, logger, saver) {
+    override val resolver: Resolver = object : Resolver {
         override suspend fun onResolve(inputs: Map<String, Any>) {
             val email = inputs[INPUT_LABEL_EMAIL] as? String
             val password = inputs[INPUT_LABEL_PASSWORD] as? String
             val userAgent = inputs[INPUT_LABEL_USER_AGENT] as? String
             val isR18Allowed = inputs[INPUT_LABEL_R18_ALLOWED] as? Boolean
             // ...
-//            saver.saveChannel(
-//               eChannel
-//
-//            )
             Log.e(TAG, "onResolve: inputs=$inputs")
             delay(1.seconds)
             saver.savePlaylist(

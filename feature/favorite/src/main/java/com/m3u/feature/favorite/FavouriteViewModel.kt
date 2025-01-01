@@ -27,8 +27,8 @@ import com.m3u.data.parser.xtream.XtreamChannelInfo
 import com.m3u.data.repository.media.MediaRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.channel.ChannelRepository
-import com.m3u.data.service.MediaCommand
-import com.m3u.data.service.PlayerManager
+import com.m3u.data.service.player.mediacommand.MediaCommand
+import com.m3u.data.service.player.PlayerManager
 import com.m3u.ui.Sort
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher

@@ -68,7 +68,7 @@ import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Episode
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.ProgrammeRange
-import com.m3u.data.service.MediaCommand
+import com.m3u.data.service.player.mediacommand.MediaCommand
 import com.m3u.material.components.Background
 import com.m3u.material.components.CircularProgressIndicator
 import com.m3u.material.components.IconButton

@@ -13,7 +13,7 @@ import com.m3u.core.Contracts
 import com.m3u.data.database.model.isSeries
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.channel.ChannelRepository
-import com.m3u.data.service.MediaCommand
+import com.m3u.data.service.player.mediacommand.MediaCommand
 import com.m3u.ui.Events.enableDPadReaction
 import com.m3u.ui.Toolkit
 import com.m3u.ui.helper.Helper

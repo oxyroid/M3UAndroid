@@ -29,7 +29,7 @@ import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.isSeries
-import com.m3u.data.service.MediaCommand
+import com.m3u.data.service.player.mediacommand.MediaCommand
 import com.m3u.feature.favorite.components.FavouriteGallery
 import com.m3u.i18n.R
 import com.m3u.material.ktx.interceptVolumeEvent

@@ -17,16 +17,15 @@ import com.m3u.core.architecture.FileProvider
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.data.logger.MessageLogger
 import com.m3u.data.logger.StubLogger
-import com.m3u.data.runtime.SaverImpl
 import com.m3u.data.service.internal.DPadReactionServiceImpl
 import com.m3u.data.service.internal.FileProviderImpl
 import com.m3u.data.service.internal.MessagerImpl
-import com.m3u.data.service.internal.PlayerManagerImpl
+import com.m3u.data.service.player.PlayerManagerImpl
+import com.m3u.data.service.player.PlayerManager
 import com.m3u.data.tv.http.HttpServer
 import com.m3u.data.tv.http.HttpServerImpl
 import com.m3u.data.tv.nsd.NsdDeviceManager
 import com.m3u.data.tv.nsd.NsdDeviceManagerImpl
-import com.m3u.extension.api.tool.Saver
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -40,10 +39,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 internal interface BindServicesModule {
-    @Binds
-    @Singleton
-    fun bindPlayerManager(impl: PlayerManagerImpl): PlayerManager
-
     @Binds
     @Singleton
     fun bindMessageManager(service: MessagerImpl): Messager

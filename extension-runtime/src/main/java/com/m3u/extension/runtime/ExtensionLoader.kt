@@ -6,7 +6,9 @@ import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
+import com.m3u.extension.api.tool.JsonHolder
 import com.m3u.extension.api.tool.Logger
+import com.m3u.extension.api.tool.OkhttpClientHolder
 import com.m3u.extension.api.tool.Saver
 import com.m3u.extension.api.workflow.Workflow
 import dalvik.system.DexClassLoader
@@ -175,8 +177,8 @@ class ExtensionLoader @Inject constructor(
         val args = classifiers
             .mapNotNull {
                 when (it) {
-                    Workflow.AllowedType.OKHTTP_CLIENT.classifier -> OkHttpClient()
-                    Workflow.AllowedType.JSON.classifier -> json
+                    Workflow.AllowedType.OKHTTP_CLIENT_HOLDER.classifier -> OkhttpClientHolder(OkHttpClient())
+                    Workflow.AllowedType.JSON_HOLDER.classifier -> JsonHolder(json)
                     Workflow.AllowedType.SAVER.classifier -> saver
                     Workflow.AllowedType.LOGGER.classifier -> logger
                     else -> {

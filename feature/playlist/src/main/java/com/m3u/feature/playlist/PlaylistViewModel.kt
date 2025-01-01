@@ -47,9 +47,9 @@ import com.m3u.data.repository.media.MediaRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.programme.ProgrammeRepository
-import com.m3u.data.service.MediaCommand
+import com.m3u.data.service.player.mediacommand.MediaCommand
 import com.m3u.data.service.Messager
-import com.m3u.data.service.PlayerManager
+import com.m3u.data.service.player.PlayerManager
 import com.m3u.data.worker.SubscriptionWorker
 import com.m3u.feature.playlist.PlaylistMessage.ChannelCoverSaved
 import com.m3u.feature.playlist.navigation.PlaylistNavigation

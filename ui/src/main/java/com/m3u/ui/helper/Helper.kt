@@ -22,8 +22,8 @@ import androidx.core.view.WindowInsetsControllerCompat
 import com.m3u.core.util.basic.rational
 import com.m3u.core.util.context.isDarkMode
 import com.m3u.core.util.context.isPortraitMode
-import com.m3u.data.service.MediaCommand
-import com.m3u.data.service.PlayerManager
+import com.m3u.data.service.player.mediacommand.MediaCommand
+import com.m3u.data.service.player.PlayerManager
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors

@@ -35,7 +35,7 @@ import com.m3u.data.parser.xtream.XtreamInput
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.service.Messager
-import com.m3u.data.service.PlayerManager
+import com.m3u.data.service.player.PlayerManager
 import com.m3u.data.worker.BackupWorker
 import com.m3u.data.worker.RestoreWorker
 import com.m3u.data.worker.SubscriptionWorker

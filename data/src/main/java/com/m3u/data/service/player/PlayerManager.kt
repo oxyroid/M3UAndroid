@@ -1,7 +1,6 @@
-package com.m3u.data.service
+package com.m3u.data.service.player
 
 import android.graphics.Rect
-import androidx.compose.runtime.Immutable
 import androidx.media3.common.C
 import androidx.media3.common.Format
 import androidx.media3.common.PlaybackException
@@ -10,7 +9,7 @@ import androidx.media3.common.TrackGroup
 import androidx.media3.common.Tracks
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Channel
-import com.m3u.data.parser.xtream.XtreamChannelInfo
+import com.m3u.data.service.player.mediacommand.MediaCommand
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,15 +37,6 @@ interface PlayerManager {
     fun release()
     fun clearCache()
     fun pauseOrContinue(value: Boolean)
-}
-
-@Immutable
-sealed class MediaCommand(open val channelId: Int) {
-    data class Common(override val channelId: Int) : MediaCommand(channelId)
-    data class XtreamEpisode(
-        override val channelId: Int,
-        val episode: XtreamChannelInfo.Episode
-    ) : MediaCommand(channelId)
 }
 
 val PlayerManager.tracks: Flow<Map<@C.TrackType Int, List<Format>>>
