@@ -113,6 +113,7 @@
     </string>
     <string name="feat_setting_source_code">código fuente</string>
 
+    <string name="feat_setting_compact_dimension">tamaño compacto</string>
     <!-- EPG -->
     <string name="feat_setting_placeholder_epg_title">nombre de epg</string>
     <string name="feat_setting_error_empty_epg_title">el nombre de epg está vacío</string>
