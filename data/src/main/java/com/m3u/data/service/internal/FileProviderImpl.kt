@@ -33,7 +33,7 @@ class FileProviderImpl @Inject constructor(
 
     override fun write(value: Throwable) {
         val infoMap = mutableMapOf<String, String>()
-        infoMap["name"] = packageInfo.versionName
+        infoMap["name"] = packageInfo.versionName.orEmpty()
         infoMap["code"] = packageInfo.code
 
         readConfiguration().forEach(infoMap::put)

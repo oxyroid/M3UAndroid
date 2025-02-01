@@ -16,7 +16,6 @@ import androidx.paging.cachedIn
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkQuery
-import androidx.work.await
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
@@ -38,6 +37,7 @@ import com.m3u.data.service.currentTracks
 import com.m3u.data.service.tracks
 import com.m3u.data.worker.ProgrammeReminder
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -305,10 +305,10 @@ class ChannelViewModel @Inject constructor(
 
     @SuppressLint("RestrictedApi")
     fun onCancelRemindProgramme(programme: Programme) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val infos = workManager
                 .getWorkInfos(WorkQuery.fromStates(WorkInfo.State.ENQUEUED))
-                .await()
+                .get()
                 .filter { ProgrammeReminder.TAG in it.tags }
                 .filter { info -> ProgrammeReminder.readProgrammeId(info.tags) == programme.id }
             infos.forEach {
