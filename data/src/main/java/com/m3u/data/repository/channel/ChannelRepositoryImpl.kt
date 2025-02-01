@@ -44,6 +44,7 @@ internal class ChannelRepositoryImpl @Inject constructor(
         Sort.ASC -> channelDao.pagingAllByPlaylistUrlAsc(url, category, query)
         Sort.DESC -> channelDao.pagingAllByPlaylistUrlDesc(url, category, query)
         Sort.RECENTLY -> channelDao.pagingAllByPlaylistUrlRecently(url, category, query)
+        Sort.MIXED -> channelDao.pagingAllByPlaylistUrlMixed(url, query)
     }
 
     override suspend fun get(id: Int): Channel? = logger.execute {

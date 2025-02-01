@@ -179,6 +179,18 @@ internal interface ChannelDao {
         query: String
     ): PagingSource<Int, Channel>
 
+    @Query(
+        """
+            SELECT * FROM streams 
+            WHERE playlist_url = :url
+            AND title LIKE '%'||:query||'%'
+        """
+    )
+    fun pagingAllByPlaylistUrlMixed(
+        url: String,
+        query: String
+    ): PagingSource<Int, Channel>
+
     @Query("SELECT COUNT(playlist_url) FROM streams WHERE playlist_url = :playlistUrl")
     fun observeCountByPlaylistUrl(playlistUrl: String): Flow<Int>
 

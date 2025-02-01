@@ -40,6 +40,7 @@ interface ChannelRepository {
         UNSPECIFIED,
         ASC,
         DESC,
-        RECENTLY
+        RECENTLY,
+        MIXED
     }
 }
