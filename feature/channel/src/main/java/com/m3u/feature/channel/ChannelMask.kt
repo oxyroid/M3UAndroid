@@ -146,7 +146,6 @@ internal fun ChannelMask(
         LocalOnBackPressedDispatcherOwner.current
     ).onBackPressedDispatcher
 
-
     // because they will be updated frequently,
     // they must be wrapped with rememberUpdatedState when using them.
     val currentVolume by rememberUpdatedState(volume)
@@ -338,8 +337,8 @@ internal fun ChannelMask(
                 Box(Modifier.size(48.dp)) {
                     androidx.compose.animation.AnimatedVisibility(
                         visible = !isPanelExpanded && adjacentChannels?.prevId != null,
-                        enter = fadeIn() + slideInHorizontally(initialOffsetX = { -it / 2 }),
-                        exit = fadeOut() + slideOutHorizontally(targetOffsetX = { -it / 2 }),
+                        enter = fadeIn() + slideInHorizontally(initialOffsetX = { -it / 6 }),
+                        exit = fadeOut() + slideOutHorizontally(targetOffsetX = { -it / 6 }),
                         modifier = Modifier.fillMaxSize()
                     ) {
                         MaskNavigateButton(
@@ -369,8 +368,8 @@ internal fun ChannelMask(
                 Box(Modifier.size(48.dp)) {
                     androidx.compose.animation.AnimatedVisibility(
                         visible = !isPanelExpanded && adjacentChannels?.nextId != null,
-                        enter = fadeIn() + slideInHorizontally(initialOffsetX = { it / 2 }),
-                        exit = fadeOut() + slideOutHorizontally(targetOffsetX = { it / 2 }),
+                        enter = fadeIn() + slideInHorizontally(initialOffsetX = { it / 6 }),
+                        exit = fadeOut() + slideOutHorizontally(targetOffsetX = { it / 6 }),
                         modifier = Modifier.size(48.dp)
                     ) {
                         MaskNavigateButton(
