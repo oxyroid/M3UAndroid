@@ -351,7 +351,7 @@ internal fun ChannelMask(
 
                 Box(Modifier.size(64.dp)) {
                     androidx.compose.animation.AnimatedVisibility(
-                        visible = !isPanelExpanded,
+                        visible = !isPanelExpanded && centerRole != MaskCenterRole.Loading,
                         enter = fadeIn(),
                         exit = fadeOut(),
                         modifier = Modifier.fillMaxSize()
@@ -601,21 +601,18 @@ private fun MaskCenterButton(
                 stiffness = Spring.StiffnessMediumLow
             )
         )
-        val isVisible = centerRole != MaskCenterRole.Loading
         MaskCircleButton(
             state = state,
             interactionSource = interactionSource,
             modifier = Modifier
-                .thenIf(!isVisible) { Modifier.alpha(0f) }
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
                 },
             icon = when (centerRole) {
-                Replay -> Icons.Rounded.Refresh
                 Play -> Icons.Rounded.PlayArrow
                 Pause -> Icons.Rounded.Pause
-                else -> Icons.Rounded.Cancel // never visible
+                else -> Icons.Rounded.Refresh
             },
             onClick = when (centerRole) {
                 Replay -> onRetry

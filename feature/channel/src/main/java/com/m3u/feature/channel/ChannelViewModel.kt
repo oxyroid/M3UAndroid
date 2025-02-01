@@ -326,7 +326,7 @@ class ChannelViewModel @Inject constructor(
                 playlist.url,
                 channel.value?.category.orEmpty(),
                 "",
-                ChannelRepository.Sort.ASC
+                ChannelRepository.Sort.UNSPECIFIED
             )
         }
             .flow
