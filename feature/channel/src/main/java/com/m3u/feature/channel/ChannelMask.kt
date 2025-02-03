@@ -35,7 +35,6 @@ import androidx.compose.material.icons.automirrored.rounded.VolumeDown
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Archive
-import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.HighQuality
@@ -145,7 +144,6 @@ internal fun ChannelMask(
     val onBackPressedDispatcher = checkNotNull(
         LocalOnBackPressedDispatcherOwner.current
     ).onBackPressedDispatcher
-
 
     // because they will be updated frequently,
     // they must be wrapped with rememberUpdatedState when using them.
@@ -338,8 +336,8 @@ internal fun ChannelMask(
                 Box(Modifier.size(48.dp)) {
                     androidx.compose.animation.AnimatedVisibility(
                         visible = !isPanelExpanded && adjacentChannels?.prevId != null,
-                        enter = fadeIn() + slideInHorizontally(initialOffsetX = { -it / 2 }),
-                        exit = fadeOut() + slideOutHorizontally(targetOffsetX = { -it / 2 }),
+                        enter = fadeIn() + slideInHorizontally(initialOffsetX = { -it / 6 }),
+                        exit = fadeOut() + slideOutHorizontally(targetOffsetX = { -it / 6 }),
                         modifier = Modifier.fillMaxSize()
                     ) {
                         MaskNavigateButton(
@@ -352,7 +350,7 @@ internal fun ChannelMask(
 
                 Box(Modifier.size(64.dp)) {
                     androidx.compose.animation.AnimatedVisibility(
-                        visible = !isPanelExpanded,
+                        visible = !isPanelExpanded && centerRole != MaskCenterRole.Loading,
                         enter = fadeIn(),
                         exit = fadeOut(),
                         modifier = Modifier.fillMaxSize()
@@ -369,8 +367,8 @@ internal fun ChannelMask(
                 Box(Modifier.size(48.dp)) {
                     androidx.compose.animation.AnimatedVisibility(
                         visible = !isPanelExpanded && adjacentChannels?.nextId != null,
-                        enter = fadeIn() + slideInHorizontally(initialOffsetX = { it / 2 }),
-                        exit = fadeOut() + slideOutHorizontally(targetOffsetX = { it / 2 }),
+                        enter = fadeIn() + slideInHorizontally(initialOffsetX = { it / 6 }),
+                        exit = fadeOut() + slideOutHorizontally(targetOffsetX = { it / 6 }),
                         modifier = Modifier.size(48.dp)
                     ) {
                         MaskNavigateButton(
@@ -602,21 +600,18 @@ private fun MaskCenterButton(
                 stiffness = Spring.StiffnessMediumLow
             )
         )
-        val isVisible = centerRole != MaskCenterRole.Loading
         MaskCircleButton(
             state = state,
             interactionSource = interactionSource,
             modifier = Modifier
-                .thenIf(!isVisible) { Modifier.alpha(0f) }
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
                 },
             icon = when (centerRole) {
-                Replay -> Icons.Rounded.Refresh
                 Play -> Icons.Rounded.PlayArrow
                 Pause -> Icons.Rounded.Pause
-                else -> Icons.Rounded.Cancel // never visible
+                else -> Icons.Rounded.Refresh
             },
             onClick = when (centerRole) {
                 Replay -> onRetry

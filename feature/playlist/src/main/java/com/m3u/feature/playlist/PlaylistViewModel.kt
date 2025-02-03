@@ -54,6 +54,7 @@ import com.m3u.data.worker.SubscriptionWorker
 import com.m3u.feature.playlist.PlaylistMessage.ChannelCoverSaved
 import com.m3u.feature.playlist.navigation.PlaylistNavigation
 import com.m3u.ui.Sort
+import com.m3u.ui.toCommonSort
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.FlowPreview
@@ -66,6 +67,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -336,8 +338,9 @@ class PlaylistViewModel @Inject constructor(
 
     @OptIn(FlowPreview::class)
     private val categories: StateFlow<List<String>> =
-        flatmapCombined(playlistUrl, query) { playlistUrl, query ->
-            playlistRepository.observeCategoriesByPlaylistUrlIgnoreHidden(playlistUrl, query)
+        flatmapCombined(playlistUrl, query, sort) { playlistUrl, query, sort ->
+            if (sort == Sort.MIXED) flowOf(emptyList())
+            else playlistRepository.observeCategoriesByPlaylistUrlIgnoreHidden(playlistUrl, query)
         }
             .let { flow ->
                 merge(
@@ -364,25 +367,38 @@ class PlaylistViewModel @Inject constructor(
         )
     }
         .mapLatest { (playlistUrl, query, sort, categories) ->
-            categories.map { category ->
-                CategoryWithChannels(
-                    category = category,
-                    channels = Pager(PagingConfig(15)) {
-                        channelRepository.pagingAllByPlaylistUrl(
-                            playlistUrl,
-                            category,
-                            query,
-                            when (sort) {
-                                Sort.UNSPECIFIED -> ChannelRepository.Sort.UNSPECIFIED
-                                Sort.ASC -> ChannelRepository.Sort.ASC
-                                Sort.DESC -> ChannelRepository.Sort.DESC
-                                Sort.RECENTLY -> ChannelRepository.Sort.RECENTLY
-                            }
-                        )
-                    }
-                        .flow
-                        .cachedIn(viewModelScope)
+            if (sort == Sort.MIXED) {
+                listOf(
+                    CategoryWithChannels(
+                        category = "",
+                        channels = Pager(PagingConfig(15)) {
+                            channelRepository.pagingAllByPlaylistUrl(
+                                playlistUrl,
+                                "",
+                                query,
+                                sort.toCommonSort()
+                            )
+                        }
+                            .flow
+                            .cachedIn(viewModelScope)
+                    )
                 )
+            } else {
+                categories.map { category ->
+                    CategoryWithChannels(
+                        category = category,
+                        channels = Pager(PagingConfig(15)) {
+                            channelRepository.pagingAllByPlaylistUrl(
+                                playlistUrl,
+                                category,
+                                query,
+                                sort.toCommonSort()
+                            )
+                        }
+                            .flow
+                            .cachedIn(viewModelScope)
+                    )
+                }
             }
         }
         .stateIn(
