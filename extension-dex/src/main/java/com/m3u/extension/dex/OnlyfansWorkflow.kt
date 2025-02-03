@@ -1,6 +1,5 @@
-package com.m3u.extension.app
+package com.m3u.extension.dex
 
-import android.util.Log
 import com.m3u.extension.api.Sample
 import com.m3u.extension.api.model.EPlaylist
 import com.m3u.extension.api.tool.JsonHolder
@@ -20,8 +19,8 @@ class OnlyfansWorkflow(
     /**
      * @see com.m3u.extension.api.workflow.Workflow.AllowedType
      */
-    private val okhttpClientHolder: OkhttpClientHolder,
-    private val jsonHolder: JsonHolder,
+    private val okHttpClient: OkHttpClient,
+    private val json: Json,
     private val logger: Logger,
     private val saver: Saver
 ) : Workflow {
@@ -45,7 +44,7 @@ class OnlyfansWorkflow(
             val userAgent = inputs[INPUT_LABEL_USER_AGENT] as? String
             val isR18Allowed = inputs[INPUT_LABEL_R18_ALLOWED] as? Boolean
             // ...
-            Log.e(TAG, "onResolve: inputs=$inputs")
+            // Log.e(TAG, "onResolve: inputs=$inputs")
             delay(1.seconds)
             saver.savePlaylist(
                 pkgName = this@OnlyfansWorkflow::class.qualifiedName.orEmpty(),

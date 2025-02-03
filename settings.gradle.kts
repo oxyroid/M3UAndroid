@@ -27,6 +27,7 @@ include(
     ":feature:playlist",
     ":feature:playlist-configuration",
     ":feature:channel",
+    ":feature:extension",
     ":feature:crash"
 )
 include(":benchmark")
@@ -34,7 +35,8 @@ include(":i18n")
 include(":codec:lite", ":codec:rich")
 include(":annotation")
 include(":processor")
-include(":extension-api")
-include(":extension-app")
-include(":extension-runtime")
-include(":feature:extension")
+include(
+    ":extension-api",
+    ":extension-dex",
+    ":extension-runtime"
+)

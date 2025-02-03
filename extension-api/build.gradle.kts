@@ -1,7 +1,7 @@
 plugins {
-    id("java-library")
     alias(libs.plugins.org.jetbrains.kotlin.jvm)
     alias(libs.plugins.org.jetbrains.kotlin.serialization)
+    id("maven-publish")
 }
 
 dependencies {
@@ -9,7 +9,18 @@ dependencies {
     compileOnly(libs.kotlinx.coroutine.core)
     compileOnly(libs.kotlinx.serialization.json)
 }
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+
+kotlin {
+    jvmToolchain(17)
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            from(components["java"])
+            groupId = "com.m3u"
+            artifactId = "extension-api"
+            version = "1.0.0"
+        }
+    }
 }

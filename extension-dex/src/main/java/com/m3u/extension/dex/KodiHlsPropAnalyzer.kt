@@ -1,4 +1,4 @@
-package com.m3u.extension.app
+package com.m3u.extension.dex
 
 import com.m3u.extension.api.Sample
 import com.m3u.extension.api.analyzer.HlsPropAnalyzer
