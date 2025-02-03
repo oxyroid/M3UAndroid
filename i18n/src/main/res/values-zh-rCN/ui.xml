@@ -19,6 +19,7 @@
     <string name="ui_sort_asc">A-Z</string>
     <string name="ui_sort_desc">Z-A</string>
     <string name="ui_sort_recently">最近</string>
+    <string name="ui_sort_mixed">混合</string>
     <string name="ui_sort_never_played">从未播放过</string>
     <string name="ui_sort_unspecified">默认</string>
 </resources>

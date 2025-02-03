@@ -212,7 +212,9 @@ internal fun SmartphonePlaylistScreenImpl(
                     else -> rowCount
                 }
             }
-            var isExpanded by remember { mutableStateOf(false) }
+            var isExpanded by remember(sort == Sort.MIXED) {
+                mutableStateOf(false)
+            }
             BackHandler(isExpanded) { isExpanded = false }
 
             val tabs = @Composable {

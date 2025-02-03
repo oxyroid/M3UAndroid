@@ -22,6 +22,7 @@ subprojects {
                 optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
                 optIn("androidx.compose.foundation.ExperimentalFoundationApi")
                 optIn("androidx.compose.foundation.layout.ExperimentalLayoutApi")
+                optIn("androidx.compose.animation.ExperimentalSharedTransitionApi")
                 optIn("androidx.compose.material3.ExperimentalMaterial3Api")
                 optIn("androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi")
                 optIn("androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi")
@@ -46,7 +47,7 @@ subprojects {
     }
     plugins.withId("com.android.library") {
         configure<LibraryExtension> {
-            compileSdk = 34
+            compileSdk = 35
             defaultConfig {
                 minSdk = 26
                 testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

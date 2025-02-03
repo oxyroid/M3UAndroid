@@ -32,6 +32,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.DenseListItem
+import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.i18n.R.string
 import com.m3u.material.components.BottomSheet
 import com.m3u.material.components.Icon
@@ -46,7 +47,16 @@ enum class Sort(@StringRes val resId: Int) {
     UNSPECIFIED(string.ui_sort_unspecified),
     ASC(string.ui_sort_asc),
     DESC(string.ui_sort_desc),
-    RECENTLY(string.ui_sort_recently)
+    RECENTLY(string.ui_sort_recently),
+    MIXED(string.ui_sort_mixed)
+}
+
+fun Sort.toCommonSort(): ChannelRepository.Sort = when (this) {
+    Sort.UNSPECIFIED -> ChannelRepository.Sort.UNSPECIFIED
+    Sort.ASC -> ChannelRepository.Sort.ASC
+    Sort.DESC -> ChannelRepository.Sort.DESC
+    Sort.RECENTLY -> ChannelRepository.Sort.RECENTLY
+    Sort.MIXED -> ChannelRepository.Sort.MIXED
 }
 
 @Composable

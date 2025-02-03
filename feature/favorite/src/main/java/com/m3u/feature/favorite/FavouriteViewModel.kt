@@ -78,7 +78,14 @@ class FavouriteViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000)
         )
 
-    val sorts: List<Sort> = Sort.entries
+    val sorts: List<Sort> = listOf(
+        Sort.UNSPECIFIED,
+        Sort.ASC,
+        Sort.DESC,
+        Sort.RECENTLY,
+        // mixed channels is not support for favourite gallery.
+        // Sort.MIXED
+    )
 
     private val sortIndex = MutableStateFlow(0)
 
@@ -109,8 +116,9 @@ class FavouriteViewModel @Inject constructor(
                 )
 
                 Sort.RECENTLY -> all.sortedByDescending { it.seen }
+                // won't reach
+                Sort.MIXED -> all
             }
-
         }
         .asResource()
         .flowOn(ioDispatcher)
