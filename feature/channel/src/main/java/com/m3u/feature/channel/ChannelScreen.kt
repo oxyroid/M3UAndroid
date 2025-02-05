@@ -342,7 +342,7 @@ private fun ChannelPlayer(
                 modifier = Modifier
                     .fillMaxHeight()
                     .fillMaxWidth(0.18f),
-                canPerformGesture = preferences.brightnessGesture
+                enabled = preferences.brightnessGesture
             )
 
             VerticalGestureArea(
@@ -359,7 +359,7 @@ private fun ChannelPlayer(
                     .align(Alignment.TopEnd)
                     .fillMaxHeight()
                     .fillMaxWidth(0.18f),
-                canPerformGesture = preferences.volumeGesture
+                enabled = preferences.volumeGesture
             )
 
             val shouldShowPlaceholder =

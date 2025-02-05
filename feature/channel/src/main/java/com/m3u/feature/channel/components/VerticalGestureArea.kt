@@ -10,7 +10,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.feature.channel.ChannelMaskUtils.detectVerticalGesture
 import com.m3u.material.ktx.tv
 import com.m3u.material.ktx.thenIf
@@ -24,7 +23,7 @@ internal fun VerticalGestureArea(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     time: Float = 0.65f,
-    canPerformGesture: Boolean = true
+    enabled: Boolean = true
 ) {
     val tv = tv()
     val currentPercent by rememberUpdatedState(percent)
@@ -32,7 +31,7 @@ internal fun VerticalGestureArea(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .thenIf(!tv && canPerformGesture) {
+                .thenIf(!tv && enabled) {
                     Modifier.detectVerticalGesture(
                         time = time,
                         onDragStart = onDragStart,
