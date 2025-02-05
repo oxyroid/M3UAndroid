@@ -341,7 +341,8 @@ private fun ChannelPlayer(
                 onClick = maskState::toggle,
                 modifier = Modifier
                     .fillMaxHeight()
-                    .fillMaxWidth(0.18f)
+                    .fillMaxWidth(0.18f),
+                enabled = preferences.brightnessGesture
             )
 
             VerticalGestureArea(
@@ -357,7 +358,8 @@ private fun ChannelPlayer(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .fillMaxHeight()
-                    .fillMaxWidth(0.18f)
+                    .fillMaxWidth(0.18f),
+                enabled = preferences.volumeGesture
             )
 
             val shouldShowPlaceholder =
