@@ -23,16 +23,16 @@ internal fun VerticalGestureArea(
     onDrag: (percent: Float) -> Unit,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    time: Float = 0.65f
+    time: Float = 0.65f,
+    canPerformGesture: Boolean = true
 ) {
-    val preferences = hiltPreferences()
     val tv = tv()
     val currentPercent by rememberUpdatedState(percent)
     BoxWithConstraints(modifier) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .thenIf(!tv && preferences.brightnessGesture) {
+                .thenIf(!tv && canPerformGesture) {
                     Modifier.detectVerticalGesture(
                         time = time,
                         onDragStart = onDragStart,
