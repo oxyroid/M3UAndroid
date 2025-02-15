@@ -14,6 +14,7 @@ import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.LightMode
+import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -105,6 +106,7 @@ fun ChannelRoute(
     val programmeReminderIds by viewModel.programmeReminderIds.collectAsStateWithLifecycle()
 
     var brightness by remember { mutableFloatStateOf(helper.brightness) }
+    var speed by remember { mutableFloatStateOf(1f) }
     var isPipMode by remember { mutableStateOf(false) }
     var isAutoZappingMode by remember { mutableStateOf(true) }
     var choosing by remember { mutableStateOf(false) }
@@ -239,6 +241,11 @@ fun ChannelRoute(
                     onVolume = viewModel::onVolume,
                     brightness = brightness,
                     onBrightness = { brightness = it },
+                    speed = speed,
+                    onSpeedUpdated = {
+                        viewModel.onSpeedUpdated(it)
+                        speed = it
+                    },
                     onPreviousChannelClick = viewModel::getPreviousChannel,
                     onNextChannelClick = viewModel::getNextChannel,
                     onEnterPipMode = {
@@ -295,6 +302,7 @@ private fun ChannelPlayer(
     isPanelExpanded: Boolean,
     volume: Float,
     brightness: Float,
+    speed: Float,
     onFavourite: () -> Unit,
     openDlnaDevices: () -> Unit,
     openChooseFormat: () -> Unit,
@@ -304,6 +312,7 @@ private fun ChannelPlayer(
     onPreviousChannelClick: () -> Unit,
     onNextChannelClick: () -> Unit,
     onEnterPipMode: () -> Unit,
+    onSpeedUpdated: (Float) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val title = channel?.title ?: "--"
@@ -313,6 +322,7 @@ private fun ChannelPlayer(
     var gesture: MaskGesture? by remember { mutableStateOf(null) }
     val currentBrightness by rememberUpdatedState(brightness)
     val currentVolume by rememberUpdatedState(volume)
+    val currentSpeed by rememberUpdatedState(speed)
     val preferences = hiltPreferences()
 
     Background(
@@ -392,6 +402,9 @@ private fun ChannelPlayer(
                 onEnterPipMode = onEnterPipMode,
                 onPreviousChannelClick = onPreviousChannelClick,
                 onNextChannelClick = onNextChannelClick,
+                onSpeedUpdated = onSpeedUpdated,
+                onSpeedStart = { gesture = MaskGesture.SPEED },
+                onSpeedEnd = { gesture = null },
                 gesture = gesture
             )
 
@@ -399,7 +412,9 @@ private fun ChannelPlayer(
                 MaskGestureValuePanel(
                     value = when (gesture) {
                         MaskGesture.BRIGHTNESS -> "${currentBrightness.times(100).toInt()}%"
-                        else -> "${currentVolume.times(100).toInt()}"
+                        MaskGesture.VOLUME -> "${currentVolume.times(100).toInt()}"
+                        MaskGesture.SPEED -> "${"%.1f".format(currentSpeed)}x"
+                        else -> ""
                     },
                     icon = when (gesture) {
                         MaskGesture.BRIGHTNESS -> when {
@@ -407,11 +422,12 @@ private fun ChannelPlayer(
                             else -> Icons.Rounded.LightMode
                         }
 
-                        else -> when {
+                        MaskGesture.VOLUME -> when {
                             volume == 0f -> Icons.AutoMirrored.Rounded.VolumeOff
                             volume < 0.5f -> Icons.AutoMirrored.Rounded.VolumeDown
                             else -> Icons.AutoMirrored.Rounded.VolumeUp
                         }
+                        else -> Icons.Rounded.Speed
                     },
                     modifier = Modifier.align(Alignment.Center)
                 )

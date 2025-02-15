@@ -236,10 +236,10 @@ class ChannelViewModel @Inject constructor(
 
     internal fun onVolume(target: Float) {
         _volume.update { target }
-
+        val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
         audioManager.setStreamVolume(
             AudioManager.STREAM_MUSIC,
-            (target * 100).roundToInt(),
+            (target * maxVolume).roundToInt(),
             AudioManager.FLAG_VIBRATE
         )
 
@@ -376,6 +376,10 @@ class ChannelViewModel @Inject constructor(
             initialValue = defaultProgrammeRange,
             started = SharingStarted.WhileSubscribed(5_000L)
         )
+
+    internal fun onSpeedUpdated(race: Float) {
+        playerManager.updateSpeed(race)
+    }
 
     companion object {
         private const val ACTION_SET_AV_TRANSPORT_URI = "SetAVTransportURI"

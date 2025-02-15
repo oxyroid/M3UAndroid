@@ -124,6 +124,9 @@ internal fun ChannelMask(
     isSeriesPlaylist: Boolean,
     isPanelExpanded: Boolean,
     hasTrack: Boolean,
+    onSpeedUpdated: (Float) -> Unit,
+    onSpeedStart: () -> Unit,
+    onSpeedEnd: () -> Unit,
     onFavourite: () -> Unit,
     openDlnaDevices: () -> Unit,
     openChooseFormat: () -> Unit,
@@ -181,6 +184,16 @@ internal fun ChannelMask(
             }
         }
     }
+    val isSpeedable by remember(
+        playerState.player,
+        playerState.playState
+    ) {
+        derivedStateOf {
+            playerState.player
+                ?.isCommandAvailable(Player.COMMAND_SET_SPEED_AND_PITCH)
+                ?: false
+        }
+    }
 
     val contentPosition by produceState(
         initialValue = -1L,
@@ -234,6 +247,10 @@ internal fun ChannelMask(
     ) {
         MaskPanel(
             state = maskState,
+            isSpeedGestureEnabled = isSpeedable,
+            onSpeedUpdated = onSpeedUpdated,
+            onSpeedStart = onSpeedStart,
+            onSpeedEnd = onSpeedEnd,
             modifier = Modifier.align(Alignment.Center)
         )
 
@@ -251,24 +268,12 @@ internal fun ChannelMask(
 
                 MaskTextButton(
                     state = maskState,
-                    icon = when (gesture) {
-                        MaskGesture.BRIGHTNESS -> when {
-                            brightness < 0.5f -> Icons.Rounded.DarkMode
-                            else -> Icons.Rounded.LightMode
-                        }
-
-                        else -> when {
-                            volume == 0f -> Icons.AutoMirrored.Rounded.VolumeOff
-                            volume < 0.5f -> Icons.AutoMirrored.Rounded.VolumeDown
-                            else -> Icons.AutoMirrored.Rounded.VolumeUp
-                        }
+                    icon = when {
+                        volume == 0f -> Icons.AutoMirrored.Rounded.VolumeOff
+                        else -> Icons.AutoMirrored.Rounded.VolumeUp
                     },
                     text = brightnessOrVolumeText,
-                    tint = when (gesture) {
-                        null -> if (muted) MaterialTheme.colorScheme.error else Color.Unspecified
-                        MaskGesture.VOLUME -> if (muted) MaterialTheme.colorScheme.error else Color.Unspecified
-                        MaskGesture.BRIGHTNESS -> Color.Unspecified
-                    },
+                    tint = if (muted) MaterialTheme.colorScheme.error else Color.Unspecified,
                     onClick = {
                         onVolume(
                             if (volume != 0f) {
@@ -394,7 +399,6 @@ internal fun ChannelMask(
                     modifier = Modifier
                         .semantics(mergeDescendants = true) { }
                         .weight(1f)
-                        .animateContentSize(alignment = Alignment.BottomCenter)
                 ) {
                     if (!isPanelExpanded || !isPanelGestureSupported) {
                         Text(
