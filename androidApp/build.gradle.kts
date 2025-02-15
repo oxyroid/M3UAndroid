@@ -136,6 +136,7 @@ dependencies {
     implementation(project(":feature:channel"))
     implementation(project(":feature:playlist-configuration"))
     implementation(project(":feature:crash"))
+    baselineProfile(project(":benchmark"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
