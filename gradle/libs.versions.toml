@@ -54,6 +54,7 @@ minabox = "1.7.1"
 ktor-server = "3.0.0-beta-1"
 mm2d-mmupnp = "3.1.6"
 symbolProcessingApi = "2.0.0-1.0.22"
+profileinstaller = "1.4.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
@@ -166,6 +167,7 @@ minabox = { group = "io.github.oleksandrbalan", name = "minabox", version.ref = 
 net-mm2d-mmupnp-mmupnp = { group = "net.mm2d.mmupnp", name = "mmupnp", version.ref = "mm2d-mmupnp" }
 androidx-graphics-shapes-android = { group = "androidx.graphics", name = "graphics-shapes-android", version.ref = "androidx-graphics-shapes" }
 symbol-processing-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "symbolProcessingApi" }
+androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
 
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }
