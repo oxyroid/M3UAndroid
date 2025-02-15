@@ -37,6 +37,7 @@ interface PlayerManager {
     fun release()
     fun clearCache()
     fun pauseOrContinue(value: Boolean)
+    fun updateSpeed(race: Float)
 }
 
 val PlayerManager.tracks: Flow<Map<@C.TrackType Int, List<Format>>>

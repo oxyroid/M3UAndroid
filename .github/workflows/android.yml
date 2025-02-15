@@ -34,7 +34,7 @@ jobs:
         run: ./gradlew :androidApp:assembleSnapshotChannelRichCodecRelease
 
       - name: Upload
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: "androidApp/build/outputs/apk/snapshotChannelRichCodec/release/*.apk"
 

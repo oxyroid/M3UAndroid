@@ -90,7 +90,7 @@ internal fun FormatsBottomSheet(
                 state = pagerState,
                 userScrollEnabled = false,
                 verticalAlignment = Alignment.Top,
-                modifier = Modifier.heightIn(240.dp)
+                modifier = Modifier.height(240.dp)
             ) { page ->
                 val type = typesIndexed[page]
                 val currentFormats = formatsIndexed[page]
@@ -119,7 +119,7 @@ internal fun FormatsBottomSheet(
             SingleChoiceSegmentedButtonRow(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = spacing.medium)
+                    .padding(horizontal = spacing.medium, vertical = spacing.small)
             ) {
                 formats.entries.forEachIndexed { index, (type, _) ->
                     val icon = when (type) {

@@ -2,9 +2,7 @@ package com.m3u.material.components
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.draggable
-import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -15,11 +13,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.offset
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastMap
+import com.m3u.material.ktx.thenIf
 import kotlin.math.roundToInt
 
 enum class PullPanelLayoutValue {
@@ -86,73 +86,73 @@ fun PullPanelLayout(
             targetValue = offset,
             label = "offset"
         )
+        val onDragEndOrCancel = {
+            offset = if (offset <= constraints.maxWidth * aspectRatio / 2) {
+                if (state.value != PullPanelLayoutValue.COLLAPSED) {
+                    onValueChanged(PullPanelLayoutValue.COLLAPSED)
+                }
+                state.collapse()
+                0f
+            } else {
+                if (state.value != PullPanelLayoutValue.EXPANDED) {
+                    onValueChanged(PullPanelLayoutValue.EXPANDED)
+                }
+                state.expand()
+                constraints.maxWidth * aspectRatio
+            }.also(onOffsetChanged)
+        }
         SubcomposeLayout(
-            modifier
-                .draggable(
-                    orientation = Orientation.Vertical,
-                    enabled = enabled,
-                    state = rememberDraggableState { delta ->
-                        offset = (offset - delta)
-                            .coerceAtLeast(0f)
-                            .also(onOffsetChanged)
-                    },
-                    onDragStopped = {
-                        offset = if (offset <= constraints.maxWidth * aspectRatio / 2) {
-                            if (state.value != PullPanelLayoutValue.COLLAPSED) {
-                                onValueChanged(PullPanelLayoutValue.COLLAPSED)
-                            }
-                            state.collapse()
-                            0f
-                        } else {
-                            if (state.value != PullPanelLayoutValue.EXPANDED) {
-                                onValueChanged(PullPanelLayoutValue.EXPANDED)
-                            }
-                            state.expand()
-                            constraints.maxWidth * aspectRatio
-                        }.also(onOffsetChanged)
-                    }
-                )
+            modifier.thenIf(enabled) {
+                Modifier.pointerInput(Unit) {
+                    detectVerticalDragGestures(
+                        onVerticalDrag = { _, delta ->
+                            offset = (offset - delta)
+                                .coerceAtLeast(0f)
+                                .also(onOffsetChanged)
+                        },
+                        onDragEnd = onDragEndOrCancel,
+                        onDragCancel = onDragEndOrCancel
+                    )
+                }
+            }
         ) { constraints ->
             val maxHeight = constraints.maxHeight
             val maxWidth = constraints.maxWidth
-            val panelLayerPlaceables = subcompose(PullPanelLayoutValue.EXPANDED, panel)
-                .fastMap {
-                    it.measure(
-                        if (useVertical) constraints
-                            .copy(
-                                maxHeight = currentOffset
-                                    .roundToInt()
-                                    .coerceAtMost(
-                                        (maxWidth * aspectRatio).roundToInt()
-                                    )
-                            )
-                        else constraints.copy(
+            val panelLayerPlaceables = subcompose(PullPanelLayoutValue.EXPANDED, panel).fastMap {
+                it.measure(
+                    if (useVertical) {
+                        constraints.copy(
+                            maxHeight = currentOffset
+                                .roundToInt()
+                                .coerceAtMost((maxWidth * aspectRatio).roundToInt())
+                        )
+                    } else {
+                        constraints.copy(
                             maxWidth = currentOffset
                                 .roundToInt()
-                                .coerceAtMost(
-                                    (maxHeight / aspectRatio).roundToInt()
-                                )
+                                .coerceAtMost((maxHeight / aspectRatio).roundToInt())
                         )
-                    )
-                }
+                    }
+                )
+            }
 
-            val contentPlaceables = subcompose(PullPanelLayoutValue.COLLAPSED, content)
-                .fastMap {
-                    it.measure(
-                        if (useVertical) constraints
-                            .offset(
-                                vertical = -currentOffset
-                                    .roundToInt()
-                                    .coerceAtMost((maxWidth * aspectRatio).roundToInt())
-                            )
-                        else constraints
-                            .offset(
-                                horizontal = -currentOffset
-                                    .roundToInt()
-                                    .coerceAtMost((maxHeight / aspectRatio).roundToInt())
-                            )
-                    )
-                }
+            val contentPlaceables = subcompose(PullPanelLayoutValue.COLLAPSED, content).fastMap {
+                it.measure(
+                    if (useVertical) {
+                        constraints.offset(
+                            vertical = -currentOffset
+                                .roundToInt()
+                                .coerceAtMost((maxWidth * aspectRatio).roundToInt())
+                        )
+                    } else {
+                        constraints.offset(
+                            horizontal = -currentOffset
+                                .roundToInt()
+                                .coerceAtMost((maxHeight / aspectRatio).roundToInt())
+                        )
+                    }
+                )
+            }
 
             layout(maxWidth, maxHeight) {
                 contentPlaceables.fastForEach { it.placeRelative(0, 0) }

@@ -418,6 +418,12 @@ internal class PlayerManagerImpl @Inject constructor(
         }
     }
 
+    override fun updateSpeed(race: Float) {
+        player.value?.apply {
+            setPlaybackSpeed(race.coerceAtLeast(0.1f))
+        }
+    }
+
     private var iterator: MimetypeIterator = MimetypeIterator.Unsupported
 
     private val logger = delegate.install(Profiles.SERVICE_PLAYER)
