@@ -58,6 +58,7 @@ import com.m3u.material.components.mask.rememberMaskState
 import com.m3u.material.components.mask.toggle
 import com.m3u.material.components.rememberPullPanelLayoutState
 import com.m3u.material.ktx.checkPermissionOrRationale
+import com.m3u.material.ktx.tv
 import com.m3u.ui.Player
 import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.helper.OnPipModeChanged
@@ -324,6 +325,7 @@ private fun ChannelPlayer(
     val currentVolume by rememberUpdatedState(volume)
     val currentSpeed by rememberUpdatedState(speed)
     val preferences = hiltPreferences()
+    val tv = tv()
 
     Background(
         color = Color.Black,
@@ -352,7 +354,7 @@ private fun ChannelPlayer(
                 modifier = Modifier
                     .fillMaxHeight()
                     .fillMaxWidth(0.18f),
-                enabled = preferences.brightnessGesture
+                enabled = !tv && preferences.brightnessGesture
             )
 
             VerticalGestureArea(
@@ -369,7 +371,7 @@ private fun ChannelPlayer(
                     .align(Alignment.TopEnd)
                     .fillMaxHeight()
                     .fillMaxWidth(0.18f),
-                enabled = preferences.volumeGesture
+                enabled = !tv && preferences.volumeGesture
             )
 
             val shouldShowPlaceholder =
