@@ -64,8 +64,13 @@
 # Serialization core uses `java.lang.ClassValue` for caching inside these specified classes.
 # If there is no `java.lang.ClassValue` (for example, in Android), then R8/ProGuard will print a warning.
 # However, since in this case they will not be used, we can disable these warnings
--dontwarn kotlinx.serialization.internal.ClassValueWrapper
--dontwarn kotlinx.serialization.internal.ParametrizedClassValueWrapper
+-dontwarn kotlinx.serialization.internal.ClassValueReferences
+
+# disable optimisation for descriptor field because in some versions of ProGuard, optimization generates incorrect bytecode that causes a verification error
+# see https://github.com/Kotlin/kotlinx.serialization/issues/2719
+-keepclassmembers public class **$$serializer {
+    private ** descriptor;
+}
 # Retrofit does reflection on generic parameters. InnerClasses is required to use Signature and
 # EnclosingMethod is required to use InnerClasses.
 -keepattributes Signature, InnerClasses, EnclosingMethod

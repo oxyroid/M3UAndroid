@@ -1,0 +1,2 @@
+-dontwarn com.m3u.core.architecture.Abi$$serializer
+-dontwarn com.m3u.core.architecture.Abi
