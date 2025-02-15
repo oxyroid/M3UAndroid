@@ -40,7 +40,7 @@ squareup-retrofit2 = "2.11.0"
 squareup-leakcanary = "2.14"
 
 kotlin = "2.0.0"
-android-gradle-plugin = "8.2.2"
+android-gradle-plugin = "8.5.0"
 ksp-plugin = "2.0.0-1.0.22"
 
 androidx-test-ext-junit = "1.2.1"
