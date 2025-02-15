@@ -38,6 +38,7 @@ interface PlayerManager {
     fun release()
     fun clearCache()
     fun pauseOrContinue(value: Boolean)
+    fun updateSpeed(race: Float)
 }
 
 @Immutable
