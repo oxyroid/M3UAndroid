@@ -120,6 +120,12 @@ hilt {
     enableAggregatingTask = true
 }
 
+baselineProfile {
+    dexLayoutOptimization = true
+    saveInSrc = true
+    automaticGenerationDuringBuild = true
+}
+
 dependencies {
     implementation(project(":core"))
     implementation(project(":ui"))
