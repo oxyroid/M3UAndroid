@@ -89,16 +89,6 @@
             android:launchMode="singleInstance"
             android:theme="@style/Theme.M3U" />
 
-        <service
-            android:name="com.m3u.data.service.StreamDownloadService"
-            android:exported="false"
-            android:foregroundServiceType="dataSync">
-            <intent-filter>
-                <action android:name="androidx.media3.exoplayer.downloadService.action.RESTART" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </service>
-
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
