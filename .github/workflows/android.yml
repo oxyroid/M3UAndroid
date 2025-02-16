@@ -35,10 +35,6 @@ jobs:
         with:
           gradle-home-cache-cleanup: true
 
-      - name: Copy CI gradle.properties
-        working-directory: ./
-        run: mkdir -p ~/.gradle ; cp .github/ci-gradle.properties ~/.gradle/gradle.properties
-
       - name: Clean GMD
         run: ./gradlew cleanManagedDevices --unused-only
 
