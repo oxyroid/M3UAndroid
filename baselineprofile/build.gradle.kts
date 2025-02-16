@@ -28,8 +28,6 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    targetProjectPath = ":androidApp"
-
     flavorDimensions += listOf("channel", "codec")
     productFlavors {
         create("stableChannel") { dimension = "channel" }
@@ -49,7 +47,10 @@ android {
             }
         }
     }
-
+    // Note that your module name may have different name
+    targetProjectPath = ":androidApp"
+    // Enable the benchmark to run separately from the app process
+    experimentalProperties["android.experimental.self-instrumenting"] = true
 }
 
 // This is the configuration block for the Baseline Profile plugin.
@@ -69,7 +70,6 @@ androidComponents {
             if (isSnapshot) "com.m3u.androidApp.snapshot"
             else "com.m3u.androidApp"
         )
-        println()
     }
 }
 

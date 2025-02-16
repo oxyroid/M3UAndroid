@@ -32,7 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.SubcomposeLayout
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -268,14 +267,14 @@ internal fun NavigationItemLayout(
             if (!tv) {
                 Text(
                     text = stringResource(
-                        if (usefob && fob != null) fob.iconTextId
+                        if (usefob) fob.iconTextId
                         else currentRootDestination.iconTextId
                     ).uppercase()
                 )
             } else {
                 TvText(
                     text = stringResource(
-                        if (usefob && fob != null) fob.iconTextId
+                        if (usefob) fob.iconTextId
                         else currentRootDestination.iconTextId
                     ).uppercase()
                 )
@@ -283,7 +282,7 @@ internal fun NavigationItemLayout(
         }
     }
     val actualOnClick: () -> Unit = if (usefob) {
-        { fob?.onClick?.invoke() }
+        fob::onClick::invoke
     } else {
         {
             navigateToRoot(currentRootDestination)

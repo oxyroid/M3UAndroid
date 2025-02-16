@@ -21,7 +21,6 @@ android {
         versionName = "1.14.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        testInstrumentationRunnerArguments["androidx.benchmark.profiling.mode"] = "MethodTracing"
     }
     flavorDimensions += setOf("channel", "codec")
     productFlavors {
@@ -51,12 +50,6 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             signingConfig = signingConfigs.getByName("debug")
-        }
-        create("benchmark") {
-            initWith(buildTypes.getByName("release"))
-            signingConfig = signingConfigs.getByName("debug")
-            matchingFallbacks += listOf("release")
-            isDebuggable = false
         }
         all {
             isCrunchPngs = false
@@ -123,7 +116,6 @@ hilt {
 baselineProfile {
     dexLayoutOptimization = true
     saveInSrc = true
-    automaticGenerationDuringBuild = true
 }
 
 dependencies {
