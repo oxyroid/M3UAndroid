@@ -116,6 +116,7 @@ hilt {
 baselineProfile {
     dexLayoutOptimization = true
     saveInSrc = true
+    automaticGenerationDuringBuild = true
 }
 
 dependencies {
