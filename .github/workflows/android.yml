@@ -20,18 +20,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-      - name: set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: gradle
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-      - name: Build with Gradle
+      - name: Setup JDK
+        id: setup-java
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: "zulu"
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-home-cache-cleanup: true
+
+      - name: Clean GMD
+        run: ./gradlew cleanManagedDevices --unused-only
+
+      # With the baseline profile Gradle plugin, release variants generate baseline profiles.
+      - name: Build production app
         run: ./gradlew :androidApp:assembleSnapshotChannelRichCodecRelease
+          -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile
+          -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect"
+          -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true
+          -Pandroid.experimental.androidTest.numManagedDeviceShards=1
+          -Pandroid.experimental.testOptions.managedDevices.maxConcurrentDevices=1
 
       - name: Upload
         uses: actions/upload-artifact@v4

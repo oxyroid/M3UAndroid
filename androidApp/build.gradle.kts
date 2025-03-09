@@ -21,7 +21,6 @@ android {
         versionName = "1.14.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        testInstrumentationRunnerArguments["androidx.benchmark.profiling.mode"] = "MethodTracing"
     }
     flavorDimensions += setOf("channel", "codec")
     productFlavors {
@@ -51,12 +50,6 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             signingConfig = signingConfigs.getByName("debug")
-        }
-        create("benchmark") {
-            initWith(buildTypes.getByName("release"))
-            signingConfig = signingConfigs.getByName("debug")
-            matchingFallbacks += listOf("release")
-            isDebuggable = false
         }
         all {
             isCrunchPngs = false
@@ -136,6 +129,8 @@ dependencies {
     implementation(project(":feature:channel"))
     implementation(project(":feature:playlist-configuration"))
     implementation(project(":feature:crash"))
+    implementation(libs.androidx.profileinstaller)
+    "baselineProfile"(project(":baselineprofile"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

@@ -4,10 +4,10 @@ androidx-core-splashscreen = "1.0.1"
 androidx-appcompat = "1.7.0"
 androidx-activity = "1.10.0"
 androidx-lifecycle = "2.8.7"
-androidx-compose-bom = "2025.01.01"
+androidx-compose-bom = "2025.02.00"
 androidx-compose-material3-adaptive = "1.0.0"
 androidx-constraintlayout-compose = "1.1.0"
-androidx-navigation = "2.8.6"
+androidx-navigation = "2.8.7"
 androidx-hilt = "1.2.0"
 androidx-tv = "1.0.0"
 androidx-media3 = "1.5.1"
@@ -15,7 +15,7 @@ androidx-work = "2.10.0"
 androidx-room = "2.6.1"
 androidx-tvprovider = "1.0.0"
 androidx-startup = "1.2.0"
-androidx-paging = "3.3.5"
+androidx-paging = "3.3.6"
 
 autoServiceAnnotations = "1.0"
 autoServiceKsp = "1.0.0"
@@ -40,7 +40,7 @@ squareup-retrofit2 = "2.11.0"
 squareup-leakcanary = "2.14"
 
 kotlin = "2.0.0"
-android-gradle-plugin = "8.2.2"
+android-gradle-plugin = "8.5.0"
 ksp-plugin = "2.0.0-1.0.22"
 
 androidx-test-ext-junit = "1.2.1"
@@ -54,6 +54,7 @@ minabox = "1.7.1"
 ktor-server = "3.0.0-beta-1"
 mm2d-mmupnp = "3.1.6"
 symbolProcessingApi = "2.0.0-1.0.22"
+profileinstaller = "1.4.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
@@ -166,6 +167,7 @@ minabox = { group = "io.github.oleksandrbalan", name = "minabox", version.ref = 
 net-mm2d-mmupnp-mmupnp = { group = "net.mm2d.mmupnp", name = "mmupnp", version.ref = "mm2d-mmupnp" }
 androidx-graphics-shapes-android = { group = "androidx.graphics", name = "graphics-shapes-android", version.ref = "androidx-graphics-shapes" }
 symbol-processing-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "symbolProcessingApi" }
+androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
 
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }

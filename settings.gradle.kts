@@ -29,7 +29,7 @@ include(
     ":feature:channel",
     ":feature:crash"
 )
-include(":benchmark")
+include(":baselineprofile")
 include(":i18n")
 include(":codec:lite", ":codec:rich")
 include(":annotation")
