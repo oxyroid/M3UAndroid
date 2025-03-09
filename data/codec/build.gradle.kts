@@ -5,15 +5,13 @@ plugins {
 }
 
 android {
-    namespace = "com.m3u.data.codec.lite"
+    namespace = "com.m3u.data.codec"
     kotlinOptions {
         jvmTarget = "17"
     }
 }
 
 dependencies {
-    implementation(project(":data:codec"))
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
 

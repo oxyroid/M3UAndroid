@@ -33,6 +33,7 @@ dependencies {
         .startParameter
         .taskNames
         .find { it.contains("richCodec", ignoreCase = true) } != null
+    implementation(project(":data:codec"))
     if (richCodec) {
         implementation(project(":data:codec:rich"))
     } else {

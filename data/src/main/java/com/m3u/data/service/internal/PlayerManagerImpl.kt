@@ -369,7 +369,7 @@ class PlayerManagerImpl @Inject constructor(
         }
 
     private val renderersFactory: RenderersFactory by lazy {
-        Codecs.createRenderersFactory(context)
+        Codecs.load().createRenderersFactory(context)
     }
 
     private fun createTrackSelector(tunneling: Boolean): TrackSelector {

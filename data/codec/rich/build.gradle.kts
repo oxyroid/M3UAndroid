@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.com.android.library)
     alias(libs.plugins.org.jetbrains.kotlin.android)
+    alias(libs.plugins.com.google.devtools.ksp)
 }
 
 android {
@@ -11,9 +12,15 @@ android {
 }
 
 dependencies {
+    implementation(project(":data:codec"))
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
 
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.nextlib.media3.ext)
+
+    implementation(libs.auto.service.annotations)
+
+    ksp(libs.auto.service.ksp)
 }
