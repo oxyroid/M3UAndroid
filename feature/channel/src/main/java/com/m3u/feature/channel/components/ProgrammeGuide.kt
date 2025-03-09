@@ -62,11 +62,9 @@ import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.ProgrammeRange
 import com.m3u.data.database.model.ProgrammeRange.Companion.HOUR_LENGTH
-import com.m3u.material.components.Icon
+import androidx.compose.material3.Icon
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdges
-import com.m3u.material.ktx.tv
-import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.FontFamilies
 import com.m3u.ui.util.TimeUtils.formatEOrSh
@@ -85,9 +83,6 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.math.absoluteValue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
-import androidx.tv.material3.ClickableSurfaceDefaults as TvClickableSurfaceDefaults
-import androidx.tv.material3.MaterialTheme as TvMaterialTheme
-import androidx.tv.material3.Surface as TvSurface
 
 private enum class Zoom(val time: Float) {
     DEFAULT(1f), ZOOM_1_5(1.5f), ZOOM_2(2f), ZOOM_5(5f)
@@ -108,7 +103,6 @@ internal fun ProgramGuide(
     onProgrammePressed: (Programme) -> Unit
 ) {
     val spacing = LocalSpacing.current
-    val tv = tv()
 
     val currentMilliseconds by produceCurrentMillisecondState()
     val coroutineScope = rememberCoroutineScope()
@@ -160,7 +154,7 @@ internal fun ProgramGuide(
                     MaterialTheme.colorScheme.surface,
                     listOf(Edge.Top, Edge.Bottom)
                 )
-                .thenIf(!tv) { zoomGestureModifier }
+                .then(zoomGestureModifier)
                 .then(modifier)
         ) {
             // programmes
@@ -223,17 +217,14 @@ internal fun ProgramGuide(
                 )
             }) {}
         }
-
-        if (!tv) {
-            Controls(
-                animateToCurrentTimeline = {
-                    coroutineScope.launch { animateToCurrentTimeline() }
-                },
-                modifier = Modifier
-                    .padding(spacing.medium)
-                    .align(Alignment.BottomEnd)
-            )
-        }
+        Controls(
+            animateToCurrentTimeline = {
+                coroutineScope.launch { animateToCurrentTimeline() }
+            },
+            modifier = Modifier
+                .padding(spacing.medium)
+                .align(Alignment.BottomEnd)
+        )
     }
 }
 
@@ -303,7 +294,6 @@ private fun ProgrammeCell(
     val currentOnPressed by rememberUpdatedState(onPressed)
     val spacing = LocalSpacing.current
     val preferences = hiltPreferences()
-    val tv = tv()
     val clockMode = preferences.twelveHourClock
     val content = @Composable {
         Column(
@@ -341,71 +331,61 @@ private fun ProgrammeCell(
             )
         }
     }
-    if (!tv) {
-        val hapticFeedback = LocalHapticFeedback.current
-        var isPressed by remember { mutableStateOf(false) }
-        val scale by animateFloatAsState(
-            targetValue = if (isPressed) 0.95f else 1f,
-            label = "programme-cell-scale",
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioHighBouncy,
-                stiffness = Spring.StiffnessMediumLow
-            )
+    val hapticFeedback = LocalHapticFeedback.current
+    var isPressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 1f,
+        label = "programme-cell-scale",
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioHighBouncy,
+            stiffness = Spring.StiffnessMediumLow
         )
-        val currentColor by animateColorAsState(
-            targetValue = if(inReminder) MaterialTheme.colorScheme.tertiary
-            else MaterialTheme.colorScheme.tertiaryContainer,
-            label = "programme-cell-color"
-        )
-        val currentContentColor by animateColorAsState(
-            targetValue = if(inReminder) MaterialTheme.colorScheme.onTertiary
-            else MaterialTheme.colorScheme.onTertiaryContainer,
-            label = "programme-cell-color"
-        )
-        Surface(
-            color = currentColor,
-            contentColor = currentContentColor,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-            shape = AbsoluteRoundedCornerShape(4.dp),
-            modifier = Modifier
-                .pointerInput(Unit) {
-                    awaitEachGesture {
-                        val down = awaitFirstDown()
-                        try {
-                            withTimeout(viewConfiguration.longPressTimeoutMillis) {
-                                waitForUpOrCancellation()
-                            }
-                        } catch (_: PointerEventTimeoutCancellationException) {
-                            down.consume()
-                            currentOnPressed()
-                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                            isPressed = true
-                            do {
-                                val event = awaitPointerEvent()
-                                event.changes.fastForEach { it.consume() }
-                            } while (event.changes.fastAny { it.pressed })
-                            isPressed = false
-                        } finally {
-                            isPressed = false
+    )
+    val currentColor by animateColorAsState(
+        targetValue = if (inReminder) MaterialTheme.colorScheme.tertiary
+        else MaterialTheme.colorScheme.tertiaryContainer,
+        label = "programme-cell-color"
+    )
+    val currentContentColor by animateColorAsState(
+        targetValue = if (inReminder) MaterialTheme.colorScheme.onTertiary
+        else MaterialTheme.colorScheme.onTertiaryContainer,
+        label = "programme-cell-color"
+    )
+    Surface(
+        color = currentColor,
+        contentColor = currentContentColor,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        shape = AbsoluteRoundedCornerShape(4.dp),
+        modifier = Modifier
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    val down = awaitFirstDown()
+                    try {
+                        withTimeout(viewConfiguration.longPressTimeoutMillis) {
+                            waitForUpOrCancellation()
                         }
+                    } catch (_: PointerEventTimeoutCancellationException) {
+                        down.consume()
+                        currentOnPressed()
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                        isPressed = true
+                        do {
+                            val event = awaitPointerEvent()
+                            event.changes.fastForEach { it.consume() }
+                        } while (event.changes.fastAny { it.pressed })
+                        isPressed = false
+                    } finally {
+                        isPressed = false
                     }
                 }
-                .graphicsLayer {
-                    scaleX = scale
-                    scaleY = scale
-                }
-                .then(modifier),
-            content = content
-        )
-    } else {
-        TvSurface(
-            onClick = onPressed,
-            colors = TvClickableSurfaceDefaults.colors(TvMaterialTheme.colorScheme.tertiaryContainer),
-            shape = TvClickableSurfaceDefaults.shape(AbsoluteRoundedCornerShape(4.dp)),
-            modifier = modifier,
-            content = { content() }
-        )
-    }
+            }
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .then(modifier),
+        content = content
+    )
 }
 
 @Composable

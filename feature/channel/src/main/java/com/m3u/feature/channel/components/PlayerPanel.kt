@@ -1,6 +1,5 @@
 package com.m3u.feature.channel.components
 
-import android.view.KeyEvent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -34,6 +33,7 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -48,20 +48,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
-import androidx.tv.material3.surfaceColorAtElevation
 import coil.compose.SubcomposeAsyncImage
 import com.m3u.core.util.collections.indexOf
 import com.m3u.data.database.model.Channel
@@ -71,12 +66,11 @@ import com.m3u.data.database.model.ProgrammeRange
 import com.m3u.data.service.MediaCommand
 import com.m3u.material.components.Background
 import com.m3u.material.components.CircularProgressIndicator
-import com.m3u.material.components.IconButton
+import androidx.compose.material3.IconButton
 import com.m3u.material.effects.BackStackEntry
 import com.m3u.material.effects.BackStackHandler
 import com.m3u.material.ktx.Edge
 import com.m3u.material.ktx.blurEdges
-import com.m3u.material.ktx.tv
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
@@ -89,10 +83,6 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import androidx.tv.material3.Card as TvCard
-import androidx.tv.material3.CardDefaults as TvCardDefaults
-import androidx.tv.material3.MaterialTheme as TvMaterialTheme
-import androidx.tv.material3.Text as TvText
 
 @Composable
 internal fun PlayerPanel(
@@ -225,15 +215,18 @@ internal fun PlayerPanel(
                                 if (isReminderShowing) {
                                     val inReminder = currentProgramme.id in programmeReminderIds
                                     IconButton(
-                                        icon = if (!inReminder) Icons.Outlined.Notifications
-                                        else Icons.Rounded.NotificationsActive,
-                                        contentDescription = null,
                                         onClick = {
                                             if (inReminder) onCancelRemindProgramme(currentProgramme)
                                             else onRemindProgramme(currentProgramme)
                                         },
                                         modifier = Modifier.align(Alignment.CenterVertically)
-                                    )
+                                    ) {
+                                        Icon(
+                                            imageVector = if (!inReminder) Icons.Outlined.Notifications
+                                            else Icons.Rounded.NotificationsActive,
+                                            contentDescription = null
+                                        )
+                                    }
                                 }
                             }
 
@@ -345,7 +338,6 @@ fun PlayerPanelImpl(
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun ChannelGallery(
     value: ChannelGalleryValue,
@@ -355,7 +347,6 @@ private fun ChannelGallery(
 ) {
     val spacing = LocalSpacing.current
     val lazyListState = rememberLazyListState()
-    val tv = tv()
 
     ScrollToCurrentEffect(
         value = value,
@@ -395,25 +386,11 @@ private fun ChannelGallery(
             content = content
         )
     } else {
-        val focusManager = LocalFocusManager.current
         LazyColumn(
             state = lazyListState,
             verticalArrangement = Arrangement.spacedBy(spacing.medium),
             contentPadding = PaddingValues(spacing.medium),
-            modifier = modifier
-                .fillMaxWidth()
-                .thenIf(tv) {
-                    Modifier.onKeyEvent {
-                        when (it.nativeKeyEvent.keyCode) {
-                            KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT -> {
-                                focusManager.moveFocus(FocusDirection.Exit)
-                                true
-                            }
-
-                            else -> false
-                        }
-                    }
-                },
+            modifier = modifier.fillMaxWidth(),
             content = content
         )
     }
@@ -441,62 +418,33 @@ private fun ChannelGalleryItem(
     val spacing = LocalSpacing.current
     val helper = LocalHelper.current
     val coroutineScope = rememberCoroutineScope()
-    val tv = tv()
 
-    if (!tv) {
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = if (!isPlaying)
-                    MaterialTheme.colorScheme.surfaceColorAtElevation(spacing.medium)
-                else MaterialTheme.colorScheme.onSurface,
-                contentColor = if (!isPlaying) MaterialTheme.colorScheme.onSurface
-                else MaterialTheme.colorScheme.surfaceColorAtElevation(spacing.small)
-            ),
-            shape = AbsoluteRoundedCornerShape(spacing.medium),
-            elevation = CardDefaults.cardElevation(spacing.none),
-            onClick = {
-                if (isPlaying) return@Card
-                coroutineScope.launch {
-                    helper.play(
-                        MediaCommand.Common(channel.id)
-                    )
-                }
-            },
-            modifier = modifier
-        ) {
-            Text(
-                text = channel.title,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold.takeIf { isPlaying },
-                modifier = Modifier.padding(spacing.medium)
-            )
-        }
-    } else {
-        TvCard(
-            colors = TvCardDefaults.colors(
-                containerColor = if (!isPlaying)
-                    TvMaterialTheme.colorScheme.surfaceColorAtElevation(spacing.medium)
-                else TvMaterialTheme.colorScheme.onSurface,
-                contentColor = if (!isPlaying) TvMaterialTheme.colorScheme.onSurface
-                else TvMaterialTheme.colorScheme.surfaceColorAtElevation(spacing.small)
-            ),
-            onClick = {
-                if (isPlaying) return@TvCard
-                coroutineScope.launch {
-                    helper.play(
-                        MediaCommand.Common(channel.id)
-                    )
-                }
-            },
-            modifier = modifier
-        ) {
-            TvText(
-                text = channel.title,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold.takeIf { isPlaying },
-                modifier = Modifier.padding(spacing.medium)
-            )
-        }
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = if (!isPlaying)
+                MaterialTheme.colorScheme.surfaceColorAtElevation(spacing.medium)
+            else MaterialTheme.colorScheme.onSurface,
+            contentColor = if (!isPlaying) MaterialTheme.colorScheme.onSurface
+            else MaterialTheme.colorScheme.surfaceColorAtElevation(spacing.small)
+        ),
+        shape = AbsoluteRoundedCornerShape(spacing.medium),
+        elevation = CardDefaults.cardElevation(spacing.none),
+        onClick = {
+            if (isPlaying) return@Card
+            coroutineScope.launch {
+                helper.play(
+                    MediaCommand.Common(channel.id)
+                )
+            }
+        },
+        modifier = modifier
+    ) {
+        Text(
+            text = channel.title,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold.takeIf { isPlaying },
+            modifier = Modifier.padding(spacing.medium)
+        )
     }
 }
 

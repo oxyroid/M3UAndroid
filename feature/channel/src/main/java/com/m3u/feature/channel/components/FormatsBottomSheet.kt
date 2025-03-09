@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.C
 import androidx.media3.common.Format
 import com.m3u.i18n.R.string
-import com.m3u.material.components.Icon
+import androidx.compose.material3.Icon
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.model.LocalSpacing
 import kotlinx.coroutines.launch

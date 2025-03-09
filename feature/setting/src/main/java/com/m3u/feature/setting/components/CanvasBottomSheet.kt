@@ -38,7 +38,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.m3u.data.database.model.ColorScheme
 import com.m3u.i18n.R.string
-import com.m3u.material.components.Icon
+import androidx.compose.material3.Icon
 import com.m3u.material.ktx.createScheme
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.model.SugarColors

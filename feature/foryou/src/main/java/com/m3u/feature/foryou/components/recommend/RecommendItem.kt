@@ -43,7 +43,6 @@ import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.title
 import com.m3u.i18n.R.string
 import com.m3u.material.brush.RecommendCardContainerBrush
-import com.m3u.material.ktx.tv
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import com.m3u.ui.FontFamilies
@@ -51,10 +50,6 @@ import com.m3u.ui.createPremiumBrush
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlin.time.Duration.Companion.days
-import androidx.tv.material3.Card as TvCard
-import androidx.tv.material3.CardDefaults as TvCardDefaults
-import androidx.tv.material3.CardScale as TvCardScale
-import androidx.tv.material3.LocalContentColor as TvLocalContentColor
 
 @Composable
 internal fun RecommendItem(
@@ -80,37 +75,25 @@ private fun RecommendItemLayout(
     content: @Composable () -> Unit
 ) {
     val spacing = LocalSpacing.current
-    val tv = tv()
-    if (!tv) {
-        Card(
-            shape = AbsoluteSmoothCornerShape(spacing.medium, 65),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurfaceVariant),
-            onClick = onClick,
-            modifier = Modifier
-                .graphicsLayer {
-                    lerp(
-                        start = 0.65f,
-                        stop = 1f,
-                        fraction = 1f - pageOffset.coerceIn(0f, 1f)
-                    ).also { scale ->
-                        scaleX = scale
-                        scaleY = scale
-                    }
+    Card(
+        shape = AbsoluteSmoothCornerShape(spacing.medium, 65),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurfaceVariant),
+        onClick = onClick,
+        modifier = Modifier
+            .graphicsLayer {
+                lerp(
+                    start = 0.65f,
+                    stop = 1f,
+                    fraction = 1f - pageOffset.coerceIn(0f, 1f)
+                ).also { scale ->
+                    scaleX = scale
+                    scaleY = scale
                 }
-                .fillMaxHeight()
-                .then(modifier),
-            content = { content() }
-        )
-    } else {
-        TvCard(
-            scale = TvCardScale.None,
-            shape = TvCardDefaults.shape(AbsoluteSmoothCornerShape(spacing.medium, 65)),
-            onClick = onClick,
-            modifier = modifier,
-            content = { content() }
-        )
-    }
-
+            }
+            .fillMaxHeight()
+            .then(modifier),
+        content = { content() }
+    )
 }
 
 @Composable
@@ -186,7 +169,6 @@ fun UnseenContent(spec: Recommend.UnseenSpec) {
             )
             CompositionLocalProvider(
                 LocalContentColor provides Color.White,
-                TvLocalContentColor provides Color.White,
             ) {
                 info()
             }

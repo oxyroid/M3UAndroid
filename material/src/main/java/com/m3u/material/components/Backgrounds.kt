@@ -14,9 +14,6 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.unit.dp
-import com.m3u.material.ktx.tv
-import androidx.tv.material3.LocalContentColor as TvLocalContentColor
-import androidx.tv.material3.MaterialTheme as TvMtaterialTheme
 
 @Composable
 inline fun Background(
@@ -26,14 +23,8 @@ inline fun Background(
     shape: Shape = RectangleShape,
     crossinline content: @Composable () -> Unit
 ) {
-    val actualColor = color.takeOrElse {
-        if (!tv()) MaterialTheme.colorScheme.background
-        else TvMtaterialTheme.colorScheme.background
-    }
-    val actualContentColor = contentColor.takeOrElse {
-        if (!tv()) MaterialTheme.colorScheme.onBackground
-        else TvMtaterialTheme.colorScheme.onBackground
-    }
+    val actualColor = color.takeOrElse { MaterialTheme.colorScheme.background }
+    val actualContentColor = contentColor.takeOrElse { MaterialTheme.colorScheme.onBackground }
     Box(
         modifier = Modifier
             .clip(shape)
@@ -44,8 +35,7 @@ inline fun Background(
     ) {
         CompositionLocalProvider(
             LocalAbsoluteTonalElevation provides 0.dp,
-            LocalContentColor provides actualContentColor,
-            TvLocalContentColor provides actualContentColor
+            LocalContentColor provides actualContentColor
         ) {
             content()
         }

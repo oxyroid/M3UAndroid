@@ -1,10 +1,7 @@
 package com.m3u.feature.channel
 
 import android.content.pm.ActivityInfo
-import android.view.KeyEvent
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -15,7 +12,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.basicMarquee
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -31,14 +27,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.automirrored.rounded.VolumeDown
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material.icons.rounded.Cast
-import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.HighQuality
-import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -68,10 +61,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
@@ -95,7 +86,6 @@ import com.m3u.material.components.mask.MaskPanel
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.effects.currentBackStackEntry
 import com.m3u.material.ktx.thenIf
-import com.m3u.material.ktx.tv
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.FontFamilies
 import com.m3u.ui.Image
@@ -141,7 +131,6 @@ internal fun ChannelMask(
     val helper = LocalHelper.current
     val spacing = LocalSpacing.current
     val configuration = LocalConfiguration.current
-    val tv = tv()
     val coroutineScope = rememberCoroutineScope()
 
     val onBackPressedDispatcher = checkNotNull(
@@ -236,12 +225,6 @@ internal fun ChannelMask(
         }
     }
 
-    if (tv) {
-        BackHandler(maskState.visible && !maskState.locked) {
-            maskState.sleep()
-        }
-    }
-
     Box(
         modifier = modifier.fillMaxSize()
     ) {
@@ -314,7 +297,7 @@ internal fun ChannelMask(
                     )
                 }
 
-                if (!tv && preferences.screencast) {
+                if (preferences.screencast) {
                     MaskButton(
                         state = maskState,
                         icon = Icons.Rounded.Cast,
@@ -322,7 +305,7 @@ internal fun ChannelMask(
                         contentDescription = stringResource(string.feat_channel_tooltip_cast)
                     )
                 }
-                if (!tv && playerState.videoSize.isNotEmpty) {
+                if (playerState.videoSize.isNotEmpty) {
                     MaskButton(
                         state = maskState,
                         icon = Icons.Rounded.PictureInPicture,
@@ -453,7 +436,6 @@ internal fun ChannelMask(
                         )
                     }
                 }
-                if (!tv) {
                     val autoRotating by ChannelMaskUtils.IsAutoRotatingEnabled
                     LaunchedEffect(autoRotating) {
                         if (autoRotating) {
@@ -474,7 +456,6 @@ internal fun ChannelMask(
                             contentDescription = stringResource(string.feat_channel_tooltip_screen_rotating)
                         )
                     }
-                }
             },
             slider = {
                 when {
@@ -506,44 +487,9 @@ internal fun ChannelMask(
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.basicMarquee()
                             )
-                            var isSliderHasFocus by remember { mutableStateOf(false) }
-                            val tvSliderModifier = Modifier
-                                .onFocusChanged {
-                                    isSliderHasFocus = it.hasFocus
-                                    if (it.hasFocus) {
-                                        maskState.wake()
-                                    }
-                                }
-                                .focusable()
-                                .onKeyEvent { event ->
-                                    when (event.nativeKeyEvent.keyCode) {
-                                        KeyEvent.KEYCODE_DPAD_LEFT -> {
-                                            bufferedPosition = (bufferedPosition
-                                                ?: contentPosition
-                                                    .coerceAtLeast(0L)) - 15000L
-                                            maskState.wake()
-                                            true
-                                        }
-
-                                        KeyEvent.KEYCODE_DPAD_RIGHT -> {
-                                            bufferedPosition = (bufferedPosition
-                                                ?: contentPosition
-                                                    .coerceAtLeast(0L)) + 15000L
-                                            maskState.wake()
-                                            true
-                                        }
-
-                                        else -> false
-                                    }
-                                }
                             val sliderThumbWidthDp by animateDpAsState(
-                                targetValue = if (isSliderHasFocus) 8.dp
-                                else 4.dp,
+                                targetValue = 4.dp,
                                 label = "slider-thumb-width-dp"
-                            )
-                            val sliderColors = SliderDefaults.colors(
-                                thumbColor = if (!isSliderHasFocus) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.primary.copy(0.56f)
                             )
                             val sliderInteractionSource = remember { MutableInteractionSource() }
                             Slider(
@@ -555,17 +501,13 @@ internal fun ChannelMask(
                                     bufferedPosition = it.roundToLong()
                                     maskState.wake()
                                 },
-                                colors = sliderColors,
                                 thumb = {
                                     SliderDefaults.Thumb(
                                         interactionSource = sliderInteractionSource,
-                                        colors = sliderColors,
                                         thumbSize = DpSize(sliderThumbWidthDp, 44.dp)
                                     )
                                 },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .thenIf(tv) { tvSliderModifier }
+                                modifier = Modifier.weight(1f)
                             )
                         }
                     }

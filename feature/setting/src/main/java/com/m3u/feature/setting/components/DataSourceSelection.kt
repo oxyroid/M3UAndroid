@@ -25,7 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.m3u.data.database.model.DataSource
 import com.m3u.material.components.ClickableSelection
-import com.m3u.material.components.Icon
+import androidx.compose.material3.Icon
 import com.m3u.material.components.SelectionsDefaults
 
 @Composable

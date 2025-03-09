@@ -36,7 +36,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.m3u.core.wrapper.Message
 import com.m3u.data.service.collectMessageAsState
-import com.m3u.material.components.Icon
+import androidx.compose.material3.Icon
 import com.m3u.material.model.LocalDuration
 import com.m3u.material.model.LocalSpacing
 import kotlinx.coroutines.delay

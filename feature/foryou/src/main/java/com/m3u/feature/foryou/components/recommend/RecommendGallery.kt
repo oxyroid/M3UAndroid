@@ -1,11 +1,5 @@
 package com.m3u.feature.foryou.components.recommend
 
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,11 +17,9 @@ import com.m3u.core.wrapper.eventOf
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
 import com.m3u.material.components.HorizontalPagerIndicator
-import com.m3u.material.ktx.tv
 import com.m3u.material.ktx.pageOffset
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Events
-import androidx.tv.material3.Carousel as TvCarousel
 
 @Composable
 internal fun RecommendGallery(
@@ -39,8 +31,6 @@ internal fun RecommendGallery(
 ) {
     val spacing = LocalSpacing.current
     val uriHandler = LocalUriHandler.current
-
-    val tv = tv()
 
     val onClick = { spec: Recommend.Spec ->
         when (spec) {
@@ -59,59 +49,35 @@ internal fun RecommendGallery(
         }
     }
 
-    if (!tv) {
-        val state = rememberPagerState { specs.size }
-        Column(
-            modifier = modifier,
-            verticalArrangement = Arrangement.spacedBy(spacing.medium)
-        ) {
-            DisposableEffect(state.currentPage) {
-                onSpecChanged(specs[state.currentPage])
-                onDispose {
-                    onSpecChanged(null)
-                }
+    val state = rememberPagerState { specs.size }
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(spacing.medium)
+    ) {
+        DisposableEffect(state.currentPage) {
+            onSpecChanged(specs[state.currentPage])
+            onDispose {
+                onSpecChanged(null)
             }
-            HorizontalPager(
-                state = state,
-                contentPadding = PaddingValues(horizontal = spacing.medium),
-                modifier = Modifier.height(128.dp)
-            ) { page ->
-                val spec = specs[page]
-                val pageOffset = state.pageOffset(page)
-                RecommendItem(
-                    spec = spec,
-                    pageOffset = pageOffset,
-                    onClick = { onClick(spec) }
-                )
-            }
-            HorizontalPagerIndicator(
-                pagerState = state,
-                modifier = Modifier
-                    .align(Alignment.End)
-                    .padding(horizontal = spacing.medium),
-            )
         }
-    } else {
-        TvCarousel(
-            itemCount = specs.size,
-            contentTransformEndToStart =
-            fadeIn(tween(1000)) togetherWith fadeOut(tween(1000)),
-            contentTransformStartToEnd =
-            fadeIn(tween(1000)) togetherWith fadeOut(tween(1000)),
-            modifier = Modifier
-                .padding(spacing.medium)
-                .then(modifier)
-        ) { index ->
-            val spec = specs[index]
+        HorizontalPager(
+            state = state,
+            contentPadding = PaddingValues(horizontal = spacing.medium),
+            modifier = Modifier.height(128.dp)
+        ) { page ->
+            val spec = specs[page]
+            val pageOffset = state.pageOffset(page)
             RecommendItem(
                 spec = spec,
-                pageOffset = 0f,
-                onClick = { onClick(spec) },
-                modifier = Modifier.animateEnterExit(
-                    enter = slideInHorizontally(animationSpec = tween(1000)) { it / 2 },
-                    exit = slideOutHorizontally(animationSpec = tween(1000))
-                )
+                pageOffset = pageOffset,
+                onClick = { onClick(spec) }
             )
         }
+        HorizontalPagerIndicator(
+            pagerState = state,
+            modifier = Modifier
+                .align(Alignment.End)
+                .padding(horizontal = spacing.medium),
+        )
     }
 }

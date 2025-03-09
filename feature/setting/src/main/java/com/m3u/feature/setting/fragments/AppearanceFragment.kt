@@ -39,7 +39,6 @@ import com.m3u.material.components.Preference
 import com.m3u.material.components.TextPreference
 import com.m3u.material.components.ThemeAddSelection
 import com.m3u.material.components.ThemeSelection
-import com.m3u.material.ktx.tv
 import com.m3u.material.ktx.minus
 import com.m3u.material.ktx.only
 import com.m3u.material.ktx.plus
@@ -60,7 +59,6 @@ internal fun AppearanceFragment(
 
     val isDarkMode = preferences.darkMode
     val useDynamicColors = preferences.useDynamicColors
-    val tv = tv()
 
     Column(
         modifier = modifier
@@ -181,17 +179,15 @@ internal fun AppearanceFragment(
                     enabled = useDynamicColorsAvailable
                 )
             }
-            if (!tv) {
-                item {
-                    SwitchSharedPreference(
-                        title = string.feat_setting_colorful_background,
-                        icon = Icons.Rounded.Stars,
-                        checked = preferences.colorfulBackground,
-                        onChanged = {
-                            preferences.colorfulBackground = !preferences.colorfulBackground
-                        }
-                    )
-                }
+            item {
+                SwitchSharedPreference(
+                    title = string.feat_setting_colorful_background,
+                    icon = Icons.Rounded.Stars,
+                    checked = preferences.colorfulBackground,
+                    onChanged = {
+                        preferences.colorfulBackground = !preferences.colorfulBackground
+                    }
+                )
             }
             item {
                 Preference(
@@ -201,15 +197,13 @@ internal fun AppearanceFragment(
                 )
             }
             item {
-                if (!tv) {
-                    SwitchSharedPreference(
-                        title = string.feat_setting_god_mode,
-                        content = string.feat_setting_god_mode_description,
-                        icon = Icons.Rounded.DeviceHub,
-                        checked = preferences.godMode,
-                        onChanged = { preferences.godMode = !preferences.godMode }
-                    )
-                }
+                SwitchSharedPreference(
+                    title = string.feat_setting_god_mode,
+                    content = string.feat_setting_god_mode_description,
+                    icon = Icons.Rounded.DeviceHub,
+                    checked = preferences.godMode,
+                    onChanged = { preferences.godMode = !preferences.godMode }
+                )
             }
         }
     }

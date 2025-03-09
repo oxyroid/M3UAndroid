@@ -11,7 +11,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import com.m3u.feature.channel.ChannelMaskUtils.detectVerticalGesture
-import com.m3u.material.ktx.tv
 import com.m3u.material.ktx.thenIf
 
 @Composable

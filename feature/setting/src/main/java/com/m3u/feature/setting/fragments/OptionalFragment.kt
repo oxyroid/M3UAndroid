@@ -37,8 +37,6 @@ import com.m3u.core.util.basic.title
 import com.m3u.feature.setting.components.SwitchSharedPreference
 import com.m3u.i18n.R.string
 import com.m3u.material.components.TextPreference
-import com.m3u.material.ktx.includeChildGlowPadding
-import com.m3u.material.ktx.tv
 import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 import kotlin.time.DurationUnit
@@ -51,13 +49,11 @@ internal fun OptionalFragment(
 ) {
     val spacing = LocalSpacing.current
     val preferences = hiltPreferences()
-    val tv = tv()
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(spacing.small),
         contentPadding = contentPadding + PaddingValues(horizontal = spacing.medium),
         modifier = modifier
             .fillMaxSize()
-            .includeChildGlowPadding()
     ) {
         item {
             SwitchSharedPreference(
@@ -86,32 +82,30 @@ internal fun OptionalFragment(
             )
         }
 
-        if (!tv) {
-            item {
-                SwitchSharedPreference(
-                    title = string.feat_setting_zapping_mode,
-                    content = string.feat_setting_zapping_mode_description,
-                    icon = Icons.Rounded.PictureInPicture,
-                    checked = preferences.zappingMode,
-                    onChanged = { preferences.zappingMode = !preferences.zappingMode }
-                )
-            }
-            item {
-                SwitchSharedPreference(
-                    title = string.feat_setting_gesture_brightness,
-                    icon = Icons.Rounded.BrightnessMedium,
-                    checked = preferences.brightnessGesture,
-                    onChanged = { preferences.brightnessGesture = !preferences.brightnessGesture }
-                )
-            }
-            item {
-                SwitchSharedPreference(
-                    title = string.feat_setting_gesture_volume,
-                    icon = Icons.AutoMirrored.Rounded.VolumeUp,
-                    checked = preferences.volumeGesture,
-                    onChanged = { preferences.volumeGesture = !preferences.volumeGesture }
-                )
-            }
+        item {
+            SwitchSharedPreference(
+                title = string.feat_setting_zapping_mode,
+                content = string.feat_setting_zapping_mode_description,
+                icon = Icons.Rounded.PictureInPicture,
+                checked = preferences.zappingMode,
+                onChanged = { preferences.zappingMode = !preferences.zappingMode }
+            )
+        }
+        item {
+            SwitchSharedPreference(
+                title = string.feat_setting_gesture_brightness,
+                icon = Icons.Rounded.BrightnessMedium,
+                checked = preferences.brightnessGesture,
+                onChanged = { preferences.brightnessGesture = !preferences.brightnessGesture }
+            )
+        }
+        item {
+            SwitchSharedPreference(
+                title = string.feat_setting_gesture_volume,
+                icon = Icons.AutoMirrored.Rounded.VolumeUp,
+                checked = preferences.volumeGesture,
+                onChanged = { preferences.volumeGesture = !preferences.volumeGesture }
+            )
         }
         item {
             SwitchSharedPreference(
@@ -140,24 +134,22 @@ internal fun OptionalFragment(
                 onChanged = { preferences.cache = !preferences.cache }
             )
         }
-        if (!tv) {
-            item {
-                SwitchSharedPreference(
-                    title = string.feat_setting_screen_rotating,
-                    content = string.feat_setting_screen_rotating_description,
-                    icon = Icons.Rounded.ScreenRotation,
-                    checked = preferences.screenRotating,
-                    onChanged = { preferences.screenRotating = !preferences.screenRotating }
-                )
-            }
-            item {
-                SwitchSharedPreference(
-                    title = string.feat_setting_screencast,
-                    icon = Icons.Rounded.Cast,
-                    checked = preferences.screencast,
-                    onChanged = { preferences.screencast = !preferences.screencast }
-                )
-            }
+        item {
+            SwitchSharedPreference(
+                title = string.feat_setting_screen_rotating,
+                content = string.feat_setting_screen_rotating_description,
+                icon = Icons.Rounded.ScreenRotation,
+                checked = preferences.screenRotating,
+                onChanged = { preferences.screenRotating = !preferences.screenRotating }
+            )
+        }
+        item {
+            SwitchSharedPreference(
+                title = string.feat_setting_screencast,
+                icon = Icons.Rounded.Cast,
+                checked = preferences.screencast,
+                onChanged = { preferences.screencast = !preferences.screencast }
+            )
         }
         item {
             TextPreference(
@@ -261,10 +253,8 @@ internal fun OptionalFragment(
         }
         item {
             SwitchSharedPreference(
-                title = if (!tv) string.feat_setting_remote_control
-                else string.feat_setting_remote_control_tv_side,
-                content = if (!tv) string.feat_setting_remote_control_description
-                else string.feat_setting_remote_control_tv_side_description,
+                title = string.feat_setting_remote_control,
+                content = string.feat_setting_remote_control_description,
                 icon = Icons.Rounded.SettingsRemote,
                 checked = preferences.remoteControl,
                 onChanged = { preferences.remoteControl = !preferences.remoteControl }

@@ -19,7 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.m3u.material.components.Background
-import com.m3u.material.components.Icon
+import androidx.compose.material3.Icon
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.MonoText
 

@@ -33,7 +33,6 @@ import com.m3u.data.service.MediaCommand
 import com.m3u.feature.favorite.components.FavouriteGallery
 import com.m3u.i18n.R
 import com.m3u.material.ktx.interceptVolumeEvent
-import com.m3u.material.ktx.tv
 import com.m3u.material.ktx.thenIf
 import com.m3u.material.model.LocalHazeState
 import com.m3u.ui.EpisodesBottomSheet
@@ -41,7 +40,6 @@ import com.m3u.ui.MediaSheet
 import com.m3u.ui.MediaSheetValue
 import com.m3u.ui.Sort
 import com.m3u.ui.SortBottomSheet
-import com.m3u.ui.TvSortFullScreenDialog
 import com.m3u.ui.helper.Action
 import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.helper.Metadata
@@ -56,8 +54,6 @@ fun FavouriteRoute(
     modifier: Modifier = Modifier,
     viewModel: FavouriteViewModel = hiltViewModel()
 ) {
-    val tv = tv()
-
     val title = stringResource(R.string.ui_title_favourite)
 
     val helper = LocalHelper.current
@@ -119,13 +115,9 @@ fun FavouriteRoute(
             }
         },
         onLongClickChannel = { mediaSheetValue = MediaSheetValue.FavouriteScreen(it) },
-        onClickRandomTips = {
-            viewModel.playRandomly()
-            navigateToChannel()
-        },
         modifier = Modifier
             .fillMaxSize()
-            .thenIf(!tv && preferences.godMode) {
+            .thenIf(preferences.godMode) {
                 Modifier.interceptVolumeEvent { event ->
                     preferences.rowCount = when (event) {
                         KeyEvent.KEYCODE_VOLUME_UP ->
@@ -159,39 +151,29 @@ fun FavouriteRoute(
         onRefresh = { series?.let { viewModel.seriesReplay.value += 1 } },
         onDismissRequest = { viewModel.series.value = null }
     )
-    if (!tv) {
-        SortBottomSheet(
-            visible = isSortSheetVisible,
-            sort = sort,
-            sorts = sorts,
-            sheetState = sheetState,
-            onChanged = { viewModel.sort(it) },
-            onDismissRequest = { isSortSheetVisible = false }
-        )
-        MediaSheet(
-            value = mediaSheetValue,
-            onFavouriteChannel = { channel ->
-                viewModel.favourite(channel.id)
-                mediaSheetValue = MediaSheetValue.FavouriteScreen()
-            },
-            onCreateShortcut = { channel ->
-                viewModel.createShortcut(context, channel.id)
-                mediaSheetValue = MediaSheetValue.FavouriteScreen()
-            },
-            onDismissRequest = {
-                mediaSheetValue = MediaSheetValue.FavouriteScreen()
-                mediaSheetValue = MediaSheetValue.FavouriteScreen()
-            }
-        )
-    } else {
-        TvSortFullScreenDialog(
-            visible = (mediaSheetValue as? MediaSheetValue.FavouriteScreen)?.channel != null,
-            sort = sort,
-            sorts = sorts,
-            onChanged = { viewModel.sort(it) },
-            onDismissRequest = { mediaSheetValue = MediaSheetValue.FavouriteScreen() }
-        )
-    }
+    SortBottomSheet(
+        visible = isSortSheetVisible,
+        sort = sort,
+        sorts = sorts,
+        sheetState = sheetState,
+        onChanged = { viewModel.sort(it) },
+        onDismissRequest = { isSortSheetVisible = false }
+    )
+    MediaSheet(
+        value = mediaSheetValue,
+        onFavouriteChannel = { channel ->
+            viewModel.favourite(channel.id)
+            mediaSheetValue = MediaSheetValue.FavouriteScreen()
+        },
+        onCreateShortcut = { channel ->
+            viewModel.createShortcut(context, channel.id)
+            mediaSheetValue = MediaSheetValue.FavouriteScreen()
+        },
+        onDismissRequest = {
+            mediaSheetValue = MediaSheetValue.FavouriteScreen()
+            mediaSheetValue = MediaSheetValue.FavouriteScreen()
+        }
+    )
 }
 
 @Composable
@@ -203,7 +185,6 @@ private fun FavoriteScreen(
     recently: Boolean,
     onClickChannel: (Channel) -> Unit,
     onLongClickChannel: (Channel) -> Unit,
-    onClickRandomTips: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
@@ -220,7 +201,6 @@ private fun FavoriteScreen(
         rowCount = actualRowCount,
         onClick = onClickChannel,
         onLongClick = onLongClickChannel,
-        onClickRandomTips = onClickRandomTips,
         modifier = modifier.haze(
             LocalHazeState.current,
             HazeDefaults.style(MaterialTheme.colorScheme.surface)

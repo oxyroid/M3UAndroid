@@ -29,7 +29,7 @@ import com.m3u.material.ktx.plus
 import com.m3u.material.model.LocalSpacing
 
 @Composable
-internal fun SmartphoneChannelGallery(
+internal fun ChannelGallery(
     state: LazyStaggeredGridState,
     rowCount: Int,
     categoryWithChannels: PlaylistViewModel.CategoryWithChannels?,
@@ -80,7 +80,7 @@ internal fun SmartphoneChannelGallery(
                     ) {
                         value = currentGetProgrammeCurrently(channel.id)
                     }
-                    SmartphoneChannelItem(
+                    ChannelItem(
                         channel = channel,
                         programme = programme,
                         recently = recently,

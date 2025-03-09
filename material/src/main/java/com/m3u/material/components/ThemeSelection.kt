@@ -25,6 +25,7 @@ import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
@@ -43,17 +44,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.tv.material3.Border
 import com.m3u.material.LocalM3UHapticFeedback
 import com.m3u.material.ktx.InteractionType
 import com.m3u.material.ktx.createScheme
 import com.m3u.material.ktx.interactionBorder
-import com.m3u.material.ktx.tv
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.model.SugarColors
-import androidx.tv.material3.Card as TvCard
-import androidx.tv.material3.CardDefaults as TvCardDefaults
-import androidx.tv.material3.Icon as TvIcon
 
 @Composable
 fun ThemeSelection(
@@ -68,7 +64,6 @@ fun ThemeSelection(
     modifier: Modifier = Modifier,
 ) {
     val spacing = LocalSpacing.current
-    val tv = tv()
 
     val colorScheme = remember(argb, isDark) {
         createScheme(argb, isDark)
@@ -144,113 +139,67 @@ fun ThemeSelection(
     Box(
         contentAlignment = Alignment.Center
     ) {
-        if (!tv) {
-            val zoom by animateFloatAsState(
-                targetValue = if (selected) 0.95f else 0.85f,
-                label = "zoom"
-            )
-            val corner by animateDpAsState(
-                targetValue = if (!selected) spacing.extraLarge else spacing.medium,
-                label = "corner"
-            )
-            val shape = RoundedCornerShape(corner)
+        val zoom by animateFloatAsState(
+            targetValue = if (selected) 0.95f else 0.85f,
+            label = "zoom"
+        )
+        val corner by animateDpAsState(
+            targetValue = if (!selected) spacing.extraLarge else spacing.medium,
+            label = "corner"
+        )
+        val shape = RoundedCornerShape(corner)
 
-            OutlinedCard(
-                shape = shape,
-                colors = CardDefaults.outlinedCardColors(
-                    containerColor = colorScheme.background,
-                    contentColor = colorScheme.onBackground
-                ),
-                modifier = modifier
-                    .graphicsLayer {
-                        scaleX = zoom
-                        scaleY = zoom
+        OutlinedCard(
+            shape = shape,
+            colors = CardDefaults.outlinedCardColors(
+                containerColor = colorScheme.background,
+                contentColor = colorScheme.onBackground
+            ),
+            modifier = modifier
+                .graphicsLayer {
+                    scaleX = zoom
+                    scaleY = zoom
+                }
+                .size(96.dp)
+                .interactionBorder(
+                    type = InteractionType.PRESS,
+                    source = interactionSource,
+                    shape = shape,
+                    color = colorScheme.primary
+                )
+        ) {
+            Box(
+                modifier = Modifier.combinedClickable(
+                    interactionSource = interactionSource,
+                    indication = ripple(),
+                    onClick = {
+                        if (selected) return@combinedClickable
+                        feedback.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                        onClick()
+                    },
+                    onLongClick = {
+                        feedback.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                        onLongClick()
                     }
-                    .size(96.dp)
-                    .interactionBorder(
-                        type = InteractionType.PRESS,
-                        source = interactionSource,
-                        shape = shape,
-                        color = colorScheme.primary
-                    )
-            ) {
-                Box(
-                    modifier = Modifier.combinedClickable(
-                        interactionSource = interactionSource,
-                        indication = ripple(),
-                        onClick = {
-                            if (selected) return@combinedClickable
-                            feedback.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                            onClick()
-                        },
-                        onLongClick = {
-                            feedback.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-                            onLongClick()
-                        }
-                    ),
-                    content = { content() }
+                ),
+                content = { content() }
+            )
+        }
+
+        Crossfade(selected, label = "icon") { selected ->
+            if (!selected) {
+                Icon(
+                    imageVector = when (isDark) {
+                        true -> Icons.Rounded.DarkMode
+                        false -> Icons.Rounded.LightMode
+                    },
+                    contentDescription = "",
+                    tint = when (isDark) {
+                        true -> SugarColors.Tee
+                        false -> SugarColors.Yellow
+                    }
                 )
             }
-
-            Crossfade(selected, label = "icon") { selected ->
-                if (!selected) {
-                    Icon(
-                        imageVector = when (isDark) {
-                            true -> Icons.Rounded.DarkMode
-                            false -> Icons.Rounded.LightMode
-                        },
-                        contentDescription = "",
-                        tint = when (isDark) {
-                            true -> SugarColors.Tee
-                            false -> SugarColors.Yellow
-                        }
-                    )
-                }
-            }
-        } else {
-            TvCard(
-                colors = TvCardDefaults.colors(
-                    containerColor = colorScheme.background,
-                    contentColor = colorScheme.onBackground
-                ),
-                shape = TvCardDefaults.shape(
-                    RoundedCornerShape(spacing.large)
-                ),
-                border = TvCardDefaults.border(focusedBorder = Border.None),
-                scale = TvCardDefaults.scale(
-                    scale = 0.8f,
-                    focusedScale = 0.95f,
-                    pressedScale = 0.85f
-                ),
-                onClick = {
-                    if (selected) return@TvCard
-                    onClick()
-                },
-                onLongClick = {
-                    onLongClick()
-                },
-                modifier = modifier.size(96.dp),
-                content = {
-                    Box(contentAlignment = Alignment.Center) {
-                        content()
-                        Crossfade(selected, label = "icon") { selected ->
-                            if (!selected) {
-                                TvIcon(
-                                    imageVector = when (isDark) {
-                                        true -> Icons.Rounded.DarkMode
-                                        false -> Icons.Rounded.LightMode
-                                    },
-                                    contentDescription = "",
-                                    tint = when (isDark) {
-                                        true -> SugarColors.Tee
-                                        false -> SugarColors.Yellow
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            )
         }
     }
 }

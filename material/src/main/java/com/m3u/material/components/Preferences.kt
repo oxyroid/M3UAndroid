@@ -7,6 +7,7 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalAbsoluteTonalElevation
@@ -33,16 +34,8 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.m3u.material.ktx.tv
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
-import androidx.tv.material3.Checkbox as TvCheckbox
-import androidx.tv.material3.Icon as TvIcon
-import androidx.tv.material3.ListItem as TvListItem
-import androidx.tv.material3.ListItemDefaults as TvListItemDefaults
-import androidx.tv.material3.MaterialTheme as TvMaterialTheme
-import androidx.tv.material3.Switch as TvSwitch
-import androidx.tv.material3.Text as TvText
 
 @Composable
 fun Preference(
@@ -73,92 +66,53 @@ fun Preference(
         }
     ) {
         val alpha = if (enabled) 1f else 0.38f
-        if (!tv()) {
-            OutlinedCard(
-                colors = CardDefaults.outlinedCardColors(Color.Transparent),
-                shape = AbsoluteSmoothCornerShape(spacing.medium, 65)
-            ) {
-                ListItem(
-                    headlineContent = {
-                        Text(
-                            text = title,
-                            style = MaterialTheme.typography.titleMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    },
-                    supportingContent = {
-                        if (content != null) {
-                            Text(
-                                text = content.capitalize(Locale.current),
-                                style = MaterialTheme.typography.bodyMedium,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier then if (focus) Modifier.basicMarquee()
-                                else Modifier
-                            )
-                        }
-                    },
-                    trailingContent = trailing,
-                    leadingContent = icon?.let {
-                        @Composable {
-                            Icon(imageVector = it, contentDescription = null)
-                        }
-                    },
-                    tonalElevation = LocalAbsoluteTonalElevation.current,
-                    shadowElevation = elevation,
-                    colors = ListItemDefaults.colors(
-                        containerColor = Color.Transparent,
-                        overlineColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha),
-                        supportingColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha),
-                        headlineColor = MaterialTheme.colorScheme.onSurface.copy(alpha)
-                    ),
-                    modifier = modifier
-                        .semantics(mergeDescendants = true) {}
-                        .clickable(
-                            enabled = enabled,
-                            onClick = onClick,
-                            interactionSource = interactionSource,
-                            indication = ripple()
-                        )
-                        .fillMaxWidth()
-                )
-            }
-        } else {
-            TvListItem(
-                selected = focus,
-                interactionSource = interactionSource,
+        OutlinedCard(
+            colors = CardDefaults.outlinedCardColors(Color.Transparent),
+            shape = AbsoluteSmoothCornerShape(spacing.medium, 65)
+        ) {
+            ListItem(
                 headlineContent = {
-                    TvText(
+                    Text(
                         text = title,
                         style = MaterialTheme.typography.titleMedium,
                         maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 },
                 supportingContent = {
                     if (content != null) {
-                        TvText(
+                        Text(
                             text = content.capitalize(Locale.current),
                             style = MaterialTheme.typography.bodyMedium,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier then if (focus) Modifier.basicMarquee()
+                            else Modifier
                         )
                     }
                 },
                 trailingContent = trailing,
                 leadingContent = icon?.let {
                     @Composable {
-                        TvIcon(imageVector = it, contentDescription = null)
+                        Icon(imageVector = it, contentDescription = null)
                     }
                 },
-                scale = TvListItemDefaults.scale(
-                    scale = 0.95f,
-                    focusedScale = 1f
+                tonalElevation = LocalAbsoluteTonalElevation.current,
+                shadowElevation = elevation,
+                colors = ListItemDefaults.colors(
+                    containerColor = Color.Transparent,
+                    overlineColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha),
+                    supportingColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha),
+                    headlineColor = MaterialTheme.colorScheme.onSurface.copy(alpha)
                 ),
-                onClick = onClick,
-                enabled = enabled,
                 modifier = modifier
                     .semantics(mergeDescendants = true) {}
+                    .clickable(
+                        enabled = enabled,
+                        onClick = onClick,
+                        interactionSource = interactionSource,
+                        indication = ripple()
+                    )
                     .fillMaxWidth()
             )
         }
@@ -189,19 +143,11 @@ fun CheckBoxPreference(
         },
         modifier = modifier,
         trailing = {
-            if (!tv()) {
-                Checkbox(
-                    enabled = enabled,
-                    checked = checked,
-                    onCheckedChange = null
-                )
-            } else {
-                TvCheckbox(
-                    enabled = enabled,
-                    checked = checked,
-                    onCheckedChange = null
-                )
-            }
+            Checkbox(
+                enabled = enabled,
+                checked = checked,
+                onCheckedChange = null
+            )
         },
         icon = icon
     )
@@ -230,19 +176,11 @@ fun SwitchPreference(
         },
         modifier = modifier,
         trailing = {
-            if (!tv()) {
-                Switch(
-                    enabled = enabled,
-                    checked = checked,
-                    onCheckedChange = null
-                )
-            } else {
-                TvSwitch(
-                    enabled = enabled,
-                    checked = checked,
-                    onCheckedChange = null
-                )
-            }
+            Switch(
+                enabled = enabled,
+                checked = checked,
+                onCheckedChange = null
+            )
         },
         icon = icon
     )
@@ -267,18 +205,11 @@ fun TrailingIconPreference(
         elevation = elevation,
         modifier = modifier,
         trailing = {
-            if (!tv()) {
-                Icon(
-                    imageVector = trailingIcon,
-                    contentDescription = null,
-                    tint = LocalContentColor.current.copy(alpha = 0.65f)
-                )
-            } else {
-                TvIcon(
-                    imageVector = trailingIcon,
-                    contentDescription = null,
-                )
-            }
+            Icon(
+                imageVector = trailingIcon,
+                contentDescription = null,
+                tint = LocalContentColor.current.copy(alpha = 0.65f)
+            )
         },
         icon = icon
     )
@@ -305,24 +236,14 @@ fun TextPreference(
         },
         modifier = modifier,
         trailing = {
-            if (!tv()) {
-                Text(
-                    text = trailing.uppercase(),
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            } else {
-                TvText(
-                    text = trailing.uppercase(),
-                    style = TvMaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
+            Text(
+                text = trailing.uppercase(),
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         },
         icon = icon
     )

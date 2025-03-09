@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -29,7 +30,7 @@ import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Channel
 import com.m3u.i18n.R.string
 import com.m3u.material.components.BottomSheet
-import com.m3u.material.components.IconButton
+import androidx.compose.material3.IconButton
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.MediaSheetValue.FavouriteScreen
 import com.m3u.ui.MediaSheetValue.ForyouScreen
@@ -210,10 +211,13 @@ private fun RowScope.ForyouScreenMediaSheetHeaderImpl(
             }
 
             IconButton(
-                icon = Icons.Rounded.Edit,
-                contentDescription = null,
                 onClick = { onPlaylistConfiguration(playlist) }
-            )
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Edit,
+                    contentDescription = null
+                )
+            }
         }
     }
 }

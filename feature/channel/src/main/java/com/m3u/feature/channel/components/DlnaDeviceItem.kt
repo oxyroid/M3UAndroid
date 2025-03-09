@@ -7,7 +7,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.m3u.material.components.Icon
+import androidx.compose.material3.Icon
 import net.mm2d.upnp.Device
 
 @Composable

@@ -58,7 +58,6 @@ import com.m3u.material.components.mask.rememberMaskState
 import com.m3u.material.components.mask.toggle
 import com.m3u.material.components.rememberPullPanelLayoutState
 import com.m3u.material.ktx.checkPermissionOrRationale
-import com.m3u.material.ktx.tv
 import com.m3u.ui.Player
 import com.m3u.ui.helper.LocalHelper
 import com.m3u.ui.helper.OnPipModeChanged
@@ -67,6 +66,7 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlin.time.Duration.Companion.milliseconds
+import androidx.core.net.toUri
 
 @Composable
 fun ChannelRoute(
@@ -269,7 +269,7 @@ fun ChannelRoute(
             val channelUrl = channel?.url ?: return@DlnaDevicesBottomSheet
             context.startActivity(
                 Intent(Intent.ACTION_VIEW).apply {
-                    setDataAndType(Uri.parse(channelUrl), "video/*")
+                    setDataAndType(channelUrl.toUri(), "video/*")
                 }.let { Intent.createChooser(it, openInExternalPlayerString.title()) }
             )
         },
@@ -325,7 +325,6 @@ private fun ChannelPlayer(
     val currentVolume by rememberUpdatedState(volume)
     val currentSpeed by rememberUpdatedState(speed)
     val preferences = hiltPreferences()
-    val tv = tv()
 
     Background(
         color = Color.Black,
@@ -354,7 +353,7 @@ private fun ChannelPlayer(
                 modifier = Modifier
                     .fillMaxHeight()
                     .fillMaxWidth(0.18f),
-                enabled = !tv && preferences.brightnessGesture
+                enabled = preferences.brightnessGesture
             )
 
             VerticalGestureArea(
@@ -371,7 +370,7 @@ private fun ChannelPlayer(
                     .align(Alignment.TopEnd)
                     .fillMaxHeight()
                     .fillMaxWidth(0.18f),
-                enabled = !tv && preferences.volumeGesture
+                enabled = preferences.volumeGesture
             )
 
             val shouldShowPlaceholder =

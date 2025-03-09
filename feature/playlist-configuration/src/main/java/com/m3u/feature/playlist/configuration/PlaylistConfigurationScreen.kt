@@ -56,7 +56,7 @@ import com.m3u.feature.playlist.configuration.components.SyncProgrammesButton
 import com.m3u.feature.playlist.configuration.components.XtreamPanel
 import com.m3u.i18n.R.string
 import com.m3u.material.components.Background
-import com.m3u.material.components.Icon
+import androidx.compose.material3.Icon
 import com.m3u.material.components.PlaceholderField
 import com.m3u.material.ktx.checkPermissionOrRationale
 import com.m3u.material.model.LocalHazeState

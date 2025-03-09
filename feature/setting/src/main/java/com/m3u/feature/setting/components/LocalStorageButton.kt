@@ -16,7 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.m3u.core.util.readFileName
 import com.m3u.i18n.R.string
-import com.m3u.material.components.Icon
+import androidx.compose.material3.Icon
 import com.m3u.material.components.ToggleableSelection
 
 @Composable

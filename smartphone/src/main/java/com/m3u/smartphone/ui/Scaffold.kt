@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -40,16 +42,12 @@ import androidx.compose.ui.unit.offset
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMaxOfOrNull
-import com.m3u.smartphone.ui.internal.SmartphoneScaffoldImpl
-import com.m3u.smartphone.ui.internal.TabletScaffoldImpl
-import com.m3u.smartphone.ui.internal.TvScaffoldImpl
 import com.m3u.material.components.Background
-import com.m3u.material.components.Icon
-import com.m3u.material.components.IconButton
 import com.m3u.material.effects.currentBackStackEntry
-import com.m3u.material.ktx.tv
 import com.m3u.material.model.LocalHazeState
 import com.m3u.material.model.LocalSpacing
+import com.m3u.smartphone.ui.internal.SmartphoneScaffoldImpl
+import com.m3u.smartphone.ui.internal.TabletScaffoldImpl
 import com.m3u.ui.Destination
 import com.m3u.ui.FontFamilies
 import com.m3u.ui.helper.Fob
@@ -59,8 +57,6 @@ import com.m3u.ui.helper.useRailNav
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.hazeChild
-import androidx.tv.material3.Icon as TvIcon
-import androidx.tv.material3.Text as TvText
 
 @Composable
 @OptIn(InternalComposeApi::class)
@@ -73,23 +69,12 @@ internal fun Scaffold(
     content: @Composable BoxScope.(PaddingValues) -> Unit
 ) {
     val useRailNav = LocalHelper.current.useRailNav
-    val tv = tv()
 
     val hazeState = remember { HazeState() }
 
     CompositionLocalProvider(LocalHazeState provides hazeState) {
         Background {
             when {
-                tv -> {
-                    TvScaffoldImpl(
-                        rootDestination = rootDestination,
-                        navigateToRoot = navigateToRootDestination,
-                        onBackPressed = onBackPressed,
-                        content = content,
-                        modifier = modifier
-                    )
-                }
-
                 !useRailNav -> {
                     SmartphoneScaffoldImpl(
                         rootDestination = rootDestination,
@@ -132,7 +117,6 @@ internal fun MainContent(
     onBackPressed: (() -> Unit)?,
     content: @Composable BoxScope.(PaddingValues) -> Unit
 ) {
-    val tv = tv()
     val spacing = LocalSpacing.current
     val hazeState = LocalHazeState.current
 
@@ -144,72 +128,76 @@ internal fun MainContent(
 
     Scaffold(
         topBar = {
-            if (!tv) {
-                TopAppBar(
-                    colors = TopAppBarDefaults.topAppBarColors(Color.Transparent),
-                    windowInsets = windowInsets,
-                    title = {
-                        Row(
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.defaultMinSize(minHeight = 56.dp)
+            TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(Color.Transparent),
+                windowInsets = windowInsets,
+                title = {
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.defaultMinSize(minHeight = 56.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .padding(horizontal = spacing.medium)
+                                .weight(1f)
                         ) {
-                            Column(
-                                modifier = Modifier
-                                    .padding(horizontal = spacing.medium)
-                                    .weight(1f)
-                            ) {
+                            Text(
+                                text = title,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                fontFamily = FontFamilies.LexendExa
+                            )
+                            AnimatedVisibility(subtitle.text.isNotEmpty()) {
                                 Text(
-                                    text = title,
+                                    text = subtitle,
+                                    style = MaterialTheme.typography.titleMedium,
                                     maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    fontFamily = FontFamilies.LexendExa
+                                    overflow = TextOverflow.Ellipsis
                                 )
-                                AnimatedVisibility(subtitle.text.isNotEmpty()) {
-                                    Text(
-                                        text = subtitle,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
                             }
-
-                            Row {
-                                actions.forEach { action ->
-                                    IconButton(
-                                        icon = action.icon,
-                                        contentDescription = action.contentDescription,
-                                        onClick = action.onClick,
-                                        enabled = action.enabled
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.width(spacing.medium))
                         }
-                    },
-                    navigationIcon = {
-                        AnimatedContent(
-                            targetState = onBackPressed,
-                            label = "app-scaffold-icon"
-                        ) { onBackPressed ->
-                            if (onBackPressed != null) {
+
+                        Row {
+                            actions.forEach { action ->
                                 IconButton(
-                                    icon = backStackEntry?.navigationIcon
+                                    onClick = action.onClick,
+                                    enabled = action.enabled
+                                ) {
+                                    Icon(
+                                        imageVector = action.icon,
+                                        contentDescription = action.contentDescription,
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(spacing.medium))
+                    }
+                },
+                navigationIcon = {
+                    AnimatedContent(
+                        targetState = onBackPressed,
+                        label = "app-scaffold-icon"
+                    ) { onBackPressed ->
+                        if (onBackPressed != null) {
+                            IconButton(
+                                onClick = onBackPressed,
+                                modifier = Modifier.wrapContentSize()
+                            ) {
+                                Icon(
+                                    imageVector = backStackEntry?.navigationIcon
                                         ?: Icons.AutoMirrored.Rounded.ArrowBack,
                                     contentDescription = null,
-                                    onClick = onBackPressed,
-                                    modifier = Modifier.wrapContentSize()
                                 )
                             }
                         }
-                    },
-                    modifier = Modifier
-                        .hazeChild(hazeState, style = HazeStyle(blurRadius = 6.dp))
-                        .fillMaxWidth()
-                )
-            }
+                    }
+                },
+                modifier = Modifier
+                    .hazeChild(hazeState, style = HazeStyle(blurRadius = 6.dp))
+                    .fillMaxWidth()
+            )
         },
         contentWindowInsets = windowInsets,
         containerColor = Color.Transparent
@@ -238,47 +226,26 @@ internal fun NavigationItemLayout(
 ) {
     val hapticFeedback = LocalHapticFeedback.current
 
-    val tv = tv()
     val usefob = fob?.rootDestination == currentRootDestination
     val selected = usefob || currentRootDestination == rootDestination
     val icon = @Composable {
-        if (!tv) {
-            Icon(
-                imageVector = when {
-                    fob != null && usefob -> fob.icon
-                    selected -> currentRootDestination.selectedIcon
-                    else -> currentRootDestination.unselectedIcon
-                },
-                contentDescription = null
-            )
-        } else {
-            TvIcon(
-                imageVector = when {
-                    fob != null && usefob -> fob.icon
-                    selected -> currentRootDestination.selectedIcon
-                    else -> currentRootDestination.unselectedIcon
-                },
-                contentDescription = null
-            )
-        }
+        Icon(
+            imageVector = when {
+                fob != null && usefob -> fob.icon
+                selected -> currentRootDestination.selectedIcon
+                else -> currentRootDestination.unselectedIcon
+            },
+            contentDescription = null
+        )
     }
     val label: @Composable () -> Unit = remember(usefob, fob) {
         @Composable {
-            if (!tv) {
-                Text(
-                    text = stringResource(
-                        if (usefob) fob.iconTextId
-                        else currentRootDestination.iconTextId
-                    ).uppercase()
-                )
-            } else {
-                TvText(
-                    text = stringResource(
-                        if (usefob) fob.iconTextId
-                        else currentRootDestination.iconTextId
-                    ).uppercase()
-                )
-            }
+            Text(
+                text = stringResource(
+                    if (usefob) fob.iconTextId
+                    else currentRootDestination.iconTextId
+                ).uppercase()
+            )
         }
     }
     val actualOnClick: () -> Unit = if (usefob) {

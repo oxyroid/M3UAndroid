@@ -2,6 +2,7 @@ package com.m3u.feature.channel.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Text
@@ -12,13 +13,10 @@ import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.m3u.material.components.IconButton
+import androidx.compose.material3.IconButton
 import com.m3u.material.components.mask.MaskState
-import com.m3u.material.ktx.thenIf
-import com.m3u.material.ktx.tv
 import com.m3u.ui.FontFamilies
 
 @Composable
@@ -33,8 +31,6 @@ fun MaskTextButton(
     tint: Color = Color.Unspecified,
     enabled: Boolean = true
 ) {
-    val tv = tv()
-
     TooltipBox(
         state = tooltipState,
         positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
@@ -48,13 +44,6 @@ fun MaskTextButton(
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically,
             modifier = modifier
-                .thenIf(tv) {
-                    Modifier.onFocusEvent {
-                        if (it.isFocused) {
-                            state.wake()
-                        }
-                    }
-                }
         ) {
             if (text != null) {
                 Text(
@@ -65,15 +54,18 @@ fun MaskTextButton(
                 )
             }
             IconButton(
-                icon = icon,
-                enabled = enabled,
-                contentDescription = contentDescription,
                 onClick = {
                     state.wake()
                     onClick()
                 },
-                tint = tint
-            )
+                enabled = enabled
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = contentDescription,
+                    tint = tint
+                )
+            }
         }
     }
 }

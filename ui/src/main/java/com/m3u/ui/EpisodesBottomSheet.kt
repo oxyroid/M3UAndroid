@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -35,7 +36,7 @@ import com.m3u.data.database.model.Channel
 import com.m3u.data.parser.xtream.XtreamChannelInfo
 import com.m3u.material.components.BottomSheet
 import com.m3u.material.components.CircularProgressIndicator
-import com.m3u.material.components.IconButton
+import androidx.compose.material3.IconButton
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
 
@@ -85,10 +86,13 @@ fun EpisodesBottomSheet(
 
                     else -> {
                         IconButton(
-                            icon = Icons.Rounded.Refresh,
-                            contentDescription = null,
                             onClick = onRefresh
-                        )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Refresh,
+                                contentDescription = null,
+                            )
+                        }
                     }
                 }
             }

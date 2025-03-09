@@ -28,6 +28,7 @@ import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -50,7 +51,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.m3u.material.components.IconButton
+import androidx.compose.material3.IconButton
 import com.m3u.material.effects.BackStackEntry
 import com.m3u.material.effects.BackStackHandler
 import com.m3u.material.ktx.Edge
@@ -99,28 +100,37 @@ internal fun PlaylistTabRow(
                             horizontalArrangement = Arrangement.End
                         ) {
                             IconButton(
-                                icon = Icons.Rounded.PushPin,
-                                contentDescription = "pin",
                                 onClick = {
                                     name.let(onPinOrUnpinCategory)
                                     focusCategory = null
                                 }
-                            )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.PushPin,
+                                    contentDescription = "pin"
+                                )
+                            }
                             IconButton(
-                                icon = Icons.Rounded.VisibilityOff,
-                                contentDescription = "hide",
                                 onClick = {
                                     name.let(onHideCategory)
                                     focusCategory = null
                                 }
-                            )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.VisibilityOff,
+                                    contentDescription = "hide"
+                                )
+                            }
                         }
                     } else {
                         IconButton(
-                            icon = Icons.Rounded.Menu,
-                            contentDescription = "",
                             onClick = onExpanded
-                        )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Menu,
+                                contentDescription = ""
+                            )
+                        }
                     }
                 }
             }

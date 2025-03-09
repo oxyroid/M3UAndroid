@@ -18,7 +18,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.data.database.model.Channel
 import com.m3u.i18n.R.string
-import com.m3u.material.ktx.tv
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import kotlinx.datetime.Clock
@@ -27,9 +26,6 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
-import androidx.tv.material3.ListItem as TvListItem
-import androidx.tv.material3.MaterialTheme as TvMaterialTheme
-import androidx.tv.material3.Text as TvText
 
 @Composable
 internal fun FavoriteItem(
@@ -39,35 +35,6 @@ internal fun FavoriteItem(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier
-) {
-    val tv = tv()
-    if (!tv) {
-        SmartphoneFavoriteItemImpl(
-            channel = channel,
-            recently = recently,
-            zapping = zapping,
-            onClick = onClick,
-            onLongClick = onLongClick,
-            modifier = modifier
-        )
-    } else {
-        TvFavouriteItemImpl(
-            channel = channel,
-            onClick = onClick,
-            onLongClick = onLongClick,
-            modifier = modifier
-        )
-    }
-}
-
-@Composable
-private fun SmartphoneFavoriteItemImpl(
-    channel: Channel,
-    recently: Boolean,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    zapping: Boolean = false
 ) {
     val spacing = LocalSpacing.current
 
@@ -122,26 +89,4 @@ private fun SmartphoneFavoriteItemImpl(
                 .then(modifier)
         )
     }
-}
-
-@Composable
-private fun TvFavouriteItemImpl(
-    channel: Channel,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    TvListItem(
-        selected = false,
-        onClick = onClick,
-        onLongClick = onLongClick,
-        headlineContent = {
-            TvText(
-                text = channel.title,
-                style = TvMaterialTheme.typography.bodyMedium,
-                maxLines = 1
-            )
-        },
-        modifier = modifier
-    )
 }

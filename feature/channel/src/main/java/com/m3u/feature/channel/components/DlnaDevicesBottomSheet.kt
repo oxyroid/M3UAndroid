@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.m3u.core.util.basic.title
 import com.m3u.i18n.R.string
 import com.m3u.material.components.CircularProgressIndicator
-import com.m3u.material.components.Icon
+import androidx.compose.material3.Icon
 import com.m3u.material.components.mask.MaskState
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.UnstableBadge

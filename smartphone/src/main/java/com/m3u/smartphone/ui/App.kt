@@ -34,8 +34,7 @@ import com.m3u.smartphone.ui.sheet.RemoteControlSheet
 import com.m3u.smartphone.ui.sheet.RemoteControlSheetValue
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.tv.model.RemoteDirection
-import com.m3u.material.components.Icon
-import com.m3u.material.ktx.tv
+import androidx.compose.material3.Icon
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.Destination
 import com.m3u.ui.FontFamilies
@@ -108,8 +107,6 @@ private fun AppImpl(
     val spacing = LocalSpacing.current
     val preferences = hiltPreferences()
 
-    val tv = tv()
-
     val entry by navController.currentBackStackEntryAsState()
 
     val rootDestination by remember {
@@ -147,7 +144,7 @@ private fun AppImpl(
         ) {
             SnackHost(Modifier.weight(1f))
             AnimatedVisibility(
-                visible = !tv && preferences.remoteControl,
+                visible = preferences.remoteControl,
                 enter = scaleIn(initialScale = 0.65f) + fadeIn(),
                 exit = scaleOut(targetScale = 0.65f) + fadeOut(),
             ) {

@@ -18,9 +18,7 @@ import com.m3u.feature.playlist.configuration.navigateToPlaylistConfiguration
 import com.m3u.feature.playlist.configuration.playlistConfigurationScreen
 import com.m3u.feature.playlist.navigation.navigateToPlaylist
 import com.m3u.feature.playlist.navigation.playlistScreen
-import com.m3u.feature.playlist.navigation.playlistTvScreen
 import com.m3u.feature.channel.PlayerActivity
-import com.m3u.material.ktx.tv
 import com.m3u.ui.Destination
 import com.m3u.ui.Events
 import com.m3u.ui.SettingDestination
@@ -36,8 +34,6 @@ fun AppNavHost(
     val context = LocalContext.current
     val preferences = hiltPreferences()
 
-    val tv = tv()
-
     NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -48,7 +44,7 @@ fun AppNavHost(
         rootGraph(
             contentPadding = contentPadding,
             navigateToPlaylist = { playlist ->
-                navController.navigateToPlaylist(playlist.url, tv)
+                navController.navigateToPlaylist(playlist.url)
             },
             navigateToChannel = {
                 if (preferences.zappingMode && PlayerActivity.isInPipMode) return@rootGraph
@@ -87,7 +83,6 @@ fun AppNavHost(
             },
             contentPadding = contentPadding
         )
-        playlistTvScreen()
         playlistConfigurationScreen(contentPadding)
     }
 }

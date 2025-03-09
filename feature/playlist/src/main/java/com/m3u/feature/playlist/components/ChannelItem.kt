@@ -45,7 +45,7 @@ import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.Channel
 import com.m3u.i18n.R.string
 import com.m3u.material.components.CircularProgressIndicator
-import com.m3u.material.components.Icon
+import androidx.compose.material3.Icon
 import com.m3u.material.model.LocalSpacing
 import com.m3u.material.shape.AbsoluteSmoothCornerShape
 import com.m3u.ui.util.TimeUtils.formatEOrSh
@@ -59,7 +59,7 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 @Composable
-internal fun SmartphoneChannelItem(
+internal fun ChannelItem(
     channel: Channel,
     recently: Boolean,
     zapping: Boolean,

@@ -20,6 +20,8 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Warning
+import androidx.compose.material3.Button
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -44,13 +46,10 @@ import com.m3u.feature.setting.components.LocalStorageButton
 import com.m3u.feature.setting.components.LocalStorageSwitch
 import com.m3u.feature.setting.components.RemoteControlSubscribeSwitch
 import com.m3u.i18n.R.string
-import com.m3u.material.components.Button
 import com.m3u.material.components.HorizontalPagerIndicator
-import com.m3u.material.components.Icon
+import androidx.compose.material3.Icon
 import com.m3u.material.components.PlaceholderField
-import com.m3u.material.components.TonalButton
 import com.m3u.material.ktx.checkPermissionOrRationale
-import com.m3u.material.ktx.tv
 import com.m3u.material.ktx.textHorizontalLabel
 import com.m3u.material.model.LocalSpacing
 import com.m3u.ui.helper.LocalHelper
@@ -172,7 +171,6 @@ private fun MainContentImpl(
     val clipboardManager = LocalClipboardManager.current
     val helper = LocalHelper.current
 
-    val tv = tv()
     val remoteControl = preferences.remoteControl
 
     LazyColumn(
@@ -233,7 +231,7 @@ private fun MainContentImpl(
                     enabled = !forTvState.value
                 )
             }
-            if (!tv && remoteControl) {
+            if (remoteControl) {
                 RemoteControlSubscribeSwitch(
                     checked = forTvState.value,
                     onChanged = { forTvState.value = !forTvState.value },
@@ -247,7 +245,6 @@ private fun MainContentImpl(
                 Manifest.permission.POST_NOTIFICATIONS
             )
             Button(
-                text = stringResource(string.feat_setting_label_subscribe),
                 onClick = {
                     postNotificationPermission.checkPermissionOrRationale(
                         showRationale = {
@@ -266,17 +263,20 @@ private fun MainContentImpl(
                     )
                 },
                 modifier = Modifier.fillMaxWidth()
-            )
+            ) {
+                Text(stringResource(string.feat_setting_label_subscribe))
+            }
             when (selectedState.value) {
                 DataSource.M3U, DataSource.Xtream -> {
-                    TonalButton(
-                        text = stringResource(string.feat_setting_label_parse_from_clipboard),
+                    FilledTonalButton(
                         enabled = !localStorageState.value,
                         onClick = {
                             onClipboard(clipboardManager.getText()?.text.orEmpty())
                         },
                         modifier = Modifier.fillMaxWidth()
-                    )
+                    ) {
+                        Text(stringResource(string.feat_setting_label_parse_from_clipboard))
+                    }
                 }
 
                 else -> {}
@@ -284,18 +284,22 @@ private fun MainContentImpl(
         }
 
         item {
-            TonalButton(
-                text = stringResource(string.feat_setting_label_backup),
+            FilledTonalButton(
                 enabled = !forTvState.value && backingUpOrRestoring == BackingUpAndRestoringState.NONE,
                 onClick = backup,
                 modifier = Modifier.fillMaxWidth()
-            )
-            TonalButton(
-                text = stringResource(string.feat_setting_label_restore),
+            ) {
+                Text(
+                    text = stringResource(string.feat_setting_label_backup)
+                )
+            }
+            FilledTonalButton(
                 enabled = !forTvState.value && backingUpOrRestoring == BackingUpAndRestoringState.NONE,
                 onClick = restore,
                 modifier = Modifier.fillMaxWidth()
-            )
+            ) {
+                Text(text = stringResource(string.feat_setting_label_restore))
+            }
         }
 
         item {
