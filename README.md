@@ -1,98 +1,74 @@
-# M3UAndroid
+# 🚀 M3UAndroid - Modern Streaming Player for Android
 
-<a href="https://t.me/m3u_android"><img src="https://img.shields.io/badge/Telegram-2CA5E0?style=flat&logo=telegram&logoColor=white"></a>
+<a href="https://t.me/m3u_android"><img src="https://img.shields.io/badge/Telegram-Channel-2CA5E0?style=flat&logo=telegram"></a>
+<a href="https://t.me/m3u_android_chat"><img src="https://img.shields.io/badge/Telegram-Discussion-2CA5E0?style=flat&logo=telegram"></a>
+![GitHub release](https://img.shields.io/github/v/release/oxyroid/M3UAndroid?color=blue)
+![Android](https://img.shields.io/badge/Android-8.0%2B-brightgreen?logo=android)
 
-M3U is a FREE stream media player on android devices, which made of jetpack compose.
-Android 8.0 and above supported.
-
-### Device support
-
-Most Android devices, including smartphones, TVs, and tablets.
-
-### Screenshots
+**M3UAndroid** is a feature-rich streaming media player built with modern Android development practices. Perfect for phones, tablets, and TV devices, delivering a seamless viewing experience powered by Jetpack Compose.
 
 <div align="center">
-<img src=".github/images/phone/deviceframes.png"/>
-<img src=".github/images/tv/playlist.png"/>
-</div>
-<div style="display:flex;">
-<img src=".github/images/tv/foryou.png" width="45%" style="flex:1" />
-<img src=".github/images/tv/player.png" width="45%" style="flex:1" />
+  <img src=".github/images/phone/deviceframes.png" width="85%">
 </div>
 
-### 📢 Translations Wanted 📢
+## ✨ Key Features
 
-Please submit a pull request if you want to help with translation.
+- 📺 Adaptive UI for mobile & TV
+- 🎭 DLNA casting support
+- 🔍 Smart stream analysis
+- 🌐 Xtream protocol compatibility
+- 📥 Playlist management
+- 🚀 Lightweight & ad-free
+- 🇺🇳 Multi-language support
 
-Official:
+## 📸 Screenshots
 
-- [English](i18n/src/main/res/values)
-- [Simplified Chinese](i18n/src/main/res/values-zh-rCN)
-- (You can also provide better translations for the above languages via pull requests)
+| Mobile Experience | TV Experience |
+|--------------------|---------------|
+| <img src=".github/images/phone/deviceframes.png" width="400"> | <img src=".github/images/tv/playlist.png" width="400"> |
+|  | <img src=".github/images/tv/foryou.png" width="400"> |
+|  | <img src=".github/images/tv/player.png" width="400"> |
 
-From PRs:
+> TV UI is going to be remade in the future...
 
-- [Spanish](i18n/src/main/res/values-es-rES),
-  thanks [@sguinetti](https://github.com/sguinetti/M3UAndroid)
-- [Romanian](i18n/src/main/res/values-ro-rRO),
-  thanks [@iboboc](https://github.com/iboboc/M3UAndroid)
-- [Brazilian Portuguese](i18n/src/main/res/values-pt-rBR),
-  thanks [@Suburbanno](https://github.com/Suburbanno)
+## ⬇️ Download Now
+[![Recommand - Telegram Channel](https://img.shields.io/badge/Telegram-Channel-2CA5E0?style=for-the-badge&logo=telegram)](https://t.me/m3u_android)
+[![GitHub Release](https://img.shields.io/badge/Download-GitHub%20Release-black?style=for-the-badge&logo=github)](https://github.com/oxyroid/M3UAndroid/releases/latest)
+[![F-Droid](https://img.shields.io/badge/Download-F--Droid-1976D2?style=for-the-badge&logo=android)](https://f-droid.org/packages/com.m3u.androidApp)
+[![IzzyOnDroid](https://img.shields.io/badge/Download-IzzyOnDroid-8A4182?style=for-the-badge)](https://apt.izzysoft.de/fdroid/index/apk/com.m3u.androidApp)
 
-### Introduce
+**Nightly Builds**: [Pre-release Packages](https://nightly.link/oxyroid/M3UAndroid/workflows/android/master/artifact.zip)
 
-- [Basic](https://t.me/m3u_android/176)
+## 🛠 Tech Stack
 
-### Features
+- 100% Kotlin-first approach
+- 🎨 Jetpack Compose UI toolkit
+- 🧬 MVVM architecture pattern
+- 🚦 Coroutines & Flows
+- 🗃️ Room database
+- 💉 Hilt dependency injection
+- 📦 Modular architecture
+- 🎥 ExoPlayer + FFmpeg core
 
-- Playlist Management.
-- Streaming media analysis capabilities.
-- Xtream support.
-- DLNA screencast.
-- i18n (Internationalization).
+## 🌍 Localization
 
-### Android Development
+Help us translate the app! Current support:
 
-M3U is an app that attempts to use the latest libraries and tools. As a summary:
+| Core Languages | Community Translations |
+|----------------|------------------------|
+| 🇬🇧 [English](i18n/src/main/res/values) | 🇪🇸 [Spanish](i18n/src/main/res/values-es-rES) by [@sguinetti](https://github.com/sguinetti) |
+| 🇨🇳 [Simplified Chinese](i18n/src/main/res/values-zh-rCN) | 🇷🇴 [Romanian](i18n/src/main/res/values-ro-rRO) by [@iboboc](https://github.com/iboboc) |
+|  | 🇧🇷 [Portuguese (BR)](i18n/src/main/res/values-pt-rBR) by [@Suburbanno](https://github.com/Suburbanno) |
 
-- Entirely written in Kotlin.
-- UI completely written in Jetpack Compose.
-- Material3 design system.
-- Uses Kotlin Coroutines throughout.
-- Uses many of the Architecture Components, including: Room, Lifecycle, Navigation.
-- Uses Hilt for dependency injection.
-- Uses Lint Checks for code scanning.
-- Uses KSP & KotlinPoet for Code Generating.
-- FFmepg-kit & ExoPlayer.
+## 🤝 Contribution
 
-### Installation
+We welcome all contributions! Here's how you can help:
+- 🐛 Report bugs via Issues
+- 💡 Suggest new features
+- 📝 Improve documentation
+- 🔧 Submit code changes
 
-[<img src="https://github.com/oxyroid/M3UAndroid/assets/5572928/c407b17c-f64f-4486-ade1-6048eb177e67"
-alt="Get it on GitHub"
-height="80">](https://github.com/oxyroid/M3UAndroid/releases/latest)
-[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
-alt="Get it on F-Droid"
-height="80">](https://f-droid.org/packages/com.m3u.androidApp)
-[<img src="https://github.com/oxyroid/M3UAndroid/assets/5572928/4ba5a44a-c5e4-4634-a7aa-b8dda0992ba2"
-alt="Get it on IzzyOnDroid"
-height="80">](https://apt.izzysoft.de/fdroid/index/apk/com.m3u.androidApp)
-> Get the SNAPSHOT
-> package [here](https://nightly.link/oxyroid/M3UAndroid/workflows/android/master/artifact.zip)
-
-### Community
-
-You can join the [Telegram Channel](https://t.me/m3u_android) for update information and **alpha &
-beta packages**.
-
-You can also join the [Telegram Group](https://t.me/m3u_android_chat) for discussing.
-
-### Contributing
-
-View this [file](CONTRIBUTING.md) to learn about how to contribute this repository.
-
-Refer to the [file](RULES.md) to learn about the Code Specification of this repository.
-
-### Star History
+## 📈 Project Growth
 
 <a href="https://star-history.com/#oxyroid/M3UAndroid&Date">
   <picture>
@@ -102,7 +78,6 @@ Refer to the [file](RULES.md) to learn about the Code Specification of this repo
   </picture>
 </a>
 
-### License
+## 📜 License
 
-M3UAndroid is distributed under the terms of the Apache License (Version 2.0). See
-the [license](LICENSE) for more information.
+Distributed under the **GPL 3.0**. See [LICENSE](LICENSE) for details.
