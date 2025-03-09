@@ -26,17 +26,18 @@ android {
 
 dependencies {
     implementation(project(":core"))
-    implementation(project(":annotation"))
-    ksp(project(":processor"))
+    implementation(project(":lint:annotation"))
+    ksp(project(":lint:processor"))
 
     val richCodec = gradle
         .startParameter
         .taskNames
         .find { it.contains("richCodec", ignoreCase = true) } != null
+    implementation(project(":data:codec"))
     if (richCodec) {
-        implementation(project(":codec:rich"))
+        implementation(project(":data:codec:rich"))
     } else {
-        implementation(project(":codec:lite"))
+        implementation(project(":data:codec:lite"))
     }
 
     implementation(libs.androidx.core.ktx)

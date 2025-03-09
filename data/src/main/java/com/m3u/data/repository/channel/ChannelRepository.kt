@@ -1,6 +1,7 @@
 package com.m3u.data.repository.channel
 
 import androidx.paging.PagingSource
+import com.m3u.core.wrapper.Sort
 import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.data.database.model.Channel
 import kotlinx.coroutines.flow.Flow
@@ -35,12 +36,4 @@ interface ChannelRepository {
     fun observeAllUnseenFavourites(limit: Duration): Flow<List<Channel>>
     fun observeAllFavourite(): Flow<List<Channel>>
     fun observeAllHidden(): Flow<List<Channel>>
-
-    enum class Sort {
-        UNSPECIFIED,
-        ASC,
-        DESC,
-        RECENTLY,
-        MIXED
-    }
 }

@@ -48,7 +48,7 @@ android {
         }
     }
     // Note that your module name may have different name
-    targetProjectPath = ":androidApp"
+    targetProjectPath = ":app:smartphone"
     // Enable the benchmark to run separately from the app process
     experimentalProperties["android.experimental.self-instrumenting"] = true
 }
@@ -67,8 +67,8 @@ androidComponents {
 
         v.instrumentationRunnerArguments.put(
             "targetAppId",
-            if (isSnapshot) "com.m3u.androidApp.snapshot"
-            else "com.m3u.androidApp"
+            if (isSnapshot) "com.m3u.smartphone.snapshot"
+            else "com.m3u.smartphone"
         )
     }
 }

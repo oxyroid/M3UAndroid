@@ -40,7 +40,7 @@ jobs:
 
       # With the baseline profile Gradle plugin, release variants generate baseline profiles.
       - name: Build production app
-        run: ./gradlew :androidApp:assembleSnapshotChannelRichCodecRelease
+        run: ./gradlew :app:smartphone:assembleSnapshotChannelRichCodecRelease
           -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile
           -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect"
           -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true
@@ -50,7 +50,7 @@ jobs:
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          path: "androidApp/build/outputs/apk/snapshotChannelRichCodec/release/*.apk"
+          path: "app/smartphone/build/outputs/apk/snapshotChannelRichCodec/release/*.apk"
 
       - name: Upload To Telegram
         if: github.event_name != 'pull_request'
@@ -60,5 +60,5 @@ jobs:
           chat_id: ${{ secrets.CHAT_ID }}
 #          large_file: true
           method: sendFile
-          path: "androidApp/build/outputs/apk/snapshotChannelRichCodec/release/*.apk"
+          path: "app/smartphone/build/outputs/apk/snapshotChannelRichCodec/release/*.apk"
 #          parse_mode: Markdown

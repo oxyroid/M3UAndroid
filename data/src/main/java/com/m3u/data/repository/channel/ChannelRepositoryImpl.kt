@@ -12,7 +12,7 @@ import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.isSeries
-import com.m3u.data.repository.channel.ChannelRepository.Sort
+import com.m3u.core.wrapper.Sort
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.datetime.Clock
