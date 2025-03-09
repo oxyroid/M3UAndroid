@@ -260,7 +260,7 @@ internal fun NavigationItemLayout(
 }
 
 internal enum class ScaffoldContent { Navigation, MainContent }
-internal enum class ScaffoldRole { SmartPhone, Tablet, Tv }
+internal enum class ScaffoldRole { SmartPhone, Tablet }
 
 @Composable
 internal fun ScaffoldLayout(

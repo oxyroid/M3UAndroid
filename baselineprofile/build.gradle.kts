@@ -48,7 +48,7 @@ android {
         }
     }
     // Note that your module name may have different name
-    targetProjectPath = ":smartphone"
+    targetProjectPath = ":app:smartphone"
     // Enable the benchmark to run separately from the app process
     experimentalProperties["android.experimental.self-instrumenting"] = true
 }

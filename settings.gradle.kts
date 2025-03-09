@@ -15,7 +15,7 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "M3U"
-include(":smartphone", ":tv")
+include(":app:smartphone", ":app:tv")
 include(":core")
 include(":data")
 include(

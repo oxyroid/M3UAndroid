@@ -40,7 +40,7 @@ jobs:
 
       # With the baseline profile Gradle plugin, release variants generate baseline profiles.
       - name: Build production app
-        run: ./gradlew :smartphone:assembleSnapshotChannelRichCodecRelease
+        run: ./gradlew :app:smartphone:assembleSnapshotChannelRichCodecRelease
           -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile
           -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect"
           -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true
