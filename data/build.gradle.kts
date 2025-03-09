@@ -34,9 +34,9 @@ dependencies {
         .taskNames
         .find { it.contains("richCodec", ignoreCase = true) } != null
     if (richCodec) {
-        implementation(project(":codec:rich"))
+        implementation(project(":data:codec:rich"))
     } else {
-        implementation(project(":codec:lite"))
+        implementation(project(":data:codec:lite"))
     }
 
     implementation(libs.androidx.core.ktx)

@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.m3u.codec.lite"
+    namespace = "com.m3u.data.codec.rich"
     kotlinOptions {
         jvmTarget = "17"
     }
@@ -15,4 +15,5 @@ dependencies {
     implementation(libs.androidx.appcompat)
 
     implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.nextlib.media3.ext)
 }

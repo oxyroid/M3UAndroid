@@ -1,4 +1,4 @@
-package com.m3u.codec
+package com.m3u.data.codec
 
 import android.content.Context
 import androidx.media3.exoplayer.DefaultRenderersFactory

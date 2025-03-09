@@ -18,6 +18,7 @@ rootProject.name = "M3U"
 include(":app:smartphone", ":app:tv")
 include(":core")
 include(":data")
+include(":data:codec:lite", ":data:codec:rich")
 include(
     ":business:foryou",
     ":business:favorite",
@@ -28,7 +29,6 @@ include(
 )
 include(":baselineprofile")
 include(":i18n")
-include(":codec:lite", ":codec:rich")
 include(
     ":lint:annotation",
     ":lint:processor"
