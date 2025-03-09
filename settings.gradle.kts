@@ -15,7 +15,7 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "M3U"
-include(":androidApp")
+include(":smartphone")
 include(":core")
 include(":data")
 include(":material")
