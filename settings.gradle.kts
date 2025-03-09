@@ -15,23 +15,24 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "M3U"
-include(":smartphone")
+include(":smartphone", ":tv")
 include(":core")
 include(":data")
 include(":material")
 include(":ui")
 include(
-    ":feature:foryou",
-    ":feature:favorite",
-    ":feature:setting",
-    ":feature:playlist",
-    ":feature:playlist-configuration",
-    ":feature:channel",
-    ":feature:crash"
+    ":business:foryou",
+    ":business:favorite",
+    ":business:setting",
+    ":business:playlist",
+    ":business:playlist-configuration",
+    ":business:channel",
+    ":business:crash"
 )
 include(":baselineprofile")
 include(":i18n")
 include(":codec:lite", ":codec:rich")
-include(":annotation")
-include(":processor")
-include(":tv")
+include(
+    ":lint:annotation",
+    ":lint:processor"
+)

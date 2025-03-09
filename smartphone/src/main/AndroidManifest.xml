@@ -57,7 +57,7 @@
                 android:resource="@xml/shortcuts" />
         </activity>
         <activity
-            android:name="com.m3u.feature.channel.PlayerActivity"
+            android:name="com.m3u.business.channel.PlayerActivity"
             android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|locale|layoutDirection"
             android:exported="true"
             android:launchMode="singleTop"
@@ -65,7 +65,7 @@
             android:theme="@style/Theme.M3U" />
 
         <activity
-            android:name="com.m3u.feature.playlist.TvPlaylistActivity"
+            android:name="com.m3u.business.playlist.TvPlaylistActivity"
             android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|locale|layoutDirection"
             android:exported="true"
             android:launchMode="singleTop"
@@ -84,7 +84,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.m3u.feature.crash.CrashActivity"
+            android:name="com.m3u.business.crash.CrashActivity"
             android:label="@string/app_label_crash"
             android:launchMode="singleInstance"
             android:theme="@style/Theme.M3U" />

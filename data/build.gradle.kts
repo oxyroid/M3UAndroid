@@ -26,8 +26,8 @@ android {
 
 dependencies {
     implementation(project(":core"))
-    implementation(project(":annotation"))
-    ksp(project(":processor"))
+    implementation(project(":lint:annotation"))
+    ksp(project(":lint:processor"))
 
     val richCodec = gradle
         .startParameter

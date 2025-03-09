@@ -30,12 +30,14 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
-import com.m3u.smartphone.ui.sheet.RemoteControlSheet
-import com.m3u.smartphone.ui.sheet.RemoteControlSheetValue
+import com.m3u.smartphone.ui.common.connect.RemoteControlSheet
+import com.m3u.smartphone.ui.common.connect.RemoteControlSheetValue
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.tv.model.RemoteDirection
 import androidx.compose.material3.Icon
 import com.m3u.material.model.LocalSpacing
+import com.m3u.smartphone.ui.common.AppNavHost
+import com.m3u.smartphone.ui.common.Scaffold
 import com.m3u.ui.Destination
 import com.m3u.ui.FontFamilies
 import com.m3u.ui.SnackHost

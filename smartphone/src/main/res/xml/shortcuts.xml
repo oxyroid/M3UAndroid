@@ -10,7 +10,7 @@
         android:shortcutShortLabel="@string/app_shortcut_channel_recently_short_label">
         <intent
             android:action="android.intent.action.VIEW"
-            android:targetClass="com.m3u.feature.channel.PlayerActivity"
+            android:targetClass="com.m3u.business.channel.PlayerActivity"
             android:targetPackage="com.m3u.smartphone" >
             <extra
                 android:name="shortcut:channel-recently"
