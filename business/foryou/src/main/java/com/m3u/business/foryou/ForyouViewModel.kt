@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkQuery
+import com.m3u.business.foryou.Recommend
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
@@ -26,7 +27,6 @@ import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.data.worker.SubscriptionWorker
-import com.m3u.business.foryou.components.recommend.Recommend
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -58,7 +58,7 @@ class ForyouViewModel @Inject constructor(
 ) : ViewModel() {
     private val logger = delegate.install(Profiles.VIEWMODEL_FORYOU)
 
-    internal val playlistCounts: StateFlow<Resource<List<PlaylistWithCount>>> =
+    val playlistCounts: StateFlow<Resource<List<PlaylistWithCount>>> =
         playlistRepository
             .observeAllCounts()
             .asResource()
@@ -68,7 +68,7 @@ class ForyouViewModel @Inject constructor(
                 initialValue = Resource.Loading
             )
 
-    internal val subscribingPlaylistUrls: StateFlow<List<String>> =
+    val subscribingPlaylistUrls: StateFlow<List<String>> =
         workManager.getWorkInfosFlow(
             WorkQuery.fromStates(
                 WorkInfo.State.RUNNING,
@@ -86,7 +86,7 @@ class ForyouViewModel @Inject constructor(
                 started = SharingStarted.WhileSubscribed(5_000L)
             )
 
-    internal val refreshingEpgUrls: Flow<List<String>> = programmeRepository.refreshingEpgUrls
+    val refreshingEpgUrls: Flow<List<String>> = programmeRepository.refreshingEpgUrls
 
     private val unseensDuration = snapshotFlow { preferences.unseensMilliseconds }
         .map { it.toDuration(DurationUnit.MILLISECONDS) }
@@ -105,7 +105,7 @@ class ForyouViewModel @Inject constructor(
             initialValue = null,
             started = SharingStarted.Lazily
         )
-    internal val specs: StateFlow<List<Recommend.Spec>> = unseensDuration
+    val specs: StateFlow<List<Recommend.Spec>> = unseensDuration
         .flatMapLatest { channelRepository.observeAllUnseenFavourites(it) }
         .let { flow ->
             combine(flow, newRelease) { channels, nr ->
@@ -132,15 +132,15 @@ class ForyouViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
-    internal fun onUnsubscribePlaylist(url: String) {
+    fun onUnsubscribePlaylist(url: String) {
         viewModelScope.launch {
             playlistRepository.unsubscribe(url)
         }
     }
 
-    internal val series = MutableStateFlow<Channel?>(null)
-    internal val seriesReplay = MutableStateFlow(0)
-    internal val episodes: StateFlow<Resource<List<XtreamChannelInfo.Episode>>> = series
+    val series = MutableStateFlow<Channel?>(null)
+    val seriesReplay = MutableStateFlow(0)
+    val episodes: StateFlow<Resource<List<XtreamChannelInfo.Episode>>> = series
         .combine(seriesReplay) { series, _ -> series }
         .flatMapLatest { series ->
             if (series == null) flow { }
@@ -154,6 +154,6 @@ class ForyouViewModel @Inject constructor(
             started = SharingStarted.Lazily
         )
 
-    internal suspend fun getPlaylist(playlistUrl: String): Playlist? =
+    suspend fun getPlaylist(playlistUrl: String): Playlist? =
         playlistRepository.get(playlistUrl)
 }

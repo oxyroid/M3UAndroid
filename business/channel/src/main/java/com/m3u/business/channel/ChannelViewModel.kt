@@ -20,6 +20,7 @@ import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
 import com.m3u.core.util.coroutine.flatmapCombined
+import com.m3u.core.wrapper.Sort
 import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.DataSource
@@ -74,15 +75,15 @@ class ChannelViewModel @Inject constructor(
     private val logger = delegate.install(Profiles.VIEWMODEL_CHANNEL)
 
     // searched screencast devices
-    internal var devices by mutableStateOf(emptyList<Device>())
+    var devices by mutableStateOf(emptyList<Device>())
 
     private val _volume: MutableStateFlow<Float> by lazy {
         MutableStateFlow(audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) / 100f)
     }
-    internal val volume = _volume.asStateFlow()
+    val volume = _volume.asStateFlow()
 
-    internal val channel: StateFlow<Channel?> = playerManager.channel
-    internal val playlist: StateFlow<Playlist?> = playerManager.playlist
+    val channel: StateFlow<Channel?> = playerManager.channel
+    val playlist: StateFlow<Playlist?> = playerManager.playlist
 
     val adjacentChannels: StateFlow<AdjacentChannels?> = flatmapCombined(
         playlist,
@@ -103,9 +104,9 @@ class ChannelViewModel @Inject constructor(
         )
 
 
-    internal val isSeriesPlaylist: Flow<Boolean> = playlist.map { it?.isSeries ?: false }
+    val isSeriesPlaylist: Flow<Boolean> = playlist.map { it?.isSeries ?: false }
 
-    internal val isProgrammeSupported: Flow<Boolean> = playlist.map {
+    val isProgrammeSupported: Flow<Boolean> = playlist.map {
         it ?: return@map false
         if (it.isSeries || it.isVod) return@map false
         when (it.source) {
@@ -115,16 +116,16 @@ class ChannelViewModel @Inject constructor(
         }
     }
 
-    internal val tracks: Flow<Map<Int, List<Format>>> = playerManager.tracks
+    val tracks: Flow<Map<Int, List<Format>>> = playerManager.tracks
         .map { all ->
             all
                 .mapValues { (_, formats) -> formats }
                 .toMap()
         }
 
-    internal val currentTracks: Flow<Map<@C.TrackType Int, Format?>> = playerManager.currentTracks
+    val currentTracks: Flow<Map<@C.TrackType Int, Format?>> = playerManager.currentTracks
 
-    internal fun chooseTrack(type: @C.TrackType Int, format: Format) {
+    fun chooseTrack(type: @C.TrackType Int, format: Format) {
         val groups = playerManager.tracksGroups.value
         val group = groups.find { it.type == type } ?: return
         val trackGroup = group.mediaTrackGroup
@@ -139,12 +140,12 @@ class ChannelViewModel @Inject constructor(
         }
     }
 
-    internal fun clearTrack(type: @C.TrackType Int) {
+    fun clearTrack(type: @C.TrackType Int) {
         playerManager.clearTrack(type)
     }
 
     // channel playing state
-    internal val playerState: StateFlow<PlayerState> = combine(
+    val playerState: StateFlow<PlayerState> = combine(
         playerManager.player,
         playerManager.playbackState,
         playerManager.size,
@@ -168,14 +169,14 @@ class ChannelViewModel @Inject constructor(
     private val _isDevicesVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
     // show searching devices dialog or not
-    internal val isDevicesVisible = _isDevicesVisible.asStateFlow()
+    val isDevicesVisible = _isDevicesVisible.asStateFlow()
 
     private val _searching: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
     // searching or not
-    internal val searching = _searching.asStateFlow()
+    val searching = _searching.asStateFlow()
 
-    internal fun openDlnaDevices() {
+    fun openDlnaDevices() {
         viewModelScope.launch {
             delay(800.milliseconds)
             _searching.value = true
@@ -189,7 +190,7 @@ class ChannelViewModel @Inject constructor(
         _isDevicesVisible.value = true
     }
 
-    internal fun closeDlnaDevices() {
+    fun closeDlnaDevices() {
         runCatching {
             _searching.value = false
             _isDevicesVisible.value = false
@@ -213,7 +214,7 @@ class ChannelViewModel @Inject constructor(
 
     private var controlPoint: ControlPoint? = null
 
-    internal fun connectDlnaDevice(device: Device) {
+    fun connectDlnaDevice(device: Device) {
         val url = channel.value?.url ?: return
         device.findAction(ACTION_SET_AV_TRANSPORT_URI)?.invoke(
             argumentValues = mapOf(
@@ -223,18 +224,18 @@ class ChannelViewModel @Inject constructor(
         )
     }
 
-    internal fun disconnectDlnaDevice(device: Device) {
+    fun disconnectDlnaDevice(device: Device) {
 
     }
 
-    internal fun onFavourite() {
+    fun onFavourite() {
         viewModelScope.launch {
             val id = channel.value?.id ?: return@launch
             channelRepository.favouriteOrUnfavourite(id)
         }
     }
 
-    internal fun onVolume(target: Float) {
+    fun onVolume(target: Float) {
         _volume.update { target }
         val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
         audioManager.setStreamVolume(
@@ -246,7 +247,7 @@ class ChannelViewModel @Inject constructor(
 //        controlPoint?.setVolume((target * 100).roundToInt(), null)
     }
 
-    internal fun getPreviousChannel() {
+    fun getPreviousChannel() {
         viewModelScope.launch {
             val previousChannelId = adjacentChannels.value?.prevId
             if (adjacentChannels.value != null && previousChannelId != null) {
@@ -255,7 +256,7 @@ class ChannelViewModel @Inject constructor(
         }
     }
 
-    internal fun getNextChannel() {
+    fun getNextChannel() {
         viewModelScope.launch {
             val nextChannelId = adjacentChannels.value?.nextId
             if (adjacentChannels.value != null && nextChannelId != null) {
@@ -279,7 +280,7 @@ class ChannelViewModel @Inject constructor(
         playerManager.pauseOrContinue(isContinued)
     }
 
-    internal val programmeReminderIds: StateFlow<List<Int>> = workManager.getWorkInfosFlow(
+    val programmeReminderIds: StateFlow<List<Int>> = workManager.getWorkInfosFlow(
         WorkQuery.fromStates(
             WorkInfo.State.ENQUEUED
         )
@@ -319,14 +320,14 @@ class ChannelViewModel @Inject constructor(
 
     // the channels which is in the same category with the current channel
     // or the episodes which is in the same series.
-    internal val pagingChannels: Flow<PagingData<Channel>> = playlist.flatMapLatest { playlist ->
+    val pagingChannels: Flow<PagingData<Channel>> = playlist.flatMapLatest { playlist ->
         playlist ?: return@flatMapLatest flowOf(PagingData.empty())
         Pager(PagingConfig(10)) {
             channelRepository.pagingAllByPlaylistUrl(
                 playlist.url,
                 channel.value?.category.orEmpty(),
                 "",
-                ChannelRepository.Sort.UNSPECIFIED
+                Sort.UNSPECIFIED
             )
         }
             .flow
@@ -340,7 +341,7 @@ class ChannelViewModel @Inject constructor(
         )
     }
 
-    internal val programmes: Flow<PagingData<Programme>> = channel.flatMapLatest { channel ->
+    val programmes: Flow<PagingData<Programme>> = channel.flatMapLatest { channel ->
         channel ?: return@flatMapLatest flowOf(PagingData.empty())
         val relationId = channel.relationId ?: return@flatMapLatest flowOf(PagingData.empty())
         val playlist = channel.playlistUrl.let { playlistRepository.get(it) }
@@ -360,7 +361,7 @@ class ChannelViewModel @Inject constructor(
             )
         }
 
-    internal val programmeRange: StateFlow<ProgrammeRange> = channel.flatMapLatest { channel ->
+    val programmeRange: StateFlow<ProgrammeRange> = channel.flatMapLatest { channel ->
         channel ?: return@flatMapLatest flowOf(defaultProgrammeRange)
         val relationId = channel.relationId ?: return@flatMapLatest flowOf(defaultProgrammeRange)
         programmeRepository
@@ -377,7 +378,7 @@ class ChannelViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    internal fun onSpeedUpdated(race: Float) {
+    fun onSpeedUpdated(race: Float) {
         playerManager.updateSpeed(race)
     }
 

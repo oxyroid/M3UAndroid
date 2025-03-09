@@ -9,12 +9,12 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.m3u.data.database.model.Playlist
-import com.m3u.business.favorite.FavouriteRoute
-import com.m3u.business.foryou.ForyouRoute
-import com.m3u.business.setting.SettingRoute
-import com.m3u.material.ktx.Edge
-import com.m3u.material.ktx.blurEdge
-import com.m3u.ui.Destination
+import com.m3u.smartphone.ui.material.ktx.Edge
+import com.m3u.smartphone.ui.material.ktx.blurEdge
+import com.m3u.smartphone.ui.business.favorite.FavouriteRoute
+import com.m3u.smartphone.ui.business.foryou.ForyouRoute
+import com.m3u.smartphone.ui.business.setting.SettingRoute
+import com.m3u.smartphone.ui.material.components.Destination
 
 fun NavGraphBuilder.rootGraph(
     contentPadding: PaddingValues,

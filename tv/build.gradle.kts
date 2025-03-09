@@ -64,14 +64,13 @@ baselineProfile {
 
 dependencies {
     implementation(project(":core"))
-    implementation(project(":ui"))
+    
     implementation(project(":business:foryou"))
     implementation(project(":business:favorite"))
     implementation(project(":business:setting"))
     implementation(project(":business:playlist"))
     implementation(project(":business:channel"))
     implementation(project(":business:playlist-configuration"))
-    implementation(project(":business:crash"))
 //    implementation(libs.androidx.profileinstaller)
 //    "baselineProfile"(project(":baselineprofile"))
 

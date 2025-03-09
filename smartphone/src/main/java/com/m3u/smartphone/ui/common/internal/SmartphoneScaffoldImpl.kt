@@ -20,11 +20,11 @@ import com.m3u.smartphone.ui.common.MainContent
 import com.m3u.smartphone.ui.common.NavigationItemLayout
 import com.m3u.smartphone.ui.common.ScaffoldLayout
 import com.m3u.smartphone.ui.common.ScaffoldRole
-import com.m3u.material.components.Background
-import com.m3u.material.ktx.plus
-import com.m3u.material.model.LocalHazeState
-import com.m3u.ui.Destination
-import com.m3u.ui.helper.Metadata
+import com.m3u.smartphone.ui.material.components.Background
+import com.m3u.smartphone.ui.material.ktx.plus
+import com.m3u.smartphone.ui.material.model.LocalHazeState
+import com.m3u.smartphone.ui.material.components.Destination
+import com.m3u.smartphone.ui.common.helper.Metadata
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.hazeChild
 

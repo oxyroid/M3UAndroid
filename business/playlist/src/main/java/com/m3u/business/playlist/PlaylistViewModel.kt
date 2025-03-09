@@ -52,9 +52,7 @@ import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManager
 import com.m3u.data.worker.SubscriptionWorker
 import com.m3u.business.playlist.PlaylistMessage.ChannelCoverSaved
-import com.m3u.business.playlist.navigation.PlaylistNavigation
-import com.m3u.ui.Sort
-import com.m3u.ui.toCommonSort
+import com.m3u.core.wrapper.Sort
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.FlowPreview
@@ -99,10 +97,10 @@ class PlaylistViewModel @Inject constructor(
 ) : ViewModel() {
     private val logger = delegate.install(Profiles.VIEWMODEL_PLAYLIST)
 
-    internal val playlistUrl: StateFlow<String> = savedStateHandle
+    val playlistUrl: StateFlow<String> = savedStateHandle
         .getStateFlow(PlaylistNavigation.TYPE_URL, "")
 
-    internal val playlist: StateFlow<Playlist?> = playlistUrl.flatMapLatest {
+    val playlist: StateFlow<Playlist?> = playlistUrl.flatMapLatest {
         playlistRepository.observe(it)
     }
         .stateIn(
@@ -111,7 +109,7 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    internal val zapping: StateFlow<Channel?> = combine(
+    val zapping: StateFlow<Channel?> = combine(
         snapshotFlow { preferences.zappingMode },
         playerManager.channel,
         playlistUrl.flatMapLatest { channelRepository.observeAllByPlaylistUrl(it) }
@@ -125,7 +123,7 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000)
         )
 
-    internal val subscribingOrRefreshing: StateFlow<Boolean> = workManager
+    val subscribingOrRefreshing: StateFlow<Boolean> = workManager
         .getWorkInfosFlow(
             WorkQuery.fromStates(
                 WorkInfo.State.RUNNING,
@@ -146,20 +144,20 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5000)
         )
 
-    internal fun refresh() {
+    fun refresh() {
         val url = playlistUrl.value
         viewModelScope.launch {
             playlistRepository.refresh(url)
         }
     }
 
-    internal fun favourite(id: Int) {
+    fun favourite(id: Int) {
         viewModelScope.launch {
             channelRepository.favouriteOrUnfavourite(id)
         }
     }
 
-    internal fun savePicture(id: Int) {
+    fun savePicture(id: Int) {
         viewModelScope.launch {
             val channel = channelRepository.get(id)
             if (channel == null) {
@@ -188,7 +186,7 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
-    internal fun hide(id: Int) {
+    fun hide(id: Int) {
         viewModelScope.launch {
             val channel = channelRepository.get(id)
             if (channel == null) {
@@ -199,7 +197,7 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
-    internal fun createShortcut(context: Context, id: Int) {
+    fun createShortcut(context: Context, id: Int) {
         val shortcutId = "channel_$id"
         viewModelScope.launch {
             val channel = channelRepository.get(id) ?: return@launch
@@ -227,7 +225,7 @@ class PlaylistViewModel @Inject constructor(
     }
 
     @SuppressLint("RestrictedApi")
-    internal fun createTvRecommend(activityContext: Context, id: Int) {
+    fun createTvRecommend(activityContext: Context, id: Int) {
         val channelInternalProviderId = "M3U"
         val programInternalProviderId = "Program_$id"
         val contentResolver = activityContext.contentResolver
@@ -301,13 +299,13 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
-    internal suspend fun getProgrammeCurrently(channelId: Int): Programme? {
+    suspend fun getProgrammeCurrently(channelId: Int): Programme? {
         return programmeRepository.getProgrammeCurrently(channelId)
     }
 
     private val sortIndex: MutableStateFlow<Int> = MutableStateFlow(0)
 
-    internal val sort: StateFlow<Sort> = sortIndex
+    val sort: StateFlow<Sort> = sortIndex
         .map { Sort.entries[it] }
         .stateIn(
             scope = viewModelScope,
@@ -315,12 +313,12 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    internal fun sort(sort: Sort) {
+    fun sort(sort: Sort) {
         sortIndex.value = Sort.entries.indexOf(sort).coerceAtLeast(0)
     }
 
-    internal val query = MutableStateFlow("")
-    internal val scrollUp: MutableStateFlow<Event<Unit>> = MutableStateFlow(handledEvent())
+    val query = MutableStateFlow("")
+    val scrollUp: MutableStateFlow<Event<Unit>> = MutableStateFlow(handledEvent())
 
     @Immutable
     data class ChannelParameters(
@@ -354,7 +352,7 @@ class PlaylistViewModel @Inject constructor(
                 started = SharingStarted.Lazily
             )
 
-    internal val channels: StateFlow<List<CategoryWithChannels>> = combine(
+    val channels: StateFlow<List<CategoryWithChannels>> = combine(
         playlistUrl,
         categories,
         query, sort
@@ -376,7 +374,7 @@ class PlaylistViewModel @Inject constructor(
                                 playlistUrl,
                                 "",
                                 query,
-                                sort.toCommonSort()
+                                sort
                             )
                         }
                             .flow
@@ -392,7 +390,7 @@ class PlaylistViewModel @Inject constructor(
                                 playlistUrl,
                                 category,
                                 query,
-                                sort.toCommonSort()
+                                sort
                             )
                         }
                             .flow
@@ -407,7 +405,7 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.Lazily
         )
 
-    internal val pinnedCategories: StateFlow<List<String>> = playlist
+    val pinnedCategories: StateFlow<List<String>> = playlist
         .map { it?.pinnedCategories ?: emptyList() }
 
         .flowOn(ioDispatcher)
@@ -417,21 +415,21 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    internal fun pinOrUnpinCategory(category: String) {
+    fun pinOrUnpinCategory(category: String) {
         val currentPlaylistUrl = playlistUrl.value
         viewModelScope.launch {
             playlistRepository.pinOrUnpinCategory(currentPlaylistUrl, category)
         }
     }
 
-    internal fun hideCategory(category: String) {
+    fun hideCategory(category: String) {
         val currentPlaylistUrl = playlistUrl.value
         viewModelScope.launch {
             playlistRepository.hideOrUnhideCategory(currentPlaylistUrl, category)
         }
     }
 
-    internal fun setup(
+    fun setup(
         channelId: Int,
         onPlayMediaCommand: (MediaCommand) -> Unit
     ) {
@@ -448,10 +446,10 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
-    internal val series = MutableStateFlow<Channel?>(null)
-    internal val seriesReplay = MutableStateFlow(0)
+    val series = MutableStateFlow<Channel?>(null)
+    val seriesReplay = MutableStateFlow(0)
 
-    internal val episodes: StateFlow<Resource<List<XtreamChannelInfo.Episode>>> = series
+    val episodes: StateFlow<Resource<List<XtreamChannelInfo.Episode>>> = series
         .combine(seriesReplay) { series, _ -> series }
         .flatMapLatest { series ->
             if (series == null) flow {}

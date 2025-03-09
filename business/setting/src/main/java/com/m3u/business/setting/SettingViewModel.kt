@@ -68,7 +68,7 @@ class SettingViewModel @Inject constructor(
 ) : ViewModel() {
     private val logger = delegate.install(Profiles.VIEWMODEL_SETTING)
 
-    internal val epgs: StateFlow<List<Playlist>> = playlistRepository
+    val epgs: StateFlow<List<Playlist>> = playlistRepository
         .observeAllEpgs()
         .stateIn(
             scope = viewModelScope,
@@ -76,7 +76,7 @@ class SettingViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    internal val hiddenChannels: StateFlow<List<Channel>> = channelRepository
+    val hiddenChannels: StateFlow<List<Channel>> = channelRepository
         .observeAllHidden()
         .stateIn(
             scope = viewModelScope,
@@ -84,7 +84,7 @@ class SettingViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    internal val hiddenCategoriesWithPlaylists: StateFlow<List<Pair<Playlist, String>>> =
+    val hiddenCategoriesWithPlaylists: StateFlow<List<Pair<Playlist, String>>> =
         playlistRepository
             .observeAll()
             .map { playlists ->
@@ -99,13 +99,13 @@ class SettingViewModel @Inject constructor(
                 started = SharingStarted.WhileSubscribed(5_000L)
             )
 
-    internal fun onUnhidePlaylistCategory(playlistUrl: String, group: String) {
+    fun onUnhidePlaylistCategory(playlistUrl: String, group: String) {
         viewModelScope.launch {
             playlistRepository.hideOrUnhideCategory(playlistUrl, group)
         }
     }
 
-    internal val colorSchemes: StateFlow<List<ColorScheme>> = combine(
+    val colorSchemes: StateFlow<List<ColorScheme>> = combine(
         colorSchemeDao.observeAll().catch { emit(emptyList()) },
         snapshotFlow { preferences.followSystemTheme }
     ) { all, followSystemTheme -> if (followSystemTheme) all.filter { !it.isDark } else all }
@@ -116,7 +116,7 @@ class SettingViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
-    internal fun onClipboard(url: String) {
+    fun onClipboard(url: String) {
         val title = run {
             val filePath = url.split("/")
             val fileSplit = filePath.lastOrNull()?.split(".") ?: emptyList()
@@ -137,7 +137,7 @@ class SettingViewModel @Inject constructor(
         }
     }
 
-    internal fun onUnhideChannel(channelId: Int) {
+    fun onUnhideChannel(channelId: Int) {
         val hidden = hiddenChannels.value.find { it.id == channelId }
         if (hidden != null) {
             viewModelScope.launch {
@@ -146,7 +146,7 @@ class SettingViewModel @Inject constructor(
         }
     }
 
-    internal fun subscribe() {
+    fun subscribe() {
         val title = titleState.value
         val url = urlState.value
         val uri = uriState.value
@@ -237,7 +237,7 @@ class SettingViewModel @Inject constructor(
         resetAllInputs()
     }
 
-    internal val backingUpOrRestoring: StateFlow<BackingUpAndRestoringState> = workManager
+    val backingUpOrRestoring: StateFlow<BackingUpAndRestoringState> = workManager
         .getWorkInfosFlow(
             WorkQuery.fromStates(
                 WorkInfo.State.RUNNING,
@@ -266,7 +266,7 @@ class SettingViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5000)
         )
 
-    internal fun backup(uri: Uri) {
+    fun backup(uri: Uri) {
         workManager.cancelAllWorkByTag(BackupWorker.TAG)
         val request = OneTimeWorkRequestBuilder<BackupWorker>()
             .setInputData(
@@ -281,7 +281,7 @@ class SettingViewModel @Inject constructor(
         messager.emit(SettingMessage.BackingUp)
     }
 
-    internal fun restore(uri: Uri) {
+    fun restore(uri: Uri) {
         workManager.cancelAllWorkByTag(RestoreWorker.TAG)
         val request = OneTimeWorkRequestBuilder<RestoreWorker>()
             .setInputData(
@@ -296,7 +296,7 @@ class SettingViewModel @Inject constructor(
         messager.emit(SettingMessage.Restoring)
     }
 
-    internal val cacheSpace: StateFlow<DataUnit> = playerManager
+    val cacheSpace: StateFlow<DataUnit> = playerManager
         .cacheSpace
         .map { DataUnit.of(it) }
         .stateIn(
@@ -315,18 +315,18 @@ class SettingViewModel @Inject constructor(
         epgState.value = ""
     }
 
-    internal fun clearCache() {
+    fun clearCache() {
         playerManager.clearCache()
     }
 
-    internal fun deleteEpgPlaylist(epgUrl: String) {
+    fun deleteEpgPlaylist(epgUrl: String) {
         viewModelScope.launch {
             playlistRepository.deleteEpgPlaylistAndProgrammes(epgUrl)
         }
     }
 
     @OptIn(ExperimentalStdlibApi::class)
-    internal fun applyColor(
+    fun applyColor(
         prev: ColorScheme?,
         argb: Int,
         isDark: Boolean
@@ -347,24 +347,24 @@ class SettingViewModel @Inject constructor(
         }
     }
 
-    internal fun restoreSchemes() {
+    fun restoreSchemes() {
         val schemes = ColorSchemeExample.schemes
         viewModelScope.launch {
             colorSchemeDao.insertAll(*schemes.toTypedArray())
         }
     }
 
-    internal val versionName: String = publisher.versionName
-    internal val versionCode: Int = publisher.versionCode
+    val versionName: String = publisher.versionName
+    val versionCode: Int = publisher.versionCode
 
-    internal val titleState = mutableStateOf("")
-    internal val urlState = mutableStateOf("")
-    internal val uriState = mutableStateOf(Uri.EMPTY)
-    internal val localStorageState = mutableStateOf(false)
-    internal val forTvState = mutableStateOf(false)
-    internal val basicUrlState = mutableStateOf("")
-    internal val usernameState = mutableStateOf("")
-    internal val passwordState = mutableStateOf("")
-    internal val epgState = mutableStateOf("")
-    internal val selectedState: MutableState<DataSource> = mutableStateOf(DataSource.M3U)
+    val titleState = mutableStateOf("")
+    val urlState = mutableStateOf("")
+    val uriState = mutableStateOf(Uri.EMPTY)
+    val localStorageState = mutableStateOf(false)
+    val forTvState = mutableStateOf(false)
+    val basicUrlState = mutableStateOf("")
+    val usernameState = mutableStateOf("")
+    val passwordState = mutableStateOf("")
+    val epgState = mutableStateOf("")
+    val selectedState: MutableState<DataSource> = mutableStateOf(DataSource.M3U)
 }

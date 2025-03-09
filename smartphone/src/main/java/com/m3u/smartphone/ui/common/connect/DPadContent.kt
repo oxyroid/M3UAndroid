@@ -18,8 +18,8 @@ import androidx.compose.ui.unit.dp
 import com.m3u.data.service.collectMessageAsState
 import com.m3u.data.tv.model.RemoteDirection
 import com.m3u.data.tv.model.TvInfo
-import com.m3u.material.model.LocalSpacing
-import com.m3u.ui.FontFamilies
+import com.m3u.smartphone.ui.material.model.LocalSpacing
+import com.m3u.smartphone.ui.material.components.FontFamilies
 
 @Composable
 @InternalComposeApi

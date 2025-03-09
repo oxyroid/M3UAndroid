@@ -6,7 +6,7 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 
 @Immutable
-internal data class PlayerState(
+data class PlayerState(
     val playState: @Player.State Int = Player.STATE_IDLE,
     val videoSize: Rect = Rect(),
     val playerError: PlaybackException? = null,

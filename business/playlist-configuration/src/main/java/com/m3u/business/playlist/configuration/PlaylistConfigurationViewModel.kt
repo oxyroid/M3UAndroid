@@ -38,7 +38,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import javax.inject.Inject
 
-internal typealias EpgManifest = Map<Playlist, Boolean>
+typealias EpgManifest = Map<Playlist, Boolean>
 
 @HiltViewModel
 class PlaylistConfigurationViewModel @Inject constructor(
@@ -53,7 +53,7 @@ class PlaylistConfigurationViewModel @Inject constructor(
     private val logger = delegate.install(Profiles.VIEWMODEL_PLAYLIST_CONFIGURATION)
     private val playlistUrl: StateFlow<String> = savedStateHandle
         .getStateFlow(PlaylistConfigurationNavigation.TYPE_PLAYLIST_URL, "")
-    internal val playlist: StateFlow<Playlist?> = playlistUrl.flatMapLatest {
+    val playlist: StateFlow<Playlist?> = playlistUrl.flatMapLatest {
         playlistRepository.observe(it)
     }
         .stateIn(
@@ -62,7 +62,7 @@ class PlaylistConfigurationViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    internal val xtreamUserInfo: StateFlow<Resource<XtreamInfo.UserInfo>> =
+    val xtreamUserInfo: StateFlow<Resource<XtreamInfo.UserInfo>> =
         playlist.map { playlist ->
             playlist ?: return@map null
             if (playlist.source != DataSource.Xtream) return@map null
@@ -81,7 +81,7 @@ class PlaylistConfigurationViewModel @Inject constructor(
                 started = SharingStarted.Lazily
             )
 
-    internal val manifest: StateFlow<EpgManifest> = combine(
+    val manifest: StateFlow<EpgManifest> = combine(
         playlistRepository.observeAllEpgs(),
         playlist
     ) { epgs, playlist ->
@@ -93,7 +93,7 @@ class PlaylistConfigurationViewModel @Inject constructor(
             started = SharingStarted.Lazily,
             initialValue = emptyMap()
         )
-    internal val subscribingOrRefreshingWorkInfo: StateFlow<WorkInfo?> = workManager
+    val subscribingOrRefreshingWorkInfo: StateFlow<WorkInfo?> = workManager
         .getWorkInfosFlow(
             WorkQuery.fromStates(
                 WorkInfo.State.RUNNING,
@@ -114,7 +114,7 @@ class PlaylistConfigurationViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    internal val expired: StateFlow<LocalDateTime?> = playlistUrl
+    val expired: StateFlow<LocalDateTime?> = playlistUrl
         .flatMapLatest { playlistUrl ->
             programmeRepository.observeProgrammeRange(playlistUrl)
         }
@@ -131,39 +131,39 @@ class PlaylistConfigurationViewModel @Inject constructor(
         )
 
 
-    internal fun onUpdatePlaylistTitle(title: String) {
+    fun onUpdatePlaylistTitle(title: String) {
         val playlistUrl = playlistUrl.value
         viewModelScope.launch {
             playlistRepository.onUpdatePlaylistTitle(playlistUrl, title)
         }
     }
 
-    internal fun onUpdatePlaylistUserAgent(userAgent: String?) {
+    fun onUpdatePlaylistUserAgent(userAgent: String?) {
         val playlistUrl = playlistUrl.value
         viewModelScope.launch {
             playlistRepository.onUpdatePlaylistUserAgent(playlistUrl, userAgent)
         }
     }
 
-    internal fun onUpdateEpgPlaylist(usecase: PlaylistRepository.EpgPlaylistUseCase) {
+    fun onUpdateEpgPlaylist(usecase: PlaylistRepository.EpgPlaylistUseCase) {
         viewModelScope.launch {
             playlistRepository.onUpdateEpgPlaylist(usecase)
         }
     }
 
-    internal fun onUpdatePlaylistAutoRefreshProgrammes() {
+    fun onUpdatePlaylistAutoRefreshProgrammes() {
         val playlistUrl = playlistUrl.value
         viewModelScope.launch {
             playlistRepository.onUpdatePlaylistAutoRefreshProgrammes(playlistUrl)
         }
     }
 
-    internal fun onSyncProgrammes() {
+    fun onSyncProgrammes() {
         val playlistUrl = playlistUrl.value
         SubscriptionWorker.epg(workManager, playlistUrl, true)
     }
 
-    internal fun onCancelSyncProgrammes() {
+    fun onCancelSyncProgrammes() {
         val workInfo = subscribingOrRefreshingWorkInfo.value
         workInfo?.id?.let { workManager.cancelWorkById(it) }
     }

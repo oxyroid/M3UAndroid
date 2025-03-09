@@ -1,6 +1,6 @@
 package com.m3u.business.setting
 
-internal enum class BackingUpAndRestoringState {
+enum class BackingUpAndRestoringState {
     NONE, BACKING_UP, RESTORING, BOTH;
 
     companion object {

@@ -41,7 +41,7 @@ import com.m3u.smartphone.R
 import com.m3u.core.Contracts
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Programme
-import com.m3u.ui.util.TimeUtils.formatEOrSh
+import com.m3u.smartphone.TimeUtils.formatEOrSh
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone

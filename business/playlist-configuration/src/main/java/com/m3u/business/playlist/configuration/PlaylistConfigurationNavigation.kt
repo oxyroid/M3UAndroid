@@ -16,7 +16,7 @@ import androidx.navigation.navArgument
 private const val PLAYLIST_CONFIGURATION_ROUTE_PATH = "playlist_configuration_route"
 
 object PlaylistConfigurationNavigation {
-    internal const val TYPE_PLAYLIST_URL = "playlist_url"
+    const val TYPE_PLAYLIST_URL = "playlist_url"
 
     const val PLAYLIST_CONFIGURATION_ROUTE =
         "$PLAYLIST_CONFIGURATION_ROUTE_PATH?$TYPE_PLAYLIST_URL={$TYPE_PLAYLIST_URL}"
@@ -33,26 +33,4 @@ fun NavController.navigateToPlaylistConfiguration(
     val encodedUrl = Uri.encode(playlistUrl)
     val route = PlaylistConfigurationNavigation.createPlaylistConfigurationRoute(encodedUrl)
     this.navigate(route, navOptions)
-}
-
-
-fun NavGraphBuilder.playlistConfigurationScreen(
-    contentPadding: PaddingValues = PaddingValues(),
-) {
-    composable(
-        route = PlaylistConfigurationNavigation.PLAYLIST_CONFIGURATION_ROUTE,
-        arguments = listOf(
-            navArgument(PlaylistConfigurationNavigation.TYPE_PLAYLIST_URL) {
-                type = NavType.StringType
-            }
-        ),
-        enterTransition = { slideInVertically { it } },
-        exitTransition = { fadeOut() },
-        popEnterTransition = { fadeIn() },
-        popExitTransition = { slideOutVertically { it } }
-    ) {
-        PlaylistConfigurationRoute(
-            contentPadding = contentPadding
-        )
-    }
 }

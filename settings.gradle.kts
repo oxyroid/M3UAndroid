@@ -18,16 +18,13 @@ rootProject.name = "M3U"
 include(":smartphone", ":tv")
 include(":core")
 include(":data")
-include(":material")
-include(":ui")
 include(
     ":business:foryou",
     ":business:favorite",
     ":business:setting",
     ":business:playlist",
     ":business:playlist-configuration",
-    ":business:channel",
-    ":business:crash"
+    ":business:channel"
 )
 include(":baselineprofile")
 include(":i18n")

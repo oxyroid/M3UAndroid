@@ -55,7 +55,6 @@ ktor-server = "3.0.0-beta-1"
 mm2d-mmupnp = "3.1.6"
 symbolProcessingApi = "2.0.0-1.0.22"
 profileinstaller = "1.4.1"
-tvFoundation = "1.0.0-alpha12"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
@@ -123,6 +122,7 @@ androidx-tvprovider = { group = "androidx.tvprovider", name = "tvprovider", vers
 
 auto-service-annotations = { module = "com.google.auto.service:auto-service-annotations", version.ref = "autoServiceAnnotations" }
 auto-service-ksp = { module = "dev.zacsweers.autoservice:auto-service-ksp", version.ref = "autoServiceKsp" }
+
 google-accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "google-accompanist" }
 
 google-dagger-hilt = { group = "com.google.dagger", name = "hilt-android", version.ref = "google-dagger" }
@@ -166,14 +166,9 @@ slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j-api" }
 
 minabox = { group = "io.github.oleksandrbalan", name = "minabox", version.ref = "minabox" }
 net-mm2d-mmupnp-mmupnp = { group = "net.mm2d.mmupnp", name = "mmupnp", version.ref = "mm2d-mmupnp" }
-androidx-graphics-shapes-android = { group = "androidx.graphics", name = "graphics-shapes-android", version.ref = "androidx-graphics-shapes" }
+androidx-graphics-shapes = { group = "androidx.graphics", name = "graphics-shapes-android", version.ref = "androidx-graphics-shapes" }
 symbol-processing-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "symbolProcessingApi" }
 androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
-androidx-ui = { group = "androidx.compose.ui", name = "ui" }
-androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
-androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
-androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
-androidx-tv-foundation = { group = "androidx.tv", name = "tv-foundation", version.ref = "tvFoundation" }
 
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }

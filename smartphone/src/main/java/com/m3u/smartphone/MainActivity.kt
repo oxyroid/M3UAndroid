@@ -9,9 +9,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.m3u.smartphone.ui.App
 import com.m3u.smartphone.ui.AppViewModel
-import com.m3u.ui.Events.enableDPadReaction
-import com.m3u.ui.Toolkit
-import com.m3u.ui.helper.Helper
+import com.m3u.smartphone.ui.common.helper.Helper
+import com.m3u.smartphone.ui.common.internal.Events.enableDPadReaction
+import com.m3u.smartphone.ui.common.internal.Toolkit
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

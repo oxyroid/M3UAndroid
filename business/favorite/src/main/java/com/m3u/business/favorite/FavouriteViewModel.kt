@@ -18,6 +18,7 @@ import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.core.wrapper.Resource
+import com.m3u.core.wrapper.Sort
 import com.m3u.core.wrapper.asResource
 import com.m3u.core.wrapper.mapResource
 import com.m3u.core.wrapper.resource
@@ -29,7 +30,6 @@ import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.PlayerManager
-import com.m3u.ui.Sort
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -161,9 +161,9 @@ class FavouriteViewModel @Inject constructor(
         }
     }
 
-    internal val series = MutableStateFlow<Channel?>(null)
-    internal val seriesReplay = MutableStateFlow(0)
-    internal val episodes: StateFlow<Resource<List<XtreamChannelInfo.Episode>>> = series
+    val series = MutableStateFlow<Channel?>(null)
+    val seriesReplay = MutableStateFlow(0)
+    val episodes: StateFlow<Resource<List<XtreamChannelInfo.Episode>>> = series
         .combine(seriesReplay) { series, _ -> series }
         .flatMapLatest { series ->
             if (series == null) flow { }
@@ -177,10 +177,10 @@ class FavouriteViewModel @Inject constructor(
             started = SharingStarted.Lazily
         )
 
-    internal suspend fun getPlaylist(playlistUrl: String): Playlist? =
+    suspend fun getPlaylist(playlistUrl: String): Playlist? =
         playlistRepository.get(playlistUrl)
 
-    internal fun playRandomly() {
+    fun playRandomly() {
         viewModelScope.launch {
             val channel = channelRepository.getRandomIgnoreSeriesAndHidden() ?: return@launch
             playerManager.play(

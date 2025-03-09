@@ -22,7 +22,7 @@ android {
 
 dependencies {
     implementation(project(":core"))
-    implementation(project(":ui"))
+    implementation(project(":data"))
 
     implementation(libs.androidx.core.ktx)
 
@@ -39,6 +39,5 @@ dependencies {
     ksp(libs.androidx.hilt.compiler)
     implementation(libs.androidx.hilt.work)
 
-    implementation(libs.minabox)
     implementation(libs.net.mm2d.mmupnp.mmupnp)
 }

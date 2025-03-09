@@ -21,7 +21,7 @@ android {
 
 dependencies {
     implementation(project(":core"))
-    implementation(project(":ui"))
+    implementation(project(":data"))
 
     implementation(libs.androidx.core.ktx)
 
@@ -35,8 +35,4 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     ksp(libs.androidx.hilt.compiler)
     implementation(libs.androidx.hilt.work)
-
-    implementation(libs.androidx.compose.material3.adaptive)
-    implementation(libs.androidx.compose.material3.adaptive.navigation)
-    implementation(libs.androidx.compose.material3.adaptive.layout)
 }

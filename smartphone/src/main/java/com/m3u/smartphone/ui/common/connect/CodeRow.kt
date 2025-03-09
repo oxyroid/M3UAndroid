@@ -22,7 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.m3u.material.model.LocalSpacing
+import com.m3u.smartphone.ui.material.model.LocalSpacing
 
 @Composable
 internal fun CodeRow(

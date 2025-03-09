@@ -21,14 +21,12 @@ android {
 
 dependencies {
     implementation(project(":core"))
-    implementation(project(":ui"))
+    implementation(project(":data"))
 
     implementation(libs.androidx.core.ktx)
 
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
-
-    implementation(libs.airbnb.lottie.compose)
 
     implementation(libs.google.dagger.hilt)
     implementation(libs.androidx.hilt.navigation.compose)

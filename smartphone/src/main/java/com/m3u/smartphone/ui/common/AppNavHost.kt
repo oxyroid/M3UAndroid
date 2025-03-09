@@ -12,16 +12,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
+import com.m3u.business.playlist.configuration.navigateToPlaylistConfiguration
+import com.m3u.business.playlist.navigateToPlaylist
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.wrapper.eventOf
-import com.m3u.business.playlist.configuration.navigateToPlaylistConfiguration
-import com.m3u.business.playlist.configuration.playlistConfigurationScreen
-import com.m3u.business.playlist.navigation.navigateToPlaylist
-import com.m3u.business.playlist.navigation.playlistScreen
-import com.m3u.business.channel.PlayerActivity
-import com.m3u.ui.Destination
-import com.m3u.ui.Events
-import com.m3u.ui.SettingDestination
+import com.m3u.smartphone.ui.business.channel.PlayerActivity
+import com.m3u.smartphone.ui.business.configuration.playlistConfigurationScreen
+import com.m3u.smartphone.ui.business.playlist.playlistScreen
+import com.m3u.smartphone.ui.common.internal.Events
+import com.m3u.smartphone.ui.material.components.Destination
+import com.m3u.smartphone.ui.material.components.SettingDestination
 
 @Composable
 fun AppNavHost(
