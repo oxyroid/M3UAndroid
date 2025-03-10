@@ -1,5 +1,4 @@
 @file:Suppress("unused")
-
 package com.m3u.data.parser
 
 import com.m3u.data.parser.epg.EpgParser

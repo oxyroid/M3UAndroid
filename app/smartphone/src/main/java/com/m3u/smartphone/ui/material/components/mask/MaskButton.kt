@@ -12,6 +12,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.ui.graphics.takeOrElse
 
 @Composable
 fun MaskButton(
@@ -39,12 +42,14 @@ fun MaskButton(
                 onClick()
             },
             enabled = enabled,
+            colors = IconButtonDefaults.iconButtonColors(
+                contentColor = tint.takeOrElse { LocalContentColor.current }
+            ),
             modifier = modifier
         ) {
             Icon(
                 imageVector = icon,
-                contentDescription = contentDescription,
-                tint = tint
+                contentDescription = contentDescription
             )
         }
     }

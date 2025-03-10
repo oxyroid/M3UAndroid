@@ -1,5 +1,4 @@
 @file:Suppress("unused")
-
 package com.m3u.data.api.dto.github
 
 import kotlinx.serialization.SerialName

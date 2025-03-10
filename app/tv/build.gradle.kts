@@ -1,6 +1,3 @@
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-
 plugins {
     alias(libs.plugins.com.android.application)
     alias(libs.plugins.org.jetbrains.kotlin.android)
@@ -64,40 +61,63 @@ baselineProfile {
 
 dependencies {
     implementation(project(":core"))
-    
+    implementation(project(":data"))
+    // business
     implementation(project(":business:foryou"))
     implementation(project(":business:favorite"))
     implementation(project(":business:setting"))
     implementation(project(":business:playlist"))
     implementation(project(":business:channel"))
     implementation(project(":business:playlist-configuration"))
-//    implementation(libs.androidx.profileinstaller)
+    // baselineprofile
+    implementation(libs.androidx.profileinstaller)
 //    "baselineProfile"(project(":baselineprofile"))
-
-    // tv
-    api(libs.androidx.tv.material)
-
+    // base
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.startup.runtime)
-
+    implementation(libs.androidx.core.splashscreen)
+    implementation(libs.google.material)
+    // lifecycle
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.process)
-
-    implementation(libs.androidx.core.splashscreen)
-
+    // work
+    implementation(libs.androidx.work.runtime.ktx)
+    // dagger
     implementation(libs.google.dagger.hilt)
     ksp(libs.google.dagger.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
-
-    implementation(libs.androidx.work.runtime.ktx)
     ksp(libs.androidx.hilt.compiler)
     implementation(libs.androidx.hilt.work)
-
+    // compose
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.foundation.layout)
+    implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.androidx.compose.runtime)
+    implementation(libs.androidx.compose.ui.util)
+    implementation(libs.androidx.navigation.compose)
+    // tv
+    api(libs.androidx.tv.material)
+    // glance
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.androidx.glance.material3)
-
+    // accompanist
+    implementation(libs.google.accompanist.permissions)
+    // performance
     debugImplementation(libs.squareup.leakcanary)
+    // other
+    implementation(libs.androidx.graphics.shapes)
+    implementation(libs.androidx.constraintlayout.compose)
+    implementation(libs.io.coil.kt)
+    implementation(libs.io.coil.kt.compose)
+    implementation(libs.androidx.media3.ui)
+    implementation(libs.androidx.media3.ui.compose)
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.airbnb.lottie.compose)
+    implementation(libs.minabox)
+    implementation(libs.net.mm2d.mmupnp.mmupnp)
+    implementation(libs.haze)
 }

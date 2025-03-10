@@ -120,7 +120,7 @@ fun XtreamVod.toChannel(
     playlistUrl: String,
     category: String
 ): Channel = Channel(
-    url = "$basicUrl/movie/$username/$password/$streamId.${containerExtension}",
+    url = "$basicUrl/channel/$username/$password/$streamId.${containerExtension}",
     category = category,
     title = name.orEmpty(),
     cover = streamIcon,

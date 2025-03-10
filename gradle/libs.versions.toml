@@ -10,7 +10,7 @@ androidx-constraintlayout-compose = "1.1.0"
 androidx-navigation = "2.8.7"
 androidx-hilt = "1.2.0"
 androidx-tv = "1.0.0"
-androidx-media3 = "1.5.1"
+androidx-media3 = "1.6.0-beta01"
 androidx-work = "2.10.0"
 androidx-room = "2.6.1"
 androidx-tvprovider = "1.0.0"
@@ -99,6 +99,7 @@ androidx-hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref 
 androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "androidx-hilt" }
 
 androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "androidx-media3" }
+androidx-media3-ui-compose = { group = "androidx.media3", name = "media3-ui-compose", version.ref = "androidx-media3" }
 androidx-media3-session = { group = "androidx.media3", name = "media3-session", version.ref = "androidx-media3" }
 androidx-media3-container = { group = "androidx.media3", name = "media3-container", version.ref = "androidx-media3" }
 androidx-media3-extractor = { group = "androidx.media3", name = "media3-extractor", version.ref = "androidx-media3" }

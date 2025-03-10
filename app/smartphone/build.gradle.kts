@@ -178,6 +178,7 @@ dependencies {
     implementation(libs.io.coil.kt)
     implementation(libs.io.coil.kt.compose)
     implementation(libs.androidx.media3.ui)
+    implementation(libs.androidx.media3.ui.compose)
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.airbnb.lottie.compose)
     implementation(libs.minabox)

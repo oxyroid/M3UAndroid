@@ -1,5 +1,4 @@
 @file:Suppress("unused")
-
 package com.m3u.core.util.basic
 
 import androidx.compose.ui.text.capitalize
