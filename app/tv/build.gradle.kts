@@ -61,6 +61,7 @@ baselineProfile {
 
 dependencies {
     implementation(project(":core"))
+    implementation(project(":core:foundation"))
     implementation(project(":data"))
     // business
     implementation(project(":business:foryou"))
@@ -101,9 +102,6 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     // tv
     api(libs.androidx.tv.material)
-    // glance
-    implementation(libs.androidx.glance.appwidget)
-    implementation(libs.androidx.glance.material3)
     // accompanist
     implementation(libs.google.accompanist.permissions)
     // performance

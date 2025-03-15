@@ -1,4 +1,4 @@
-package com.m3u.smartphone.ui.material.components
+package com.m3u.core.foundation.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size

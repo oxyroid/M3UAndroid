@@ -19,7 +19,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.offset
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastMap
-import com.m3u.smartphone.ui.material.ktx.thenIf
+import com.m3u.core.foundation.ui.thenIf
 import kotlin.math.roundToInt
 
 enum class PullPanelLayoutValue {

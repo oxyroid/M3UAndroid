@@ -1,4 +1,4 @@
-package com.m3u.tv.screens.movies
+package com.m3u.tv.screens.playlist
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background

@@ -1,4 +1,4 @@
-package com.m3u.tv.screens.movies
+package com.m3u.tv.screens.playlist
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
@@ -37,14 +37,13 @@ import androidx.tv.material3.Text
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.m3u.data.database.model.Channel
-import com.m3u.tv.screens.channels.DotSeparatedRow
 import com.m3u.tv.screens.dashboard.rememberChildPadding
 import com.m3u.tv.theme.JetStreamButtonShape
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun Channel(
+fun ChannelDetail(
     channel: Channel,
     goToChannelPlayer: () -> Unit
 ) {
@@ -114,7 +113,7 @@ private fun WatchTrailerButton(
         )
         Spacer(Modifier.size(8.dp))
         Text(
-            text = "stringResource(R.string.watch_trailer)",
+            text = "Play Now",
             style = MaterialTheme.typography.titleSmall
         )
     }

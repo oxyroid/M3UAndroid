@@ -43,7 +43,7 @@ import androidx.navigation.compose.rememberNavController
 import com.m3u.data.database.model.Channel
 import com.m3u.tv.screens.Screens
 import com.m3u.tv.screens.home.HomeScreen
-import com.m3u.tv.screens.channels.ChannelsScreen
+import com.m3u.tv.screens.playlist.PlaylistScreen
 import com.m3u.tv.screens.profile.ProfileScreen
 import com.m3u.tv.screens.search.SearchScreen
 import com.m3u.tv.screens.shows.ShowsScreen
@@ -161,7 +161,9 @@ fun DashboardScreen(
                 ),
             selectedTabIndex = currentTopBarSelectedTabIndex,
         ) { screen ->
-            navController.navigate(screen()) {
+            val currentRoute = screen()
+            if (navController.currentDestination?.route == currentRoute) return@DashboardTopBar
+            navController.navigate(currentRoute) {
                 if (screen == TopBarTabs[0]) popUpTo(TopBarTabs[0].invoke())
                 launchSingleTop = true
             }
@@ -183,7 +185,7 @@ private fun BackPressHandledArea(
     onBackPressed: () -> Unit,
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit,
-) =
+) {
     Box(
         modifier = Modifier
             .onPreviewKeyEvent {
@@ -197,6 +199,7 @@ private fun BackPressHandledArea(
             .then(modifier),
         content = content
     )
+}
 
 @Composable
 private fun Body(
@@ -206,7 +209,7 @@ private fun Body(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
     isTopBarVisible: Boolean = true,
-) =
+) {
     NavHost(
         modifier = modifier,
         navController = navController,
@@ -219,13 +222,18 @@ private fun Body(
             HomeScreen(
                 onChannelClick = { selectedChannel ->
                 },
+                goToChannel = { playlistUrl ->
+                    navController.navigate(
+                        Screens.Channels()
+                    )
+                },
                 goToVideoPlayer = openVideoPlayer,
                 onScroll = updateTopBarVisibility,
                 isTopBarVisible = isTopBarVisible
             )
         }
         composable(Screens.Channels()) {
-            ChannelsScreen(
+            PlaylistScreen(
                 onChannelClick = { channel -> openChannelScreen(channel.id.toString()) },
                 onScroll = updateTopBarVisibility,
                 isTopBarVisible = isTopBarVisible
@@ -245,3 +253,4 @@ private fun Body(
             )
         }
     }
+}

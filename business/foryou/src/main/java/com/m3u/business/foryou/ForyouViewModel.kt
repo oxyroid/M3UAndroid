@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkQuery
-import com.m3u.business.foryou.Recommend
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
@@ -40,6 +39,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import javax.inject.Inject
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
@@ -58,7 +58,14 @@ class ForyouViewModel @Inject constructor(
 ) : ViewModel() {
     private val logger = delegate.install(Profiles.VIEWMODEL_FORYOU)
 
-    val playlistCounts: StateFlow<Resource<List<PlaylistWithCount>>> =
+    init {
+        SubscriptionWorker.m3u(
+            workManager,
+            "PL_${Clock.System.now().toEpochMilliseconds()}",
+            "https://tv.iill.top/m3u/Live"
+        )
+    }
+    val playlists: StateFlow<Resource<List<PlaylistWithCount>>> =
         playlistRepository
             .observeAllCounts()
             .asResource()

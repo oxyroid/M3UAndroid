@@ -1,4 +1,4 @@
-package com.m3u.tv.screens.channels
+package com.m3u.tv.screens.playlist
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box

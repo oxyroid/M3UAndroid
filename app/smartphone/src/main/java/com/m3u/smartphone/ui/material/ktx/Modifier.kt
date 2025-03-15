@@ -10,10 +10,6 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.Color
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 
-inline fun Modifier.thenIf(condition: Boolean, factory: () -> Modifier): Modifier = then(
-    if (condition) factory() else Modifier
-)
-
 @Composable
 fun Modifier.textHorizontalLabel(
     color: Color = MaterialTheme.colorScheme.primary

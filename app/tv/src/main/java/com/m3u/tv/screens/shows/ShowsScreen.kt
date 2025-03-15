@@ -18,7 +18,6 @@ import com.m3u.data.database.model.Channel
 import com.m3u.tv.common.ChannelsRow
 import com.m3u.tv.common.Loading
 import com.m3u.tv.screens.dashboard.rememberChildPadding
-import com.m3u.tv.screens.movies.ChannelsScreenList
 
 @Composable
 fun ShowsScreen(
@@ -78,10 +77,10 @@ private fun Catalog(
         contentPadding = PaddingValues(top = childPadding.top, bottom = 104.dp)
     ) {
         item {
-            ChannelsScreenList(
-                channels = tvShowList,
-                onChannelClick = onTVShowClick
-            )
+//            ChannelsScreenList(
+//                channels = tvShowList,
+//                onChannelClick = onTVShowClick
+//            )
         }
         item {
             ChannelsRow(

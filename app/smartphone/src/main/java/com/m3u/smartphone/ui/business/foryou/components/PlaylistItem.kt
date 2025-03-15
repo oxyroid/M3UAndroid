@@ -26,7 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.m3u.smartphone.ui.material.components.CircularProgressIndicator
+import com.m3u.core.foundation.components.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.smartphone.ui.material.shape.AbsoluteSmoothCornerShape

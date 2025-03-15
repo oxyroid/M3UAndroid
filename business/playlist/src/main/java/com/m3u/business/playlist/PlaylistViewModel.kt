@@ -98,7 +98,7 @@ class PlaylistViewModel @Inject constructor(
     private val logger = delegate.install(Profiles.VIEWMODEL_PLAYLIST)
 
     val playlistUrl: StateFlow<String> = savedStateHandle
-        .getStateFlow(PlaylistNavigation.TYPE_URL, "")
+        .getStateFlow(PlaylistNavigation.TYPE_URL, "https://tv.iill.top/m3u/Live")
 
     val playlist: StateFlow<Playlist?> = playlistUrl.flatMapLatest {
         playlistRepository.observe(it)
@@ -346,6 +346,7 @@ class PlaylistViewModel @Inject constructor(
                     flow.drop(1).debounce(1.seconds)
                 )
             }
+            .flowOn(ioDispatcher)
             .stateIn(
                 scope = viewModelScope,
                 initialValue = emptyList(),
@@ -399,6 +400,7 @@ class PlaylistViewModel @Inject constructor(
                 }
             }
         }
+        .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
             initialValue = emptyList(),
@@ -407,7 +409,6 @@ class PlaylistViewModel @Inject constructor(
 
     val pinnedCategories: StateFlow<List<String>> = playlist
         .map { it?.pinnedCategories ?: emptyList() }
-
         .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,

@@ -44,7 +44,7 @@ import com.m3u.data.service.MediaCommand
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.material.ktx.composableOf
 import com.m3u.smartphone.ui.material.ktx.interceptVolumeEvent
-import com.m3u.smartphone.ui.material.ktx.thenIf
+import com.m3u.core.foundation.ui.thenIf
 import com.m3u.smartphone.ui.business.foryou.components.HeadlineBackground
 import com.m3u.smartphone.ui.business.foryou.components.PlaylistGallery
 import com.m3u.smartphone.ui.business.foryou.components.recommend.RecommendGallery
@@ -74,7 +74,7 @@ fun ForyouRoute(
 
     val title = stringResource(string.ui_title_foryou)
 
-    val playlistCounts by viewModel.playlistCounts.collectAsStateWithLifecycle()
+    val playlists by viewModel.playlists.collectAsStateWithLifecycle()
     val specs by viewModel.specs.collectAsStateWithLifecycle()
     val episodes by viewModel.episodes.collectAsStateWithLifecycle()
 
@@ -101,7 +101,7 @@ fun ForyouRoute(
     }
 
     ForyouScreen(
-        playlistCounts = playlistCounts,
+        playlists = playlists,
         subscribingPlaylistUrls = subscribingPlaylistUrls,
         refreshingEpgUrls = refreshingEpgUrls,
         specs = specs,
@@ -163,7 +163,7 @@ fun ForyouRoute(
 @Composable
 private fun ForyouScreen(
     rowCount: Int,
-    playlistCounts: Resource<List<PlaylistWithCount>>,
+    playlists: Resource<List<PlaylistWithCount>>,
     subscribingPlaylistUrls: List<String>,
     refreshingEpgUrls: List<String>,
     specs: List<Recommend.Spec>,
@@ -204,7 +204,7 @@ private fun ForyouScreen(
 
     Box(modifier) {
         HeadlineBackground()
-        when (playlistCounts) {
+        when (playlists) {
             Resource.Loading -> {
                 LinearProgressIndicator(
                     modifier = Modifier
@@ -225,7 +225,7 @@ private fun ForyouScreen(
                 }
                 PlaylistGallery(
                     rowCount = actualRowCount,
-                    playlistCounts = playlistCounts.data,
+                    playlists = playlists.data,
                     subscribingPlaylistUrls = subscribingPlaylistUrls,
                     refreshingEpgUrls = refreshingEpgUrls,
                     onClick = navigateToPlaylist,
@@ -249,7 +249,7 @@ private fun ForyouScreen(
 
             is Resource.Failure -> {
                 Text(
-                    text = playlistCounts.message.orEmpty(),
+                    text = playlists.message.orEmpty(),
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.align(Alignment.Center)
                 )

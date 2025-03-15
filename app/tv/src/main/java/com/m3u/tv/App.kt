@@ -4,23 +4,29 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.m3u.data.service.MediaCommand
 import com.m3u.tv.screens.Screens
 import com.m3u.tv.screens.dashboard.DashboardScreen
-import com.m3u.tv.screens.movies.ChannelScreen
+import com.m3u.tv.screens.playlist.ChannelScreen
+import com.m3u.tv.screens.playlist.ChannelDetailScreen
 import com.m3u.tv.screens.videoPlayer.VideoPlayerScreen
+import com.m3u.tv.utils.LocalHelper
+import kotlinx.coroutines.launch
 
 @Composable
 fun App(
     onBackPressed: () -> Unit
 ) {
-
+    val helper = LocalHelper.current
     val navController = rememberNavController()
+    val coroutineScope = rememberCoroutineScope()
     var isComingBackFromDifferentScreen by remember { mutableStateOf(false) }
 
     NavHost(
@@ -35,7 +41,7 @@ fun App(
                     }
                 )
             ) {
-                ChannelScreen(
+                ChannelDetailScreen(
                     goToChannelPlayer = {
                         navController.navigate(Screens.VideoPlayer())
                     },
@@ -63,7 +69,10 @@ fun App(
                         )
                     },
                     openVideoPlayer = {
-                        navController.navigate(Screens.VideoPlayer())
+                        coroutineScope.launch {
+                            helper.play(MediaCommand.Common(it.id))
+                            navController.navigate(Screens.VideoPlayer())
+                        }
                     },
                     onBackPressed = onBackPressed,
                     isComingBackFromDifferentScreen = isComingBackFromDifferentScreen,

@@ -10,7 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import com.m3u.smartphone.ui.material.ktx.thenIf
+import com.m3u.core.foundation.ui.thenIf
 import com.m3u.smartphone.ui.business.channel.ChannelMaskUtils.detectVerticalGesture
 
 @Composable

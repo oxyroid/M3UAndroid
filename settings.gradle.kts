@@ -33,3 +33,4 @@ include(
     ":lint:annotation",
     ":lint:processor"
 )
+include(":core:foundation")

@@ -1,6 +1,5 @@
-package com.m3u.tv.screens.movies
+package com.m3u.tv.screens.playlist
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
@@ -11,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
@@ -18,7 +18,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
@@ -28,47 +27,45 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.tv.material3.Border
 import androidx.tv.material3.CardDefaults
 import androidx.tv.material3.CompactCard
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil.compose.AsyncImage
+import com.m3u.business.playlist.PlaylistViewModel
 import com.m3u.data.database.model.Channel
-import com.m3u.tv.screens.dashboard.rememberChildPadding
 import com.m3u.tv.theme.JetStreamBorderWidth
 
-@OptIn(ExperimentalComposeUiApi::class)
-@Composable
-fun ChannelsScreenList(
-    modifier: Modifier = Modifier,
-    channels: List<Channel>,
-    startPadding: Dp = rememberChildPadding().start,
-    endPadding: Dp = rememberChildPadding().end,
+fun LazyListScope.channelGallery(
+    channels: List<PlaylistViewModel.CategoryWithChannels>,
+    startPadding: Dp,
+    endPadding: Dp,
     onChannelClick: (channel: Channel) -> Unit
 ) {
-    AnimatedContent(
-        modifier = modifier,
-        targetState = channels,
-        label = "",
-    ) { channelsTarget ->
+    items(channels) { (category, channels) ->
+        val pagingChannels = channels.collectAsLazyPagingItems()
         LazyRow(
             modifier = Modifier.focusRestorer(),
-            contentPadding = PaddingValues(start = startPadding, end = endPadding)
+            contentPadding = PaddingValues(start = startPadding, end = endPadding),
         ) {
-            items(channelsTarget) {
-                ChannelListItem(
-                    itemWidth = 432.dp,
-                    onChannelClick = onChannelClick,
-                    channel = it,
-                )
+            items(pagingChannels.itemCount) {
+                val channel = pagingChannels[it]
+                if (channel != null) {
+                    ChannelGalleryItem(
+                        itemWidth = 432.dp,
+                        onChannelClick = onChannelClick,
+                        channel = channel,
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun ChannelListItem(
+private fun ChannelGalleryItem(
     itemWidth: Dp,
     channel: Channel,
     modifier: Modifier = Modifier,

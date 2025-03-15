@@ -17,7 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.m3u.smartphone.ui.material.ktx.Edge
 import com.m3u.smartphone.ui.material.ktx.blurEdges
-import com.m3u.smartphone.ui.material.ktx.thenIf
+import com.m3u.core.foundation.ui.thenIf
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 
 @Composable

@@ -23,7 +23,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalHapticFeedback
 import com.m3u.smartphone.ui.material.components.OuterColumn
-import com.m3u.smartphone.ui.material.ktx.thenIf
+import com.m3u.core.foundation.ui.thenIf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach

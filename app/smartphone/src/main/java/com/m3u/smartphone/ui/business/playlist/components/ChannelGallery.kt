@@ -23,7 +23,7 @@ import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Programme
 import com.m3u.business.playlist.PlaylistViewModel
-import com.m3u.smartphone.ui.material.components.CircularProgressIndicator
+import com.m3u.core.foundation.components.CircularProgressIndicator
 import com.m3u.smartphone.ui.material.components.VerticalDraggableScrollbar
 import com.m3u.smartphone.ui.material.ktx.plus
 import com.m3u.smartphone.ui.material.model.LocalSpacing

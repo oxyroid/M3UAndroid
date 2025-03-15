@@ -35,7 +35,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -50,6 +49,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ShapeDefaults
 import androidx.tv.material3.Text
 import coil.compose.AsyncImage
+import com.m3u.business.foryou.Recommend
 import com.m3u.data.database.model.Channel
 import com.m3u.tv.theme.JetStreamBorderWidth
 import com.m3u.tv.theme.JetStreamButtonShape
@@ -64,10 +64,10 @@ val CarouselSaver = Saver<CarouselState, Int>(
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-fun FeaturedChannelsCarousel(
-    channels: List<Channel>,
+fun FeaturedSpecsCarousel(
+    specs: List<Recommend.Spec>,
     padding: Padding,
-    goToVideoPlayer: (channel: Channel) -> Unit,
+    onClickSpec: (Recommend.Spec) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val carouselState = rememberSaveable(saver = CarouselSaver) { CarouselState(0) }
@@ -96,13 +96,13 @@ fun FeaturedChannelsCarousel(
                     "StringConstants.Composable.ContentDescription.ChannelsCarousel"
             }
             .handleDPadKeyEvents(onEnter = {
-                goToVideoPlayer(channels[carouselState.activeItemIndex])
+                onClickSpec(specs[carouselState.activeItemIndex])
             }),
-        itemCount = channels.size,
+        itemCount = specs.size,
         carouselState = carouselState,
         carouselIndicator = {
             CarouselIndicator(
-                itemCount = channels.size,
+                itemCount = specs.size,
                 activeItemIndex = carouselState.activeItemIndex
             )
         },
@@ -111,15 +111,24 @@ fun FeaturedChannelsCarousel(
         contentTransformEndToStart = fadeIn(tween(durationMillis = 1000))
             .togetherWith(fadeOut(tween(durationMillis = 1000))),
         content = { index ->
-            val channel = channels[index]
-            // background
-            CarouselItemBackground(channel = channel, modifier = Modifier.fillMaxSize())
-            // foreground
-            CarouselItemForeground(
-                channel = channel,
-                isCarouselFocused = isCarouselFocused,
-                modifier = Modifier.fillMaxSize()
-            )
+            val spec = specs[index]
+            when (spec) {
+                is Recommend.UnseenSpec -> {
+                    // background
+                    CarouselItemBackground(
+                        channel = spec.channel,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    // foreground
+                    CarouselItemForeground(
+                        channel = spec.channel,
+                        isCarouselFocused = isCarouselFocused,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+                is Recommend.DiscoverSpec -> TODO()
+                is Recommend.NewRelease -> TODO()
+            }
         }
     )
 }
@@ -244,7 +253,7 @@ private fun WatchNowButton() {
         )
         Spacer(Modifier.size(8.dp))
         Text(
-            text = "stringResource(R.string.watch_now)",
+            text = "Watch Now",
             style = MaterialTheme.typography.titleSmall
         )
     }

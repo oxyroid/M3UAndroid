@@ -7,8 +7,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.compose.state.PlayPauseButtonState
 import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
 import kotlinx.coroutines.FlowPreview
@@ -65,10 +65,10 @@ class VideoPlayerState(
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun rememberVideoPlayerState(
-    exoPlayer: ExoPlayer,
+    player: Player,
     @IntRange(from = 0) hideSeconds: Int = 2
 ): VideoPlayerState {
-    val playPauseButtonState = rememberPlayPauseButtonState(exoPlayer)
+    val playPauseButtonState = rememberPlayPauseButtonState(player)
     return remember(playPauseButtonState) {
         VideoPlayerState(
             hideSeconds = hideSeconds,

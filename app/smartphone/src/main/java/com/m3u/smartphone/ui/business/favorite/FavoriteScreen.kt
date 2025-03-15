@@ -34,7 +34,7 @@ import com.m3u.data.service.MediaCommand
 import com.m3u.core.wrapper.Sort
 import com.m3u.i18n.R
 import com.m3u.smartphone.ui.material.ktx.interceptVolumeEvent
-import com.m3u.smartphone.ui.material.ktx.thenIf
+import com.m3u.core.foundation.ui.thenIf
 import com.m3u.smartphone.ui.material.model.LocalHazeState
 import com.m3u.smartphone.ui.business.favorite.components.FavouriteGallery
 import com.m3u.smartphone.ui.material.components.EpisodesBottomSheet

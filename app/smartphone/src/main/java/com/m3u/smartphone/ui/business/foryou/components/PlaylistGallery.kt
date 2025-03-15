@@ -46,7 +46,7 @@ import kotlin.math.absoluteValue
 @Composable
 internal fun PlaylistGallery(
     rowCount: Int,
-    playlistCounts: List<PlaylistWithCount>,
+    playlists: List<PlaylistWithCount>,
     subscribingPlaylistUrls: List<String>,
     refreshingEpgUrls: List<String>,
     onClick: (Playlist) -> Unit,
@@ -106,7 +106,7 @@ internal fun PlaylistGallery(
             }
         }
         itemsIndexed(
-            items = playlistCounts,
+            items = playlists,
             key = { _, playlistCount -> playlistCount.playlist.url }
         ) { index, playlistCount ->
             val playlist = playlistCount.playlist

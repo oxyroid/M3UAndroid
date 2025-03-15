@@ -87,7 +87,7 @@ import com.m3u.smartphone.ui.material.components.mask.MaskCircleButton
 import com.m3u.smartphone.ui.material.components.mask.MaskPanel
 import com.m3u.smartphone.ui.material.components.mask.MaskState
 import com.m3u.smartphone.ui.material.effects.currentBackStackEntry
-import com.m3u.smartphone.ui.material.ktx.thenIf
+import com.m3u.core.foundation.ui.thenIf
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue

@@ -65,13 +65,13 @@ import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.ProgrammeRange
 import com.m3u.data.service.MediaCommand
 import com.m3u.smartphone.ui.material.components.Background
-import com.m3u.smartphone.ui.material.components.CircularProgressIndicator
+import com.m3u.core.foundation.components.CircularProgressIndicator
 import androidx.compose.material3.IconButton
 import com.m3u.smartphone.ui.material.effects.BackStackEntry
 import com.m3u.smartphone.ui.material.effects.BackStackHandler
 import com.m3u.smartphone.ui.material.ktx.Edge
 import com.m3u.smartphone.ui.material.ktx.blurEdges
-import com.m3u.smartphone.ui.material.ktx.thenIf
+import com.m3u.core.foundation.ui.thenIf
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.smartphone.ui.material.shape.AbsoluteSmoothCornerShape
 import com.m3u.smartphone.ui.material.components.FontFamilies

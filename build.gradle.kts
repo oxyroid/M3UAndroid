@@ -21,6 +21,7 @@ subprojects {
         kotlinExtension.sourceSets.all {
             languageSettings {
                 optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
+                optIn("androidx.compose.ui.ExperimentalComposeUiApi")
                 optIn("androidx.compose.foundation.ExperimentalFoundationApi")
                 optIn("androidx.compose.foundation.layout.ExperimentalLayoutApi")
                 optIn("androidx.compose.animation.ExperimentalSharedTransitionApi")

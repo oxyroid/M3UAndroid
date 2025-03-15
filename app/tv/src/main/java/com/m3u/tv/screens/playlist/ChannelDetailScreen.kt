@@ -1,4 +1,4 @@
-package com.m3u.tv.screens.movies
+package com.m3u.tv.screens.playlist
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateContentSize
@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
@@ -22,24 +23,27 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.MaterialTheme
 import com.m3u.data.database.model.Channel
+import com.m3u.data.service.MediaCommand
 import com.m3u.tv.common.Error
 import com.m3u.tv.common.Loading
 import com.m3u.tv.common.ChannelsRow
-import com.m3u.tv.screens.channels.ChannelScreenUiState
-import com.m3u.tv.screens.channels.ChannelScreenViewModel
 import com.m3u.tv.screens.dashboard.rememberChildPadding
+import com.m3u.tv.utils.LocalHelper
+import kotlinx.coroutines.launch
 
 object ChannelScreen {
     const val ChannelIdBundleKey = "channelId"
 }
 
 @Composable
-fun ChannelScreen(
+fun ChannelDetailScreen(
     goToChannelPlayer: () -> Unit,
     onBackPressed: () -> Unit,
     refreshScreenWithNewChannel: (Channel) -> Unit,
     channelScreenViewModel: ChannelScreenViewModel = hiltViewModel()
 ) {
+    val helper = LocalHelper.current
+    val coroutineScope = rememberCoroutineScope()
     val uiState by channelScreenViewModel.uiState.collectAsStateWithLifecycle()
 
     when (val s = uiState) {
@@ -54,7 +58,12 @@ fun ChannelScreen(
         is ChannelScreenUiState.Done -> {
             Details(
                 channel = s.channel,
-                goToChannelPlayer = goToChannelPlayer,
+                goToChannelPlayer = {
+                    coroutineScope.launch {
+                        helper.play(MediaCommand.Common(s.channel.id))
+                    }
+                    goToChannelPlayer()
+                },
                 onBackPressed = onBackPressed,
                 refreshScreenWithNewChannel = refreshScreenWithNewChannel,
                 modifier = Modifier
@@ -83,7 +92,7 @@ private fun Details(
         modifier = modifier,
     ) {
         item {
-            Channel(
+            ChannelDetail(
                 channel = channel,
                 goToChannelPlayer = goToChannelPlayer
             )
@@ -128,24 +137,24 @@ private fun Details(
 
                 TitleValueText(
                     modifier = itemModifier,
-                    title = "stringResource(R.string.status)",
+                    title = "LIVE",
                     value = "channel.status"
                 )
-                TitleValueText(
-                    modifier = itemModifier,
-                    title = "stringResource(R.string.original_language)",
-                    value = "channel.originalLanguage"
-                )
-                TitleValueText(
-                    modifier = itemModifier,
-                    title = "stringResource(R.string.budget)",
-                    value = "channel.budget"
-                )
-                TitleValueText(
-                    modifier = itemModifier,
-                    title = "stringResource(R.string.revenue)",
-                    value = "channel.revenue"
-                )
+//                TitleValueText(
+//                    modifier = itemModifier,
+//                    title = "stringResource(R.string.original_language)",
+//                    value = "channel.originalLanguage"
+//                )
+//                TitleValueText(
+//                    modifier = itemModifier,
+//                    title = "stringResource(R.string.budget)",
+//                    value = "channel.budget"
+//                )
+//                TitleValueText(
+//                    modifier = itemModifier,
+//                    title = "stringResource(R.string.revenue)",
+//                    value = "channel.revenue"
+//                )
             }
         }
     }

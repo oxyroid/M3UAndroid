@@ -3,7 +3,7 @@ package com.m3u.tv.screens
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.m3u.tv.screens.movies.ChannelScreen
+import com.m3u.tv.screens.playlist.ChannelScreen
 import com.m3u.tv.screens.videoPlayer.VideoPlayerScreen
 
 enum class Screens(

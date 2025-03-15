@@ -101,7 +101,7 @@ import com.m3u.smartphone.ui.material.ktx.interceptVolumeEvent
 import com.m3u.smartphone.ui.material.ktx.isAtTop
 import com.m3u.smartphone.ui.material.ktx.only
 import com.m3u.smartphone.ui.material.ktx.split
-import com.m3u.smartphone.ui.material.ktx.thenIf
+import com.m3u.core.foundation.ui.thenIf
 import com.m3u.smartphone.ui.material.model.LocalHazeState
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.smartphone.ui.business.playlist.components.ChannelGallery

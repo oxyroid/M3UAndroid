@@ -1,6 +1,5 @@
-package com.m3u.tv.screens.videoPlayer
+package com.m3u.tv.screens.playlist
 
-import androidx.compose.runtime.Immutable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,30 +12,28 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 @HiltViewModel
-class VideoPlayerScreenViewModel @Inject constructor(
+class ChannelScreenViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     repository: ChannelRepository,
 ) : ViewModel() {
     val uiState = savedStateHandle
-        .getStateFlow<String?>(VideoPlayerScreen.ChannelIdBundleKey, null)
+        .getStateFlow<String?>(ChannelScreen.ChannelIdBundleKey, null)
         .map { id ->
             if (id == null) {
-                VideoPlayerScreenUiState.Error
+                ChannelScreenUiState.Error
             } else {
-                // FIXME:
                 val channel = repository.get(id = id.toIntOrNull() ?: 0)
-                channel?.let { VideoPlayerScreenUiState.Done(channel = it) }
+                channel?.let { ChannelScreenUiState.Done(channel = it) }
             }
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = VideoPlayerScreenUiState.Loading
+            initialValue = ChannelScreenUiState.Loading
         )
 }
 
-@Immutable
-sealed class VideoPlayerScreenUiState {
-    object Loading : VideoPlayerScreenUiState()
-    object Error : VideoPlayerScreenUiState()
-    data class Done(val channel: Channel) : VideoPlayerScreenUiState()
+sealed class ChannelScreenUiState {
+    data object Loading : ChannelScreenUiState()
+    data object Error : ChannelScreenUiState()
+    data class Done(val channel: Channel) : ChannelScreenUiState()
 }

@@ -27,7 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.m3u.core.util.basic.title
 import com.m3u.i18n.R.string
-import com.m3u.smartphone.ui.material.components.CircularProgressIndicator
+import com.m3u.core.foundation.components.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import com.m3u.smartphone.ui.material.components.mask.MaskState
 import com.m3u.smartphone.ui.material.model.LocalSpacing

@@ -163,7 +163,7 @@ private fun JetStreamLogo(
                 .size(IconSize)
         )
         Text(
-            text = "stringResource(R.string.brand_logo_text)",
+            text = "M3U",
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Medium,
             fontFamily = LexendExa
