@@ -39,7 +39,6 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import javax.inject.Inject
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
@@ -58,13 +57,6 @@ class ForyouViewModel @Inject constructor(
 ) : ViewModel() {
     private val logger = delegate.install(Profiles.VIEWMODEL_FORYOU)
 
-    init {
-        SubscriptionWorker.m3u(
-            workManager,
-            "PL_${Clock.System.now().toEpochMilliseconds()}",
-            "https://tv.iill.top/m3u/Live"
-        )
-    }
     val playlists: StateFlow<Resource<List<PlaylistWithCount>>> =
         playlistRepository
             .observeAllCounts()
