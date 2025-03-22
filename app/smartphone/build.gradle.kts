@@ -180,6 +180,7 @@ dependencies {
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.ui.compose)
     implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.common.ktx)
     implementation(libs.airbnb.lottie.compose)
     implementation(libs.minabox)
     implementation(libs.net.mm2d.mmupnp.mmupnp)

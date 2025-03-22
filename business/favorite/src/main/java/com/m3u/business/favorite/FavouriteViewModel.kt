@@ -179,13 +179,4 @@ class FavouriteViewModel @Inject constructor(
 
     suspend fun getPlaylist(playlistUrl: String): Playlist? =
         playlistRepository.get(playlistUrl)
-
-    fun playRandomly() {
-        viewModelScope.launch {
-            val channel = channelRepository.getRandomIgnoreSeriesAndHidden() ?: return@launch
-            playerManager.play(
-                MediaCommand.Common(channel.id)
-            )
-        }
-    }
 }

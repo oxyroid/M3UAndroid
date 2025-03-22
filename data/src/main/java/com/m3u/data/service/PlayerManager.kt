@@ -33,7 +33,10 @@ interface PlayerManager {
 
     fun chooseTrack(group: TrackGroup, index: Int)
     fun clearTrack(type: @C.TrackType Int)
-    suspend fun play(command: MediaCommand)
+    suspend fun play(
+        command: MediaCommand,
+        applyContinueWatching: Boolean = true
+    )
     suspend fun replay()
     fun release()
     fun clearCache()

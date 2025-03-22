@@ -26,8 +26,6 @@ import androidx.media3.exoplayer.drm.HttpMediaDrmCallback
 import androidx.media3.exoplayer.drm.LocalMediaDrmCallback
 import androidx.media3.exoplayer.hls.DefaultHlsExtractorFactory
 import androidx.media3.exoplayer.hls.HlsMediaSource
-import androidx.media3.exoplayer.offline.Download
-import androidx.media3.exoplayer.offline.DownloadManager
 import androidx.media3.exoplayer.rtsp.RtspMediaSource
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
@@ -38,7 +36,7 @@ import androidx.media3.extractor.DefaultExtractorsFactory
 import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES
 import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
 import androidx.media3.session.MediaSession
-import com.m3u.data.codec.Codecs
+import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
@@ -50,6 +48,7 @@ import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.core.architecture.preferences.ReconnectMode
 import com.m3u.data.SSLs
 import com.m3u.data.api.OkhttpClient
+import com.m3u.data.codec.Codecs
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.copyXtreamEpisode
@@ -62,14 +61,17 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
@@ -77,51 +79,44 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 
 class PlayerManagerImpl @Inject constructor(
-    @Dispatcher(Main) mainDispatcher: CoroutineDispatcher,
-    @Dispatcher(IO) ioDispatcher: CoroutineDispatcher,
+    @Dispatcher(Main) private val mainDispatcher: CoroutineDispatcher,
+    @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
     @ApplicationContext private val context: Context,
     @OkhttpClient(false) private val okHttpClient: OkHttpClient,
     private val preferences: Preferences,
     private val playlistRepository: PlaylistRepository,
     private val channelRepository: ChannelRepository,
     private val cache: Cache,
-    downloadManager: DownloadManager,
+    publisher: Publisher,
     delegate: Logger
 ) : PlayerManager, Player.Listener, MediaSession.Callback {
     private val mainCoroutineScope = CoroutineScope(mainDispatcher)
     private val ioCoroutineScope = CoroutineScope(ioDispatcher)
 
+    private val channelPreferenceProvider = ChannelPreferenceProvider(
+        directory = context.cacheDir.resolve("channel-preferences"),
+        appVersion = publisher.versionCode,
+        ioDispatcher = ioDispatcher
+    )
+
+    private val continueWatchingCondition = ContinueWatchingCondition.getInstance<Player>()
+
     override val player = MutableStateFlow<ExoPlayer?>(null)
     override val size = MutableStateFlow(Rect())
 
     private val mediaCommand = MutableStateFlow<MediaCommand?>(null)
-
-    override val channel: StateFlow<Channel?> = mediaCommand
-        .onEach { logger.post { "receive media command: $it" } }
-        .flatMapLatest { command ->
-            when (command) {
-                is MediaCommand.Common -> channelRepository.observe(command.channelId)
-                is MediaCommand.XtreamEpisode -> channelRepository
-                    .observe(command.channelId)
-                    .map { it?.copyXtreamEpisode(command.episode) }
-
-                else -> flowOf(null)
-            }
-        }
-        .stateIn(
-            scope = ioCoroutineScope,
-            initialValue = null,
-            started = SharingStarted.WhileSubscribed(5_000L)
-        )
 
     override val playlist: StateFlow<Playlist?> = mediaCommand.flatMapLatest { command ->
         when (command) {
@@ -148,17 +143,62 @@ class PlayerManagerImpl @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
+    override val channel: StateFlow<Channel?> = mediaCommand
+        .onEach { logger.post { "receive media command: $it" } }
+        .flatMapLatest { command ->
+            when (command) {
+                is MediaCommand.Common -> channelRepository.observe(command.channelId)
+                is MediaCommand.XtreamEpisode -> channelRepository
+                    .observe(command.channelId)
+                    .map { it?.copyXtreamEpisode(command.episode) }
+
+                else -> flowOf(null)
+            }
+        }
+        .stateIn(
+            scope = ioCoroutineScope,
+            initialValue = null,
+            started = SharingStarted.WhileSubscribed(5_000L)
+        )
+
     override val playbackState = MutableStateFlow<@Player.State Int>(Player.STATE_IDLE)
     override val playbackException = MutableStateFlow<PlaybackException?>(null)
     override val isPlaying = MutableStateFlow(false)
     override val tracksGroups = MutableStateFlow<List<Tracks.Group>>(emptyList())
+
+    private val playbackPosition = MutableStateFlow(-1L)
 
     private var currentConnectTimeout = preferences.connectTimeout
     private var currentTunneling = preferences.tunneling
     private var currentCache = preferences.cache
     private var observePreferencesChangingJob: Job? = null
 
-    override suspend fun play(command: MediaCommand) {
+    init {
+        mainCoroutineScope.launch {
+            playbackState.collectLatest { state ->
+                logger.post { "playbackState changed: $state" }
+                when (state) {
+                    Player.STATE_IDLE -> onPlaybackIdle()
+                    Player.STATE_BUFFERING -> onPlaybackBuffering()
+                    Player.STATE_READY -> onPlaybackReady()
+                    Player.STATE_ENDED -> onPlaybackEnded()
+                }
+            }
+        }
+        mainCoroutineScope.launch {
+            while (true) {
+                ensureActive()
+                playbackPosition.value = player.value?.currentPosition ?: -1L
+                delay(1.seconds)
+            }
+        }
+    }
+
+    override suspend fun play(
+        command: MediaCommand,
+        applyContinueWatching: Boolean
+    ) {
+        logger.post { "play" }
         release()
         mediaCommand.value = command
         val channel = when (command) {
@@ -169,21 +209,27 @@ class PlayerManagerImpl @Inject constructor(
         }
         if (channel != null) {
             val channelUrl = channel.url
+            val channelPreference = getChannelPreference(channelUrl)
             val licenseType = channel.licenseType.orEmpty()
             val licenseKey = channel.licenseKey.orEmpty()
+
             channelRepository.reportPlayed(channel.id)
+
             val playlist = playlistRepository.get(channel.playlistUrl)
             val userAgent = getUserAgent(channelUrl, playlist)
 
-            val iterator = MimetypeIterator.Unspecified(channelUrl)
-            this.iterator = iterator
-            logger.post { "init mimetype: $iterator" }
+            this.chain = channelPreference?.mineType
+                ?.let { MimetypeChain.Remembered(channelUrl, it) }
+                ?: MimetypeChain.Unspecified(channelUrl)
+
+            logger.post { "init mimetype: $chain" }
+
             tryPlay(
-                mimeType = null,
                 url = channelUrl,
                 userAgent = userAgent,
                 licenseType = licenseType,
-                licenseKey = licenseKey
+                licenseKey = licenseKey,
+                applyContinueWatching = applyContinueWatching
             )
 
             observePreferencesChangingJob?.cancel()
@@ -201,26 +247,28 @@ class PlayerManagerImpl @Inject constructor(
         }
     }
 
-    private val downloads: StateFlow<List<Download>> = downloadManager
-        .observeDownloads()
-        .flowOn(ioDispatcher)
-        .stateIn(
-            scope = ioCoroutineScope,
-            started = SharingStarted.WhileSubscribed(5_000L),
-            initialValue = emptyList()
-        )
-
     private fun tryPlay(
-        mimeType: String?,
         url: String = channel.value?.url.orEmpty(),
         userAgent: String? = getUserAgent(channel.value?.url.orEmpty(), playlist.value),
         licenseType: String = channel.value?.licenseType.orEmpty(),
         licenseKey: String = channel.value?.licenseKey.orEmpty(),
+        applyContinueWatching: Boolean
     ) {
         val rtmp: Boolean = Url(url).protocol.name == "rtmp"
         val tunneling: Boolean = preferences.tunneling
+
+        val mimeType = when (val chain = chain) {
+            is MimetypeChain.Remembered -> chain.mimeType
+            is MimetypeChain.Trying -> chain.mimetype
+            is MimetypeChain.Unspecified -> {
+                this.chain = chain.next()
+                return tryPlay(url, userAgent, licenseType, licenseKey, applyContinueWatching)
+            }
+            is MimetypeChain.Unsupported -> throw UnsupportedOperationException()
+        }
+
         logger.post {
-            "play, mimetype: $mimeType," +
+            "tryPlay, mimetype: $mimeType," +
                     " url: $url," +
                     " user-agent: $userAgent," +
                     " rtmp: $rtmp, " +
@@ -239,7 +287,11 @@ class PlayerManagerImpl @Inject constructor(
                 .setAllowChunklessPreparation(false)
                 .setExtractorFactory(DefaultHlsExtractorFactory())
 
-            MimeTypes.APPLICATION_SS -> ProgressiveMediaSource.Factory(dataSourceFactory, extractorsFactory)
+            MimeTypes.APPLICATION_SS -> ProgressiveMediaSource.Factory(
+                dataSourceFactory,
+                extractorsFactory
+            )
+
             MimeTypes.APPLICATION_RTSP -> RtspMediaSource.Factory()
                 .setDebugLoggingEnabled(true)
                 .setForceUseRtpTcp(true)
@@ -280,21 +332,28 @@ class PlayerManagerImpl @Inject constructor(
             }
         }
         val player = player.updateAndGet { prev ->
+            logger.post { "player instance updated" }
             prev ?: createPlayer(mediaSourceFactory, tunneling)
         }!!
         val mediaItem = MediaItem.fromUri(url)
         val mediaSource: MediaSource = mediaSourceFactory.createMediaSource(mediaItem)
         player.setMediaSource(mediaSource)
         player.prepare()
+        if (applyContinueWatching) {
+            mainCoroutineScope.launch {
+                restoreContinueWatching(player, url)
+            }
+        }
     }
 
     override suspend fun replay() {
         val prev = mediaCommand.value
         release()
-        prev?.let { play(it) }
+        prev?.let { play(it, applyContinueWatching = false) }
     }
 
     override fun release() {
+        logger.post { "release" }
         observePreferencesChangingJob?.cancel()
         observePreferencesChangingJob = null
         player.update {
@@ -307,17 +366,16 @@ class PlayerManagerImpl @Inject constructor(
             playbackState.value = Player.STATE_IDLE
             playbackException.value = null
             tracksGroups.value = emptyList()
-            iterator = MimetypeIterator.Unsupported
+            chain = MimetypeChain.Unsupported(chain.url)
             null
         }
     }
 
     override fun clearCache() {
         cache.keys.forEach {
-            cache.getCachedSpans(it)
-                .forEach { span ->
-                    cache.removeSpan(span)
-                }
+            cache.getCachedSpans(it).forEach { span ->
+                cache.removeSpan(span)
+            }
         }
     }
 
@@ -408,33 +466,13 @@ class PlayerManagerImpl @Inject constructor(
 
     override fun onVideoSizeChanged(videoSize: VideoSize) {
         super.onVideoSizeChanged(videoSize)
+        logger.post { "onVideoSizeChanged, [${videoSize.toRect()}]" }
         size.value = videoSize.toRect()
     }
 
     override fun onPlaybackStateChanged(state: Int) {
         super.onPlaybackStateChanged(state)
         playbackState.value = state
-        if (state == Player.STATE_ENDED && preferences.reconnectMode == ReconnectMode.RECONNECT) {
-            mainCoroutineScope.launch { replay() }
-        }
-        logger.post { "playback-state: $state" }
-        when (state) {
-            Player.STATE_READY -> {
-                logger.post {
-                    val currentPlayer = player.value ?: return@post ""
-                    val getCurrentMediaItem =
-                        currentPlayer.isCommandAvailable(Player.COMMAND_GET_CURRENT_MEDIA_ITEM)
-                    if (!getCurrentMediaItem) {
-                        return@post "dynamic, seekable: unknown"
-                    }
-                    val seekable = currentPlayer.isCurrentMediaItemSeekable
-                    val dynamic = currentPlayer.isCurrentMediaItemDynamic
-                    "dynamic: $dynamic, seekable: $seekable"
-                }
-            }
-
-            else -> {}
-        }
     }
 
     override fun onPlayerErrorChanged(exception: PlaybackException?) {
@@ -452,18 +490,37 @@ class PlayerManagerImpl @Inject constructor(
             PlaybackException.ERROR_CODE_PARSING_MANIFEST_MALFORMED,
             PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED,
             PlaybackException.ERROR_CODE_PARSING_MANIFEST_UNSUPPORTED -> {
-                if (iterator.hasNext()) {
-                    val next = iterator.next()
+                when (val chain = chain) {
+                    is MimetypeChain.Remembered -> {
+                        ioCoroutineScope.launch {
+                            logger.post { "onPlayerErrorChanged, parsing error! invalidate remembered mimeType!" }
+                            val channelPreference = getChannelPreference(chain.url)
+                            if (channelPreference != null) {
+                                updateChannelPreference(
+                                    chain.url,
+                                    channelPreference.copy(mineType = null)
+                                )
+                            }
+                        }
+                    }
+
+                    else -> {
+
+                        logger.post { "onPlayerErrorChanged, parsing error! Trying another mimeType." }
+                    }
+                }
+                if (chain.hasNext()) {
+                    val next = chain.next()
+                    chain = next
                     logger.post {
                         "[${PlaybackException.getErrorCodeName(exception.errorCode)}] " +
-                                "Try another mimetype, from $iterator to $next"
+                                "Try another mimetype, from $chain to $next"
                     }
-                    iterator = next
                     when (next) {
-                        is MimetypeIterator.Trying -> tryPlay(next.mimeType)
-                        else -> {
+                        is MimetypeChain.Unsupported -> {
                             playbackException.value = exception
                         }
+                        else -> tryPlay(applyContinueWatching = false)
                     }
                 }
             }
@@ -506,7 +563,89 @@ class PlayerManagerImpl @Inject constructor(
         }
     }
 
-    private var iterator: MimetypeIterator = MimetypeIterator.Unsupported
+    private suspend fun onPlaybackIdle() {}
+    private suspend fun onPlaybackBuffering() {}
+
+    private suspend fun onPlaybackReady() {
+        logger.post { "onPlaybackReady, chain=$chain" }
+        when (val chain = chain) {
+            is MimetypeChain.Remembered -> {
+                storeContinueWatching(chain.url)
+            }
+            is MimetypeChain.Trying -> {
+                val channelPreference = getChannelPreference(chain.url)
+                updateChannelPreference(
+                    chain.url,
+                    channelPreference?.copy(mineType = chain.mimetype)
+                        ?: ChannelPreference(mineType = chain.mimetype)
+                )
+                storeContinueWatching(chain.url)
+            }
+            else -> {}
+        }
+    }
+
+    private suspend fun onPlaybackEnded() {
+        if (preferences.reconnectMode == ReconnectMode.RECONNECT) {
+            mainCoroutineScope.launch { replay() }
+        }
+        val channelUrl = chain.url
+        if (channelUrl.isNotEmpty()) {
+            resetContinueWatching(channelUrl)
+        }
+    }
+
+    @OptIn(FlowPreview::class)
+    private suspend fun storeContinueWatching(channelUrl: String) {
+        logger.post { "storeContinueWatching" }
+        // avoid memory leaks caused by loops
+        fun checkContinueWatching(): Boolean {
+            val currentPlayer = player.value ?: return false
+            return continueWatchingCondition.isStoringSupported(currentPlayer)
+        }
+        if (!checkContinueWatching()) {
+            logger.post { "storeContinueWatching, playback is not supported." }
+            return
+        }
+        playbackPosition
+            .sample(5.seconds)
+            .collect { cwPosition ->
+                logger.post { "storeContinueWatching, received new position: $cwPosition" }
+                if (cwPosition == -1L) return@collect
+                val channelPreference = getChannelPreference(channelUrl)
+                updateChannelPreference(
+                    channelUrl,
+                    channelPreference?.copy(cwPosition = cwPosition)
+                        ?: ChannelPreference(cwPosition = cwPosition)
+                )
+            }
+    }
+
+    private suspend fun restoreContinueWatching(player: Player, channelUrl: String) {
+        val channelPreference = getChannelPreference(channelUrl)
+        val cwPosition = channelPreference?.cwPosition?.takeIf { it != -1L } ?: return
+        withContext(mainDispatcher) {
+            if (continueWatchingCondition.isRestoringSupported(player)) {
+                player.seekTo(cwPosition)
+            }
+        }
+    }
+
+    private suspend fun resetContinueWatching(channelUrl: String) {
+        logger.post { "resetContinueWatching, channelUrl=$channelUrl" }
+        val channelPreference = getChannelPreference(channelUrl)
+        val currentPlayer = player.value
+        withContext(mainDispatcher) {
+            if (currentPlayer != null && continueWatchingCondition.isResettingSupported(currentPlayer)) {
+                updateChannelPreference(
+                    channelUrl,
+                    channelPreference?.copy(cwPosition = -1L) ?: ChannelPreference(cwPosition = -1L)
+                )
+            }
+        }
+    }
+
+    private var chain: MimetypeChain = MimetypeChain.Unsupported("")
 
     private val logger = delegate.install(Profiles.SERVICE_PLAYER)
 
@@ -519,7 +658,9 @@ class PlayerManagerImpl @Inject constructor(
      * https://kodi.wiki/view/HTTP
      */
     private fun String.readKodiUrlOptions(): Map<String, String?> {
-        val options = this.drop(this.indexOf("|") + 1).split("&")
+        val index = this.indexOf('|')
+        if (index == -1) return emptyMap()
+        val options = this.drop(index + 1).split("&")
         return options
             .filter { it.isNotBlank() }
             .associate {
@@ -539,25 +680,37 @@ class PlayerManagerImpl @Inject constructor(
         val userAgent = kodiUrlOptions[KodiAdaptions.HTTP_OPTION_UA] ?: playlist?.userAgent
         return userAgent
     }
+
+    private suspend fun getChannelPreference(channelUrl: String): ChannelPreference? {
+        if (channelUrl.isEmpty()) return null
+        return channelPreferenceProvider[channelUrl]
+    }
+
+    private suspend fun updateChannelPreference(
+        channelUrl: String,
+        channelPreference: ChannelPreference
+    ) {
+        if (channelUrl.isEmpty()) return
+        channelPreferenceProvider[channelUrl] = channelPreference
+    }
 }
 
 private fun VideoSize.toRect(): Rect {
     return Rect(0, 0, width, height)
 }
 
-private sealed class MimetypeIterator {
-    class Unspecified(val url: String) : MimetypeIterator()
-    class Trying(val mimeType: String) : MimetypeIterator()
-    object Unsupported : MimetypeIterator()
+private sealed class MimetypeChain(val url: String) {
+    class Remembered(
+        url: String,
+        val mimeType: String
+    ) : MimetypeChain(url)
 
-    val mimeTypeOrNull: String?
-        get() = when (this) {
-            is Trying -> mimeType
-            else -> null
-        }
+    class Unspecified(url: String) : MimetypeChain(url)
+    class Trying(url: String, val mimetype: String) : MimetypeChain(url)
+    class Unsupported(url: String) : MimetypeChain(url)
 
     companion object {
-        val ORDER_DEFAULT = arrayOf(
+        val ORDERS = arrayOf(
             MimeTypes.APPLICATION_SS,
             MimeTypes.APPLICATION_M3U8,
             MimeTypes.APPLICATION_MPD,
@@ -566,21 +719,24 @@ private sealed class MimetypeIterator {
     }
 
     override fun toString(): String = when (this) {
-        is Trying -> "Trying[$mimeType]"
         is Unspecified -> "Unspecified[$url]"
-        Unsupported -> "Unsupported"
+        is Trying -> "Trying[$url, $mimetype]"
+        is Remembered -> "Remembered[$url, $mimeType]"
+        is Unsupported -> "Unsupported[$url]"
     }
 
-    operator fun hasNext(): Boolean = this != Unsupported
+    operator fun hasNext(): Boolean = this !is Unsupported
 
-    operator fun next(): MimetypeIterator = when (this) {
-        is Unspecified -> Trying(ORDER_DEFAULT.first())
+    operator fun next(): MimetypeChain = when (this) {
+        is Unspecified -> Trying(url, ORDERS.first())
         is Trying -> {
-            ORDER_DEFAULT
-                .getOrNull(ORDER_DEFAULT.indexOf(mimeType) + 1)
-                ?.let { Trying(it) }
-                ?: Unsupported
+            ORDERS
+                .getOrNull(ORDERS.indexOf(mimetype) + 1)
+                ?.let { Trying(url, it) }
+                ?: Unsupported(url)
         }
+
+        is Remembered -> Unspecified(url)
 
         else -> throw IllegalArgumentException()
     }

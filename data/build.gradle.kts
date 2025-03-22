@@ -69,6 +69,7 @@ dependencies {
     implementation(libs.androidx.media3.datasource.rtmp)
     implementation(libs.androidx.media3.datasource.okhttp)
     implementation(libs.androidx.media3.extractor)
+    implementation(libs.androidx.media3.common.ktx)
 
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.hilt.work)
@@ -84,4 +85,6 @@ dependencies {
     releaseImplementation(libs.chucker.no.op)
     debugImplementation(libs.slf4j.api)
     debugImplementation(libs.logback.android)
+
+    implementation(libs.jakewharton.disklrucache)
 }
