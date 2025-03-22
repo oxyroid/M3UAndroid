@@ -35,13 +35,10 @@ subprojects {
     }
     plugins.withId("org.jetbrains.kotlin.plugin.compose") {
         configure<ComposeCompilerGradlePluginExtension> {
-            enableStrongSkippingMode = true
-            enableNonSkippingGroupOptimization = true
-            enableIntrinsicRemember = true
             includeSourceInformation = true
             val file = rootProject.layout.projectDirectory.file("compose_compiler_config.conf")
             if (file.asFile.exists()) {
-                stabilityConfigurationFile = file
+                stabilityConfigurationFiles.add(file)
             }
             metricsDestination = layout.buildDirectory.dir("compose_metrics")
             reportsDestination = layout.buildDirectory.dir("compose_metrics")

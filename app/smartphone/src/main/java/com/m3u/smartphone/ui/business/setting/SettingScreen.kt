@@ -18,6 +18,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -52,6 +53,7 @@ import com.m3u.smartphone.ui.common.helper.Metadata
 import com.m3u.smartphone.ui.common.internal.Events
 import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.haze
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingRoute(
@@ -173,6 +175,7 @@ private fun SettingScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
 ) {
+    val coroutineScope = rememberCoroutineScope()
     val preferences = hiltPreferences()
 
     val defaultTitle = stringResource(string.ui_title_setting)
@@ -183,7 +186,7 @@ private fun SettingScreen(
     val colorArgb = preferences.argb
 
     val navigator = rememberListDetailPaneScaffoldNavigator<SettingDestination>()
-    val destination = navigator.currentDestination?.content ?: SettingDestination.Default
+    val destination = navigator.currentDestination?.contentKey ?: SettingDestination.Default
 
     EventHandler(Events.settingDestination) {
         navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, it)
@@ -206,7 +209,9 @@ private fun SettingScreen(
                 icon = Icons.Rounded.ChangeCircle,
                 iconTextId = string.feat_setting_back_home
             ) {
-                navigator.navigateBack()
+                coroutineScope.launch {
+                    navigator.navigateBack()
+                }
             }
         }
         Metadata.actions = emptyList()
@@ -225,22 +230,28 @@ private fun SettingScreen(
                 versionName = versionName,
                 versionCode = versionCode,
                 navigateToPlaylistManagement = {
-                    navigator.navigateTo(
-                        pane = ListDetailPaneScaffoldRole.Detail,
-                        content = SettingDestination.Playlists
-                    )
+                    coroutineScope.launch {
+                        navigator.navigateTo(
+                            pane = ListDetailPaneScaffoldRole.Detail,
+                            contentKey = SettingDestination.Playlists
+                        )
+                    }
                 },
                 navigateToThemeSelector = {
-                    navigator.navigateTo(
-                        pane = ListDetailPaneScaffoldRole.Detail,
-                        content = SettingDestination.Appearance
-                    )
+                    coroutineScope.launch {
+                        navigator.navigateTo(
+                            pane = ListDetailPaneScaffoldRole.Detail,
+                            contentKey = SettingDestination.Appearance
+                        )
+                    }
                 },
                 navigateToOptional = {
-                    navigator.navigateTo(
-                        pane = ListDetailPaneScaffoldRole.Detail,
-                        content = SettingDestination.Optional
-                    )
+                    coroutineScope.launch {
+                        navigator.navigateTo(
+                            pane = ListDetailPaneScaffoldRole.Detail,
+                            contentKey = SettingDestination.Optional
+                        )
+                    }
                 },
                 cacheSpace = cacheSpace,
                 onClearCache = onClearCache,
@@ -308,6 +319,8 @@ private fun SettingScreen(
             .testTag("feature:setting")
     )
     BackHandler(navigator.canNavigateBack()) {
-        navigator.navigateBack()
+        coroutineScope.launch {
+            navigator.navigateBack()
+        }
     }
 }

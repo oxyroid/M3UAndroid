@@ -104,8 +104,7 @@ android {
             .map { it as com.android.build.gradle.internal.api.ApkVariantOutputImpl }
             .forEach { output ->
                 val abi = output.getFilter("ABI") ?: "universal"
-                val versionName = output.versionNameOverride
-                output.outputFileName = "${versionName}_$abi.apk"
+                output.versionNameOverride = "${versionName}_$abi.apk"
             }
     }
 }

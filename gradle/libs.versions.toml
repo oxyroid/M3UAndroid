@@ -2,31 +2,31 @@
 androidx-core = "1.15.0"
 androidx-core-splashscreen = "1.0.1"
 androidx-appcompat = "1.7.0"
-androidx-activity = "1.10.0"
+androidx-activity = "1.10.1"
 androidx-lifecycle = "2.8.7"
-androidx-compose-bom = "2025.02.00"
-androidx-compose-material3-adaptive = "1.0.0"
-androidx-constraintlayout-compose = "1.1.0"
-androidx-navigation = "2.8.7"
+androidx-compose-bom = "2025.03.00"
+androidx-compose-material3-adaptive = "1.1.0"
+androidx-constraintlayout-compose = "1.1.1"
+androidx-navigation = "2.8.9"
 androidx-hilt = "1.2.0"
 androidx-tv = "1.0.0"
-androidx-media3 = "1.6.0-beta01"
+androidx-media3 = "1.6.0-rc02"
 androidx-work = "2.10.0"
 androidx-room = "2.6.1"
 androidx-tvprovider = "1.0.0"
 androidx-startup = "1.2.0"
 androidx-paging = "3.3.6"
 
-autoServiceAnnotations = "1.0"
-autoServiceKsp = "1.0.0"
+auto-annotations = "1.0"
+auto-ksp = "1.0.0"
 glance = "1.1.1"
 google-accompanist = "0.35.1-alpha"
-google-dagger = "2.51.1"
+google-dagger = "2.54"
 
 haze = "0.7.3"
-io-coil = "2.6.0"
+io-coil = "2.7.0"
 kotlinpoet = "1.18.1"
-kotlinx-serialization-json = "1.6.3"
+kotlinx-serialization-json = "1.8.0"
 kotlinx-serialization-converter-retrofit = "1.0.0"
 kotlinx-datetime = "0.6.0"
 
@@ -39,9 +39,9 @@ slf4j-api = "2.0.13"
 squareup-retrofit2 = "2.11.0"
 squareup-leakcanary = "2.14"
 
-kotlin = "2.0.0"
-android-gradle-plugin = "8.5.0"
-ksp-plugin = "2.0.0-1.0.22"
+kotlin = "2.1.0"
+android-gradle-plugin = "8.6.0"
+kotlin-symbol-processor = "2.1.0-1.0.29"
 
 androidx-test-ext-junit = "1.2.1"
 espresso-core = "3.6.1"
@@ -53,9 +53,7 @@ androidx-graphics-shapes = "1.0.1"
 minabox = "1.7.1"
 ktor-server = "3.0.0-beta-1"
 mm2d-mmupnp = "3.1.6"
-symbolProcessingApi = "2.0.0-1.0.22"
 profileinstaller = "1.4.1"
-junit = "4.13.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
@@ -73,8 +71,6 @@ androidx-compose-foundation-layout = { group = "androidx.compose.foundation", na
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime" }
-androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
-androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-compose-ui-util = { group = "androidx.compose.ui", name = "ui-util" }
 
 androidx-compose-material3-window-size-clazz = { group = "androidx.compose.material3", name = "material3-window-size-class" }
@@ -122,8 +118,8 @@ androidx-room-compiler = { group = "androidx.room", name = "room-compiler", vers
 
 androidx-tvprovider = { group = "androidx.tvprovider", name = "tvprovider", version.ref = "androidx-tvprovider" }
 
-auto-service-annotations = { module = "com.google.auto.service:auto-service-annotations", version.ref = "autoServiceAnnotations" }
-auto-service-ksp = { module = "dev.zacsweers.autoservice:auto-service-ksp", version.ref = "autoServiceKsp" }
+auto-service-annotations = { module = "com.google.auto.service:auto-service-annotations", version.ref = "auto-annotations" }
+auto-service-ksp = { module = "dev.zacsweers.autoservice:auto-service-ksp", version.ref = "auto-ksp" }
 
 google-accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "google-accompanist" }
 
@@ -169,9 +165,8 @@ slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j-api" }
 minabox = { group = "io.github.oleksandrbalan", name = "minabox", version.ref = "minabox" }
 net-mm2d-mmupnp-mmupnp = { group = "net.mm2d.mmupnp", name = "mmupnp", version.ref = "mm2d-mmupnp" }
 androidx-graphics-shapes = { group = "androidx.graphics", name = "graphics-shapes-android", version.ref = "androidx-graphics-shapes" }
-symbol-processing-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "symbolProcessingApi" }
+symbol-processing-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "kotlin-symbol-processor" }
 androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
-junit = { group = "junit", name = "junit", version.ref = "junit" }
 
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }
@@ -180,7 +175,7 @@ org-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.re
 org-jetbrains-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 com-google-dagger-hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "google-dagger" }
-com-google-devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp-plugin" }
+com-google-devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "kotlin-symbol-processor" }
 com-android-test = { id = "com.android.test", version.ref = "android-gradle-plugin" }
 androidx-baselineprofile = { id = "androidx.baselineprofile", version.ref = "androidx-benchmark" }
 org-jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
