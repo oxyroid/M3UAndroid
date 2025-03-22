@@ -98,7 +98,7 @@ class PlaylistViewModel @Inject constructor(
     private val logger = delegate.install(Profiles.VIEWMODEL_PLAYLIST)
 
     val playlistUrl: StateFlow<String> = savedStateHandle
-        .getStateFlow(PlaylistNavigation.TYPE_URL, "https://tv.iill.top/m3u/Live")
+        .getStateFlow(PlaylistNavigation.TYPE_URL, "")
 
     val playlist: StateFlow<Playlist?> = playlistUrl.flatMapLatest {
         playlistRepository.observe(it)
