@@ -12,11 +12,10 @@ import androidx.lifecycle.lifecycleScope
 import com.m3u.business.channel.ChannelViewModel
 import com.m3u.core.Contracts
 import com.m3u.data.database.model.isSeries
-import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.channel.ChannelRepository
+import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.service.MediaCommand
 import com.m3u.smartphone.ui.common.helper.Helper
-import com.m3u.smartphone.ui.common.internal.Events.enableDPadReaction
 import com.m3u.smartphone.ui.common.internal.Toolkit
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -42,7 +41,6 @@ class PlayerActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
-        enableDPadReaction()
         super.onCreate(savedInstanceState)
         handleIntent(intent)
         setContent {
