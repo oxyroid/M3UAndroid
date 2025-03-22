@@ -16,7 +16,7 @@ dependencyResolutionManagement {
 }
 rootProject.name = "M3U"
 include(":app:smartphone", ":app:tv")
-include(":core")
+include(":core", ":core:foundation")
 include(":data")
 include(":data:codec", ":data:codec:lite", ":data:codec:rich")
 include(
@@ -33,4 +33,3 @@ include(
     ":lint:annotation",
     ":lint:processor"
 )
-include(":core:foundation")
