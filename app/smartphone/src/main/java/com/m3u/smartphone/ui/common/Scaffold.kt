@@ -8,12 +8,10 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -55,8 +53,6 @@ import com.m3u.smartphone.ui.common.helper.LocalHelper
 import com.m3u.smartphone.ui.common.helper.Metadata
 import com.m3u.smartphone.ui.common.helper.useRailNav
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.HazeStyle
-import dev.chrisbanes.haze.hazeChild
 
 @Composable
 @OptIn(InternalComposeApi::class)
@@ -133,13 +129,13 @@ internal fun MainContent(
                 windowInsets = windowInsets,
                 title = {
                     Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                        horizontalArrangement = Arrangement.End,
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.defaultMinSize(minHeight = 56.dp)
                     ) {
                         Column(
                             modifier = Modifier
-                                .padding(horizontal = spacing.medium)
+                                .padding(start = spacing.medium)
                                 .weight(1f)
                         ) {
                             Text(
@@ -157,22 +153,19 @@ internal fun MainContent(
                                 )
                             }
                         }
-
-                        Row {
-                            actions.forEach { action ->
-                                IconButton(
-                                    onClick = action.onClick,
-                                    enabled = action.enabled
-                                ) {
-                                    Icon(
-                                        imageVector = action.icon,
-                                        contentDescription = action.contentDescription,
-                                    )
-                                }
-                            }
+                    }
+                },
+                actions = {
+                    actions.forEach { action ->
+                        IconButton(
+                            onClick = action.onClick,
+                            enabled = action.enabled
+                        ) {
+                            Icon(
+                                imageVector = action.icon,
+                                contentDescription = action.contentDescription,
+                            )
                         }
-
-                        Spacer(modifier = Modifier.width(spacing.medium))
                     }
                 },
                 navigationIcon = {
@@ -194,9 +187,7 @@ internal fun MainContent(
                         }
                     }
                 },
-                modifier = Modifier
-                    .hazeChild(hazeState, style = HazeStyle(blurRadius = 6.dp))
-                    .fillMaxWidth()
+                modifier = Modifier.fillMaxWidth()
             )
         },
         contentWindowInsets = windowInsets,

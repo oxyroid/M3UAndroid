@@ -1,7 +1,9 @@
 package com.m3u.business.channel
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.media.AudioManager
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -38,6 +40,7 @@ import com.m3u.data.service.currentTracks
 import com.m3u.data.service.tracks
 import com.m3u.data.worker.ProgrammeReminder
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -70,6 +73,7 @@ class ChannelViewModel @Inject constructor(
     private val audioManager: AudioManager,
     private val programmeRepository: ProgrammeRepository,
     private val workManager: WorkManager,
+    @ApplicationContext private val context: Context,
     delegate: Logger,
 ) : ViewModel(), ControlPoint.DiscoveryListener {
     private val logger = delegate.install(Profiles.VIEWMODEL_CHANNEL)
@@ -380,6 +384,12 @@ class ChannelViewModel @Inject constructor(
 
     fun onSpeedUpdated(race: Float) {
         playerManager.updateSpeed(race)
+    }
+
+    fun recordVideo(uri: Uri) {
+        viewModelScope.launch {
+            playerManager.recordVideo(uri)
+        }
     }
 
     companion object {

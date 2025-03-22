@@ -2,7 +2,14 @@ package com.m3u.data.service.internal
 
 import android.content.Context
 import android.graphics.Rect
+import android.media.MediaCodec
+import android.media.MediaCodecInfo
+import android.media.MediaFormat
+import android.media.MediaMuxer
+import android.net.Uri
+import android.view.Surface
 import androidx.compose.runtime.snapshotFlow
+import androidx.core.net.toUri
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -19,6 +26,7 @@ import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.datasource.rtmp.RtmpDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.MediaExtractorCompat
 import androidx.media3.exoplayer.RenderersFactory
 import androidx.media3.exoplayer.drm.DefaultDrmSessionManager
 import androidx.media3.exoplayer.drm.FrameworkMediaDrm
@@ -35,7 +43,18 @@ import androidx.media3.exoplayer.trackselection.TrackSelector
 import androidx.media3.extractor.DefaultExtractorsFactory
 import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES
 import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
+import androidx.media3.muxer.FragmentedMp4Muxer
+import androidx.media3.muxer.Mp4Muxer
 import androidx.media3.session.MediaSession
+import androidx.media3.transformer.Composition
+import androidx.media3.transformer.DefaultEncoderFactory
+import androidx.media3.transformer.ExportException
+import androidx.media3.transformer.ExportResult
+import androidx.media3.transformer.InAppFragmentedMp4Muxer
+import androidx.media3.transformer.InAppMp4Muxer
+import androidx.media3.transformer.TransformationRequest
+import androidx.media3.transformer.Transformer
+import androidx.media3.transformer.VideoEncoderSettings
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
@@ -57,6 +76,7 @@ import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.PlayerManager
+import com.m3u.data.service.currentTracks
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineDispatcher
@@ -80,10 +100,10 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.sample
+import kotlinx.coroutines.flow.singleOrNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -247,6 +267,7 @@ class PlayerManagerImpl @Inject constructor(
         }
     }
 
+    private var extractor: MediaExtractorCompat? = null
     private fun tryPlay(
         url: String = channel.value?.url.orEmpty(),
         userAgent: String? = getUserAgent(channel.value?.url.orEmpty(), playlist.value),
@@ -264,6 +285,7 @@ class PlayerManagerImpl @Inject constructor(
                 this.chain = chain.next()
                 return tryPlay(url, userAgent, licenseType, licenseKey, applyContinueWatching)
             }
+
             is MimetypeChain.Unsupported -> throw UnsupportedOperationException()
         }
 
@@ -282,6 +304,7 @@ class PlayerManagerImpl @Inject constructor(
         val extractorsFactory = DefaultExtractorsFactory().setTsExtractorFlags(
             FLAG_ALLOW_NON_IDR_KEYFRAMES and FLAG_DETECT_ACCESS_UNITS
         )
+        extractor = MediaExtractorCompat(extractorsFactory, dataSourceFactory)
         val mediaSourceFactory = when (mimeType) {
             MimeTypes.APPLICATION_M3U8 -> HlsMediaSource.Factory(dataSourceFactory)
                 .setAllowChunklessPreparation(false)
@@ -356,6 +379,7 @@ class PlayerManagerImpl @Inject constructor(
         logger.post { "release" }
         observePreferencesChangingJob?.cancel()
         observePreferencesChangingJob = null
+        extractor = null
         player.update {
             it ?: return
             it.stop()
@@ -520,6 +544,7 @@ class PlayerManagerImpl @Inject constructor(
                         is MimetypeChain.Unsupported -> {
                             playbackException.value = exception
                         }
+
                         else -> tryPlay(applyContinueWatching = false)
                     }
                 }
@@ -563,6 +588,94 @@ class PlayerManagerImpl @Inject constructor(
         }
     }
 
+    override suspend fun recordVideo(uri: Uri) {
+        withContext(mainDispatcher) {
+            try {
+                val currentPlayer = player.value ?: return@withContext
+                val tracksGroup = currentPlayer.currentTracks.groups.first {
+                    it.type == C.TRACK_TYPE_VIDEO
+                } ?: return@withContext
+                val formats = (0 until tracksGroup.length).mapNotNull {
+                    if (!tracksGroup.isTrackSupported(it)) null
+                    else tracksGroup.getTrackFormat(it)
+                }
+                    .mapNotNull { it.containerMimeType ?: it.sampleMimeType }
+                val (mimeType, muxerFactory) = when {
+                    formats.any { it in FragmentedMp4Muxer.SUPPORTED_VIDEO_SAMPLE_MIME_TYPES } -> {
+                        val mimeType = formats.first { it in FragmentedMp4Muxer.SUPPORTED_VIDEO_SAMPLE_MIME_TYPES }
+                        val muxerFactory = InAppFragmentedMp4Muxer.Factory()
+                        mimeType to muxerFactory
+                    }
+                    formats.any { it in Mp4Muxer.SUPPORTED_VIDEO_SAMPLE_MIME_TYPES } -> {
+                        val mimeType = formats.first { it in Mp4Muxer.SUPPORTED_VIDEO_SAMPLE_MIME_TYPES }
+                        val muxerFactory = InAppMp4Muxer.Factory()
+                        mimeType to muxerFactory
+                    }
+                    else -> {
+                        logger.post { "recordVideo, unsupported video formats: $formats" }
+                        return@withContext
+                    }
+                }
+                val transformer = Transformer.Builder(context)
+                    .setMuxerFactory(muxerFactory)
+                    .setVideoMimeType(mimeType)
+                    .setEncoderFactory(
+                        DefaultEncoderFactory.Builder(context.applicationContext)
+                            .setEnableFallback(true)
+//                        .setRequestedVideoEncoderSettings(
+//                            VideoEncoderSettings.Builder()
+//                                .
+//                                .build()
+//                        )
+                            .build()
+                    )
+                    .addListener(
+                        object : Transformer.Listener {
+                            override fun onCompleted(
+                                composition: Composition,
+                                exportResult: ExportResult
+                            ) {
+                                super.onCompleted(composition, exportResult)
+                                logger.post { "transformer, onCompleted" }
+                            }
+
+                            override fun onError(
+                                composition: Composition,
+                                exportResult: ExportResult,
+                                exportException: ExportException
+                            ) {
+                                super.onError(composition, exportResult, exportException)
+                                logger.post { "transformer, onError. message=${exportException.message}, code=[${exportException.errorCode}]${exportException.errorCodeName}" }
+                            }
+
+                            override fun onFallbackApplied(
+                                composition: Composition,
+                                originalTransformationRequest: TransformationRequest,
+                                fallbackTransformationRequest: TransformationRequest
+                            ) {
+                                super.onFallbackApplied(
+                                    composition,
+                                    originalTransformationRequest,
+                                    fallbackTransformationRequest
+                                )
+                                logger.post { "transformer, onFallbackApplied" }
+                            }
+                        }
+                    )
+                    .build()
+
+                withContext(mainDispatcher) {
+                    transformer.start(
+                        MediaItem.fromUri(channel.value?.url.orEmpty()),
+                        uri.path.orEmpty()
+                    )
+                }
+            } finally {
+                logger.post { "record video completed" }
+            }
+        }
+    }
+
     private suspend fun onPlaybackIdle() {}
     private suspend fun onPlaybackBuffering() {}
 
@@ -572,6 +685,7 @@ class PlayerManagerImpl @Inject constructor(
             is MimetypeChain.Remembered -> {
                 storeContinueWatching(chain.url)
             }
+
             is MimetypeChain.Trying -> {
                 val channelPreference = getChannelPreference(chain.url)
                 updateChannelPreference(
@@ -581,6 +695,7 @@ class PlayerManagerImpl @Inject constructor(
                 )
                 storeContinueWatching(chain.url)
             }
+
             else -> {}
         }
     }
@@ -634,9 +749,9 @@ class PlayerManagerImpl @Inject constructor(
     private suspend fun resetContinueWatching(channelUrl: String) {
         logger.post { "resetContinueWatching, channelUrl=$channelUrl" }
         val channelPreference = getChannelPreference(channelUrl)
-        val currentPlayer = player.value
+        val player = this@PlayerManagerImpl.player.value
         withContext(mainDispatcher) {
-            if (currentPlayer != null && continueWatchingCondition.isResettingSupported(currentPlayer)) {
+            if (player != null && continueWatchingCondition.isResettingSupported(player)) {
                 updateChannelPreference(
                     channelUrl,
                     channelPreference?.copy(cwPosition = -1L) ?: ChannelPreference(cwPosition = -1L)

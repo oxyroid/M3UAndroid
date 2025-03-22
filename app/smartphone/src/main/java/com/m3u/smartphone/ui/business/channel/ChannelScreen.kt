@@ -3,6 +3,8 @@ package com.m3u.smartphone.ui.business.channel
 import android.Manifest
 import android.content.Intent
 import android.graphics.Rect
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -68,6 +70,7 @@ import com.m3u.smartphone.ui.material.components.mask.rememberMaskState
 import com.m3u.smartphone.ui.material.components.mask.toggle
 import com.m3u.smartphone.ui.material.components.rememberPullPanelLayoutState
 import com.m3u.smartphone.ui.material.ktx.checkPermissionOrRationale
+import kotlinx.datetime.Clock
 
 @Composable
 fun ChannelRoute(
@@ -120,6 +123,12 @@ fun ChannelRoute(
     val pullPanelLayoutState = rememberPullPanelLayoutState()
 
     val isPanelExpanded = pullPanelLayoutState.value == PullPanelLayoutValue.EXPANDED
+
+    val createRecordFileLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("video/mp4")) { uri ->
+            uri ?: return@rememberLauncherForActivityResult
+            viewModel.recordVideo(uri)
+        }
 
     LifecycleResumeEffect(Unit) {
         with(helper) {
@@ -217,6 +226,8 @@ fun ChannelRoute(
                 ChannelPlayer(
                     isSeriesPlaylist = isSeriesPlaylist,
                     openDlnaDevices = {
+//                        viewModel.recordVideo()
+                        createRecordFileLauncher.launch("record_${Clock.System.now().toEpochMilliseconds()}.mp4")
                         viewModel.openDlnaDevices()
                         pullPanelLayoutState.collapse()
                     },

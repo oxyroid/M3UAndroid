@@ -1,6 +1,8 @@
 package com.m3u.data.service
 
 import android.graphics.Rect
+import android.net.Uri
+import android.view.Surface
 import androidx.compose.runtime.Immutable
 import androidx.media3.common.C
 import androidx.media3.common.Format
@@ -16,6 +18,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
+import java.io.FileDescriptor
 
 interface PlayerManager {
     val player: StateFlow<Player?>
@@ -42,6 +45,10 @@ interface PlayerManager {
     fun clearCache()
     fun pauseOrContinue(value: Boolean)
     fun updateSpeed(race: Float)
+
+    suspend fun recordVideo(
+        uri: Uri,
+    )
 }
 
 @Immutable

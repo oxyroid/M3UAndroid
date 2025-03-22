@@ -1,9 +1,13 @@
 package com.m3u.smartphone.ui.material.components
 
+import android.view.Surface
 import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.Player
@@ -17,7 +21,9 @@ data class PlayerState(
     val player: Player?,
     @ClipMode val clipMode: Int,
     val keepScreenOn: Boolean
-)
+) {
+    var surface: Surface? by mutableStateOf(null)
+}
 
 @Composable
 fun rememberPlayerState(
@@ -53,6 +59,7 @@ fun Player(
         factory = { context ->
             PlayerView(context).apply {
                 useController = false
+                videoSurfaceView
             }
         },
         update = { view ->

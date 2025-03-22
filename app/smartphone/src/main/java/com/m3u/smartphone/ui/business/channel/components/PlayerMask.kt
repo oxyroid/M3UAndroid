@@ -72,7 +72,11 @@ internal fun PlayerMask(
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(horizontal = spacing.medium)
+                .padding(
+                    start = spacing.medium,
+                    end = spacing.medium,
+                    bottom = spacing.small
+                )
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),

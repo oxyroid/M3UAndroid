@@ -110,6 +110,8 @@ androidx-media3-exoplayer-workmanager = { group = "androidx.media3", name = "med
 androidx-media3-datasource-rtmp = { group = "androidx.media3", name = "media3-datasource-rtmp", version.ref = "androidx-media3" }
 androidx-media3-datasource-okhttp = { group = "androidx.media3", name = "media3-datasource-okhttp", version.ref = "androidx-media3" }
 androidx-media3-common-ktx = { group = "androidx.media3", name = "media3-common-ktx", version.ref = "androidx-media3" }
+androidx-media3-transformer = { group = "androidx.media3", name = "media3-transformer", version.ref = "androidx-media3" }
+androidx-media3-muxer = { group = "androidx.media3", name = "media3-muxer", version.ref = "androidx-media3" }
 
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "androidx-work" }
 
