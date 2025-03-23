@@ -41,20 +41,20 @@ class MainActivity : ComponentActivity() {
                             .padding(16.dp)
                     ) {
                         Button(
-                            enabled = !isConnected,
                             onClick = {
-                                client.connect(this@MainActivity)
+                                if (!isConnected) client.connect(this@MainActivity)
+                                else client.disconnect(this@MainActivity)
                             }
                         ) {
                             Text(
-                                text = if (isConnected) "Connected" else "Connect"
+                                text = if (isConnected) "Disconnect" else "Connect"
                             )
                         }
                         Button(
                             enabled = isConnected,
                             onClick = {
                                 coroutineScope.launch {
-                                    channelCount = client.call("read-channel-count", "{}")
+                                    channelCount = client.call("test", "read-channel-count", "{}")
                                         ?.toIntOrNull() ?: -1
                                 }
                             }

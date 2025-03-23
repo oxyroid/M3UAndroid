@@ -52,21 +52,31 @@ class RemoteClient {
         context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
     }
 
-    suspend fun call(func: String, param: String): String? = suspendCoroutine { cont ->
+    fun disconnect(context: Context) {
+        context.unbindService(connection)
+        _isConnectedObservable.value = false
+    }
+
+    suspend fun call(
+        module: String,
+        method: String,
+        param: String
+    ): String? = suspendCoroutine { cont ->
         val remoteService = requireNotNull(server) { "RemoteService is not connected!" }
-        remoteService.call(func, param, object : IRemoteCallback.Stub() {
-            override fun onSuccess(func: String?, param: String?) {
-                Log.d(TAG, "onSuccess: $func, $param")
+        remoteService.call(module, method, param, object : IRemoteCallback.Stub() {
+            override fun onSuccess(module: String, method: String, param: String?) {
+                Log.d(TAG, "onSuccess: $method, $param")
                 cont.resume(param)
             }
 
             override fun onError(
-                func: String?,
-                errorCode: String?,
+                module: String,
+                method: String,
+                errorCode: Int,
                 errorMessage: String?
             ) {
-                Log.e(TAG, "onError: $func, $errorCode, $errorMessage")
-                throw RuntimeException("Error: $func $param $errorCode, $errorMessage")
+                Log.e(TAG, "onError: $method, $errorCode, $errorMessage")
+                throw RuntimeException("Error: $method $param $errorCode, $errorMessage")
             }
         })
     }

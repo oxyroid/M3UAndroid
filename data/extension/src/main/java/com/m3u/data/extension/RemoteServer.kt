@@ -21,11 +21,12 @@ class RemoteServer : Service() {
     }
     private val binder: IRemoteService.Stub = object : IRemoteService.Stub() {
         override fun call(
-            func: String,
+            module: String,
+            method: String,
             param: String,
             callback: IRemoteCallback?
         ) {
-            onRemoteServerCall.onCall(func, param, callback)
+            onRemoteServerCall.onCall(module, method, param, callback)
         }
     }
 
