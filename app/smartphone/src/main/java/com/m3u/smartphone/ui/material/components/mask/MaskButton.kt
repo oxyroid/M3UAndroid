@@ -25,7 +25,8 @@ fun MaskButton(
     modifier: Modifier = Modifier,
     tooltipState: TooltipState = rememberTooltipState(),
     tint: Color = Color.Unspecified,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    wakeWhenClicked: Boolean = true
 ) {
     TooltipBox(
         state = tooltipState,
@@ -38,7 +39,8 @@ fun MaskButton(
     ) {
         IconButton(
             onClick = {
-                state.wake()
+                if (wakeWhenClicked) state.wake()
+                else state.sleep()
                 onClick()
             },
             enabled = enabled,

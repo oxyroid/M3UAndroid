@@ -53,6 +53,8 @@ import com.m3u.smartphone.ui.common.helper.LocalHelper
 import com.m3u.smartphone.ui.common.helper.Metadata
 import com.m3u.smartphone.ui.common.helper.useRailNav
 import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.HazeStyle
+import dev.chrisbanes.haze.hazeChild
 
 @Composable
 @OptIn(InternalComposeApi::class)
@@ -187,7 +189,9 @@ internal fun MainContent(
                         }
                     }
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .hazeChild(hazeState, style = HazeStyle(blurRadius = 6.dp))
+                    .fillMaxWidth()
             )
         },
         contentWindowInsets = windowInsets,

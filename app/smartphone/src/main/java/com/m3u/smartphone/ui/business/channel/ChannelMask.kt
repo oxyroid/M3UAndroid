@@ -308,7 +308,8 @@ internal fun ChannelMask(
                         state = maskState,
                         icon = Icons.Rounded.PictureInPicture,
                         onClick = onEnterPipMode,
-                        contentDescription = stringResource(string.feat_channel_tooltip_enter_pip_mode)
+                        contentDescription = stringResource(string.feat_channel_tooltip_enter_pip_mode),
+                        wakeWhenClicked = false
                     )
                 }
             },

@@ -236,15 +236,6 @@ internal fun OptionalFragment(
         }
         item {
             SwitchSharedPreference(
-                title = string.feat_setting_randomly_in_favourite,
-                icon = Icons.Rounded.Terrain,
-                checked = preferences.randomlyInFavourite,
-                onChanged = { preferences.randomlyInFavourite = !preferences.randomlyInFavourite }
-            )
-
-        }
-        item {
-            SwitchSharedPreference(
                 title = string.feat_setting_epg_clock_mode,
                 icon = Icons.Rounded.AccessTime,
                 checked = preferences.twelveHourClock,
