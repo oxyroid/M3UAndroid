@@ -27,8 +27,6 @@ import com.m3u.smartphone.ui.material.model.LocalSpacing
 internal fun OtherPreferences(
     versionName: String,
     versionCode: Int,
-    cacheSpace: DataUnit,
-    onClearCache: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -49,12 +47,6 @@ internal fun OtherPreferences(
                     }
                 context.startActivity(intent)
             }
-        )
-        Preference(
-            title = stringResource(string.feat_setting_clear_cache).title(),
-            content = cacheSpace.toString(),
-            icon = Icons.Rounded.Delete,
-            onClick = onClearCache
         )
         Preference(
             title = stringResource(string.feat_setting_app_version).title(),

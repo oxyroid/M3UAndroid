@@ -32,7 +32,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.business.setting.BackingUpAndRestoringState
 import com.m3u.business.setting.SettingViewModel
 import com.m3u.core.architecture.preferences.hiltPreferences
-import com.m3u.core.unit.DataUnit
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.ColorScheme
@@ -68,8 +67,6 @@ fun SettingRoute(
     val hiddenChannels by viewModel.hiddenChannels.collectAsStateWithLifecycle()
     val hiddenCategoriesWithPlaylists by viewModel.hiddenCategoriesWithPlaylists.collectAsStateWithLifecycle()
     val backingUpOrRestoring by viewModel.backingUpOrRestoring.collectAsStateWithLifecycle()
-
-    val cacheSpace by viewModel.cacheSpace.collectAsStateWithLifecycle()
 
     val sheetState = rememberModalBottomSheetState()
     var colorScheme: ColorScheme? by remember { mutableStateOf(null) }
@@ -110,14 +107,12 @@ fun SettingRoute(
         epgs = epgs,
         hiddenChannels = hiddenChannels,
         hiddenCategoriesWithPlaylists = hiddenCategoriesWithPlaylists,
-        cacheSpace = cacheSpace,
         backup = backup,
         restore = restore,
         colorSchemes = colorSchemes,
         openColorCanvas = { colorScheme = it },
         restoreSchemes = viewModel::restoreSchemes,
         onClipboard = { viewModel.onClipboard(it) },
-        onClearCache = { viewModel.clearCache() },
         onSubscribe = {
             controller?.hide()
             viewModel.subscribe()
@@ -168,8 +163,6 @@ private fun SettingScreen(
     colorSchemes: List<ColorScheme>,
     openColorCanvas: (ColorScheme) -> Unit,
     restoreSchemes: () -> Unit,
-    cacheSpace: DataUnit,
-    onClearCache: () -> Unit,
     epgs: List<Playlist>,
     onDeleteEpgPlaylist: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -253,8 +246,6 @@ private fun SettingScreen(
                         )
                     }
                 },
-                cacheSpace = cacheSpace,
-                onClearCache = onClearCache,
                 modifier = Modifier
                     .fillMaxSize()
             )

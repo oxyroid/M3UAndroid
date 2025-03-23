@@ -19,8 +19,6 @@ import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.preferences.Preferences
-import com.m3u.core.unit.DataUnit
-import com.m3u.core.unit.KB
 import com.m3u.core.util.basic.startWithHttpScheme
 import com.m3u.data.api.TvApiDelegate
 import com.m3u.data.database.dao.ColorSchemeDao
@@ -59,7 +57,6 @@ class SettingViewModel @Inject constructor(
     private val preferences: Preferences,
     private val messager: Messager,
     private val tvApi: TvApiDelegate,
-    private val playerManager: PlayerManager,
     publisher: Publisher,
     // FIXME: do not use dao in viewmodel
     private val colorSchemeDao: ColorSchemeDao,
@@ -296,15 +293,6 @@ class SettingViewModel @Inject constructor(
         messager.emit(SettingMessage.Restoring)
     }
 
-    val cacheSpace: StateFlow<DataUnit> = playerManager
-        .cacheSpace
-        .map { DataUnit.of(it) }
-        .stateIn(
-            scope = viewModelScope,
-            initialValue = 0.0.KB,
-            started = SharingStarted.Lazily
-        )
-
     private fun resetAllInputs() {
         titleState.value = ""
         urlState.value = ""
@@ -313,10 +301,6 @@ class SettingViewModel @Inject constructor(
         usernameState.value = ""
         passwordState.value = ""
         epgState.value = ""
-    }
-
-    fun clearCache() {
-        playerManager.clearCache()
     }
 
     fun deleteEpgPlaylist(epgUrl: String) {

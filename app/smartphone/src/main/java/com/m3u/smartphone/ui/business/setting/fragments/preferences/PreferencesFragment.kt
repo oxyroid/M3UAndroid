@@ -20,8 +20,6 @@ internal fun PreferencesFragment(
     navigateToPlaylistManagement: () -> Unit,
     navigateToThemeSelector: () -> Unit,
     navigateToOptional: () -> Unit,
-    cacheSpace: DataUnit,
-    onClearCache: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -43,8 +41,6 @@ internal fun PreferencesFragment(
             OtherPreferences(
                 versionName = versionName,
                 versionCode = versionCode,
-                cacheSpace = cacheSpace,
-                onClearCache = onClearCache
             )
         }
     }
