@@ -240,7 +240,9 @@ internal fun NavigationItemLayout(
         }
     }
     val actualOnClick: () -> Unit = if (usefob) {
-        fob::onClick::invoke
+        {
+            fob.onClick()
+        }
     } else {
         {
             navigateToRoot(currentRootDestination)

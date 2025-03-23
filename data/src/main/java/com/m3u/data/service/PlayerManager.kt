@@ -46,9 +46,7 @@ interface PlayerManager {
     fun pauseOrContinue(value: Boolean)
     fun updateSpeed(race: Float)
 
-    suspend fun recordVideo(
-        uri: Uri,
-    )
+    suspend fun recordVideo(uri: Uri)
 }
 
 @Immutable
