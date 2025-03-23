@@ -33,7 +33,11 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -58,26 +62,26 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import coil.compose.SubcomposeAsyncImage
+import com.m3u.core.foundation.components.CircularProgressIndicator
+import com.m3u.core.foundation.ui.thenIf
 import com.m3u.core.util.collections.indexOf
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Episode
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.ProgrammeRange
 import com.m3u.data.service.MediaCommand
+import com.m3u.smartphone.TimeUtils.formatEOrSh
+import com.m3u.smartphone.TimeUtils.toEOrSh
+import com.m3u.smartphone.ui.common.helper.LocalHelper
 import com.m3u.smartphone.ui.material.components.Background
-import com.m3u.core.foundation.components.CircularProgressIndicator
-import androidx.compose.material3.IconButton
+import com.m3u.smartphone.ui.material.components.FontFamilies
 import com.m3u.smartphone.ui.material.effects.BackStackEntry
 import com.m3u.smartphone.ui.material.effects.BackStackHandler
 import com.m3u.smartphone.ui.material.ktx.Edge
 import com.m3u.smartphone.ui.material.ktx.blurEdges
-import com.m3u.core.foundation.ui.thenIf
+import com.m3u.smartphone.ui.material.ktx.composableOf
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.smartphone.ui.material.shape.AbsoluteSmoothCornerShape
-import com.m3u.smartphone.ui.material.components.FontFamilies
-import com.m3u.smartphone.ui.common.helper.LocalHelper
-import com.m3u.smartphone.TimeUtils.formatEOrSh
-import com.m3u.smartphone.TimeUtils.toEOrSh
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -364,8 +368,12 @@ private fun ChannelGallery(
                         val isPlaying = channel.id == channelId
                         ChannelGalleryItem(
                             channel = channel,
-                            isPlaying = isPlaying
+                            isPlaying = isPlaying,
+                            isRoundedShape = !vertical
                         )
+                        if (vertical) {
+                            HorizontalDivider()
+                        }
                     }
                 }
             }
@@ -388,9 +396,10 @@ private fun ChannelGallery(
     } else {
         LazyColumn(
             state = lazyListState,
-            verticalArrangement = Arrangement.spacedBy(spacing.medium),
-            contentPadding = PaddingValues(spacing.medium),
-            modifier = modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .blurEdges(MaterialTheme.colorScheme.surface, listOf(Edge.Top, Edge.Bottom))
+                .then(modifier),
             content = content
         )
     }
@@ -413,37 +422,56 @@ private sealed class ChannelGalleryValue {
 private fun ChannelGalleryItem(
     channel: Channel,
     isPlaying: Boolean,
+    isRoundedShape: Boolean,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
     val helper = LocalHelper.current
     val coroutineScope = rememberCoroutineScope()
 
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = if (!isPlaying)
-                MaterialTheme.colorScheme.surfaceColorAtElevation(spacing.medium)
-            else MaterialTheme.colorScheme.onSurface,
-            contentColor = if (!isPlaying) MaterialTheme.colorScheme.onSurface
-            else MaterialTheme.colorScheme.surfaceColorAtElevation(spacing.small)
-        ),
-        shape = AbsoluteRoundedCornerShape(spacing.medium),
-        elevation = CardDefaults.cardElevation(spacing.none),
-        onClick = {
-            if (isPlaying) return@Card
-            coroutineScope.launch {
-                helper.play(
-                    MediaCommand.Common(channel.id)
-                )
-            }
-        },
-        modifier = modifier
-    ) {
+    val containerColor = if (!isPlaying) MaterialTheme.colorScheme.surfaceColorAtElevation(spacing.medium)
+    else MaterialTheme.colorScheme.onSurface
+    val contentColor = if (!isPlaying) MaterialTheme.colorScheme.onSurface
+    else MaterialTheme.colorScheme.surfaceColorAtElevation(spacing.small)
+    val text = composableOf {
         Text(
             text = channel.title,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold.takeIf { isPlaying },
             modifier = Modifier.padding(spacing.medium)
+        )
+    }
+    val onClick = lambda@{
+        if (isPlaying) return@lambda
+        coroutineScope.launch {
+            helper.play(
+                MediaCommand.Common(channel.id)
+            )
+        }
+    }
+    if (isRoundedShape) {
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = containerColor,
+                contentColor = contentColor
+            ),
+            shape = AbsoluteRoundedCornerShape(spacing.medium),
+            elevation = CardDefaults.cardElevation(spacing.none),
+            onClick = onClick,
+            modifier = modifier
+        ) {
+            text()
+        }
+    } else {
+        ListItem(
+            headlineContent = {
+                text()
+            },
+            colors = ListItemDefaults.colors(
+                containerColor = containerColor,
+                headlineColor = contentColor
+            ),
+            modifier = Modifier.clickable(onClick = onClick).then(modifier)
         )
     }
 }

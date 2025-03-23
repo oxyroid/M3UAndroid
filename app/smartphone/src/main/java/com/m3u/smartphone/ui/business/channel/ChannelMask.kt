@@ -73,21 +73,21 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import com.m3u.business.channel.PlayerState
 import com.m3u.core.architecture.preferences.hiltPreferences
+import com.m3u.core.foundation.ui.thenIf
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.i18n.R.string
-import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.smartphone.ui.business.channel.components.MaskTextButton
 import com.m3u.smartphone.ui.business.channel.components.PlayerMask
+import com.m3u.smartphone.ui.common.helper.LocalHelper
 import com.m3u.smartphone.ui.material.components.FontFamilies
 import com.m3u.smartphone.ui.material.components.Image
-import com.m3u.smartphone.ui.common.helper.LocalHelper
 import com.m3u.smartphone.ui.material.components.mask.MaskButton
 import com.m3u.smartphone.ui.material.components.mask.MaskCircleButton
 import com.m3u.smartphone.ui.material.components.mask.MaskPanel
 import com.m3u.smartphone.ui.material.components.mask.MaskState
 import com.m3u.smartphone.ui.material.effects.currentBackStackEntry
-import com.m3u.core.foundation.ui.thenIf
+import com.m3u.smartphone.ui.material.model.LocalSpacing
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
@@ -319,7 +319,7 @@ internal fun ChannelMask(
                     preferences.alwaysShowReplay,
                     playerState.playerError
                 )
-                Box(Modifier.size(48.dp)) {
+                Box(Modifier.size(36.dp)) {
                     androidx.compose.animation.AnimatedVisibility(
                         visible = !isPanelExpanded && adjacentChannels?.prevId != null,
                         enter = fadeIn() + slideInHorizontally(initialOffsetX = { -it / 6 }),
@@ -334,7 +334,7 @@ internal fun ChannelMask(
                     }
                 }
 
-                Box(Modifier.size(64.dp)) {
+                Box(Modifier.size(52.dp)) {
                     androidx.compose.animation.AnimatedVisibility(
                         visible = !isPanelExpanded && centerRole != MaskCenterRole.Loading,
                         enter = fadeIn(),
@@ -350,12 +350,12 @@ internal fun ChannelMask(
                         )
                     }
                 }
-                Box(Modifier.size(48.dp)) {
+                Box(Modifier.size(36.dp)) {
                     androidx.compose.animation.AnimatedVisibility(
                         visible = !isPanelExpanded && adjacentChannels?.nextId != null,
                         enter = fadeIn() + slideInHorizontally(initialOffsetX = { it / 6 }),
                         exit = fadeOut() + slideOutHorizontally(targetOffsetX = { it / 6 }),
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.fillMaxSize()
                     ) {
                         MaskNavigateButton(
                             state = maskState,
@@ -381,7 +381,10 @@ internal fun ChannelMask(
                         .semantics(mergeDescendants = true) { }
                         .weight(1f)
                 ) {
-                    if (!isPanelExpanded || !isPanelGestureSupported) {
+                    val alpha by animateFloatAsState(
+                        if (!isPanelExpanded || !isPanelGestureSupported) 1f else 0f
+                    )
+                    Column(Modifier.alpha(alpha)) {
                         Text(
                             text = playlistTitle.trim().uppercase(),
                             style = MaterialTheme.typography.labelMedium,
@@ -434,26 +437,26 @@ internal fun ChannelMask(
                         )
                     }
                 }
-                    val autoRotating by ChannelMaskUtils.IsAutoRotatingEnabled
-                    LaunchedEffect(autoRotating) {
-                        if (autoRotating) {
-                            helper.screenOrientation =
-                                ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-                        }
+                val autoRotating by ChannelMaskUtils.IsAutoRotatingEnabled
+                LaunchedEffect(autoRotating) {
+                    if (autoRotating) {
+                        helper.screenOrientation =
+                            ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
                     }
-                    if (preferences.screenRotating && !autoRotating) {
-                        MaskButton(
-                            state = maskState,
-                            icon = Icons.Rounded.ScreenRotationAlt,
-                            onClick = {
-                                helper.screenOrientation = when (helper.screenOrientation) {
-                                    ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                                    else -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-                                }
-                            },
-                            contentDescription = stringResource(string.feat_channel_tooltip_screen_rotating)
-                        )
-                    }
+                }
+                if (preferences.screenRotating && !autoRotating) {
+                    MaskButton(
+                        state = maskState,
+                        icon = Icons.Rounded.ScreenRotationAlt,
+                        onClick = {
+                            helper.screenOrientation = when (helper.screenOrientation) {
+                                ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                                else -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                            }
+                        },
+                        contentDescription = stringResource(string.feat_channel_tooltip_screen_rotating)
+                    )
+                }
             },
             slider = {
                 when {

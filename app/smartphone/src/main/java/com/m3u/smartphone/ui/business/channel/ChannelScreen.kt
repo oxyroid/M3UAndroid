@@ -226,8 +226,7 @@ fun ChannelRoute(
                 ChannelPlayer(
                     isSeriesPlaylist = isSeriesPlaylist,
                     openDlnaDevices = {
-//                        viewModel.recordVideo()
-                        createRecordFileLauncher.launch("record_${Clock.System.now().toEpochMilliseconds()}.mp4")
+//                        createRecordFileLauncher.launch("record_${Clock.System.now().toEpochMilliseconds()}.mp4")
                         viewModel.openDlnaDevices()
                         pullPanelLayoutState.collapse()
                     },

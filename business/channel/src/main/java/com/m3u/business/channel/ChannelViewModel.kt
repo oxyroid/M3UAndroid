@@ -82,7 +82,11 @@ class ChannelViewModel @Inject constructor(
     var devices by mutableStateOf(emptyList<Device>())
 
     private val _volume: MutableStateFlow<Float> by lazy {
-        MutableStateFlow(audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) / 100f)
+        MutableStateFlow(
+            with(audioManager) {
+                getStreamVolume(AudioManager.STREAM_MUSIC) * 1f / getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+            }
+        )
     }
     val volume = _volume.asStateFlow()
 

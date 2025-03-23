@@ -1,5 +1,6 @@
 package com.m3u.smartphone.ui.material.components
 
+import android.annotation.SuppressLint
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -57,6 +58,7 @@ fun PullPanelLayout(
     BackHandler(state.value == PullPanelLayoutValue.EXPANDED) {
         state.collapse()
     }
+    @SuppressLint("UnusedBoxWithConstraintsScope")
     BoxWithConstraints {
         var offset: Float by remember(state, constraints.maxHeight) {
             mutableFloatStateOf(

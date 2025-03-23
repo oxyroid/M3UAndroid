@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.BrokenImage
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalContentColor
@@ -41,14 +42,14 @@ import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import coil.size.Size
 import com.m3u.core.architecture.preferences.hiltPreferences
-import com.m3u.data.database.model.Programme
-import com.m3u.data.database.model.Channel
-import com.m3u.i18n.R.string
 import com.m3u.core.foundation.components.CircularProgressIndicator
-import androidx.compose.material3.Icon
+import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.Programme
+import com.m3u.i18n.R.string
+import com.m3u.smartphone.TimeUtils.formatEOrSh
+import com.m3u.smartphone.ui.material.ktx.composableOf
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.smartphone.ui.material.shape.AbsoluteSmoothCornerShape
-import com.m3u.smartphone.TimeUtils.formatEOrSh
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -175,16 +176,14 @@ internal fun ChannelItem(
                             fontWeight = FontWeight.Bold,
                         )
                     },
-                    leadingContent = if (!noPictureMode) {
-                        {
-                            AsyncImage(
-                                model = channel.cover,
-                                contentDescription = null,
-                                contentScale = ContentScale.Fit,
-                                modifier = Modifier.size(56.dp)
-                            )
-                        }
-                    } else null,
+                    leadingContent = composableOf(!noPictureMode) {
+                        AsyncImage(
+                            model = channel.cover,
+                            contentDescription = null,
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier.size(56.dp)
+                        )
+                    },
                     supportingContent = {
                         when {
                             recently -> {
@@ -220,9 +219,7 @@ internal fun ChannelItem(
                             }
                         }
                     },
-                    trailingContent = {
-                        star()
-                    },
+                    trailingContent = star,
                     colors = ListItemDefaults.colors(Color.Transparent),
                     modifier = Modifier
                         .combinedClickable(

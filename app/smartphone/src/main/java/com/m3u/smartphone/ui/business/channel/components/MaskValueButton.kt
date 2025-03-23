@@ -16,6 +16,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.ui.graphics.takeOrElse
 import com.m3u.smartphone.ui.material.components.mask.MaskState
 import com.m3u.smartphone.ui.material.components.FontFamilies
 
@@ -58,12 +61,14 @@ fun MaskTextButton(
                     state.wake()
                     onClick()
                 },
-                enabled = enabled
+                enabled = enabled,
+                colors = IconButtonDefaults.iconButtonColors(
+                    contentColor = tint.takeOrElse { LocalContentColor.current }
+                ),
             ) {
                 Icon(
                     imageVector = icon,
-                    contentDescription = contentDescription,
-                    tint = tint
+                    contentDescription = contentDescription
                 )
             }
         }

@@ -31,6 +31,7 @@ internal fun PlayerMask(
     body: @Composable RowScope.() -> Unit,
     footer: @Composable RowScope.() -> Unit,
     modifier: Modifier = Modifier,
+    control: @Composable RowScope.() -> Unit = {},
     slider: (@Composable () -> Unit)? = null
 ) {
     val configuration = LocalConfiguration.current
@@ -78,6 +79,12 @@ internal fun PlayerMask(
                     bottom = spacing.small
                 )
         ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.Bottom,
+                content = control
+            )
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(spacing.medium),
