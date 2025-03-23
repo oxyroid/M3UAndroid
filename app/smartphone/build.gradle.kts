@@ -122,6 +122,7 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":core:foundation"))
     implementation(project(":data"))
+    implementation(project(":data:extension"))
     // business
     implementation(project(":business:foryou"))
     implementation(project(":business:favorite"))

@@ -12,6 +12,11 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
+    <permission
+        android:name="com.m3u.permission.CONNECT_EXTENSION_PLUGIN"
+        android:protectionLevel="normal" />
+    <uses-permission android:name="com.m3u.permission.CONNECT_EXTENSION_PLUGIN"/>
+
     <uses-feature
         android:name="android.software.leanback"
         android:required="false" />
@@ -69,6 +74,15 @@
             android:label="@string/app_label_crash"
             android:launchMode="singleInstance"
             android:theme="@style/Theme.M3U" />
+
+        <service
+            android:name="com.m3u.data.extension.RemoteServer"
+            android:exported="true"
+            android:permission="com.m3u.permission.CONNECT_EXTENSION_PLUGIN">
+            <intent-filter>
+                <action android:name="com.m3u.permission.CONNECT_EXTENSION_PLUGIN" />
+            </intent-filter>
+        </service>
 
         <provider
             android:name="androidx.startup.InitializationProvider"

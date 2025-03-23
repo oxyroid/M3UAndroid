@@ -1,23 +1,20 @@
 plugins {
     alias(libs.plugins.com.android.library)
     alias(libs.plugins.org.jetbrains.kotlin.android)
-    alias(libs.plugins.com.google.devtools.ksp)
+    alias(libs.plugins.org.jetbrains.kotlin.serialization)
 }
 
 android {
-    namespace = "com.m3u.data.codec"
+    namespace = "com.m3u.data.extension"
     kotlinOptions {
         jvmTarget = "17"
+    }
+    buildFeatures {
+        aidl = true
     }
 }
 
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
-
-    implementation(libs.androidx.media3.exoplayer)
-
-    // auto
-    implementation(libs.auto.service.annotations)
-    ksp(libs.auto.service.ksp)
 }

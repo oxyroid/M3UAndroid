@@ -26,6 +26,7 @@ android {
 
 dependencies {
     implementation(project(":core"))
+    implementation(project(":data:extension"))
     implementation(project(":lint:annotation"))
     ksp(project(":lint:processor"))
 
@@ -55,6 +56,7 @@ dependencies {
 
     implementation(libs.google.dagger.hilt)
     ksp(libs.google.dagger.hilt.compiler)
+    ksp(libs.androidx.hilt.compiler)
 
     implementation(libs.squareup.retrofit2)
 
@@ -75,7 +77,6 @@ dependencies {
 
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.hilt.work)
-    ksp(libs.androidx.hilt.compiler)
 
     implementation(libs.ktor.server.netty)
     implementation(libs.ktor.server.websockets)
@@ -89,4 +90,8 @@ dependencies {
     debugImplementation(libs.logback.android)
 
     implementation(libs.jakewharton.disklrucache)
+
+    // auto
+    implementation(libs.auto.service.annotations)
+    ksp(libs.auto.service.ksp)
 }

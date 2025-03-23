@@ -33,3 +33,5 @@ include(
     ":lint:annotation",
     ":lint:processor"
 )
+include(":data:extension")
+include(":app:extension")
