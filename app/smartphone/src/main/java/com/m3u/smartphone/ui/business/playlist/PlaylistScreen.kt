@@ -1,5 +1,3 @@
-@file:Suppress("UsingMaterialAndMaterial3Libraries")
-
 package com.m3u.smartphone.ui.business.playlist
 
 import android.Manifest
@@ -31,13 +29,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
-import androidx.compose.material.BackdropScaffold
-import androidx.compose.material.BackdropValue
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material.icons.rounded.KeyboardDoubleArrowUp
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material.rememberBackdropScaffoldState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -102,10 +97,13 @@ import com.m3u.smartphone.ui.material.ktx.isAtTop
 import com.m3u.smartphone.ui.material.ktx.only
 import com.m3u.smartphone.ui.material.ktx.split
 import com.m3u.core.foundation.ui.thenIf
+import com.m3u.smartphone.ui.business.playlist.components.BackdropScaffold
+import com.m3u.smartphone.ui.business.playlist.components.BackdropValue
 import com.m3u.smartphone.ui.material.model.LocalHazeState
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.smartphone.ui.business.playlist.components.ChannelGallery
 import com.m3u.smartphone.ui.business.playlist.components.PlaylistTabRow
+import com.m3u.smartphone.ui.business.playlist.components.rememberBackdropScaffoldState
 import com.m3u.smartphone.ui.material.components.Destination
 import com.m3u.smartphone.ui.material.components.EpisodesBottomSheet
 import com.m3u.smartphone.ui.material.components.EventHandler

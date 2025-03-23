@@ -185,6 +185,4 @@ dependencies {
     implementation(libs.minabox)
     implementation(libs.net.mm2d.mmupnp.mmupnp)
     implementation(libs.haze)
-    // FIXME: for m2 BackdropScaffold only
-    implementation("androidx.compose.material:material")
 }
