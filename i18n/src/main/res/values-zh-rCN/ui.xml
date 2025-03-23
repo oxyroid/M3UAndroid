@@ -12,8 +12,8 @@
     <string name="ui_error_unknown">未知错误</string>
     <string name="ui_cd_top_bar_on_back_pressed">返回</string>
 
-    <string name="ui_theme_card_left">您</string>
-    <string name="ui_theme_card_right">好</string>
+    <string name="ui_theme_card_left">你知道吗？</string>
+    <string name="ui_theme_card_right">我们会记录您的**观看进度**，并在下次播放时恢复进度</string>
 
     <string name="ui_sort">排序</string>
     <string name="ui_sort_asc">A-Z</string>

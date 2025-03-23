@@ -11,8 +11,8 @@
     <string name="ui_error_unknown">unknown error</string>
     <string name="ui_cd_top_bar_on_back_pressed">back</string>
 
-    <string name="ui_theme_card_left">ho</string>
-    <string name="ui_theme_card_right">la</string>
+    <string name="ui_theme_card_left">Did you know?</string>
+    <string name="ui_theme_card_right">We will record your **watching progress** and resume it next time you play</string>
 
     <string name="ui_sort">Sort</string>
     <string name="ui_sort_asc">A-Z</string>
