@@ -120,6 +120,11 @@ class OnRemoteCallImpl : OnRemoteCall {
 
 interface RemoteModule {
     val module: String
+
+    interface Continuation<R> {
+        fun resume(result: R)
+        fun reject(errorCode: Int, errorMessage: String)
+    }
 }
 
 @Retention(AnnotationRetention.SOURCE)
