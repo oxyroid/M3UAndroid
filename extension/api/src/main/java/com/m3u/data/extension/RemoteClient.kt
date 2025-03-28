@@ -42,12 +42,16 @@ class RemoteClient {
 
     fun connect(
         context: Context,
-        targetPackageName: String = PACKAGE_NAME_HOST
+        targetPackageName: String,
+        targetClassName: String,
+        targetPermission: String,
+        accessKey: String
     ) {
         Log.d(TAG, "connect")
-        val intent = Intent(context, RemoteServer::class.java).apply {
-            action = "com.m3u.permission.CONNECT_EXTENSION_PLUGIN"
-            component = ComponentName(targetPackageName, "com.m3u.data.extension.RemoteServer")
+        val intent = Intent(context, RemoteService::class.java).apply {
+            action = targetPermission
+            component = ComponentName(targetPackageName, targetClassName)
+            putExtra(Const.ACCESS_KEY, accessKey)
         }
         context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
     }
@@ -60,11 +64,11 @@ class RemoteClient {
     suspend fun call(
         module: String,
         method: String,
-        param: String
-    ): String? = suspendCoroutine { cont ->
+        param: ByteArray
+    ): ByteArray = suspendCoroutine { cont ->
         val remoteService = requireNotNull(server) { "RemoteService is not connected!" }
         remoteService.call(module, method, param, object : IRemoteCallback.Stub() {
-            override fun onSuccess(module: String, method: String, param: String?) {
+            override fun onSuccess(module: String, method: String, param: ByteArray) {
                 Log.d(TAG, "onSuccess: $method, $param")
                 cont.resume(param)
             }
@@ -89,6 +93,5 @@ class RemoteClient {
 
     companion object {
         private const val TAG = "RemoteClient"
-        const val PACKAGE_NAME_HOST = "com.m3u.smartphone"
     }
 }

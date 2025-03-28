@@ -26,7 +26,7 @@ android {
 
 dependencies {
     implementation(project(":core"))
-    implementation(project(":data:extension"))
+    implementation(project(":extension:api"))
     implementation(project(":lint:annotation"))
     ksp(project(":lint:processor"))
 

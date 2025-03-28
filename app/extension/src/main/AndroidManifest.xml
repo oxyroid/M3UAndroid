@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <permission
-        android:name="com.m3u.permission.CONNECT_EXTENSION_PLUGIN"
-        android:protectionLevel="normal" />
     <uses-permission android:name="com.m3u.permission.CONNECT_EXTENSION_PLUGIN"/>
     <application
         android:allowBackup="true"
@@ -21,16 +18,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <service
-            android:name="com.m3u.data.extension.RemoteServer"
-            android:exported="true"
-            android:permission="com.m3u.permission.CONNECT_EXTENSION_PLUGIN">
-            <intent-filter>
-                <action android:name="com.m3u.permission.CONNECT_EXTENSION_PLUGIN" />
-            </intent-filter>
-        </service>
-
     </application>
     <queries>
         <package android:name="com.m3u.smartphone" />

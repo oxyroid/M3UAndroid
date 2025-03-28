@@ -41,7 +41,7 @@ android {
 }
 
 dependencies {
-    implementation(project(":data:extension"))
+    implementation(project(":extension:api"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

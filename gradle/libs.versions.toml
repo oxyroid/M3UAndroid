@@ -173,13 +173,8 @@ androidx-graphics-shapes = { group = "androidx.graphics", name = "graphics-shape
 symbol-processing-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "kotlin-symbol-processor" }
 androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
 jakewharton-disklrucache = { group = "com.jakewharton", name = "disklrucache", version.ref = "jakewharton-disklrucache" }
-junit = { group = "junit", name = "junit", version.ref = "junit" }
-androidx-ui = { group = "androidx.compose.ui", name = "ui" }
-androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
-androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
-androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
-androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
-androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+
+org-jetbrains-kotlin-kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
 
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }

@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.m3u.data.extension"
+    namespace = "com.m3u.extension.api"
     kotlinOptions {
         jvmTarget = "17"
     }

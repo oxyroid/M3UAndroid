@@ -15,7 +15,6 @@
     <permission
         android:name="com.m3u.permission.CONNECT_EXTENSION_PLUGIN"
         android:protectionLevel="normal" />
-    <uses-permission android:name="com.m3u.permission.CONNECT_EXTENSION_PLUGIN"/>
 
     <uses-feature
         android:name="android.software.leanback"
@@ -76,7 +75,7 @@
             android:theme="@style/Theme.M3U" />
 
         <service
-            android:name="com.m3u.data.extension.RemoteServer"
+            android:name="com.m3u.data.extension.RemoteService"
             android:exported="true"
             android:permission="com.m3u.permission.CONNECT_EXTENSION_PLUGIN">
             <intent-filter>
