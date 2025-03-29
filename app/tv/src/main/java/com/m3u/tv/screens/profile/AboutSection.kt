@@ -13,27 +13,28 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import com.m3u.core.util.basic.title
+import com.m3u.i18n.R
 
 @Composable
 fun AboutSection() {
     val context = LocalContext.current
-    val versionNumber = remember(context) {
-        context.getVersionNumber()
-    }
+    val versionNumber = remember(context) { context.getVersionNumber() }
 
     Column(modifier = Modifier.padding(horizontal = 72.dp)) {
         Text(
-            text = "AboutSectionTitle",
+            text = stringResource(R.string.feat_about_title).title(),
             style = MaterialTheme.typography.headlineSmall
         )
         Text(
             modifier = Modifier
                 .graphicsLayer { alpha = 0.8f }
                 .padding(top = 16.dp),
-            text = "AboutSectionDescription",
+            text = "FOSS Player, which made of jetpack compose. Android 8.0 and above supported.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -48,7 +49,7 @@ fun AboutSection() {
             modifier = Modifier
                 .graphicsLayer { alpha = 0.6f }
                 .padding(top = 16.dp),
-            text = "AboutSectionAppVersionTitle",
+            text = "App Version",
             style = MaterialTheme.typography.labelMedium
         )
         Text(

@@ -14,9 +14,11 @@ import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithContent
@@ -32,6 +34,8 @@ import androidx.compose.ui.unit.sp
 import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Icon
+import androidx.tv.material3.IconButton
+import androidx.tv.material3.IconButtonDefaults
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil.compose.AsyncImage
@@ -45,7 +49,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun ChannelDetail(
     channel: Channel,
-    goToChannelPlayer: () -> Unit
+    navigateToChannelPlayer: () -> Unit,
+    updateFavourite: () -> Unit,
 ) {
     val childPadding = rememberChildPadding()
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
@@ -73,23 +78,16 @@ fun ChannelDetail(
                     modifier = Modifier.alpha(0.75f)
                 ) {
                     ChannelDescription(description = channel.category)
-                    DotSeparatedRow(
-                        modifier = Modifier.padding(top = 20.dp),
-                        texts = emptyList()
-                    )
-                    DirectorScreenplayMusicRow(
-                        director = channel.title,
-                        screenplay = channel.title,
-                        music = channel.title
-                    )
                 }
                 WatchTrailerButton(
+                    channel = channel,
+                    navigateToChannelPlayer = navigateToChannelPlayer,
+                    updateFavourite = updateFavourite,
                     modifier = Modifier.onFocusChanged {
                         if (it.isFocused) {
                             coroutineScope.launch { bringIntoViewRequester.bringIntoView() }
                         }
-                    },
-                    goToChannelPlayer = goToChannelPlayer
+                    }
                 )
             }
         }
@@ -98,25 +96,48 @@ fun ChannelDetail(
 
 @Composable
 private fun WatchTrailerButton(
+    channel: Channel,
     modifier: Modifier = Modifier,
-    goToChannelPlayer: () -> Unit
+    navigateToChannelPlayer: () -> Unit,
+    updateFavourite: () -> Unit,
 ) {
-    Button(
-        onClick = goToChannelPlayer,
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
         modifier = modifier.padding(top = 24.dp),
-        contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
-        shape = ButtonDefaults.shape(shape = JetStreamButtonShape)
     ) {
-        Icon(
-            imageVector = Icons.Outlined.PlayArrow,
-            contentDescription = null
-        )
-        Spacer(Modifier.size(8.dp))
-        Text(
-            text = "Play Now",
-            style = MaterialTheme.typography.titleSmall
-        )
+        Button(
+            onClick = navigateToChannelPlayer,
+            contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+            shape = ButtonDefaults.shape(shape = JetStreamButtonShape)
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.PlayArrow,
+                contentDescription = null
+            )
+            Spacer(Modifier.size(16.dp))
+            Text(
+                text = "Play Now",
+                style = MaterialTheme.typography.titleSmall
+            )
+        }
+        Spacer(Modifier.size(16.dp))
+        IconButton(
+            onClick = updateFavourite,
+            shape = ButtonDefaults.shape(shape = JetStreamButtonShape),
+            colors = IconButtonDefaults.colors(
+                contentColor = if (channel.favourite) Color(0xffffcd3c)
+                else MaterialTheme.colorScheme.onSurface,
+                focusedContentColor = if (channel.favourite) Color(0xffffcd3c)
+                else MaterialTheme.colorScheme.inverseOnSurface
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Star,
+                contentDescription = null
+            )
+        }
     }
+
 }
 
 @Composable

@@ -27,6 +27,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -121,12 +122,12 @@ fun DashboardTopBar(
                                         contentDescription = "DashboardSearchButton",
                                         tint = LocalContentColor.current
                                     )
-                                } else {
+                                } else if (screen.title != null) {
                                     Text(
                                         modifier = Modifier
                                             .occupyScreenSize()
                                             .padding(horizontal = 16.dp),
-                                        text = screen(),
+                                        text = stringResource(screen.title),
                                         style = MaterialTheme.typography.titleSmall.copy(
                                             color = LocalContentColor.current
                                         )

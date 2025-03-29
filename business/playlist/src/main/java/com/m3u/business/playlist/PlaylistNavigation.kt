@@ -10,10 +10,10 @@ object PlaylistNavigation {
     const val TYPE_URL = "url"
 
     const val PLAYLIST_ROUTE =
-        "$PLAYLIST_ROUTE_PATH?$TYPE_URL={$TYPE_URL}"
+        "$PLAYLIST_ROUTE_PATH/{$TYPE_URL}"
 
     internal fun createPlaylistRoute(url: String): String {
-        return "$PLAYLIST_ROUTE_PATH?$TYPE_URL=$url"
+        return "$PLAYLIST_ROUTE_PATH/$url"
     }
 }
 

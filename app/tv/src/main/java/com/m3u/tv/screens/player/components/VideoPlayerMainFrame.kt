@@ -1,4 +1,4 @@
-package com.m3u.tv.screens.videoPlayer.components
+package com.m3u.tv.screens.player.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

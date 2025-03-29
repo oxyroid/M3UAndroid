@@ -22,11 +22,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.MaterialTheme
+import com.m3u.core.foundation.components.CircularProgressIndicator
 import com.m3u.data.database.model.Channel
 import com.m3u.data.service.MediaCommand
-import com.m3u.tv.common.Error
-import com.m3u.tv.common.Loading
-import com.m3u.tv.common.ChannelsRow
 import com.m3u.tv.screens.dashboard.rememberChildPadding
 import com.m3u.tv.utils.LocalHelper
 import kotlinx.coroutines.launch
@@ -36,52 +34,44 @@ object ChannelScreen {
 }
 
 @Composable
-fun ChannelDetailScreen(
-    goToChannelPlayer: () -> Unit,
+fun ChannelScreen(
+    navigateToChannelPlayer: () -> Unit,
     onBackPressed: () -> Unit,
-    refreshScreenWithNewChannel: (Channel) -> Unit,
-    channelScreenViewModel: ChannelScreenViewModel = hiltViewModel()
+    viewModel: ChannelDetailViewModel = hiltViewModel()
 ) {
     val helper = LocalHelper.current
     val coroutineScope = rememberCoroutineScope()
-    val uiState by channelScreenViewModel.uiState.collectAsStateWithLifecycle()
+    val channel by viewModel.channel.collectAsStateWithLifecycle()
 
-    when (val s = uiState) {
-        is ChannelScreenUiState.Loading -> {
-            Loading(modifier = Modifier.fillMaxSize())
+    when (val channel = channel) {
+        null -> {
+            CircularProgressIndicator()
         }
-
-        is ChannelScreenUiState.Error -> {
-            Error(modifier = Modifier.fillMaxSize())
-        }
-
-        is ChannelScreenUiState.Done -> {
+        else -> {
             Details(
-                channel = s.channel,
-                goToChannelPlayer = {
+                channel = channel,
+                navigateToChannelPlayer = {
                     coroutineScope.launch {
-                        helper.play(MediaCommand.Common(s.channel.id))
+                        helper.play(MediaCommand.Common(channel.id))
                     }
-                    goToChannelPlayer()
+                    navigateToChannelPlayer()
                 },
+                updateFavourite = viewModel::updateFavourite,
                 onBackPressed = onBackPressed,
-                refreshScreenWithNewChannel = refreshScreenWithNewChannel,
                 modifier = Modifier
                     .fillMaxSize()
                     .animateContentSize()
             )
         }
-
-        null -> {}
     }
 }
 
 @Composable
 private fun Details(
-    channel: Channel,
-    goToChannelPlayer: () -> Unit,
+    channel: Channel?,
+    navigateToChannelPlayer: () -> Unit,
+    updateFavourite: () -> Unit,
     onBackPressed: () -> Unit,
-    refreshScreenWithNewChannel: (Channel) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val childPadding = rememberChildPadding()
@@ -91,27 +81,14 @@ private fun Details(
         contentPadding = PaddingValues(bottom = 135.dp),
         modifier = modifier,
     ) {
-        item {
-            ChannelDetail(
-                channel = channel,
-                goToChannelPlayer = goToChannelPlayer
-            )
-        }
-
-        item {
-            ChannelsRow(
-                title = channel.title,
-                titleStyle = MaterialTheme.typography.titleMedium,
-                channels = emptyList(),
-                onChannelSelected = refreshScreenWithNewChannel
-            )
-        }
-
-        item {
-            ChannelReviews(
-                modifier = Modifier.padding(top = childPadding.top),
-                reviewsAndRatings = emptyList()
-            )
+        if (channel != null) {
+            item {
+                ChannelDetail(
+                    channel = channel,
+                    navigateToChannelPlayer = navigateToChannelPlayer,
+                    updateFavourite = updateFavourite
+                )
+            }
         }
 
         item {
@@ -140,21 +117,6 @@ private fun Details(
                     title = "LIVE",
                     value = "channel.status"
                 )
-//                TitleValueText(
-//                    modifier = itemModifier,
-//                    title = "stringResource(R.string.original_language)",
-//                    value = "channel.originalLanguage"
-//                )
-//                TitleValueText(
-//                    modifier = itemModifier,
-//                    title = "stringResource(R.string.budget)",
-//                    value = "channel.budget"
-//                )
-//                TitleValueText(
-//                    modifier = itemModifier,
-//                    title = "stringResource(R.string.revenue)",
-//                    value = "channel.revenue"
-//                )
             }
         }
     }

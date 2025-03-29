@@ -1,4 +1,4 @@
-package com.m3u.tv.screens.videoPlayer.components
+package com.m3u.tv.screens.player.components
 
 import android.content.Context
 import androidx.compose.runtime.Composable

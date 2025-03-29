@@ -14,9 +14,8 @@ import androidx.navigation.navArgument
 import com.m3u.data.service.MediaCommand
 import com.m3u.tv.screens.Screens
 import com.m3u.tv.screens.dashboard.DashboardScreen
+import com.m3u.tv.screens.player.PlayerScreen
 import com.m3u.tv.screens.playlist.ChannelScreen
-import com.m3u.tv.screens.playlist.ChannelDetailScreen
-import com.m3u.tv.screens.videoPlayer.VideoPlayerScreen
 import com.m3u.tv.utils.LocalHelper
 import kotlinx.coroutines.launch
 
@@ -37,22 +36,13 @@ fun App(
                 route = Screens.Channel(),
                 arguments = listOf(
                     navArgument(ChannelScreen.ChannelIdBundleKey) {
-                        type = NavType.StringType
+                        type = NavType.IntType
                     }
                 )
             ) {
-                ChannelDetailScreen(
-                    goToChannelPlayer = {
+                ChannelScreen(
+                    navigateToChannelPlayer = {
                         navController.navigate(Screens.VideoPlayer())
-                    },
-                    refreshScreenWithNewChannel = { channel ->
-                        navController.navigate(
-                            Screens.Channel.withArgs(channel.id)
-                        ) {
-                            popUpTo(Screens.Channel()) {
-                                inclusive = true
-                            }
-                        }
                     },
                     onBackPressed = {
                         if (navController.navigateUp()) {
@@ -82,7 +72,7 @@ fun App(
                 )
             }
             composable(route = Screens.VideoPlayer()) {
-                VideoPlayerScreen(
+                PlayerScreen(
                     onBackPressed = {
                         if (navController.navigateUp()) {
                             isComingBackFromDifferentScreen = true

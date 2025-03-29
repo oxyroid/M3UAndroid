@@ -13,6 +13,7 @@ import androidx.media3.common.Tracks
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.parser.xtream.XtreamChannelInfo
+import com.m3u.data.service.internal.ChannelPreference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow

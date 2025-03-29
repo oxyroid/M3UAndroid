@@ -1,4 +1,4 @@
-package com.m3u.tv.screens.videoPlayer.components
+package com.m3u.tv.screens.player.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.size
@@ -17,7 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Icon
-import com.m3u.tv.screens.videoPlayer.components.VideoPlayerPulse.Type.NONE
+import com.m3u.tv.screens.player.components.VideoPlayerPulse.Type.NONE
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel

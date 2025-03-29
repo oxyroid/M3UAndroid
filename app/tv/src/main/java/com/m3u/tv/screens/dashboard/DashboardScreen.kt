@@ -46,7 +46,6 @@ import com.m3u.tv.screens.home.HomeScreen
 import com.m3u.tv.screens.playlist.PlaylistScreen
 import com.m3u.tv.screens.profile.ProfileScreen
 import com.m3u.tv.screens.search.SearchScreen
-import com.m3u.tv.screens.shows.ShowsScreen
 import com.m3u.tv.utils.Padding
 
 val ParentPadding = PaddingValues(vertical = 16.dp, horizontal = 58.dp)
@@ -65,7 +64,7 @@ fun rememberChildPadding(direction: LayoutDirection = LocalLayoutDirection.curre
 
 @Composable
 fun DashboardScreen(
-    openChannelScreen: (channelId: String) -> Unit,
+    openChannelScreen: (channelId: Int) -> Unit,
     openVideoPlayer: (Channel) -> Unit,
     isComingBackFromDifferentScreen: Boolean,
     resetIsComingBackFromDifferentScreen: () -> Unit,
@@ -81,7 +80,8 @@ fun DashboardScreen(
     var currentDestination: String? by remember { mutableStateOf(null) }
     val currentTopBarSelectedTabIndex by remember(currentDestination) {
         derivedStateOf {
-            currentDestination?.let { TopBarTabs.indexOf(Screens.valueOf(it)) } ?: 0
+            Screens.tabDestinations.indexOfFirst { it == currentDestination }.takeIf { it != -1 }
+                ?: 0
         }
     }
 
@@ -98,10 +98,6 @@ fun DashboardScreen(
     }
 
     BackPressHandledArea(
-        // 1. On user's first back press, bring focus to the current selected tab, if TopBar is not
-        //    visible, first make it visible, then focus the selected tab
-        // 2. On second back press, bring focus back to the first displayed tab
-        // 3. On third back press, exit the app
         onBackPressed = {
             if (!isTopBarVisible) {
                 isTopBarVisible = true
@@ -203,7 +199,7 @@ private fun BackPressHandledArea(
 
 @Composable
 private fun Body(
-    openChannelScreen: (channelId: String) -> Unit,
+    openChannelScreen: (channelId: Int) -> Unit,
     openVideoPlayer: (Channel) -> Unit,
     updateTopBarVisibility: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
@@ -220,35 +216,26 @@ private fun Body(
         }
         composable(Screens.Home()) {
             HomeScreen(
-                onChannelClick = { selectedChannel ->
-                },
-                goToChannel = { playlistUrl ->
+                navigateToPlaylist = { playlistUrl ->
                     navController.navigate(
-                        Screens.Channels()
+                        Screens.Playlist.withArgs(playlistUrl)
                     )
                 },
-                goToVideoPlayer = openVideoPlayer,
+                navigateToChannel = openVideoPlayer,
                 onScroll = updateTopBarVisibility,
                 isTopBarVisible = isTopBarVisible
             )
         }
-        composable(Screens.Channels()) {
+        composable(Screens.Playlist()) {
             PlaylistScreen(
-                onChannelClick = { channel -> openChannelScreen(channel.id.toString()) },
-                onScroll = updateTopBarVisibility,
-                isTopBarVisible = isTopBarVisible
-            )
-        }
-        composable(Screens.Shows()) {
-            ShowsScreen(
-                onTVShowClick = { channel -> openChannelScreen(channel.id.toString()) },
+                onChannelClick = { channel -> openChannelScreen(channel.id) },
                 onScroll = updateTopBarVisibility,
                 isTopBarVisible = isTopBarVisible
             )
         }
         composable(Screens.Search()) {
             SearchScreen(
-                onChannelClick = { channel -> openChannelScreen(channel.id.toString()) },
+                onChannelClick = { channel -> openChannelScreen(channel.id) },
                 onScroll = updateTopBarVisibility
             )
         }

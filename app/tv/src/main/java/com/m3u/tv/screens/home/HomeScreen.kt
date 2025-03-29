@@ -17,9 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -29,7 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.tv.material3.Card
+import androidx.tv.material3.CardDefaults
 import androidx.tv.material3.CompactCard
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -39,14 +37,13 @@ import com.m3u.core.foundation.components.CircularProgressIndicator
 import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.PlaylistWithCount
-import com.m3u.tv.common.ChannelsRow
 import com.m3u.tv.screens.dashboard.rememberChildPadding
+import com.m3u.tv.theme.LexendExa
 
 @Composable
 fun HomeScreen(
-    onChannelClick: (channel: Channel) -> Unit,
-    goToChannel: (playlistUrl: String) -> Unit,
-    goToVideoPlayer: (channel: Channel) -> Unit,
+    navigateToPlaylist: (playlistUrl: String) -> Unit,
+    navigateToChannel: (channel: Channel) -> Unit,
     onScroll: (isTopBarVisible: Boolean) -> Unit,
     isTopBarVisible: Boolean,
     viewModel: ForyouViewModel = hiltViewModel(),
@@ -64,13 +61,9 @@ fun HomeScreen(
                 Catalog(
                     playlists = playlists.data,
                     specs = specs,
-                    trendingChannels = emptyList(),
-                    top10Channels = emptyList(),
-                    nowPlayingChannels = emptyList(),
-                    onChannelClick = onChannelClick,
                     onScroll = onScroll,
-                    goToChannel = goToChannel,
-                    goToVideoPlayer = goToVideoPlayer,
+                    navigateToPlaylist = navigateToPlaylist,
+                    navigateToChannel = navigateToChannel,
                     isTopBarVisible = isTopBarVisible
                 )
             }
@@ -87,20 +80,15 @@ fun HomeScreen(
 private fun Catalog(
     playlists: List<PlaylistWithCount>,
     specs: List<Recommend.Spec>,
-    trendingChannels: List<Channel>,
-    top10Channels: List<Channel>,
-    nowPlayingChannels: List<Channel>,
-    onChannelClick: (channel: Channel) -> Unit,
     onScroll: (isTopBarVisible: Boolean) -> Unit,
-    goToChannel: (playlistUrl: String) -> Unit,
-    goToVideoPlayer: (channel: Channel) -> Unit,
+    navigateToPlaylist: (playlistUrl: String) -> Unit,
+    navigateToChannel: (channel: Channel) -> Unit,
     modifier: Modifier = Modifier,
     isTopBarVisible: Boolean = true,
 ) {
 
     val lazyListState = rememberLazyListState()
     val childPadding = rememberChildPadding()
-    var immersiveListHasFocus by remember { mutableStateOf(false) }
 
     val shouldShowTopBar by remember {
         derivedStateOf {
@@ -119,31 +107,33 @@ private fun Catalog(
     LazyColumn(
         state = lazyListState,
         contentPadding = PaddingValues(bottom = 108.dp),
-        // Setting overscan margin to bottom to ensure the last row's visibility
         modifier = modifier
     ) {
-        item(contentType = "FeaturedChannelsCarousel") {
-            FeaturedSpecsCarousel(
-                specs = specs,
-                padding = childPadding,
-                onClickSpec = { spec ->
-                    when (spec) {
-                        is Recommend.UnseenSpec -> {
-                            goToVideoPlayer(spec.channel)
+        if (specs.isNotEmpty()) {
+            item(contentType = "FeaturedChannelsCarousel") {
+                FeaturedSpecsCarousel(
+                    specs = specs,
+                    padding = childPadding,
+                    onClickSpec = { spec ->
+                        when (spec) {
+                            is Recommend.UnseenSpec -> {
+                                navigateToChannel(spec.channel)
+                            }
+                            is Recommend.DiscoverSpec -> TODO()
+                            is Recommend.NewRelease -> TODO()
                         }
-                        is Recommend.DiscoverSpec -> TODO()
-                        is Recommend.NewRelease -> TODO()
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(324.dp)
-                /*
-                 Setting height for the FeaturedChannelCarousel to keep it rendered with same height,
-                 regardless of the top bar's visibility
-                 */
-            )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(324.dp)
+                    /*
+                     Setting height for the FeaturedChannelCarousel to keep it rendered with same height,
+                     regardless of the top bar's visibility
+                     */
+                )
+            }
         }
+
         item(contentType = "PlaylistsRow") {
             val startPadding: Dp = rememberChildPadding().start
             val endPadding: Dp = rememberChildPadding().end
@@ -165,15 +155,20 @@ private fun Catalog(
             ) {
                 items(playlists) { (playlist, count) ->
                     CompactCard(
-                        onClick = {
-                            goToChannel(playlist.url)
-                        },
+                        onClick = { navigateToPlaylist(playlist.url) },
                         title = {
                             Text(
                                 text = playlist.title,
-                                modifier = Modifier.padding(16.dp)
+                                modifier = Modifier.padding(16.dp),
+                                fontSize = 36.sp,
+                                lineHeight = 36.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = LexendExa
                             )
                         },
+                        colors = CardDefaults.compactCardColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        ),
                         image = {},
                         modifier = Modifier
                             .width(325.dp)
@@ -181,33 +176,6 @@ private fun Catalog(
                     )
                 }
             }
-        }
-        item(contentType = "ChannelsRow") {
-            ChannelsRow(
-                modifier = Modifier
-                    .padding(top = 16.dp),
-                channels = trendingChannels,
-                title = "StringConstants.Composable.HomeScreenTrendingTitle",
-                onChannelSelected = onChannelClick
-            )
-        }
-//        item(contentType = "Top10ChannelsList") {
-//            Top10ChannelsList(
-//                channels = top10Channels,
-//                onChannelClick = onChannelClick,
-//                modifier = Modifier.onFocusChanged {
-//                    immersiveListHasFocus = it.hasFocus
-//                },
-//            )
-//        }
-        item(contentType = "ChannelsRow") {
-            ChannelsRow(
-                modifier = Modifier
-                    .padding(top = 16.dp),
-                channels = nowPlayingChannels,
-                title = "StringConstants.Composable.HomeScreenNowPlayingChannelsTitle",
-                onChannelSelected = onChannelClick
-            )
         }
     }
 }

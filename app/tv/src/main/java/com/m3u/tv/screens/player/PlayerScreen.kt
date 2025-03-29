@@ -1,4 +1,4 @@
-package com.m3u.tv.screens.videoPlayer
+package com.m3u.tv.screens.player
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.focusable
@@ -23,15 +23,15 @@ import com.m3u.business.channel.ChannelViewModel
 import com.m3u.business.channel.PlayerState
 import com.m3u.core.foundation.ui.thenNoN
 import com.m3u.data.database.model.Channel
-import com.m3u.tv.screens.videoPlayer.components.VideoPlayerControls
-import com.m3u.tv.screens.videoPlayer.components.VideoPlayerOverlay
-import com.m3u.tv.screens.videoPlayer.components.VideoPlayerPulse
-import com.m3u.tv.screens.videoPlayer.components.VideoPlayerPulse.Type.BACK
-import com.m3u.tv.screens.videoPlayer.components.VideoPlayerPulse.Type.FORWARD
-import com.m3u.tv.screens.videoPlayer.components.VideoPlayerPulseState
-import com.m3u.tv.screens.videoPlayer.components.VideoPlayerState
-import com.m3u.tv.screens.videoPlayer.components.rememberVideoPlayerPulseState
-import com.m3u.tv.screens.videoPlayer.components.rememberVideoPlayerState
+import com.m3u.tv.screens.player.components.VideoPlayerControls
+import com.m3u.tv.screens.player.components.VideoPlayerOverlay
+import com.m3u.tv.screens.player.components.VideoPlayerPulse
+import com.m3u.tv.screens.player.components.VideoPlayerPulse.Type.BACK
+import com.m3u.tv.screens.player.components.VideoPlayerPulse.Type.FORWARD
+import com.m3u.tv.screens.player.components.VideoPlayerPulseState
+import com.m3u.tv.screens.player.components.VideoPlayerState
+import com.m3u.tv.screens.player.components.rememberVideoPlayerPulseState
+import com.m3u.tv.screens.player.components.rememberVideoPlayerState
 import com.m3u.tv.utils.handleDPadKeyEvents
 import kotlinx.coroutines.delay
 
@@ -40,7 +40,7 @@ object VideoPlayerScreen {
 }
 
 @Composable
-fun VideoPlayerScreen(
+fun PlayerScreen(
     onBackPressed: () -> Unit,
     viewModel: ChannelViewModel = hiltViewModel()
 ) {
