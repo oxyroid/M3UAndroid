@@ -16,10 +16,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -34,8 +32,10 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -45,20 +45,22 @@ import androidx.tv.material3.ListItem
 import androidx.tv.material3.ListItemDefaults
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import com.m3u.business.setting.SettingViewModel
+import com.m3u.core.util.basic.title
 import com.m3u.tv.screens.dashboard.rememberChildPadding
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ProfileScreen(
     @FloatRange(from = 0.0, to = 1.0)
-    sidebarWidthFraction: Float = 0.32f
+    sidebarWidthFraction: Float = 0.32f,
+    viewModel: SettingViewModel = hiltViewModel()
 ) {
     val childPadding = rememberChildPadding()
     val profileNavController = rememberNavController()
 
     val backStack by profileNavController.currentBackStackEntryAsState()
-    val currentDestination =
-        remember(backStack?.destination?.route) { backStack?.destination?.route }
+    val currentDestination = remember(backStack?.destination?.route) { backStack?.destination?.route }
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
     var isLeftColumnFocused by remember { mutableStateOf(false) }
@@ -83,7 +85,6 @@ fun ProfileScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             ProfileScreens.entries.forEachIndexed { index, profileScreen ->
-                // TODO: make this dense list item
                 key(index) {
                     ListItem(
                         trailingContent = {
@@ -93,15 +94,12 @@ fun ProfileScreen(
                                     .padding(vertical = 2.dp)
                                     .padding(start = 4.dp)
                                     .size(20.dp),
-                                contentDescription = """stringResource(
-                                    id = R.string.profile_screen_listItem_icon_content_description,
-                                    profileScreen.tabTitle
-                                )"""
+                                contentDescription = null
                             )
                         },
                         headlineContent = {
                             Text(
-                                text = profileScreen.tabTitle,
+                                text = stringResource(profileScreen.title).title(),
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     fontWeight = FontWeight.Medium
                                 ),
@@ -139,15 +137,11 @@ fun ProfileScreen(
             }
         }
 
-        var selectedLanguageIndex by rememberSaveable { mutableIntStateOf(0) }
-        var isSubtitlesChecked by rememberSaveable { mutableStateOf(true) }
         NavHost(
             modifier = Modifier
                 .fillMaxSize()
                 .onPreviewKeyEvent {
                     if (it.key == Key.Back && it.type == KeyEventType.KeyUp) {
-                        // Using 'while' because AccountsScreen has a grid that has multiple items
-                        // in a row for which we would need to press D-Pad Left multiple times
                         while (!isLeftColumnFocused) {
                             focusManager.moveFocus(FocusDirection.Left)
                         }
@@ -156,31 +150,22 @@ fun ProfileScreen(
                     false
                 },
             navController = profileNavController,
-            startDestination = ProfileScreens.Accounts(),
+            startDestination = ProfileScreens.Subscribe(),
             builder = {
-                composable(ProfileScreens.Accounts()) {
-                    AccountsSection()
+                composable(ProfileScreens.Subscribe()) {
+                    viewModel.SubscribeSection()
                 }
-                composable(ProfileScreens.About()) {
-                    AboutSection()
-                }
-                composable(ProfileScreens.Subtitles()) {
-                    SubtitlesSection(
-                        isSubtitlesChecked = isSubtitlesChecked,
-                        onSubtitleCheckChange = { isSubtitlesChecked = it }
-                    )
-                }
-                composable(ProfileScreens.Language()) {
-                    LanguageSection(
-                        selectedIndex = selectedLanguageIndex,
-                        onSelectedIndexChange = { selectedLanguageIndex = it }
-                    )
-                }
-                composable(ProfileScreens.SearchHistory()) {
-                    SearchHistorySection()
+//                composable(ProfileScreens.Appearance()) {
+//                    SubtitlesSection(
+//                        isSubtitlesChecked = isSubtitlesChecked,
+//                        onSubtitleCheckChange = { isSubtitlesChecked = it }
+//                    )
+//                }
+                composable(ProfileScreens.Optional()) {
+
                 }
                 composable(ProfileScreens.HelpAndSupport()) {
-                    HelpAndSupportSection()
+                    AboutSection()
                 }
             }
         )

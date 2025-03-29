@@ -79,7 +79,7 @@ import com.m3u.smartphone.ui.material.effects.BackStackEntry
 import com.m3u.smartphone.ui.material.effects.BackStackHandler
 import com.m3u.smartphone.ui.material.ktx.Edge
 import com.m3u.smartphone.ui.material.ktx.blurEdges
-import com.m3u.smartphone.ui.material.ktx.composableOf
+import com.m3u.core.foundation.ui.composableOf
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.smartphone.ui.material.shape.AbsoluteSmoothCornerShape
 import kotlinx.coroutines.launch

@@ -1,21 +1,14 @@
 package com.m3u.tv.screens.profile
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.m3u.tv.StandardDialog
 import com.m3u.tv.theme.JetStreamCardShape
 
-@OptIn(
-    ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class,
-    ExperimentalTvMaterial3Api::class
-)
 @Composable
 fun AccountsSectionDeleteDialog(
     showDialog: Boolean,

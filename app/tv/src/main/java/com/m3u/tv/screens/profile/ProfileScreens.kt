@@ -1,26 +1,21 @@
 package com.m3u.tv.screens.profile
 
+import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Subtitles
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Support
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.m3u.i18n.R
 
 enum class ProfileScreens(
     val icon: ImageVector,
-    private val title: String? = null,
+    @StringRes val title: Int
 ) {
-    Accounts(Icons.Default.Person),
-    About(Icons.Default.Info),
-    Subtitles(Icons.Default.Subtitles),
-    Language(Icons.Default.Translate),
-    SearchHistory(title = "Search history", icon = Icons.Default.Search),
-    HelpAndSupport(title = "Help and Support", icon = Icons.Default.Support);
+    Subscribe(Icons.Default.MusicNote, R.string.feat_setting_label_subscribe),
+//    Appearance(Icons.Default.ColorLens, R.string.feat_setting_appearance),
+    Optional(Icons.Default.Translate, R.string.feat_setting_optional_features),
+    HelpAndSupport(Icons.Default.Support, R.string.feat_about_title);
 
     operator fun invoke() = name
-
-    val tabTitle = title ?: name
 }

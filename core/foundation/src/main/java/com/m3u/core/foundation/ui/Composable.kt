@@ -1,4 +1,4 @@
-package com.m3u.smartphone.ui.material.ktx
+package com.m3u.core.foundation.ui
 
 import androidx.compose.runtime.Composable
 

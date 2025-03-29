@@ -42,7 +42,7 @@ import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.database.model.isSeries
 import com.m3u.data.service.MediaCommand
 import com.m3u.i18n.R.string
-import com.m3u.smartphone.ui.material.ktx.composableOf
+import com.m3u.core.foundation.ui.composableOf
 import com.m3u.smartphone.ui.material.ktx.interceptVolumeEvent
 import com.m3u.core.foundation.ui.thenIf
 import com.m3u.smartphone.ui.business.foryou.components.HeadlineBackground
