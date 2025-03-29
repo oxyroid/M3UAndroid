@@ -1,24 +1,25 @@
 package com.m3u.tv.screens.search
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.tv.material3.Text
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.Channel
 import com.m3u.i18n.R
 import com.m3u.tv.common.ChannelsRow
@@ -39,64 +40,49 @@ fun SearchScreen(
         }
     }
 
-    val searchState by searchScreenViewModel.searchState.collectAsStateWithLifecycle()
+    val channels = searchScreenViewModel.channels.collectAsLazyPagingItems()
 
     LaunchedEffect(shouldShowTopBar) {
         onScroll(shouldShowTopBar)
     }
-
-    when (val s = searchState) {
-        is SearchState.Searching -> {
-            Text(text = "Searching...")
-        }
-
-        is SearchState.Done -> {
-            val channels = s.channels
-            SearchResult(
-                channels = channels,
-                searchChannels = searchScreenViewModel::query,
-                onChannelClick = onChannelClick,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
-    }
+    SearchResult(
+        searchQuery = searchScreenViewModel.searchQuery,
+        channels = channels,
+        onChannelClick = onChannelClick,
+        modifier = Modifier.fillMaxSize()
+    )
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun SearchResult(
-    channels: List<Channel>,
-    searchChannels: (queryString: String) -> Unit,
+    searchQuery: MutableState<String>,
+    channels: LazyPagingItems<Channel>,
     onChannelClick: (channel: Channel) -> Unit,
     modifier: Modifier = Modifier,
-    lazyColumnState: LazyListState = rememberLazyListState(),
 ) {
     val childPadding = rememberChildPadding()
-    var searchQuery by remember { mutableStateOf("") }
 
-    LazyColumn(
+    Column(
         modifier = modifier,
-        state = lazyColumnState
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item {
-            TextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                placeholder = stringResource(R.string.feat_setting_placeholder_title),
-                keyboardActions = KeyboardActions(
-                    onSearch = { searchChannels(searchQuery) }
-                ),
-                modifier = Modifier.padding(start = childPadding.start)
-            )
-        }
+        TextField(
+            value = searchQuery.value,
+            onValueChange = { searchQuery.value = it },
+            placeholder = stringResource(R.string.feat_setting_placeholder_title).title(),
+            modifier = Modifier
+                .padding(
+                    start = childPadding.start,
+                    end = childPadding.end
+                )
+        )
 
-        item {
-            ChannelsRow(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = childPadding.top * 2),
-                channels = channels
-            ) { selectedChannel -> onChannelClick(selectedChannel) }
-        }
+        ChannelsRow(
+            channels = channels,
+            onChannelSelected = { selectedChannel -> onChannelClick(selectedChannel) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        )
     }
 }

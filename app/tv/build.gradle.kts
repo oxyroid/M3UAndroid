@@ -48,6 +48,13 @@ android {
     packaging {
         resources.excludes += "META-INF/**"
     }
+    applicationVariants.all {
+        outputs
+            .map { it as com.android.build.gradle.internal.api.ApkVariantOutputImpl }
+            .forEach { output ->
+                output.versionNameOverride = "tv-${versionName}.apk"
+            }
+    }
 }
 
 hilt {

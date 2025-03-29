@@ -1,5 +1,6 @@
 package com.m3u.data.repository.channel
 
+import androidx.paging.PagingData
 import androidx.paging.PagingSource
 import com.m3u.core.wrapper.Sort
 import com.m3u.data.database.model.AdjacentChannels
@@ -36,4 +37,5 @@ interface ChannelRepository {
     fun observeAllUnseenFavourites(limit: Duration): Flow<List<Channel>>
     fun observeAllFavourite(): Flow<List<Channel>>
     fun observeAllHidden(): Flow<List<Channel>>
+    fun search(query: String): PagingSource<Int, Channel>
 }

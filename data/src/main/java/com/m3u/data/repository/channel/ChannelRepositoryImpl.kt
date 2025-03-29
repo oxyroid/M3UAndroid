@@ -1,5 +1,6 @@
 package com.m3u.data.repository.channel
 
+import androidx.paging.PagingData
 import androidx.paging.PagingSource
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
@@ -107,4 +108,8 @@ internal class ChannelRepositoryImpl @Inject constructor(
 
     override fun observeAllHidden(): Flow<List<Channel>> = channelDao.observeAllHidden()
         .catch { emit(emptyList()) }
+
+    override fun search(query: String): PagingSource<Int, Channel> {
+        return channelDao.query(query)
+    }
 }

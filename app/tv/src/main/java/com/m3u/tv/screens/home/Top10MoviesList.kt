@@ -33,7 +33,6 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.m3u.data.database.model.Channel
 import com.m3u.tv.common.ImmersiveListChannelsRow
-import com.m3u.tv.common.ItemDirection
 import com.m3u.tv.common.PosterImage
 import com.m3u.tv.screens.dashboard.rememberChildPadding
 import com.m3u.tv.utils.bringIntoViewIfChildrenAreFocused
@@ -109,12 +108,8 @@ private fun ImmersiveList(
 
             ImmersiveListChannelsRow(
                 channels = channels,
-                itemDirection = ItemDirection.Horizontal,
                 title = sectionTitle,
-                showItemTitle = !isListFocused,
-                showIndexOverImage = true,
                 onChannelSelected = onChannelClick,
-                onChannelFocused = onChannelFocused,
                 modifier = Modifier.onFocusChanged(onFocusChanged)
             )
         }
@@ -137,7 +132,7 @@ private fun Background(
             targetState = channel,
             label = "posterUriCrossfade",
 
-        ) {
+            ) {
             PosterImage(channel = it, modifier = Modifier.fillMaxSize())
         }
     }

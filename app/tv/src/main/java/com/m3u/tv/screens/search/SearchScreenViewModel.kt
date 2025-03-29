@@ -1,41 +1,40 @@
 package com.m3u.tv.screens.search
 
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import com.m3u.data.database.model.Channel
 import com.m3u.data.repository.channel.ChannelRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import javax.inject.Inject
 
 @HiltViewModel
 class SearchScreenViewModel @Inject constructor(
     private val channelRepository: ChannelRepository
 ) : ViewModel() {
+    val channels: Flow<PagingData<Channel>> = snapshotFlow { searchQuery.value }
+        .flatMapLatest { query ->
+            if (query.isBlank()) {
+                emptyFlow()
+            } else {
+                Pager(
+                    config = PagingConfig(
+                        pageSize = 20,
+                        enablePlaceholders = false,
+                        prefetchDistance = 5
+                    ),
+                    pagingSourceFactory = { channelRepository.search(query) }
+                )
+                    .flow
+            }
+        }
 
-    private val internalSearchState = MutableSharedFlow<SearchState>()
-
-    fun query(queryString: String) {
-        viewModelScope.launch { postQuery(queryString) }
-    }
-
-    private suspend fun postQuery(queryString: String) {
-        internalSearchState.emit(SearchState.Searching)
-//        val result = channelRepository.searchChannels(query = queryString)
-//        internalSearchState.emit(SearchState.Done(result))
-    }
-
-    val searchState = internalSearchState.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = SearchState.Done(emptyList())
-    )
+    var searchQuery = mutableStateOf("")
 }
 
-sealed interface SearchState {
-    data object Searching : SearchState
-    data class Done(val channels: List<Channel>) : SearchState
-}

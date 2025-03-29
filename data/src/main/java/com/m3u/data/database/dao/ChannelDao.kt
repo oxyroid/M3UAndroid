@@ -240,4 +240,14 @@ internal interface ChannelDao {
         category: String,
     ): Flow<AdjacentChannels>
 
+
+    @Query(
+        """
+            SELECT * FROM streams WHERE 1
+            AND title LIKE '%'||:query||'%'
+        """
+    )
+    fun query(
+        query: String
+    ): PagingSource<Int, Channel>
 }
