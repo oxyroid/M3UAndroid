@@ -56,7 +56,7 @@ fun ChannelScreen(
                     }
                     navigateToChannelPlayer()
                 },
-                updateFavourite = viewModel::updateFavourite,
+                updateFavorite = viewModel::updateFavorite,
                 onBackPressed = onBackPressed,
                 modifier = Modifier
                     .fillMaxSize()
@@ -70,7 +70,7 @@ fun ChannelScreen(
 private fun Details(
     channel: Channel?,
     navigateToChannelPlayer: () -> Unit,
-    updateFavourite: () -> Unit,
+    updateFavorite: () -> Unit,
     onBackPressed: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -86,7 +86,7 @@ private fun Details(
                 ChannelDetail(
                     channel = channel,
                     navigateToChannelPlayer = navigateToChannelPlayer,
-                    updateFavourite = updateFavourite
+                    updateFavorite = updateFavorite
                 )
             }
         }

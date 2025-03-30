@@ -1,4 +1,4 @@
-package com.m3u.smartphone.ui.business.favorite.components
+package com.m3u.smartphone.ui.business.favourite.components
 
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.material3.CardDefaults

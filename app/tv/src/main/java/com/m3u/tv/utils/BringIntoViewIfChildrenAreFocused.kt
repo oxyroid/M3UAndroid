@@ -13,7 +13,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.unit.toSize
 
-@OptIn(ExperimentalFoundationApi::class)
 // ToDo: Migrate to Modifier.Node and stop using composed function.
 internal fun Modifier.bringIntoViewIfChildrenAreFocused(
     paddingValues: PaddingValues = PaddingValues()

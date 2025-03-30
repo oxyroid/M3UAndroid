@@ -34,8 +34,9 @@ interface ChannelRepository {
     suspend fun reportPlayed(id: Int)
     suspend fun getPlayedRecently(): Channel?
     fun observePlayedRecently(): Flow<Channel?>
-    fun observeAllUnseenFavourites(limit: Duration): Flow<List<Channel>>
-    fun observeAllFavourite(): Flow<List<Channel>>
+    fun observeAllUnseenFavorites(limit: Duration): Flow<List<Channel>>
+    fun observeAllFavorite(): Flow<List<Channel>>
+    fun pagingAllFavorite(sort: Sort): PagingSource<Int, Channel>
     fun observeAllHidden(): Flow<List<Channel>>
     fun search(query: String): PagingSource<Int, Channel>
 }

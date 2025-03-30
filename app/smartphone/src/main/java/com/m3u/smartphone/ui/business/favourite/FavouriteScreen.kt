@@ -1,4 +1,4 @@
-package com.m3u.smartphone.ui.business.favorite
+package com.m3u.smartphone.ui.business.favourite
 
 import android.content.res.Configuration
 import android.view.KeyEvent
@@ -24,10 +24,11 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.m3u.business.favorite.FavouriteViewModel
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import com.m3u.business.favorite.FavoriteViewModel
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.title
-import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.isSeries
 import com.m3u.data.service.MediaCommand
@@ -36,7 +37,7 @@ import com.m3u.i18n.R
 import com.m3u.smartphone.ui.material.ktx.interceptVolumeEvent
 import com.m3u.core.foundation.ui.thenIf
 import com.m3u.smartphone.ui.material.model.LocalHazeState
-import com.m3u.smartphone.ui.business.favorite.components.FavouriteGallery
+import com.m3u.smartphone.ui.business.favourite.components.FavoriteGallery
 import com.m3u.smartphone.ui.material.components.EpisodesBottomSheet
 import com.m3u.smartphone.ui.material.components.MediaSheet
 import com.m3u.smartphone.ui.material.components.MediaSheetValue
@@ -49,11 +50,11 @@ import dev.chrisbanes.haze.haze
 import kotlinx.coroutines.launch
 
 @Composable
-fun FavouriteRoute(
+fun FavoriteRoute(
     navigateToChannel: () -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
-    viewModel: FavouriteViewModel = hiltViewModel()
+    viewModel: FavoriteViewModel = hiltViewModel()
 ) {
     val title = stringResource(R.string.ui_title_favourite)
 
@@ -63,7 +64,7 @@ fun FavouriteRoute(
 
     val coroutineScope = rememberCoroutineScope()
 
-    val channels by viewModel.channels.collectAsStateWithLifecycle()
+    val channels = viewModel.channels.collectAsLazyPagingItems()
     val episodes by viewModel.episodes.collectAsStateWithLifecycle()
     val zapping by viewModel.zapping.collectAsStateWithLifecycle()
     val sorts = viewModel.sorts
@@ -72,8 +73,8 @@ fun FavouriteRoute(
     val sheetState = rememberModalBottomSheetState()
 
     var isSortSheetVisible by rememberSaveable { mutableStateOf(false) }
-    var mediaSheetValue: MediaSheetValue.FavouriteScreen by remember {
-        mutableStateOf(MediaSheetValue.FavouriteScreen())
+    var mediaSheetValue: MediaSheetValue.FavoriteScreen by remember {
+        mutableStateOf(MediaSheetValue.FavoriteScreen())
     }
 
     val series: Channel? by viewModel.series.collectAsStateWithLifecycle()
@@ -115,7 +116,7 @@ fun FavouriteRoute(
                 }
             }
         },
-        onLongClickChannel = { mediaSheetValue = MediaSheetValue.FavouriteScreen(it) },
+        onLongClickChannel = { mediaSheetValue = MediaSheetValue.FavoriteScreen(it) },
         modifier = Modifier
             .fillMaxSize()
             .thenIf(preferences.godMode) {
@@ -162,17 +163,17 @@ fun FavouriteRoute(
     )
     MediaSheet(
         value = mediaSheetValue,
-        onFavouriteChannel = { channel ->
+        onFavoriteChannel = { channel ->
             viewModel.favourite(channel.id)
-            mediaSheetValue = MediaSheetValue.FavouriteScreen()
+            mediaSheetValue = MediaSheetValue.FavoriteScreen()
         },
         onCreateShortcut = { channel ->
             viewModel.createShortcut(context, channel.id)
-            mediaSheetValue = MediaSheetValue.FavouriteScreen()
+            mediaSheetValue = MediaSheetValue.FavoriteScreen()
         },
         onDismissRequest = {
-            mediaSheetValue = MediaSheetValue.FavouriteScreen()
-            mediaSheetValue = MediaSheetValue.FavouriteScreen()
+            mediaSheetValue = MediaSheetValue.FavoriteScreen()
+            mediaSheetValue = MediaSheetValue.FavoriteScreen()
         }
     )
 }
@@ -181,7 +182,7 @@ fun FavouriteRoute(
 private fun FavoriteScreen(
     contentPadding: PaddingValues,
     rowCount: Int,
-    channels: Resource<List<Channel>>,
+    channels: LazyPagingItems<Channel>,
     zapping: Channel?,
     recently: Boolean,
     onClickChannel: (Channel) -> Unit,
@@ -194,7 +195,7 @@ private fun FavoriteScreen(
         Configuration.ORIENTATION_LANDSCAPE -> rowCount + 2
         else -> rowCount + 2
     }
-    FavouriteGallery(
+    FavoriteGallery(
         contentPadding = contentPadding,
         channels = channels,
         zapping = zapping,

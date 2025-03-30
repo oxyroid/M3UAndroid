@@ -68,8 +68,8 @@ internal class ChannelRepositoryImpl @Inject constructor(
             .filter { it.isSeries }
             .map { it.url }
             .toTypedArray()
-        if (!preferences.randomlyInFavourite) channelDao.randomIgnoreSeriesAndHidden(*seriesPlaylistUrls)
-        else channelDao.randomIgnoreSeriesInFavourite(*seriesPlaylistUrls)
+        if (!preferences.randomlyInFavorite) channelDao.randomIgnoreSeriesAndHidden(*seriesPlaylistUrls)
+        else channelDao.randomIgnoreSeriesInFavorite(*seriesPlaylistUrls)
     }
 
     override suspend fun getByPlaylistUrl(playlistUrl: String): List<Channel> = logger.execute {
@@ -96,15 +96,24 @@ internal class ChannelRepositoryImpl @Inject constructor(
 
     override fun observePlayedRecently(): Flow<Channel?> = channelDao.observePlayedRecently()
 
-    override fun observeAllUnseenFavourites(limit: Duration): Flow<List<Channel>> =
-        channelDao.observeAllUnseenFavourites(
+    override fun observeAllUnseenFavorites(limit: Duration): Flow<List<Channel>> =
+        channelDao.observeAllUnseenFavorites(
             limit = limit.inWholeMilliseconds,
             current = Clock.System.now().toEpochMilliseconds()
         )
             .catch { emit(emptyList()) }
 
-    override fun observeAllFavourite(): Flow<List<Channel>> = channelDao.observeAllFavourite()
+    override fun observeAllFavorite(): Flow<List<Channel>> = channelDao.observeAllFavorite()
         .catch { emit(emptyList()) }
+
+    override fun pagingAllFavorite(sort: Sort): PagingSource<Int, Channel> {
+        return when (sort) {
+            Sort.ASC -> channelDao.pagingAllFavoriteAsc()
+            Sort.DESC -> channelDao.pagingAllFavoriteDesc()
+            Sort.RECENTLY -> channelDao.pagingAllFavoriteRecently()
+            else -> channelDao.pagingAllFavorite()
+        }
+    }
 
     override fun observeAllHidden(): Flow<List<Channel>> = channelDao.observeAllHidden()
         .catch { emit(emptyList()) }

@@ -573,7 +573,7 @@ private fun PlaylistScreen(
 
     MediaSheet(
         value = mediaSheetValue,
-        onFavouriteChannel = { channel ->
+        onFavoriteChannel = { channel ->
             favourite(channel.id)
             mediaSheetValue = MediaSheetValue.PlaylistScreen()
         },

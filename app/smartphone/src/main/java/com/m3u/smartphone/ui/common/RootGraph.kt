@@ -11,7 +11,7 @@ import androidx.navigation.compose.composable
 import com.m3u.data.database.model.Playlist
 import com.m3u.smartphone.ui.material.ktx.Edge
 import com.m3u.smartphone.ui.material.ktx.blurEdge
-import com.m3u.smartphone.ui.business.favorite.FavouriteRoute
+import com.m3u.smartphone.ui.business.favourite.FavoriteRoute
 import com.m3u.smartphone.ui.business.foryou.ForyouRoute
 import com.m3u.smartphone.ui.business.setting.SettingRoute
 import com.m3u.smartphone.ui.material.components.Destination
@@ -43,11 +43,11 @@ fun NavGraphBuilder.rootGraph(
         )
     }
     composable(
-        route = Destination.Root.Favourite.name,
+        route = Destination.Root.Favorite.name,
         enterTransition = { fadeIn() },
         exitTransition = { fadeOut() }
     ) {
-        FavouriteRoute(
+        FavoriteRoute(
             navigateToChannel = navigateToChannel,
             contentPadding = contentPadding,
             modifier = Modifier

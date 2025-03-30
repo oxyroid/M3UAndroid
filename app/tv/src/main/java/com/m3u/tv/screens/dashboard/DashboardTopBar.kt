@@ -38,10 +38,13 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Tab
 import androidx.tv.material3.TabRow
 import androidx.tv.material3.Text
+import com.m3u.core.foundation.ui.thenIf
+import com.m3u.i18n.R
 import com.m3u.tv.screens.Screens
 import com.m3u.tv.theme.IconSize
 import com.m3u.tv.theme.JetStreamCardShape
 import com.m3u.tv.theme.LexendExa
+import com.m3u.tv.utils.createInitialFocusRestorerModifiers
 import com.m3u.tv.utils.occupyScreenSize
 
 val TopBarTabs = Screens.entries.toList().filter { it.isTabItem }
@@ -61,13 +64,16 @@ fun DashboardTopBar(
     onScreenSelection: (screen: Screens) -> Unit
 ) {
     val focusManager = LocalFocusManager.current
+    val (parent, child) = createInitialFocusRestorerModifiers()
+
     Box(modifier = modifier) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 16.dp)
                 .background(MaterialTheme.colorScheme.surface)
-                .focusRestorer(),
+                .focusRestorer()
+                .then(parent),
             verticalAlignment = Alignment.CenterVertically
         ) {
             UserAvatar(
@@ -110,7 +116,8 @@ fun DashboardTopBar(
                             Tab(
                                 modifier = Modifier
                                     .height(32.dp)
-                                    .focusRequester(focusRequesters[index + 1]),
+                                    .focusRequester(focusRequesters[index + 1])
+                                    .thenIf(index == selectedTabIndex) { child },
                                 selected = index == selectedTabIndex,
                                 onFocus = { onScreenSelection(screen) },
                                 onClick = { focusManager.moveFocus(FocusDirection.Down) },
@@ -139,7 +146,7 @@ fun DashboardTopBar(
                 }
             }
             Spacer(modifier = Modifier.weight(1f))
-            JetStreamLogo(
+            Logo(
                 modifier = Modifier
                     .alpha(0.75f)
                     .padding(end = 8.dp),
@@ -149,7 +156,7 @@ fun DashboardTopBar(
 }
 
 @Composable
-private fun JetStreamLogo(
+private fun Logo(
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -158,7 +165,7 @@ private fun JetStreamLogo(
     ) {
         Icon(
             Icons.Default.PlayCircle,
-            contentDescription = "BrandLogoImage",
+            contentDescription = null,
             modifier = Modifier
                 .padding(end = 4.dp)
                 .size(IconSize)

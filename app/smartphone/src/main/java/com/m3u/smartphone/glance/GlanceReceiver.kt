@@ -9,7 +9,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 
 class GlanceReceiver : GlanceAppWidgetReceiver() {
-    override val glanceAppWidget: GlanceAppWidget = FavouriteWidget()
+    override val glanceAppWidget: GlanceAppWidget = FavoriteWidget()
 }
 
 @EntryPoint

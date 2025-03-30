@@ -42,7 +42,7 @@ sealed class MediaSheetValue {
         val channel: Channel? = null
     ) : MediaSheetValue()
 
-    data class FavouriteScreen(
+    data class FavoriteScreen(
         val channel: Channel? = null
     ) : MediaSheetValue()
 }
@@ -55,7 +55,7 @@ fun MediaSheet(
     modifier: Modifier = Modifier,
     onUnsubscribePlaylist: (Playlist) -> Unit = { noImpl() },
     onPlaylistConfiguration: (Playlist) -> Unit = { noImpl() },
-    onFavouriteChannel: (Channel) -> Unit = { noImpl() },
+    onFavoriteChannel: (Channel) -> Unit = { noImpl() },
     onHideChannel: (Channel) -> Unit = { noImpl() },
     onSaveChannelCover: (Channel) -> Unit = { noImpl() },
     onCreateShortcut: (Channel) -> Unit = { noImpl() }
@@ -67,7 +67,7 @@ fun MediaSheet(
     val visible = when (value) {
         is MediaSheetValue.ForyouScreen -> value.playlist != null
         is MediaSheetValue.PlaylistScreen -> value.channel != null
-        is MediaSheetValue.FavouriteScreen -> value.channel != null
+        is MediaSheetValue.FavoriteScreen -> value.channel != null
     }
     BottomSheet(
         sheetState = sheetState,
@@ -84,7 +84,7 @@ fun MediaSheet(
                     channel = value.channel
                 )
 
-                is MediaSheetValue.FavouriteScreen -> FavouriteScreenMediaSheetHeaderImpl(
+                is MediaSheetValue.FavoriteScreen -> FavoriteScreenMediaSheetHeaderImpl(
                     channel = value.channel
                 )
             }
@@ -123,7 +123,7 @@ fun MediaSheet(
                                 stringRes = if (!it.favourite) string.feat_playlist_dialog_favourite_title
                                 else string.feat_playlist_dialog_favourite_cancel_title,
                                 onClick = {
-                                    onFavouriteChannel(it)
+                                    onFavoriteChannel(it)
                                     onDismissRequest()
                                 }
                             )
@@ -151,13 +151,13 @@ fun MediaSheet(
                         }
                     }
 
-                    is MediaSheetValue.FavouriteScreen -> {
+                    is MediaSheetValue.FavoriteScreen -> {
                         value.channel?.let {
                             MediaSheetItem(
                                 stringRes = if (!it.favourite) string.feat_playlist_dialog_favourite_title
                                 else string.feat_playlist_dialog_favourite_cancel_title,
                                 onClick = {
-                                    onFavouriteChannel(it)
+                                    onFavoriteChannel(it)
                                     onDismissRequest()
                                 }
                             )
@@ -232,7 +232,7 @@ private fun RowScope.PlaylistScreenMediaSheetHeaderImpl(
 }
 
 @Composable
-private fun RowScope.FavouriteScreenMediaSheetHeaderImpl(
+private fun RowScope.FavoriteScreenMediaSheetHeaderImpl(
     channel: Channel?
 ) {
     channel?.let {

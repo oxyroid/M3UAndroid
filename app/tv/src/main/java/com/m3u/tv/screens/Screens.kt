@@ -26,6 +26,10 @@ enum class Screens(
         isTabItem = true,
         args = listOf(PlaylistNavigation.TYPE_URL)
     ),
+    Favorite(
+        title = R.string.ui_destination_favourite,
+        isTabItem = true,
+    ),
     Search(
         isTabItem = true,
         tabIcon = Icons.Default.Search
@@ -52,10 +56,5 @@ enum class Screens(
             destination.append("/$path")
         }
         return name + destination
-    }
-
-    companion object {
-        val destinations = Screens.entries.map { it() }
-        val tabDestinations = Screens.entries.filter { it.isTabItem }.map { it() }
     }
 }

@@ -10,6 +10,10 @@ import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import com.m3u.core.Contracts
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
@@ -19,19 +23,18 @@ import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.Sort
-import com.m3u.core.wrapper.asResource
 import com.m3u.core.wrapper.mapResource
 import com.m3u.core.wrapper.resource
-import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.Playlist
 import com.m3u.data.parser.xtream.XtreamChannelInfo
+import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.media.MediaRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
-import com.m3u.data.repository.channel.ChannelRepository
-import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.PlayerManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -46,7 +49,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class FavouriteViewModel @Inject constructor(
+class FavoriteViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val channelRepository: ChannelRepository,
     private val mediaRepository: MediaRepository,
@@ -102,31 +105,13 @@ class FavouriteViewModel @Inject constructor(
         sortIndex.update { sorts.indexOf(sort).coerceAtLeast(0) }
     }
 
-    val channels: StateFlow<Resource<List<Channel>>> = channelRepository
-        .observeAllFavourite()
-        .combine(sort) { all, sort ->
-            when (sort) {
-                Sort.UNSPECIFIED -> all
-                Sort.ASC -> all.sortedWith(
-                    compareBy(String.CASE_INSENSITIVE_ORDER) { it.title }
-                )
-
-                Sort.DESC -> all.sortedWith(
-                    compareByDescending(String.CASE_INSENSITIVE_ORDER) { it.title }
-                )
-
-                Sort.RECENTLY -> all.sortedByDescending { it.seen }
-                // won't reach
-                Sort.MIXED -> all
-            }
+    val channels: Flow<PagingData<Channel>> = sort.flatMapLatest {
+        Pager(PagingConfig(10)) {
+            channelRepository.pagingAllFavorite(it)
         }
-        .asResource()
-        .flowOn(ioDispatcher)
-        .stateIn(
-            scope = viewModelScope,
-            initialValue = Resource.Loading,
-            started = SharingStarted.WhileSubscribed(5_000L)
-        )
+            .flow
+    }
+        .cachedIn(viewModelScope)
 
     fun favourite(id: Int) {
         viewModelScope.launch {

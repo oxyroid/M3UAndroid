@@ -42,6 +42,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.m3u.data.database.model.Channel
 import com.m3u.tv.screens.Screens
+import com.m3u.tv.screens.favorite.FavoriteScreen
 import com.m3u.tv.screens.home.HomeScreen
 import com.m3u.tv.screens.playlist.PlaylistScreen
 import com.m3u.tv.screens.profile.ProfileScreen
@@ -80,8 +81,9 @@ fun DashboardScreen(
     var currentDestination: String? by remember { mutableStateOf(null) }
     val currentTopBarSelectedTabIndex by remember(currentDestination) {
         derivedStateOf {
-            Screens.tabDestinations.indexOfFirst { it == currentDestination }.takeIf { it != -1 }
-                ?: 0
+            TopBarTabs
+                .indexOfFirst { it() == currentDestination }
+                .takeIf { it != -1 } ?: 0
         }
     }
 
@@ -228,6 +230,13 @@ private fun Body(
         }
         composable(Screens.Playlist()) {
             PlaylistScreen(
+                onChannelClick = { channel -> openChannelScreen(channel.id) },
+                onScroll = updateTopBarVisibility,
+                isTopBarVisible = isTopBarVisible
+            )
+        }
+        composable(Screens.Favorite()) {
+            FavoriteScreen(
                 onChannelClick = { channel -> openChannelScreen(channel.id) },
                 onScroll = updateTopBarVisibility,
                 isTopBarVisible = isTopBarVisible

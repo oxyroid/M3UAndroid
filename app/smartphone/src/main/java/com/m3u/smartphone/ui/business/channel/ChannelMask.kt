@@ -115,7 +115,7 @@ internal fun ChannelMask(
     onSpeedUpdated: (Float) -> Unit,
     onSpeedStart: () -> Unit,
     onSpeedEnd: () -> Unit,
-    onFavourite: () -> Unit,
+    onFavorite: () -> Unit,
     openDlnaDevices: () -> Unit,
     openChooseFormat: () -> Unit,
     openOrClosePanel: () -> Unit,
@@ -270,7 +270,7 @@ internal fun ChannelMask(
                         state = maskState,
                         icon = Icons.Rounded.Star,
                         tint = if (favourite) Color(0xffffcd3c) else Color.Unspecified,
-                        onClick = onFavourite,
+                        onClick = onFavorite,
                         contentDescription = if (favourite) stringResource(string.feat_channel_tooltip_unfavourite)
                         else stringResource(string.feat_channel_tooltip_favourite)
                     )

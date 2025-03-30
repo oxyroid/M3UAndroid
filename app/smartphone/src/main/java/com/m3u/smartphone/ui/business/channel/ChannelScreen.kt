@@ -241,7 +241,7 @@ fun ChannelRoute(
                             pullPanelLayoutState.expand()
                         }
                     },
-                    onFavourite = viewModel::onFavourite,
+                    onFavorite = viewModel::onFavorite,
                     maskState = maskState,
                     playerState = playerState,
                     playlist = playlist,
@@ -315,7 +315,7 @@ private fun ChannelPlayer(
     volume: Float,
     brightness: Float,
     speed: Float,
-    onFavourite: () -> Unit,
+    onFavorite: () -> Unit,
     openDlnaDevices: () -> Unit,
     openChooseFormat: () -> Unit,
     openOrClosePanel: () -> Unit,
@@ -406,7 +406,7 @@ private fun ChannelPlayer(
                 isSeriesPlaylist = isSeriesPlaylist,
                 hasTrack = hasTrack,
                 isPanelExpanded = isPanelExpanded,
-                onFavourite = onFavourite,
+                onFavorite = onFavorite,
                 openDlnaDevices = openDlnaDevices,
                 openChooseFormat = openChooseFormat,
                 openOrClosePanel = openOrClosePanel,

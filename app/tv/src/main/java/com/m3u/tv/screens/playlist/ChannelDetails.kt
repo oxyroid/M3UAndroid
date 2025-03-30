@@ -50,7 +50,7 @@ import kotlinx.coroutines.launch
 fun ChannelDetail(
     channel: Channel,
     navigateToChannelPlayer: () -> Unit,
-    updateFavourite: () -> Unit,
+    updateFavorite: () -> Unit,
 ) {
     val childPadding = rememberChildPadding()
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
@@ -82,7 +82,7 @@ fun ChannelDetail(
                 WatchTrailerButton(
                     channel = channel,
                     navigateToChannelPlayer = navigateToChannelPlayer,
-                    updateFavourite = updateFavourite,
+                    updateFavorite = updateFavorite,
                     modifier = Modifier.onFocusChanged {
                         if (it.isFocused) {
                             coroutineScope.launch { bringIntoViewRequester.bringIntoView() }
@@ -99,7 +99,7 @@ private fun WatchTrailerButton(
     channel: Channel,
     modifier: Modifier = Modifier,
     navigateToChannelPlayer: () -> Unit,
-    updateFavourite: () -> Unit,
+    updateFavorite: () -> Unit,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -122,7 +122,7 @@ private fun WatchTrailerButton(
         }
         Spacer(Modifier.size(16.dp))
         IconButton(
-            onClick = updateFavourite,
+            onClick = updateFavorite,
             shape = ButtonDefaults.shape(shape = JetStreamButtonShape),
             colors = IconButtonDefaults.colors(
                 contentColor = if (channel.favourite) Color(0xffffcd3c)

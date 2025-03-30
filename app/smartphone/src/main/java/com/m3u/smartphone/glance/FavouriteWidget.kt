@@ -47,13 +47,13 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
-class FavouriteWidget : GlanceAppWidget() {
+class FavoriteWidget : GlanceAppWidget() {
     override val sizeMode: SizeMode = SizeMode.Exact
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val accessor: GlanceAccessor by lazy {
             EntryPointAccessors.fromApplication(context.applicationContext)
         }
-        val favouriteFlow = accessor.channelRepository.observeAllFavourite()
+        val favouriteFlow = accessor.channelRepository.observeAllFavorite()
         val programmeRepository = accessor.programmeRepository
 
         provideContent {
@@ -75,7 +75,7 @@ class FavouriteWidget : GlanceAppWidget() {
                         iconColor = GlanceTheme.colors.onPrimary,
                         textColor = GlanceTheme.colors.onPrimary
                     )
-                    FavouriteGallery(
+                    FavoriteGallery(
                         channels = channels,
                         getProgrammeCurrently = { programmeRepository.getProgrammeCurrently(it) }
                     )
@@ -86,7 +86,7 @@ class FavouriteWidget : GlanceAppWidget() {
 }
 
 @Composable
-private fun FavouriteGallery(
+private fun FavoriteGallery(
     channels: List<Channel>,
     getProgrammeCurrently: suspend (channelId: Int) -> Programme?,
     modifier: GlanceModifier = GlanceModifier
@@ -98,7 +98,7 @@ private fun FavouriteGallery(
             .then(modifier)
     ) {
         itemsIndexed(channels) { i, channel ->
-            FavouriteGalleryItem(
+            FavoriteGalleryItem(
                 channel = channel,
                 shouldShowDivider = i != channels.lastIndex,
                 getProgrammeCurrently = getProgrammeCurrently
@@ -108,7 +108,7 @@ private fun FavouriteGallery(
 }
 
 @Composable
-private fun FavouriteGalleryItem(
+private fun FavoriteGalleryItem(
     channel: Channel,
     shouldShowDivider: Boolean,
     getProgrammeCurrently: suspend (channelId: Int) -> Programme?,

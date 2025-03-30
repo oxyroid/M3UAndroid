@@ -27,7 +27,7 @@ sealed interface Destination {
             unselectedIcon = Icons.Outlined.Home,
             iconTextId = string.ui_destination_foryou
         ),
-        Favourite(
+        Favorite(
             selectedIcon = Icons.Rounded.Collections,
             unselectedIcon = Icons.Outlined.Collections,
             iconTextId = string.ui_destination_favourite

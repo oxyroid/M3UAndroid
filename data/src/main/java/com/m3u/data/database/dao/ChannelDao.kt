@@ -91,7 +91,7 @@ internal interface ChannelDao {
         LIMIT 1
     """
     )
-    suspend fun randomIgnoreSeriesInFavourite(vararg seriesPlaylistUrls: String): Channel?
+    suspend fun randomIgnoreSeriesInFavorite(vararg seriesPlaylistUrls: String): Channel?
 
     @Query("SELECT * FROM streams WHERE url = :url AND playlist_url = :playlistUrl")
     suspend fun getByPlaylistUrlAndUrl(playlistUrl: String, url: String): Channel?
@@ -115,7 +115,7 @@ internal interface ChannelDao {
     fun observeAllUnhidden(): Flow<List<Channel>>
 
     @Query("SELECT * FROM streams WHERE favourite = 1")
-    fun observeAllFavourite(): Flow<List<Channel>>
+    fun observeAllFavorite(): Flow<List<Channel>>
 
     @Query("SELECT * FROM streams WHERE hidden = 1")
     fun observeAllHidden(): Flow<List<Channel>>
@@ -198,7 +198,7 @@ internal interface ChannelDao {
     suspend fun getCountByPlaylistUrl(playlistUrl: String): Int
 
     @Query("SELECT * FROM streams WHERE favourite = 1 AND seen + :limit < :current ORDER BY seen")
-    fun observeAllUnseenFavourites(
+    fun observeAllUnseenFavorites(
         limit: Long,
         current: Long
     ): Flow<List<Channel>>
@@ -250,4 +250,37 @@ internal interface ChannelDao {
     fun query(
         query: String
     ): PagingSource<Int, Channel>
+
+    @Query(
+        """
+            SELECT * FROM streams WHERE 1
+            AND favourite = 1
+        """
+    )
+    fun pagingAllFavorite(): PagingSource<Int, Channel>
+    @Query(
+        """
+            SELECT * FROM streams WHERE 1
+            AND favourite = 1
+            ORDER BY title ASC
+            
+        """
+    )
+    fun pagingAllFavoriteAsc(): PagingSource<Int, Channel>
+    @Query(
+        """
+            SELECT * FROM streams WHERE 1
+            AND favourite = 1
+            ORDER BY title DESC
+        """
+    )
+    fun pagingAllFavoriteDesc(): PagingSource<Int, Channel>
+    @Query(
+        """
+            SELECT * FROM streams WHERE 1
+            AND favourite = 1
+            ORDER BY seen DESC
+        """
+    )
+    fun pagingAllFavoriteRecently(): PagingSource<Int, Channel>
 }

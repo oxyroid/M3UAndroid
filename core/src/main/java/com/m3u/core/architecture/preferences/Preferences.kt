@@ -108,7 +108,7 @@ class Preferences @Inject constructor(
     sharedPreferences.booleanAsState(DEFAULT_PAGING, PAGING)
     var panel: Boolean by sharedPreferences.booleanAsState(DEFAULT_PLAYER_PANEL, PLAYER_PANEL)
     var cache: Boolean by sharedPreferences.booleanAsState(DEFAULT_CACHE, CACHE)
-    var randomlyInFavourite: Boolean by
+    var randomlyInFavorite: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_RANDOMLY_IN_FAVOURITE, RANDOMLY_IN_FAVOURITE)
     var colorfulBackground by
     sharedPreferences.booleanAsState(DEFAULT_COLORFUL_BACKGROUND, COLORFUL_BACKGROUND)

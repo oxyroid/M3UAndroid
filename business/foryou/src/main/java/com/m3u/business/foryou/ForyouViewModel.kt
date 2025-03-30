@@ -105,7 +105,7 @@ class ForyouViewModel @Inject constructor(
             started = SharingStarted.Lazily
         )
     val specs: StateFlow<List<Recommend.Spec>> = unseensDuration
-        .flatMapLatest { channelRepository.observeAllUnseenFavourites(it) }
+        .flatMapLatest { channelRepository.observeAllUnseenFavorites(it) }
         .let { flow ->
             combine(flow, newRelease) { channels, nr ->
                 buildList<Recommend.Spec> {

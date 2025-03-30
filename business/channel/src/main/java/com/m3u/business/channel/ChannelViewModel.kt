@@ -236,7 +236,7 @@ class ChannelViewModel @Inject constructor(
 
     }
 
-    fun onFavourite() {
+    fun onFavorite() {
         viewModelScope.launch {
             val id = channel.value?.id ?: return@launch
             channelRepository.favouriteOrUnfavourite(id)

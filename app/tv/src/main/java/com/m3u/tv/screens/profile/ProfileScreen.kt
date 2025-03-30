@@ -84,12 +84,12 @@ fun ProfileScreen(
                 .focusGroup(),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            ProfileScreens.entries.forEachIndexed { index, profileScreen ->
+            ProfileScreens.entries.forEachIndexed { index, screen ->
                 key(index) {
                     ListItem(
                         trailingContent = {
                             Icon(
-                                profileScreen.icon,
+                                imageVector = screen.icon,
                                 modifier = Modifier
                                     .padding(vertical = 2.dp)
                                     .padding(start = 4.dp)
@@ -99,14 +99,14 @@ fun ProfileScreen(
                         },
                         headlineContent = {
                             Text(
-                                text = stringResource(profileScreen.title).title(),
+                                text = stringResource(screen.title).title(),
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     fontWeight = FontWeight.Medium
                                 ),
                                 modifier = Modifier.fillMaxWidth()
                             )
                         },
-                        selected = currentDestination == profileScreen.name,
+                        selected = currentDestination == screen.name,
                         onClick = { focusManager.moveFocus(FocusDirection.Right) },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -115,8 +115,8 @@ fun ProfileScreen(
                                 else Modifier
                             )
                             .onFocusChanged {
-                                if (it.isFocused && currentDestination != profileScreen.name) {
-                                    profileNavController.navigate(profileScreen()) {
+                                if (it.isFocused && currentDestination != screen.name) {
+                                    profileNavController.navigate(screen()) {
                                         currentDestination?.let { nnCurrentDestination ->
                                             popUpTo(nnCurrentDestination) { inclusive = true }
                                         }
@@ -140,6 +140,7 @@ fun ProfileScreen(
         NavHost(
             modifier = Modifier
                 .fillMaxSize()
+                .focusGroup()
                 .onPreviewKeyEvent {
                     if (it.key == Key.Back && it.type == KeyEventType.KeyUp) {
                         while (!isLeftColumnFocused) {
