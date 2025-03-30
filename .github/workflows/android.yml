@@ -62,7 +62,9 @@ jobs:
         with:
           bot_token: ${{ secrets.BOT_TOKEN }}
           chat_id: ${{ secrets.CHAT_ID }}
-#          large_file: true
+          api_id: ${{ secrets.API_ID }}
+          api_hash: ${{ secrets.API_HASH }}
+          large_file: true
           method: sendFile
           path: |
             app/smartphone/build/outputs/apk/snapshotChannelRichCodec/release/*.apk
