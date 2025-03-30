@@ -32,7 +32,7 @@ kotlinx-datetime = "0.6.2"
 
 chucker = "4.1.0"
 logback = "3.0.0"
-lottie-compose = "6.4.0"
+lottie-compose = "6.6.4"
 nextLib = "0.7.1"
 slf4j-api = "2.0.17"
 
