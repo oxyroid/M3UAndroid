@@ -6,7 +6,7 @@ import kotlin.time.Duration.Companion.seconds
 internal interface ContinueWatchingCondition<P: Player> {
     fun isStoringSupported(player: P): Boolean
     fun isRestoringSupported(player: P): Boolean
-    fun isResettingSupported(player: P): Boolean
+    fun isResettingSupported(player: P, ignorePositionCondition: Boolean = false): Boolean
     companion object {
         @Suppress("UNCHECKED_CAST")
         inline fun <reified P: Player> getInstance(): ContinueWatchingCondition<P> =
@@ -29,8 +29,9 @@ internal object CommonContinueWatchingCondition: ContinueWatchingCondition<Playe
         return true
     }
 
-    override fun isResettingSupported(player: Player): Boolean {
+    override fun isResettingSupported(player: Player, ignorePositionCondition: Boolean): Boolean {
         if (!isPlayerSupported(player)) return true
+        if (ignorePositionCondition) return true
         val duration = player.contentDuration.toFloat()
         val position = player.contentPosition
         if (duration <= 15.seconds.inWholeMilliseconds) return true

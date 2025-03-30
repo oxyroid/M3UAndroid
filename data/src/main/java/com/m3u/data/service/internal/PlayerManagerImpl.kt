@@ -678,7 +678,7 @@ class PlayerManagerImpl @Inject constructor(
 
     override suspend fun onRewind(channelUrl: String) {
         cwPositionObserver.emit(-1L)
-        resetContinueWatching(channelUrl)
+        resetContinueWatching(channelUrl, ignorePositionCondition = true)
         val currentPlayer = player.value ?: return
         if (currentPlayer.isCommandAvailable(Player.COMMAND_SEEK_TO_DEFAULT_POSITION)) {
             currentPlayer.seekToDefaultPosition()
@@ -760,12 +760,12 @@ class PlayerManagerImpl @Inject constructor(
         }
     }
 
-    private suspend fun resetContinueWatching(channelUrl: String) {
-        logger.post { "resetContinueWatching, channelUrl=$channelUrl" }
+    private suspend fun resetContinueWatching(channelUrl: String, ignorePositionCondition: Boolean = false) {
+        logger.post { "resetContinueWatching, channelUrl=$channelUrl, ignorePositionCondition=$ignorePositionCondition" }
         val channelPreference = getChannelPreference(channelUrl)
         val player = this@PlayerManagerImpl.player.value
         withContext(mainDispatcher) {
-            if (player != null && continueWatchingCondition.isResettingSupported(player)) {
+            if (player != null && continueWatchingCondition.isResettingSupported(player, ignorePositionCondition)) {
                 updateChannelPreference(
                     channelUrl,
                     channelPreference?.copy(cwPosition = -1L) ?: ChannelPreference(cwPosition = -1L)

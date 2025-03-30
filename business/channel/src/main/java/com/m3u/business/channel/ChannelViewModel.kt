@@ -90,9 +90,11 @@ class ChannelViewModel @Inject constructor(
             playerManager.cwPositionObserver.collectLatest {
                 ensureActive() // make sure the cwPosition has not been recycled by GC.
                 cwPosition = it
-                Signal.lock("ChannelViewModel-cwPosition")
-                ensureActive() // make sure the cwPosition has not been recycled by GC.
-                cwPosition = -1L
+                if (it != -1L) {
+                    Signal.lock("ChannelViewModel-cwPosition")
+                    ensureActive() // make sure the cwPosition has not been recycled by GC.
+                    cwPosition = -1L
+                }
             }
         }
     }
