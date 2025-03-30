@@ -1,6 +1,6 @@
 package com.m3u.data.parser.m3u
 
-import android.net.Uri
+import androidx.core.net.toUri
 import com.m3u.data.database.model.Channel
 
 internal data class M3UData(
@@ -22,7 +22,7 @@ internal fun M3UData.toChannel(
     val fileScheme = "file:///"
     val absoluteUrl = if (!url.startsWith(fileScheme)) url
     else {
-        with(Uri.parse(playlistUrl)) {
+        with(playlistUrl.toUri()) {
             val paths = pathSegments.dropLast(1) + url.drop(fileScheme.length)
             buildUpon()
                 .path(

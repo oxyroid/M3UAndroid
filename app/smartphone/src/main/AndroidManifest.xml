@@ -13,7 +13,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <permission
-        android:name="com.m3u.permission.CONNECT_EXTENSION_PLUGIN"
+        android:name="${applicationId}.permission.CONNECT_EXTENSION_PLUGIN"
         android:protectionLevel="normal" />
 
     <uses-feature
