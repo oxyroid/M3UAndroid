@@ -38,7 +38,6 @@ jobs:
       - name: Clean GMD
         run: ./gradlew cleanManagedDevices --unused-only
 
-      # With the baseline profile Gradle plugin, release variants generate baseline profiles.
       - name: Build production app
         run: ./gradlew :app:smartphone:assembleSnapshotChannelRichCodecRelease
           -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile
