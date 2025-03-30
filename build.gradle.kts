@@ -14,7 +14,7 @@ plugins {
     alias(libs.plugins.org.jetbrains.kotlin.serialization) apply false
     alias(libs.plugins.org.jetbrains.kotlin.jvm) apply false
     alias(libs.plugins.androidx.baselineprofile) apply false
-    id("com.squareup.wire") version "4.9.2" apply false
+    id("com.squareup.wire") version "4.9.11" apply false
 }
 
 subprojects {
