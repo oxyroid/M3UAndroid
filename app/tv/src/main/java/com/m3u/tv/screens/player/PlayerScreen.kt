@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
@@ -46,6 +47,11 @@ fun PlayerScreen(
 ) {
     val channel by viewModel.channel.collectAsStateWithLifecycle()
     val playerState by viewModel.playerState.collectAsStateWithLifecycle()
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.destroy()
+        }
+    }
     when (val channel = channel) {
         null -> {} // do nothing
         else -> {
