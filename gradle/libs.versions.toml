@@ -20,7 +20,7 @@ androidx-paging = "3.3.6"
 auto-annotations = "1.0"
 auto-ksp = "1.0.0"
 glance = "1.1.1"
-google-accompanist = "0.35.1-alpha"
+google-accompanist = "0.37.2"
 google-dagger = "2.54"
 
 haze = "1.5.2"
