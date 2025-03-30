@@ -58,7 +58,7 @@ jobs:
 
       - name: Upload To Telegram
         if: github.event_name != 'pull_request'
-        uses: xireiki/channel-post@v1.0.7
+        uses: xireiki/channel-post@v1.0.10
         with:
           bot_token: ${{ secrets.BOT_TOKEN }}
           chat_id: ${{ secrets.CHAT_ID }}
