@@ -34,7 +34,7 @@ chucker = "4.0.0"
 logback = "3.0.0"
 lottie-compose = "6.4.0"
 nextLib = "0.7.1"
-slf4j-api = "2.0.13"
+slf4j-api = "2.0.17"
 
 squareup-retrofit2 = "2.11.0"
 squareup-leakcanary = "2.14"
