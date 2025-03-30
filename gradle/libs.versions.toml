@@ -17,7 +17,7 @@ androidx-tvprovider = "1.0.0"
 androidx-startup = "1.2.0"
 androidx-paging = "3.3.6"
 
-auto-annotations = "1.0"
+auto-annotations = "1.1.1"
 auto-ksp = "1.0.0"
 glance = "1.1.1"
 google-accompanist = "0.35.1-alpha"
