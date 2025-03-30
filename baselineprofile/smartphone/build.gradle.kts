@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace = "com.m3u.baselineprofile"
+    namespace = "com.m3u.baselineprofile.smartphone"
     compileSdk = 35
 
     compileOptions {
@@ -36,21 +36,15 @@ android {
         create("liteCodec") { dimension = "codec" }
     }
 
-    testOptions {
-        managedDevices {
-            allDevices {
-                create("Pixel5Api31", ManagedVirtualDevice::class) {
-                    device = "Pixel 5"
-                    apiLevel = 31
-                    systemImageSource = "aosp"
-                }
-            }
+    testOptions.managedDevices.devices {
+        create<ManagedVirtualDevice>("Pixel5Api31") {
+            device = "Pixel 5"
+            apiLevel = 34
+            systemImageSource = "aosp"
         }
     }
     // Note that your module name may have different name
     targetProjectPath = ":app:smartphone"
-    // Enable the benchmark to run separately from the app process
-    experimentalProperties["android.experimental.self-instrumenting"] = true
 }
 
 // This is the configuration block for the Baseline Profile plugin.

@@ -76,7 +76,6 @@ import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.PlayerManager
-import com.m3u.data.service.currentTracks
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineDispatcher

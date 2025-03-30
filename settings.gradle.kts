@@ -27,7 +27,7 @@ include(
     ":business:playlist-configuration",
     ":business:channel"
 )
-include(":baselineprofile")
+include(":baselineprofile:smartphone", ":baselineprofile:tv")
 include(":i18n")
 include(
     ":lint:annotation",

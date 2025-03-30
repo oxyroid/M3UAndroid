@@ -30,15 +30,23 @@ dependencies {
     implementation(project(":lint:annotation"))
     ksp(project(":lint:processor"))
 
-    val richCodec = gradle
+    implementation(project(":data:codec"))
+    val isTvBuild = gradle
         .startParameter
         .taskNames
-        .find { it.contains("richCodec", ignoreCase = true) } != null
-    implementation(project(":data:codec"))
-    if (richCodec) {
+        .any { ":app:tv" in it }
+    if (isTvBuild) {
         implementation(project(":data:codec:rich"))
     } else {
-        implementation(project(":data:codec:lite"))
+        val richCodec = gradle
+            .startParameter
+            .taskNames
+            .find { it.contains("richCodec", ignoreCase = true) } != null
+        if (richCodec) {
+            implementation(project(":data:codec:rich"))
+        } else {
+            implementation(project(":data:codec:lite"))
+        }
     }
 
     implementation(libs.androidx.core.ktx)

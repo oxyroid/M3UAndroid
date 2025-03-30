@@ -133,7 +133,7 @@ dependencies {
     implementation(project(":business:playlist-configuration"))
     // baselineprofile
     implementation(libs.androidx.profileinstaller)
-    "baselineProfile"(project(":baselineprofile"))
+    "baselineProfile"(project(":baselineprofile:smartphone"))
     // base
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
