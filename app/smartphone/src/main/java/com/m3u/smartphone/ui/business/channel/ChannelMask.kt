@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -476,15 +477,14 @@ internal fun ChannelMask(
                 }
             },
             slider = {
-                val sliderRole: MaskSlideRole = remember(cwPosition) {
-                    when {
-                        cwPosition != -1L -> MaskSlideRole.CwPosition(cwPosition)
-                        isProgressEnabled && isStaticAndSeekable -> MaskSlideRole.Slide
-                        else -> MaskSlideRole.None
-                    }
+                val sliderRole: MaskSlideRole = when {
+                    cwPosition != -1L -> MaskSlideRole.CwPosition(cwPosition)
+                    isProgressEnabled && isStaticAndSeekable -> MaskSlideRole.Slide
+                    else -> MaskSlideRole.None
                 }
                 AnimatedContent(
-                    targetState = sliderRole
+                    targetState = sliderRole,
+                    modifier = Modifier.fillMaxWidth()
                 ) { role ->
                     when (role) {
                         is MaskSlideRole.CwPosition -> {
@@ -497,6 +497,7 @@ internal fun ChannelMask(
                                 )
                             )
                         }
+
                         MaskSlideRole.Slide -> {
                             SliderImpl(
                                 contentDuration = contentDuration,
@@ -508,6 +509,7 @@ internal fun ChannelMask(
                                 }
                             )
                         }
+
                         MaskSlideRole.None -> {}
                     }
                 }
@@ -757,7 +759,7 @@ private enum class MaskNavigateRole {
 }
 
 private sealed class MaskSlideRole {
-    data object None: MaskSlideRole()
-    data class CwPosition(val milliseconds: Long): MaskSlideRole()
-    data object Slide: MaskSlideRole()
+    data object None : MaskSlideRole()
+    data class CwPosition(val milliseconds: Long) : MaskSlideRole()
+    data object Slide : MaskSlideRole()
 }
