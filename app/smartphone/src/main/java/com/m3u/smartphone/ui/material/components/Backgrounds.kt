@@ -9,6 +9,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
@@ -30,6 +31,31 @@ inline fun Background(
             .clip(shape)
             .drawBehind {
                 drawRect(actualColor)
+            }
+            .then(modifier)
+    ) {
+        CompositionLocalProvider(
+            LocalAbsoluteTonalElevation provides 0.dp,
+            LocalContentColor provides actualContentColor
+        ) {
+            content()
+        }
+    }
+}
+@Composable
+inline fun Background(
+    modifier: Modifier = Modifier,
+    brush: Brush,
+    contentColor: Color = Color.Unspecified,
+    shape: Shape = RectangleShape,
+    crossinline content: @Composable () -> Unit
+) {
+    val actualContentColor = contentColor.takeOrElse { MaterialTheme.colorScheme.onBackground }
+    Box(
+        modifier = Modifier
+            .clip(shape)
+            .drawBehind {
+                drawRect(brush)
             }
             .then(modifier)
     ) {

@@ -18,4 +18,7 @@
 
     <string name="feat_channel_dialog_dlna_devices">DLNA 设备</string>
     <string name="feat_channel_dialog_choose_tracks">选择格式</string>
+
+    <string name="feat_channel_cw_position_title">上次播放到 %s</string>
+    <string name="feat_channel_cw_position_button">回到片头</string>
 </resources>

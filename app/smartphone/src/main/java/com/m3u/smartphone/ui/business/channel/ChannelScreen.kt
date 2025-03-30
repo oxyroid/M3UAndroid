@@ -32,11 +32,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.google.accompanist.permissions.rememberPermissionState
+import com.m3u.business.channel.ChannelViewModel
+import com.m3u.business.channel.PlayerState
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.core.util.basic.title
@@ -44,33 +47,30 @@ import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
 import com.m3u.i18n.R.string
-import com.m3u.smartphone.ui.material.components.Player
-import com.m3u.smartphone.ui.common.helper.LocalHelper
-import com.m3u.smartphone.ui.material.components.rememberPlayerState
-import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import kotlin.time.Duration.Companion.milliseconds
-import androidx.core.net.toUri
-import com.m3u.business.channel.ChannelViewModel
-import com.m3u.business.channel.PlayerState
 import com.m3u.smartphone.ui.business.channel.components.CoverPlaceholder
 import com.m3u.smartphone.ui.business.channel.components.DlnaDevicesBottomSheet
 import com.m3u.smartphone.ui.business.channel.components.FormatsBottomSheet
 import com.m3u.smartphone.ui.business.channel.components.MaskGestureValuePanel
 import com.m3u.smartphone.ui.business.channel.components.PlayerPanel
 import com.m3u.smartphone.ui.business.channel.components.VerticalGestureArea
+import com.m3u.smartphone.ui.common.helper.LocalHelper
 import com.m3u.smartphone.ui.common.helper.OnPipModeChanged
 import com.m3u.smartphone.ui.material.components.Background
+import com.m3u.smartphone.ui.material.components.Player
 import com.m3u.smartphone.ui.material.components.PullPanelLayout
 import com.m3u.smartphone.ui.material.components.PullPanelLayoutValue
 import com.m3u.smartphone.ui.material.components.mask.MaskInterceptor
 import com.m3u.smartphone.ui.material.components.mask.MaskState
 import com.m3u.smartphone.ui.material.components.mask.rememberMaskState
 import com.m3u.smartphone.ui.material.components.mask.toggle
+import com.m3u.smartphone.ui.material.components.rememberPlayerState
 import com.m3u.smartphone.ui.material.components.rememberPullPanelLayoutState
 import com.m3u.smartphone.ui.material.ktx.checkPermissionOrRationale
-import kotlinx.datetime.Clock
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun ChannelRoute(
@@ -167,6 +167,7 @@ fun ChannelRoute(
             .onEach { visible ->
                 helper.statusBarVisibility = visible
                 helper.navigationBarVisibility = visible
+                viewModel.onMaskStateChanged(visible)
             }
             .launchIn(this)
     }
@@ -226,7 +227,6 @@ fun ChannelRoute(
                 ChannelPlayer(
                     isSeriesPlaylist = isSeriesPlaylist,
                     openDlnaDevices = {
-//                        createRecordFileLauncher.launch("record_${Clock.System.now().toEpochMilliseconds()}.mp4")
                         viewModel.openDlnaDevices()
                         pullPanelLayoutState.collapse()
                     },
@@ -258,6 +258,8 @@ fun ChannelRoute(
                         viewModel.onSpeedUpdated(it)
                         speed = it
                     },
+                    cwPosition = viewModel.cwPosition,
+                    onRewind = viewModel::onRewind,
                     onPreviousChannelClick = viewModel::getPreviousChannel,
                     onNextChannelClick = viewModel::getNextChannel,
                     onEnterPipMode = {
@@ -315,6 +317,8 @@ private fun ChannelPlayer(
     volume: Float,
     brightness: Float,
     speed: Float,
+    cwPosition: Long,
+    onRewind: () -> Unit,
     onFavorite: () -> Unit,
     openDlnaDevices: () -> Unit,
     openChooseFormat: () -> Unit,
@@ -337,6 +341,11 @@ private fun ChannelPlayer(
     val currentSpeed by rememberUpdatedState(speed)
     val preferences = hiltPreferences()
 
+    LaunchedEffect(cwPosition) {
+        if (cwPosition != -1L) {
+            maskState.wake(6.seconds)
+        }
+    }
     Background(
         color = Color.Black,
         contentColor = Color.White,
@@ -405,6 +414,8 @@ private fun ChannelPlayer(
                 favourite = favourite,
                 isSeriesPlaylist = isSeriesPlaylist,
                 hasTrack = hasTrack,
+                cwPosition = cwPosition,
+                onRewind = onRewind,
                 isPanelExpanded = isPanelExpanded,
                 onFavorite = onFavorite,
                 openDlnaDevices = openDlnaDevices,

@@ -21,7 +21,7 @@ import kotlin.time.Duration
 interface MaskState {
     val visible: Boolean
     val locked: Boolean
-    fun wake()
+    fun wake(duration: Duration = Duration.ZERO)
     fun sleep()
     // Lock the mask until the [unlock] is called.
     // While any key is not unlocked the mask will always visible
@@ -61,8 +61,8 @@ private class MaskStateCoroutineImpl(
 
     private val systemClock: Long get() = System.currentTimeMillis() / 1000
 
-    override fun wake() {
-        lastTime = currentTime
+    override fun wake(duration: Duration) {
+        lastTime = currentTime + duration.inWholeMilliseconds / 1000
     }
 
     override fun sleep() {

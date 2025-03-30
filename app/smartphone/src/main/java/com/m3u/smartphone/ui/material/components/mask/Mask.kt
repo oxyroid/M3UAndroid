@@ -11,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import com.m3u.smartphone.ui.material.components.Background
 
@@ -18,7 +19,10 @@ import com.m3u.smartphone.ui.material.components.Background
 fun Mask(
     state: MaskState,
     modifier: Modifier = Modifier,
-    color: Color = Color.Unspecified,
+    brush: Brush = Brush.verticalGradient(
+        0f to Color.Black.copy(alpha = 0.54f),
+        1f to Color.Black.copy(alpha = 0.54f)
+    ),
     contentColor: Color = Color.Unspecified,
     content: @Composable BoxScope.() -> Unit
 ) {
@@ -31,10 +35,12 @@ fun Mask(
         LaunchedEffect(Unit) {
             focusRequester.requestFocus()
         }
-        Background(color = color, contentColor = contentColor) {
+        Background(
+            brush = brush,
+            contentColor = contentColor
+        ) {
             Box(
-                modifier = modifier
-                    .focusRequester(focusRequester),
+                modifier = modifier.focusRequester(focusRequester),
                 content = content
             )
         }

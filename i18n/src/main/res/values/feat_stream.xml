@@ -22,4 +22,7 @@
     <string name="feat_channel_dialog_choose_tracks">Choose Tracks</string>
 
     <string name="feat_channel_open_in_external_app">open in external app</string>
+
+    <string name="feat_channel_cw_position_title">Last played at %s</string>
+    <string name="feat_channel_cw_position_button">Rewind</string>
 </resources>

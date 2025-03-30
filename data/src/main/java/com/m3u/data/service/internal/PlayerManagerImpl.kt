@@ -2,14 +2,8 @@ package com.m3u.data.service.internal
 
 import android.content.Context
 import android.graphics.Rect
-import android.media.MediaCodec
-import android.media.MediaCodecInfo
-import android.media.MediaFormat
-import android.media.MediaMuxer
 import android.net.Uri
-import android.view.Surface
 import androidx.compose.runtime.snapshotFlow
-import androidx.core.net.toUri
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -54,7 +48,6 @@ import androidx.media3.transformer.InAppFragmentedMp4Muxer
 import androidx.media3.transformer.InAppMp4Muxer
 import androidx.media3.transformer.TransformationRequest
 import androidx.media3.transformer.Transformer
-import androidx.media3.transformer.VideoEncoderSettings
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.dispatcher.Dispatcher
 import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
@@ -86,6 +79,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -99,7 +93,6 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.sample
-import kotlinx.coroutines.flow.singleOrNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
@@ -361,9 +354,11 @@ class PlayerManagerImpl @Inject constructor(
         val mediaSource: MediaSource = mediaSourceFactory.createMediaSource(mediaItem)
         player.setMediaSource(mediaSource)
         player.prepare()
-        if (applyContinueWatching) {
-            mainCoroutineScope.launch {
+        mainCoroutineScope.launch {
+            if (applyContinueWatching) {
                 restoreContinueWatching(player, url)
+            } else {
+                cwPositionObserver.emit(-1L)
             }
         }
     }
@@ -601,15 +596,19 @@ class PlayerManagerImpl @Inject constructor(
                     .mapNotNull { it.containerMimeType ?: it.sampleMimeType }
                 val (mimeType, muxerFactory) = when {
                     formats.any { it in FragmentedMp4Muxer.SUPPORTED_VIDEO_SAMPLE_MIME_TYPES } -> {
-                        val mimeType = formats.first { it in FragmentedMp4Muxer.SUPPORTED_VIDEO_SAMPLE_MIME_TYPES }
+                        val mimeType =
+                            formats.first { it in FragmentedMp4Muxer.SUPPORTED_VIDEO_SAMPLE_MIME_TYPES }
                         val muxerFactory = InAppFragmentedMp4Muxer.Factory()
                         mimeType to muxerFactory
                     }
+
                     formats.any { it in Mp4Muxer.SUPPORTED_VIDEO_SAMPLE_MIME_TYPES } -> {
-                        val mimeType = formats.first { it in Mp4Muxer.SUPPORTED_VIDEO_SAMPLE_MIME_TYPES }
+                        val mimeType =
+                            formats.first { it in Mp4Muxer.SUPPORTED_VIDEO_SAMPLE_MIME_TYPES }
                         val muxerFactory = InAppMp4Muxer.Factory()
                         mimeType to muxerFactory
                     }
+
                     else -> {
                         logger.post { "recordVideo, unsupported video formats: $formats" }
                         return@withContext
@@ -675,6 +674,17 @@ class PlayerManagerImpl @Inject constructor(
         }
     }
 
+    override val cwPositionObserver = MutableSharedFlow<Long>(replay = 1)
+
+    override suspend fun onRewind(channelUrl: String) {
+        cwPositionObserver.emit(-1L)
+        resetContinueWatching(channelUrl)
+        val currentPlayer = player.value ?: return
+        if (currentPlayer.isCommandAvailable(Player.COMMAND_SEEK_TO_DEFAULT_POSITION)) {
+            currentPlayer.seekToDefaultPosition()
+        }
+    }
+
     private suspend fun onPlaybackIdle() {}
     private suspend fun onPlaybackBuffering() {}
 
@@ -737,9 +747,14 @@ class PlayerManagerImpl @Inject constructor(
 
     private suspend fun restoreContinueWatching(player: Player, channelUrl: String) {
         val channelPreference = getChannelPreference(channelUrl)
-        val cwPosition = channelPreference?.cwPosition?.takeIf { it != -1L } ?: return
+        val cwPosition = channelPreference?.cwPosition?.takeIf { it != -1L } ?: run {
+            cwPositionObserver.emit(-1L)
+            return
+        }
         withContext(mainDispatcher) {
             if (continueWatchingCondition.isRestoringSupported(player)) {
+                logger.post { "restoreContinueWatching, $cwPosition" }
+                cwPositionObserver.emit(cwPosition)
                 player.seekTo(cwPosition)
             }
         }

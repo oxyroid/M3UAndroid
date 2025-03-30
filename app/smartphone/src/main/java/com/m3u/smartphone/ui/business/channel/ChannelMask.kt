@@ -2,6 +2,8 @@ package com.m3u.smartphone.ui.business.channel
 
 import android.content.pm.ActivityInfo
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -9,8 +11,12 @@ import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
@@ -23,6 +29,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -46,6 +53,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -61,6 +69,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
@@ -77,6 +86,7 @@ import com.m3u.core.foundation.ui.thenIf
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.i18n.R.string
+import com.m3u.smartphone.ui.business.channel.components.CwPositionRewinder
 import com.m3u.smartphone.ui.business.channel.components.MaskTextButton
 import com.m3u.smartphone.ui.business.channel.components.PlayerMask
 import com.m3u.smartphone.ui.common.helper.LocalHelper
@@ -112,6 +122,8 @@ internal fun ChannelMask(
     isSeriesPlaylist: Boolean,
     isPanelExpanded: Boolean,
     hasTrack: Boolean,
+    cwPosition: Long,
+    onRewind: () -> Unit,
     onSpeedUpdated: (Float) -> Unit,
     onSpeedStart: () -> Unit,
     onSpeedEnd: () -> Unit,
@@ -205,18 +217,17 @@ internal fun ChannelMask(
         value = -1L
     }
 
-    var bufferedPosition: Long? by remember { mutableStateOf(null) }
     var volumeBeforeMuted: Float by remember { mutableFloatStateOf(1f) }
 
     val isPanelGestureSupported = configuration.screenWidthDp < configuration.screenHeightDp
 
+    var bufferedPosition: Long? by remember { mutableStateOf(null) }
     LaunchedEffect(bufferedPosition) {
         bufferedPosition?.let {
             delay(800.milliseconds)
             playerState.player?.seekTo(it)
         }
     }
-
     LaunchedEffect(playerState.playState) {
         if (playerState.playState == Player.STATE_READY) {
             bufferedPosition = null
@@ -235,8 +246,13 @@ internal fun ChannelMask(
             modifier = Modifier.align(Alignment.Center)
         )
 
+        val brushAlpha by animateFloatAsState(if (isPanelExpanded) 0f else 0.54f)
         PlayerMask(
             state = maskState,
+            brush = Brush.verticalGradient(
+                0f to Color.Black.copy(0.54f),
+                1f to Color.Black.copy(brushAlpha)
+            ),
             header = {
                 val backStackEntry by currentBackStackEntry()
                 MaskButton(
@@ -460,62 +476,159 @@ internal fun ChannelMask(
                 }
             },
             slider = {
-                when {
-                    isProgressEnabled && isStaticAndSeekable -> {
-                        val animContentPosition by animateFloatAsState(
-                            targetValue = (bufferedPosition
-                                ?: contentPosition.coerceAtLeast(0L)).toFloat(),
-                            label = "anim-content-position"
-                        )
-                        val fontWeight by animateIntAsState(
-                            targetValue = if (bufferedPosition != null) 800
-                            else 400,
-                            label = "position-text-font-weight"
-                        )
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = ChannelMaskUtils.timeunitDisplayTest(
-                                    (bufferedPosition ?: contentPosition)
-                                        .toDuration(DurationUnit.MILLISECONDS)
-                                ),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = LocalContentColor.current.copy(alpha = 0.75f),
-                                maxLines = 1,
-                                fontFamily = FontFamilies.JetbrainsMono,
-                                fontWeight = FontWeight(fontWeight),
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.basicMarquee()
-                            )
-                            val sliderThumbWidthDp by animateDpAsState(
-                                targetValue = 4.dp,
-                                label = "slider-thumb-width-dp"
-                            )
-                            val sliderInteractionSource = remember { MutableInteractionSource() }
-                            Slider(
-                                value = animContentPosition,
-                                valueRange = 0f..contentDuration
-                                    .coerceAtLeast(0L)
-                                    .toFloat(),
-                                onValueChange = {
-                                    bufferedPosition = it.roundToLong()
-                                    maskState.wake()
-                                },
-                                thumb = {
-                                    SliderDefaults.Thumb(
-                                        interactionSource = sliderInteractionSource,
-                                        thumbSize = DpSize(sliderThumbWidthDp, 44.dp)
-                                    )
-                                },
-                                modifier = Modifier.weight(1f)
+                val sliderRole: MaskSlideRole = remember(cwPosition) {
+                    when {
+                        cwPosition != -1L -> MaskSlideRole.CwPosition(cwPosition)
+                        isProgressEnabled && isStaticAndSeekable -> MaskSlideRole.Slide
+                        else -> MaskSlideRole.None
+                    }
+                }
+                AnimatedContent(
+                    targetState = sliderRole
+                ) { role ->
+                    when (role) {
+                        is MaskSlideRole.CwPosition -> {
+                            CwPositionSliderImpl(
+                                position = role.milliseconds,
+                                onResetPlayback = onRewind,
+                                modifier = Modifier.animateEnterExit(
+                                    enter = fadeIn() + scaleIn(initialScale = 0.85f),
+                                    exit = fadeOut() + scaleOut(targetScale = 0.85f)
+                                )
                             )
                         }
+                        MaskSlideRole.Slide -> {
+                            SliderImpl(
+                                contentDuration = contentDuration,
+                                contentPosition = contentPosition,
+                                bufferedPosition = bufferedPosition,
+                                onBufferedPositionChanged = {
+                                    bufferedPosition = it
+                                    maskState.wake()
+                                }
+                            )
+                        }
+                        MaskSlideRole.None -> {}
+                    }
+                }
+                AnimatedVisibility(
+                    visible = true,
+                    enter = slideInVertically(),
+                    exit = slideOutVertically(),
+                    modifier = Modifier.padding(top = 4.dp)
+                ) {
+
+                }
+                when {
+                    isProgressEnabled && isStaticAndSeekable -> {
+
                     }
                 }
             },
             modifier = Modifier.fillMaxSize()
+        )
+    }
+}
+
+@Composable
+private fun SliderImpl(
+    bufferedPosition: Long?,
+    onBufferedPositionChanged: (Long) -> Unit,
+    contentPosition: Long,
+    contentDuration: Long,
+    modifier: Modifier = Modifier
+) {
+    val spacing = LocalSpacing.current
+    val animContentPosition by animateFloatAsState(
+        targetValue = (bufferedPosition
+            ?: contentPosition.coerceAtLeast(0L)).toFloat(),
+        label = "anim-content-position"
+    )
+    val fontWeight by animateIntAsState(
+        targetValue = if (bufferedPosition != null) 800
+        else 400,
+        label = "position-text-font-weight"
+    )
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+    ) {
+        Text(
+            text = ChannelMaskUtils.timeunitDisplayTest(
+                (bufferedPosition ?: contentPosition)
+                    .toDuration(DurationUnit.MILLISECONDS)
+            ),
+            style = MaterialTheme.typography.bodyMedium,
+            color = LocalContentColor.current.copy(alpha = 0.75f),
+            maxLines = 1,
+            fontFamily = FontFamilies.JetbrainsMono,
+            fontWeight = FontWeight(fontWeight),
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.basicMarquee()
+        )
+        val sliderThumbWidthDp by animateDpAsState(
+            targetValue = 4.dp,
+            label = "slider-thumb-width-dp"
+        )
+        val sliderInteractionSource = remember { MutableInteractionSource() }
+        Slider(
+            value = animContentPosition,
+            valueRange = 0f..contentDuration
+                .coerceAtLeast(0L)
+                .toFloat(),
+            onValueChange = {
+                onBufferedPositionChanged(it.roundToLong())
+            },
+            thumb = {
+                SliderDefaults.Thumb(
+                    interactionSource = sliderInteractionSource,
+                    thumbSize = DpSize(sliderThumbWidthDp, 44.dp)
+                )
+            },
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun CwPositionSliderImpl(
+    position: Long,
+    modifier: Modifier = Modifier,
+    onResetPlayback: () -> Unit
+) {
+    val time = remember(position) {
+        position.toDuration(DurationUnit.MILLISECONDS).toComponents { hours, minutes, seconds, _ ->
+            buildString {
+                if (hours > 0) {
+                    append("$hours:")
+                }
+                if (minutes < 10) {
+                    append("0")
+                }
+                append("$minutes:")
+                if (seconds < 10) {
+                    append("0")
+                }
+                append("$seconds")
+            }
+        }
+    }
+    Column(modifier) {
+        Spacer(modifier = Modifier.height(8.dp))
+        CwPositionRewinder(
+            text = {
+                Text(
+                    text = stringResource(string.feat_channel_cw_position_title, time),
+                )
+            },
+            action = {
+                TextButton(onClick = onResetPlayback) {
+                    Text(
+                        text = stringResource(string.feat_channel_cw_position_button)
+                    )
+                }
+            }
         )
     }
 }
@@ -641,4 +754,10 @@ private enum class MaskCenterRole {
 
 private enum class MaskNavigateRole {
     Next, Previous
+}
+
+private sealed class MaskSlideRole {
+    data object None: MaskSlideRole()
+    data class CwPosition(val milliseconds: Long): MaskSlideRole()
+    data object Slide: MaskSlideRole()
 }

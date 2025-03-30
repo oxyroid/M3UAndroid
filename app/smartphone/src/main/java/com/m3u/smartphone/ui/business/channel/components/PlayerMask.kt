@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.coerceAtLeast
@@ -27,6 +28,7 @@ import com.m3u.smartphone.ui.material.model.LocalSpacing
 @Composable
 internal fun PlayerMask(
     state: MaskState,
+    brush: Brush,
     header: @Composable RowScope.() -> Unit,
     body: @Composable RowScope.() -> Unit,
     footer: @Composable RowScope.() -> Unit,
@@ -39,7 +41,7 @@ internal fun PlayerMask(
 
     Mask(
         state = state,
-        color = Color.Black.copy(alpha = 0.54f),
+        brush = brush,
         contentColor = Color.White,
         modifier = modifier.windowInsetsPadding(WindowInsets.safeDrawing)
     ) {

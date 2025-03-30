@@ -5,6 +5,7 @@ import android.content.Context
 import android.media.AudioManager
 import android.net.Uri
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -18,6 +19,7 @@ import androidx.paging.cachedIn
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkQuery
+import com.m3u.core.architecture.Signal
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
@@ -43,11 +45,13 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -77,6 +81,35 @@ class ChannelViewModel @Inject constructor(
     delegate: Logger,
 ) : ViewModel(), ControlPoint.DiscoveryListener {
     private val logger = delegate.install(Profiles.VIEWMODEL_CHANNEL)
+
+    var cwPosition: Long by mutableLongStateOf(-1L)
+        private set
+
+    init {
+        viewModelScope.launch {
+            playerManager.cwPositionObserver.collectLatest {
+                ensureActive() // make sure the cwPosition has not been recycled by GC.
+                cwPosition = it
+                Signal.lock("ChannelViewModel-cwPosition")
+                ensureActive() // make sure the cwPosition has not been recycled by GC.
+                cwPosition = -1L
+            }
+        }
+    }
+
+    fun onRewind() {
+        val channelUrl = channel.value?.url ?: return
+        viewModelScope.launch {
+            playerManager.onRewind(channelUrl)
+        }
+    }
+
+    fun onMaskStateChanged(visible: Boolean) {
+        if (!visible) {
+            Signal.unlock("ChannelViewModel-cwPosition")
+        }
+    }
+
 
     // searched screencast devices
     var devices by mutableStateOf(emptyList<Device>())
@@ -341,13 +374,6 @@ class ChannelViewModel @Inject constructor(
             .flow
     }
         .cachedIn(viewModelScope)
-
-    private val channels: Flow<List<Channel>> = playlist.flatMapLatest { playlist ->
-        playlist ?: return@flatMapLatest flowOf(emptyList())
-        channelRepository.observeAllByPlaylistUrl(
-            playlist.url,
-        )
-    }
 
     val programmes: Flow<PagingData<Programme>> = channel.flatMapLatest { channel ->
         channel ?: return@flatMapLatest flowOf(PagingData.empty())
