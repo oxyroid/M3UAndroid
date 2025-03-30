@@ -30,7 +30,7 @@ kotlinx-serialization-json = "1.8.0"
 kotlinx-serialization-converter-retrofit = "1.0.0"
 kotlinx-datetime = "0.6.2"
 
-chucker = "4.0.0"
+chucker = "4.1.0"
 logback = "3.0.0"
 lottie-compose = "6.4.0"
 nextLib = "0.7.1"
