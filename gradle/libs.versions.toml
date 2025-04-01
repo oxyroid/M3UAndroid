@@ -26,7 +26,7 @@ google-dagger = "2.56.1"
 haze = "1.5.2"
 io-coil = "2.7.0"
 kotlinpoet = "2.1.0"
-kotlinx-serialization-json = "1.8.0"
+kotlinx-serialization-json = "1.8.1"
 kotlinx-serialization-converter-retrofit = "1.0.0"
 kotlinx-datetime = "0.6.2"
 
