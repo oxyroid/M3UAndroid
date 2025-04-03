@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.com.android.library)
     alias(libs.plugins.org.jetbrains.kotlin.android)
     alias(libs.plugins.org.jetbrains.kotlin.serialization)
+    id("com.squareup.wire")
 }
 
 android {
@@ -14,7 +15,14 @@ android {
     }
 }
 
+wire {
+    kotlin {}
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
+
+    // wire
+    implementation("com.squareup.wire:wire-runtime:4.9.2")
 }

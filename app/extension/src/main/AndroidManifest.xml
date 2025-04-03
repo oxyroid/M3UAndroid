@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <uses-permission android:name="com.m3u.permission.CONNECT_EXTENSION_PLUGIN"/>
+    <uses-permission android:name="com.m3u.smartphone.permission.CONNECT_EXTENSION_PLUGIN"/>
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"

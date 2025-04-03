@@ -75,11 +75,11 @@
             android:theme="@style/Theme.M3U" />
 
         <service
-            android:name="com.m3u.data.extension.RemoteService"
+            android:name="com.m3u.extension.api.RemoteService"
             android:exported="true"
-            android:permission="com.m3u.permission.CONNECT_EXTENSION_PLUGIN">
+            android:permission="${applicationId}.permission.CONNECT_EXTENSION_PLUGIN">
             <intent-filter>
-                <action android:name="com.m3u.permission.CONNECT_EXTENSION_PLUGIN" />
+                <action android:name="${applicationId}.permission.CONNECT_EXTENSION_PLUGIN" />
             </intent-filter>
         </service>
 

@@ -3,7 +3,6 @@ plugins {
     alias(libs.plugins.org.jetbrains.kotlin.android)
     alias(libs.plugins.org.jetbrains.kotlin.serialization)
     alias(libs.plugins.com.google.devtools.ksp)
-    id("com.squareup.wire")
 }
 
 android {
@@ -14,10 +13,6 @@ android {
     buildFeatures {
         aidl = true
     }
-}
-
-wire {
-    kotlin {}
 }
 
 dependencies {

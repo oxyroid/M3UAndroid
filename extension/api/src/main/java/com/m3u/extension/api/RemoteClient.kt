@@ -1,4 +1,4 @@
-package com.m3u.data.extension
+package com.m3u.extension.api
 
 import android.content.ComponentName
 import android.content.Context
@@ -6,6 +6,8 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
 import android.util.Log
+import com.m3u.data.extension.IRemoteCallback
+import com.m3u.data.extension.IRemoteService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.coroutines.resume
@@ -80,7 +82,7 @@ class RemoteClient {
                 errorMessage: String?
             ) {
                 Log.e(TAG, "onError: $method, $errorCode, $errorMessage")
-                throw RuntimeException("Error: $method $param $errorCode, $errorMessage")
+                throw RuntimeException("Error: $method $errorCode, $errorMessage")
             }
         })
     }

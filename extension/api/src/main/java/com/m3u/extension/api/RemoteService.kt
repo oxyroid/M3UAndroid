@@ -1,16 +1,19 @@
-package com.m3u.data.extension
+package com.m3u.extension.api
 
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import android.util.Log
+import com.m3u.data.extension.IRemoteCallback
+import com.m3u.data.extension.IRemoteService
 import java.util.ServiceLoader
 import java.util.concurrent.ConcurrentHashMap
 
 class RemoteService : Service() {
     private val onRemoteCall: OnRemoteCall by lazy {
         ServiceLoader.load<OnRemoteCall>(
-            OnRemoteCall::class.java
+            OnRemoteCall::class.java,
+            application.classLoader
         ).let {
             val count = it.count()
             if (count == 0) {
@@ -25,7 +28,7 @@ class RemoteService : Service() {
 
     private val binders = ConcurrentHashMap<String, IRemoteService.Stub>()
 
-    private inner class RemoteServiceImpl: IRemoteService.Stub() {
+    private inner class RemoteServiceImpl : IRemoteService.Stub() {
         override fun call(
             module: String,
             method: String,
@@ -33,13 +36,14 @@ class RemoteService : Service() {
             callback: IRemoteCallback?
         ) {
             onRemoteCall(module, method, param, callback)
+            Log.d(TAG, "call: $module, $method")
         }
     }
 
     override fun onBind(intent: Intent?): IBinder? {
         Log.d(TAG, "onBind: $intent")
-        intent?: return null
-        val packageName = intent.`package` ?: return null
+        intent ?: return null
+        val packageName = intent.resolveActivity(application.packageManager).packageName
         val binder = binders.getOrPut(packageName) {
             RemoteServiceImpl()
         }

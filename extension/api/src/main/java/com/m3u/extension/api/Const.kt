@@ -1,4 +1,4 @@
-package com.m3u.data.extension
+package com.m3u.extension.api
 
 object Const {
     const val PACKAGE_NAME = "package_name"

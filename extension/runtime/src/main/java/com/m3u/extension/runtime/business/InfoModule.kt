@@ -2,10 +2,12 @@ package com.m3u.extension.runtime.business
 
 import GetAppInfoRequest
 import GetAppInfoResponse
+import com.google.auto.service.AutoService
 import com.m3u.extension.runtime.RemoteMethod
 import com.m3u.extension.runtime.RemoteMethodParam
 import com.m3u.extension.runtime.RemoteModule
 
+@AutoService(RemoteModule::class)
 class InfoModule : RemoteModule {
     override val module: String = "info"
 

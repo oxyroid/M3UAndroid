@@ -1,4 +1,6 @@
-package com.m3u.data.extension
+package com.m3u.extension.api
+
+import com.m3u.data.extension.IRemoteCallback
 
 interface OnRemoteCall {
     operator fun invoke(module: String, method: String, bytes: ByteArray, callback: IRemoteCallback?)
