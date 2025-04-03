@@ -251,8 +251,10 @@ internal fun NavigationItemLayout(
         }
     } else {
         {
-            navigateToRoot(currentRootDestination)
-            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+            if (currentRootDestination != rootDestination) {
+                navigateToRoot(currentRootDestination)
+                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+            }
         }
     }
     block(selected, actualOnClick, icon, label)

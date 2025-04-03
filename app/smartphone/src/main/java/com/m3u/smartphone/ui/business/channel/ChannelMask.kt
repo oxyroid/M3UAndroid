@@ -218,7 +218,7 @@ internal fun ChannelMask(
         value = -1L
     }
 
-    var volumeBeforeMuted: Float by remember { mutableFloatStateOf(1f) }
+    var volumeBeforeMuted: Float by remember { mutableFloatStateOf(0.4f) }
 
     val isPanelGestureSupported = configuration.screenWidthDp < configuration.screenHeightDp
 

@@ -1,5 +1,6 @@
 package com.m3u.smartphone.ui.business.channel.components
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -144,6 +145,7 @@ internal fun ProgramGuide(
         }
     }
 
+    @SuppressLint("UnusedBoxWithConstraintsScope")
     BoxWithConstraints {
         MinaBox(
             state = minaBoxState,
