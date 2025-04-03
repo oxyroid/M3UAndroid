@@ -78,8 +78,10 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.business.playlist.PlaylistViewModel
 import com.m3u.core.architecture.preferences.hiltPreferences
+import com.m3u.core.foundation.ui.thenIf
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Event
+import com.m3u.core.wrapper.Sort
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.DataSource
@@ -88,34 +90,31 @@ import com.m3u.data.database.model.isSeries
 import com.m3u.data.database.model.isVod
 import com.m3u.data.database.model.type
 import com.m3u.data.service.MediaCommand
-import com.m3u.core.wrapper.Sort
 import com.m3u.i18n.R.string
-import com.m3u.smartphone.ui.material.components.TextField
-import com.m3u.smartphone.ui.material.ktx.checkPermissionOrRationale
-import com.m3u.smartphone.ui.material.ktx.interceptVolumeEvent
-import com.m3u.smartphone.ui.material.ktx.isAtTop
-import com.m3u.smartphone.ui.material.ktx.only
-import com.m3u.smartphone.ui.material.ktx.split
-import com.m3u.core.foundation.ui.thenIf
 import com.m3u.smartphone.ui.business.playlist.components.BackdropScaffold
 import com.m3u.smartphone.ui.business.playlist.components.BackdropValue
-import com.m3u.smartphone.ui.material.model.LocalHazeState
-import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.smartphone.ui.business.playlist.components.ChannelGallery
 import com.m3u.smartphone.ui.business.playlist.components.PlaylistTabRow
 import com.m3u.smartphone.ui.business.playlist.components.rememberBackdropScaffoldState
+import com.m3u.smartphone.ui.common.helper.Action
+import com.m3u.smartphone.ui.common.helper.Fob
+import com.m3u.smartphone.ui.common.helper.LocalHelper
+import com.m3u.smartphone.ui.common.helper.Metadata
 import com.m3u.smartphone.ui.material.components.Destination
 import com.m3u.smartphone.ui.material.components.EpisodesBottomSheet
 import com.m3u.smartphone.ui.material.components.EventHandler
 import com.m3u.smartphone.ui.material.components.MediaSheet
 import com.m3u.smartphone.ui.material.components.MediaSheetValue
 import com.m3u.smartphone.ui.material.components.SortBottomSheet
-import com.m3u.smartphone.ui.common.helper.Action
-import com.m3u.smartphone.ui.common.helper.Fob
-import com.m3u.smartphone.ui.common.helper.LocalHelper
-import com.m3u.smartphone.ui.common.helper.Metadata
-import dev.chrisbanes.haze.HazeDefaults
-import dev.chrisbanes.haze.haze
+import com.m3u.smartphone.ui.material.components.TextField
+import com.m3u.smartphone.ui.material.ktx.checkPermissionOrRationale
+import com.m3u.smartphone.ui.material.ktx.interceptVolumeEvent
+import com.m3u.smartphone.ui.material.ktx.isAtTop
+import com.m3u.smartphone.ui.material.ktx.only
+import com.m3u.smartphone.ui.material.ktx.split
+import com.m3u.smartphone.ui.material.model.LocalHazeState
+import com.m3u.smartphone.ui.material.model.LocalSpacing
+import dev.chrisbanes.haze.hazeSource
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
@@ -524,10 +523,7 @@ private fun PlaylistScreen(
                         mediaSheetValue = MediaSheetValue.PlaylistScreen(it)
                     },
                     getProgrammeCurrently = getProgrammeCurrently,
-                    modifier = Modifier.haze(
-                        LocalHazeState.current,
-                        HazeDefaults.style(MaterialTheme.colorScheme.surface)
-                    )
+                    modifier = Modifier.hazeSource(LocalHazeState.current)
                 )
             }
             Column(

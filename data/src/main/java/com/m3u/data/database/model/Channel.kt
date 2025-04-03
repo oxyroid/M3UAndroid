@@ -76,7 +76,7 @@ data class Channel(
 fun Channel.copyXtreamEpisode(episode: XtreamChannelInfo.Episode): Channel {
     val url = Url(url)
     val newUrl = URLBuilder(url)
-        .apply { path(*url.pathSegments.dropLast(1).toTypedArray()) }
+        .apply { path(*url.rawSegments.dropLast(1).toTypedArray()) }
         .appendPathSegments("${episode.id}.${episode.containerExtension}")
         .build()
     return copy(

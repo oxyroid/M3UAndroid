@@ -1,7 +1,7 @@
 package com.m3u.data.tv.http
 
-import com.m3u.data.tv.http.endpoint.Remotes
 import com.m3u.data.tv.http.endpoint.Playlists
+import com.m3u.data.tv.http.endpoint.Remotes
 import com.m3u.data.tv.http.endpoint.SayHellos
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
@@ -17,8 +17,8 @@ import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.pingPeriod
 import io.ktor.server.websocket.timeout
 import kotlinx.serialization.json.Json
-import java.time.Duration
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
 
 internal class HttpServerImpl @Inject constructor(
     private val sayHellos: SayHellos,
@@ -65,8 +65,8 @@ internal class HttpServerImpl @Inject constructor(
                 prettyPrint = true
             }
             contentConverter = KotlinxWebsocketSerializationConverter(json)
-            pingPeriod = Duration.ofSeconds(15)
-            timeout = Duration.ofSeconds(15)
+            pingPeriod = 15.seconds
+            timeout = 15.seconds
         }
     }
 

@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChangeCircle
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
@@ -38,20 +37,19 @@ import com.m3u.data.database.model.ColorScheme
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.i18n.R.string
-import com.m3u.smartphone.ui.material.model.LocalHazeState
 import com.m3u.smartphone.ui.business.setting.components.CanvasBottomSheet
 import com.m3u.smartphone.ui.business.setting.fragments.AppearanceFragment
 import com.m3u.smartphone.ui.business.setting.fragments.OptionalFragment
 import com.m3u.smartphone.ui.business.setting.fragments.SubscriptionsFragment
 import com.m3u.smartphone.ui.business.setting.fragments.preferences.PreferencesFragment
-import com.m3u.smartphone.ui.material.components.Destination
-import com.m3u.smartphone.ui.material.components.EventHandler
-import com.m3u.smartphone.ui.material.components.SettingDestination
 import com.m3u.smartphone.ui.common.helper.Fob
 import com.m3u.smartphone.ui.common.helper.Metadata
 import com.m3u.smartphone.ui.common.internal.Events
-import dev.chrisbanes.haze.HazeDefaults
-import dev.chrisbanes.haze.haze
+import com.m3u.smartphone.ui.material.components.Destination
+import com.m3u.smartphone.ui.material.components.EventHandler
+import com.m3u.smartphone.ui.material.components.SettingDestination
+import com.m3u.smartphone.ui.material.model.LocalHazeState
+import dev.chrisbanes.haze.hazeSource
 import kotlinx.coroutines.launch
 
 @Composable
@@ -303,10 +301,7 @@ private fun SettingScreen(
         },
         modifier = modifier
             .fillMaxSize()
-            .haze(
-                LocalHazeState.current,
-                HazeDefaults.style(MaterialTheme.colorScheme.surface)
-            )
+            .hazeSource(LocalHazeState.current)
             .testTag("feature:setting")
     )
     BackHandler(navigator.canNavigateBack()) {

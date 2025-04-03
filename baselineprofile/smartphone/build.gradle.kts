@@ -36,7 +36,7 @@ android {
         create("liteCodec") { dimension = "codec" }
     }
 
-    testOptions.managedDevices.devices {
+    testOptions.managedDevices.allDevices {
         create<ManagedVirtualDevice>("Pixel5Api31") {
             device = "Pixel 5"
             apiLevel = 34

@@ -149,6 +149,7 @@ kotlinx-serialization-coverter-retrofit = { group = "com.jakewharton.retrofit", 
 kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinx-datetime" }
 
 haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
+haze-materials = { module = "dev.chrisbanes.haze:haze-materials", version.ref = "haze" }
 io-coil-kt = { group = "io.coil-kt", name = "coil", version.ref = "io-coil" }
 io-coil-kt-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "io-coil" }
 

@@ -40,21 +40,22 @@ import androidx.compose.ui.unit.offset
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMaxOfOrNull
-import com.m3u.smartphone.ui.material.components.Background
-import com.m3u.smartphone.ui.material.effects.currentBackStackEntry
-import com.m3u.smartphone.ui.material.model.LocalHazeState
-import com.m3u.smartphone.ui.material.model.LocalSpacing
-import com.m3u.smartphone.ui.common.internal.SmartphoneScaffoldImpl
-import com.m3u.smartphone.ui.common.internal.TabletScaffoldImpl
-import com.m3u.smartphone.ui.material.components.Destination
-import com.m3u.smartphone.ui.material.components.FontFamilies
 import com.m3u.smartphone.ui.common.helper.Fob
 import com.m3u.smartphone.ui.common.helper.LocalHelper
 import com.m3u.smartphone.ui.common.helper.Metadata
 import com.m3u.smartphone.ui.common.helper.useRailNav
+import com.m3u.smartphone.ui.common.internal.SmartphoneScaffoldImpl
+import com.m3u.smartphone.ui.common.internal.TabletScaffoldImpl
+import com.m3u.smartphone.ui.material.components.Background
+import com.m3u.smartphone.ui.material.components.Destination
+import com.m3u.smartphone.ui.material.components.FontFamilies
+import com.m3u.smartphone.ui.material.effects.currentBackStackEntry
+import com.m3u.smartphone.ui.material.model.LocalHazeState
+import com.m3u.smartphone.ui.material.model.LocalSpacing
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.HazeStyle
-import dev.chrisbanes.haze.hazeChild
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
+import dev.chrisbanes.haze.materials.HazeMaterials
 
 @Composable
 @OptIn(InternalComposeApi::class)
@@ -109,6 +110,7 @@ internal fun Items(
     }
 }
 
+@OptIn(ExperimentalHazeMaterialsApi::class)
 @Composable
 internal fun MainContent(
     windowInsets: WindowInsets,
@@ -190,7 +192,7 @@ internal fun MainContent(
                     }
                 },
                 modifier = Modifier
-                    .hazeChild(hazeState, style = HazeStyle(blurRadius = 6.dp))
+                    .hazeEffect(hazeState, HazeMaterials.ultraThin())
                     .fillMaxWidth()
             )
         },

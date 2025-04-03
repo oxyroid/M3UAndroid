@@ -14,20 +14,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.InternalComposeApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import com.m3u.smartphone.ui.common.Items
 import com.m3u.smartphone.ui.common.MainContent
 import com.m3u.smartphone.ui.common.NavigationItemLayout
 import com.m3u.smartphone.ui.common.ScaffoldLayout
 import com.m3u.smartphone.ui.common.ScaffoldRole
+import com.m3u.smartphone.ui.common.helper.Metadata
 import com.m3u.smartphone.ui.material.components.Background
+import com.m3u.smartphone.ui.material.components.Destination
 import com.m3u.smartphone.ui.material.ktx.plus
 import com.m3u.smartphone.ui.material.model.LocalHazeState
-import com.m3u.smartphone.ui.material.components.Destination
-import com.m3u.smartphone.ui.common.helper.Metadata
-import dev.chrisbanes.haze.HazeStyle
-import dev.chrisbanes.haze.hazeChild
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
+import dev.chrisbanes.haze.materials.HazeMaterials
 
+@OptIn(ExperimentalHazeMaterialsApi::class)
 @Composable
 @InternalComposeApi
 fun SmartphoneScaffoldImpl(
@@ -46,7 +47,7 @@ fun SmartphoneScaffoldImpl(
             containerColor = Color.Transparent,
             contentColor = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier
-                .hazeChild(hazeState, style = HazeStyle(blurRadius = 6.dp, noiseFactor = 0.4f))
+                .hazeEffect(hazeState, HazeMaterials.ultraThin())
                 .fillMaxWidth()
         ) {
             Items { currentRootDestination ->

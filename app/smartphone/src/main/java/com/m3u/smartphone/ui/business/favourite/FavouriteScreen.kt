@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Sort
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -28,25 +27,24 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.m3u.business.favorite.FavoriteViewModel
 import com.m3u.core.architecture.preferences.hiltPreferences
+import com.m3u.core.foundation.ui.thenIf
 import com.m3u.core.util.basic.title
+import com.m3u.core.wrapper.Sort
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.isSeries
 import com.m3u.data.service.MediaCommand
-import com.m3u.core.wrapper.Sort
 import com.m3u.i18n.R
-import com.m3u.smartphone.ui.material.ktx.interceptVolumeEvent
-import com.m3u.core.foundation.ui.thenIf
-import com.m3u.smartphone.ui.material.model.LocalHazeState
 import com.m3u.smartphone.ui.business.favourite.components.FavoriteGallery
+import com.m3u.smartphone.ui.common.helper.Action
+import com.m3u.smartphone.ui.common.helper.LocalHelper
+import com.m3u.smartphone.ui.common.helper.Metadata
 import com.m3u.smartphone.ui.material.components.EpisodesBottomSheet
 import com.m3u.smartphone.ui.material.components.MediaSheet
 import com.m3u.smartphone.ui.material.components.MediaSheetValue
 import com.m3u.smartphone.ui.material.components.SortBottomSheet
-import com.m3u.smartphone.ui.common.helper.Action
-import com.m3u.smartphone.ui.common.helper.LocalHelper
-import com.m3u.smartphone.ui.common.helper.Metadata
-import dev.chrisbanes.haze.HazeDefaults
-import dev.chrisbanes.haze.haze
+import com.m3u.smartphone.ui.material.ktx.interceptVolumeEvent
+import com.m3u.smartphone.ui.material.model.LocalHazeState
+import dev.chrisbanes.haze.hazeSource
 import kotlinx.coroutines.launch
 
 @Composable
@@ -203,9 +201,6 @@ private fun FavoriteScreen(
         rowCount = actualRowCount,
         onClick = onClickChannel,
         onLongClick = onLongClickChannel,
-        modifier = modifier.haze(
-            LocalHazeState.current,
-            HazeDefaults.style(MaterialTheme.colorScheme.surface)
-        )
+        modifier = modifier.hazeSource(LocalHazeState.current)
     )
 }

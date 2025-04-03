@@ -27,7 +27,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -54,19 +53,18 @@ import com.m3u.data.database.model.epgUrlsOrXtreamXmlUrl
 import com.m3u.data.parser.xtream.XtreamInfo
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.i18n.R.string
-import com.m3u.smartphone.ui.material.components.Background
-import com.m3u.smartphone.ui.material.components.PlaceholderField
-import com.m3u.smartphone.ui.material.ktx.checkPermissionOrRationale
-import com.m3u.smartphone.ui.material.model.LocalHazeState
-import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.smartphone.ui.business.configuration.components.AutoSyncProgrammesButton
 import com.m3u.smartphone.ui.business.configuration.components.EpgManifestGallery
 import com.m3u.smartphone.ui.business.configuration.components.SyncProgrammesButton
 import com.m3u.smartphone.ui.business.configuration.components.XtreamPanel
 import com.m3u.smartphone.ui.common.helper.LocalHelper
 import com.m3u.smartphone.ui.common.helper.Metadata
-import dev.chrisbanes.haze.HazeStyle
-import dev.chrisbanes.haze.haze
+import com.m3u.smartphone.ui.material.components.Background
+import com.m3u.smartphone.ui.material.components.PlaceholderField
+import com.m3u.smartphone.ui.material.ktx.checkPermissionOrRationale
+import com.m3u.smartphone.ui.material.model.LocalHazeState
+import com.m3u.smartphone.ui.material.model.LocalSpacing
+import dev.chrisbanes.haze.hazeSource
 import kotlinx.datetime.LocalDateTime
 
 @Composable
@@ -166,10 +164,7 @@ private fun PlaylistConfigurationScreen(
                 verticalArrangement = Arrangement.spacedBy(spacing.small),
                 contentPadding = contentPadding,
                 modifier = Modifier
-                    .haze(
-                        LocalHazeState.current,
-                        HazeStyle(MaterialTheme.colorScheme.surface)
-                    )
+                    .hazeSource(LocalHazeState.current)
                     .fillMaxSize()
                     .padding(spacing.medium)
             ) {

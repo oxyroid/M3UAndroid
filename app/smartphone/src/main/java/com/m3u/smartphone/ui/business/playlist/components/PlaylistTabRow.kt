@@ -29,6 +29,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -51,17 +52,15 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.IconButton
+import com.m3u.core.foundation.ui.thenIf
 import com.m3u.smartphone.ui.material.effects.BackStackEntry
 import com.m3u.smartphone.ui.material.effects.BackStackHandler
 import com.m3u.smartphone.ui.material.ktx.Edge
 import com.m3u.smartphone.ui.material.ktx.blurEdge
-import com.m3u.core.foundation.ui.thenIf
 import com.m3u.smartphone.ui.material.model.LocalHazeState
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.smartphone.ui.material.shape.AbsoluteSmoothCornerShape
-import dev.chrisbanes.haze.HazeDefaults
-import dev.chrisbanes.haze.haze
+import dev.chrisbanes.haze.hazeSource
 
 @Composable
 internal fun PlaylistTabRow(
@@ -174,10 +173,7 @@ internal fun PlaylistTabRow(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(MaterialTheme.colorScheme.surface)
-                        .haze(
-                            LocalHazeState.current,
-                            HazeDefaults.style(MaterialTheme.colorScheme.surface)
-                        ),
+                        .hazeSource(LocalHazeState.current),
                     content = categoriesContent
                 )
             } else {

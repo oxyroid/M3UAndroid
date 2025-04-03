@@ -31,14 +31,13 @@ import com.m3u.data.database.model.epgUrlsOrXtreamXmlUrl
 import com.m3u.data.database.model.fromLocal
 import com.m3u.data.database.model.type
 import com.m3u.i18n.R.string
-import com.m3u.smartphone.ui.material.ktx.plus
-import com.m3u.smartphone.ui.material.model.LocalHazeState
-import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.smartphone.ui.common.helper.LocalHelper
 import com.m3u.smartphone.ui.common.helper.Metadata
 import com.m3u.smartphone.ui.common.helper.useRailNav
-import dev.chrisbanes.haze.HazeDefaults
-import dev.chrisbanes.haze.haze
+import com.m3u.smartphone.ui.material.ktx.plus
+import com.m3u.smartphone.ui.material.model.LocalHazeState
+import com.m3u.smartphone.ui.material.model.LocalSpacing
+import dev.chrisbanes.haze.hazeSource
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlin.math.absoluteValue
@@ -94,11 +93,7 @@ internal fun PlaylistGallery(
         contentPadding = PaddingValues(vertical = spacing.medium) + contentPadding,
         verticalArrangement = Arrangement.spacedBy(spacing.medium),
         horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-        modifier = modifier
-            .haze(
-                LocalHazeState.current,
-                HazeDefaults.style(currentHazeColor)
-            )
+        modifier = modifier.hazeSource(LocalHazeState.current)
     ) {
         if (header != null) {
             item(span = { GridItemSpan(rowCount) }) {

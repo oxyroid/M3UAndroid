@@ -187,4 +187,5 @@ dependencies {
     implementation(libs.minabox)
     implementation(libs.net.mm2d.mmupnp.mmupnp)
     implementation(libs.haze)
+    implementation(libs.haze.materials)
 }

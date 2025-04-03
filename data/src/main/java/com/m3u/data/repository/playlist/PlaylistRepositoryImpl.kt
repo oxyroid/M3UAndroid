@@ -60,7 +60,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -583,7 +582,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         val playlist = checkNotNull(get(series.playlistUrl)) { "playlist is not exist" }
         val seriesInfo = xtreamParser.getSeriesInfoOrThrow(
             input = XtreamInput.decodeFromPlaylistUrl(playlist.url),
-            seriesId = Url(series.url).pathSegments.last().toInt()
+            seriesId = Url(series.url).rawSegments.last().toInt()
         )
         // fixme: do not flatmap
         return seriesInfo.episodes.flatMap { it.value }
