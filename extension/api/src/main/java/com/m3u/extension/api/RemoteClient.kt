@@ -8,10 +8,17 @@ import android.os.IBinder
 import android.util.Log
 import com.m3u.data.extension.IRemoteCallback
 import com.m3u.data.extension.IRemoteService
+import com.squareup.wire.ProtoAdapter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import java.lang.reflect.Parameter
+import java.lang.reflect.ParameterizedType
+import java.lang.reflect.Type
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
+import kotlin.reflect.KProperty1
+import kotlin.reflect.full.companionObject
+import kotlin.reflect.full.declaredMembers
 
 class RemoteClient {
     private var server: IRemoteService? = null
@@ -85,6 +92,36 @@ class RemoteClient {
                 throw RuntimeException("Error: $method $errorCode, $errorMessage")
             }
         })
+    }
+
+    // Map<type-name, adapter>
+    private val adapters = mutableMapOf<String, Any>()
+
+    @Suppress("UNCHECKED_CAST")
+    fun getAdapter(typeName: String): Any = Samplings.measure("adapter") {
+        adapters.getOrPut(typeName) {
+            val companionObject = Class.forName(typeName).kotlin.companionObject!!
+            val property =
+                companionObject.declaredMembers.first { it.name == "ADAPTER" } as KProperty1<Any, Any>
+            property.get(companionObject)
+        }
+    }
+
+    fun Parameter.getRealParameterizedType(): Type {
+        return (parameterizedType as ParameterizedType).actualTypeArguments[0]
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    suspend inline fun <reified RQ, reified RP> request(
+        module: String,
+        method: String,
+        request: RQ
+    ): RP {
+        val requestAdapter = getAdapter(RQ::class.java.typeName) as ProtoAdapter<RQ>
+        val responseAdapter = getAdapter(RP::class.java.typeName) as ProtoAdapter<RP>
+        call(module, method, requestAdapter.encode(request)).let { response ->
+            return responseAdapter.decode(response)
+        }
     }
 
     val isConnected: Boolean

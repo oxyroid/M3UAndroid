@@ -74,14 +74,12 @@ class MainActivity : ComponentActivity() {
                             enabled = isConnected,
                             onClick = {
                                 coroutineScope.launch {
-                                    val res = client.call(
+                                    val res: GetAppInfoResponse = client.request(
                                         "info",
                                         "getAppInfo",
-                                        GetAppInfoRequest.ADAPTER.encode(
-                                            GetAppInfoRequest()
-                                        )
+                                        GetAppInfoRequest()
                                     )
-                                    getAppInfoResponse = GetAppInfoResponse.ADAPTER.decode(res)
+                                    getAppInfoResponse = res
                                 }
                             }
                         ) {

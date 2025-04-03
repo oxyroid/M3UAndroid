@@ -21,9 +21,6 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
 
-    // reflect
-    implementation(libs.org.jetbrains.kotlin.kotlin.reflect)
-
     // auto
     implementation(libs.auto.service.annotations)
     ksp(libs.auto.service.ksp)

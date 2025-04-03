@@ -25,4 +25,7 @@ dependencies {
 
     // wire
     implementation("com.squareup.wire:wire-runtime:4.9.2")
+
+    // reflect
+    api(libs.org.jetbrains.kotlin.kotlin.reflect)
 }
