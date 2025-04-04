@@ -88,9 +88,10 @@ class OnRemoteCallImpl : OnRemoteCall {
     ) {
         val methods = remoteMethods.getOrPut(module) {
             Samplings.measure("methods") {
-                val moduleClass = module::class.java
+                val moduleClass = instance::class.java
                 moduleClass.declaredMethods
                     .asSequence()
+                    .onEach { Log.e(TAG, "invokeImpl: ${it.name}, ${it.annotations.toList()}", ) }
                     // FIXME: never reached
                     .filter { it.isAnnotationPresent(RemoteMethod::class.java) }
                     .associateBy { it.getAnnotation(RemoteMethod::class.java)!!.name }
