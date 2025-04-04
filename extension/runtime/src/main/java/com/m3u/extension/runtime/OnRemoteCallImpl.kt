@@ -88,12 +88,12 @@ class OnRemoteCallImpl : OnRemoteCall {
     ) {
         val methods = remoteMethods.getOrPut(module) {
             Samplings.measure("methods") {
-                val moduleClass = instance::class.java
+                val moduleClass = module::class.java
                 moduleClass.declaredMethods
                     .asSequence()
-//                .filter { it.isAnnotationPresent(RemoteMethod::class.java) }
-                    .associateBy { it.name }
-//                .associateBy { it.getAnnotation(RemoteMethod::class.java)!!.name }
+                    // FIXME: never reached
+                    .filter { it.isAnnotationPresent(RemoteMethod::class.java) }
+                    .associateBy { it.getAnnotation(RemoteMethod::class.java)!!.name }
             }
         }
         val remoteMethod = methods[method]
@@ -117,8 +117,8 @@ class OnRemoteCallImpl : OnRemoteCall {
                     )
                 }
 
-                else -> {
-//                        parameter.isAnnotationPresent(RemoteMethodParam::class.java) ->
+                // FIXME: never reached
+                parameter.isAnnotationPresent(RemoteMethodParam::class.java) -> {
                     val adapter = adapters.getOrPut(parameter.type.typeName) {
                         getAdapter(parameter.type.typeName)
                     }
@@ -128,7 +128,8 @@ class OnRemoteCallImpl : OnRemoteCall {
                             .invoke(adapter, bytes)
                     }
                 }
-//                    else -> throw UnsupportedOperationException("Unsupported parameter type: ${parameter.type}")
+
+                else -> throw UnsupportedOperationException("Unsupported parameter type: ${parameter.type}")
             }
         }
         try {

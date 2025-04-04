@@ -39,6 +39,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.m3u.business.foryou.ForyouViewModel
 import com.m3u.business.foryou.Recommend
 import com.m3u.core.architecture.preferences.hiltPreferences
+import com.m3u.core.foundation.ui.composableOf
+import com.m3u.core.foundation.ui.thenIf
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.Channel
@@ -46,20 +48,18 @@ import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.database.model.isSeries
 import com.m3u.data.service.MediaCommand
-import com.m3u.i18n.R.string
-import com.m3u.core.foundation.ui.composableOf
-import com.m3u.smartphone.ui.material.ktx.interceptVolumeEvent
-import com.m3u.core.foundation.ui.thenIf
 import com.m3u.extension.api.Const
+import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.business.foryou.components.HeadlineBackground
 import com.m3u.smartphone.ui.business.foryou.components.PlaylistGallery
 import com.m3u.smartphone.ui.business.foryou.components.recommend.RecommendGallery
-import com.m3u.smartphone.ui.material.components.EpisodesBottomSheet
-import com.m3u.smartphone.ui.material.components.MediaSheet
-import com.m3u.smartphone.ui.material.components.MediaSheetValue
 import com.m3u.smartphone.ui.common.helper.Action
 import com.m3u.smartphone.ui.common.helper.LocalHelper
 import com.m3u.smartphone.ui.common.helper.Metadata
+import com.m3u.smartphone.ui.material.components.EpisodesBottomSheet
+import com.m3u.smartphone.ui.material.components.MediaSheet
+import com.m3u.smartphone.ui.material.components.MediaSheetValue
+import com.m3u.smartphone.ui.material.ktx.interceptVolumeEvent
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -96,7 +96,10 @@ fun ForyouRoute(
                 )
                 putExtra(Const.PACKAGE_NAME, context.packageName)
                 putExtra(Const.CLASS_NAME, "com.m3u.extension.api.RemoteService")
-                putExtra(Const.PERMISSION,"${context.packageName}.permission.CONNECT_EXTENSION_PLUGIN")
+                putExtra(
+                    Const.PERMISSION,
+                    "${context.packageName}.permission.CONNECT_EXTENSION_PLUGIN"
+                )
                 putExtra(Const.ACCESS_KEY, UUID.randomUUID().toString())
             }
         )

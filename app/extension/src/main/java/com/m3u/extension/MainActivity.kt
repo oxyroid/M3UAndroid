@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
@@ -38,6 +39,13 @@ class MainActivity : ComponentActivity() {
             M3UTheme {
                 val coroutineScope = rememberCoroutineScope()
                 val isConnected by client.isConnectedObservable.collectAsStateWithLifecycle(false)
+                DisposableEffect(Unit) {
+                    onDispose {
+                        if (isConnected) {
+                            client.disconnect(this@MainActivity)
+                        }
+                    }
+                }
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Column(
                         modifier = Modifier
