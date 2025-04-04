@@ -20,6 +20,7 @@ fun NavGraphBuilder.rootGraph(
     contentPadding: PaddingValues,
     navigateToPlaylist: (Playlist) -> Unit,
     navigateToChannel: () -> Unit,
+    navigateToExtension: () -> Unit,
     navigateToSettingPlaylistManagement: () -> Unit,
     navigateToPlaylistConfiguration: (Playlist) -> Unit,
 ) {
@@ -66,6 +67,7 @@ fun NavGraphBuilder.rootGraph(
     ) {
         SettingRoute(
             contentPadding = contentPadding,
+            navigateToExtension = navigateToExtension,
             modifier = Modifier
                 .fillMaxSize()
                 .blurEdge(

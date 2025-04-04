@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="com.m3u.smartphone.permission.CONNECT_EXTENSION_PLUGIN"/>
+    <uses-feature android:name="m3uandroid.extension" />
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.M3U">
         <activity
@@ -18,8 +18,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <meta-data android:name="m3uandroid.extension.class" android:value="${mainClass}" />
+        <meta-data android:name="m3uandroid.extension.description" android:value="${description}" />
+        <meta-data android:name="m3uandroid.extension.version" android:value="${version}" />
     </application>
     <queries>
-        <package android:name="com.m3u.smartphone" />
+        <package android:name="com.m3u.smartphone"/>
     </queries>
 </manifest>

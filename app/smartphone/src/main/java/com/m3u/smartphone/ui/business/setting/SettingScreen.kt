@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChangeCircle
+import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
@@ -42,6 +43,7 @@ import com.m3u.smartphone.ui.business.setting.fragments.AppearanceFragment
 import com.m3u.smartphone.ui.business.setting.fragments.OptionalFragment
 import com.m3u.smartphone.ui.business.setting.fragments.SubscriptionsFragment
 import com.m3u.smartphone.ui.business.setting.fragments.preferences.PreferencesFragment
+import com.m3u.smartphone.ui.common.helper.Action
 import com.m3u.smartphone.ui.common.helper.Fob
 import com.m3u.smartphone.ui.common.helper.Metadata
 import com.m3u.smartphone.ui.common.internal.Events
@@ -55,6 +57,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SettingRoute(
     contentPadding: PaddingValues,
+    navigateToExtension: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingViewModel = hiltViewModel()
 ) {
@@ -121,7 +124,8 @@ fun SettingRoute(
         },
         onDeleteEpgPlaylist = { viewModel.deleteEpgPlaylist(it) },
         modifier = modifier.fillMaxSize(),
-        contentPadding = contentPadding
+        contentPadding = contentPadding,
+        navigateToExtension = navigateToExtension,
     )
     CanvasBottomSheet(
         sheetState = sheetState,
@@ -163,6 +167,7 @@ private fun SettingScreen(
     restoreSchemes: () -> Unit,
     epgs: List<Playlist>,
     onDeleteEpgPlaylist: (String) -> Unit,
+    navigateToExtension: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
 ) {
@@ -205,9 +210,17 @@ private fun SettingScreen(
                 }
             }
         }
-        Metadata.actions = emptyList()
+        Metadata.actions = listOf(
+            Action(
+                icon = Icons.Rounded.Extension,
+                contentDescription = "extension"
+            ) {
+                navigateToExtension()
+            }
+        )
         onPauseOrDispose {
             Metadata.fob = null
+            Metadata.actions = emptyList()
         }
     }
 

@@ -138,9 +138,7 @@ internal fun MainContent(
                         modifier = Modifier.defaultMinSize(minHeight = 56.dp)
                     ) {
                         Column(
-                            modifier = Modifier
-                                .padding(start = spacing.medium)
-                                .weight(1f)
+                            modifier = Modifier.weight(1f)
                         ) {
                             Text(
                                 text = title,

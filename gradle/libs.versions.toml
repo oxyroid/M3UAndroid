@@ -55,6 +55,7 @@ ktor-server = "3.1.2"
 mm2d-mmupnp = "3.1.6"
 profileinstaller = "1.4.1"
 jakewharton-disklrucache = "2.0.2"
+junit = "4.13.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
@@ -175,6 +176,7 @@ androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profi
 jakewharton-disklrucache = { group = "com.jakewharton", name = "disklrucache", version.ref = "jakewharton-disklrucache" }
 
 org-jetbrains-kotlin-kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
 
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }

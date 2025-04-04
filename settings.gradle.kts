@@ -25,7 +25,8 @@ include(
     ":business:setting",
     ":business:playlist",
     ":business:playlist-configuration",
-    ":business:channel"
+    ":business:channel",
+    ":business:extension",
 )
 include(":baselineprofile:smartphone", ":baselineprofile:tv")
 include(":i18n")

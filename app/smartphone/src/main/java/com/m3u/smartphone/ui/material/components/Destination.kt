@@ -45,12 +45,6 @@ sealed interface Destination {
             }
         }
     }
-
-    @Immutable
-    data class Playlist(
-        val url: String,
-        val recommend: String? = null
-    ) : Destination
 }
 
 @Immutable

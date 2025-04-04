@@ -1,11 +1,7 @@
 package com.m3u.smartphone.ui.business.foryou
 
-import android.content.ComponentName
-import android.content.Intent
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.view.KeyEvent
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -48,7 +43,6 @@ import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.database.model.isSeries
 import com.m3u.data.service.MediaCommand
-import com.m3u.extension.api.Const
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.business.foryou.components.HeadlineBackground
 import com.m3u.smartphone.ui.business.foryou.components.PlaylistGallery
@@ -62,7 +56,6 @@ import com.m3u.smartphone.ui.material.components.MediaSheetValue
 import com.m3u.smartphone.ui.material.ktx.interceptVolumeEvent
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.util.UUID
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
@@ -80,30 +73,6 @@ fun ForyouRoute(
     val coroutineScope = rememberCoroutineScope()
 
     val title = stringResource(string.ui_title_foryou)
-
-    val context = LocalContext.current
-    val launcher =
-        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
-
-        }
-
-    LaunchedEffect(Unit) {
-        launcher.launch(
-            Intent().apply {
-                this.component = ComponentName(
-                    "com.m3u.extension",
-                    "com.m3u.extension.MainActivity"
-                )
-                putExtra(Const.PACKAGE_NAME, context.packageName)
-                putExtra(Const.CLASS_NAME, "com.m3u.extension.api.RemoteService")
-                putExtra(
-                    Const.PERMISSION,
-                    "${context.packageName}.permission.CONNECT_EXTENSION_PLUGIN"
-                )
-                putExtra(Const.ACCESS_KEY, UUID.randomUUID().toString())
-            }
-        )
-    }
 
     val playlists by viewModel.playlists.collectAsStateWithLifecycle()
     val specs by viewModel.specs.collectAsStateWithLifecycle()

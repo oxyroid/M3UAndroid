@@ -18,6 +18,8 @@ import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.wrapper.eventOf
 import com.m3u.smartphone.ui.business.channel.PlayerActivity
 import com.m3u.smartphone.ui.business.configuration.playlistConfigurationScreen
+import com.m3u.smartphone.ui.business.extension.extensionScreen
+import com.m3u.smartphone.ui.business.extension.navigateToExtension
 import com.m3u.smartphone.ui.business.playlist.playlistScreen
 import com.m3u.smartphone.ui.common.internal.Events
 import com.m3u.smartphone.ui.material.components.Destination
@@ -64,6 +66,9 @@ fun AppNavHost(
             },
             navigateToPlaylistConfiguration = {
                 navController.navigateToPlaylistConfiguration(it.url)
+            },
+            navigateToExtension = {
+                navController.navigateToExtension()
             }
         )
         playlistScreen(
@@ -84,5 +89,6 @@ fun AppNavHost(
             contentPadding = contentPadding
         )
         playlistConfigurationScreen(contentPadding)
+        extensionScreen(contentPadding)
     }
 }

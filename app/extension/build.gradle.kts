@@ -15,7 +15,11 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
-
+        manifestPlaceholders += mapOf(
+            "description" to "Provides the ability to parse playlists using the standard TXT IPTV protocol",
+            "version" to "1",
+            "mainClass" to ".MainActivity"
+        )
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
