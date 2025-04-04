@@ -19,3 +19,7 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+-keep class com.squareup.wire.** { *; }
+-keep class com.m3u.extension.api.model.** { *; }
+-keep class * extends com.squareup.wire.ProtoAdapter

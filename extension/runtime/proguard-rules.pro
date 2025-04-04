@@ -21,3 +21,10 @@
 #-renamesourcefileattribute SourceFile
 
 -keep class * extends com.m3u.extension.runtime.RemoteModule
+
+-keepclassmembers class ** {
+  @com.m3u.extension.runtime.RemoteMethod public *;
+  @com.m3u.extension.runtime.RemoteMethodParam public *;
+}
+
+-keep class com.m3u.extension.runtime.** { *; }

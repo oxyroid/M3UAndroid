@@ -52,6 +52,11 @@ android {
             isShrinkResources = true
             signingConfig = signingConfigs.getByName("debug")
         }
+        debug {
+            isMinifyEnabled = false
+            isShrinkResources = false
+            signingConfig = signingConfigs.getByName("debug")
+        }
         all {
             isCrunchPngs = false
             proguardFiles(

@@ -1,7 +1,5 @@
 package com.m3u.extension
 
-import GetAppInfoRequest
-import GetAppInfoResponse
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -23,6 +21,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.extension.api.Const
 import com.m3u.extension.api.RemoteClient
+import com.m3u.extension.api.model.GetAppInfoRequest
+import com.m3u.extension.api.model.GetAppInfoResponse
 import com.m3u.extension.ui.theme.M3UTheme
 import kotlinx.coroutines.launch
 
@@ -82,6 +82,7 @@ class MainActivity : ComponentActivity() {
                             enabled = isConnected,
                             onClick = {
                                 coroutineScope.launch {
+                                    GetAppInfoRequest.ADAPTER
                                     val res: GetAppInfoResponse = client.request(
                                         "info",
                                         "getAppInfo",

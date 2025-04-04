@@ -16,7 +16,11 @@ android {
 }
 
 wire {
-    kotlin {}
+    kotlin {
+    }
+    protoPath {
+        srcDir("src/main/proto")
+    }
 }
 
 dependencies {

@@ -7,6 +7,7 @@ import com.m3u.data.extension.IRemoteCallback
 import com.m3u.extension.api.OnRemoteCall
 import com.m3u.extension.api.RemoteCallException
 import com.m3u.extension.api.Samplings
+import com.m3u.extension.runtime.business.InfoModule
 import com.squareup.wire.ProtoAdapter
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
@@ -14,7 +15,6 @@ import java.lang.reflect.Parameter
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Proxy
 import java.lang.reflect.Type
-import java.util.ServiceLoader
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.companionObject
 import kotlin.reflect.full.declaredMembers
@@ -23,11 +23,10 @@ import kotlin.reflect.full.declaredMembers
 class OnRemoteCallImpl : OnRemoteCall {
     private val remoteModules by lazy {
         Samplings.measure("modules") {
-            ServiceLoader.load(
-                RemoteModule::class.java,
-                OnRemoteCallImpl::class.java.classLoader
+            listOf(
+                InfoModule()
             )
-                ?.toList().orEmpty().filterNotNull().associateBy { it.module }
+                .associateBy { it.module }
         }
     }
 
@@ -91,8 +90,6 @@ class OnRemoteCallImpl : OnRemoteCall {
                 val moduleClass = instance::class.java
                 moduleClass.declaredMethods
                     .asSequence()
-                    .onEach { Log.e(TAG, "invokeImpl: ${it.name}, ${it.annotations.toList()}", ) }
-                    // FIXME: never reached
                     .filter { it.isAnnotationPresent(RemoteMethod::class.java) }
                     .associateBy { it.getAnnotation(RemoteMethod::class.java)!!.name }
             }
@@ -118,7 +115,6 @@ class OnRemoteCallImpl : OnRemoteCall {
                     )
                 }
 
-                // FIXME: never reached
                 parameter.isAnnotationPresent(RemoteMethodParam::class.java) -> {
                     val adapter = adapters.getOrPut(parameter.type.typeName) {
                         getAdapter(parameter.type.typeName)
@@ -184,7 +180,12 @@ class OnRemoteCallImpl : OnRemoteCall {
 
     @Suppress("UNCHECKED_CAST")
     private fun getAdapter(typeName: String): Any = Samplings.measure("adapter") {
-        val companionObject = Class.forName(typeName).kotlin.companionObject!!
+        val companionObject = Class.forName(typeName).kotlin.companionObject.also {
+            Log.e(
+                TAG,
+                "getAdapter:sss $it",
+
+            ) }!!
         val property =
             companionObject.declaredMembers.first { it.name == "ADAPTER" } as KProperty1<Any, Any>
         property.get(companionObject)
