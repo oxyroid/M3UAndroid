@@ -12,9 +12,9 @@ import com.m3u.extension.api.Utils.getAdapter
 import com.m3u.extension.api.Utils.getRealParameterizedType
 import com.m3u.extension.api.client.Method
 import com.m3u.extension.api.client.Module
-import com.squareup.wire.ProtoAdapter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.runBlocking
 import java.lang.reflect.Proxy
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
@@ -71,6 +71,9 @@ class RemoteClient {
         _isConnectedObservable.value = false
     }
 
+    /**
+     * @hide
+     */
     suspend fun call(
         module: String,
         method: String,
@@ -82,7 +85,6 @@ class RemoteClient {
                 Log.d(TAG, "onSuccess: $method, $param")
                 cont.resume(param)
             }
-
             override fun onError(
                 module: String,
                 method: String,
@@ -96,7 +98,7 @@ class RemoteClient {
     }
 
     // Map<type-name, adapter>
-    private val adapters = mutableMapOf<String, Any>()
+    val adapters = mutableMapOf<String, Any>()
 
     @Suppress("UNCHECKED_CAST")
     inline fun <reified P> create(): P {
@@ -120,18 +122,38 @@ class RemoteClient {
                             ByteArray(0)
                         } else {
                             // param type
-                            val adapter = getAdapter(args[0]::class.java.typeName)
+                            val adapter = adapters.getOrPut(args[0]::class.java.typeName) {
+                                getAdapter(args[0]::class.java.typeName)
+                            }
                             Utils.encode(adapter, args[0])
                         }
                         val returnType = (parameters.last().getRealParameterizedType() as Class<*>).name
-                        val adapter = getAdapter(returnType)
+                        val adapter = adapters.getOrPut(returnType) {
+                            getAdapter(returnType)
+                        }
                         val response = call(moduleName, methodName, bytes)
                         Utils.decode(adapter, response)
                     }
                     (block as (Continuation<Any>) -> Any)(continuation) // R | COROUTINE_SUSPENDED
                 }
 
-                else -> throw UnsupportedOperationException("Unsupported method: $method")
+                else -> {
+                    val bytes: ByteArray = if (args.size == 1) {
+                        ByteArray(0)
+                    } else {
+                        // param type
+                        val adapter = adapters.getOrPut(args[0]::class.java.typeName) {
+                            getAdapter(args[0]::class.java.typeName)
+                        }
+                        Utils.encode(adapter, args[0])
+                    }
+                    val returnType = (parameters.last().getRealParameterizedType() as Class<*>).name
+                    val adapter = adapters.getOrPut(returnType) {
+                        getAdapter(returnType)
+                    }
+                    val response = runBlocking { call(moduleName, methodName, bytes) }
+                    Utils.decode(adapter, response)
+                }
             }
         } as P
     }

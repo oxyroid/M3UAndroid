@@ -1,8 +1,6 @@
 package com.m3u.extension.runtime.business
 
 import com.m3u.extension.api.model.GetAppInfoResponse
-import com.m3u.extension.runtime.RemoteMethod
-import com.m3u.extension.runtime.RemoteModule
 
 class InfoModule : RemoteModule {
     override val module: String = "info"

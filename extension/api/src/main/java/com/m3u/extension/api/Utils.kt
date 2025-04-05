@@ -28,7 +28,7 @@ object Utils {
     @Suppress("UNCHECKED_CAST")
     fun <R: Any> decode(adapter: Any, bytes: ByteArray): R {
         return ProtoAdapter::class.java
-            .getDeclaredMethod("decode")
+            .getDeclaredMethod("decode", ByteArray::class.java)
             .invoke(adapter, bytes) as R
     }
 

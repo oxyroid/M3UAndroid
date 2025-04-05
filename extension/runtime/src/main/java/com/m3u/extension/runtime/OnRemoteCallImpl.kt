@@ -8,6 +8,9 @@ import com.m3u.extension.api.Samplings
 import com.m3u.extension.api.Utils
 import com.m3u.extension.api.Utils.getAdapter
 import com.m3u.extension.runtime.business.InfoModule
+import com.m3u.extension.runtime.business.RemoteMethod
+import com.m3u.extension.runtime.business.RemoteMethodParam
+import com.m3u.extension.runtime.business.RemoteModule
 import java.lang.reflect.Method
 import java.lang.reflect.Parameter
 
@@ -134,17 +137,3 @@ class OnRemoteCallImpl : OnRemoteCall {
         private const val TAG = "Host-OnRemoteCallImpl"
     }
 }
-
-interface RemoteModule {
-    val module: String
-}
-
-@Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.FUNCTION)
-annotation class RemoteMethod(
-    val name: String
-)
-
-@Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.VALUE_PARAMETER)
-annotation class RemoteMethodParam
