@@ -28,7 +28,7 @@ dependencies {
     implementation(libs.androidx.appcompat)
 
     // wire
-    implementation("com.squareup.wire:wire-runtime:4.9.2")
+    implementation("com.squareup.wire:wire-runtime:5.3.1")
 
     // reflect
     api(libs.org.jetbrains.kotlin.kotlin.reflect)
