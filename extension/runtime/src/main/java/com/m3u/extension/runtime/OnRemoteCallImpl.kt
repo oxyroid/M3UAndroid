@@ -1,6 +1,5 @@
 package com.m3u.extension.runtime
 
-import android.util.Log
 import com.google.auto.service.AutoService
 import com.m3u.data.extension.IRemoteCallback
 import com.m3u.extension.api.Method
@@ -24,7 +23,10 @@ class OnRemoteCallImpl : OnRemoteCall {
     private val remoteModules: Map<String, RemoteModule> by lazy {
         Samplings.measure("modules") {
             listOf<RemoteModule>(
-                InfoModule()
+                InfoModule(
+                    modules = { remoteModules.keys.toList() },
+                    methods = { module -> remoteMethods[module]?.map { it.key }.orEmpty() }
+                )
             )
                 .associateBy {
                     checkNotNull(it::class.findAnnotation<Module>()) {
@@ -103,13 +105,11 @@ class OnRemoteCallImpl : OnRemoteCall {
                 "Method \"$method\" not founded, available methods: ${methods.keys}"
             )
             return
-        } else {
-            Log.e(TAG, "invokeImpl: scanned methods: ${methods.keys}")
         }
         val args = remoteMethod.valueParameters.map { parameter ->
             try {
-                val adapter = adapters.getOrPut(parameter.type.javaClass.typeName) {
-                    getAdapter(parameter.type.javaClass.typeName)
+                val adapter = adapters.getOrPut(parameter.type.toString()) {
+                    getAdapter(parameter.type.toString())
                 }
                 Samplings.measure("decode") {
                     Utils.decode(adapter, bytes)
@@ -124,12 +124,16 @@ class OnRemoteCallImpl : OnRemoteCall {
             val result = Samplings.measure("inner-$module/$method") {
                 remoteMethod.callSuspend(instance, *args.toTypedArray())
             }
-            val clazz = result!!::class.java
-            val adapter = adapters.getOrPut(clazz.name) { getAdapter(clazz.name) }
+            val bytes = if (result == null) ByteArray(0)
+            else {
+                val clazz = result::class.java
+                val adapter = adapters.getOrPut(clazz.name) { getAdapter(clazz.name) }
+                Utils.encode(adapter, result)
+            }
             callback?.onSuccess(
                 module,
                 method,
-                Utils.encode(adapter, result)
+                bytes
             )
         } catch (e: Exception) {
             callback?.onError(

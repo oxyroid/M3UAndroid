@@ -12,7 +12,9 @@ import kotlin.reflect.full.declaredMembers
 object Utils {
     @Suppress("UNCHECKED_CAST")
     fun getAdapter(typeName: String): Any = Samplings.measure("adapter") {
-        val companionObject = Class.forName(typeName).kotlin.companionObject!!
+        val companionObject = checkNotNull(Class.forName(typeName).kotlin.companionObject) {
+            "Companion object not found for $typeName."
+        }
         val property =
             companionObject.declaredMembers.first { it.name == "ADAPTER" } as KProperty1<Any, Any>
         property.get(companionObject)
@@ -26,10 +28,12 @@ object Utils {
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun <R: Any> decode(adapter: Any, bytes: ByteArray): R {
-        return ProtoAdapter::class.java
+    fun decode(adapter: Any, bytes: ByteArray): Any {
+        val raw = adapter as? ProtoAdapter<Any>
+        return raw?.decode(bytes) ?: (ProtoAdapter::class.java
             .getDeclaredMethod("decode", ByteArray::class.java)
-            .invoke(adapter, bytes) as R
+            .invoke(adapter, bytes))
+            .let { checkNotNull(it) { "Failed to decode, adapter: $adapter, bytes size: ${bytes.size}." } }
     }
 
     fun Parameter.getRealParameterizedType(): Type {

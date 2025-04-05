@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package com.m3u.extension.api.model;
+
+message GetMethodsRequest {
+  string module = 1;
+}
+message GetMethodsResponse {
+  repeated string methods = 1;
+}

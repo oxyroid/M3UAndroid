@@ -23,7 +23,9 @@ import com.m3u.extension.api.CallTokenConst
 import com.m3u.extension.api.RemoteClient
 import com.m3u.extension.api.business.InfoApi
 import com.m3u.extension.api.model.GetAppInfoResponse
-import com.m3u.extension.api.model.GetAvailableModulesResponse
+import com.m3u.extension.api.model.GetMethodsRequest
+import com.m3u.extension.api.model.GetMethodsResponse
+import com.m3u.extension.api.model.GetModulesResponse
 import com.m3u.extension.ui.theme.M3UTheme
 import kotlinx.coroutines.launch
 
@@ -36,7 +38,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         var callToken by mutableStateOf(handleArguments(intent))
         var getAppInfo: GetAppInfoResponse? by mutableStateOf(null)
-        var getAvailableModules: GetAvailableModulesResponse? by mutableStateOf(null)
+        var getModulesResponse: GetModulesResponse? by mutableStateOf(null)
+        var getMethodsResponse: GetMethodsResponse? by mutableStateOf(null)
 
         setContent {
             M3UTheme {
@@ -97,19 +100,38 @@ class MainActivity : ComponentActivity() {
                             enabled = isConnected,
                             onClick = {
                                 coroutineScope.launch {
-                                    getAvailableModules = infoApi.getAvailableModules()
+                                    getModulesResponse = infoApi.getModules()
                                 }
                             }
                         ) {
                             Text(
-                                text = "GetAvailableModules"
+                                text = "GetModulesResponse"
+                            )
+                        }
+                        Button(
+                            enabled = isConnected,
+                            onClick = {
+                                coroutineScope.launch {
+                                    getMethodsResponse = infoApi.getMethods(
+                                        GetMethodsRequest(
+                                            module = getModulesResponse?.modules?.firstOrNull().orEmpty()
+                                        )
+                                    )
+                                }
+                            }
+                        ) {
+                            Text(
+                                text = "GetMethodsResponse"
                             )
                         }
                         Text(
                             text = getAppInfo?.toString().orEmpty()
                         )
                         Text(
-                            text = getAvailableModules?.toString().orEmpty()
+                            text = getModulesResponse?.toString().orEmpty()
+                        )
+                        Text(
+                            text = getMethodsResponse?.toString().orEmpty()
                         )
                     }
                 }
