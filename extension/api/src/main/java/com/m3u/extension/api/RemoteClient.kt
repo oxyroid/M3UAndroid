@@ -10,8 +10,6 @@ import com.m3u.data.extension.IRemoteCallback
 import com.m3u.data.extension.IRemoteService
 import com.m3u.extension.api.Utils.getAdapter
 import com.m3u.extension.api.Utils.getRealParameterizedType
-import com.m3u.extension.api.client.Method
-import com.m3u.extension.api.client.Module
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
@@ -61,7 +59,7 @@ class RemoteClient {
         val intent = Intent(context, RemoteService::class.java).apply {
             action = targetPermission
             component = ComponentName(targetPackageName, targetClassName)
-            putExtra(Const.ACCESS_KEY, accessKey)
+            putExtra(CallTokenConst.ACCESS_KEY, accessKey)
         }
         context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
     }

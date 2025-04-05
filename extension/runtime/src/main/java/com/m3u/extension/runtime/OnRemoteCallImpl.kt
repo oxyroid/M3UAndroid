@@ -1,39 +1,46 @@
 package com.m3u.extension.runtime
 
+import android.util.Log
 import com.google.auto.service.AutoService
 import com.m3u.data.extension.IRemoteCallback
+import com.m3u.extension.api.Method
+import com.m3u.extension.api.Module
 import com.m3u.extension.api.OnRemoteCall
 import com.m3u.extension.api.RemoteCallException
 import com.m3u.extension.api.Samplings
 import com.m3u.extension.api.Utils
 import com.m3u.extension.api.Utils.getAdapter
 import com.m3u.extension.runtime.business.InfoModule
-import com.m3u.extension.runtime.business.RemoteMethod
-import com.m3u.extension.runtime.business.RemoteMethodParam
 import com.m3u.extension.runtime.business.RemoteModule
-import java.lang.reflect.Method
-import java.lang.reflect.Parameter
+import kotlin.reflect.KFunction
+import kotlin.reflect.full.callSuspend
+import kotlin.reflect.full.declaredFunctions
+import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.full.hasAnnotation
+import kotlin.reflect.full.valueParameters
 
 @AutoService(OnRemoteCall::class)
 class OnRemoteCallImpl : OnRemoteCall {
-    private val remoteModules by lazy {
+    private val remoteModules: Map<String, RemoteModule> by lazy {
         Samplings.measure("modules") {
-            listOf(
+            listOf<RemoteModule>(
                 InfoModule()
             )
-                .associateBy { it.module }
+                .associateBy {
+                    checkNotNull(it::class.findAnnotation<Module>()) {
+                        "${it::class.simpleName} must manually inherit his parent's annotations."
+                    }.name
+                }
         }
     }
 
     // Map<module-name, Map<method-name, method>>
-    private val remoteMethods = mutableMapOf<String, Map<String, Method>>()
+    private val remoteMethods = mutableMapOf<String, Map<String, KFunction<*>>>()
 
     // Map<type-name, adapter>
     private val adapters = mutableMapOf<String, Any>()
 
-    private val parameterizedTypeNames = mutableMapOf<Parameter, String>()
-
-    override fun invoke(
+    override suspend fun invoke(
         module: String,
         method: String,
         bytes: ByteArray,
@@ -72,7 +79,7 @@ class OnRemoteCallImpl : OnRemoteCall {
         }
     }
 
-    private fun invokeImpl(
+    private suspend fun invokeImpl(
         instance: RemoteModule,
         module: String,
         method: String,
@@ -81,11 +88,10 @@ class OnRemoteCallImpl : OnRemoteCall {
     ) {
         val methods = remoteMethods.getOrPut(module) {
             Samplings.measure("methods") {
-                val moduleClass = instance::class.java
-                moduleClass.declaredMethods
-                    .asSequence()
-                    .filter { it.isAnnotationPresent(RemoteMethod::class.java) }
-                    .associateBy { it.getAnnotation(RemoteMethod::class.java)!!.name }
+                val moduleClass = instance::class
+                moduleClass.declaredFunctions
+                    .filter { it.hasAnnotation<Method>() }
+                    .associateBy { it.findAnnotation<Method>()!!.name }
             }
         }
         val remoteMethod = methods[method]
@@ -97,31 +103,33 @@ class OnRemoteCallImpl : OnRemoteCall {
                 "Method \"$method\" not founded, available methods: ${methods.keys}"
             )
             return
+        } else {
+            Log.e(TAG, "invokeImpl: scanned methods: ${methods.keys}")
         }
-        val args = remoteMethod.parameters.map { parameter ->
-            when {
-                parameter.isAnnotationPresent(RemoteMethodParam::class.java) -> {
-                    val adapter = adapters.getOrPut(parameter.type.typeName) {
-                        getAdapter(parameter.type.typeName)
-                    }
-                    Samplings.measure("decode") {
-                        Utils.decode(adapter, bytes)
-                    }
+        val args = remoteMethod.valueParameters.map { parameter ->
+            try {
+                val adapter = adapters.getOrPut(parameter.type.javaClass.typeName) {
+                    getAdapter(parameter.type.javaClass.typeName)
                 }
-
-                else -> throw UnsupportedOperationException("Unsupported parameter type: ${parameter.type}")
+                Samplings.measure("decode") {
+                    Utils.decode(adapter, bytes)
+                }
+            } catch (e: Exception) {
+                throw UnsupportedOperationException(
+                    "Unsupported parameter type: ${parameter.type}", e
+                )
             }
         }
         try {
-            val res = Samplings.measure("inner-$module/$method") {
-                remoteMethod.invoke(instance, *args.toTypedArray())
+            val result = Samplings.measure("inner-$module/$method") {
+                remoteMethod.callSuspend(instance, *args.toTypedArray())
             }
-            val clazz = res::class.java
+            val clazz = result!!::class.java
             val adapter = adapters.getOrPut(clazz.name) { getAdapter(clazz.name) }
             callback?.onSuccess(
                 module,
                 method,
-                Utils.encode(adapter, res)
+                Utils.encode(adapter, result)
             )
         } catch (e: Exception) {
             callback?.onError(

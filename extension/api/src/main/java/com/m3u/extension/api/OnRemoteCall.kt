@@ -3,7 +3,7 @@ package com.m3u.extension.api
 import com.m3u.data.extension.IRemoteCallback
 
 interface OnRemoteCall {
-    operator fun invoke(module: String, method: String, bytes: ByteArray, callback: IRemoteCallback?)
+    suspend operator fun invoke(module: String, method: String, bytes: ByteArray, callback: IRemoteCallback?)
     companion object {
         const val ERROR_CODE_MODULE_NOT_FOUNDED = -1
         const val ERROR_CODE_METHOD_NOT_FOUNDED = -2

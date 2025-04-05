@@ -1,4 +1,4 @@
-package com.m3u.extension.api.client
+package com.m3u.extension.api
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS)

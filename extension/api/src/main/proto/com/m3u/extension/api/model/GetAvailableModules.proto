@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package com.m3u.extension.api.model;
+
+message GetAvailableModulesResponse {
+  repeated string module = 1;
+}

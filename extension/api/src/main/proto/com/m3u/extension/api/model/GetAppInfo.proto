@@ -3,14 +3,9 @@ syntax = "proto3";
 package com.m3u.extension.api.model;
 
 message GetAppInfoResponse {
-    string app_id = 1;
-    string app_version = 2;
-    string app_name = 3;
-    string app_icon = 4;
-    string app_description = 5;
-    string app_package_name = 6;
-}
-
-message GetAppInfoRequest {
-
+  string app_id = 1;
+  string app_version = 2;
+  string app_name = 3;
+  string app_description = 4;
+  string app_package_name = 5;
 }

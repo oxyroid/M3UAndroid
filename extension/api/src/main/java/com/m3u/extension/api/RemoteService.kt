@@ -6,10 +6,16 @@ import android.os.IBinder
 import android.util.Log
 import com.m3u.data.extension.IRemoteCallback
 import com.m3u.data.extension.IRemoteService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import java.util.ServiceLoader
 import java.util.concurrent.ConcurrentHashMap
 
 class RemoteService : Service() {
+    private val job = SupervisorJob()
+    private val scope = CoroutineScope(Dispatchers.Main + job)
     private val onRemoteCall: OnRemoteCall by lazy {
         ServiceLoader.load<OnRemoteCall>(
             OnRemoteCall::class.java,
@@ -35,8 +41,10 @@ class RemoteService : Service() {
             param: ByteArray,
             callback: IRemoteCallback?
         ) {
-            onRemoteCall(module, method, param, callback)
-            Log.d(TAG, "call: $module, $method")
+            scope.launch {
+                onRemoteCall(module, method, param, callback)
+                Log.d(TAG, "call: $module, $method")
+            }
         }
     }
 
@@ -64,6 +72,11 @@ class RemoteService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d(TAG, "onStartCommand: $intent, $flags, $startId")
         return super.onStartCommand(intent, flags, startId)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        job.cancel()
     }
 
     companion object {

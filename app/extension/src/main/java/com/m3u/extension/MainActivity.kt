@@ -19,10 +19,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.m3u.extension.api.Const
+import com.m3u.extension.api.CallTokenConst
 import com.m3u.extension.api.RemoteClient
+import com.m3u.extension.api.business.InfoApi
 import com.m3u.extension.api.model.GetAppInfoResponse
-import com.m3u.extension.api.client.InfoApi
+import com.m3u.extension.api.model.GetAvailableModulesResponse
 import com.m3u.extension.ui.theme.M3UTheme
 import kotlinx.coroutines.launch
 
@@ -34,7 +35,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         var callToken by mutableStateOf(handleArguments(intent))
-        var getAppInfoResponse: GetAppInfoResponse? by mutableStateOf(null)
+        var getAppInfo: GetAppInfoResponse? by mutableStateOf(null)
+        var getAvailableModules: GetAvailableModulesResponse? by mutableStateOf(null)
 
         setContent {
             M3UTheme {
@@ -83,7 +85,7 @@ class MainActivity : ComponentActivity() {
                             enabled = isConnected,
                             onClick = {
                                 coroutineScope.launch {
-                                    getAppInfoResponse = infoApi.getAppInfo()
+                                    getAppInfo = infoApi.getAppInfo()
                                 }
                             }
                         ) {
@@ -91,8 +93,23 @@ class MainActivity : ComponentActivity() {
                                 text = "GetAppInfo"
                             )
                         }
+                        Button(
+                            enabled = isConnected,
+                            onClick = {
+                                coroutineScope.launch {
+                                    getAvailableModules = infoApi.getAvailableModules()
+                                }
+                            }
+                        ) {
+                            Text(
+                                text = "GetAvailableModules"
+                            )
+                        }
                         Text(
-                            text = getAppInfoResponse?.toString().orEmpty()
+                            text = getAppInfo?.toString().orEmpty()
+                        )
+                        Text(
+                            text = getAvailableModules?.toString().orEmpty()
                         )
                     }
                 }
@@ -101,10 +118,10 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleArguments(intent: Intent): CallToken? {
-        val packageName = intent.getStringExtra(Const.PACKAGE_NAME) ?: return null
-        val className = intent.getStringExtra(Const.CLASS_NAME) ?: return null
-        val permission = intent.getStringExtra(Const.PERMISSION) ?: return null
-        val accessKey = intent.getStringExtra(Const.ACCESS_KEY) ?: return null
+        val packageName = intent.getStringExtra(CallTokenConst.PACKAGE_NAME) ?: return null
+        val className = intent.getStringExtra(CallTokenConst.CLASS_NAME) ?: return null
+        val permission = intent.getStringExtra(CallTokenConst.PERMISSION) ?: return null
+        val accessKey = intent.getStringExtra(CallTokenConst.ACCESS_KEY) ?: return null
         return CallToken(packageName, className, permission, accessKey)
     }
 }

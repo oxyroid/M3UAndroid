@@ -5,7 +5,7 @@ import kotlin.time.Duration
 import kotlin.time.measureTime
 
 object Samplings {
-    fun <R> measure(key: String, block: () -> R): R {
+    inline fun <R> measure(key: String, block: () -> R): R {
         val r: R
         val duration = measureTime {
             r = block()
@@ -14,7 +14,7 @@ object Samplings {
         return r
     }
 
-    private fun record(key: String, duration: Duration) {
+    fun record(key: String, duration: Duration) {
         val info = infos[key] ?: Info()
         infos[key] = info.copy(
             count = info.count + 1,
