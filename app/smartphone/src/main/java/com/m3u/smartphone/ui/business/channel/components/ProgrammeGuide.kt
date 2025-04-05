@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardDoubleArrowUp
 import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SmallFloatingActionButton
@@ -63,18 +64,17 @@ import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.ProgrammeRange
 import com.m3u.data.database.model.ProgrammeRange.Companion.HOUR_LENGTH
-import androidx.compose.material3.Icon
+import com.m3u.smartphone.TimeUtils.formatEOrSh
+import com.m3u.smartphone.TimeUtils.toEOrSh
+import com.m3u.smartphone.ui.material.components.FontFamilies
 import com.m3u.smartphone.ui.material.ktx.Edge
 import com.m3u.smartphone.ui.material.ktx.blurEdges
 import com.m3u.smartphone.ui.material.model.LocalSpacing
-import com.m3u.smartphone.ui.material.components.FontFamilies
-import com.m3u.smartphone.TimeUtils.formatEOrSh
-import com.m3u.smartphone.TimeUtils.toEOrSh
 import eu.wewox.minabox.MinaBox
 import eu.wewox.minabox.MinaBoxItem
 import eu.wewox.minabox.MinaBoxScrollDirection
 import eu.wewox.minabox.MinaBoxState
-import eu.wewox.minabox.rememberMinaBoxState
+import eu.wewox.minabox.rememberSaveableMinaBoxState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -96,7 +96,7 @@ internal fun ProgramGuide(
     range: ProgrammeRange,
     programmeReminderIds: List<Int>,
     modifier: Modifier = Modifier,
-    minaBoxState: MinaBoxState = rememberMinaBoxState(),
+    minaBoxState: MinaBoxState = rememberSaveableMinaBoxState(),
     height: Float = 256f,
     padding: Float = 16f,
     currentTimelineHeight: Float = 48f,

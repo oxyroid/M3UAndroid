@@ -1,9 +1,7 @@
 package com.m3u.extension.runtime.business
 
-import com.m3u.extension.api.model.GetAppInfoRequest
 import com.m3u.extension.api.model.GetAppInfoResponse
 import com.m3u.extension.runtime.RemoteMethod
-import com.m3u.extension.runtime.RemoteMethodParam
 import com.m3u.extension.runtime.RemoteModule
 
 class InfoModule : RemoteModule {
@@ -11,7 +9,6 @@ class InfoModule : RemoteModule {
 
     @RemoteMethod("getAppInfo")
     fun getAppInfo(
-        @RemoteMethodParam param: GetAppInfoRequest,
         continuation: RemoteModule.Continuation<GetAppInfoResponse>
     ) {
         continuation.resume(

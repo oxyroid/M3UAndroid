@@ -1,23 +1,19 @@
 package com.m3u.extension.runtime
 
-import android.util.Log
 import androidx.annotation.Keep
 import com.google.auto.service.AutoService
 import com.m3u.data.extension.IRemoteCallback
 import com.m3u.extension.api.OnRemoteCall
 import com.m3u.extension.api.RemoteCallException
 import com.m3u.extension.api.Samplings
+import com.m3u.extension.api.Utils.getAdapter
+import com.m3u.extension.api.Utils.getRealParameterizedType
 import com.m3u.extension.runtime.business.InfoModule
 import com.squareup.wire.ProtoAdapter
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.lang.reflect.Parameter
-import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Proxy
-import java.lang.reflect.Type
-import kotlin.reflect.KProperty1
-import kotlin.reflect.full.companionObject
-import kotlin.reflect.full.declaredMembers
 
 @AutoService(OnRemoteCall::class)
 class OnRemoteCallImpl : OnRemoteCall {
@@ -44,7 +40,6 @@ class OnRemoteCallImpl : OnRemoteCall {
         bytes: ByteArray,
         callback: IRemoteCallback?
     ) {
-        Log.d(TAG, "$module, $method, ${bytes.size}, $callback")
         try {
             val instance = remoteModules[module]
             if (instance == null) {
@@ -178,23 +173,6 @@ class OnRemoteCallImpl : OnRemoteCall {
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
-    private fun getAdapter(typeName: String): Any = Samplings.measure("adapter") {
-        val companionObject = Class.forName(typeName).kotlin.companionObject.also {
-            Log.e(
-                TAG,
-                "getAdapter:sss $it",
-
-            ) }!!
-        val property =
-            companionObject.declaredMembers.first { it.name == "ADAPTER" } as KProperty1<Any, Any>
-        property.get(companionObject)
-    }
-
-    private fun Parameter.getRealParameterizedType(): Type {
-        return (parameterizedType as ParameterizedType).actualTypeArguments[0]
-    }
-
     companion object {
         private const val TAG = "Host-OnRemoteCallImpl"
     }
@@ -219,7 +197,6 @@ interface RemoteModule {
                 Continuation::class.java.classLoader,
                 arrayOf(Continuation::class.java)
             ) { _, method, args ->
-                Log.e(TAG, "createProxy: $args")
                 when (method.name) {
                     "resume" -> onResume(args[0])
                     "reject" -> onReject(args[0] as Int, args[1] as String)

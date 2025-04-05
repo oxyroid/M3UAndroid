@@ -8,17 +8,18 @@ import android.os.IBinder
 import android.util.Log
 import com.m3u.data.extension.IRemoteCallback
 import com.m3u.data.extension.IRemoteService
+import com.m3u.extension.api.Utils.getAdapter
+import com.m3u.extension.api.Utils.getRealParameterizedType
+import com.m3u.extension.api.client.Method
+import com.m3u.extension.api.client.Module
 import com.squareup.wire.ProtoAdapter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import java.lang.reflect.Parameter
-import java.lang.reflect.ParameterizedType
-import java.lang.reflect.Type
+import java.lang.reflect.Proxy
+import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
-import kotlin.reflect.KProperty1
-import kotlin.reflect.full.companionObject
-import kotlin.reflect.full.declaredMembers
 
 class RemoteClient {
     private var server: IRemoteService? = null
@@ -89,7 +90,7 @@ class RemoteClient {
                 errorMessage: String?
             ) {
                 Log.e(TAG, "onError: $method, $errorCode, $errorMessage")
-                throw RuntimeException("Error: $method $errorCode, $errorMessage")
+                cont.resumeWithException(RuntimeException("Error: $method $errorCode, $errorMessage"))
             }
         })
     }
@@ -98,30 +99,41 @@ class RemoteClient {
     private val adapters = mutableMapOf<String, Any>()
 
     @Suppress("UNCHECKED_CAST")
-    fun getAdapter(typeName: String): Any = Samplings.measure("adapter") {
-        adapters.getOrPut(typeName) {
-            val companionObject = Class.forName(typeName).kotlin.companionObject!!
-            val property =
-                companionObject.declaredMembers.first { it.name == "ADAPTER" } as KProperty1<Any, Any>
-            property.get(companionObject)
-        }
-    }
+    inline fun <reified P> create(): P {
+        val clazz = P::class.java
+        val moduleName = checkNotNull(clazz.getAnnotation<Module>(Module::class.java)) {
+            "Module annotation not found"
+        }.name
+        return Proxy.newProxyInstance(
+            clazz.classLoader,
+            arrayOf(clazz)
+        ) { _, method, args ->
+            val methodName = checkNotNull(method.getAnnotation<Method>(Method::class.java)) {
+                "Method annotation not found"
+            }.name
+            val parameters = method.parameters
+            when {
+                parameters.lastOrNull()?.type == Continuation::class.java -> {
+                    val continuation = args.last() as Continuation<Any>
+                    val block: suspend () -> Any = { // return type
+                        val bytes = if (args.size == 1) {
+                            ByteArray(0)
+                        } else {
+                            // param type
+                            val adapter = getAdapter(args[0]::class.java.typeName) as ProtoAdapter<Any>
+                            adapter.encode(args[0])
+                        }
+                        val returnType = (parameters.last().getRealParameterizedType() as Class<*>).name
+                        val adapter = getAdapter(returnType) as ProtoAdapter<Any>
+                        val response = call(moduleName, methodName, bytes)
+                        adapter.decode(response)
+                    }
+                    (block as (Continuation<Any>) -> Any)(continuation) // R | COROUTINE_SUSPENDED
+                }
 
-    fun Parameter.getRealParameterizedType(): Type {
-        return (parameterizedType as ParameterizedType).actualTypeArguments[0]
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    suspend inline fun <reified RQ, reified RP> request(
-        module: String,
-        method: String,
-        request: RQ
-    ): RP {
-        val requestAdapter = getAdapter(RQ::class.java.typeName) as ProtoAdapter<RQ>
-        val responseAdapter = getAdapter(RP::class.java.typeName) as ProtoAdapter<RP>
-        call(module, method, requestAdapter.encode(request)).let { response ->
-            return responseAdapter.decode(response)
-        }
+                else -> throw UnsupportedOperationException("Unsupported method: $method")
+            }
+        } as P
     }
 
     val isConnected: Boolean
@@ -131,6 +143,6 @@ class RemoteClient {
     private val _isConnectedObservable = MutableStateFlow(false)
 
     companion object {
-        private const val TAG = "RemoteClient"
+        const val TAG = "RemoteClient"
     }
 }

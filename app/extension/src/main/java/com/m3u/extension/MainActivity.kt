@@ -21,13 +21,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.extension.api.Const
 import com.m3u.extension.api.RemoteClient
-import com.m3u.extension.api.model.GetAppInfoRequest
 import com.m3u.extension.api.model.GetAppInfoResponse
+import com.m3u.extension.api.client.InfoApi
 import com.m3u.extension.ui.theme.M3UTheme
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private val client = RemoteClient()
+    private val infoApi = client.create<InfoApi>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,13 +83,7 @@ class MainActivity : ComponentActivity() {
                             enabled = isConnected,
                             onClick = {
                                 coroutineScope.launch {
-                                    GetAppInfoRequest.ADAPTER
-                                    val res: GetAppInfoResponse = client.request(
-                                        "info",
-                                        "getAppInfo",
-                                        GetAppInfoRequest()
-                                    )
-                                    getAppInfoResponse = res
+                                    getAppInfoResponse = infoApi.getAppInfo()
                                 }
                             }
                         ) {
