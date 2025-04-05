@@ -8,15 +8,11 @@ class InfoModule : RemoteModule {
     override val module: String = "info"
 
     @RemoteMethod("getAppInfo")
-    fun getAppInfo(
-        continuation: RemoteModule.Continuation<GetAppInfoResponse>
-    ) {
-        continuation.resume(
-            GetAppInfoResponse(
-                app_id = "com.m3u.extension.runtime",
-                app_version = "InfoModule",
-                app_name = "1.0.0"
-            )
+    fun getAppInfo(): GetAppInfoResponse {
+        return GetAppInfoResponse(
+            app_id = "com.m3u.extension.runtime",
+            app_version = "InfoModule",
+            app_name = "1.0.0"
         )
     }
 }

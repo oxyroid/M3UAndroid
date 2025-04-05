@@ -1,19 +1,15 @@
 package com.m3u.extension.runtime
 
-import androidx.annotation.Keep
 import com.google.auto.service.AutoService
 import com.m3u.data.extension.IRemoteCallback
 import com.m3u.extension.api.OnRemoteCall
 import com.m3u.extension.api.RemoteCallException
 import com.m3u.extension.api.Samplings
+import com.m3u.extension.api.Utils
 import com.m3u.extension.api.Utils.getAdapter
-import com.m3u.extension.api.Utils.getRealParameterizedType
 import com.m3u.extension.runtime.business.InfoModule
-import com.squareup.wire.ProtoAdapter
-import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.lang.reflect.Parameter
-import java.lang.reflect.Proxy
 
 @AutoService(OnRemoteCall::class)
 class OnRemoteCallImpl : OnRemoteCall {
@@ -101,23 +97,12 @@ class OnRemoteCallImpl : OnRemoteCall {
         }
         val args = remoteMethod.parameters.map { parameter ->
             when {
-                parameter.type == RemoteModule.Continuation::class.java -> {
-                    createContinuationArg(
-                        module = module,
-                        method = method,
-                        param = parameter,
-                        callback = callback
-                    )
-                }
-
                 parameter.isAnnotationPresent(RemoteMethodParam::class.java) -> {
                     val adapter = adapters.getOrPut(parameter.type.typeName) {
                         getAdapter(parameter.type.typeName)
                     }
                     Samplings.measure("decode") {
-                        ProtoAdapter::class.java
-                            .getDeclaredMethod("decode", ByteArray::class.java)
-                            .invoke(adapter, bytes)
+                        Utils.decode(adapter, bytes)
                     }
                 }
 
@@ -125,50 +110,22 @@ class OnRemoteCallImpl : OnRemoteCall {
             }
         }
         try {
-            Samplings.measure("inner-$module/$method") {
+            val res = Samplings.measure("inner-$module/$method") {
                 remoteMethod.invoke(instance, *args.toTypedArray())
             }
-        } catch (e: InvocationTargetException) {
+            val clazz = res::class.java
+            val adapter = adapters.getOrPut(clazz.name) { getAdapter(clazz.name) }
+            callback?.onSuccess(
+                module,
+                method,
+                Utils.encode(adapter, res)
+            )
+        } catch (e: Exception) {
             callback?.onError(
                 module,
                 method,
                 OnRemoteCall.ERROR_CODE_UNCAUGHT,
                 e.stackTraceToString()
-            )
-        }
-    }
-
-    private fun createContinuationArg(
-        module: String,
-        method: String,
-        param: Parameter,
-        callback: IRemoteCallback?
-    ): RemoteModule.Continuation<*> {
-        val typeName = parameterizedTypeNames.getOrPut(param) {
-            (param.getRealParameterizedType() as Class<*>).name
-        }
-        val adapter = adapters.getOrPut(typeName) { getAdapter(typeName) }
-        return Samplings.measure("continuation") {
-            RemoteModule.Continuation.createProxy(
-                onResume = { res ->
-                    callback?.onSuccess(
-                        module, method,
-                        Samplings.measure("encode") {
-                            val encodeMethod = ProtoAdapter::class.java.declaredMethods.first {
-                                it.returnType == ByteArray::class.java
-                            }
-                            encodeMethod.invoke(adapter, res) as ByteArray?
-                        }
-                    )
-                },
-                onReject = { code, message ->
-                    callback?.onError(
-                        module,
-                        method,
-                        code,
-                        message
-                    )
-                }
             )
         }
     }
@@ -180,33 +137,6 @@ class OnRemoteCallImpl : OnRemoteCall {
 
 interface RemoteModule {
     val module: String
-
-    @Keep
-    interface Continuation<R> {
-        fun resume(result: R)
-        fun reject(errorCode: Int, errorMessage: String)
-
-        companion object {
-            private const val TAG = "RemoteModule"
-
-            @Suppress("UNCHECKED_CAST")
-            internal fun createProxy(
-                onResume: (Any) -> Unit,
-                onReject: (Int, String) -> Unit
-            ): Continuation<*> = Proxy.newProxyInstance(
-                Continuation::class.java.classLoader,
-                arrayOf(Continuation::class.java)
-            ) { _, method, args ->
-                when (method.name) {
-                    "resume" -> onResume(args[0])
-                    "reject" -> onReject(args[0] as Int, args[1] as String)
-                    else -> {
-                        // do nothing
-                    }
-                }
-            } as Continuation<*>
-        }
-    }
 }
 
 @Retention(AnnotationRetention.RUNTIME)

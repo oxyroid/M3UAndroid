@@ -116,17 +116,17 @@ class RemoteClient {
                 parameters.lastOrNull()?.type == Continuation::class.java -> {
                     val continuation = args.last() as Continuation<Any>
                     val block: suspend () -> Any = { // return type
-                        val bytes = if (args.size == 1) {
+                        val bytes: ByteArray = if (args.size == 1) {
                             ByteArray(0)
                         } else {
                             // param type
-                            val adapter = getAdapter(args[0]::class.java.typeName) as ProtoAdapter<Any>
-                            adapter.encode(args[0])
+                            val adapter = getAdapter(args[0]::class.java.typeName)
+                            Utils.encode(adapter, args[0])
                         }
                         val returnType = (parameters.last().getRealParameterizedType() as Class<*>).name
-                        val adapter = getAdapter(returnType) as ProtoAdapter<Any>
+                        val adapter = getAdapter(returnType)
                         val response = call(moduleName, methodName, bytes)
-                        adapter.decode(response)
+                        Utils.decode(adapter, response)
                     }
                     (block as (Continuation<Any>) -> Any)(continuation) // R | COROUTINE_SUSPENDED
                 }
