@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.org.jetbrains.kotlin.android)
     alias(libs.plugins.org.jetbrains.kotlin.serialization)
     id("com.squareup.wire")
+    id("maven-publish")
 }
 
 android {
@@ -13,6 +14,11 @@ android {
     buildFeatures {
         aidl = true
     }
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+        }
+    }
 }
 
 wire {
@@ -20,6 +26,19 @@ wire {
     }
     protoPath {
         srcDir("src/main/proto")
+    }
+}
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("maven") {
+                groupId = "com.m3u.extension"
+                artifactId = "api"
+                version = "1.0"
+
+                from(components["release"])
+            }
+        }
     }
 }
 
