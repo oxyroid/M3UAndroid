@@ -35,7 +35,7 @@ jobs:
           distribution: "zulu"
 
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v3
+        uses: gradle/actions/setup-gradle@v4
         with:
           gradle-home-cache-cleanup: true
 
@@ -73,4 +73,3 @@ jobs:
           path: |
             app/smartphone/build/outputs/apk/snapshotChannelRichCodec/release/*.apk
             app/tv/build/outputs/apk/release/*.apk
-#          parse_mode: Markdown
