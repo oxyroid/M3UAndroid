@@ -13,7 +13,7 @@ import com.m3u.data.database.model.PlaylistWithCount
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-internal interface PlaylistDao {
+interface PlaylistDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrReplace(playlist: Playlist): Long
 

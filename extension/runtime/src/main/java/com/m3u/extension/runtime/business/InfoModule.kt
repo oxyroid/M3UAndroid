@@ -12,7 +12,7 @@ import com.m3u.extension.api.model.GetModulesResponse
 class InfoModule(
     private val modules: () -> List<String>,
     private val methods: (module: String) -> List<String>
-) : RemoteModule, InfoApi {
+) : RemoteModule(), InfoApi {
     @Method("getAppInfo")
     override suspend fun getAppInfo(): GetAppInfoResponse {
         return GetAppInfoResponse(

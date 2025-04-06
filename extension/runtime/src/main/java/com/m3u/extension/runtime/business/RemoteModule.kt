@@ -1,3 +1,17 @@
 package com.m3u.extension.runtime.business
 
-interface RemoteModule
+import com.m3u.extension.api.model.Result
+import com.m3u.extension.runtime.Utils.asProtoResult
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
+abstract class RemoteModule(
+    val dispatcher: CoroutineDispatcher = Dispatchers.IO
+)
+
+internal suspend inline fun RemoteModule.result(
+    crossinline block: suspend () -> Unit
+): Result = withContext(dispatcher) {
+    runCatching { block() }.asProtoResult()
+}

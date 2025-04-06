@@ -4,6 +4,7 @@ import com.m3u.data.extension.IRemoteCallback
 
 interface OnRemoteCall {
     suspend operator fun invoke(module: String, method: String, bytes: ByteArray, callback: IRemoteCallback?)
+    fun setDependencies(dependencies: RemoteServiceDependencies)
     companion object {
         const val ERROR_CODE_MODULE_NOT_FOUNDED = -1
         const val ERROR_CODE_METHOD_NOT_FOUNDED = -2

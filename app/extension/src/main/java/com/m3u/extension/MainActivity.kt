@@ -5,41 +5,55 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.extension.api.CallTokenConst
 import com.m3u.extension.api.RemoteClient
 import com.m3u.extension.api.business.InfoApi
-import com.m3u.extension.api.model.GetAppInfoResponse
-import com.m3u.extension.api.model.GetMethodsRequest
-import com.m3u.extension.api.model.GetMethodsResponse
-import com.m3u.extension.api.model.GetModulesResponse
+import com.m3u.extension.api.business.SubscribeApi
+import com.m3u.extension.api.model.AddPlaylistRequest
 import com.m3u.extension.ui.theme.M3UTheme
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private val client = RemoteClient()
     private val infoApi = client.create<InfoApi>()
+    private val subscribeApi = client.create<SubscribeApi>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         var callToken by mutableStateOf(handleArguments(intent))
-        var getAppInfo: GetAppInfoResponse? by mutableStateOf(null)
-        var getModulesResponse: GetModulesResponse? by mutableStateOf(null)
-        var getMethodsResponse: GetMethodsResponse? by mutableStateOf(null)
+        val commands = mutableStateListOf<String>()
 
         setContent {
             M3UTheme {
@@ -59,6 +73,36 @@ class MainActivity : ComponentActivity() {
                             .padding(innerPadding)
                             .padding(16.dp)
                     ) {
+                        val lazyListState = rememberLazyListState()
+                        LaunchedEffect(commands.size) {
+                            lazyListState.scrollToItem(Int.MAX_VALUE)
+                        }
+                        LazyColumn(
+                            state = lazyListState,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color.Black)
+                                .weight(1f),
+                            contentPadding = PaddingValues(8.dp)
+                        ) {
+                            itemsIndexed(commands) { index, command ->
+                                val isFocused = index == commands.lastIndex
+                                val fontWeight by animateIntAsState(if (isFocused) 700 else 400)
+                                val color by animateColorAsState(if (isFocused) Color.Yellow else Color.White)
+
+                                Text(
+                                    text = "> $command",
+                                    fontFamily = FontFamily.Monospace,
+                                    color = color,
+                                    fontWeight = FontWeight(fontWeight),
+                                    modifier = Modifier.weight(1f),
+                                    style = LocalTextStyle.current.copy(
+                                        lineBreak = LineBreak.Paragraph
+                                    )
+                                )
+                            }
+                        }
                         Button(
                             enabled = callToken != null,
                             onClick = {
@@ -88,7 +132,7 @@ class MainActivity : ComponentActivity() {
                             enabled = isConnected,
                             onClick = {
                                 coroutineScope.launch {
-                                    getAppInfo = infoApi.getAppInfo()
+                                    commands += infoApi.getAppInfo().toString()
                                 }
                             }
                         ) {
@@ -100,7 +144,7 @@ class MainActivity : ComponentActivity() {
                             enabled = isConnected,
                             onClick = {
                                 coroutineScope.launch {
-                                    getModulesResponse = infoApi.getModules()
+                                    commands += infoApi.getModules().toString()
                                 }
                             }
                         ) {
@@ -112,27 +156,20 @@ class MainActivity : ComponentActivity() {
                             enabled = isConnected,
                             onClick = {
                                 coroutineScope.launch {
-                                    getMethodsResponse = infoApi.getMethods(
-                                        GetMethodsRequest(
-                                            module = getModulesResponse?.modules?.firstOrNull().orEmpty()
+                                    commands += subscribeApi.addPlaylist(
+                                        AddPlaylistRequest(
+                                            url = "https://example.com/playlist.m3u?time=${System.currentTimeMillis()}",
+                                            title = "Test Playlist ${System.currentTimeMillis()}",
+                                            user_agent = "Test User Agent"
                                         )
-                                    )
+                                    ).toString()
                                 }
                             }
                         ) {
                             Text(
-                                text = "GetMethodsResponse"
+                                text = "AddPlaylist"
                             )
                         }
-                        Text(
-                            text = getAppInfo?.toString().orEmpty()
-                        )
-                        Text(
-                            text = getModulesResponse?.toString().orEmpty()
-                        )
-                        Text(
-                            text = getMethodsResponse?.toString().orEmpty()
-                        )
                     }
                 }
             }

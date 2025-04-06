@@ -1,15 +1,16 @@
 @file:Suppress("unused")
+
 package com.m3u.data.database
 
 import android.content.Context
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.m3u.data.database.dao.ChannelDao
 import com.m3u.data.database.dao.ColorSchemeDao
 import com.m3u.data.database.dao.EpisodeDao
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.ProgrammeDao
-import com.m3u.data.database.dao.ChannelDao
 import com.m3u.data.database.example.ColorSchemeExample
 import dagger.Module
 import dagger.Provides

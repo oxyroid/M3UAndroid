@@ -11,7 +11,7 @@ import com.m3u.data.database.model.Channel
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-internal interface ChannelDao {
+interface ChannelDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrReplace(channel: Channel): Long
 

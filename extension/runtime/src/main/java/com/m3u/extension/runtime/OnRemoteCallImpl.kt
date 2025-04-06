@@ -6,11 +6,13 @@ import com.m3u.extension.api.Method
 import com.m3u.extension.api.Module
 import com.m3u.extension.api.OnRemoteCall
 import com.m3u.extension.api.RemoteCallException
+import com.m3u.extension.api.RemoteServiceDependencies
 import com.m3u.extension.api.Samplings
 import com.m3u.extension.api.Utils
 import com.m3u.extension.api.Utils.getAdapter
 import com.m3u.extension.runtime.business.InfoModule
 import com.m3u.extension.runtime.business.RemoteModule
+import com.m3u.extension.runtime.business.SubscribeModule
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.callSuspend
 import kotlin.reflect.full.declaredFunctions
@@ -26,6 +28,9 @@ class OnRemoteCallImpl : OnRemoteCall {
                 InfoModule(
                     modules = { remoteModules.keys.toList() },
                     methods = { module -> remoteMethods[module]?.map { it.key }.orEmpty() }
+                ),
+                SubscribeModule(
+                    dependencies = dependencies
                 )
             )
                 .associateBy {
@@ -143,6 +148,11 @@ class OnRemoteCallImpl : OnRemoteCall {
                 e.stackTraceToString()
             )
         }
+    }
+    private lateinit var dependencies: RemoteServiceDependencies
+
+    override fun setDependencies(dependencies: RemoteServiceDependencies) {
+        this.dependencies = dependencies
     }
 
     companion object {

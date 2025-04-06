@@ -11,6 +11,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <!-- To view extension packages in API 30+ -->
     <uses-permission
         android:name="android.permission.QUERY_ALL_PACKAGES"
@@ -77,10 +78,10 @@
             android:label="@string/app_label_crash"
             android:launchMode="singleInstance"
             android:theme="@style/Theme.M3U" />
-
         <service
             android:name="com.m3u.extension.api.RemoteService"
             android:exported="true"
+            android:foregroundServiceType="mediaPlayback"
             android:permission="${applicationId}.permission.CONNECT_EXTENSION_PLUGIN">
             <intent-filter>
                 <action android:name="${applicationId}.permission.CONNECT_EXTENSION_PLUGIN" />
