@@ -2,7 +2,7 @@
 androidx-core = "1.15.0"
 androidx-appcompat = "1.7.0"
 kotlin = "2.1.20"
-android-gradle-plugin = "8.7.0"
+android-gradle-plugin = "8.9.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
