@@ -79,7 +79,7 @@
             android:launchMode="singleInstance"
             android:theme="@style/Theme.M3U" />
         <service
-            android:name="com.m3u.extension.api.RemoteService"
+            android:name="com.m3u.extension.runtime.RemoteService"
             android:exported="true"
             android:foregroundServiceType="mediaPlayback"
             android:permission="${applicationId}.permission.CONNECT_EXTENSION_PLUGIN">

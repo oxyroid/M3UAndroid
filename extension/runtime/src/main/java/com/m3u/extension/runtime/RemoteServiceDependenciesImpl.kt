@@ -1,10 +1,8 @@
-package com.m3u.data
+package com.m3u.extension.runtime
 
 import com.google.auto.service.AutoService
-import com.m3u.core.util.context.ContextUtils
 import com.m3u.data.database.dao.ChannelDao
 import com.m3u.data.database.dao.PlaylistDao
-import com.m3u.extension.api.RemoteServiceDependencies
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
@@ -20,11 +18,11 @@ class RemoteServiceDependenciesImpl : RemoteServiceDependencies {
 
     private val entryPoint: EntryPoint by lazy {
         EntryPointAccessors.fromApplication(
-            ContextUtils.getContext(),
+            Utils.getContext(),
             EntryPoint::class.java
         )
     }
 
-    override val playlistDao: Any = entryPoint.playlistDao
-    override val channelDao: Any = entryPoint.channelDao
+    override val playlistDao: PlaylistDao = entryPoint.playlistDao
+    override val channelDao: ChannelDao = entryPoint.channelDao
 }

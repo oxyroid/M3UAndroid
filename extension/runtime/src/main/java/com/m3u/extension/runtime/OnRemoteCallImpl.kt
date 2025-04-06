@@ -4,9 +4,6 @@ import com.google.auto.service.AutoService
 import com.m3u.data.extension.IRemoteCallback
 import com.m3u.extension.api.Method
 import com.m3u.extension.api.Module
-import com.m3u.extension.api.OnRemoteCall
-import com.m3u.extension.api.RemoteCallException
-import com.m3u.extension.api.RemoteServiceDependencies
 import com.m3u.extension.api.Samplings
 import com.m3u.extension.api.Utils
 import com.m3u.extension.api.Utils.getAdapter
@@ -29,9 +26,7 @@ class OnRemoteCallImpl : OnRemoteCall {
                     modules = { remoteModules.keys.toList() },
                     methods = { module -> remoteMethods[module]?.map { it.key }.orEmpty() }
                 ),
-                SubscribeModule(
-                    dependencies = dependencies
-                )
+                SubscribeModule(dependencies)
             )
                 .associateBy {
                     checkNotNull(it::class.findAnnotation<Module>()) {

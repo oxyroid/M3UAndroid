@@ -16,10 +16,11 @@ class InfoModule(
     @Method("getAppInfo")
     override suspend fun getAppInfo(): GetAppInfoResponse {
         return GetAppInfoResponse(
-            app_id = "com.m3u.extension.runtime",
+            app_id = "com.m3u.smartphone",
             app_version = "InfoModule",
             app_name = "M3U",
-            app_description = "Powerful Media Player"
+            app_description = "Powerful Media Player",
+            app_package_name = "com.m3u.smartphone"
         )
     }
 

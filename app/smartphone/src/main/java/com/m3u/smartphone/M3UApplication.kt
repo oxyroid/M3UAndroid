@@ -5,7 +5,7 @@ import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.preferences.Preferences
-import com.m3u.core.util.context.ContextUtils
+import com.m3u.extension.runtime.Utils
 import com.m3u.smartphone.ui.business.crash.CrashHandler
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
@@ -29,7 +29,7 @@ class M3UApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
-        ContextUtils.init(this)
+        Utils.init(this)
         Thread.setDefaultUncaughtExceptionHandler(handler)
 //        ResponseBodies.WebPage
 //            .onEach {

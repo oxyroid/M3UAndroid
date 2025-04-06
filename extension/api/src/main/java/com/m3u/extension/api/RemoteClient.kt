@@ -8,7 +8,6 @@ import android.os.IBinder
 import android.util.Log
 import com.m3u.data.extension.IRemoteCallback
 import com.m3u.data.extension.IRemoteService
-import com.m3u.extension.api.Utils.getAdapter
 import com.m3u.extension.api.Utils.getRealParameterizedType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -56,7 +55,7 @@ class RemoteClient {
         accessKey: String
     ) {
         Log.d(TAG, "connect")
-        val intent = Intent(context, RemoteService::class.java).apply {
+        val intent = Intent().apply {
             action = targetPermission
             component = ComponentName(targetPackageName, targetClassName)
             putExtra(CallTokenConst.ACCESS_KEY, accessKey)
@@ -83,6 +82,7 @@ class RemoteClient {
                 Log.d(TAG, "onSuccess: $method, $param")
                 cont.resume(param)
             }
+
             override fun onError(
                 module: String,
                 method: String,
@@ -121,13 +121,14 @@ class RemoteClient {
                         } else {
                             // param type
                             val adapter = adapters.getOrPut(args[0]::class.java.typeName) {
-                                getAdapter(args[0]::class.java.typeName)
+                                Utils.getAdapter(args[0]::class.java.typeName)
                             }
                             Utils.encode(adapter, args[0])
                         }
-                        val returnType = (parameters.last().getRealParameterizedType() as Class<*>).name
+                        val returnType =
+                            (parameters.last().getRealParameterizedType() as Class<*>).name
                         val adapter = adapters.getOrPut(returnType) {
-                            getAdapter(returnType)
+                            Utils.getAdapter(returnType)
                         }
                         val response = call(moduleName, methodName, bytes)
                         Utils.decode(adapter, response)
@@ -141,13 +142,13 @@ class RemoteClient {
                     } else {
                         // param type
                         val adapter = adapters.getOrPut(args[0]::class.java.typeName) {
-                            getAdapter(args[0]::class.java.typeName)
+                            Utils.getAdapter(args[0]::class.java.typeName)
                         }
                         Utils.encode(adapter, args[0])
                     }
                     val returnType = (parameters.last().getRealParameterizedType() as Class<*>).name
                     val adapter = adapters.getOrPut(returnType) {
-                        getAdapter(returnType)
+                        Utils.getAdapter(returnType)
                     }
                     val response = runBlocking { call(moduleName, methodName, bytes) }
                     Utils.decode(adapter, response)
