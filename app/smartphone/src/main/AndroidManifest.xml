@@ -17,10 +17,6 @@
         android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
 
-    <permission
-        android:name="${applicationId}.permission.CONNECT_EXTENSION_PLUGIN"
-        android:protectionLevel="normal" />
-
     <uses-feature
         android:name="android.software.leanback"
         android:required="false" />
@@ -82,11 +78,7 @@
             android:name="com.m3u.extension.runtime.RemoteService"
             android:exported="true"
             android:foregroundServiceType="mediaPlayback"
-            android:permission="${applicationId}.permission.CONNECT_EXTENSION_PLUGIN">
-            <intent-filter>
-                <action android:name="${applicationId}.permission.CONNECT_EXTENSION_PLUGIN" />
-            </intent-filter>
-        </service>
+            android:process=":remote"/>
 
         <provider
             android:name="androidx.startup.InitializationProvider"
