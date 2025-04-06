@@ -10,8 +10,8 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
-import com.m3u.data.extension.IRemoteCallback
-import com.m3u.data.extension.IRemoteService
+import com.m3u.extension.api.IRemoteCallback
+import com.m3u.extension.api.IRemoteService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

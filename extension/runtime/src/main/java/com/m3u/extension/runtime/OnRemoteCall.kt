@@ -1,6 +1,6 @@
 package com.m3u.extension.runtime
 
-import com.m3u.data.extension.IRemoteCallback
+import com.m3u.extension.api.IRemoteCallback
 
 interface OnRemoteCall {
     suspend operator fun invoke(module: String, method: String, bytes: ByteArray, callback: IRemoteCallback?)

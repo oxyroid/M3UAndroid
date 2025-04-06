@@ -1,7 +1,7 @@
 package com.m3u.extension.runtime
 
 import com.google.auto.service.AutoService
-import com.m3u.data.extension.IRemoteCallback
+import com.m3u.extension.api.IRemoteCallback
 import com.m3u.extension.api.Method
 import com.m3u.extension.api.Module
 import com.m3u.extension.api.Samplings
