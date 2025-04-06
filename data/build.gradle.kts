@@ -26,7 +26,7 @@ android {
 
 dependencies {
     implementation(project(":core"))
-    implementation(project(":extension:api"))
+    implementation("com.github.oxyroid:m3u-extension-api:1.0")
     implementation(project(":lint:annotation"))
     ksp(project(":lint:processor"))
 

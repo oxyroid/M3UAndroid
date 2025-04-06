@@ -22,7 +22,7 @@ android {
 dependencies {
     implementation(project(":core"))
     implementation(project(":data"))
-    implementation(project(":extension:api"))
+    implementation("com.github.oxyroid:m3u-extension-api:1.0")
     implementation(project(":extension:runtime"))
 
     implementation(libs.androidx.core.ktx)
