@@ -17,7 +17,7 @@ android {
 }
 
 dependencies {
-    implementation("com.github.oxyroid:m3u-extension-api:1.0")
+    implementation(libs.m3u.extension.api)
     implementation(project(":data"))
 
     implementation(libs.androidx.core.ktx)

@@ -33,6 +33,7 @@ kotlinx-datetime = "0.6.2"
 chucker = "4.1.0"
 logback = "3.0.0"
 lottie-compose = "6.6.4"
+m3u-extension-api = "1.0"
 nextLib = "0.8.4"
 slf4j-api = "2.0.17"
 
@@ -135,6 +136,7 @@ google-material = { group = "com.google.android.material", name = "material", ve
 
 kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoet" }
 kotlinpoet-ksp = { module = "com.squareup:kotlinpoet-ksp", version.ref = "kotlinpoet" }
+m3u-extension-api = { module = "com.github.oxyroid:m3u-extension-api", version.ref = "m3u-extension-api" }
 squareup-retrofit2 = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "squareup-retrofit2" }
 squareup-leakcanary = { group = "com.squareup.leakcanary", name = "leakcanary-android", version.ref = "squareup-leakcanary" }
 
