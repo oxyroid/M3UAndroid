@@ -73,7 +73,7 @@ class ExtensionViewModel @Inject constructor(
         val intent = Intent().apply {
             this.component = ComponentName(app.packageName, app.mainClassName)
             putExtra(CallTokenConst.PACKAGE_NAME, context.packageName)
-            putExtra(CallTokenConst.CLASS_NAME, "com.m3u.extension.api.RemoteService")
+            putExtra(CallTokenConst.CLASS_NAME, "com.m3u.extension.runtime.RemoteService")
             putExtra(
                 CallTokenConst.PERMISSION,
                 "${context.packageName}.permission.CONNECT_EXTENSION_PLUGIN"
