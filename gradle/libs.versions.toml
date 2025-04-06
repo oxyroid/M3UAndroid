@@ -33,7 +33,7 @@ kotlinx-datetime = "0.6.2"
 chucker = "4.1.0"
 logback = "3.0.0"
 lottie-compose = "6.6.4"
-m3u-extension-api = "1.1"
+m3u-extension-api = "1.3"
 nextLib = "0.8.4"
 slf4j-api = "2.0.17"
 
