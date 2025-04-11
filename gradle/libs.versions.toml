@@ -42,7 +42,7 @@ squareup-leakcanary = "2.14"
 
 kotlin = "2.1.20"
 android-gradle-plugin = "8.9.1"
-kotlin-symbol-processor = "2.1.20-1.0.32"
+kotlin-symbol-processor = "2.1.20-2.0.0"
 
 androidx-test-ext-junit = "1.2.1"
 espresso-core = "3.6.1"
