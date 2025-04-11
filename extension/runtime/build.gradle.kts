@@ -33,5 +33,5 @@ dependencies {
     ksp(libs.auto.service.ksp)
 
     // wire
-    implementation("com.squareup.wire:wire-runtime:4.9.2")
+    implementation("com.squareup.wire:wire-runtime:4.9.11")
 }
