@@ -17,22 +17,10 @@
         android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
 
-    <uses-feature
-        android:name="android.software.leanback"
-        android:required="false" />
-    <uses-feature
-        android:name="android.hardware.touchscreen"
-        android:required="false" />
-
-    <uses-feature
-        android:name="android.hardware.wifi"
-        android:required="false" />
-
     <application
         android:name=".M3UApplication"
         android:allowBackup="true"
         android:appCategory="video"
-        android:banner="@mipmap/ic_launcher"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:enableOnBackInvokedCallback="true"
         android:fullBackupContent="@xml/backup_rules"
@@ -54,7 +42,6 @@
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
 
             <meta-data
@@ -74,11 +61,13 @@
             android:label="@string/app_label_crash"
             android:launchMode="singleInstance"
             android:theme="@style/Theme.M3U" />
+
         <service
             android:name="com.m3u.extension.runtime.RemoteService"
             android:exported="true"
             android:foregroundServiceType="mediaPlayback"
-            android:process=":remote"/>
+            android:process=":remote"
+            tools:ignore="ExportedService" />
 
         <provider
             android:name="androidx.startup.InitializationProvider"

@@ -112,7 +112,6 @@ class MainActivity : ComponentActivity() {
                                         context = this@MainActivity,
                                         targetPackageName = callToken.packageName,
                                         targetClassName = callToken.className,
-                                        targetPermission = callToken.permission,
                                         accessKey = callToken.accessKey
                                     )
                                 } else {
@@ -179,15 +178,13 @@ class MainActivity : ComponentActivity() {
     private fun handleArguments(intent: Intent): CallToken? {
         val packageName = intent.getStringExtra(CallTokenConst.PACKAGE_NAME) ?: return null
         val className = intent.getStringExtra(CallTokenConst.CLASS_NAME) ?: return null
-        val permission = intent.getStringExtra(CallTokenConst.PERMISSION) ?: return null
         val accessKey = intent.getStringExtra(CallTokenConst.ACCESS_KEY) ?: return null
-        return CallToken(packageName, className, permission, accessKey)
+        return CallToken(packageName, className, accessKey)
     }
 }
 
 private data class CallToken(
     val packageName: String,
     val className: String,
-    val permission: String,
     val accessKey: String
 )

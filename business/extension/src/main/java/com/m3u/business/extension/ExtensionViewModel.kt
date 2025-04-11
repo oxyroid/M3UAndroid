@@ -74,10 +74,6 @@ class ExtensionViewModel @Inject constructor(
             this.component = ComponentName(app.packageName, app.mainClassName)
             putExtra(CallTokenConst.PACKAGE_NAME, context.packageName)
             putExtra(CallTokenConst.CLASS_NAME, "com.m3u.extension.runtime.RemoteService")
-            putExtra(
-                CallTokenConst.PERMISSION,
-                "${context.packageName}.permission.CONNECT_EXTENSION_PLUGIN"
-            )
             putExtra(CallTokenConst.ACCESS_KEY, UUID.randomUUID().toString())
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
