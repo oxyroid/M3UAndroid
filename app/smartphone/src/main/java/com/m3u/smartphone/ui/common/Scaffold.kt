@@ -212,6 +212,10 @@ internal fun MainContent(
                                 }
                             }
                         },
+                        colors = SearchBarDefaults.inputFieldColors(
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedContainerColor = Color.Transparent
+                        )
                     )
                 },
                 expanded = showQuery,

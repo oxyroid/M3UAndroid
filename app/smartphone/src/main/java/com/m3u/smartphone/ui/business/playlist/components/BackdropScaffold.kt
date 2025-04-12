@@ -453,7 +453,7 @@ fun BackdropScaffold(
                         }
                         val newTarget = when (scaffoldState.targetValue) {
                             BackdropValue.Concealed -> BackdropValue.Concealed
-                            BackdropValue.Revealed -> if (newAnchors.hasAnchorFor(BackdropValue.Revealed)) BackdropValue.Revealed
+                            BackdropValue.Revealed -> if (newAnchors.hasPositionFor(BackdropValue.Revealed)) BackdropValue.Revealed
                             else BackdropValue.Concealed
                         }
                         return@draggableAnchors newAnchors to newTarget
@@ -709,7 +709,7 @@ internal fun ConsumeSwipeNestedScrollConnection(
     override suspend fun onPreFling(available: Velocity): Velocity {
         val toFling = available.toFloat()
         val currentOffset = state.requireOffset()
-        return if (toFling < 0 && currentOffset > state.anchors.minAnchor()) {
+        return if (toFling < 0 && currentOffset > state.anchors.minPosition()) {
             state.settle(velocity = toFling)
             // since we go to the anchor with tween settling, consume all for the best UX
             available
