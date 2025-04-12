@@ -9,7 +9,7 @@ androidx-compose-material3-adaptive = "1.1.0"
 androidx-constraintlayout-compose = "1.1.1"
 androidx-navigation = "2.8.9"
 androidx-hilt = "1.2.0"
-androidx-tv = "1.0.0"
+androidx-tv = "1.1.0-alpha01"
 androidx-media3 = "1.6.0"
 androidx-work = "2.10.0"
 androidx-room = "2.7.0"
@@ -55,7 +55,7 @@ ktor-server = "3.1.2"
 mm2d-mmupnp = "3.1.6"
 profileinstaller = "1.4.1"
 jakewharton-disklrucache = "2.0.2"
-wire = "4.9.2"
+wire = "5.3.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }

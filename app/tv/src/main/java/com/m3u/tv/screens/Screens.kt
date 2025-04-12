@@ -40,8 +40,8 @@ enum class Screens(
     val tabIcon: ImageVector? = null,
     @StringRes val title: Int? = null
 ) {
-    Profile(isTabItem = true),
-    Home(
+    Profile,
+    Foryou(
         title = R.string.ui_destination_foryou,
         isTabItem = true
     ),

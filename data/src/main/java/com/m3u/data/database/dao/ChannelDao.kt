@@ -283,4 +283,11 @@ interface ChannelDao {
         """
     )
     fun pagingAllFavoriteRecently(): PagingSource<Int, Channel>
+    @Query(
+        """
+            SELECT * FROM streams WHERE 1
+            AND title LIKE '%'||:query||'%'
+        """
+    )
+    fun pagingAll(query: String): PagingSource<Int, Channel>
 }

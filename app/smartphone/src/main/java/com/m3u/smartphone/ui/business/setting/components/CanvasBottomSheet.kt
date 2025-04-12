@@ -41,7 +41,7 @@ import com.m3u.i18n.R.string
 import androidx.compose.material3.Icon
 import com.m3u.smartphone.ui.material.ktx.createScheme
 import com.m3u.smartphone.ui.material.model.LocalSpacing
-import com.m3u.smartphone.ui.material.model.SugarColors
+import com.m3u.core.foundation.ui.SugarColors
 import com.m3u.smartphone.ui.material.components.FontFamilies
 
 @OptIn(ExperimentalStdlibApi::class)
@@ -197,8 +197,8 @@ internal fun CanvasBottomSheet(
                                         },
                                         contentDescription = "",
                                         tint = when (currentIsDark) {
-                                            true -> SugarColors.Tee
-                                            false -> SugarColors.Yellow
+                                            true -> SugarColors.Tee.color
+                                            false -> SugarColors.Yellow.color
                                         }
                                     )
                                 }

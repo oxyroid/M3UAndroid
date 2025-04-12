@@ -58,7 +58,7 @@ import com.m3u.smartphone.ui.material.ktx.InteractionType
 import com.m3u.smartphone.ui.material.ktx.createScheme
 import com.m3u.smartphone.ui.material.ktx.interactionBorder
 import com.m3u.smartphone.ui.material.model.LocalSpacing
-import com.m3u.smartphone.ui.material.model.SugarColors
+import com.m3u.core.foundation.ui.SugarColors
 import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 import kotlin.math.max
 
@@ -176,8 +176,8 @@ fun ThemeSelection(
                 tint = when {
                     selected -> colorScheme.onPrimary
                     else -> when (isDark) {
-                        true -> SugarColors.Tee
-                        false -> SugarColors.Yellow
+                        true -> SugarColors.Tee.color
+                        false -> SugarColors.Yellow.color
                     }
                 }
             )

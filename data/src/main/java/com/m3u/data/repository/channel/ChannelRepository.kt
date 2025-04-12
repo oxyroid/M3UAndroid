@@ -12,6 +12,7 @@ interface ChannelRepository {
     fun observe(id: Int): Flow<Channel?>
 
     fun observeAllByPlaylistUrl(playlistUrl: String): Flow<List<Channel>>
+    fun pagingAll(query: String): PagingSource<Int, Channel>
     fun pagingAllByPlaylistUrl(
         url: String,
         category: String,

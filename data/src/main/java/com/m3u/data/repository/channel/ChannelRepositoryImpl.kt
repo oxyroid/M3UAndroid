@@ -35,6 +35,10 @@ internal class ChannelRepositoryImpl @Inject constructor(
         .observeAllByPlaylistUrl(playlistUrl)
         .catch { emit(emptyList()) }
 
+    override fun pagingAll(query: String): PagingSource<Int, Channel> {
+        return channelDao.pagingAll(query)
+    }
+
     override fun pagingAllByPlaylistUrl(
         url: String,
         category: String,

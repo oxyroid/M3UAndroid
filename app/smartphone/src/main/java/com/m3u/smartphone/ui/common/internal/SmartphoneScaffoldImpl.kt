@@ -36,6 +36,7 @@ fun SmartphoneScaffoldImpl(
     alwaysShowLabel: Boolean,
     navigateToRoot: (Destination.Root) -> Unit,
     onBackPressed: (() -> Unit)?,
+    navigateToChannel: () -> Unit,
     content: @Composable BoxScope.(PaddingValues) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -75,7 +76,8 @@ fun SmartphoneScaffoldImpl(
         MainContent(
             windowInsets = WindowInsets.systemBars.exclude(WindowInsets.navigationBars),
             onBackPressed = onBackPressed,
-            content = { content(it + contentPadding) }
+            content = { content(it + contentPadding) },
+            navigateToChannel = navigateToChannel
         )
     }
 

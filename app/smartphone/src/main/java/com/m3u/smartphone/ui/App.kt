@@ -1,5 +1,7 @@
 package com.m3u.smartphone.ui
 
+import android.app.ActivityOptions
+import android.content.Intent
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
@@ -35,6 +37,8 @@ import com.m3u.smartphone.ui.common.connect.RemoteControlSheetValue
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.tv.model.RemoteDirection
 import androidx.compose.material3.Icon
+import androidx.compose.ui.platform.LocalContext
+import com.m3u.smartphone.ui.business.channel.PlayerActivity
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.smartphone.ui.common.AppNavHost
 import com.m3u.smartphone.ui.common.Scaffold
@@ -106,6 +110,7 @@ private fun AppImpl(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val spacing = LocalSpacing.current
     val preferences = hiltPreferences()
 
@@ -117,9 +122,24 @@ private fun AppImpl(
         }
     }
 
+    val navigateToChannel: () -> Unit = {
+        if (!preferences.zappingMode || !PlayerActivity.isInPipMode) {
+            val options = ActivityOptions.makeCustomAnimation(
+                context,
+                0,
+                0
+            )
+            context.startActivity(
+                Intent(context, PlayerActivity::class.java),
+                options.toBundle()
+            )
+        }
+    }
+
     Scaffold(
         rootDestination = rootDestination,
         onBackPressed = onBackPressed,
+        navigateToChannel =navigateToChannel,
         navigateToRootDestination = {
             navController.navigate(it.name, navOptions {
                 popUpTo(it.name) {
@@ -132,6 +152,7 @@ private fun AppImpl(
         AppNavHost(
             navController = navController,
             navigateToRootDestination = { navController.navigate(it.name) },
+            navigateToChannel = navigateToChannel,
             contentPadding = contentPadding,
             modifier = Modifier.fillMaxSize()
         )

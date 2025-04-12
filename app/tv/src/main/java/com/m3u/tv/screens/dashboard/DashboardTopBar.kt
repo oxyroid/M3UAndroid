@@ -1,6 +1,7 @@
 package com.m3u.tv.screens.dashboard
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -26,10 +27,12 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Icon
@@ -82,7 +85,7 @@ fun DashboardTopBar(
                     },
                 selected = selectedTabIndex == PROFILE_SCREEN_INDEX,
                 onClick = {
-                    onScreenSelection(TopBarTabs[0])
+                    onScreenSelection(Screens.Profile)
                 }
             )
             Row(
@@ -131,7 +134,7 @@ fun DashboardTopBar(
                                         modifier = Modifier
                                             .occupyScreenSize()
                                             .padding(horizontal = 16.dp),
-                                        text = stringResource(screen.title),
+                                        text = stringResource(screen.title).uppercase(),
                                         style = MaterialTheme.typography.titleSmall.copy(
                                             color = LocalContentColor.current
                                         )

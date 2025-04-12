@@ -1,45 +1,56 @@
 package com.m3u.smartphone.ui.common
 
-import androidx.compose.animation.AnimatedContent
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SearchBar
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.InternalComposeApi
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.offset
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMaxOfOrNull
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.PagingData
+import com.m3u.business.playlist.PlaylistViewModel
+import com.m3u.core.foundation.ui.composableOf
+import com.m3u.data.database.model.Channel
+import com.m3u.data.service.MediaCommand
+import com.m3u.i18n.R
+import com.m3u.smartphone.ui.business.playlist.components.ChannelGallery
 import com.m3u.smartphone.ui.common.helper.Fob
 import com.m3u.smartphone.ui.common.helper.LocalHelper
 import com.m3u.smartphone.ui.common.helper.Metadata
@@ -56,6 +67,8 @@ import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 
 @Composable
 @OptIn(InternalComposeApi::class)
@@ -64,6 +77,7 @@ internal fun Scaffold(
     navigateToRootDestination: (Destination.Root) -> Unit,
     modifier: Modifier = Modifier,
     onBackPressed: (() -> Unit)? = null,
+    navigateToChannel: () -> Unit,
     alwaysShowLabel: Boolean = false,
     content: @Composable BoxScope.(PaddingValues) -> Unit
 ) {
@@ -80,6 +94,7 @@ internal fun Scaffold(
                         alwaysShowLabel = alwaysShowLabel,
                         navigateToRoot = navigateToRootDestination,
                         onBackPressed = onBackPressed,
+                        navigateToChannel = navigateToChannel,
                         content = content,
                         modifier = modifier
                     )
@@ -90,6 +105,7 @@ internal fun Scaffold(
                         rootDestination = rootDestination,
                         alwaysShowLabel = alwaysShowLabel,
                         navigateToRoot = navigateToRootDestination,
+                        navigateToChannel = navigateToChannel,
                         onBackPressed = onBackPressed,
                         content = content,
                         modifier = modifier
@@ -115,10 +131,15 @@ internal fun Items(
 internal fun MainContent(
     windowInsets: WindowInsets,
     onBackPressed: (() -> Unit)?,
-    content: @Composable BoxScope.(PaddingValues) -> Unit
+    navigateToChannel: () -> Unit,
+    content: @Composable BoxScope.(PaddingValues) -> Unit,
+    viewModel: SmartphoneViewModel = hiltViewModel()
 ) {
     val spacing = LocalSpacing.current
+    val helper = LocalHelper.current
     val hazeState = LocalHazeState.current
+
+    val coroutineScope = rememberCoroutineScope()
 
     val title = Metadata.title
     val subtitle = Metadata.subtitle
@@ -126,73 +147,99 @@ internal fun MainContent(
 
     val backStackEntry by currentBackStackEntry()
 
+    val query by viewModel.query.collectAsStateWithLifecycle()
+    val onQueryChange = { query: String -> viewModel.query.value = query }
+    var showQuery by remember { mutableStateOf(false) }
+    val channels: Flow<PagingData<Channel>> = viewModel.channels
+
     Scaffold(
         topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(Color.Transparent),
-                windowInsets = windowInsets,
-                title = {
-                    Row(
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.defaultMinSize(minHeight = 56.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(
-                                text = title,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                fontFamily = FontFamilies.LexendExa
-                            )
-                            AnimatedVisibility(subtitle.text.isNotEmpty()) {
+            SearchBar(
+                inputField = {
+                    BackHandler(showQuery) { showQuery = false }
+                    SearchBarDefaults.InputField(
+                        query = query,
+                        onQueryChange = onQueryChange,
+                        onSearch = {},
+                        expanded = showQuery,
+                        onExpandedChange = { showQuery = it },
+                        placeholder = {
+                            Column(Modifier.padding(start = 4.dp)) {
                                 Text(
-                                    text = subtitle,
-                                    style = MaterialTheme.typography.titleMedium,
+                                    text = if (!showQuery) title
+                                    else AnnotatedString(stringResource(R.string.feat_playlist_query_placeholder)),
                                     maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                    style = MaterialTheme.typography.titleLarge,
+                                    overflow = TextOverflow.Ellipsis,
+                                    fontFamily = FontFamilies.LexendExa,
+                                    color = LocalContentColor.current.copy(
+                                        alpha = if (showQuery) 0.65f else 1f
+                                    )
                                 )
+                                AnimatedVisibility(!showQuery && subtitle.text.isNotEmpty()) {
+                                    Text(
+                                        text = subtitle,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
                             }
-                        }
-                    }
-                },
-                actions = {
-                    actions.forEach { action ->
-                        IconButton(
-                            onClick = action.onClick,
-                            enabled = action.enabled
-                        ) {
-                            Icon(
-                                imageVector = action.icon,
-                                contentDescription = action.contentDescription,
-                            )
-                        }
-                    }
-                },
-                navigationIcon = {
-                    AnimatedContent(
-                        targetState = onBackPressed,
-                        label = "app-scaffold-icon"
-                    ) { onBackPressed ->
-                        if (onBackPressed != null) {
-                            IconButton(
-                                onClick = onBackPressed,
-                                modifier = Modifier.wrapContentSize()
-                            ) {
-                                Icon(
-                                    imageVector = backStackEntry?.navigationIcon
-                                        ?: Icons.AutoMirrored.Rounded.ArrowBack,
-                                    contentDescription = null,
-                                )
+                        },
+                        leadingIcon = onBackPressed?.let { onClick ->
+                            composableOf {
+                                IconButton(onClick) {
+                                    Icon(
+                                        imageVector = backStackEntry?.navigationIcon
+                                            ?: Icons.AutoMirrored.Rounded.ArrowBack,
+                                        contentDescription = null,
+                                    )
+                                }
                             }
-                        }
-                    }
+                        },
+                        trailingIcon = composableOf(!showQuery) {
+                            Row {
+                                actions.forEach { action ->
+                                    IconButton(
+                                        onClick = action.onClick,
+                                        enabled = action.enabled
+                                    ) {
+                                        Icon(
+                                            imageVector = action.icon,
+                                            contentDescription = action.contentDescription,
+                                        )
+                                    }
+                                }
+                            }
+                        },
+                    )
                 },
+                expanded = showQuery,
+                onExpandedChange = { showQuery = it },
+                colors = SearchBarDefaults.colors(Color.Transparent),
+                windowInsets = windowInsets,
                 modifier = Modifier
                     .hazeEffect(hazeState, HazeMaterials.ultraThin())
                     .fillMaxWidth()
-            )
+            ) {
+                val state = rememberLazyStaggeredGridState()
+                ChannelGallery(
+                    state = state,
+                    rowCount = 1,
+                    categoryWithChannels = PlaylistViewModel.CategoryWithChannels("", channels),
+                    zapping = null,
+                    recently = false,
+                    isVodOrSeriesPlaylist = false,
+                    onClick = { channel ->
+                        coroutineScope.launch {
+                            helper.play(MediaCommand.Common(channel.id))
+                            navigateToChannel()
+                        }
+                    },
+                    onLongClick = {},
+                    getProgrammeCurrently = { null }
+                )
+            }
         },
         contentWindowInsets = windowInsets,
         containerColor = Color.Transparent

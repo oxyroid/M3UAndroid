@@ -32,6 +32,7 @@ internal fun TabletScaffoldImpl(
     alwaysShowLabel: Boolean,
     navigateToRoot: (Destination.Root) -> Unit,
     onBackPressed: (() -> Unit)?,
+    navigateToChannel: () -> Unit,
     content: @Composable BoxScope.(PaddingValues) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -74,6 +75,7 @@ internal fun TabletScaffoldImpl(
                 navigationWindowInsets.only(WindowInsetsSides.Start)
             ),
             onBackPressed = onBackPressed,
+            navigateToChannel = navigateToChannel,
             content = { content(it + contentPadding) }
         )
     }

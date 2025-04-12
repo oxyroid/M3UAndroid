@@ -44,7 +44,11 @@ fun App(
         navController = navController,
         startDestination = Screens.Dashboard(),
         builder = {
-            composable(route = Screens.Dashboard()) {
+            composable(
+                route = Screens.Dashboard(),
+                enterTransition = { null },
+                exitTransition = { null }
+            ) {
                 DashboardScreen(
                     navigateToPlaylist = { playlistUrl ->
                         coroutineScope.launch {

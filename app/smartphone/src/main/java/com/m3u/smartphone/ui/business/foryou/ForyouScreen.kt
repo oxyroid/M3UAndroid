@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -54,6 +55,8 @@ import com.m3u.smartphone.ui.material.components.EpisodesBottomSheet
 import com.m3u.smartphone.ui.material.components.MediaSheet
 import com.m3u.smartphone.ui.material.components.MediaSheetValue
 import com.m3u.smartphone.ui.material.ktx.interceptVolumeEvent
+import com.m3u.smartphone.ui.material.ktx.plus
+import com.m3u.smartphone.ui.material.model.LocalSpacing
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
@@ -79,8 +82,7 @@ fun ForyouRoute(
     val episodes by viewModel.episodes.collectAsStateWithLifecycle()
 
     val series: Channel? by viewModel.series.collectAsStateWithLifecycle()
-    val subscribingPlaylistUrls by
-    viewModel.subscribingPlaylistUrls.collectAsStateWithLifecycle()
+    val subscribingPlaylistUrls by viewModel.subscribingPlaylistUrls.collectAsStateWithLifecycle()
     val refreshingEpgUrls by viewModel.refreshingEpgUrls.collectAsStateWithLifecycle(emptyList())
 
     LifecycleResumeEffect(title) {
@@ -100,64 +102,64 @@ fun ForyouRoute(
         }
     }
 
-    ForyouScreen(
-        playlists = playlists,
-        subscribingPlaylistUrls = subscribingPlaylistUrls,
-        refreshingEpgUrls = refreshingEpgUrls,
-        specs = specs,
-        rowCount = preferences.rowCount,
-        contentPadding = contentPadding,
-        navigateToPlaylist = navigateToPlaylist,
-        onPlayChannel = { channel ->
-            coroutineScope.launch {
-                val playlist = viewModel.getPlaylist(channel.playlistUrl)
-                when {
-                    playlist?.isSeries == true -> {
-                        viewModel.series.value = channel
-                    }
+    Box(modifier) {
+        ForyouScreen(
+            playlists = playlists,
+            subscribingPlaylistUrls = subscribingPlaylistUrls,
+            refreshingEpgUrls = refreshingEpgUrls,
+            specs = specs,
+            rowCount = preferences.rowCount,
+            contentPadding = contentPadding,
+            navigateToPlaylist = navigateToPlaylist,
+            onPlayChannel = { channel ->
+                coroutineScope.launch {
+                    val playlist = viewModel.getPlaylist(channel.playlistUrl)
+                    when {
+                        playlist?.isSeries == true -> {
+                            viewModel.series.value = channel
+                        }
 
-                    else -> {
-                        helper.play(MediaCommand.Common(channel.id))
+                        else -> {
+                            helper.play(MediaCommand.Common(channel.id))
+                            navigateToChannel()
+                        }
+                    }
+                }
+            },
+            navigateToPlaylistConfiguration = navigateToPlaylistConfiguration,
+            onUnsubscribePlaylist = viewModel::onUnsubscribePlaylist,
+            modifier = Modifier
+                .fillMaxSize()
+                .thenIf(preferences.godMode) {
+                    Modifier.interceptVolumeEvent { event ->
+                        preferences.rowCount = when (event) {
+                            KeyEvent.KEYCODE_VOLUME_UP -> (preferences.rowCount - 1).coerceAtLeast(1)
+                            KeyEvent.KEYCODE_VOLUME_DOWN -> (preferences.rowCount + 1).coerceAtMost(2)
+                            else -> return@interceptVolumeEvent
+                        }
+                    }
+                }
+        )
+
+        EpisodesBottomSheet(
+            series = series,
+            episodes = episodes,
+            onEpisodeClick = { episode ->
+                coroutineScope.launch {
+                    series?.let { channel ->
+                        val input = MediaCommand.XtreamEpisode(
+                            channelId = channel.id,
+                            episode = episode
+                        )
+                        helper.play(input)
                         navigateToChannel()
                     }
                 }
-            }
-        },
-        navigateToPlaylistConfiguration = navigateToPlaylistConfiguration,
-        onUnsubscribePlaylist = viewModel::onUnsubscribePlaylist,
-        modifier = Modifier
-            .fillMaxSize()
-            .thenIf(preferences.godMode) {
-                Modifier.interceptVolumeEvent { event ->
-                    preferences.rowCount = when (event) {
-                        KeyEvent.KEYCODE_VOLUME_UP -> (preferences.rowCount - 1).coerceAtLeast(1)
-                        KeyEvent.KEYCODE_VOLUME_DOWN -> (preferences.rowCount + 1).coerceAtMost(2)
-
-                        else -> return@interceptVolumeEvent
-                    }
-                }
-            }
-            .then(modifier)
-    )
-
-    EpisodesBottomSheet(
-        series = series,
-        episodes = episodes,
-        onEpisodeClick = { episode ->
-            coroutineScope.launch {
-                series?.let { channel ->
-                    val input = MediaCommand.XtreamEpisode(
-                        channelId = channel.id,
-                        episode = episode
-                    )
-                    helper.play(input)
-                    navigateToChannel()
-                }
-            }
-        },
-        onRefresh = { series?.let { viewModel.seriesReplay.value += 1 } },
-        onDismissRequest = { viewModel.series.value = null }
-    )
+            },
+            onRefresh = { series?.let { viewModel.seriesReplay.value += 1 } },
+            onDismissRequest = { viewModel.series.value = null }
+        )
+    }
 }
 
 @Composable
@@ -174,6 +176,7 @@ private fun ForyouScreen(
     onUnsubscribePlaylist: (playlistUrl: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val spacing = LocalSpacing.current
     val configuration = LocalConfiguration.current
     val lifecycleOwner = LocalLifecycleOwner.current
 

@@ -4,10 +4,10 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,7 +21,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -38,8 +37,8 @@ import com.m3u.business.foryou.ForyouViewModel
 import com.m3u.business.foryou.Recommend
 import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 import com.m3u.core.foundation.components.CircularProgressIndicator
+import com.m3u.core.foundation.ui.SugarColors
 import com.m3u.core.wrapper.Resource
-import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.tv.screens.dashboard.rememberChildPadding
 import com.m3u.tv.theme.LexendExa
@@ -69,7 +68,8 @@ fun ForyouScreen(
                     onScroll = onScroll,
                     navigateToPlaylist = navigateToPlaylist,
                     navigateToChannel = navigateToChannel,
-                    isTopBarVisible = isTopBarVisible
+                    isTopBarVisible = isTopBarVisible,
+                    modifier = Modifier.fillMaxSize()
                 )
             }
 
@@ -151,7 +151,10 @@ private fun Catalog(
                     .padding(top = 16.dp),
                 contentPadding = PaddingValues(start = startPadding, end = endPadding)
             ) {
-                items(playlists) { (playlist, count) ->
+                items(playlists) { (playlist, _) ->
+                    val (color, contentColor) = remember {
+                        SugarColors.entries.random()
+                    }
                     CompactCard(
                         onClick = { navigateToPlaylist(playlist.url) },
                         title = {
@@ -165,7 +168,8 @@ private fun Catalog(
                             )
                         },
                         colors = CardDefaults.compactCardColors(
-                            containerColor = MaterialTheme.colorScheme.primary
+                            containerColor = color,
+                            contentColor = MaterialTheme.colorScheme.background
                         ),
                         shape = CardDefaults.shape(shape),
                         border = CardDefaults.border(
@@ -191,7 +195,7 @@ private fun Catalog(
                         image = {},
                         modifier = Modifier
                             .width(265.dp)
-                            .aspectRatio(2f)
+                            .heightIn(min = 130.dp)
                     )
                 }
             }

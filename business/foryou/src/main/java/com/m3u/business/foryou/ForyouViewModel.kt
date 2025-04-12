@@ -153,6 +153,8 @@ class ForyouViewModel @Inject constructor(
             started = SharingStarted.Lazily
         )
 
+    val query = MutableStateFlow<String>("")
+
     suspend fun getPlaylist(playlistUrl: String): Playlist? =
         playlistRepository.get(playlistUrl)
 }

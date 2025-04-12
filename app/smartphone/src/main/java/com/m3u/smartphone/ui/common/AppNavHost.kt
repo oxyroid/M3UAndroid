@@ -29,6 +29,7 @@ import com.m3u.smartphone.ui.material.components.SettingDestination
 fun AppNavHost(
     navController: NavHostController,
     navigateToRootDestination: (Destination.Root) -> Unit,
+    navigateToChannel: () -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     startDestination: String = Destination.Root.Foryou.name
@@ -48,18 +49,7 @@ fun AppNavHost(
             navigateToPlaylist = { playlist ->
                 navController.navigateToPlaylist(playlist.url)
             },
-            navigateToChannel = {
-                if (preferences.zappingMode && PlayerActivity.isInPipMode) return@rootGraph
-                val options = ActivityOptions.makeCustomAnimation(
-                    context,
-                    0,
-                    0
-                )
-                context.startActivity(
-                    Intent(context, PlayerActivity::class.java),
-                    options.toBundle()
-                )
-            },
+            navigateToChannel = navigateToChannel,
             navigateToSettingPlaylistManagement = {
                 navigateToRootDestination(Destination.Root.Setting)
                 Events.settingDestination = eventOf(SettingDestination.Playlists)

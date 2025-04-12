@@ -108,7 +108,6 @@ fun LazyListScope.channelGallery(
                 modifier = Modifier
                     .fillMaxWidth()
                     .onFocusChanged { hasFocus = it.hasFocus }
-                    .focusRestorer()
                     .heightIn(min = 160.dp)
                     .thenIf(!hasFocus) {
                         Modifier.drawWithContent {
