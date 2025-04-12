@@ -49,7 +49,7 @@ import com.m3u.i18n.R.string
 import com.m3u.smartphone.TimeUtils.formatEOrSh
 import com.m3u.core.foundation.ui.composableOf
 import com.m3u.smartphone.ui.material.model.LocalSpacing
-import com.m3u.smartphone.ui.material.shape.AbsoluteSmoothCornerShape
+import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone

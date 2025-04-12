@@ -11,13 +11,13 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -35,19 +35,22 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.m3u.data.database.model.Channel
+import androidx.navigation.navArgument
+import com.m3u.business.playlist.PlaylistNavigation
 import com.m3u.tv.screens.Screens
 import com.m3u.tv.screens.favorite.FavoriteScreen
-import com.m3u.tv.screens.home.HomeScreen
+import com.m3u.tv.screens.foryou.ForyouScreen
 import com.m3u.tv.screens.playlist.PlaylistScreen
 import com.m3u.tv.screens.profile.ProfileScreen
 import com.m3u.tv.screens.search.SearchScreen
 import com.m3u.tv.utils.Padding
+import kotlinx.coroutines.launch
 
 val ParentPadding = PaddingValues(vertical = 16.dp, horizontal = 58.dp)
 
@@ -65,8 +68,9 @@ fun rememberChildPadding(direction: LayoutDirection = LocalLayoutDirection.curre
 
 @Composable
 fun DashboardScreen(
-    openChannelScreen: (channelId: Int) -> Unit,
-    openVideoPlayer: (Channel) -> Unit,
+    navigateToPlaylist: (playlistUrl: String) -> Unit,
+    navigateToChannel: (channelId: Int) -> Unit,
+    navigateToChannelDetail: (channelId: Int) -> Unit,
     isComingBackFromDifferentScreen: Boolean,
     resetIsComingBackFromDifferentScreen: () -> Unit,
     onBackPressed: () -> Unit
@@ -78,24 +82,14 @@ fun DashboardScreen(
     var isTopBarVisible by remember { mutableStateOf(true) }
     var isTopBarFocused by remember { mutableStateOf(false) }
 
-    var currentDestination: String? by remember { mutableStateOf(null) }
-    val currentTopBarSelectedTabIndex by remember(currentDestination) {
+    val currentBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentTopBarSelectedTabIndex by remember {
         derivedStateOf {
-            TopBarTabs
-                .indexOfFirst { it() == currentDestination }
-                .takeIf { it != -1 } ?: 0
-        }
-    }
-
-    DisposableEffect(Unit) {
-        val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
-            currentDestination = destination.route
-        }
-
-        navController.addOnDestinationChangedListener(listener)
-
-        onDispose {
-            navController.removeOnDestinationChangedListener(listener)
+            TopBarTabs.indexOfFirst {
+                it() == currentBackStackEntry?.destination?.route
+            }
+                .takeIf { it != -1 }
+                ?: 0
         }
     }
 
@@ -104,16 +98,15 @@ fun DashboardScreen(
             if (!isTopBarVisible) {
                 isTopBarVisible = true
                 TopBarFocusRequesters[currentTopBarSelectedTabIndex + 1].requestFocus()
-            } else if (currentTopBarSelectedTabIndex == 0) onBackPressed()
-            else if (!isTopBarFocused) {
+            } else if (currentTopBarSelectedTabIndex == 0) {
+                onBackPressed()
+            } else if (!isTopBarFocused) {
                 TopBarFocusRequesters[currentTopBarSelectedTabIndex + 1].requestFocus()
-            } else TopBarFocusRequesters[1].requestFocus()
+            } else {
+                TopBarFocusRequesters[1].requestFocus()
+            }
         }
     ) {
-        // We do not want to focus the TopBar everytime we come back from another screen e.g.
-        // Channel, CategoryList<Channel> or VideoPlayer screen
-        var wasTopBarFocusRequestedBefore by rememberSaveable { mutableStateOf(false) }
-
         var topBarHeightPx: Int by rememberSaveable { mutableIntStateOf(0) }
 
         // Used to show/hide DashboardTopBar
@@ -135,13 +128,6 @@ fun DashboardScreen(
             animationSpec = tween(),
             label = "",
         )
-
-        LaunchedEffect(Unit) {
-            if (!wasTopBarFocusRequestedBefore) {
-                TopBarFocusRequesters[currentTopBarSelectedTabIndex + 1].requestFocus()
-                wasTopBarFocusRequestedBefore = true
-            }
-        }
 
         DashboardTopBar(
             modifier = Modifier
@@ -168,8 +154,9 @@ fun DashboardScreen(
         }
 
         Body(
-            openChannelScreen = openChannelScreen,
-            openVideoPlayer = openVideoPlayer,
+            navigateToPlaylist = navigateToPlaylist,
+            navigateToChannel = navigateToChannel,
+            navigateToChannelDetail = navigateToChannelDetail,
             updateTopBarVisibility = { isTopBarVisible = it },
             isTopBarVisible = isTopBarVisible,
             navController = navController,
@@ -201,8 +188,9 @@ private fun BackPressHandledArea(
 
 @Composable
 private fun Body(
-    openChannelScreen: (channelId: Int) -> Unit,
-    openVideoPlayer: (Channel) -> Unit,
+    navigateToPlaylist: (playlistUrl: String) -> Unit,
+    navigateToChannel: (channelId: Int) -> Unit,
+    navigateToChannelDetail: (channelId: Int) -> Unit,
     updateTopBarVisibility: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
@@ -217,34 +205,23 @@ private fun Body(
             ProfileScreen()
         }
         composable(Screens.Home()) {
-            HomeScreen(
-                navigateToPlaylist = { playlistUrl ->
-                    navController.navigate(
-                        Screens.Playlist.withArgs(playlistUrl)
-                    )
-                },
-                navigateToChannel = openVideoPlayer,
-                onScroll = updateTopBarVisibility,
-                isTopBarVisible = isTopBarVisible
-            )
-        }
-        composable(Screens.Playlist()) {
-            PlaylistScreen(
-                onChannelClick = { channel -> openChannelScreen(channel.id) },
+            ForyouScreen(
+                navigateToPlaylist = navigateToPlaylist,
+                navigateToChannel = navigateToChannel,
                 onScroll = updateTopBarVisibility,
                 isTopBarVisible = isTopBarVisible
             )
         }
         composable(Screens.Favorite()) {
             FavoriteScreen(
-                onChannelClick = { channel -> openChannelScreen(channel.id) },
+                onChannelClick = { channel -> navigateToChannelDetail(channel.id) },
                 onScroll = updateTopBarVisibility,
                 isTopBarVisible = isTopBarVisible
             )
         }
         composable(Screens.Search()) {
             SearchScreen(
-                onChannelClick = { channel -> openChannelScreen(channel.id) },
+                onChannelClick = { channel -> navigateToChannelDetail(channel.id) },
                 onScroll = updateTopBarVisibility
             )
         }

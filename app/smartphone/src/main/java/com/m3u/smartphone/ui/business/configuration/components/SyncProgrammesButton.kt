@@ -25,7 +25,7 @@ import com.m3u.i18n.R.string
 import com.m3u.core.foundation.components.CircularProgressIndicator
 import com.m3u.smartphone.ui.material.components.SelectionsDefaults
 import com.m3u.smartphone.ui.material.model.LocalSpacing
-import com.m3u.smartphone.ui.material.shape.AbsoluteSmoothCornerShape
+import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 import kotlinx.datetime.LocalDateTime
 
 @Composable

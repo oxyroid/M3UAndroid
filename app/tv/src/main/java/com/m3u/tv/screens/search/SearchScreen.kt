@@ -11,7 +11,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -25,7 +24,6 @@ import com.m3u.i18n.R
 import com.m3u.tv.common.ChannelsRow
 import com.m3u.tv.screens.dashboard.rememberChildPadding
 import com.m3u.tv.ui.component.TextField
-import com.m3u.tv.utils.focusOnInitialVisibility
 
 @Composable
 fun SearchScreen(
@@ -62,7 +60,6 @@ fun SearchResult(
     modifier: Modifier = Modifier,
 ) {
     val childPadding = rememberChildPadding()
-    val isVisible = remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier,
@@ -77,7 +74,6 @@ fun SearchResult(
                     start = childPadding.start,
                     end = childPadding.end
                 )
-                .focusOnInitialVisibility(isVisible)
         )
 
         ChannelsRow(

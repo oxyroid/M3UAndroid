@@ -22,8 +22,10 @@ import androidx.media3.ui.compose.SURFACE_TYPE_TEXTURE_VIEW
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import com.m3u.business.channel.ChannelViewModel
 import com.m3u.business.channel.PlayerState
-import com.m3u.core.foundation.ui.thenNoN
+import com.m3u.core.foundation.ktx.onlyNonNull
+import com.m3u.core.foundation.ui.notNull
 import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.Playlist
 import com.m3u.tv.screens.player.components.VideoPlayerControls
 import com.m3u.tv.screens.player.components.VideoPlayerOverlay
 import com.m3u.tv.screens.player.components.VideoPlayerPulse
@@ -36,36 +38,32 @@ import com.m3u.tv.screens.player.components.rememberVideoPlayerState
 import com.m3u.tv.utils.handleDPadKeyEvents
 import kotlinx.coroutines.delay
 
-object VideoPlayerScreen {
-    const val ChannelIdBundleKey = "channelId"
-}
-
 @Composable
-fun PlayerScreen(
+fun ChannelScreen(
     onBackPressed: () -> Unit,
     viewModel: ChannelViewModel = hiltViewModel()
 ) {
     val channel by viewModel.channel.collectAsStateWithLifecycle()
+    val playlist by viewModel.playlist.collectAsStateWithLifecycle()
     val playerState by viewModel.playerState.collectAsStateWithLifecycle()
     DisposableEffect(Unit) {
         onDispose {
             viewModel.destroy()
         }
     }
-    when (val channel = channel) {
-        null -> {} // do nothing
-        else -> {
-            VideoPlayerScreenContent(
-                channel = channel,
-                playerState = playerState,
-                onBackPressed = onBackPressed
-            )
-        }
+    onlyNonNull(playlist, channel) { playlist, channel ->
+        ChannelScreenContent(
+            playlist = playlist,
+            channel = channel,
+            playerState = playerState,
+            onBackPressed = onBackPressed
+        )
     }
 }
 
 @Composable
-fun VideoPlayerScreenContent(
+fun ChannelScreenContent(
+    playlist: Playlist,
     channel: Channel,
     playerState: PlayerState,
     onBackPressed: () -> Unit
@@ -92,7 +90,7 @@ fun VideoPlayerScreenContent(
 
         Box(
             Modifier
-                .thenNoN(player) { player ->
+                .notNull(player) { player ->
                     Modifier.dPadEvents(
                         player,
                         videoPlayerState,
@@ -122,9 +120,11 @@ fun VideoPlayerScreenContent(
                 controls = {
                     VideoPlayerControls(
                         channel = channel,
+                        playlist = playlist,
                         contentCurrentPosition = contentCurrentPosition,
                         contentDuration = player.duration,
                         isPlaying = videoPlayerState.isPlaying,
+                        isBuffering = videoPlayerState.isBuffering,
                         focusRequester = focusRequester,
                         onShowControls = videoPlayerState::showControls,
                         onSeek = { player.seekTo(player.duration.times(it).toLong()) },

@@ -59,7 +59,7 @@ import com.m3u.smartphone.ui.material.ktx.createScheme
 import com.m3u.smartphone.ui.material.ktx.interactionBorder
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.smartphone.ui.material.model.SugarColors
-import com.m3u.smartphone.ui.material.shape.AbsoluteSmoothCornerShape
+import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 import kotlin.math.max
 
 /**

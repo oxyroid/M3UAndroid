@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.sp
 import com.m3u.core.foundation.components.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import com.m3u.smartphone.ui.material.model.LocalSpacing
-import com.m3u.smartphone.ui.material.shape.AbsoluteSmoothCornerShape
+import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 import com.m3u.smartphone.ui.material.components.Badge
 import com.m3u.smartphone.ui.material.components.FontFamilies
 

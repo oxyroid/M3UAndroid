@@ -11,11 +11,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.m3u.business.playlist.PlaylistNavigation
 import com.m3u.data.service.MediaCommand
 import com.m3u.tv.screens.Screens
 import com.m3u.tv.screens.dashboard.DashboardScreen
-import com.m3u.tv.screens.player.PlayerScreen
-import com.m3u.tv.screens.playlist.ChannelScreen
+import com.m3u.tv.screens.player.ChannelScreen
+import com.m3u.tv.screens.playlist.ChannelDetailScreen
+import com.m3u.tv.screens.playlist.PlaylistScreen
 import com.m3u.tv.utils.LocalHelper
 import kotlinx.coroutines.launch
 
@@ -27,43 +29,32 @@ fun App(
     val navController = rememberNavController()
     val coroutineScope = rememberCoroutineScope()
     var isComingBackFromDifferentScreen by remember { mutableStateOf(false) }
-
+    val navigateToChannel: (Int) -> Unit = { channelId: Int ->
+        coroutineScope.launch {
+            helper.play(MediaCommand.Common(channelId))
+            navController.navigate(Screens.Channel())
+        }
+    }
+    val navigateToChannelDetail: (Int) -> Unit = { channelId: Int ->
+        navController.navigate(
+            Screens.ChannelDetail.withArgs(channelId)
+        )
+    }
     NavHost(
         navController = navController,
         startDestination = Screens.Dashboard(),
         builder = {
-            composable(
-                route = Screens.Channel(),
-                arguments = listOf(
-                    navArgument(ChannelScreen.ChannelIdBundleKey) {
-                        type = NavType.IntType
-                    }
-                )
-            ) {
-                ChannelScreen(
-                    navigateToChannelPlayer = {
-                        navController.navigate(Screens.VideoPlayer())
-                    },
-                    onBackPressed = {
-                        if (navController.navigateUp()) {
-                            isComingBackFromDifferentScreen = true
-                        }
-                    }
-                )
-            }
             composable(route = Screens.Dashboard()) {
                 DashboardScreen(
-                    openChannelScreen = { channelId ->
-                        navController.navigate(
-                            Screens.Channel.withArgs(channelId)
-                        )
-                    },
-                    openVideoPlayer = {
+                    navigateToPlaylist = { playlistUrl ->
                         coroutineScope.launch {
-                            helper.play(MediaCommand.Common(it.id))
-                            navController.navigate(Screens.VideoPlayer())
+                            navController.navigate(
+                                Screens.Playlist.withArgs(playlistUrl)
+                            )
                         }
                     },
+                    navigateToChannel = navigateToChannel,
+                    navigateToChannelDetail = navigateToChannelDetail,
                     onBackPressed = onBackPressed,
                     isComingBackFromDifferentScreen = isComingBackFromDifferentScreen,
                     resetIsComingBackFromDifferentScreen = {
@@ -71,8 +62,42 @@ fun App(
                     }
                 )
             }
-            composable(route = Screens.VideoPlayer()) {
-                PlayerScreen(
+
+            composable(
+                route = Screens.Playlist(),
+                arguments = listOf(
+                    navArgument(PlaylistNavigation.TYPE_URL) {
+                        type = NavType.StringType
+                    }
+                )
+            ) {
+                PlaylistScreen(
+                    onChannelClick = { channel -> navigateToChannel(channel.id) }
+                )
+            }
+            composable(
+                route = Screens.Channel()
+            ) {
+                ChannelScreen(
+                    onBackPressed = {
+                        if (navController.navigateUp()) {
+                            isComingBackFromDifferentScreen = true
+                        }
+                    }
+                )
+            }
+            composable(
+                route = Screens.ChannelDetail(),
+                arguments = listOf(
+                    navArgument(ChannelDetailScreen.ChannelIdBundleKey) {
+                        type = NavType.IntType
+                    }
+                )
+            ) {
+                ChannelDetailScreen(
+                    navigateToChannel = {
+                        navController.navigate(Screens.Channel())
+                    },
                     onBackPressed = {
                         if (navController.navigateUp()) {
                             isComingBackFromDifferentScreen = true

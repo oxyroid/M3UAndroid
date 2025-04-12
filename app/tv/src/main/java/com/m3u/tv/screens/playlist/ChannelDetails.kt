@@ -49,7 +49,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun ChannelDetail(
     channel: Channel,
-    navigateToChannelPlayer: () -> Unit,
+    navigateToChannel: () -> Unit,
     updateFavorite: () -> Unit,
 ) {
     val childPadding = rememberChildPadding()
@@ -81,7 +81,7 @@ fun ChannelDetail(
                 }
                 WatchTrailerButton(
                     channel = channel,
-                    navigateToChannelPlayer = navigateToChannelPlayer,
+                    navigateToChannel = navigateToChannel,
                     updateFavorite = updateFavorite,
                     modifier = Modifier.onFocusChanged {
                         if (it.isFocused) {
@@ -98,7 +98,7 @@ fun ChannelDetail(
 private fun WatchTrailerButton(
     channel: Channel,
     modifier: Modifier = Modifier,
-    navigateToChannelPlayer: () -> Unit,
+    navigateToChannel: () -> Unit,
     updateFavorite: () -> Unit,
 ) {
     Row(
@@ -106,7 +106,7 @@ private fun WatchTrailerButton(
         modifier = modifier.padding(top = 24.dp),
     ) {
         Button(
-            onClick = navigateToChannelPlayer,
+            onClick = navigateToChannel,
             contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
             shape = ButtonDefaults.shape(shape = JetStreamButtonShape)
         ) {

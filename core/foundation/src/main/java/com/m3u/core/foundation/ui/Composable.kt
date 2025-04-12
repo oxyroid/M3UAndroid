@@ -8,3 +8,6 @@ fun composableOf(block: @Composable () -> Unit): @Composable () -> Unit = block
 @Composable
 fun composableOf(condition: Boolean, block: @Composable () -> Unit): (@Composable () -> Unit)? = block.takeIf { condition }
 
+@Composable
+fun <T> composableOf(block: @Composable (T) -> Unit): @Composable (T) -> Unit = block
+

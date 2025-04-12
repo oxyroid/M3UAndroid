@@ -22,7 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.m3u.smartphone.ui.material.model.LocalSpacing
-import com.m3u.smartphone.ui.material.shape.AbsoluteSmoothCornerShape
+import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 
 @Composable
 fun Badge(

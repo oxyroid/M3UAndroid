@@ -30,6 +30,7 @@ import androidx.tv.material3.CompactCard
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil.compose.AsyncImage
+import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 import com.m3u.data.database.model.Channel
 import com.m3u.tv.theme.JetStreamBorderWidth
 
@@ -56,6 +57,7 @@ private fun ChannelGalleryItem(
     modifier: Modifier = Modifier,
     onChannelClick: (channel: Channel) -> Unit
 ) {
+    val shape = AbsoluteSmoothCornerShape(16.dp, 100)
     Column(modifier = Modifier.fillMaxSize()) {
         Spacer(modifier = Modifier.height(JetStreamBorderWidth))
         var isFocused by remember { mutableStateOf(false) }
@@ -65,12 +67,26 @@ private fun ChannelGalleryItem(
                 .aspectRatio(2f)
                 .padding(end = 32.dp)
                 .onFocusChanged { isFocused = it.isFocused || it.hasFocus },
-            scale = CardDefaults.scale(focusedScale = 1f),
+            scale = CardDefaults.scale(focusedScale = 1.1f),
+            shape = CardDefaults.shape(shape),
             border = CardDefaults.border(
+                border = Border(
+                    BorderStroke(
+                        width = 2.dp,
+                        color = MaterialTheme.colorScheme.border
+                    ),
+                    shape = shape
+                ),
                 focusedBorder = Border(
-                    border = BorderStroke(
-                        width = JetStreamBorderWidth, color = MaterialTheme.colorScheme.onSurface
-                    )
+                    BorderStroke(width = 4.dp, color = Color.White),
+                    shape = shape
+                ),
+                pressedBorder = Border(
+                    BorderStroke(
+                        width = 4.dp,
+                        color = MaterialTheme.colorScheme.border
+                    ),
+                    shape = shape
                 )
             ),
             colors = CardDefaults.colors(

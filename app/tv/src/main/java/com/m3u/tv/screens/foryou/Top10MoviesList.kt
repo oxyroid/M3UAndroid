@@ -1,4 +1,4 @@
-package com.m3u.tv.screens.home
+package com.m3u.tv.screens.foryou
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade

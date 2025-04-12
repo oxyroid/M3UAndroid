@@ -1,7 +1,5 @@
 package com.m3u.business.playlist
 
-import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -11,7 +9,6 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.drawable.toBitmap
-import androidx.core.net.toUri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -19,8 +16,6 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import androidx.tvprovider.media.tv.PreviewProgram
-import androidx.tvprovider.media.tv.TvContractCompat
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkQuery
@@ -41,7 +36,6 @@ import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.isSeries
-import com.m3u.data.database.model.type
 import com.m3u.data.parser.xtream.XtreamChannelInfo
 import com.m3u.data.repository.media.MediaRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
@@ -77,9 +71,6 @@ import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
-import androidx.tvprovider.media.tv.Channel as TvProviderChannel
-
-const val REQUEST_CHANNEL_BROWSABLE = 4001
 
 @HiltViewModel
 class PlaylistViewModel @Inject constructor(
@@ -221,81 +212,6 @@ class PlaylistViewModel @Inject constructor(
                 )
                 .build()
             ShortcutManagerCompat.pushDynamicShortcut(context, shortcutInfo)
-        }
-    }
-
-    @SuppressLint("RestrictedApi")
-    fun createTvRecommend(activityContext: Context, id: Int) {
-        val channelInternalProviderId = "M3U"
-        val programInternalProviderId = "Program_$id"
-        val contentResolver = activityContext.contentResolver
-        val existingChannel: TvProviderChannel? = run {
-            contentResolver.query(
-                TvContractCompat.Channels.CONTENT_URI,
-                null,
-                null,
-                null,
-                null
-            )?.use { cursor ->
-                while (cursor.moveToNext()) {
-                    val channel = TvProviderChannel.fromCursor(cursor)
-                    if (channel.internalProviderId == channelInternalProviderId) return@run channel
-                }
-            }
-            null
-        }
-        viewModelScope.launch {
-            val channel = channelRepository.get(id) ?: return@launch
-            val type = when (playlistRepository.get(channel.playlistUrl)?.type) {
-                in Playlist.VOD_TYPES -> TvContractCompat.PreviewPrograms.TYPE_MOVIE
-                in Playlist.SERIES_TYPES -> TvContractCompat.PreviewPrograms.TYPE_TV_EPISODE
-                else -> TvContractCompat.PreviewPrograms.TYPE_CHANNEL
-            }
-            val channelBuilder = when (existingChannel) {
-                null -> TvProviderChannel.Builder()
-                else -> TvProviderChannel.Builder(existingChannel)
-            }
-            val tvChannel = channelBuilder
-                .setType(TvContractCompat.Channels.TYPE_PREVIEW)
-                .setDisplayName("M3U")
-                .setInternalProviderId(channelInternalProviderId)
-                .setAppLinkIntentUri("content://m3u.com/discover".toUri())
-                .build()
-
-            val channelId = tvChannel.id
-
-            if (existingChannel == null) {
-                try {
-                    val intent = Intent(TvContractCompat.ACTION_REQUEST_CHANNEL_BROWSABLE)
-                    intent.putExtra(TvContractCompat.EXTRA_CHANNEL_ID, channelId)
-                    (activityContext as Activity).startActivityForResult(
-                        intent,
-                        REQUEST_CHANNEL_BROWSABLE,
-                        null
-                    )
-                } catch (exception: Exception) {
-                    logger.log(exception)
-                }
-                contentResolver.insert(
-                    TvContractCompat.Channels.CONTENT_URI,
-                    tvChannel.toContentValues()
-                )
-            }
-
-            val program = PreviewProgram.Builder()
-                .setChannelId(channelId)
-                .setType(type)
-                .setTitle(channel.title)
-                .setPreviewVideoUri(channel.url.toUri())
-                .setPosterArtUri(channel.cover?.toUri())
-                .setIntentUri("content://m3u.com/discover/$id".toUri())
-                .setInternalProviderId(programInternalProviderId)
-                .build()
-
-            contentResolver.insert(
-                TvContractCompat.PreviewPrograms.CONTENT_URI,
-                program.toContentValues()
-            )
         }
     }
 

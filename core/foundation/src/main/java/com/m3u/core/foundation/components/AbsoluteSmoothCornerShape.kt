@@ -1,4 +1,4 @@
-package com.m3u.smartphone.ui.material.shape
+package com.m3u.core.foundation.components
 
 import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.foundation.shape.CornerSize

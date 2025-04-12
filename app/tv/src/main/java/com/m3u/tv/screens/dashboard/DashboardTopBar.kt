@@ -39,7 +39,6 @@ import androidx.tv.material3.Tab
 import androidx.tv.material3.TabRow
 import androidx.tv.material3.Text
 import com.m3u.core.foundation.ui.thenIf
-import com.m3u.i18n.R
 import com.m3u.tv.screens.Screens
 import com.m3u.tv.theme.IconSize
 import com.m3u.tv.theme.JetStreamCardShape
@@ -59,9 +58,7 @@ private const val PROFILE_SCREEN_INDEX = -1
 fun DashboardTopBar(
     modifier: Modifier = Modifier,
     selectedTabIndex: Int,
-    screens: List<Screens> = TopBarTabs,
-    focusRequesters: List<FocusRequester> = remember { TopBarFocusRequesters },
-    onScreenSelection: (screen: Screens) -> Unit
+    onScreenSelection: (Screens) -> Unit
 ) {
     val focusManager = LocalFocusManager.current
     val (parent, child) = createInitialFocusRestorerModifiers()
@@ -79,13 +76,13 @@ fun DashboardTopBar(
             UserAvatar(
                 modifier = Modifier
                     .size(32.dp)
-                    .focusRequester(focusRequesters[0])
+                    .focusRequester(TopBarFocusRequesters[0])
                     .semantics {
                         contentDescription = "UserAvatar"
                     },
                 selected = selectedTabIndex == PROFILE_SCREEN_INDEX,
                 onClick = {
-                    onScreenSelection(Screens.Profile)
+                    onScreenSelection(TopBarTabs[0])
                 }
             )
             Row(
@@ -95,10 +92,9 @@ fun DashboardTopBar(
 
                 Spacer(modifier = Modifier.width(20.dp))
                 TabRow(
-                    modifier = Modifier
-                        .onFocusChanged {
-                            isTabRowFocused = it.isFocused || it.hasFocus
-                        },
+                    modifier = Modifier.onFocusChanged {
+                        isTabRowFocused = it.isFocused || it.hasFocus
+                    },
                     selectedTabIndex = selectedTabIndex,
                     indicator = { tabPositions, _ ->
                         if (selectedTabIndex >= 0) {
@@ -111,20 +107,21 @@ fun DashboardTopBar(
                     },
                     separator = { Spacer(modifier = Modifier) }
                 ) {
-                    screens.forEachIndexed { index, screen ->
+                    TopBarTabs.forEachIndexed { index, screen ->
+                        val selected = index == selectedTabIndex
                         key(index) {
                             Tab(
                                 modifier = Modifier
                                     .height(32.dp)
-                                    .focusRequester(focusRequesters[index + 1])
-                                    .thenIf(index == selectedTabIndex) { child },
-                                selected = index == selectedTabIndex,
+                                    .focusRequester(TopBarFocusRequesters[index + 1])
+                                    .thenIf(selected) { child },
+                                selected = selected,
                                 onFocus = { onScreenSelection(screen) },
                                 onClick = { focusManager.moveFocus(FocusDirection.Down) },
                             ) {
                                 if (screen.tabIcon != null) {
                                     Icon(
-                                        screen.tabIcon,
+                                        imageVector = screen.tabIcon,
                                         modifier = Modifier.padding(4.dp),
                                         contentDescription = "DashboardSearchButton",
                                         tint = LocalContentColor.current

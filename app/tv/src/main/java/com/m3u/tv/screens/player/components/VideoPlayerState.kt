@@ -4,10 +4,12 @@ import androidx.annotation.IntRange
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.media3.common.Player
+import androidx.media3.common.listen
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.state.PlayPauseButtonState
 import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
@@ -22,12 +24,17 @@ class VideoPlayerState(
     @IntRange(from = 0)
     private val hideSeconds: Int,
     val playPauseButtonState: PlayPauseButtonState,
+    val playbackState: Int
 ) {
     var isControlsVisible by mutableStateOf(true)
         private set
 
     val isPlaying
         get() = !playPauseButtonState.showPlay
+
+    val isBuffering
+        get() = playbackState == Player.STATE_IDLE ||
+                playbackState == Player.STATE_BUFFERING
 
     fun togglePlayPause() {
         playPauseButtonState.onClick()
@@ -69,10 +76,19 @@ fun rememberVideoPlayerState(
     @IntRange(from = 0) hideSeconds: Int = 2
 ): VideoPlayerState {
     val playPauseButtonState = rememberPlayPauseButtonState(player)
+    var playbackState by remember { mutableIntStateOf(Player.STATE_IDLE) }
+    LaunchedEffect(player) {
+        player.listen {
+            if (it.contains(Player.EVENT_PLAYBACK_STATE_CHANGED)) {
+                playbackState = this.playbackState
+            }
+        }
+    }
     return remember(playPauseButtonState) {
         VideoPlayerState(
             hideSeconds = hideSeconds,
-            playPauseButtonState = playPauseButtonState
+            playPauseButtonState = playPauseButtonState,
+            playbackState = playbackState
         )
     }
         .also { LaunchedEffect(it) { it.observe() } }

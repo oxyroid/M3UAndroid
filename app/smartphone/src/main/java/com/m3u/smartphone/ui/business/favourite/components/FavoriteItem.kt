@@ -19,7 +19,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.data.database.model.Channel
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.material.model.LocalSpacing
-import com.m3u.smartphone.ui.material.shape.AbsoluteSmoothCornerShape
+import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlin.time.Duration.Companion.days

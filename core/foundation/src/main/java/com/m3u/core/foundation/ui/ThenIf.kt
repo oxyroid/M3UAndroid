@@ -6,6 +6,6 @@ inline fun Modifier.thenIf(condition: Boolean, factory: () -> Modifier): Modifie
     if (condition) factory() else Modifier
 )
 
-inline fun <T> Modifier.thenNoN(key: T?, factory: (T) -> Modifier): Modifier = then(
+inline fun <T> Modifier.notNull(key: T?, factory: (T) -> Modifier): Modifier = then(
     if (key != null) factory(key) else Modifier
 )

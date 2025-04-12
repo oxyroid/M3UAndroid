@@ -26,33 +26,17 @@ class RemoteService : Service() {
         ServiceLoader.load<OnRemoteCall>(
             OnRemoteCall::class.java,
             application.classLoader
-        ).let {
-            val count = it.count()
-            if (count == 0) {
-                throw IllegalStateException("No implementation of OnRemoteCall found")
-            } else if (count > 1) {
-                throw IllegalStateException("Multiple implementations of OnRemoteCall found")
-            } else {
-                it.first()
+        )
+            .single().apply {
+                setDependencies(dependencies)
             }
-        }.apply {
-            setDependencies(dependencies)
-        }
     }
     private val dependencies: RemoteServiceDependencies by lazy {
         ServiceLoader.load<RemoteServiceDependencies>(
             RemoteServiceDependencies::class.java,
             application.classLoader
-        ).let {
-            val count = it.count()
-            if (count == 0) {
-                throw IllegalStateException("No implementation of RemoteServiceDependencies found")
-            } else if (count > 1) {
-                throw IllegalStateException("Multiple implementations of RemoteServiceDependencies found")
-            } else {
-                it.first()
-            }
-        }
+        )
+            .single()
     }
 
     private val binders = ConcurrentHashMap<String, IRemoteService.Stub>()

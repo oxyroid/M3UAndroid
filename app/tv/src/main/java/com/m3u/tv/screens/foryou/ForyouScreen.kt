@@ -1,5 +1,6 @@
-package com.m3u.tv.screens.home
+package com.m3u.tv.screens.foryou
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -21,18 +22,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.tv.material3.Border
 import androidx.tv.material3.CardDefaults
 import androidx.tv.material3.CompactCard
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.m3u.business.foryou.ForyouViewModel
 import com.m3u.business.foryou.Recommend
+import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 import com.m3u.core.foundation.components.CircularProgressIndicator
 import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.Channel
@@ -41,9 +45,9 @@ import com.m3u.tv.screens.dashboard.rememberChildPadding
 import com.m3u.tv.theme.LexendExa
 
 @Composable
-fun HomeScreen(
+fun ForyouScreen(
     navigateToPlaylist: (playlistUrl: String) -> Unit,
-    navigateToChannel: (channel: Channel) -> Unit,
+    navigateToChannel: (channelId: Int) -> Unit,
     onScroll: (isTopBarVisible: Boolean) -> Unit,
     isTopBarVisible: Boolean,
     viewModel: ForyouViewModel = hiltViewModel(),
@@ -57,6 +61,7 @@ fun HomeScreen(
                     Modifier.align(Alignment.Center)
                 )
             }
+
             is Resource.Success -> {
                 Catalog(
                     playlists = playlists.data,
@@ -67,6 +72,7 @@ fun HomeScreen(
                     isTopBarVisible = isTopBarVisible
                 )
             }
+
             is Resource.Failure -> {
                 Text(
                     text = playlists.message.orEmpty()
@@ -82,7 +88,7 @@ private fun Catalog(
     specs: List<Recommend.Spec>,
     onScroll: (isTopBarVisible: Boolean) -> Unit,
     navigateToPlaylist: (playlistUrl: String) -> Unit,
-    navigateToChannel: (channel: Channel) -> Unit,
+    navigateToChannel: (channelId: Int) -> Unit,
     modifier: Modifier = Modifier,
     isTopBarVisible: Boolean = true,
 ) {
@@ -93,7 +99,7 @@ private fun Catalog(
     val shouldShowTopBar by remember {
         derivedStateOf {
             lazyListState.firstVisibleItemIndex == 0 &&
-                lazyListState.firstVisibleItemScrollOffset < 300
+                    lazyListState.firstVisibleItemScrollOffset < 300
         }
     }
 
@@ -117,8 +123,9 @@ private fun Catalog(
                     onClickSpec = { spec ->
                         when (spec) {
                             is Recommend.UnseenSpec -> {
-                                navigateToChannel(spec.channel)
+                                navigateToChannel(spec.channel.id)
                             }
+
                             is Recommend.DiscoverSpec -> TODO()
                             is Recommend.NewRelease -> TODO()
                         }
@@ -137,16 +144,7 @@ private fun Catalog(
         item(contentType = "PlaylistsRow") {
             val startPadding: Dp = rememberChildPadding().start
             val endPadding: Dp = rememberChildPadding().end
-            Text(
-                text = "Playlist",
-                style = MaterialTheme.typography.headlineLarge.copy(
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 30.sp
-                ),
-                modifier = Modifier
-                    .alpha(1f)
-                    .padding(start = startPadding, top = 16.dp, bottom = 16.dp)
-            )
+            val shape = AbsoluteSmoothCornerShape(16.dp, 100)
             LazyRow(
                 modifier = Modifier
                     .focusGroup()
@@ -169,9 +167,30 @@ private fun Catalog(
                         colors = CardDefaults.compactCardColors(
                             containerColor = MaterialTheme.colorScheme.primary
                         ),
+                        shape = CardDefaults.shape(shape),
+                        border = CardDefaults.border(
+                            border = Border(
+                                BorderStroke(
+                                    width = 2.dp,
+                                    color = MaterialTheme.colorScheme.border
+                                ),
+                                shape = shape
+                            ),
+                            focusedBorder = Border(
+                                BorderStroke(width = 4.dp, color = Color.White),
+                                shape = shape
+                            ),
+                            pressedBorder = Border(
+                                BorderStroke(
+                                    width = 4.dp,
+                                    color = MaterialTheme.colorScheme.border
+                                ),
+                                shape = shape
+                            )
+                        ),
                         image = {},
                         modifier = Modifier
-                            .width(325.dp)
+                            .width(265.dp)
                             .aspectRatio(2f)
                     )
                 }

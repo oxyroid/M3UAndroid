@@ -4,11 +4,35 @@ import android.net.Uri
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.m3u.business.playlist.PlaylistNavigation
+import com.m3u.data.database.model.Playlist
 import com.m3u.i18n.R
-import com.m3u.tv.screens.playlist.ChannelScreen
-import com.m3u.tv.screens.player.VideoPlayerScreen
+import com.m3u.tv.screens.playlist.ChannelDetailScreen
+
+sealed class DashboardKey {
+    data class Common(
+        override val screens: Screens,
+        override val focusRequester: FocusRequester
+    ) : DashboardKey()
+
+    data class PlaylistSpec(
+        val playlist: Playlist,
+        override val focusRequester: FocusRequester
+    ) : DashboardKey() {
+        override val screens: Screens = Screens.Playlist
+    }
+
+    data class ProfileSpec(
+        override val focusRequester: FocusRequester
+    ): DashboardKey() {
+        override val screens: Screens = Screens.Profile
+    }
+
+    abstract val focusRequester: FocusRequester
+    abstract val screens: Screens
+}
 
 enum class Screens(
     private val args: List<String>? = null,
@@ -16,14 +40,13 @@ enum class Screens(
     val tabIcon: ImageVector? = null,
     @StringRes val title: Int? = null
 ) {
-    Profile,
+    Profile(isTabItem = true),
     Home(
         title = R.string.ui_destination_foryou,
         isTabItem = true
     ),
     Playlist(
         title = R.string.ui_destination_playlist,
-        isTabItem = true,
         args = listOf(PlaylistNavigation.TYPE_URL)
     ),
     Favorite(
@@ -34,9 +57,9 @@ enum class Screens(
         isTabItem = true,
         tabIcon = Icons.Default.Search
     ),
-    Channel(args = listOf(ChannelScreen.ChannelIdBundleKey)),
-    Dashboard,
-    VideoPlayer(args = listOf(VideoPlayerScreen.ChannelIdBundleKey));
+    Channel,
+    ChannelDetail(args = listOf(ChannelDetailScreen.ChannelIdBundleKey)),
+    Dashboard;
 
     operator fun invoke(): String {
         val argList = StringBuilder()

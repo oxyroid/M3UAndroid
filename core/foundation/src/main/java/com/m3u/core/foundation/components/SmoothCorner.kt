@@ -1,4 +1,4 @@
-package com.m3u.smartphone.ui.material.shape
+package com.m3u.core.foundation.components
 
 import kotlin.math.*
 

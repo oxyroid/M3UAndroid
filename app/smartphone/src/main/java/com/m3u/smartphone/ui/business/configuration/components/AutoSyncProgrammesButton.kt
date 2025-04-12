@@ -17,7 +17,7 @@ import com.m3u.core.util.basic.title
 import com.m3u.i18n.R
 import com.m3u.smartphone.ui.material.components.SelectionsDefaults
 import com.m3u.smartphone.ui.material.model.LocalSpacing
-import com.m3u.smartphone.ui.material.shape.AbsoluteSmoothCornerShape
+import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 
 @Composable
 internal fun AutoSyncProgrammesButton(

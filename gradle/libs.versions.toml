@@ -13,7 +13,6 @@ androidx-tv = "1.0.0"
 androidx-media3 = "1.6.0"
 androidx-work = "2.10.0"
 androidx-room = "2.7.0"
-androidx-tvprovider = "1.0.0"
 androidx-startup = "1.2.0"
 androidx-paging = "3.3.6"
 
@@ -56,8 +55,7 @@ ktor-server = "3.1.2"
 mm2d-mmupnp = "3.1.6"
 profileinstaller = "1.4.1"
 jakewharton-disklrucache = "2.0.2"
-junit = "4.13.2"
-wireRuntime = "4.9.2"
+wire = "4.9.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
@@ -123,8 +121,6 @@ androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = 
 androidx-room-paging = { group = "androidx.room", name = "room-paging", version.ref = "androidx-room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "androidx-room" }
 
-androidx-tvprovider = { group = "androidx.tvprovider", name = "tvprovider", version.ref = "androidx-tvprovider" }
-
 auto-service-annotations = { module = "com.google.auto.service:auto-service-annotations", version.ref = "auto-annotations" }
 auto-service-ksp = { module = "dev.zacsweers.autoservice:auto-service-ksp", version.ref = "auto-ksp" }
 
@@ -179,8 +175,7 @@ androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profi
 jakewharton-disklrucache = { group = "com.jakewharton", name = "disklrucache", version.ref = "jakewharton-disklrucache" }
 
 org-jetbrains-kotlin-kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
-junit = { group = "junit", name = "junit", version.ref = "junit" }
-wire-runtime = { module = "com.squareup.wire:wire-runtime", version.ref = "wireRuntime" }
+wire-runtime = { module = "com.squareup.wire:wire-runtime", version.ref = "wire" }
 
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }

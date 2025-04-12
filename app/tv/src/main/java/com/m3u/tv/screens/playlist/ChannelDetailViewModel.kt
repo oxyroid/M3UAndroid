@@ -19,7 +19,7 @@ class ChannelDetailViewModel @Inject constructor(
     private val channelRepository: ChannelRepository
 ) : ViewModel() {
     val channel: StateFlow<Channel?> = savedStateHandle
-        .getStateFlow(ChannelScreen.ChannelIdBundleKey, -1)
+        .getStateFlow(ChannelDetailScreen.ChannelIdBundleKey, -1)
         .flatMapLatest { id -> channelRepository.observe(id) }
         .stateIn(
             scope = viewModelScope,

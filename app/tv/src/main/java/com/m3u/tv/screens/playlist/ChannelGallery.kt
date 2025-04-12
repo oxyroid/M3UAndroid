@@ -19,8 +19,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
@@ -37,10 +36,10 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil.compose.AsyncImage
 import com.m3u.business.playlist.PlaylistViewModel
+import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 import com.m3u.core.foundation.ui.thenIf
 import com.m3u.data.database.model.Channel
 import com.m3u.tv.theme.JetStreamBorderWidth
-import com.m3u.tv.utils.focusOnInitialVisibility
 
 fun LazyListScope.channelGallery(
     channels: List<PlaylistViewModel.CategoryWithChannels>,
@@ -50,15 +49,26 @@ fun LazyListScope.channelGallery(
 ) {
     itemsIndexed(channels) { i, (category, channels) ->
         val pagingChannels = channels.collectAsLazyPagingItems()
+        var hasFocus by remember { mutableStateOf(false) }
         LazyRow(
-            modifier = Modifier.focusRestorer(),
+            modifier = Modifier
+                .onFocusChanged {
+                    hasFocus = it.hasFocus
+                }
+                .focusRestorer()
+                .thenIf(!hasFocus) {
+                    Modifier.drawWithContent {
+                        drawContent()
+                        drawRect(Color.Black.copy(0.4f))
+                    }
+                },
             contentPadding = PaddingValues(start = startPadding, end = endPadding),
         ) {
             items(pagingChannels.itemCount) { j ->
                 val channel = pagingChannels[j]
                 if (channel != null) {
                     ChannelGalleryItem(
-                        itemWidth = 432.dp,
+                        itemWidth = 382.dp,
                         onChannelClick = onChannelClick,
                         channel = channel
                     )
@@ -78,23 +88,34 @@ private fun ChannelGalleryItem(
     Column(modifier = Modifier.fillMaxSize()) {
         Spacer(modifier = Modifier.height(JetStreamBorderWidth))
         var isFocused by remember { mutableStateOf(false) }
+        val shape = AbsoluteSmoothCornerShape(16.dp, 100)
         CompactCard(
             modifier = modifier
                 .width(itemWidth)
                 .aspectRatio(2f)
                 .padding(end = 32.dp)
                 .onFocusChanged { isFocused = it.isFocused || it.hasFocus },
-            scale = CardDefaults.scale(focusedScale = 1f),
+            scale = CardDefaults.scale(focusedScale = 1.1f),
+            shape = CardDefaults.shape(shape),
             border = CardDefaults.border(
+                border = Border(
+                    BorderStroke(
+                        width = 2.dp,
+                        color = MaterialTheme.colorScheme.border
+                    ),
+                    shape = shape
+                ),
                 focusedBorder = Border(
-                    border = BorderStroke(
-                        width = JetStreamBorderWidth, color = MaterialTheme.colorScheme.onSurface
-                    )
+                    BorderStroke(width = 4.dp, color = Color.White),
+                    shape = shape
+                ),
+                pressedBorder = Border(
+                    BorderStroke(
+                        width = 4.dp,
+                        color = MaterialTheme.colorScheme.border
+                    ),
+                    shape = shape
                 )
-            ),
-            colors = CardDefaults.colors(
-                containerColor = Color.Transparent,
-                contentColor = MaterialTheme.colorScheme.onSurface,
             ),
             onClick = { onChannelClick(channel) },
             image = {

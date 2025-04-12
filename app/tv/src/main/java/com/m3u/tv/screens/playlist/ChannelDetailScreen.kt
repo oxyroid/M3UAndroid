@@ -29,13 +29,13 @@ import com.m3u.tv.screens.dashboard.rememberChildPadding
 import com.m3u.tv.utils.LocalHelper
 import kotlinx.coroutines.launch
 
-object ChannelScreen {
+object ChannelDetailScreen {
     const val ChannelIdBundleKey = "channelId"
 }
 
 @Composable
-fun ChannelScreen(
-    navigateToChannelPlayer: () -> Unit,
+fun ChannelDetailScreen(
+    navigateToChannel: () -> Unit,
     onBackPressed: () -> Unit,
     viewModel: ChannelDetailViewModel = hiltViewModel()
 ) {
@@ -50,11 +50,11 @@ fun ChannelScreen(
         else -> {
             Details(
                 channel = channel,
-                navigateToChannelPlayer = {
+                navigateToChannel = {
                     coroutineScope.launch {
                         helper.play(MediaCommand.Common(channel.id))
                     }
-                    navigateToChannelPlayer()
+                    navigateToChannel()
                 },
                 updateFavorite = viewModel::updateFavorite,
                 onBackPressed = onBackPressed,
@@ -69,7 +69,7 @@ fun ChannelScreen(
 @Composable
 private fun Details(
     channel: Channel?,
-    navigateToChannelPlayer: () -> Unit,
+    navigateToChannel: () -> Unit,
     updateFavorite: () -> Unit,
     onBackPressed: () -> Unit,
     modifier: Modifier = Modifier,
@@ -85,7 +85,7 @@ private fun Details(
             item {
                 ChannelDetail(
                     channel = channel,
-                    navigateToChannelPlayer = navigateToChannelPlayer,
+                    navigateToChannel = navigateToChannel,
                     updateFavorite = updateFavorite
                 )
             }
