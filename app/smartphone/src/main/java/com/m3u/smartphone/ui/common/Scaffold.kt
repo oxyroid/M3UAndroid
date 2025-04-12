@@ -2,6 +2,7 @@ package com.m3u.smartphone.ui.common
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -130,12 +131,13 @@ internal fun Items(
 @Composable
 internal fun MainContent(
     windowInsets: WindowInsets,
+    showQuery: Boolean,
+    onShowQueryChange: (Boolean) -> Unit,
     onBackPressed: (() -> Unit)?,
     navigateToChannel: () -> Unit,
     content: @Composable BoxScope.(PaddingValues) -> Unit,
     viewModel: SmartphoneViewModel = hiltViewModel()
 ) {
-    val spacing = LocalSpacing.current
     val helper = LocalHelper.current
     val hazeState = LocalHazeState.current
 
@@ -149,20 +151,18 @@ internal fun MainContent(
 
     val query by viewModel.query.collectAsStateWithLifecycle()
     val onQueryChange = { query: String -> viewModel.query.value = query }
-    var showQuery by remember { mutableStateOf(false) }
     val channels: Flow<PagingData<Channel>> = viewModel.channels
 
     Scaffold(
         topBar = {
             SearchBar(
                 inputField = {
-                    BackHandler(showQuery) { showQuery = false }
                     SearchBarDefaults.InputField(
                         query = query,
                         onQueryChange = onQueryChange,
                         onSearch = {},
                         expanded = showQuery,
-                        onExpandedChange = { showQuery = it },
+                        onExpandedChange = onShowQueryChange,
                         placeholder = {
                             Column(Modifier.padding(start = 4.dp)) {
                                 Text(
@@ -219,7 +219,7 @@ internal fun MainContent(
                     )
                 },
                 expanded = showQuery,
-                onExpandedChange = { showQuery = it },
+                onExpandedChange = onShowQueryChange,
                 colors = SearchBarDefaults.colors(Color.Transparent),
                 windowInsets = windowInsets,
                 modifier = Modifier
@@ -352,11 +352,11 @@ internal fun ScaffoldLayout(
         layout(layoutWidth, layoutHeight) {
             when (role) {
                 ScaffoldRole.SmartPhone -> {
-                    navigationPlaceables.fastForEach {
-                        it.place(0, layoutHeight - navigationHeight)
-                    }
                     mainContentPlaceables.fastForEach {
                         it.place(0, 0)
+                    }
+                    navigationPlaceables.fastForEach {
+                        it.place(0, layoutHeight - navigationHeight)
                     }
                 }
 

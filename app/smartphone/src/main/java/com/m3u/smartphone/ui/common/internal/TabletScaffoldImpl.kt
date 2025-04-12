@@ -14,7 +14,12 @@ import androidx.compose.material3.NavigationRailDefaults
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.InternalComposeApi
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.m3u.core.foundation.ui.composableOf
 import com.m3u.smartphone.ui.common.Items
 import com.m3u.smartphone.ui.common.MainContent
 import com.m3u.smartphone.ui.common.NavigationItemLayout
@@ -38,8 +43,9 @@ internal fun TabletScaffoldImpl(
 ) {
     val navigationWindowInsets = NavigationRailDefaults.windowInsets
     val fob = Metadata.fob
+    var showQuery by remember { mutableStateOf(false) }
 
-    val navigation = @Composable {
+    val navigation = composableOf(!showQuery) {
         NavigationRail(
             modifier = Modifier.fillMaxHeight(),
             containerColor = MaterialTheme.colorScheme.background,
@@ -71,6 +77,8 @@ internal fun TabletScaffoldImpl(
     }
     val mainContent = @Composable { contentPadding: PaddingValues ->
         MainContent(
+            showQuery = showQuery,
+            onShowQueryChange = { showQuery = it },
             windowInsets = WindowInsets.systemBars.exclude(
                 navigationWindowInsets.only(WindowInsetsSides.Start)
             ),
@@ -83,7 +91,7 @@ internal fun TabletScaffoldImpl(
     Background(modifier) {
         ScaffoldLayout(
             role = ScaffoldRole.Tablet,
-            navigation = navigation,
+            navigation = navigation ?: {},
             mainContent = mainContent
         )
     }
