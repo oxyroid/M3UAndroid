@@ -352,11 +352,11 @@ internal fun ScaffoldLayout(
         layout(layoutWidth, layoutHeight) {
             when (role) {
                 ScaffoldRole.SmartPhone -> {
-                    mainContentPlaceables.fastForEach {
-                        it.place(0, 0)
-                    }
                     navigationPlaceables.fastForEach {
                         it.place(0, layoutHeight - navigationHeight)
+                    }
+                    mainContentPlaceables.fastForEach {
+                        it.place(0, 0)
                     }
                 }
 
