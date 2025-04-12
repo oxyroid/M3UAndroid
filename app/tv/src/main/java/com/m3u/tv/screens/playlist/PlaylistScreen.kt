@@ -1,6 +1,5 @@
 package com.m3u.tv.screens.playlist
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,8 +20,12 @@ fun PlaylistScreen(
     viewModel: PlaylistViewModel = hiltViewModel(),
 ) {
     val channels by viewModel.channels.collectAsStateWithLifecycle()
+    val pinnedCategories by viewModel.pinnedCategories.collectAsStateWithLifecycle()
     Catalog(
         channels = channels,
+        pinnedCategories = pinnedCategories,
+        onPinOrUnpinCategory = viewModel::onPinOrUnpinCategory,
+        onHideCategory = viewModel::onHideCategory,
         onChannelClick = onChannelClick,
         modifier = Modifier.fillMaxSize(),
     )
@@ -31,6 +34,9 @@ fun PlaylistScreen(
 @Composable
 private fun Catalog(
     channels: List<PlaylistViewModel.CategoryWithChannels>,
+    pinnedCategories: List<String>,
+    onPinOrUnpinCategory: (String) -> Unit,
+    onHideCategory: (String) -> Unit,
     onChannelClick: (channel: Channel) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -39,11 +45,13 @@ private fun Catalog(
     LazyColumn(
         modifier = modifier,
         state = lazyListState,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(top = childPadding.top, bottom = 104.dp)
     ) {
         channelGallery(
             channels = channels,
+            pinnedCategories = pinnedCategories,
+            onPinOrUnpinCategory = onPinOrUnpinCategory,
+            onHideCategory = onHideCategory,
             onChannelClick = onChannelClick,
             startPadding = childPadding.start,
             endPadding = childPadding.end,

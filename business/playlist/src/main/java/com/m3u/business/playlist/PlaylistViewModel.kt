@@ -332,14 +332,14 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    fun pinOrUnpinCategory(category: String) {
+    fun onPinOrUnpinCategory(category: String) {
         val currentPlaylistUrl = playlistUrl.value
         viewModelScope.launch {
             playlistRepository.pinOrUnpinCategory(currentPlaylistUrl, category)
         }
     }
 
-    fun hideCategory(category: String) {
+    fun onHideCategory(category: String) {
         val currentPlaylistUrl = playlistUrl.value
         viewModelScope.launch {
             playlistRepository.hideOrUnhideCategory(currentPlaylistUrl, category)
