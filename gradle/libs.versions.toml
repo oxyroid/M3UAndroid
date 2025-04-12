@@ -55,7 +55,7 @@ ktor-server = "3.1.2"
 mm2d-mmupnp = "3.1.6"
 profileinstaller = "1.4.1"
 jakewharton-disklrucache = "2.0.2"
-wire = "4.9.2"
+wire = "4.9.11"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
