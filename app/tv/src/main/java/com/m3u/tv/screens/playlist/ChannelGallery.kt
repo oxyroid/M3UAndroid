@@ -1,5 +1,6 @@
 package com.m3u.tv.screens.playlist
 
+import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -45,6 +46,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -54,10 +56,12 @@ import androidx.tv.material3.CardDefaults
 import androidx.tv.material3.CompactCard
 import androidx.tv.material3.Icon
 import androidx.tv.material3.IconButton
-import androidx.tv.material3.LocalContentColor
+import androidx.tv.material3.IconButtonDefaults
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil.compose.AsyncImage
+import coil.request.CachePolicy
+import coil.request.ImageRequest
 import com.m3u.business.playlist.PlaylistViewModel
 import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 import com.m3u.core.foundation.ui.thenIf
@@ -73,12 +77,14 @@ fun LazyListScope.channelGallery(
     onHideCategory: (String) -> Unit,
     startPadding: Dp,
     endPadding: Dp,
-    onChannelClick: (channel: Channel) -> Unit
+    onChannelClick: (channel: Channel) -> Unit,
+    reloadThumbnail: suspend (channelUrl: String) -> Uri?,
+    syncThumbnail: suspend (channelUrl: String) -> Uri?,
 ) {
     itemsIndexed(channels, key = { _, (category, _) -> category }) { i, (category, channels) ->
+        var hasFocus by remember { mutableStateOf(false) }
         Column {
             val pagingChannels = channels.collectAsLazyPagingItems()
-            var hasFocus by remember { mutableStateOf(false) }
             AnimatedVisibility(
                 visible = hasFocus,
                 modifier = Modifier.fillMaxWidth()
@@ -141,17 +147,23 @@ fun LazyListScope.channelGallery(
                                 .fillMaxHeight()
                                 .padding(end = startPadding)
                         ) {
+                            val pinned = category in pinnedCategories
                             IconButton(
+                                colors = IconButtonDefaults.colors(
+                                    containerColor = if (pinned) MaterialTheme.colorScheme.primary.copy(
+                                        alpha = 0.8f
+                                    )
+                                    else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f),
+                                    focusedContainerColor = if (pinned) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.onSurface,
+                                ),
                                 onClick = {
                                     onPinOrUnpinCategory(category)
                                 }
                             ) {
-                                val pinned = category in pinnedCategories
                                 Icon(
                                     imageVector = Icons.Rounded.PushPin,
                                     contentDescription = "PushPin",
-                                    tint = if (pinned) MaterialTheme.colorScheme.primary
-                                    else LocalContentColor.current
                                 )
                             }
                             IconButton(
@@ -173,6 +185,8 @@ fun LazyListScope.channelGallery(
                         ChannelGalleryItem(
                             itemWidth = 382.dp,
                             onChannelClick = onChannelClick,
+                            reloadThumbnail = reloadThumbnail,
+                            syncThumbnail = syncThumbnail,
                             channel = channel,
                             modifier = Modifier
                                 .thenIf(j == 0 && showControl) {
@@ -193,8 +207,18 @@ private fun ChannelGalleryItem(
     itemWidth: Dp,
     channel: Channel,
     modifier: Modifier = Modifier,
-    onChannelClick: (channel: Channel) -> Unit
+    onChannelClick: (channel: Channel) -> Unit,
+    reloadThumbnail: suspend (channelUrl: String) -> Uri?,
+    syncThumbnail: suspend (channelUrl: String) -> Uri?,
 ) {
+    val context = LocalContext.current
+    val crossfadeImageRequest = { data: Any? ->
+        ImageRequest.Builder(context)
+            .crossfade(800)
+            .memoryCachePolicy(CachePolicy.DISABLED)
+            .data(data)
+            .build()
+    }
     Column(modifier = Modifier.fillMaxSize()) {
         Spacer(modifier = Modifier.height(JetStreamBorderWidth))
         var isFocused by remember { mutableStateOf(false) }
@@ -233,8 +257,32 @@ private fun ChannelGalleryItem(
                     targetValue = if (isFocused) 1f else 0.5f,
                     label = "",
                 )
+                val model: Any? by produceState<Any?>(
+                    initialValue = channel.cover,
+                    key1 = isFocused
+                ) {
+                    val default = channel.cover
+                    if (isFocused) {
+                        val channelUrl = channel.url
+                        delay(600.milliseconds)
+                        val reloaded = reloadThumbnail(channelUrl)
+                            ?.let { crossfadeImageRequest(it) }
+                        if (reloaded == null) {
+                            value = syncThumbnail(channelUrl)
+                                ?.let { crossfadeImageRequest(it) }
+                                ?: default
+                        } else {
+                            value = reloaded
+                            delay(600.milliseconds)
+                            value = syncThumbnail(channelUrl)
+                                ?.let { crossfadeImageRequest(it) } ?: default
+                        }
+                    } else {
+                        value = default
+                    }
+                }
                 AsyncImage(
-                    model = channel.cover,
+                    model = model,
                     contentDescription = channel.title,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier

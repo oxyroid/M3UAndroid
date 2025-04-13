@@ -1,9 +1,11 @@
 package com.m3u.data.service.internal
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.Rect
 import android.net.Uri
 import androidx.compose.runtime.snapshotFlow
+import androidx.core.net.toUri
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -99,6 +101,9 @@ import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
+import java.io.File
+import java.io.FileOutputStream
+import java.util.UUID
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 
@@ -425,6 +430,38 @@ class PlayerManagerImpl @Inject constructor(
     }
         .flowOn(ioDispatcher)
 
+    override suspend fun reloadThumbnail(channelUrl: String): Uri? {
+        val channelPreference = getChannelPreference(channelUrl)
+        return channelPreference?.thumbnail
+    }
+
+    private val thumbnailDir by lazy {
+        context.cacheDir.resolve("thumbnails").apply {
+            if (!exists()) {
+                mkdirs()
+            }
+        }
+    }
+    override suspend fun syncThumbnail(channelUrl: String): Uri? = withContext(ioDispatcher) {
+        val thumbnail = codecs.getThumbnail(context, channelUrl.toUri())?: return@withContext null
+        val filename = UUID.randomUUID().toString() + ".jpeg"
+        val file = File(thumbnailDir, filename)
+        while (!file.createNewFile()) {
+            ensureActive()
+            file.delete()
+        }
+        FileOutputStream(file).use {
+            thumbnail.compress(Bitmap.CompressFormat.JPEG, 50, it)
+        }
+        val uri = file.toUri()
+        addChannelPreference(
+            channelUrl,
+            getChannelPreference(channelUrl)?.copy(
+                thumbnail = uri
+            ) ?: ChannelPreference(thumbnail = uri)
+        )
+        uri
+    }
     private fun createPlayer(
         mediaSourceFactory: MediaSource.Factory,
         tunneling: Boolean
@@ -444,8 +481,9 @@ class PlayerManagerImpl @Inject constructor(
             addListener(this@PlayerManagerImpl)
         }
 
+    private val codecs: Codecs by lazy { Codecs.load() }
     private val renderersFactory: RenderersFactory by lazy {
-        Codecs.load().createRenderersFactory(context)
+        codecs.createRenderersFactory(context)
     }
 
     private fun createTrackSelector(tunneling: Boolean): TrackSelector {
@@ -514,7 +552,7 @@ class PlayerManagerImpl @Inject constructor(
                             logger.post { "onPlayerErrorChanged, parsing error! invalidate remembered mimeType!" }
                             val channelPreference = getChannelPreference(chain.url)
                             if (channelPreference != null) {
-                                updateChannelPreference(
+                                addChannelPreference(
                                     chain.url,
                                     channelPreference.copy(mineType = null)
                                 )
@@ -697,7 +735,7 @@ class PlayerManagerImpl @Inject constructor(
 
             is MimetypeChain.Trying -> {
                 val channelPreference = getChannelPreference(chain.url)
-                updateChannelPreference(
+                addChannelPreference(
                     chain.url,
                     channelPreference?.copy(mineType = chain.mimetype)
                         ?: ChannelPreference(mineType = chain.mimetype)
@@ -737,7 +775,7 @@ class PlayerManagerImpl @Inject constructor(
                 logger.post { "storeContinueWatching, received new position: $cwPosition" }
                 if (cwPosition == -1L) return@collect
                 val channelPreference = getChannelPreference(channelUrl)
-                updateChannelPreference(
+                addChannelPreference(
                     channelUrl,
                     channelPreference?.copy(cwPosition = cwPosition)
                         ?: ChannelPreference(cwPosition = cwPosition)
@@ -766,7 +804,7 @@ class PlayerManagerImpl @Inject constructor(
         val player = this@PlayerManagerImpl.player.value
         withContext(mainDispatcher) {
             if (player != null && continueWatchingCondition.isResettingSupported(player, ignorePositionCondition)) {
-                updateChannelPreference(
+                addChannelPreference(
                     channelUrl,
                     channelPreference?.copy(cwPosition = -1L) ?: ChannelPreference(cwPosition = -1L)
                 )
@@ -815,7 +853,7 @@ class PlayerManagerImpl @Inject constructor(
         return channelPreferenceProvider[channelUrl]
     }
 
-    private suspend fun updateChannelPreference(
+    private suspend fun addChannelPreference(
         channelUrl: String,
         channelPreference: ChannelPreference
     ) {

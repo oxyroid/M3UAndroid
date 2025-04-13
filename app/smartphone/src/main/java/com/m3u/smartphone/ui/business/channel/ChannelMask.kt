@@ -585,7 +585,7 @@ private fun SliderImpl(
             thumb = {
                 SliderDefaults.Thumb(
                     interactionSource = sliderInteractionSource,
-                    thumbSize = DpSize(sliderThumbWidthDp, 44.dp)
+                    thumbSize = DpSize(sliderThumbWidthDp, 20.dp)
                 )
             },
             modifier = Modifier.weight(1f)

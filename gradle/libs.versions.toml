@@ -163,7 +163,8 @@ androidx-benchmark-benchmark-macro-junit4 = { group = "androidx.benchmark", name
 chucker = { module = "com.github.chuckerteam.chucker:library", version.ref = "chucker" }
 chucker-no-op = { module = "com.github.chuckerteam.chucker:library-no-op", version.ref = "chucker" }
 logback-android = { module = "com.github.tony19:logback-android", version.ref = "logback" }
-nextlib-media3-ext = { module = "com.github.anilbeesetti.nextlib:nextlib-media3ext", version.ref = "nextLib" }
+nextlib-media3ext = { module = "com.github.anilbeesetti.nextlib:nextlib-media3ext", version.ref = "nextLib" }
+nextlib-mediainfo = { module = "com.github.anilbeesetti.nextlib:nextlib-mediainfo", version.ref = "nextLib" }
 
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j-api" }
 

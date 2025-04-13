@@ -18,7 +18,8 @@ dependencies {
     implementation(libs.androidx.appcompat)
 
     implementation(libs.androidx.media3.exoplayer)
-    implementation(libs.nextlib.media3.ext)
+    implementation(libs.nextlib.media3ext)
+    implementation(libs.nextlib.mediainfo)
 
     implementation(libs.auto.service.annotations)
 

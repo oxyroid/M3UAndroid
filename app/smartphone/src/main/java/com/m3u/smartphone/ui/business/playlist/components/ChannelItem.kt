@@ -64,6 +64,7 @@ internal fun ChannelItem(
     channel: Channel,
     recently: Boolean,
     zapping: Boolean,
+    cover: Any?,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     programme: Programme?,
@@ -115,9 +116,9 @@ internal fun ChannelItem(
                         .then(modifier)
                 ) {
                     SubcomposeAsyncImage(
-                        model = remember(channel.cover) {
+                        model = remember(cover) {
                             ImageRequest.Builder(context)
-                                .data(channel.cover)
+                                .data(cover)
                                 .size(Size.ORIGINAL)
                                 .build()
                         },
@@ -178,7 +179,7 @@ internal fun ChannelItem(
                     },
                     leadingContent = composableOf(!noPictureMode) {
                         AsyncImage(
-                            model = channel.cover,
+                            model = cover,
                             contentDescription = null,
                             contentScale = ContentScale.Fit,
                             modifier = Modifier.size(56.dp)

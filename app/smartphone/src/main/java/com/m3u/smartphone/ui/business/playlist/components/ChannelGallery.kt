@@ -1,5 +1,6 @@
 package com.m3u.smartphone.ui.business.playlist.components
 
+import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -27,6 +28,8 @@ import com.m3u.core.foundation.components.CircularProgressIndicator
 import com.m3u.smartphone.ui.material.components.VerticalDraggableScrollbar
 import com.m3u.smartphone.ui.material.ktx.plus
 import com.m3u.smartphone.ui.material.model.LocalSpacing
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 internal fun ChannelGallery(
@@ -39,6 +42,8 @@ internal fun ChannelGallery(
     onClick: (Channel) -> Unit,
     onLongClick: (Channel) -> Unit,
     getProgrammeCurrently: suspend (channelId: Int) -> Programme?,
+    reloadThumbnail: suspend (channelUrl: String) -> Uri?,
+    syncThumbnail: suspend (channelUrl: String) -> Uri?,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
@@ -54,6 +59,8 @@ internal fun ChannelGallery(
     val channels = categoryWithChannels?.channels?.collectAsLazyPagingItems()
 
     val currentGetProgrammeCurrently by rememberUpdatedState(getProgrammeCurrently)
+    val currentReloadThumbnail by rememberUpdatedState(reloadThumbnail)
+    val currentSyncThumbnail by rememberUpdatedState(syncThumbnail)
 
     Row(
         modifier = modifier
@@ -80,9 +87,23 @@ internal fun ChannelGallery(
                     ) {
                         value = currentGetProgrammeCurrently(channel.id)
                     }
+                    val loadedUrl: Any? by produceState<Any?>(initialValue = channel.cover) {
+                        val default = channel.cover
+                        delay(1200.milliseconds)
+                        val channelUrl = channel.url
+                        val reloaded = currentReloadThumbnail(channelUrl)
+                        if (reloaded == null) {
+                            value = currentSyncThumbnail(channelUrl) ?: default
+                        } else {
+                            value = reloaded
+                            delay(2400.milliseconds)
+                            value = currentSyncThumbnail(channelUrl) ?: default
+                        }
+                    }
                     ChannelItem(
                         channel = channel,
                         programme = programme,
+                        cover = loadedUrl,
                         recently = recently,
                         zapping = zapping == channel,
                         isVodOrSeriesPlaylist = isVodOrSeriesPlaylist,

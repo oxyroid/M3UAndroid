@@ -1,5 +1,6 @@
 package com.m3u.tv.screens.playlist
 
+import android.net.Uri
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,6 +28,8 @@ fun PlaylistScreen(
         onPinOrUnpinCategory = viewModel::onPinOrUnpinCategory,
         onHideCategory = viewModel::onHideCategory,
         onChannelClick = onChannelClick,
+        reloadThumbnail = viewModel::reloadThumbnail,
+        syncThumbnail = viewModel::syncThumbnail,
         modifier = Modifier.fillMaxSize(),
     )
 }
@@ -38,6 +41,8 @@ private fun Catalog(
     onPinOrUnpinCategory: (String) -> Unit,
     onHideCategory: (String) -> Unit,
     onChannelClick: (channel: Channel) -> Unit,
+    reloadThumbnail: suspend (channelUrl: String) -> Uri?,
+    syncThumbnail: suspend (channelUrl: String) -> Uri?,
     modifier: Modifier = Modifier,
 ) {
     val childPadding = rememberChildPadding()
@@ -55,6 +60,8 @@ private fun Catalog(
             onChannelClick = onChannelClick,
             startPadding = childPadding.start,
             endPadding = childPadding.end,
+            reloadThumbnail = reloadThumbnail,
+            syncThumbnail = syncThumbnail
         )
     }
 }

@@ -1,8 +1,6 @@
 package com.m3u.smartphone.ui.common
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -26,10 +24,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.InternalComposeApi
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -63,7 +59,6 @@ import com.m3u.smartphone.ui.material.components.Destination
 import com.m3u.smartphone.ui.material.components.FontFamilies
 import com.m3u.smartphone.ui.material.effects.currentBackStackEntry
 import com.m3u.smartphone.ui.material.model.LocalHazeState
-import com.m3u.smartphone.ui.material.model.LocalSpacing
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
@@ -241,7 +236,9 @@ internal fun MainContent(
                         }
                     },
                     onLongClick = {},
-                    getProgrammeCurrently = { null }
+                    getProgrammeCurrently = { null },
+                    reloadThumbnail = { null },
+                    syncThumbnail = { null }
                 )
             }
         },

@@ -3,6 +3,7 @@ package com.m3u.business.playlist
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.snapshotFlow
 import androidx.core.content.pm.ShortcutInfoCompat
@@ -80,7 +81,7 @@ class PlaylistViewModel @Inject constructor(
     private val mediaRepository: MediaRepository,
     private val programmeRepository: ProgrammeRepository,
     private val messager: Messager,
-    playerManager: PlayerManager,
+    private val playerManager: PlayerManager,
     preferences: Preferences,
     workManager: WorkManager,
     @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
@@ -361,6 +362,13 @@ class PlaylistViewModel @Inject constructor(
                 series.value = channel
             }
         }
+    }
+
+    suspend fun reloadThumbnail(channelUrl: String): Uri? {
+        return playerManager.reloadThumbnail(channelUrl)
+    }
+    suspend fun syncThumbnail(channelUrl: String): Uri? {
+        return playerManager.syncThumbnail(channelUrl)
     }
 
     val series = MutableStateFlow<Channel?>(null)

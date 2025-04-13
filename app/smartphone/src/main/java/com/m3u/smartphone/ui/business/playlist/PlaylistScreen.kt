@@ -11,6 +11,7 @@ import android.content.res.Configuration.UI_MODE_TYPE_NORMAL
 import android.content.res.Configuration.UI_MODE_TYPE_TELEVISION
 import android.content.res.Configuration.UI_MODE_TYPE_VR_HEADSET
 import android.content.res.Configuration.UI_MODE_TYPE_WATCH
+import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import android.view.KeyEvent
@@ -283,6 +284,9 @@ internal fun PlaylistRoute(
         isVodPlaylist = isVodPlaylist,
         isSeriesPlaylist = isSeriesPlaylist,
         getProgrammeCurrently = { channelId -> viewModel.getProgrammeCurrently(channelId) },
+        reloadThumbnail = { channelUrl -> viewModel.reloadThumbnail(channelUrl) },
+        syncThumbnail = { channelUrl ->
+            /** disabled in smartphone because it will cost too much data*/ null },
         modifier = Modifier
             .fillMaxSize()
             .thenIf(preferences.godMode) {
@@ -353,6 +357,8 @@ private fun PlaylistScreen(
     isVodPlaylist: Boolean,
     isSeriesPlaylist: Boolean,
     getProgrammeCurrently: suspend (channelId: Int) -> Programme?,
+    reloadThumbnail: suspend (channelUrl: String) -> Uri?,
+    syncThumbnail: suspend (channelUrl: String) -> Uri?,
     modifier: Modifier = Modifier
 ) {
     val currentOnScrollUp by rememberUpdatedState(onScrollUp)
@@ -523,6 +529,8 @@ private fun PlaylistScreen(
                         mediaSheetValue = MediaSheetValue.PlaylistScreen(it)
                     },
                     getProgrammeCurrently = getProgrammeCurrently,
+                    reloadThumbnail = reloadThumbnail,
+                    syncThumbnail = syncThumbnail,
                     modifier = Modifier.hazeSource(LocalHazeState.current)
                 )
             }

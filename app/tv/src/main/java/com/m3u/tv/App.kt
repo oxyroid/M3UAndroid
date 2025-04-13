@@ -1,5 +1,6 @@
 package com.m3u.tv
 
+import androidx.compose.animation.fadeIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -73,7 +74,8 @@ fun App(
                     navArgument(PlaylistNavigation.TYPE_URL) {
                         type = NavType.StringType
                     }
-                )
+                ),
+                enterTransition = { fadeIn() }
             ) {
                 PlaylistScreen(
                     onChannelClick = { channel -> navigateToChannel(channel.id) }
