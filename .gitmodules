@@ -1,3 +1,4 @@
 [submodule "extension/api"]
 	path = extension/api
 	url = https://github.com/oxyroid/m3u-extension-api.git
+  branch = main
