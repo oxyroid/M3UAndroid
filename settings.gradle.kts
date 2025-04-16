@@ -35,7 +35,5 @@ include(
     ":lint:annotation",
     ":lint:processor"
 )
-include(
-    ":extension:api",
-    ":extension:runtime"
-)
+includeBuild("extension/api")
+include(":extension:runtime")
