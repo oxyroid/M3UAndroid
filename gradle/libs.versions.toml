@@ -32,7 +32,7 @@ kotlinx-datetime = "0.6.2"
 chucker = "4.1.0"
 logback = "3.0.0"
 lottie-compose = "6.6.6"
-m3u-extension-api = "1.4"
+m3u-extension-api = "1.7"
 nextLib = "0.8.4"
 slf4j-api = "2.0.17"
 
@@ -55,7 +55,6 @@ ktor-server = "3.1.2"
 mm2d-mmupnp = "3.1.6"
 profileinstaller = "1.4.1"
 jakewharton-disklrucache = "2.0.2"
-wire = "5.3.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
@@ -174,9 +173,6 @@ androidx-graphics-shapes = { group = "androidx.graphics", name = "graphics-shape
 symbol-processing-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "kotlin-symbol-processor" }
 androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
 jakewharton-disklrucache = { group = "com.jakewharton", name = "disklrucache", version.ref = "jakewharton-disklrucache" }
-
-org-jetbrains-kotlin-kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
-wire-runtime = { module = "com.squareup.wire:wire-runtime", version.ref = "wire" }
 
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }

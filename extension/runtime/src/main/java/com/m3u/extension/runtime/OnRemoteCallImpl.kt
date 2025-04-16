@@ -5,11 +5,11 @@ import com.m3u.extension.api.IRemoteCallback
 import com.m3u.extension.api.Method
 import com.m3u.extension.api.Module
 import com.m3u.extension.api.Samplings
-import com.m3u.extension.api.Utils
-import com.m3u.extension.api.Utils.getAdapter
 import com.m3u.extension.runtime.business.InfoModule
 import com.m3u.extension.runtime.business.RemoteModule
 import com.m3u.extension.runtime.business.SubscribeModule
+import com.squareup.wire.ProtoAdapter
+import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.callSuspend
 import kotlin.reflect.full.declaredFunctions
@@ -39,8 +39,7 @@ class OnRemoteCallImpl : OnRemoteCall {
     // Map<module-name, Map<method-name, method>>
     private val remoteMethods = mutableMapOf<String, Map<String, KFunction<*>>>()
 
-    // Map<type-name, adapter>
-    private val adapters = mutableMapOf<String, Any>()
+    private val adapters = mutableMapOf<Class<*>, ProtoAdapter<Any>>()
 
     override suspend fun invoke(
         module: String,
@@ -108,11 +107,12 @@ class OnRemoteCallImpl : OnRemoteCall {
         }
         val args = remoteMethod.valueParameters.map { parameter ->
             try {
-                val adapter = adapters.getOrPut(parameter.type.toString()) {
-                    getAdapter(parameter.type.toString())
+                val type = (parameter.type.classifier as KClass<*>).java
+                val adapter = adapters.getOrPut(type) {
+                    ProtoAdapter.get(type) as ProtoAdapter<Any>
                 }
                 Samplings.measure("decode") {
-                    Utils.decode(adapter, bytes)
+                    adapter.decode(bytes)
                 }
             } catch (e: Exception) {
                 throw UnsupportedOperationException(
@@ -126,9 +126,9 @@ class OnRemoteCallImpl : OnRemoteCall {
             }
             val bytes = if (result == null) ByteArray(0)
             else {
-                val clazz = result::class.java
-                val adapter = adapters.getOrPut(clazz.name) { getAdapter(clazz.name) }
-                Utils.encode(adapter, result)
+                val type = result::class.java
+                val adapter = adapters.getOrPut(type) { ProtoAdapter.get(type) as ProtoAdapter<Any> }
+                adapter.encode(result)
             }
             callback?.onSuccess(
                 module,
