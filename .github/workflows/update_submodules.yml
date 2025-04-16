@@ -1,0 +1,23 @@
+name: Update Submodules
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  update-submodules:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Update Submodules
+        run: |
+          git submodule update --remote --merge
+          git add .
+          git commit -m "Update submodules"
+          git push
