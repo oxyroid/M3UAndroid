@@ -1,9 +1,0 @@
-syntax = "proto3";
-
-package com.m3u.extension.api.model;
-
-message AddPlaylistRequest {
-  string title = 1;
-  string url = 2;
-  optional string user_agent = 3;
-}

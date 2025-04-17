@@ -1,8 +1,0 @@
-syntax = "proto3";
-
-package com.m3u.extension.api.model;
-
-message Result {
-  bool success = 1;
-  optional string message = 2;
-}
