@@ -1,12 +1,13 @@
 package com.m3u.smartphone.ui.common
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.Box
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
@@ -16,7 +17,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
@@ -24,16 +24,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.InternalComposeApi
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.layout.onLayoutRectChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.offset
 import androidx.compose.ui.util.fastForEach
@@ -58,13 +63,18 @@ import com.m3u.smartphone.ui.material.components.Background
 import com.m3u.smartphone.ui.material.components.Destination
 import com.m3u.smartphone.ui.material.components.FontFamilies
 import com.m3u.smartphone.ui.material.effects.currentBackStackEntry
+import com.m3u.smartphone.ui.material.ktx.plus
 import com.m3u.smartphone.ui.material.model.LocalHazeState
+import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import androidx.compose.ui.graphics.lerp as lerpColor
+import androidx.compose.ui.unit.lerp as lerpDp
+import androidx.compose.ui.util.lerp as lerpf
 
 @Composable
 @OptIn(InternalComposeApi::class)
@@ -133,6 +143,7 @@ internal fun MainContent(
     content: @Composable BoxScope.(PaddingValues) -> Unit,
     viewModel: SmartphoneViewModel = hiltViewModel()
 ) {
+    val density = LocalDensity.current
     val helper = LocalHelper.current
     val hazeState = LocalHazeState.current
 
@@ -148,109 +159,141 @@ internal fun MainContent(
     val onQueryChange = { query: String -> viewModel.query.value = query }
     val channels: Flow<PagingData<Channel>> = viewModel.channels
 
-    Scaffold(
-        topBar = {
-            SearchBar(
-                inputField = {
-                    SearchBarDefaults.InputField(
-                        query = query,
-                        onQueryChange = onQueryChange,
-                        onSearch = {},
-                        expanded = showQuery,
-                        onExpandedChange = onShowQueryChange,
-                        placeholder = {
-                            Column(Modifier.padding(start = 4.dp)) {
-                                Text(
-                                    text = if (!showQuery) title
-                                    else AnnotatedString(stringResource(R.string.feat_playlist_query_placeholder)),
-                                    maxLines = 1,
-                                    style = MaterialTheme.typography.titleLarge,
-                                    overflow = TextOverflow.Ellipsis,
-                                    fontFamily = FontFamilies.LexendExa,
-                                    color = LocalContentColor.current.copy(
-                                        alpha = if (showQuery) 0.65f else 1f
-                                    )
+    Background {
+        val headlineFraction = Metadata.headlineFraction
+        val fraction = LinearOutSlowInEasing.transform(headlineFraction)
+        val lerpHazeColor = lerpColor(
+            start = Color.Transparent,
+            stop = MaterialTheme.colorScheme.surface,
+            fraction = fraction
+        )
+        val lerpBlurRadius = lerpDp(
+            start = 0.dp,
+            stop = 20.dp,
+            fraction = fraction
+        )
+        val lerpNoiseFactor = lerpf(
+            start = 0f,
+            stop = 0.15f,
+            fraction = fraction
+        )
+
+        val currentHazeColor = if (showQuery) MaterialTheme.colorScheme.surface
+        else lerpHazeColor
+        val currentBlurRadius = if (showQuery) 30.dp else lerpBlurRadius
+        val currentNoiseFactor = if (showQuery) 0.15f else lerpNoiseFactor
+        val currentOnShowQueryChange = { value: Boolean ->
+            if (!value) {
+                viewModel.query.value = ""
+            }
+            onShowQueryChange(value)
+        }
+        var searchBarHeight by remember { mutableStateOf(0.dp) }
+        // androidx.compose.material3.SearchBarVerticalPadding
+        val SearchBarVerticalPadding: Dp = 8.dp
+        StarBackground()
+        content(windowInsets.asPaddingValues() + PaddingValues(top = searchBarHeight + SearchBarVerticalPadding))
+        SearchBar(
+            inputField = {
+                SearchBarDefaults.InputField(
+                    query = query,
+                    onQueryChange = onQueryChange,
+                    onSearch = {},
+                    expanded = showQuery,
+                    onExpandedChange = currentOnShowQueryChange,
+                    placeholder = {
+                        Column(Modifier.padding(start = 4.dp)) {
+                            Text(
+                                text = if (!showQuery) title
+                                else AnnotatedString(stringResource(R.string.feat_playlist_query_placeholder)),
+                                maxLines = 1,
+                                style = MaterialTheme.typography.titleLarge,
+                                overflow = TextOverflow.Ellipsis,
+                                fontFamily = FontFamilies.LexendExa,
+                                color = LocalContentColor.current.copy(
+                                    alpha = if (showQuery) 0.65f else 1f
                                 )
-                                AnimatedVisibility(!showQuery && subtitle.text.isNotEmpty()) {
-                                    Text(
-                                        text = subtitle,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
+                            )
+                            AnimatedVisibility(!showQuery && subtitle.text.isNotEmpty()) {
+                                Text(
+                                    text = subtitle,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
                             }
-                        },
-                        leadingIcon = onBackPressed?.let { onClick ->
-                            composableOf {
-                                IconButton(onClick) {
-                                    Icon(
-                                        imageVector = backStackEntry?.navigationIcon
-                                            ?: Icons.AutoMirrored.Rounded.ArrowBack,
-                                        contentDescription = null,
-                                    )
-                                }
-                            }
-                        },
-                        trailingIcon = composableOf(!showQuery) {
-                            Row {
-                                actions.forEach { action ->
-                                    IconButton(
-                                        onClick = action.onClick,
-                                        enabled = action.enabled
-                                    ) {
-                                        Icon(
-                                            imageVector = action.icon,
-                                            contentDescription = action.contentDescription,
-                                        )
-                                    }
-                                }
-                            }
-                        },
-                        colors = SearchBarDefaults.inputFieldColors(
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedContainerColor = Color.Transparent
-                        )
-                    )
-                },
-                expanded = showQuery,
-                onExpandedChange = onShowQueryChange,
-                colors = SearchBarDefaults.colors(Color.Transparent),
-                windowInsets = windowInsets,
-                modifier = Modifier
-                    .hazeEffect(hazeState, HazeMaterials.ultraThin())
-                    .fillMaxWidth()
-            ) {
-                val state = rememberLazyStaggeredGridState()
-                ChannelGallery(
-                    state = state,
-                    rowCount = 1,
-                    categoryWithChannels = PlaylistViewModel.CategoryWithChannels("", channels),
-                    zapping = null,
-                    recently = false,
-                    isVodOrSeriesPlaylist = false,
-                    onClick = { channel ->
-                        coroutineScope.launch {
-                            helper.play(MediaCommand.Common(channel.id))
-                            navigateToChannel()
                         }
                     },
-                    onLongClick = {},
-                    getProgrammeCurrently = { null },
-                    reloadThumbnail = { null },
-                    syncThumbnail = { null }
+                    leadingIcon = onBackPressed?.let { onClick ->
+                        composableOf {
+                            IconButton(onClick) {
+                                Icon(
+                                    imageVector = backStackEntry?.navigationIcon
+                                        ?: Icons.AutoMirrored.Rounded.ArrowBack,
+                                    contentDescription = null,
+                                )
+                            }
+                        }
+                    },
+                    trailingIcon = composableOf(!showQuery) {
+                        Row {
+                            actions.forEach { action ->
+                                IconButton(
+                                    onClick = action.onClick,
+                                    enabled = action.enabled
+                                ) {
+                                    Icon(
+                                        imageVector = action.icon,
+                                        contentDescription = action.contentDescription,
+                                    )
+                                }
+                            }
+                        }
+                    },
+                    colors = SearchBarDefaults.inputFieldColors(
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedContainerColor = Color.Transparent
+                    ),
+                    modifier = Modifier.onLayoutRectChanged {
+                        searchBarHeight = with(density) { it.height.toDp() }
+                    }
                 )
-            }
-        },
-        contentWindowInsets = windowInsets,
-        containerColor = Color.Transparent
-    ) { padding ->
-        Background {
-            Box {
-                StarBackground()
-                content(padding)
-            }
+            },
+            expanded = showQuery,
+            onExpandedChange = currentOnShowQueryChange,
+            colors = SearchBarDefaults.colors(Color.Transparent),
+            modifier = Modifier
+                .hazeEffect(
+                    state = hazeState,
+                    style = HazeDefaults.style(
+                        backgroundColor = currentHazeColor,
+                        blurRadius = currentBlurRadius,
+                        noiseFactor = currentNoiseFactor
+                    )
+                )
+                .fillMaxWidth()
+        ) {
+            val state = rememberLazyStaggeredGridState()
+            ChannelGallery(
+                state = state,
+                rowCount = 1,
+                categoryWithChannels = PlaylistViewModel.CategoryWithChannels("", channels),
+                zapping = null,
+                recently = false,
+                isVodOrSeriesPlaylist = false,
+                onClick = { channel ->
+                    coroutineScope.launch {
+                        helper.play(MediaCommand.Common(channel.id))
+                        navigateToChannel()
+                    }
+                },
+                onLongClick = {},
+                getProgrammeCurrently = { null },
+                reloadThumbnail = { null },
+                syncThumbnail = { null }
+            )
         }
+        HazeMaterials.regular()
     }
 }
 

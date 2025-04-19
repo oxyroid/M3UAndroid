@@ -11,7 +11,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -55,7 +54,6 @@ import com.m3u.smartphone.ui.material.components.EpisodesBottomSheet
 import com.m3u.smartphone.ui.material.components.MediaSheet
 import com.m3u.smartphone.ui.material.components.MediaSheetValue
 import com.m3u.smartphone.ui.material.ktx.interceptVolumeEvent
-import com.m3u.smartphone.ui.material.ktx.plus
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

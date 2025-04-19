@@ -21,7 +21,6 @@ import androidx.compose.material.icons.rounded.ScreenRotation
 import androidx.compose.material.icons.rounded.SettingsEthernet
 import androidx.compose.material.icons.rounded.SettingsRemote
 import androidx.compose.material.icons.rounded.Sync
-import androidx.compose.material.icons.rounded.Terrain
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Unarchive
 import androidx.compose.runtime.Composable
@@ -51,9 +50,8 @@ internal fun OptionalFragment(
     val preferences = hiltPreferences()
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(spacing.small),
-        contentPadding = contentPadding + PaddingValues(horizontal = spacing.medium),
-        modifier = modifier
-            .fillMaxSize()
+        contentPadding = contentPadding + PaddingValues(spacing.medium),
+        modifier = modifier.fillMaxSize()
     ) {
         item {
             SwitchSharedPreference(

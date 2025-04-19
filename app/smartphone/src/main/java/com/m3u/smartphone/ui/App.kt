@@ -156,6 +156,7 @@ private fun AppImpl(
             contentPadding = contentPadding,
             modifier = Modifier.fillMaxSize()
         )
+        // snack-host area
         Row(
             horizontalArrangement = Arrangement.spacedBy(spacing.small, Alignment.End),
             verticalAlignment = Alignment.Bottom,
@@ -169,7 +170,7 @@ private fun AppImpl(
             AnimatedVisibility(
                 visible = preferences.remoteControl,
                 enter = scaleIn(initialScale = 0.65f) + fadeIn(),
-                exit = scaleOut(targetScale = 0.65f) + fadeOut(),
+                exit = scaleOut(targetScale = 0.65f) + fadeOut()
             ) {
                 FloatingActionButton(
                     elevation = FloatingActionButtonDefaults.elevation(

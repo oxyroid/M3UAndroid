@@ -1,5 +1,6 @@
 package com.m3u.smartphone.ui.business.foryou.components
 
+import android.util.Log
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -37,6 +38,9 @@ import com.m3u.smartphone.ui.common.helper.useRailNav
 import com.m3u.smartphone.ui.material.ktx.plus
 import com.m3u.smartphone.ui.material.model.LocalHazeState
 import com.m3u.smartphone.ui.material.model.LocalSpacing
+import dev.chrisbanes.haze.HazeDefaults
+import dev.chrisbanes.haze.hazeChild
+import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -58,8 +62,6 @@ internal fun PlaylistGallery(
     val windowInfo = LocalWindowInfo.current
     val helper = LocalHelper.current
 
-    val colorScheme = MaterialTheme.colorScheme
-
     val headlineAspectRatio = Metadata.headlineAspectRatio(helper.useRailNav)
 
     val state = rememberLazyGridState()
@@ -69,19 +71,11 @@ internal fun PlaylistGallery(
             else -Int.MAX_VALUE
         }
     }
-    val currentHazeColor by animateColorAsState(
-        targetValue = lerp(
-            start = Color.Transparent,
-            stop = colorScheme.surface,
-            fraction = Metadata.headlineFraction
-        ),
-        label = "playlist-gallery-haze-color"
-    )
     LaunchedEffect(windowInfo.containerSize.width) {
         snapshotFlow { viewportStartOffset }
             .onEach {
-                val fraction = (it.absoluteValue /
-                        (windowInfo.containerSize.width * headlineAspectRatio))
+                val fraction =
+                    (it.absoluteValue * headlineAspectRatio / (windowInfo.containerSize.width))
                     .coerceIn(0f, 1f)
                 Metadata.headlineFraction = fraction
             }

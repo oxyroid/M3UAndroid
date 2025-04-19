@@ -257,8 +257,7 @@ private fun SettingScreen(
                         )
                     }
                 },
-                modifier = Modifier
-                    .fillMaxSize()
+                modifier = Modifier.fillMaxSize()
             )
         },
         detailPane = {

@@ -25,7 +25,7 @@ internal fun PreferencesFragment(
     val spacing = LocalSpacing.current
     LazyColumn(
         modifier = modifier,
-        contentPadding = contentPadding + PaddingValues(horizontal = spacing.medium),
+        contentPadding = contentPadding + PaddingValues(spacing.medium),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(spacing.medium)
     ) {

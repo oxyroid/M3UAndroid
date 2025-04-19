@@ -21,14 +21,10 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Sort
@@ -52,24 +48,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -92,11 +77,8 @@ import com.m3u.data.database.model.isVod
 import com.m3u.data.database.model.type
 import com.m3u.data.service.MediaCommand
 import com.m3u.i18n.R.string
-import com.m3u.smartphone.ui.business.playlist.components.BackdropScaffold
-import com.m3u.smartphone.ui.business.playlist.components.BackdropValue
 import com.m3u.smartphone.ui.business.playlist.components.ChannelGallery
 import com.m3u.smartphone.ui.business.playlist.components.PlaylistTabRow
-import com.m3u.smartphone.ui.business.playlist.components.rememberBackdropScaffoldState
 import com.m3u.smartphone.ui.common.helper.Action
 import com.m3u.smartphone.ui.common.helper.Fob
 import com.m3u.smartphone.ui.common.helper.LocalHelper
@@ -107,12 +89,10 @@ import com.m3u.smartphone.ui.material.components.EventHandler
 import com.m3u.smartphone.ui.material.components.MediaSheet
 import com.m3u.smartphone.ui.material.components.MediaSheetValue
 import com.m3u.smartphone.ui.material.components.SortBottomSheet
-import com.m3u.smartphone.ui.material.components.TextField
 import com.m3u.smartphone.ui.material.ktx.checkPermissionOrRationale
 import com.m3u.smartphone.ui.material.ktx.interceptVolumeEvent
 import com.m3u.smartphone.ui.material.ktx.isAtTop
 import com.m3u.smartphone.ui.material.ktx.only
-import com.m3u.smartphone.ui.material.ktx.split
 import com.m3u.smartphone.ui.material.model.LocalHazeState
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import dev.chrisbanes.haze.hazeSource
@@ -286,7 +266,9 @@ internal fun PlaylistRoute(
         getProgrammeCurrently = { channelId -> viewModel.getProgrammeCurrently(channelId) },
         reloadThumbnail = { channelUrl -> viewModel.reloadThumbnail(channelUrl) },
         syncThumbnail = { channelUrl ->
-            /** disabled in smartphone because it will cost too much data*/ null },
+            /** disabled in smartphone because it will cost too much data*/
+            null
+        },
         modifier = Modifier
             .fillMaxSize()
             .thenIf(preferences.godMode) {
@@ -390,17 +372,6 @@ private fun PlaylistScreen(
     val configuration = LocalConfiguration.current
     val focusManager = LocalFocusManager.current
 
-    val scaffoldState = rememberBackdropScaffoldState(
-        initialValue = BackdropValue.Concealed
-    )
-    val connection = remember {
-        object : NestedScrollConnection {
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                return if (scaffoldState.isRevealed) available
-                else Offset.Zero
-            }
-        }
-    }
     val currentColor = MaterialTheme.colorScheme.background
     val currentContentColor = MaterialTheme.colorScheme.onBackground
 
@@ -431,140 +402,84 @@ private fun PlaylistScreen(
     val categories = remember(categoryWithChannels) { categoryWithChannels.map { it.category } }
     var category by remember(categories) { mutableStateOf(categories.firstOrNull().orEmpty()) }
 
-    val (inner, outer) = contentPadding split WindowInsetsSides.Bottom
+    val state = rememberLazyStaggeredGridState()
+    LaunchedEffect(Unit) {
+        snapshotFlow { state.isAtTop }
+            .onEach { isAtTopState.value = it }
+            .launchIn(this)
+    }
+    EventHandler(scrollUp) {
+        state.scrollToItem(0)
+    }
+    val orientation = configuration.orientation
+    val actualRowCount = remember(orientation, rowCount) {
+        when (orientation) {
+            ORIENTATION_LANDSCAPE -> rowCount + 2
+            ORIENTATION_PORTRAIT -> rowCount
+            else -> rowCount
+        }
+    }
+    var isExpanded by remember(sort == Sort.MIXED) {
+        mutableStateOf(false)
+    }
+    BackHandler(isExpanded) { isExpanded = false }
 
-    BackdropScaffold(
-        scaffoldState = scaffoldState,
-        gesturesEnabled = isAtTopState.value,
-        appBar = {},
-        frontLayerShape = RectangleShape,
-        peekHeight = 0.dp,
-        backLayerContent = {
-            val coroutineScope = rememberCoroutineScope()
-            val focusRequester = remember { FocusRequester() }
-            LaunchedEffect(scaffoldState.currentValue) {
-                if (scaffoldState.isConcealed) {
-                    focusManager.clearFocus()
-                } else {
-                    focusRequester.requestFocus()
-                }
-            }
-            BackHandler(scaffoldState.isRevealed || query.isNotEmpty()) {
-                if (scaffoldState.isRevealed) {
-                    coroutineScope.launch {
-                        scaffoldState.conceal()
-                    }
-                }
-                if (query.isNotEmpty()) {
-                    onQuery("")
-                }
-            }
-            Box(
-                modifier = Modifier
-                    .padding(spacing.medium)
-                    .fillMaxWidth()
+    val tabs = @Composable {
+        PlaylistTabRow(
+            selectedCategory = category,
+            categories = categories,
+            isExpanded = isExpanded,
+            bottomContentPadding = contentPadding only WindowInsetsSides.Bottom,
+            onExpanded = { isExpanded = !isExpanded },
+            onCategoryChanged = { category = it },
+            pinnedCategories = pinnedCategories,
+            onPinOrUnpinCategory = onPinOrUnpinCategory,
+            onHideCategory = onHideCategory
+        )
+    }
+
+    val gallery = @Composable {
+        val channel = remember(categoryWithChannels, category) {
+            categoryWithChannels.find { it.category == category }
+        }
+        ChannelGallery(
+            state = state,
+            rowCount = actualRowCount,
+            categoryWithChannels = channel,
+            zapping = zapping,
+            recently = sort == Sort.RECENTLY,
+            isVodOrSeriesPlaylist = isVodPlaylist || isSeriesPlaylist,
+            onClick = onPlayChannel,
+            contentPadding = contentPadding,
+            onLongClick = {
+                mediaSheetValue = MediaSheetValue.PlaylistScreen(it)
+            },
+            getProgrammeCurrently = getProgrammeCurrently,
+            reloadThumbnail = reloadThumbnail,
+            syncThumbnail = syncThumbnail,
+            modifier = Modifier.hazeSource(LocalHazeState.current)
+        )
+    }
+    Column(
+        Modifier.background(MaterialTheme.colorScheme.surfaceContainerHighest)
+    ) {
+        if (!isExpanded) {
+            AnimatedVisibility(
+                visible = categories.size > 1,
+                enter = fadeIn(animationSpec = tween(400))
             ) {
-                TextField(
-                    text = query,
-                    onValueChange = onQuery,
-                    fontWeight = FontWeight.Bold,
-                    placeholder = stringResource(string.feat_playlist_query_placeholder).uppercase(),
-                    modifier = Modifier
-                        .focusRequester(focusRequester)
-                        .heightIn(max = 48.dp)
-                )
+                tabs()
             }
-        },
-        frontLayerContent = {
-            val state = rememberLazyStaggeredGridState()
-            LaunchedEffect(Unit) {
-                snapshotFlow { state.isAtTop }
-                    .onEach { isAtTopState.value = it }
-                    .launchIn(this)
-            }
-            EventHandler(scrollUp) {
-                state.scrollToItem(0)
-            }
-            val orientation = configuration.orientation
-            val actualRowCount = remember(orientation, rowCount) {
-                when (orientation) {
-                    ORIENTATION_LANDSCAPE -> rowCount + 2
-                    ORIENTATION_PORTRAIT -> rowCount
-                    else -> rowCount
-                }
-            }
-            var isExpanded by remember(sort == Sort.MIXED) {
-                mutableStateOf(false)
-            }
-            BackHandler(isExpanded) { isExpanded = false }
-
-            val tabs = @Composable {
-                PlaylistTabRow(
-                    selectedCategory = category,
-                    categories = categories,
-                    isExpanded = isExpanded,
-                    bottomContentPadding = contentPadding only WindowInsetsSides.Bottom,
-                    onExpanded = { isExpanded = !isExpanded },
-                    onCategoryChanged = { category = it },
-                    pinnedCategories = pinnedCategories,
-                    onPinOrUnpinCategory = onPinOrUnpinCategory,
-                    onHideCategory = onHideCategory
-                )
-            }
-
-            val gallery = @Composable {
-                val channel = remember(categoryWithChannels, category) {
-                    categoryWithChannels.find { it.category == category }
-                }
-                ChannelGallery(
-                    state = state,
-                    rowCount = actualRowCount,
-                    categoryWithChannels = channel,
-                    zapping = zapping,
-                    recently = sort == Sort.RECENTLY,
-                    isVodOrSeriesPlaylist = isVodPlaylist || isSeriesPlaylist,
-                    onClick = onPlayChannel,
-                    contentPadding = inner,
-                    onLongClick = {
-                        mediaSheetValue = MediaSheetValue.PlaylistScreen(it)
-                    },
-                    getProgrammeCurrently = getProgrammeCurrently,
-                    reloadThumbnail = reloadThumbnail,
-                    syncThumbnail = syncThumbnail,
-                    modifier = Modifier.hazeSource(LocalHazeState.current)
-                )
-            }
-            Column(
-                Modifier.background(MaterialTheme.colorScheme.surfaceContainerHighest)
+            gallery()
+        } else {
+            AnimatedVisibility(
+                visible = categories.size > 1,
+                enter = fadeIn(animationSpec = tween(400))
             ) {
-                if (!isExpanded) {
-                    AnimatedVisibility(
-                        visible = categories.size > 1,
-                        enter = fadeIn(animationSpec = tween(400))
-                    ) {
-                        tabs()
-                    }
-                    gallery()
-                } else {
-                    AnimatedVisibility(
-                        visible = categories.size > 1,
-                        enter = fadeIn(animationSpec = tween(400))
-                    ) {
-                        tabs()
-                    }
-                }
+                tabs()
             }
-        },
-        backLayerBackgroundColor = Color.Transparent,
-        backLayerContentColor = currentContentColor,
-        frontLayerScrimColor = currentColor.copy(alpha = 0.45f),
-        frontLayerBackgroundColor = Color.Transparent,
-        modifier = modifier
-            .padding(outer)
-            .nestedScroll(
-                connection = connection
-            )
-    )
+        }
+    }
 
     SortBottomSheet(
         visible = isSortSheetVisible,

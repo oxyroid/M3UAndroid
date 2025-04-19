@@ -1,6 +1,7 @@
 package com.m3u.smartphone.ui.material.components
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.material3.LocalAbsoluteTonalElevation
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -22,7 +23,7 @@ inline fun Background(
     color: Color = Color.Unspecified,
     contentColor: Color = Color.Unspecified,
     shape: Shape = RectangleShape,
-    crossinline content: @Composable () -> Unit
+    crossinline content: @Composable BoxScope.() -> Unit
 ) {
     val actualColor = color.takeOrElse { MaterialTheme.colorScheme.background }
     val actualContentColor = contentColor.takeOrElse { MaterialTheme.colorScheme.onBackground }

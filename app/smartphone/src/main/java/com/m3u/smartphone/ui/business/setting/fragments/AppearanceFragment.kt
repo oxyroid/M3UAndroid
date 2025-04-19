@@ -73,7 +73,7 @@ internal fun AppearanceFragment(
 
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(spacing.small),
-        contentPadding = contentPadding + PaddingValues(horizontal = spacing.medium),
+        contentPadding = contentPadding + PaddingValues(spacing.medium),
         modifier = modifier.fillMaxSize()
     ) {
         item {
