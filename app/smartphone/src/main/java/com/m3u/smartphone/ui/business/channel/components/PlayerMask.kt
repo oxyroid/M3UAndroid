@@ -13,43 +13,82 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import com.m3u.smartphone.ui.material.components.mask.Mask
 import com.m3u.smartphone.ui.material.components.mask.MaskState
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 
+@Immutable
+data class MaskDimension(
+    val top: Dp = Dp.Unspecified,
+    val middle: Dp = Dp.Unspecified,
+    val bottom: Dp = Dp.Unspecified
+)
+
 @Composable
-internal fun PlayerMask(
+fun PlayerMask(
     state: MaskState,
-    brush: Brush,
+    color: Color,
+    modifier: Modifier = Modifier,
     header: @Composable RowScope.() -> Unit,
     body: @Composable RowScope.() -> Unit,
-    footer: @Composable RowScope.() -> Unit,
-    modifier: Modifier = Modifier,
-    control: @Composable RowScope.() -> Unit = {},
-    slider: (@Composable () -> Unit)? = null
+    footer: (@Composable RowScope.() -> Unit)? = null,
+    control: (@Composable RowScope.() -> Unit)? = null,
+    slider: (@Composable () -> Unit)? = null,
+    onDimensionChanged: (MaskDimension) -> Unit = {}
 ) {
     val configuration = LocalConfiguration.current
     val spacing = LocalSpacing.current
+    val density = LocalDensity.current
+
+    val windowInsets = WindowInsets.safeDrawing
+    var size: MaskDimension by remember {
+        mutableStateOf(
+            MaskDimension(
+                top = with(density) { windowInsets.getTop(density).toDp() },
+                bottom = with(density) { windowInsets.getBottom(density).toDp() },
+            )
+        )
+    }
 
     Mask(
         state = state,
-        brush = brush,
-        contentColor = Color.White,
+        color = color,
         modifier = modifier.windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
+        DisposableEffect(Unit) {
+            onDispose {
+                size = MaskDimension(
+                    top = with(density) { windowInsets.getTop(density).toDp() },
+                    bottom =  with(density) { windowInsets.getBottom(density).toDp() }
+                )
+                onDimensionChanged(size)
+            }
+        }
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = spacing.medium)
-                .align(Alignment.TopCenter),
+                .onGloballyPositioned {
+                    size = size.copy(
+                        top = with(density) { (it.size.height + windowInsets.getTop(density)).toDp() }
+                    )
+                    onDimensionChanged(size)
+                }
+                .padding(horizontal = spacing.medium),
             horizontalArrangement = Arrangement.spacedBy(
                 spacing.none,
                 Alignment.End
@@ -64,7 +103,13 @@ internal fun PlayerMask(
             modifier = Modifier
                 .padding(horizontal = spacing.medium)
                 .fillMaxWidth()
-                .align(Alignment.Center),
+                .weight(1f)
+                .onGloballyPositioned {
+                    size = size.copy(
+                        middle = with(density) { it.size.height.toDp() }
+                    )
+                    onDimensionChanged(size)
+                },
             horizontalArrangement = Arrangement.spacedBy(
                 centerSpacing,
                 Alignment.CenterHorizontally
@@ -73,30 +118,34 @@ internal fun PlayerMask(
             content = body
         )
         Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(
-                    start = spacing.medium,
-                    end = spacing.medium,
-                    bottom = spacing.small
-                )
+            modifier = Modifier.padding(horizontal = spacing.medium)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.Bottom,
-                content = control
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-                verticalAlignment = Alignment.Bottom,
-                content = footer
-            )
+            control?.let {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.Bottom,
+                    content = it
+                )
+            }
+            footer?.let {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+                    verticalAlignment = Alignment.Bottom,
+                    content = it
+                )
+            }
             AnimatedVisibility(
                 visible = slider != null,
                 enter = fadeIn(),
-                exit = fadeOut()
+                exit = fadeOut(),
+                modifier = Modifier.onGloballyPositioned {
+                    size = size.copy(
+                        bottom = with(density) { (it.size.height + windowInsets.getBottom(density)).toDp() }
+                    )
+                    onDimensionChanged(size)
+                }
             ) {
                 slider?.invoke()
             }

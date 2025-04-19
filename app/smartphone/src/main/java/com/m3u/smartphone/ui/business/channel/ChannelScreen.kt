@@ -5,10 +5,12 @@ import android.content.Intent
 import android.graphics.Rect
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.VolumeDown
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
@@ -16,6 +18,7 @@ import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Speed
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -29,9 +32,15 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.takeOrElse
+import androidx.compose.ui.util.fastRoundToInt
 import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -50,15 +59,15 @@ import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.business.channel.components.CoverPlaceholder
 import com.m3u.smartphone.ui.business.channel.components.DlnaDevicesBottomSheet
 import com.m3u.smartphone.ui.business.channel.components.FormatsBottomSheet
+import com.m3u.smartphone.ui.business.channel.components.MaskDimension
 import com.m3u.smartphone.ui.business.channel.components.MaskGestureValuePanel
 import com.m3u.smartphone.ui.business.channel.components.PlayerPanel
 import com.m3u.smartphone.ui.business.channel.components.VerticalGestureArea
 import com.m3u.smartphone.ui.common.helper.LocalHelper
 import com.m3u.smartphone.ui.common.helper.OnPipModeChanged
-import com.m3u.smartphone.ui.material.components.Background
 import com.m3u.smartphone.ui.material.components.Player
 import com.m3u.smartphone.ui.material.components.PullPanelLayout
-import com.m3u.smartphone.ui.material.components.PullPanelLayoutValue
+import com.m3u.smartphone.ui.material.components.PullPanelLayoutDefaults
 import com.m3u.smartphone.ui.material.components.mask.MaskInterceptor
 import com.m3u.smartphone.ui.material.components.mask.MaskState
 import com.m3u.smartphone.ui.material.components.mask.rememberMaskState
@@ -69,7 +78,6 @@ import com.m3u.smartphone.ui.material.ktx.checkPermissionOrRationale
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 @Composable
@@ -82,7 +90,8 @@ fun ChannelRoute(
     val helper = LocalHelper.current
     val preferences = hiltPreferences()
     val context = LocalContext.current
-    val configuration = LocalConfiguration.current
+    val density = LocalDensity.current
+    val windowInfo = LocalWindowInfo.current
 
     val requestIgnoreBatteryOptimizations =
         rememberPermissionState(Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
@@ -116,13 +125,14 @@ fun ChannelRoute(
     var isAutoZappingMode by remember { mutableStateOf(true) }
     var choosing by remember { mutableStateOf(false) }
 
-    val isPanelGestureSupported = configuration.screenWidthDp < configuration.screenHeightDp
+    val useVertical = PullPanelLayoutDefaults.UseVertical
     val isPanelEnabled = preferences.panel
 
     val maskState = rememberMaskState()
     val pullPanelLayoutState = rememberPullPanelLayoutState()
 
-    val isPanelExpanded = pullPanelLayoutState.value == PullPanelLayoutValue.EXPANDED
+    val isPanelExpanded = pullPanelLayoutState.isExpanded
+    val fraction = pullPanelLayoutState.fraction
 
     val createRecordFileLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("video/mp4")) { uri ->
@@ -133,7 +143,6 @@ fun ChannelRoute(
     LifecycleResumeEffect(Unit) {
         with(helper) {
             isSystemBarUseDarkMode = true
-            statusBarVisibility = false
             onPipModeChanged = OnPipModeChanged { info ->
                 isPipMode = info.isInPictureInPictureMode
                 if (!isPipMode) {
@@ -165,10 +174,12 @@ fun ChannelRoute(
 
         snapshotFlow { maskState.visible }
             .onEach { visible ->
-                helper.statusBarVisibility = visible
                 helper.navigationBarVisibility = visible
                 viewModel.onMaskStateChanged(visible)
             }
+            .launchIn(this)
+        snapshotFlow { pullPanelLayoutState.fraction }
+            .onEach { maskState.sleep() }
             .launchIn(this)
     }
 
@@ -184,93 +195,108 @@ fun ChannelRoute(
         maskState.intercept(interceptor)
     }
 
-    Background(
-        color = Color.Black,
-        contentColor = Color.White,
-        modifier = modifier
-    ) {
-        PullPanelLayout(
-            state = pullPanelLayoutState,
-            enabled = isPanelGestureSupported && isPanelEnabled,
-            onValueChanged = { state ->
-                when (state) {
-                    PullPanelLayoutValue.EXPANDED -> {
-                        maskState.lock(PullPanelLayoutValue.EXPANDED)
-                    }
+    var dimension: MaskDimension by remember { mutableStateOf(MaskDimension()) }
+    val onDimensionChanged = { size: MaskDimension -> dimension = size }
+    val topPadding by animateDpAsState(dimension.top.takeOrElse { 0.dp }.takeIf { isPanelExpanded } ?: 0.dp)
+    val bottomPadding by animateDpAsState(dimension.bottom.takeOrElse { 0.dp }.takeIf { isPanelExpanded } ?: 0.dp)
 
-                    PullPanelLayoutValue.COLLAPSED -> {
-                        maskState.unlock(PullPanelLayoutValue.EXPANDED, 2400.milliseconds)
-                    }
-                }
-            },
-            panel = {
-                PlayerPanel(
-                    title = channel?.title.orEmpty(),
-                    playlistTitle = playlist?.title.orEmpty(),
-                    channelId = channel?.id ?: -1,
-                    isPanelExpanded = isPanelExpanded,
-                    isChannelsSupported = !isSeriesPlaylist,
-                    isProgrammeSupported = isProgrammeSupported,
-                    channels = channels,
-                    programmes = programmes,
-                    programmeRange = programmeRange,
-                    programmeReminderIds = programmeReminderIds,
-                    onRemindProgramme = {
-                        requestIgnoreBatteryOptimizations.checkPermissionOrRationale {
-                            viewModel.onRemindProgramme(it)
-                        }
-                    },
-                    onCancelRemindProgramme = viewModel::onCancelRemindProgramme,
-                )
-            },
-            content = {
-                ChannelPlayer(
-                    isSeriesPlaylist = isSeriesPlaylist,
-                    openDlnaDevices = {
-                        viewModel.openDlnaDevices()
-                        pullPanelLayoutState.collapse()
-                    },
-                    openChooseFormat = {
-                        choosing = true
-                        pullPanelLayoutState.collapse()
-                    },
-                    openOrClosePanel = {
-                        if (isPanelExpanded) {
-                            pullPanelLayoutState.collapse()
-                        } else {
-                            pullPanelLayoutState.expand()
-                        }
-                    },
-                    onFavorite = viewModel::onFavorite,
-                    maskState = maskState,
-                    playerState = playerState,
-                    playlist = playlist,
-                    adjacentChannels = adjacentChannels,
-                    channel = channel,
-                    hasTrack = tracks.isNotEmpty(),
-                    isPanelExpanded = isPanelExpanded,
-                    volume = volume,
-                    onVolume = viewModel::onVolume,
-                    brightness = brightness,
-                    onBrightness = { brightness = it },
-                    speed = speed,
-                    onSpeedUpdated = {
-                        viewModel.onSpeedUpdated(it)
-                        speed = it
-                    },
-                    cwPosition = viewModel.cwPosition,
-                    onRewind = viewModel::onRewind,
-                    onPreviousChannelClick = viewModel::getPreviousChannel,
-                    onNextChannelClick = viewModel::getNextChannel,
-                    onEnterPipMode = {
-                        helper.enterPipMode(playerState.videoSize)
-                        maskState.unlockAll()
-                        pullPanelLayoutState.collapse()
-                    },
-                )
-            }
-        )
+    val aspectRatio = with(density) {
+        val source = playerState.videoSize
+        val scaledSourceWidth = source.width()
+        val scaledSourceHeight = source.height()
+        val sourceAspectRatio = (scaledSourceWidth * 1f / scaledSourceHeight)
+        if (sourceAspectRatio.isNaN()) {
+            PullPanelLayoutDefaults.AspectRatio
+        } else {
+            val destWidth = windowInfo.containerSize.width.toDp()
+            val destHeight = destWidth / sourceAspectRatio
+            (destWidth * 1f / (destHeight + topPadding + bottomPadding))
+        }
     }
+    val onAlignment = { size: IntSize, space: IntSize ->
+        val centerX = (space.width - size.width).toFloat() / 2f
+        val centerY = (space.height - size.height).toFloat() / 2f
+        val x = centerX
+        val y = centerY - (centerY - with(density) { topPadding.toPx() }) * fraction
+        IntOffset(x.fastRoundToInt(), y.fastRoundToInt())
+    }
+
+    PullPanelLayout(
+        state = pullPanelLayoutState,
+        enabled = isPanelEnabled,
+        aspectRatio = aspectRatio,
+        useVertical = useVertical,
+        panel = {
+            PlayerPanel(
+                title = channel?.title.orEmpty(),
+                playlistTitle = playlist?.title.orEmpty(),
+                channelId = channel?.id ?: -1,
+                isPanelExpanded = isPanelExpanded,
+                isChannelsSupported = !isSeriesPlaylist,
+                isProgrammeSupported = isProgrammeSupported,
+                useVertical = useVertical,
+                channels = channels,
+                programmes = programmes,
+                programmeRange = programmeRange,
+                programmeReminderIds = programmeReminderIds,
+                onRemindProgramme = {
+                    requestIgnoreBatteryOptimizations.checkPermissionOrRationale {
+                        viewModel.onRemindProgramme(it)
+                    }
+                },
+                onCancelRemindProgramme = viewModel::onCancelRemindProgramme,
+            )
+        },
+        content = {
+            ChannelPlayer(
+                isSeriesPlaylist = isSeriesPlaylist,
+                openDlnaDevices = {
+                    viewModel.openDlnaDevices()
+                    pullPanelLayoutState.collapse()
+                },
+                openChooseFormat = {
+                    choosing = true
+                    pullPanelLayoutState.collapse()
+                },
+                openOrClosePanel = {
+                    if (isPanelExpanded) {
+                        pullPanelLayoutState.collapse()
+                    } else {
+                        pullPanelLayoutState.expand()
+                    }
+                },
+                onFavorite = viewModel::onFavorite,
+                maskState = maskState,
+                playerState = playerState,
+                playlist = playlist,
+                adjacentChannels = adjacentChannels,
+                channel = channel,
+                hasTrack = tracks.isNotEmpty(),
+                isPanelExpanded = isPanelExpanded,
+                volume = volume,
+                onVolume = viewModel::onVolume,
+                brightness = brightness,
+                onBrightness = { brightness = it },
+                speed = speed,
+                onSpeedUpdated = {
+                    viewModel.onSpeedUpdated(it)
+                    speed = it
+                },
+                cwPosition = viewModel.cwPosition,
+                onRewind = viewModel::onRewind,
+                onPreviousChannelClick = viewModel::getPreviousChannel,
+                onNextChannelClick = viewModel::getNextChannel,
+                onEnterPipMode = {
+                    helper.enterPipMode(playerState.videoSize)
+                    maskState.unlockAll()
+                    pullPanelLayoutState.collapse()
+                },
+                onDimensionChanged = onDimensionChanged,
+                onAlignment = onAlignment
+            )
+        },
+        modifier = modifier
+    )
 
     DlnaDevicesBottomSheet(
         maskState = maskState,
@@ -329,8 +355,13 @@ private fun ChannelPlayer(
     onNextChannelClick: () -> Unit,
     onEnterPipMode: () -> Unit,
     onSpeedUpdated: (Float) -> Unit,
+    onDimensionChanged: (MaskDimension) -> Unit,
+    onAlignment: (size: IntSize, space: IntSize) -> IntOffset,
     modifier: Modifier = Modifier,
 ) {
+    val density = LocalDensity.current
+    val windowInfo = LocalWindowInfo.current
+
     val title = channel?.title ?: "--"
     val cover = channel?.cover.orEmpty()
     val playlistTitle = playlist?.title ?: "--"
@@ -341,125 +372,140 @@ private fun ChannelPlayer(
     val currentSpeed by rememberUpdatedState(speed)
     val preferences = hiltPreferences()
 
+    val useVertical = with(windowInfo.containerSize) { width < height }
+
     LaunchedEffect(cwPosition) {
         if (cwPosition != -1L) {
             maskState.wake(6.seconds)
         }
     }
-    Background(
-        color = Color.Black,
-        contentColor = Color.White,
-    ) {
-        Box(modifier) {
-            val state = rememberPlayerState(
-                player = playerState.player,
-                clipMode = preferences.clipMode
-            )
+    Box(modifier) {
+        val state = rememberPlayerState(
+            player = playerState.player,
+            clipMode = preferences.clipMode
+        )
+        var dimension: MaskDimension by remember { mutableStateOf(MaskDimension()) }
+        val topPadding = with(density) { dimension.top.takeOrElse { 0.dp }.toPx() }
+        Player(
+            state = state,
+            modifier = Modifier
+                .fillMaxWidth()
+                .align { size: IntSize, space: IntSize, _ ->
+                    onAlignment(size, space)
+                }
+        )
+        VerticalGestureArea(
+            percent = currentBrightness,
+            time = 0.65f,
+            onDragStart = {
+                gesture = MaskGesture.BRIGHTNESS
+                maskState.sleep()
+            },
+            onDragEnd = { gesture = null },
+            onDrag = onBrightness,
+            onClick = maskState::toggle,
+            modifier = Modifier
+                .fillMaxHeight()
+                .fillMaxWidth(0.18f),
+            enabled = preferences.brightnessGesture
+        )
 
-            Player(
-                state = state,
-                modifier = Modifier.fillMaxSize()
-            )
-            VerticalGestureArea(
-                percent = currentBrightness,
-                time = 0.65f,
-                onDragStart = {
-                    gesture = MaskGesture.BRIGHTNESS
-                    maskState.sleep()
+        VerticalGestureArea(
+            percent = currentVolume,
+            time = 0.35f,
+            onDragStart = {
+                gesture = MaskGesture.VOLUME
+                maskState.sleep()
+            },
+            onDragEnd = { gesture = null },
+            onDrag = onVolume,
+            onClick = maskState::toggle,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .fillMaxHeight()
+                .fillMaxWidth(0.18f),
+            enabled = preferences.volumeGesture
+        )
+
+        val shouldShowPlaceholder =
+            !preferences.noPictureMode && cover.isNotEmpty() && playerState.videoSize.isEmpty
+
+        CoverPlaceholder(
+            visible = shouldShowPlaceholder,
+            cover = cover,
+            modifier = Modifier
+                .size(dimension.middle)
+                .align { size: IntSize, space: IntSize, _ ->
+                    val centerX = (space.width - size.width).toFloat() / 2f
+                    val centerY = (space.height - size.height).toFloat() / 2f
+                    val x = centerX * 1
+                    val y = if (!useVertical) centerY
+                    else centerY - (centerY - topPadding) * 1 // fraction TODO
+                    IntOffset(x.fastRoundToInt(), y.fastRoundToInt())
+                }
+        )
+
+        ChannelMask(
+            adjacentChannels = adjacentChannels,
+            title = title,
+            playlistTitle = playlistTitle,
+            playerState = playerState,
+            volume = volume,
+            brightness = brightness,
+            maskState = maskState,
+            favourite = favourite,
+            isSeriesPlaylist = isSeriesPlaylist,
+            hasTrack = hasTrack,
+            cwPosition = cwPosition,
+            onRewind = onRewind,
+            isPanelExpanded = isPanelExpanded,
+            onFavorite = onFavorite,
+            openDlnaDevices = openDlnaDevices,
+            openChooseFormat = openChooseFormat,
+            openOrClosePanel = openOrClosePanel,
+            onVolume = onVolume,
+            onEnterPipMode = onEnterPipMode,
+            onPreviousChannelClick = onPreviousChannelClick,
+            onNextChannelClick = onNextChannelClick,
+            onSpeedUpdated = onSpeedUpdated,
+            onSpeedStart = { gesture = MaskGesture.SPEED },
+            onSpeedEnd = { gesture = null },
+            gesture = gesture,
+            onDimensionChanged = {
+                dimension = it
+                onDimensionChanged(it)
+            }
+        )
+
+        if (gesture != null) {
+            MaskGestureValuePanel(
+                value = when (gesture) {
+                    MaskGesture.BRIGHTNESS -> "${currentBrightness.times(100).toInt()}%"
+                    MaskGesture.VOLUME -> "${currentVolume.times(100).toInt()}"
+                    MaskGesture.SPEED -> "${"%.1f".format(currentSpeed)}x"
+                    else -> ""
                 },
-                onDragEnd = { gesture = null },
-                onDrag = onBrightness,
-                onClick = maskState::toggle,
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth(0.18f),
-                enabled = preferences.brightnessGesture
-            )
+                icon = when (gesture) {
+                    MaskGesture.BRIGHTNESS -> when {
+                        brightness < 0.5f -> Icons.Rounded.DarkMode
+                        else -> Icons.Rounded.LightMode
+                    }
 
-            VerticalGestureArea(
-                percent = currentVolume,
-                time = 0.35f,
-                onDragStart = {
-                    gesture = MaskGesture.VOLUME
-                    maskState.sleep()
+                    MaskGesture.VOLUME -> when {
+                        volume == 0f -> Icons.AutoMirrored.Rounded.VolumeOff
+                        volume < 0.5f -> Icons.AutoMirrored.Rounded.VolumeDown
+                        else -> Icons.AutoMirrored.Rounded.VolumeUp
+                    }
+
+                    else -> Icons.Rounded.Speed
                 },
-                onDragEnd = { gesture = null },
-                onDrag = onVolume,
-                onClick = maskState::toggle,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .fillMaxHeight()
-                    .fillMaxWidth(0.18f),
-                enabled = preferences.volumeGesture
-            )
-
-            val shouldShowPlaceholder =
-                !preferences.noPictureMode && cover.isNotEmpty() && playerState.videoSize.isEmpty
-
-            CoverPlaceholder(
-                visible = shouldShowPlaceholder,
-                cover = cover,
                 modifier = Modifier.align(Alignment.Center)
             )
+        }
 
-            ChannelMask(
-                adjacentChannels = adjacentChannels,
-                cover = cover,
-                title = title,
-                playlistTitle = playlistTitle,
-                playerState = playerState,
-                volume = volume,
-                brightness = brightness,
-                maskState = maskState,
-                favourite = favourite,
-                isSeriesPlaylist = isSeriesPlaylist,
-                hasTrack = hasTrack,
-                cwPosition = cwPosition,
-                onRewind = onRewind,
-                isPanelExpanded = isPanelExpanded,
-                onFavorite = onFavorite,
-                openDlnaDevices = openDlnaDevices,
-                openChooseFormat = openChooseFormat,
-                openOrClosePanel = openOrClosePanel,
-                onVolume = onVolume,
-                onEnterPipMode = onEnterPipMode,
-                onPreviousChannelClick = onPreviousChannelClick,
-                onNextChannelClick = onNextChannelClick,
-                onSpeedUpdated = onSpeedUpdated,
-                onSpeedStart = { gesture = MaskGesture.SPEED },
-                onSpeedEnd = { gesture = null },
-                gesture = gesture
-            )
-
-            if (gesture != null) {
-                MaskGestureValuePanel(
-                    value = when (gesture) {
-                        MaskGesture.BRIGHTNESS -> "${currentBrightness.times(100).toInt()}%"
-                        MaskGesture.VOLUME -> "${currentVolume.times(100).toInt()}"
-                        MaskGesture.SPEED -> "${"%.1f".format(currentSpeed)}x"
-                        else -> ""
-                    },
-                    icon = when (gesture) {
-                        MaskGesture.BRIGHTNESS -> when {
-                            brightness < 0.5f -> Icons.Rounded.DarkMode
-                            else -> Icons.Rounded.LightMode
-                        }
-
-                        MaskGesture.VOLUME -> when {
-                            volume == 0f -> Icons.AutoMirrored.Rounded.VolumeOff
-                            volume < 0.5f -> Icons.AutoMirrored.Rounded.VolumeDown
-                            else -> Icons.AutoMirrored.Rounded.VolumeUp
-                        }
-                        else -> Icons.Rounded.Speed
-                    },
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
-
-            LaunchedEffect(playerState.playerError) {
-                if (playerState.playerError != null) {
-                    maskState.wake()
-                }
+        LaunchedEffect(playerState.playerError) {
+            if (playerState.playerError != null) {
+                maskState.wake()
             }
         }
     }

@@ -23,7 +23,10 @@ fun <S> composableOf(block: @Composable S.() -> Unit): @Composable S.() -> Unit 
 
 @OptIn(ExperimentalContracts::class)
 @Composable
-fun <S> composableOf(condition: Boolean, block: @Composable S.() -> Unit): (@Composable S.() -> Unit)? {
+fun <S> composableOf(
+    condition: Boolean,
+    block: @Composable S.() -> Unit
+): (@Composable S.() -> Unit)? {
     contract { returnsNotNull() implies condition }
     return if (condition) {
         block

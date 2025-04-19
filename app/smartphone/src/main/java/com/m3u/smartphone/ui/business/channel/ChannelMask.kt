@@ -4,6 +4,7 @@ import android.content.pm.ActivityInfo
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -26,13 +27,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
@@ -69,8 +70,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
@@ -83,16 +82,19 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import com.m3u.business.channel.PlayerState
 import com.m3u.core.architecture.preferences.hiltPreferences
+import com.m3u.core.foundation.suggest.any
+import com.m3u.core.foundation.suggest.suggestAll
+import com.m3u.core.foundation.ui.composableOf
 import com.m3u.core.foundation.ui.thenIf
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.business.channel.components.CwPositionRewinder
+import com.m3u.smartphone.ui.business.channel.components.MaskDimension
 import com.m3u.smartphone.ui.business.channel.components.MaskTextButton
 import com.m3u.smartphone.ui.business.channel.components.PlayerMask
 import com.m3u.smartphone.ui.common.helper.LocalHelper
 import com.m3u.smartphone.ui.material.components.FontFamilies
-import com.m3u.smartphone.ui.material.components.Image
 import com.m3u.smartphone.ui.material.components.mask.MaskButton
 import com.m3u.smartphone.ui.material.components.mask.MaskCircleButton
 import com.m3u.smartphone.ui.material.components.mask.MaskPanel
@@ -109,9 +111,8 @@ import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
 @Composable
-internal fun ChannelMask(
+fun ChannelMask(
     adjacentChannels: AdjacentChannels?,
-    cover: String,
     title: String,
     gesture: MaskGesture?,
     playlistTitle: String,
@@ -136,6 +137,7 @@ internal fun ChannelMask(
     onVolume: (Float) -> Unit,
     onNextChannelClick: () -> Unit,
     onPreviousChannelClick: () -> Unit,
+    onDimensionChanged: (MaskDimension) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val preferences = hiltPreferences()
@@ -246,14 +248,15 @@ internal fun ChannelMask(
             onSpeedEnd = onSpeedEnd,
             modifier = Modifier.align(Alignment.Center)
         )
+        val color by animateColorAsState(
+            Color.Black.copy(alpha = if (isPanelExpanded) 0f else 0.54f)
+        )
+        val playStateDisplayText = ChannelMaskUtils.playStateDisplayText(playerState.playState)
+        val exceptionDisplayText = ChannelMaskUtils.playbackExceptionDisplayText(playerState.playerError)
 
-        val brushAlpha by animateFloatAsState(if (isPanelExpanded) 0f else 0.54f)
         PlayerMask(
             state = maskState,
-            brush = Brush.verticalGradient(
-                0f to Color.Black.copy(0.54f),
-                1f to Color.Black.copy(brushAlpha)
-            ),
+            color = color,
             header = {
                 val backStackEntry by currentBackStackEntry()
                 MaskButton(
@@ -383,16 +386,18 @@ internal fun ChannelMask(
                     }
                 }
             },
-            footer = {
-                if (preferences.fullInfoPlayer && cover.isNotEmpty()) {
-                    Image(
-                        model = cover,
-                        modifier = Modifier
-                            .size(64.dp)
-                            .align(Alignment.Bottom)
-                            .clip(RoundedCornerShape(spacing.small))
-                    )
+            footer = composableOf<RowScope>(
+                any {
+                    suggest { !isPanelExpanded }
+                    suggest { !isPanelGestureSupported }
+                    suggest { playStateDisplayText.isNotEmpty() }
+                    suggest { exceptionDisplayText.isNotEmpty() }
+                    suggestAll {
+                        suggest { isStaticAndSeekable }
+                        suggest { isProgressEnabled }
+                    }
                 }
+            ) {
                 Column(
                     verticalArrangement = Arrangement.Bottom,
                     modifier = Modifier
@@ -421,11 +426,6 @@ internal fun ChannelMask(
                             modifier = Modifier.basicMarquee()
                         )
                     }
-                    val playStateDisplayText =
-                        ChannelMaskUtils.playStateDisplayText(playerState.playState)
-                    val exceptionDisplayText =
-                        ChannelMaskUtils.playbackExceptionDisplayText(playerState.playerError)
-
                     if (playStateDisplayText.isNotEmpty()
                         || exceptionDisplayText.isNotEmpty()
                         || (isStaticAndSeekable && isProgressEnabled)
@@ -527,6 +527,7 @@ internal fun ChannelMask(
                     }
                 }
             },
+            onDimensionChanged = onDimensionChanged,
             modifier = Modifier.fillMaxSize()
         )
     }

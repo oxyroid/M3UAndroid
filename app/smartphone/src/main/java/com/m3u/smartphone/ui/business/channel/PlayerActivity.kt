@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.material3.MaterialTheme
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.m3u.business.channel.ChannelViewModel
@@ -17,6 +18,7 @@ import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.service.MediaCommand
 import com.m3u.smartphone.ui.common.helper.Helper
 import com.m3u.smartphone.ui.common.internal.Toolkit
+import com.m3u.smartphone.ui.material.components.Background
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -48,9 +50,11 @@ class PlayerActivity : ComponentActivity() {
                 helper = helper,
                 alwaysUseDarkTheme = true
             ) {
-                ChannelRoute(
-                    viewModel = viewModel
-                )
+                Background {
+                    ChannelRoute(
+                        viewModel = viewModel
+                    )
+                }
             }
         }
         addOnPictureInPictureModeChangedListener {

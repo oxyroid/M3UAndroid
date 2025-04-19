@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
@@ -23,12 +24,8 @@ internal fun CoverPlaceholder(
     cover: String,
     modifier: Modifier = Modifier
 ) {
-    val configuration = LocalConfiguration.current
     val duration = LocalDuration.current
     val spacing = LocalSpacing.current
-    val size = remember(configuration.screenHeightDp) {
-        configuration.screenHeightDp.dp
-    }
     AnimatedVisibility(
         visible = visible,
         enter = scaleIn(
@@ -47,7 +44,7 @@ internal fun CoverPlaceholder(
     ) {
         Image(
             model = cover,
-            modifier = Modifier.size(size),
+            modifier = Modifier.fillMaxSize(),
             transparentPlaceholder = true
         )
     }

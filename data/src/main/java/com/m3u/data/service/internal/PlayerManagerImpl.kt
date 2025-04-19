@@ -867,7 +867,7 @@ class PlayerManagerImpl @Inject constructor(
     }
 }
 
-private fun VideoSize.toRect(): Rect {
+fun VideoSize.toRect(): Rect {
     return Rect(0, 0, width, height)
 }
 

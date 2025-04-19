@@ -153,9 +153,10 @@ internal fun ProgramGuide(
             modifier = Modifier
                 .fillMaxSize()
                 .blurEdges(
-                    MaterialTheme.colorScheme.surface,
+                    MaterialTheme.colorScheme.surfaceContainerHigh,
                     listOf(Edge.Top, Edge.Bottom)
                 )
+                .background(MaterialTheme.colorScheme.surfaceContainer)
                 .then(zoomGestureModifier)
                 .then(modifier)
         ) {

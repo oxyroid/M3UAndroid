@@ -55,14 +55,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import coil.compose.SubcomposeAsyncImage
+import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 import com.m3u.core.foundation.components.CircularProgressIndicator
+import com.m3u.core.foundation.ui.composableOf
 import com.m3u.core.foundation.ui.thenIf
 import com.m3u.core.util.collections.indexOf
 import com.m3u.data.database.model.Channel
@@ -73,15 +74,12 @@ import com.m3u.data.service.MediaCommand
 import com.m3u.smartphone.TimeUtils.formatEOrSh
 import com.m3u.smartphone.TimeUtils.toEOrSh
 import com.m3u.smartphone.ui.common.helper.LocalHelper
-import com.m3u.smartphone.ui.material.components.Background
 import com.m3u.smartphone.ui.material.components.FontFamilies
 import com.m3u.smartphone.ui.material.effects.BackStackEntry
 import com.m3u.smartphone.ui.material.effects.BackStackHandler
 import com.m3u.smartphone.ui.material.ktx.Edge
 import com.m3u.smartphone.ui.material.ktx.blurEdges
-import com.m3u.core.foundation.ui.composableOf
 import com.m3u.smartphone.ui.material.model.LocalSpacing
-import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -99,19 +97,20 @@ internal fun PlayerPanel(
     channels: LazyPagingItems<Channel>,
     programmes: LazyPagingItems<Programme>,
     programmeRange: ProgrammeRange,
+    useVertical: Boolean,
     modifier: Modifier = Modifier,
     programmeReminderIds: List<Int>,
     onRemindProgramme: (Programme) -> Unit,
     onCancelRemindProgramme: (Programme) -> Unit,
 ) {
-    val configuration = LocalConfiguration.current
     val spacing = LocalSpacing.current
 
-    val useVertical = configuration.screenWidthDp < configuration.screenHeightDp
-    Background(
+    Surface(
         shape = if (useVertical) RectangleShape else AbsoluteSmoothCornerShape(
             cornerRadiusTL = spacing.medium,
-            cornerRadiusBL = spacing.medium
+            cornerRadiusBL = spacing.medium,
+            smoothnessAsPercentTL = 100,
+            smoothnessAsPercentBL = 100
         ),
         modifier = modifier
     ) {
@@ -125,6 +124,7 @@ internal fun PlayerPanel(
             isChannelsSupported = isChannelsSupported,
             isProgrammeSupported = isProgrammeSupported,
             isPanelExpanded = isPanelExpanded,
+            useVertical = useVertical,
             channels = channels,
             programmes = programmes,
             programmeRange = programmeRange,
@@ -274,6 +274,7 @@ fun PlayerPanelImpl(
     isChannelsSupported: Boolean,
     isProgrammeSupported: Boolean,
     isPanelExpanded: Boolean,
+    useVertical: Boolean,
     channels: LazyPagingItems<Channel>,
     programmes: LazyPagingItems<Programme>,
     programmeRange: ProgrammeRange,
@@ -281,10 +282,7 @@ fun PlayerPanelImpl(
     modifier: Modifier = Modifier,
     onProgrammePressed: (Programme) -> Unit
 ) {
-    val configuration = LocalConfiguration.current
     val spacing = LocalSpacing.current
-
-    val useVertical = configuration.screenWidthDp < configuration.screenHeightDp
     Column(
         verticalArrangement = Arrangement.spacedBy(spacing.small),
         modifier = modifier
@@ -429,8 +427,9 @@ private fun ChannelGalleryItem(
     val helper = LocalHelper.current
     val coroutineScope = rememberCoroutineScope()
 
-    val containerColor = if (!isPlaying) MaterialTheme.colorScheme.surfaceColorAtElevation(spacing.medium)
-    else MaterialTheme.colorScheme.onSurface
+    val containerColor =
+        if (!isPlaying) MaterialTheme.colorScheme.surfaceColorAtElevation(spacing.medium)
+        else MaterialTheme.colorScheme.onSurface
     val contentColor = if (!isPlaying) MaterialTheme.colorScheme.onSurface
     else MaterialTheme.colorScheme.surfaceColorAtElevation(spacing.small)
     val text = composableOf {
@@ -471,7 +470,9 @@ private fun ChannelGalleryItem(
                 containerColor = containerColor,
                 headlineColor = contentColor
             ),
-            modifier = Modifier.clickable(onClick = onClick).then(modifier)
+            modifier = Modifier
+                .clickable(onClick = onClick)
+                .then(modifier)
         )
     }
 }
