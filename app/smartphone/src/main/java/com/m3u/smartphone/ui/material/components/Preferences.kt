@@ -54,7 +54,7 @@ fun Preference(
 
     TooltipBox(
         state = rememberTooltipState(),
-        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
         tooltip = {
             if (!content.isNullOrEmpty()) {
                 PlainTooltip {

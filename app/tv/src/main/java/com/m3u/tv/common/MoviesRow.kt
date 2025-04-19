@@ -87,9 +87,7 @@ fun ChannelsRow(
                 horizontalArrangement = Arrangement.spacedBy(20.dp),
                 modifier = Modifier
                     .focusRequester(lazyRow)
-                    .focusRestorer {
-                        firstItem
-                    }
+                    .focusRestorer(firstItem)
             ) {
                 itemsIndexed(channelState, key = { _, channel -> channel.id }) { index, channel ->
                     val itemModifier = if (index == 0) {
@@ -178,9 +176,7 @@ fun ImmersiveListChannelsRow(
                 horizontalArrangement = Arrangement.spacedBy(20.dp),
                 modifier = Modifier
                     .focusRequester(lazyRow)
-                    .focusRestorer {
-                        firstItem
-                    }
+                    .focusRestorer(firstItem)
             ) {
                 itemsIndexed(
                     channelState,

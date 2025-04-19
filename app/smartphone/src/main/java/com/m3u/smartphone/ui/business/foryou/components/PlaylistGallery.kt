@@ -20,7 +20,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -55,7 +55,7 @@ internal fun PlaylistGallery(
     header: (@Composable () -> Unit)? = null
 ) {
     val spacing = LocalSpacing.current
-    val configuration = LocalConfiguration.current
+    val windowInfo = LocalWindowInfo.current
     val helper = LocalHelper.current
 
     val colorScheme = MaterialTheme.colorScheme
@@ -77,11 +77,11 @@ internal fun PlaylistGallery(
         ),
         label = "playlist-gallery-haze-color"
     )
-    LaunchedEffect(configuration.screenWidthDp) {
+    LaunchedEffect(windowInfo.containerSize.width) {
         snapshotFlow { viewportStartOffset }
             .onEach {
                 val fraction = (it.absoluteValue /
-                        (configuration.screenWidthDp * headlineAspectRatio))
+                        (windowInfo.containerSize.width * headlineAspectRatio))
                     .coerceIn(0f, 1f)
                 Metadata.headlineFraction = fraction
             }
