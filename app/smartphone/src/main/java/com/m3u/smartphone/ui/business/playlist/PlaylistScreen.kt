@@ -50,7 +50,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -368,12 +367,7 @@ private fun PlaylistScreen(
         onDispose { Metadata.fob = null }
     }
 
-    val spacing = LocalSpacing.current
     val configuration = LocalConfiguration.current
-    val focusManager = LocalFocusManager.current
-
-    val currentColor = MaterialTheme.colorScheme.background
-    val currentContentColor = MaterialTheme.colorScheme.onBackground
 
     val sheetState = rememberModalBottomSheetState()
 
@@ -461,7 +455,9 @@ private fun PlaylistScreen(
         )
     }
     Column(
-        Modifier.background(MaterialTheme.colorScheme.surfaceContainerHighest)
+        Modifier
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+            .then(modifier)
     ) {
         if (!isExpanded) {
             AnimatedVisibility(

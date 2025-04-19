@@ -162,26 +162,13 @@ internal fun MainContent(
     Background {
         val headlineFraction = Metadata.headlineFraction
         val fraction = LinearOutSlowInEasing.transform(headlineFraction)
-        val lerpHazeColor = lerpColor(
-            start = Color.Transparent,
-            stop = MaterialTheme.colorScheme.surface,
-            fraction = fraction
-        )
-        val lerpBlurRadius = lerpDp(
-            start = 0.dp,
-            stop = 20.dp,
-            fraction = fraction
-        )
-        val lerpNoiseFactor = lerpf(
-            start = 0f,
-            stop = 0.15f,
-            fraction = fraction
-        )
+        val color = lerpColor(Color.Transparent, MaterialTheme.colorScheme.surface, fraction)
+        val blurRadius = lerpDp(0.dp, 20.dp, fraction)
+        val noiseFactor = lerpf(0f, 0.15f, fraction)
 
-        val currentHazeColor = if (showQuery) MaterialTheme.colorScheme.surface
-        else lerpHazeColor
-        val currentBlurRadius = if (showQuery) 30.dp else lerpBlurRadius
-        val currentNoiseFactor = if (showQuery) 0.15f else lerpNoiseFactor
+        val currentHazeColor = if (showQuery) MaterialTheme.colorScheme.surface else color
+        val currentBlurRadius = if (showQuery) 30.dp else blurRadius
+        val currentNoiseFactor = if (showQuery) 0.15f else noiseFactor
         val currentOnShowQueryChange = { value: Boolean ->
             if (!value) {
                 viewModel.query.value = ""

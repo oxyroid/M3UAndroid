@@ -1,7 +1,5 @@
 package com.m3u.smartphone.ui.business.foryou.components
 
-import android.util.Log
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,7 +9,6 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -19,12 +16,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
@@ -38,11 +36,9 @@ import com.m3u.smartphone.ui.common.helper.useRailNav
 import com.m3u.smartphone.ui.material.ktx.plus
 import com.m3u.smartphone.ui.material.model.LocalHazeState
 import com.m3u.smartphone.ui.material.model.LocalSpacing
-import dev.chrisbanes.haze.HazeDefaults
-import dev.chrisbanes.haze.hazeChild
-import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlin.math.absoluteValue
 
@@ -61,6 +57,7 @@ internal fun PlaylistGallery(
     val spacing = LocalSpacing.current
     val windowInfo = LocalWindowInfo.current
     val helper = LocalHelper.current
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     val headlineAspectRatio = Metadata.headlineAspectRatio(helper.useRailNav)
 
@@ -72,14 +69,17 @@ internal fun PlaylistGallery(
         }
     }
     LaunchedEffect(windowInfo.containerSize.width) {
-        snapshotFlow { viewportStartOffset }
-            .onEach {
-                val fraction =
-                    (it.absoluteValue * headlineAspectRatio / (windowInfo.containerSize.width))
-                    .coerceIn(0f, 1f)
-                Metadata.headlineFraction = fraction
-            }
-            .launchIn(this)
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            snapshotFlow { viewportStartOffset }
+                .onEach {
+                    Metadata.headlineFraction = it.absoluteValue
+                        .times(headlineAspectRatio)
+                        .div(windowInfo.containerSize.width)
+                        .coerceIn(0f, 1f)
+                }
+                .onCompletion { Metadata.headlineFraction = 1f }
+                .launchIn(this)
+        }
     }
     LazyVerticalGrid(
         state = state,
