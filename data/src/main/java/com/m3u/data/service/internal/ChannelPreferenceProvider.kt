@@ -1,7 +1,6 @@
 package com.m3u.data.service.internal
 
 import android.net.Uri
-import android.util.Log
 import androidx.core.net.toUri
 import com.jakewharton.disklrucache.DiskLruCache
 import kotlinx.coroutines.CoroutineDispatcher
@@ -31,9 +30,6 @@ internal class ChannelPreferenceProvider(
                 )
             }
         }
-            .onFailure {
-                Log.e("TAG", "get: ", it)
-            }
             .getOrNull()
     }
 
@@ -49,9 +45,6 @@ internal class ChannelPreferenceProvider(
             editor.set(2, value.thumbnail?.toString().orEmpty())
             editor.commit()
         }
-            .onFailure {
-                Log.e("TAG", "set: ", it)
-            }
     }
 
     // [a-z0-9_-]{1,64}

@@ -28,6 +28,12 @@ class Recommend(
     ) : Spec
 
     @Immutable
+    data class CwSpec(
+        val channel: Channel,
+        val position: Long
+    ) : Spec
+
+    @Immutable
     data class NewRelease(
         val name: String,
         val description: String,

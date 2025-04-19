@@ -10,4 +10,5 @@
     <string name="feat_foryou_recommend_unseen_more_than_days">超过 %d 天</string>
     <string name="feat_foryou_recommend_unseen_days">%d 天</string>
     <string name="feat_foryou_recommend_unseen_hours">%d 小时</string>
+    <string name="feat_foryou_recommend_cw_label">继续播放</string>
 </resources>

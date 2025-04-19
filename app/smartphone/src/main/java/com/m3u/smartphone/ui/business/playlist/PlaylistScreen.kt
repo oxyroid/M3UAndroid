@@ -20,11 +20,13 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Sort
@@ -48,12 +50,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -91,6 +95,7 @@ import com.m3u.smartphone.ui.material.components.SortBottomSheet
 import com.m3u.smartphone.ui.material.ktx.checkPermissionOrRationale
 import com.m3u.smartphone.ui.material.ktx.interceptVolumeEvent
 import com.m3u.smartphone.ui.material.ktx.isAtTop
+import com.m3u.smartphone.ui.material.ktx.minus
 import com.m3u.smartphone.ui.material.ktx.only
 import com.m3u.smartphone.ui.material.model.LocalHazeState
 import com.m3u.smartphone.ui.material.model.LocalSpacing
@@ -444,7 +449,7 @@ private fun PlaylistScreen(
             recently = sort == Sort.RECENTLY,
             isVodOrSeriesPlaylist = isVodPlaylist || isSeriesPlaylist,
             onClick = onPlayChannel,
-            contentPadding = contentPadding,
+            contentPadding = contentPadding.minus(contentPadding.only(WindowInsetsSides.Top)),
             onLongClick = {
                 mediaSheetValue = MediaSheetValue.PlaylistScreen(it)
             },
@@ -457,12 +462,13 @@ private fun PlaylistScreen(
     Column(
         Modifier
             .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+            .padding(contentPadding.minus(contentPadding.only(WindowInsetsSides.Bottom)))
             .then(modifier)
     ) {
         if (!isExpanded) {
             AnimatedVisibility(
                 visible = categories.size > 1,
-                enter = fadeIn(animationSpec = tween(400))
+                enter = fadeIn(animationSpec = tween(400)),
             ) {
                 tabs()
             }

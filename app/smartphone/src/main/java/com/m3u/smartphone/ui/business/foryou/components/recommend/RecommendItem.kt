@@ -1,10 +1,12 @@
 package com.m3u.smartphone.ui.business.foryou.components.recommend
 
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -19,6 +21,7 @@ import androidx.compose.material.icons.rounded.NewReleases
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,16 +44,19 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.m3u.business.foryou.Recommend
 import com.m3u.core.architecture.preferences.hiltPreferences
+import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
+import com.m3u.core.foundation.ui.composableOf
 import com.m3u.core.util.basic.title
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.material.brush.RecommendCardContainerBrush
-import com.m3u.smartphone.ui.material.model.LocalSpacing
-import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 import com.m3u.smartphone.ui.material.components.FontFamilies
 import com.m3u.smartphone.ui.material.components.createPremiumBrush
+import com.m3u.smartphone.ui.material.model.LocalSpacing
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlin.time.Duration.Companion.days
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 @Composable
 internal fun RecommendItem(
@@ -63,6 +69,7 @@ internal fun RecommendItem(
         when (spec) {
             is Recommend.UnseenSpec -> UnseenContent(spec)
             is Recommend.DiscoverSpec -> DiscoverContent(spec)
+            is Recommend.CwSpec -> CwContent(spec)
             is Recommend.NewRelease -> NewReleaseContent(spec)
         }
     }
@@ -98,65 +105,55 @@ private fun RecommendItemLayout(
 }
 
 @Composable
-fun UnseenContent(spec: Recommend.UnseenSpec) {
+private fun RecommendItemContent(
+    cover: String,
+    primaryContent: @Composable ColumnScope.() -> Unit,
+    secondaryContent: (@Composable ColumnScope.() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     val context = LocalContext.current
     val spacing = LocalSpacing.current
     val preferences = hiltPreferences()
 
-    val stream = spec.channel
-    val duration = remember(stream.seen) {
-        Clock.System.now() - Instant.fromEpochMilliseconds(stream.seen)
-    }
     val noPictureMode = preferences.noPictureMode
 
     Box(Modifier.fillMaxSize()) {
         val info = @Composable {
             Column(Modifier.padding(spacing.medium)) {
-                Text(
-                    text = stringResource(string.feat_foryou_recommend_unseen_label).uppercase(),
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1
-                )
-                Text(
-                    text = when {
-                        duration > 30.days -> stringResource(
-                            string.feat_foryou_recommend_unseen_more_than_days,
-                            30
-                        )
+                CompositionLocalProvider(
+                    LocalTextStyle provides MaterialTheme.typography.titleMedium
+                ) {
+                    primaryContent()
+                }
+                CompositionLocalProvider(
+                    LocalTextStyle provides MaterialTheme.typography.labelMedium.copy(
+                        color = LocalContentColor.current.copy(0.56f)
+                    )
+                ) {
+                    secondaryContent?.invoke(this)
+                }
+                Spacer(modifier = Modifier.weight(1f))
 
-                        duration > 1.days -> stringResource(
-                            string.feat_foryou_recommend_unseen_days,
-                            duration.inWholeDays
-                        )
-
-                        else -> stringResource(
-                            string.feat_foryou_recommend_unseen_hours,
-                            duration.inWholeHours
-                        )
-                    }.title(),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = LocalContentColor.current.copy(0.56f)
-                )
-                Spacer(modifier = Modifier.height(spacing.extraSmall))
-                Text(
-                    text = stream.title,
-                    style = MaterialTheme.typography.displaySmall,
-                    fontWeight = FontWeight.Black,
-                    maxLines = 1
-                )
+                CompositionLocalProvider(
+                    LocalTextStyle provides MaterialTheme.typography.displaySmall.copy(
+                        fontWeight = FontWeight.Black
+                    )
+                ) {
+                    content()
+                }
             }
         }
         if (!noPictureMode) {
-            val request = remember(stream.cover) {
+            val request = remember(cover) {
                 ImageRequest.Builder(context)
-                    .data(stream.cover.orEmpty())
+                    .data(cover)
                     .crossfade(1600)
                     .build()
             }
             AsyncImage(
                 model = request,
                 contentScale = ContentScale.Crop,
-                contentDescription = stream.title,
+                contentDescription = null,
                 modifier = Modifier
                     .fillMaxWidth(0.78f)
                     .matchParentSize()
@@ -180,6 +177,49 @@ fun UnseenContent(spec: Recommend.UnseenSpec) {
 }
 
 @Composable
+private fun UnseenContent(spec: Recommend.UnseenSpec) {
+    val channel = spec.channel
+    val duration = remember(channel.seen) {
+        Clock.System.now() - Instant.fromEpochMilliseconds(channel.seen)
+    }
+    RecommendItemContent(
+        cover = spec.channel.cover.orEmpty(),
+        primaryContent = {
+            Text(
+                text = stringResource(string.feat_foryou_recommend_unseen_label).uppercase(),
+                maxLines = 1
+            )
+        },
+        secondaryContent = {
+            Text(
+                text = when {
+                    duration > 30.days -> stringResource(
+                        string.feat_foryou_recommend_unseen_more_than_days,
+                        30
+                    )
+
+                    duration > 1.days -> stringResource(
+                        string.feat_foryou_recommend_unseen_days,
+                        duration.inWholeDays
+                    )
+
+                    else -> stringResource(
+                        string.feat_foryou_recommend_unseen_hours,
+                        duration.inWholeHours
+                    )
+                }.title()
+            )
+        },
+        content = {
+            Text(
+                text = channel.title,
+                maxLines = 1
+            )
+        }
+    )
+}
+
+@Composable
 private fun DiscoverContent(spec: Recommend.DiscoverSpec) {
     val spacing = LocalSpacing.current
     val playlist = spec.playlist
@@ -199,6 +239,42 @@ private fun DiscoverContent(spec: Recommend.DiscoverSpec) {
         style = MaterialTheme.typography.displaySmall,
         fontWeight = FontWeight.Black,
         maxLines = 1
+    )
+}
+
+@Composable
+private fun CwContent(spec: Recommend.CwSpec) {
+    val channel = spec.channel
+    val timezone = remember(spec.position) {
+        spec.position.toDuration(DurationUnit.MILLISECONDS).toComponents { h, m, s, _ ->
+            listOf(h, m, s)
+                .dropWhile { it.toInt() == 0 }
+                .joinToString(":") {
+                    if (it.toInt() >= 10) it.toString()
+                    else "0$it"
+                }
+        }
+    }
+    RecommendItemContent(
+        cover = channel.cover.orEmpty(),
+        primaryContent = {
+            Text(
+                text = stringResource(string.feat_foryou_recommend_cw_label).uppercase(),
+                maxLines = 1
+            )
+        },
+        secondaryContent = composableOf<ColumnScope>(spec.position >= 0L) {
+            Text(
+                text = timezone,
+                maxLines = 1
+            )
+        },
+        content = {
+            Text(
+                text = channel.title,
+                maxLines = 1
+            )
+        }
     )
 }
 

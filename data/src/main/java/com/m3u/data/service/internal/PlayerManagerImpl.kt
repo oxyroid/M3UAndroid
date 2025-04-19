@@ -723,6 +723,11 @@ class PlayerManagerImpl @Inject constructor(
         }
     }
 
+    override suspend fun getCwPosition(channelUrl: String): Long {
+        val channelPreference = getChannelPreference(channelUrl)
+        return channelPreference?.cwPosition ?: -1L
+    }
+
     private suspend fun onPlaybackIdle() {}
     private suspend fun onPlaybackBuffering() {}
 

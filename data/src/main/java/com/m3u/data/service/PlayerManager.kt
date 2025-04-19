@@ -49,6 +49,7 @@ interface PlayerManager {
 
     val cwPositionObserver: SharedFlow<Long>
     suspend fun onRewind(channelUrl: String)
+    suspend fun getCwPosition(channelUrl: String): Long
     suspend fun reloadThumbnail(channelUrl: String): Uri?
     suspend fun syncThumbnail(channelUrl: String): Uri?
 }

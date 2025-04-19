@@ -44,6 +44,10 @@ internal fun RecommendGallery(
                 navigateToPlaylist(spec.playlist)
             }
 
+            is Recommend.CwSpec -> {
+                onPlayChannel(spec.channel)
+            }
+
             is Recommend.NewRelease -> {
                 uriHandler.openUri(spec.url)
             }

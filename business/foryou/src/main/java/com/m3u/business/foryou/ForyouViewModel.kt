@@ -7,17 +7,15 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkQuery
 import com.m3u.core.architecture.dispatcher.Dispatcher
-import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
+import com.m3u.core.architecture.dispatcher.M3uDispatchers.Default
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.preferences.Preferences
-import com.m3u.core.unit.DataUnit
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.asResource
 import com.m3u.core.wrapper.mapResource
 import com.m3u.core.wrapper.resource
-import com.m3u.data.api.dto.github.Release
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
@@ -25,6 +23,7 @@ import com.m3u.data.parser.xtream.XtreamChannelInfo
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.programme.ProgrammeRepository
+import com.m3u.data.service.PlayerManager
 import com.m3u.data.worker.SubscriptionWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -49,9 +48,9 @@ class ForyouViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     channelRepository: ChannelRepository,
     programmeRepository: ProgrammeRepository,
-//    otherRepository: OtherRepository,
+    private val playerManager: PlayerManager,
     preferences: Preferences,
-    @Dispatcher(IO) ioDispatcher: CoroutineDispatcher,
+    @Dispatcher(Default) defaultDispatcher: CoroutineDispatcher,
     workManager: WorkManager,
     delegate: Logger
 ) : ViewModel() {
@@ -89,45 +88,27 @@ class ForyouViewModel @Inject constructor(
 
     private val unseensDuration = snapshotFlow { preferences.unseensMilliseconds }
         .map { it.toDuration(DurationUnit.MILLISECONDS) }
-        .flowOn(ioDispatcher)
+        .flowOn(defaultDispatcher)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Lazily,
             initialValue = Duration.INFINITE
         )
 
-    private val newRelease: StateFlow<Release?> = flow<Release?> {
-//        emit(otherRepository.release())
-    }
-        .stateIn(
-            scope = viewModelScope,
-            initialValue = null,
-            started = SharingStarted.Lazily
+    val specs = combine(
+        unseensDuration.flatMapLatest { channelRepository.observeAllUnseenFavorites(it) },
+        channelRepository.observePlayedRecently(),
+    ) { channels, playedRecently ->
+        playerManager.cwPositionObserver
+        listOfNotNull<Recommend.Spec>(
+            playedRecently?.let { Recommend.CwSpec(it, playerManager.getCwPosition(it.url)) },
+            *(channels.map { channel -> Recommend.UnseenSpec(channel) }.take(8).toTypedArray())
         )
-    val specs: StateFlow<List<Recommend.Spec>> = unseensDuration
-        .flatMapLatest { channelRepository.observeAllUnseenFavorites(it) }
-        .let { flow ->
-            combine(flow, newRelease) { channels, nr ->
-                buildList<Recommend.Spec> {
-                    if (nr != null) {
-                        val min = DataUnit.of(nr.assets.minOfOrNull { it.size }?.toLong() ?: 0L)
-                        val max = DataUnit.of(nr.assets.maxOfOrNull { it.size }?.toLong() ?: 0L)
-                        this += Recommend.NewRelease(
-                            name = nr.name,
-                            description = nr.body,
-                            downloadCount = nr.assets.sumOf { it.downloadCount },
-                            size = min..max,
-                            url = nr.htmlUrl
-                        )
-                    }
-                    this += channels.map { channel -> Recommend.UnseenSpec(channel) }
-                }
-            }
-        }
-        .flowOn(ioDispatcher)
+    }
+        .flowOn(defaultDispatcher)
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000L),
+            started = SharingStarted.WhileSubscribed(1_000L),
             initialValue = emptyList()
         )
 
