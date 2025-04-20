@@ -13,8 +13,6 @@ import androidx.work.WorkManager
 import androidx.work.WorkQuery
 import androidx.work.workDataOf
 import com.m3u.core.architecture.Publisher
-import com.m3u.core.architecture.dispatcher.Dispatcher
-import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
@@ -31,12 +29,11 @@ import com.m3u.data.parser.xtream.XtreamInput
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.service.Messager
-import com.m3u.data.service.PlayerManager
 import com.m3u.data.worker.BackupWorker
 import com.m3u.data.worker.RestoreWorker
 import com.m3u.data.worker.SubscriptionWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -60,7 +57,6 @@ class SettingViewModel @Inject constructor(
     publisher: Publisher,
     // FIXME: do not use dao in viewmodel
     private val colorSchemeDao: ColorSchemeDao,
-    @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
     delegate: Logger
 ) : ViewModel() {
     private val logger = delegate.install(Profiles.VIEWMODEL_SETTING)
@@ -89,7 +85,7 @@ class SettingViewModel @Inject constructor(
                     .filter { it.hiddenCategories.isNotEmpty() }
                     .flatMap { playlist -> playlist.hiddenCategories.map { playlist to it } }
             }
-            .flowOn(ioDispatcher)
+            .flowOn(Dispatchers.Default)
             .stateIn(
                 scope = viewModelScope,
                 initialValue = emptyList(),
@@ -106,7 +102,7 @@ class SettingViewModel @Inject constructor(
         colorSchemeDao.observeAll().catch { emit(emptyList()) },
         snapshotFlow { preferences.followSystemTheme }
     ) { all, followSystemTheme -> if (followSystemTheme) all.filter { !it.isDark } else all }
-        .flowOn(ioDispatcher)
+        .flowOn(Dispatchers.Default)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
@@ -254,7 +250,7 @@ class SettingViewModel @Inject constructor(
             }
             BackingUpAndRestoringState.of(backingUp, restoring)
         }
-        .flowOn(ioDispatcher)
+        .flowOn(Dispatchers.Default)
         .stateIn(
             scope = viewModelScope,
             // determine ui button enabled or not

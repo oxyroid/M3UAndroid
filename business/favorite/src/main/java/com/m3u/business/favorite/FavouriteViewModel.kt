@@ -15,8 +15,6 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.m3u.core.Contracts
-import com.m3u.core.architecture.dispatcher.Dispatcher
-import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
@@ -33,7 +31,6 @@ import com.m3u.data.repository.media.MediaRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.service.PlayerManager
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -41,7 +38,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -55,26 +51,16 @@ class FavoriteViewModel @Inject constructor(
     private val mediaRepository: MediaRepository,
     private val playerManager: PlayerManager,
     preferences: Preferences,
-    @Dispatcher(IO) ioDispatcher: CoroutineDispatcher,
     delegate: Logger
 ) : ViewModel() {
     private val logger = delegate.install(Profiles.VIEWMODEL_FAVOURITE)
 
-    private val zappingMode = snapshotFlow { preferences.zappingMode }
-        .flowOn(ioDispatcher)
-        .stateIn(
-            scope = viewModelScope,
-            initialValue = Preferences.DEFAULT_ZAPPING_MODE,
-            started = SharingStarted.WhileSubscribed(5_000)
-        )
-
     val zapping: StateFlow<Channel?> = combine(
-        zappingMode,
+        snapshotFlow { preferences.zappingMode },
         playerManager.channel
     ) { zappingMode, channel ->
         channel.takeIf { zappingMode }
     }
-        .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
             initialValue = null,
@@ -94,7 +80,6 @@ class FavoriteViewModel @Inject constructor(
 
     val sort = sortIndex
         .map { sorts[it] }
-        .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
             initialValue = Sort.UNSPECIFIED,

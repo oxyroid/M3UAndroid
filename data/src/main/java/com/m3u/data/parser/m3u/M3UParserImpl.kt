@@ -1,12 +1,10 @@
 package com.m3u.data.parser.m3u
 
-import com.m3u.core.architecture.dispatcher.Dispatcher
-import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.logger.post
-import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -14,7 +12,6 @@ import java.io.InputStream
 import javax.inject.Inject
 
 internal class M3UParserImpl @Inject constructor(
-    @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
     delegate: Logger
 ) : M3UParser {
     private val logger = delegate.install(Profiles.PARSER_M3U)
@@ -105,5 +102,5 @@ internal class M3UParserImpl @Inject constructor(
             emit(entry)
         }
     }
-        .flowOn(ioDispatcher)
+        .flowOn(Dispatchers.Default)
 }

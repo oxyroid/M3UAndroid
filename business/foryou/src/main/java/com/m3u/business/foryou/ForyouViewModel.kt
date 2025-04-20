@@ -6,8 +6,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkQuery
-import com.m3u.core.architecture.dispatcher.Dispatcher
-import com.m3u.core.architecture.dispatcher.M3uDispatchers.Default
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
@@ -26,7 +24,7 @@ import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.data.service.PlayerManager
 import com.m3u.data.worker.SubscriptionWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -50,7 +48,6 @@ class ForyouViewModel @Inject constructor(
     programmeRepository: ProgrammeRepository,
     private val playerManager: PlayerManager,
     preferences: Preferences,
-    @Dispatcher(Default) defaultDispatcher: CoroutineDispatcher,
     workManager: WorkManager,
     delegate: Logger
 ) : ViewModel() {
@@ -88,7 +85,6 @@ class ForyouViewModel @Inject constructor(
 
     private val unseensDuration = snapshotFlow { preferences.unseensMilliseconds }
         .map { it.toDuration(DurationUnit.MILLISECONDS) }
-        .flowOn(defaultDispatcher)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Lazily,
@@ -99,13 +95,12 @@ class ForyouViewModel @Inject constructor(
         unseensDuration.flatMapLatest { channelRepository.observeAllUnseenFavorites(it) },
         channelRepository.observePlayedRecently(),
     ) { channels, playedRecently ->
-        playerManager.cwPositionObserver
         listOfNotNull<Recommend.Spec>(
             playedRecently?.let { Recommend.CwSpec(it, playerManager.getCwPosition(it.url)) },
             *(channels.map { channel -> Recommend.UnseenSpec(channel) }.take(8).toTypedArray())
         )
     }
-        .flowOn(defaultDispatcher)
+        .flowOn(Dispatchers.IO)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(1_000L),

@@ -1,12 +1,10 @@
 package com.m3u.data.parser.epg
 
 import android.util.Xml
-import com.m3u.core.architecture.dispatcher.Dispatcher
-import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
-import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flowOn
@@ -15,7 +13,6 @@ import java.io.InputStream
 import javax.inject.Inject
 
 internal class EpgParserImpl @Inject constructor(
-    @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
     delegate: Logger
 ) : EpgParser {
     private val logger = delegate.install(Profiles.PARSER_EPG)
@@ -38,7 +35,7 @@ internal class EpgParserImpl @Inject constructor(
             }
         }
     }
-        .flowOn(ioDispatcher)
+        .flowOn(Dispatchers.Default)
 
     private val ns: String? = null
     private fun XmlPullParser.readProgramme(): EpgProgramme {

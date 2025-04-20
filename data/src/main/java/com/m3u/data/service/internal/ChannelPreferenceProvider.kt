@@ -3,17 +3,16 @@ package com.m3u.data.service.internal
 import android.net.Uri
 import androidx.core.net.toUri
 import com.jakewharton.disklrucache.DiskLruCache
-import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.security.MessageDigest
 
 internal class ChannelPreferenceProvider(
     directory: File,
-    appVersion: Int,
-    ioDispatcher: CoroutineDispatcher
+    appVersion: Int
 ) {
-    private val limitedParallelism = ioDispatcher.limitedParallelism(1, "channel-preference")
+    private val limitedParallelism = Dispatchers.IO.limitedParallelism(1, "channel-preference")
     private val cache = DiskLruCache.open(directory, appVersion, 3, 4 * 1024 * 1024) // 4mb
 
     suspend operator fun get(

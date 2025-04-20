@@ -21,8 +21,6 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkQuery
 import com.m3u.core.Contracts
-import com.m3u.core.architecture.dispatcher.Dispatcher
-import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
@@ -50,6 +48,7 @@ import com.m3u.business.playlist.PlaylistMessage.ChannelCoverSaved
 import com.m3u.core.wrapper.Sort
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -84,7 +83,6 @@ class PlaylistViewModel @Inject constructor(
     private val playerManager: PlayerManager,
     preferences: Preferences,
     workManager: WorkManager,
-    @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
     delegate: Logger
 ) : ViewModel() {
     private val logger = delegate.install(Profiles.VIEWMODEL_PLAYLIST)
@@ -129,7 +127,7 @@ class PlaylistViewModel @Inject constructor(
                 )
             }
         }
-        .flowOn(ioDispatcher)
+        .flowOn(Dispatchers.Default)
         .stateIn(
             scope = viewModelScope,
             initialValue = false,

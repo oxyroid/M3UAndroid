@@ -2,8 +2,6 @@ package com.m3u.smartphone.ui.business.channel
 
 import android.content.pm.ActivityInfo
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -12,13 +10,10 @@ import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -30,10 +25,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
@@ -55,7 +50,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -72,13 +66,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.media3.common.Player
 import com.m3u.business.channel.PlayerState
 import com.m3u.core.architecture.preferences.hiltPreferences
@@ -89,7 +86,6 @@ import com.m3u.core.foundation.ui.thenIf
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.i18n.R.string
-import com.m3u.smartphone.ui.business.channel.components.CwPositionRewinder
 import com.m3u.smartphone.ui.business.channel.components.MaskDimension
 import com.m3u.smartphone.ui.business.channel.components.MaskTextButton
 import com.m3u.smartphone.ui.business.channel.components.PlayerMask
@@ -123,9 +119,10 @@ fun ChannelMask(
     favourite: Boolean,
     isSeriesPlaylist: Boolean,
     isPanelExpanded: Boolean,
+    useVertical: Boolean,
     hasTrack: Boolean,
     cwPosition: Long,
-    onRewind: () -> Unit,
+    onResetPlayback: () -> Unit,
     onSpeedUpdated: (Float) -> Unit,
     onSpeedStart: () -> Unit,
     onSpeedEnd: () -> Unit,
@@ -143,7 +140,6 @@ fun ChannelMask(
     val preferences = hiltPreferences()
     val helper = LocalHelper.current
     val spacing = LocalSpacing.current
-    val configuration = LocalConfiguration.current
     val coroutineScope = rememberCoroutineScope()
 
     val onBackPressedDispatcher = checkNotNull(
@@ -222,8 +218,6 @@ fun ChannelMask(
 
     var volumeBeforeMuted: Float by remember { mutableFloatStateOf(0.4f) }
 
-    val isPanelGestureSupported = configuration.screenWidthDp < configuration.screenHeightDp
-
     var bufferedPosition: Long? by remember { mutableStateOf(null) }
     LaunchedEffect(bufferedPosition) {
         bufferedPosition?.let {
@@ -252,8 +246,10 @@ fun ChannelMask(
             Color.Black.copy(alpha = if (isPanelExpanded) 0f else 0.54f)
         )
         val playStateDisplayText = ChannelMaskUtils.playStateDisplayText(playerState.playState)
-        val exceptionDisplayText = ChannelMaskUtils.playbackExceptionDisplayText(playerState.playerError)
+        val exceptionDisplayText =
+            ChannelMaskUtils.playbackExceptionDisplayText(playerState.playerError)
 
+        val cwPositionObj = cwPosition.takeIf { it != -1L }?.let { CwPosition(it) }
         PlayerMask(
             state = maskState,
             color = color,
@@ -305,7 +301,7 @@ fun ChannelMask(
                     )
                 }
 
-                if (!isPanelGestureSupported) {
+                if (!useVertical) {
                     MaskButton(
                         state = maskState,
                         icon = if (isPanelExpanded) Icons.Rounded.Archive
@@ -386,10 +382,15 @@ fun ChannelMask(
                     }
                 }
             },
+            control = cwPositionObj?.let {
+                composableOf<RowScope> {
+                    CwPositionSliderImpl(it.milliseconds, onResetPlayback = onResetPlayback)
+                }
+            },
             footer = composableOf<RowScope>(
                 any {
                     suggest { !isPanelExpanded }
-                    suggest { !isPanelGestureSupported }
+                    suggest { !useVertical }
                     suggest { playStateDisplayText.isNotEmpty() }
                     suggest { exceptionDisplayText.isNotEmpty() }
                     suggestAll {
@@ -405,7 +406,7 @@ fun ChannelMask(
                         .weight(1f)
                 ) {
                     val alpha by animateFloatAsState(
-                        if (!isPanelExpanded || !isPanelGestureSupported) 1f else 0f
+                        if (!isPanelExpanded || !useVertical) 1f else 0f
                     )
                     Column(Modifier.alpha(alpha)) {
                         Text(
@@ -476,56 +477,17 @@ fun ChannelMask(
                     )
                 }
             },
-            slider = {
-                val sliderRole: MaskSlideRole = when {
-                    cwPosition != -1L -> MaskSlideRole.CwPosition(cwPosition)
-                    isProgressEnabled && isStaticAndSeekable -> MaskSlideRole.Slide
-                    else -> MaskSlideRole.None
-                }
-                AnimatedContent(
-                    targetState = sliderRole,
-                    modifier = Modifier.fillMaxWidth()
-                ) { role ->
-                    when (role) {
-                        is MaskSlideRole.CwPosition -> {
-                            CwPositionSliderImpl(
-                                position = role.milliseconds,
-                                onResetPlayback = onRewind,
-                                modifier = Modifier.animateEnterExit(
-                                    enter = fadeIn() + scaleIn(initialScale = 0.85f),
-                                    exit = fadeOut() + scaleOut(targetScale = 0.85f)
-                                )
-                            )
-                        }
-
-                        MaskSlideRole.Slide -> {
-                            SliderImpl(
-                                contentDuration = contentDuration,
-                                contentPosition = contentPosition,
-                                bufferedPosition = bufferedPosition,
-                                onBufferedPositionChanged = {
-                                    bufferedPosition = it
-                                    maskState.wake()
-                                }
-                            )
-                        }
-
-                        MaskSlideRole.None -> {}
+            slider = composableOf(isProgressEnabled && isStaticAndSeekable) {
+                SliderImpl(
+                    contentDuration = contentDuration,
+                    contentPosition = contentPosition,
+                    bufferedPosition = bufferedPosition,
+                    isPanelExpanded = isPanelExpanded,
+                    onBufferedPositionChanged = {
+                        bufferedPosition = it
+                        maskState.wake()
                     }
-                }
-                AnimatedVisibility(
-                    visible = true,
-                    enter = slideInVertically(),
-                    exit = slideOutVertically(),
-                    modifier = Modifier.padding(top = 4.dp)
-                ) {
-
-                }
-                when {
-                    isProgressEnabled && isStaticAndSeekable -> {
-
-                    }
-                }
+                )
             },
             onDimensionChanged = onDimensionChanged,
             modifier = Modifier.fillMaxSize()
@@ -539,6 +501,7 @@ private fun SliderImpl(
     onBufferedPositionChanged: (Long) -> Unit,
     contentPosition: Long,
     contentDuration: Long,
+    isPanelExpanded: Boolean,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -550,10 +513,9 @@ private fun SliderImpl(
     val fontWeight by animateIntAsState(
         targetValue = if (bufferedPosition != null) 800
         else 400,
-        label = "position-text-font-weight"
     )
     Row(
-        horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+        horizontalArrangement = Arrangement.spacedBy(spacing.small),
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
     ) {
@@ -566,23 +528,19 @@ private fun SliderImpl(
             color = LocalContentColor.current.copy(alpha = 0.75f),
             maxLines = 1,
             fontFamily = FontFamilies.JetbrainsMono,
+            fontSize = 12.sp,
             fontWeight = FontWeight(fontWeight),
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.basicMarquee()
         )
-        val sliderThumbWidthDp by animateDpAsState(
-            targetValue = 4.dp,
-            label = "slider-thumb-width-dp"
-        )
+        val sliderThumbWidthDp by animateDpAsState(4.dp)
         val sliderInteractionSource = remember { MutableInteractionSource() }
         Slider(
             value = animContentPosition,
             valueRange = 0f..contentDuration
                 .coerceAtLeast(0L)
                 .toFloat(),
-            onValueChange = {
-                onBufferedPositionChanged(it.roundToLong())
-            },
+            onValueChange = { onBufferedPositionChanged(it.roundToLong()) },
             thumb = {
                 SliderDefaults.Thumb(
                     interactionSource = sliderInteractionSource,
@@ -600,38 +558,44 @@ private fun CwPositionSliderImpl(
     modifier: Modifier = Modifier,
     onResetPlayback: () -> Unit
 ) {
+    val spacing = LocalSpacing.current
     val time = remember(position) {
-        position.toDuration(DurationUnit.MILLISECONDS).toComponents { hours, minutes, seconds, _ ->
-            buildString {
-                if (hours > 0) {
-                    append("$hours:")
+        position.toDuration(DurationUnit.MILLISECONDS).toComponents { h, m, s, _ ->
+            listOf(h, m, s)
+                .dropWhile { it.toInt() == 0 }
+                .joinToString(":") {
+                    if (it.toInt() >= 10) it.toString()
+                    else "0$it"
                 }
-                if (minutes < 10) {
-                    append("0")
-                }
-                append("$minutes:")
-                if (seconds < 10) {
-                    append("0")
-                }
-                append("$seconds")
-            }
         }
     }
-    Column(modifier) {
-        Spacer(modifier = Modifier.height(8.dp))
-        CwPositionRewinder(
-            text = {
-                Text(
-                    text = stringResource(string.feat_channel_cw_position_title, time),
-                )
-            },
-            action = {
-                TextButton(onClick = onResetPlayback) {
-                    Text(
-                        text = stringResource(string.feat_channel_cw_position_button)
-                    )
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+//        Text(
+//            text = stringResource(string.feat_channel_cw_position_title, time),
+//            modifier = Modifier.weight(1f)
+//        )
+        Text(
+            text = buildAnnotatedString {
+                withLink(
+                    LinkAnnotation.Clickable(
+                        tag = stringResource(string.feat_channel_cw_position_button),
+                        linkInteractionListener = { onResetPlayback() }
+                    ),
+                ) {
+                    append(stringResource(string.feat_channel_cw_position_button))
                 }
-            }
+            },
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier
+                .border(
+                    width = 1.dp,
+                    color = LocalContentColor.current.copy(0.65f),
+                    shape = CircleShape
+                )
+                .padding(spacing.small)
         )
     }
 }
@@ -658,7 +622,6 @@ private fun MaskCenterButton(
         }
         val scale by animateFloatAsState(
             targetValue = if (isScaled) 0.65f else 1f,
-            label = "MaskCenterButton-scale",
             animationSpec = spring(
                 dampingRatio = Spring.DampingRatioMediumBouncy,
                 stiffness = Spring.StiffnessMediumLow
@@ -708,10 +671,7 @@ private fun MaskNavigateButton(
         val isScaled by remember {
             derivedStateOf { isPressed || isHovered || isDragged }
         }
-        val scale by animateFloatAsState(
-            targetValue = if (isScaled) 0.85f else 1f,
-            label = "MaskCenterButton-scale"
-        )
+        val scale by animateFloatAsState(if (isScaled) 0.85f else 1f)
         MaskCircleButton(
             state = state,
             isSmallDimension = true,
@@ -759,8 +719,5 @@ private enum class MaskNavigateRole {
     Next, Previous
 }
 
-private sealed class MaskSlideRole {
-    data object None : MaskSlideRole()
-    data class CwPosition(val milliseconds: Long) : MaskSlideRole()
-    data object Slide : MaskSlideRole()
-}
+data class CwPosition(val milliseconds: Long)
+data object Slide

@@ -9,8 +9,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.WorkManager
 import com.m3u.smartphone.ui.common.connect.RemoteControlSheetValue
 import com.m3u.core.architecture.Publisher
-import com.m3u.core.architecture.dispatcher.Dispatcher
-import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.data.api.TvApiDelegate
 import com.m3u.data.tv.model.RemoteDirection
@@ -21,7 +19,6 @@ import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.data.service.Messager
 import com.m3u.data.worker.SubscriptionWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -29,7 +26,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -47,7 +43,6 @@ class AppViewModel @Inject constructor(
     private val workManager: WorkManager,
     private val preferences: Preferences,
     private val publisher: Publisher,
-    @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
     init {
         refreshProgrammes()
@@ -72,7 +67,6 @@ class AppViewModel @Inject constructor(
                 flowOf(ConnectionToTvValue.Idle())
             }
         }
-            .flowOn(ioDispatcher)
             .stateIn(
                 scope = viewModelScope,
                 initialValue = ConnectionToTvValue.Idle(),

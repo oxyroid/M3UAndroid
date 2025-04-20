@@ -5,8 +5,6 @@ import android.content.Context
 import android.net.Uri
 import androidx.core.net.toUri
 import androidx.work.WorkManager
-import com.m3u.core.architecture.dispatcher.Dispatcher
-import com.m3u.core.architecture.dispatcher.M3uDispatchers
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.execute
@@ -44,7 +42,7 @@ import com.m3u.data.repository.createCoroutineCache
 import com.m3u.data.worker.SubscriptionWorker
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.ktor.http.Url
-import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
@@ -83,7 +81,6 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     private val preferences: Preferences,
     private val workManager: WorkManager,
     @ApplicationContext private val context: Context,
-    @Dispatcher(M3uDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : PlaylistRepository {
     private val logger = delegate.install(Profiles.REPOS_PLAYLIST)
 
@@ -158,7 +155,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         }
             .onEach(cache::push)
             .onCompletion { cache.flush() }
-            .flowOn(ioDispatcher)
+            .flowOn(Dispatchers.IO)
             .collect()
     }
 
@@ -169,7 +166,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         password: String,
         type: String?,
         callback: (count: Int) -> Unit
-    ): Unit = withContext(ioDispatcher) {
+    ): Unit = withContext(Dispatchers.IO) {
         val input = XtreamInput(basicUrl, username, password, type)
         val (
             liveCategories,
@@ -347,17 +344,16 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             .collect()
     }
 
-    override suspend fun insertEpgAsPlaylist(title: String, epg: String): Unit =
-        withContext(ioDispatcher) {
-            // just save epg playlist to db
-            playlistDao.insertOrReplace(
-                Playlist(
-                    title = title,
-                    url = epg,
-                    source = DataSource.EPG
-                )
+    override suspend fun insertEpgAsPlaylist(title: String, epg: String) {
+        // just save epg playlist to db
+        playlistDao.insertOrReplace(
+            Playlist(
+                title = title,
+                url = epg,
+                source = DataSource.EPG
             )
-        }
+        )
+    }
 
     override suspend fun refresh(url: String) = logger.sandBox {
         val playlist = checkNotNull(get(url)) { "Cannot find playlist: $url" }
@@ -388,7 +384,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun backupOrThrow(uri: Uri): Unit = withContext(ioDispatcher) {
+    override suspend fun backupOrThrow(uri: Uri): Unit = withContext(Dispatchers.IO) {
         val json = Json {
             prettyPrint = false
         }
@@ -420,7 +416,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     }
 
     override suspend fun restoreOrThrow(uri: Uri) = logger.sandBox {
-        withContext(ioDispatcher) {
+        withContext(Dispatchers.IO) {
             val json = Json {
                 ignoreUnknownKeys = true
             }
@@ -644,9 +640,9 @@ internal class PlaylistRepositoryImpl @Inject constructor(
 
     private suspend fun String.actualUrl(): String {
         if (!isSupportedAndroidUrl()) return this
-        val uri = Uri.parse(this)
+        val uri = this.toUri()
         if (uri.scheme == ContentResolver.SCHEME_FILE) return uri.toString()
-        return withContext(ioDispatcher) {
+        return withContext(Dispatchers.IO) {
             val contentResolver = context.contentResolver
             val filename = uri.readFileName(contentResolver) ?: filenameWithTimezone
             val destinationFile = File(context.filesDir, filename)
@@ -672,7 +668,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     }
 
     private fun openAndroidInput(url: String): InputStream? {
-        val uri = Uri.parse(url)
+        val uri = url.toUri()
         return context.contentResolver.openInputStream(uri)
     }
 }

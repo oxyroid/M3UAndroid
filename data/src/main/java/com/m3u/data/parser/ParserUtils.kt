@@ -2,7 +2,7 @@ package com.m3u.data.parser
 
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
-import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
@@ -15,10 +15,9 @@ class ParserUtils(
     val json: Json,
     val okHttpClient: OkHttpClient,
     val logger: Logger,
-    val ioDispatcher: CoroutineDispatcher
 ) {
     @OptIn(ExperimentalSerializationApi::class)
-    suspend inline fun <reified T> newCall(url: String): T? = withContext(ioDispatcher) {
+    suspend inline fun <reified T> newCall(url: String): T? = withContext(Dispatchers.IO) {
         logger.execute {
             okHttpClient.newCall(
                 Request.Builder().url(url).build()
@@ -33,7 +32,7 @@ class ParserUtils(
 
     @OptIn(ExperimentalSerializationApi::class)
     suspend inline fun <reified T> newCallOrThrow(url: String): T =
-        withContext(ioDispatcher) {
+        withContext(Dispatchers.IO) {
             okHttpClient.newCall(
                 Request.Builder().url(url).build()
             )

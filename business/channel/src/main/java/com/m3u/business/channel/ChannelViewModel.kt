@@ -99,10 +99,10 @@ class ChannelViewModel @Inject constructor(
         }
     }
 
-    fun onRewind() {
+    fun onResetPlayback() {
         val channelUrl = channel.value?.url ?: return
         viewModelScope.launch {
-            playerManager.onRewind(channelUrl)
+            playerManager.onResetPlayback(channelUrl)
         }
     }
 

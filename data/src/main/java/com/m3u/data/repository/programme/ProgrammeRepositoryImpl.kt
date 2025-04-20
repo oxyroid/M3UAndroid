@@ -3,8 +3,6 @@ package com.m3u.data.repository.programme
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
-import com.m3u.core.architecture.dispatcher.Dispatcher
-import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.execute
@@ -21,7 +19,7 @@ import com.m3u.data.database.model.epgUrlsOrXtreamXmlUrl
 import com.m3u.data.parser.epg.EpgParser
 import com.m3u.data.parser.epg.EpgProgramme
 import com.m3u.data.parser.epg.toProgramme
-import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
@@ -46,7 +44,6 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
     private val programmeDao: ProgrammeDao,
     private val epgParser: EpgParser,
     @OkhttpClient(true) private val okHttpClient: OkHttpClient,
-    @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
     delegate: Logger
 ) : ProgrammeRepository {
     private val logger = delegate.install(Profiles.REPOS_PROGRAMME)
@@ -191,7 +188,7 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
                     .collect { send(it) }
             }
     }
-        .flowOn(ioDispatcher)
+        .flowOn(Dispatchers.IO)
 
     /**
      * Attempts to find the first valid EPG URL from a list of URLs.

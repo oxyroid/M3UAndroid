@@ -13,8 +13,6 @@ import coil.request.ErrorResult
 import coil.request.ImageRequest
 import coil.request.SuccessResult
 import com.m3u.core.architecture.logger.Profiles
-import com.m3u.core.architecture.dispatcher.Dispatcher
-import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.execute
 import com.m3u.core.architecture.logger.install
@@ -23,7 +21,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import io.ktor.util.cio.writeChannel
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.copyAndClose
-import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.InputStream
@@ -35,7 +33,6 @@ private const val BITMAP_QUALITY = 100
 internal class MediaRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     delegate: Logger,
-    @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher
 ) : MediaRepository {
     private val logger = delegate.install(Profiles.REPOS_MEDIA)
     private val applicationName = "M3U"
@@ -48,7 +45,7 @@ internal class MediaRepositoryImpl @Inject constructor(
         applicationName
     )
 
-    override suspend fun savePicture(url: String): File = withContext(ioDispatcher) {
+    override suspend fun savePicture(url: String): File = withContext(Dispatchers.IO) {
         val drawable = checkNotNull(loadDrawable(url))
         val bitmap = drawable.toBitmap()
         val name = "Picture_${System.currentTimeMillis()}.png"

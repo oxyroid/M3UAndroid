@@ -16,7 +16,7 @@ abstract class Suggester {
     val completedResult: Boolean
         get() {
             complete()
-            return result!!
+            return requireNotNull(result) { "suggester hasn't any conditions." }
         }
 
 

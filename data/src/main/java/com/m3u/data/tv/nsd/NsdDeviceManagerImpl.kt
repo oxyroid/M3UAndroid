@@ -2,27 +2,22 @@ package com.m3u.data.tv.nsd
 
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
-import com.m3u.core.architecture.dispatcher.Dispatcher
-import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
 import com.m3u.data.tv.Utils
 import com.m3u.data.tv.nsd.NsdDeviceManager.Companion.META_DATA_PIN
 import com.m3u.data.tv.nsd.NsdDeviceManager.Companion.SERVICE_TYPE
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.flowOn
 import javax.inject.Inject
 
 class NsdDeviceManagerImpl @Inject constructor(
     private val nsdManager: NsdManager,
     delegate: Logger,
-    @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher
 ) : NsdDeviceManager {
     private val logger = delegate.install(Profiles.SERVICE_NSD)
 
@@ -91,7 +86,6 @@ class NsdDeviceManagerImpl @Inject constructor(
             nsdManager.stopServiceDiscovery(listener)
         }
     }
-        .flowOn(ioDispatcher)
 
     override fun broadcast(
         name: String,
@@ -139,5 +133,4 @@ class NsdDeviceManagerImpl @Inject constructor(
             trySendBlocking(null)
         }
     }
-        .flowOn(ioDispatcher)
 }

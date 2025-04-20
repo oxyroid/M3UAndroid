@@ -6,7 +6,6 @@ import android.graphics.Rect
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,7 +17,6 @@ import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Speed
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -31,7 +29,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -179,6 +176,7 @@ fun ChannelRoute(
             }
             .launchIn(this)
         snapshotFlow { pullPanelLayoutState.fraction }
+            .drop(1)
             .onEach { maskState.sleep() }
             .launchIn(this)
     }
@@ -283,7 +281,7 @@ fun ChannelRoute(
                     speed = it
                 },
                 cwPosition = viewModel.cwPosition,
-                onRewind = viewModel::onRewind,
+                onResetPlayback = viewModel::onResetPlayback,
                 onPreviousChannelClick = viewModel::getPreviousChannel,
                 onNextChannelClick = viewModel::getNextChannel,
                 onEnterPipMode = {
@@ -344,7 +342,7 @@ private fun ChannelPlayer(
     brightness: Float,
     speed: Float,
     cwPosition: Long,
-    onRewind: () -> Unit,
+    onResetPlayback: () -> Unit,
     onFavorite: () -> Unit,
     openDlnaDevices: () -> Unit,
     openChooseFormat: () -> Unit,
@@ -455,9 +453,10 @@ private fun ChannelPlayer(
             maskState = maskState,
             favourite = favourite,
             isSeriesPlaylist = isSeriesPlaylist,
+            useVertical = useVertical,
             hasTrack = hasTrack,
             cwPosition = cwPosition,
-            onRewind = onRewind,
+            onResetPlayback = onResetPlayback,
             isPanelExpanded = isPanelExpanded,
             onFavorite = onFavorite,
             openDlnaDevices = openDlnaDevices,

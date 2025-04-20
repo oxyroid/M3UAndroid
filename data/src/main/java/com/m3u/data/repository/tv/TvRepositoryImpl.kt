@@ -3,8 +3,6 @@ package com.m3u.data.repository.tv
 import android.net.nsd.NsdServiceInfo
 import androidx.compose.runtime.snapshotFlow
 import com.m3u.core.architecture.Publisher
-import com.m3u.core.architecture.dispatcher.Dispatcher
-import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
@@ -17,9 +15,9 @@ import com.m3u.data.tv.Utils
 import com.m3u.data.tv.http.HttpServer
 import com.m3u.data.tv.model.TvInfo
 import com.m3u.data.tv.nsd.NsdDeviceManager
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.Flow
@@ -46,11 +44,10 @@ class TvRepositoryImpl @Inject constructor(
     logger: Logger,
     preferences: Preferences,
     publisher: Publisher,
-    @Dispatcher(IO) ioDispatcher: CoroutineDispatcher
 ) : TvRepository() {
     private val logger = logger.install(Profiles.REPOS_LEANBACK)
     private val tv = publisher.tv
-    private val coroutineScope = CoroutineScope(ioDispatcher)
+    private val coroutineScope = CoroutineScope(SupervisorJob())
 
     init {
         snapshotFlow { preferences.remoteControl }

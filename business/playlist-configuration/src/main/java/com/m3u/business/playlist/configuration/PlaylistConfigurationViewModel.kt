@@ -6,8 +6,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkQuery
-import com.m3u.core.architecture.dispatcher.Dispatcher
-import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
@@ -23,6 +21,7 @@ import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.data.worker.SubscriptionWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -46,7 +45,6 @@ class PlaylistConfigurationViewModel @Inject constructor(
     private val programmeRepository: ProgrammeRepository,
     private val xtreamParser: XtreamParser,
     private val workManager: WorkManager,
-    @Dispatcher(IO) ioDispatcher: CoroutineDispatcher,
     savedStateHandle: SavedStateHandle,
     delegate: Logger
 ) : ViewModel() {
@@ -107,7 +105,7 @@ class PlaylistConfigurationViewModel @Inject constructor(
                 )
             }
         }
-        .flowOn(ioDispatcher)
+        .flowOn(Dispatchers.Default)
         .stateIn(
             scope = viewModelScope,
             initialValue = null,

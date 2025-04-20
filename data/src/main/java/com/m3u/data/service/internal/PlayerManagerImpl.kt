@@ -51,9 +51,6 @@ import androidx.media3.transformer.InAppMp4Muxer
 import androidx.media3.transformer.TransformationRequest
 import androidx.media3.transformer.Transformer
 import com.m3u.core.architecture.Publisher
-import com.m3u.core.architecture.dispatcher.Dispatcher
-import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
-import com.m3u.core.architecture.dispatcher.M3uDispatchers.Main
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
@@ -73,8 +70,8 @@ import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.PlayerManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.ktor.http.Url
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
@@ -108,8 +105,6 @@ import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 
 class PlayerManagerImpl @Inject constructor(
-    @Dispatcher(Main) private val mainDispatcher: CoroutineDispatcher,
-    @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
     @ApplicationContext private val context: Context,
     @OkhttpClient(false) private val okHttpClient: OkHttpClient,
     private val preferences: Preferences,
@@ -119,13 +114,12 @@ class PlayerManagerImpl @Inject constructor(
     publisher: Publisher,
     delegate: Logger
 ) : PlayerManager, Player.Listener, MediaSession.Callback {
-    private val mainCoroutineScope = CoroutineScope(mainDispatcher)
-    private val ioCoroutineScope = CoroutineScope(ioDispatcher)
+    private val mainCoroutineScope = CoroutineScope(Dispatchers.Main)
+    private val ioCoroutineScope = CoroutineScope(Dispatchers.IO)
 
     private val channelPreferenceProvider = ChannelPreferenceProvider(
         directory = context.cacheDir.resolve("channel-preferences"),
-        appVersion = publisher.versionCode,
-        ioDispatcher = ioDispatcher
+        appVersion = publisher.versionCode
     )
 
     private val continueWatchingCondition = ContinueWatchingCondition.getInstance<Player>()
@@ -428,7 +422,7 @@ class PlayerManagerImpl @Inject constructor(
             delay(1.seconds)
         }
     }
-        .flowOn(ioDispatcher)
+        .flowOn(Dispatchers.IO)
 
     override suspend fun reloadThumbnail(channelUrl: String): Uri? {
         val channelPreference = getChannelPreference(channelUrl)
@@ -442,8 +436,9 @@ class PlayerManagerImpl @Inject constructor(
             }
         }
     }
-    override suspend fun syncThumbnail(channelUrl: String): Uri? = withContext(ioDispatcher) {
-        val thumbnail = codecs.getThumbnail(context, channelUrl.toUri())?: return@withContext null
+
+    override suspend fun syncThumbnail(channelUrl: String): Uri? = withContext(Dispatchers.IO) {
+        val thumbnail = codecs.getThumbnail(context, channelUrl.toUri()) ?: return@withContext null
         val filename = UUID.randomUUID().toString() + ".jpeg"
         val file = File(thumbnailDir, filename)
         while (!file.createNewFile()) {
@@ -462,6 +457,7 @@ class PlayerManagerImpl @Inject constructor(
         )
         uri
     }
+
     private fun createPlayer(
         mediaSourceFactory: MediaSource.Factory,
         tunneling: Boolean
@@ -621,7 +617,7 @@ class PlayerManagerImpl @Inject constructor(
     }
 
     override suspend fun recordVideo(uri: Uri) {
-        withContext(mainDispatcher) {
+        withContext(Dispatchers.Main) {
             try {
                 val currentPlayer = player.value ?: return@withContext
                 val tracksGroup = currentPlayer.currentTracks.groups.first {
@@ -700,7 +696,7 @@ class PlayerManagerImpl @Inject constructor(
                     )
                     .build()
 
-                withContext(mainDispatcher) {
+                withContext(Dispatchers.Main) {
                     transformer.start(
                         MediaItem.fromUri(channel.value?.url.orEmpty()),
                         uri.path.orEmpty()
@@ -714,7 +710,7 @@ class PlayerManagerImpl @Inject constructor(
 
     override val cwPositionObserver = MutableSharedFlow<Long>(replay = 1)
 
-    override suspend fun onRewind(channelUrl: String) {
+    override suspend fun onResetPlayback(channelUrl: String) {
         cwPositionObserver.emit(-1L)
         resetContinueWatching(channelUrl, ignorePositionCondition = true)
         val currentPlayer = player.value ?: return
@@ -794,7 +790,7 @@ class PlayerManagerImpl @Inject constructor(
             cwPositionObserver.emit(-1L)
             return
         }
-        withContext(mainDispatcher) {
+        withContext(Dispatchers.Main) {
             if (continueWatchingCondition.isRestoringSupported(player)) {
                 logger.post { "restoreContinueWatching, $cwPosition" }
                 cwPositionObserver.emit(cwPosition)
@@ -803,12 +799,19 @@ class PlayerManagerImpl @Inject constructor(
         }
     }
 
-    private suspend fun resetContinueWatching(channelUrl: String, ignorePositionCondition: Boolean = false) {
+    private suspend fun resetContinueWatching(
+        channelUrl: String,
+        ignorePositionCondition: Boolean = false
+    ) {
         logger.post { "resetContinueWatching, channelUrl=$channelUrl, ignorePositionCondition=$ignorePositionCondition" }
         val channelPreference = getChannelPreference(channelUrl)
         val player = this@PlayerManagerImpl.player.value
-        withContext(mainDispatcher) {
-            if (player != null && continueWatchingCondition.isResettingSupported(player, ignorePositionCondition)) {
+        withContext(Dispatchers.Main) {
+            if (player != null && continueWatchingCondition.isResettingSupported(
+                    player,
+                    ignorePositionCondition
+                )
+            ) {
                 addChannelPreference(
                     channelUrl,
                     channelPreference?.copy(cwPosition = -1L) ?: ChannelPreference(cwPosition = -1L)

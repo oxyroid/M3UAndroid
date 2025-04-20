@@ -1,26 +1,23 @@
 package com.m3u.data.parser.xtream
 
-import com.m3u.core.architecture.dispatcher.Dispatcher
-import com.m3u.core.architecture.dispatcher.M3uDispatchers.IO
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
 import com.m3u.data.api.OkhttpClient
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.parser.ParserUtils
-import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
-import java.time.Duration
 import javax.inject.Inject
 
 internal class XtreamParserImpl @Inject constructor(
-    @Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
     @OkhttpClient(true) okHttpClient: OkHttpClient,
     delegate: Logger
 ) : XtreamParser {
@@ -33,19 +30,12 @@ internal class XtreamParserImpl @Inject constructor(
             explicitNulls = false
             isLenient = true
         }
-    private val okHttpClient = okHttpClient
-        .newBuilder()
-        .callTimeout(Duration.ofMillis(Int.MAX_VALUE.toLong()))
-        .connectTimeout(Duration.ofMillis(Int.MAX_VALUE.toLong()))
-        .readTimeout(Duration.ofMillis(Int.MAX_VALUE.toLong()))
-        .build()
 
     private val utils by lazy {
         ParserUtils(
             json = json,
             okHttpClient = okHttpClient,
-            logger = logger,
-            ioDispatcher = ioDispatcher
+            logger = logger
         )
     }
 
@@ -94,6 +84,7 @@ internal class XtreamParserImpl @Inject constructor(
                 .collect { serial -> send(serial) }
         }
     }
+        .flowOn(Dispatchers.Default)
 
     override suspend fun getXtreamOutput(input: XtreamInput): XtreamOutput {
         val (basicUrl, username, password, type) = input
