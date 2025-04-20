@@ -720,4 +720,3 @@ private enum class MaskNavigateRole {
 }
 
 data class CwPosition(val milliseconds: Long)
-data object Slide

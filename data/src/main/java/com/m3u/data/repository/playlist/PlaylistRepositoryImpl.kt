@@ -552,6 +552,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                     .sortedByDescending { it in pinnedCategories }
             }
     }
+        .flowOn(Dispatchers.Default)
 
     override suspend fun unsubscribe(url: String): Playlist? = logger.execute {
         val playlist = playlistDao.get(url)

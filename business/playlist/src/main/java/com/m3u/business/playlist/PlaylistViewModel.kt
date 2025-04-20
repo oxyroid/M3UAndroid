@@ -47,7 +47,6 @@ import com.m3u.data.worker.SubscriptionWorker
 import com.m3u.business.playlist.PlaylistMessage.ChannelCoverSaved
 import com.m3u.core.wrapper.Sort
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
@@ -261,7 +260,6 @@ class PlaylistViewModel @Inject constructor(
                     flow.drop(1).debounce(1.seconds)
                 )
             }
-            .flowOn(ioDispatcher)
             .stateIn(
                 scope = viewModelScope,
                 initialValue = emptyList(),
@@ -315,7 +313,6 @@ class PlaylistViewModel @Inject constructor(
                 }
             }
         }
-        .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
             initialValue = emptyList(),
@@ -324,7 +321,6 @@ class PlaylistViewModel @Inject constructor(
 
     val pinnedCategories: StateFlow<List<String>> = playlist
         .map { it?.pinnedCategories ?: emptyList() }
-        .flowOn(ioDispatcher)
         .stateIn(
             scope = viewModelScope,
             initialValue = emptyList(),
