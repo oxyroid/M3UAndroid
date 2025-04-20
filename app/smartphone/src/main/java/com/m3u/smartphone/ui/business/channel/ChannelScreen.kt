@@ -9,7 +9,6 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.VolumeDown
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
@@ -53,7 +52,6 @@ import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
 import com.m3u.i18n.R.string
-import com.m3u.smartphone.ui.business.channel.components.CoverPlaceholder
 import com.m3u.smartphone.ui.business.channel.components.DlnaDevicesBottomSheet
 import com.m3u.smartphone.ui.business.channel.components.FormatsBottomSheet
 import com.m3u.smartphone.ui.business.channel.components.MaskDimension
@@ -195,8 +193,10 @@ fun ChannelRoute(
 
     var dimension: MaskDimension by remember { mutableStateOf(MaskDimension()) }
     val onDimensionChanged = { size: MaskDimension -> dimension = size }
-    val topPadding by animateDpAsState(dimension.top.takeOrElse { 0.dp }.takeIf { isPanelExpanded } ?: 0.dp)
-    val bottomPadding by animateDpAsState(dimension.bottom.takeOrElse { 0.dp }.takeIf { isPanelExpanded } ?: 0.dp)
+    val topPadding by animateDpAsState(dimension.top.takeOrElse { 0.dp }.takeIf { isPanelExpanded }
+        ?: 0.dp)
+    val bottomPadding by animateDpAsState(dimension.bottom.takeOrElse { 0.dp }
+        .takeIf { isPanelExpanded } ?: 0.dp)
 
     val aspectRatio = with(density) {
         val source = playerState.videoSize
@@ -403,8 +403,9 @@ private fun ChannelPlayer(
             onDrag = onBrightness,
             onClick = maskState::toggle,
             modifier = Modifier
-                .fillMaxHeight()
-                .fillMaxWidth(0.18f),
+                .fillMaxHeight(0.7f)
+                .fillMaxWidth(0.18f)
+                .align(Alignment.CenterStart),
             enabled = preferences.brightnessGesture
         )
 
@@ -419,28 +420,10 @@ private fun ChannelPlayer(
             onDrag = onVolume,
             onClick = maskState::toggle,
             modifier = Modifier
-                .align(Alignment.TopEnd)
-                .fillMaxHeight()
+                .align(Alignment.CenterEnd)
+                .fillMaxHeight(0.7f)
                 .fillMaxWidth(0.18f),
             enabled = preferences.volumeGesture
-        )
-
-        val shouldShowPlaceholder =
-            !preferences.noPictureMode && cover.isNotEmpty() && playerState.videoSize.isEmpty
-
-        CoverPlaceholder(
-            visible = shouldShowPlaceholder,
-            cover = cover,
-            modifier = Modifier
-                .size(dimension.middle)
-                .align { size: IntSize, space: IntSize, _ ->
-                    val centerX = (space.width - size.width).toFloat() / 2f
-                    val centerY = (space.height - size.height).toFloat() / 2f
-                    val x = centerX * 1
-                    val y = if (!useVertical) centerY
-                    else centerY - (centerY - topPadding) * 1 // fraction TODO
-                    IntOffset(x.fastRoundToInt(), y.fastRoundToInt())
-                }
         )
 
         ChannelMask(

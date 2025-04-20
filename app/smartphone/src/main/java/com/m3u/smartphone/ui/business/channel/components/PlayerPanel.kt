@@ -106,12 +106,18 @@ internal fun PlayerPanel(
     val spacing = LocalSpacing.current
 
     Surface(
-        shape = if (useVertical) RectangleShape else AbsoluteSmoothCornerShape(
+        shape = if (useVertical) AbsoluteSmoothCornerShape(
+            cornerRadiusTL = spacing.medium,
+            cornerRadiusTR = spacing.medium,
+            smoothnessAsPercentTL = 100,
+            smoothnessAsPercentTR = 100
+        ) else AbsoluteSmoothCornerShape(
             cornerRadiusTL = spacing.medium,
             cornerRadiusBL = spacing.medium,
             smoothnessAsPercentTL = 100,
             smoothnessAsPercentBL = 100
         ),
+        shadowElevation = 4.dp,
         modifier = modifier
     ) {
         var programme: Programme? by remember { mutableStateOf(null) }
@@ -292,29 +298,42 @@ fun PlayerPanelImpl(
             }
             .padding(vertical = spacing.medium)
     ) {
-        if (isPanelExpanded && useVertical) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = spacing.medium)
+        ) {
             Column(
-                modifier = Modifier.padding(horizontal = spacing.medium)
+                modifier = Modifier
+                    .weight(1f)
             ) {
-                Text(
-                    text = title.trim(),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.basicMarquee()
-                )
-                Text(
-                    text = playlistTitle.trim().uppercase(),
-                    style = MaterialTheme.typography.labelMedium,
-                    maxLines = 1,
-                    color = LocalContentColor.current.copy(0.54f),
-                    fontFamily = FontFamilies.LexendExa,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.basicMarquee()
-                )
+                if (isPanelExpanded && useVertical) {
+                    Text(
+                        text = title.trim(),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.basicMarquee()
+                    )
+                    Text(
+                        text = playlistTitle.trim().uppercase(),
+                        style = MaterialTheme.typography.labelMedium,
+                        maxLines = 1,
+                        color = LocalContentColor.current.copy(0.54f),
+                        fontFamily = FontFamilies.LexendExa,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.basicMarquee()
+                    )
+                }
             }
+            Icon(
+                imageVector = Icons.Rounded.Close,
+                contentDescription = null
+            )
         }
+
 
         if (isChannelsSupported) {
             ChannelGallery(

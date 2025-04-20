@@ -7,7 +7,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.m3u.business.channel.ChannelViewModel
@@ -19,7 +21,9 @@ import com.m3u.data.service.MediaCommand
 import com.m3u.smartphone.ui.common.helper.Helper
 import com.m3u.smartphone.ui.common.internal.Toolkit
 import com.m3u.smartphone.ui.material.components.Background
+import com.m3u.smartphone.ui.material.model.LocalHazeState
 import dagger.hilt.android.AndroidEntryPoint
+import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -50,10 +54,15 @@ class PlayerActivity : ComponentActivity() {
                 helper = helper,
                 alwaysUseDarkTheme = true
             ) {
-                Background {
-                    ChannelRoute(
-                        viewModel = viewModel
-                    )
+                val hazeState = remember { HazeState() }
+                CompositionLocalProvider(LocalHazeState provides hazeState) {
+                    Background(
+                        color = Color.Black
+                    ) {
+                        ChannelRoute(
+                            viewModel = viewModel
+                        )
+                    }
                 }
             }
         }

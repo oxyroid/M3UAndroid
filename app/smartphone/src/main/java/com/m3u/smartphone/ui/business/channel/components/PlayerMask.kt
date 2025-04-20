@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.systemGestureExclusion
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
@@ -74,7 +75,7 @@ fun PlayerMask(
             onDispose {
                 size = MaskDimension(
                     top = with(density) { windowInsets.getTop(density).toDp() },
-                    bottom =  with(density) { windowInsets.getBottom(density).toDp() }
+                    bottom = with(density) { windowInsets.getBottom(density).toDp() }
                 )
                 onDimensionChanged(size)
             }
@@ -118,7 +119,9 @@ fun PlayerMask(
             content = body
         )
         Column(
-            modifier = Modifier.padding(horizontal = spacing.medium)
+            modifier = Modifier
+                .systemGestureExclusion()
+                .padding(horizontal = spacing.medium)
         ) {
             control?.let {
                 Row(

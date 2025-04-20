@@ -160,6 +160,30 @@ internal fun ProgramGuide(
                 .then(zoomGestureModifier)
                 .then(modifier)
         ) {
+            // clock
+            items(
+                count = ((range.end - range.start) / 1000 / 60 / 60).toInt(),
+                layoutInfo = { hour ->
+                    MinaBoxItem(
+                        x = 0f,
+                        y = currentHeight * hour + padding * 3,
+                        width = padding * 2,
+                        height = currentHeight
+                    )
+                }
+            ) {
+                Canvas(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    repeat(12) { index ->
+                        drawLine(
+                            Color.LightGray,
+                            Offset(0f, currentHeight / 12 * index),
+                            Offset(size.width, currentHeight / 12 * index)
+                        )
+                    }
+                }
+            }
             // programmes
             items(
                 count = programmes.itemCount,
@@ -211,7 +235,7 @@ internal fun ProgramGuide(
             }
 
             // current timeline background placeholder
-            items(1, layoutInfo = {
+            items(count = 1, layoutInfo = {
                 MinaBoxItem(
                     x = 0f,
                     y = currentTimelineOffset + padding * 2,
