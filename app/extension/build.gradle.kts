@@ -47,6 +47,8 @@ android {
 
 dependencies {
     implementation(libs.m3u.extension.api)
+    implementation(libs.m3u.extension.annotation)
+    ksp(libs.m3u.extension.processor)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

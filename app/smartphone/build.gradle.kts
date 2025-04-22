@@ -128,6 +128,8 @@ dependencies {
     implementation(project(":core:foundation"))
     implementation(project(":data"))
     implementation(libs.m3u.extension.api)
+    implementation(libs.m3u.extension.annotation)
+    ksp(libs.m3u.extension.processor)
     implementation(project(":extension:runtime"))
     // business
     implementation(project(":business:foryou"))

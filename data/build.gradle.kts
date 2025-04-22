@@ -27,6 +27,8 @@ android {
 dependencies {
     implementation(project(":core"))
     implementation(libs.m3u.extension.api)
+    implementation(libs.m3u.extension.annotation)
+    ksp(libs.m3u.extension.processor)
     implementation(project(":lint:annotation"))
     ksp(project(":lint:processor"))
 
