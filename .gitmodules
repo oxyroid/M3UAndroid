@@ -1,0 +1,3 @@
+[submodule "extension/repos"]
+	path = extension/repos
+	url = https://github.com/oxyroid/m3u-extension.git

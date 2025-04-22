@@ -35,5 +35,12 @@ include(
     ":lint:annotation",
     ":lint:processor"
 )
-//includeBuild("extension/api")
 include(":extension:runtime")
+
+includeBuild("extension/repos") {
+    dependencySubstitution {
+        substitute(module("com.github.oxyroid.m3u-extension:annotation")).using(project(":annotation"))
+        substitute(module("com.github.oxyroid.m3u-extension:processor")).using(project(":processor"))
+        substitute(module("com.github.oxyroid.m3u-extension:api")).using(project(":api"))
+    }
+}

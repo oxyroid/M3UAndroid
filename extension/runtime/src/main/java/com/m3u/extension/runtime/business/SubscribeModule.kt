@@ -11,6 +11,8 @@ import com.m3u.extension.api.model.AddChannelRequest
 import com.m3u.extension.api.model.AddPlaylistRequest
 import com.m3u.extension.api.model.ObtainPlaylistsResponse
 import com.m3u.extension.api.model.Result
+import com.m3u.extension.api.model.Playlist as ApiPlaylist
+import com.m3u.extension.api.model.Channel as ApiChannel
 import com.m3u.extension.runtime.RemoteServiceDependencies
 import kotlinx.coroutines.Dispatchers
 
@@ -21,20 +23,37 @@ class SubscribeModule(
     private val playlistDao: PlaylistDao = dependencies.playlistDao
     private val channelDao: ChannelDao = dependencies.channelDao
 
-    @Method("addPlaylist")
-    override suspend fun addPlaylist(playlist: com.m3u.extension.api.model.Playlist): Result {
-        TODO("Not yet implemented")
+    @Method("addPlaylist_v2")
+    override suspend fun addPlaylist(playlist: ApiPlaylist): Result = result {
+        playlistDao.insertOrReplace(
+            Playlist(
+                url = playlist.url,
+                title = playlist.title,
+                userAgent = playlist.user_agent
+            )
+        )
     }
 
-    override suspend fun addChannel(channel: com.m3u.extension.api.model.Channel): Result {
-        TODO("Not yet implemented")
+    @Method("addChannel_v2")
+    override suspend fun addChannel(channel: ApiChannel): Result = result {
+        channelDao.insertOrReplace(
+            Channel(
+                title = channel.title,
+                url = channel.url,
+                playlistUrl = channel.playlist_url,
+                cover = channel.cover,
+                category = channel.category.orEmpty(),
+                licenseKey = channel.license_key,
+                licenseType = channel.license_type
+            )
+        )
     }
 
     override suspend fun obtainPlaylists(): ObtainPlaylistsResponse {
         TODO("Not yet implemented")
     }
 
-    override suspend fun obtainChannels(playlist: com.m3u.extension.api.model.Playlist): ObtainPlaylistsResponse {
+    override suspend fun obtainChannels(playlist: ApiPlaylist): ObtainPlaylistsResponse {
         TODO("Not yet implemented")
     }
 
