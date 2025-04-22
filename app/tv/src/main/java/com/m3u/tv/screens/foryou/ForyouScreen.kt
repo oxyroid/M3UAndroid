@@ -128,6 +128,7 @@ private fun Catalog(
 
                             is Recommend.DiscoverSpec -> TODO()
                             is Recommend.NewRelease -> TODO()
+                            is Recommend.CwSpec -> TODO()
                         }
                     },
                     modifier = Modifier

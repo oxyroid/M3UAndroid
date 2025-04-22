@@ -128,6 +128,7 @@ fun FeaturedSpecsCarousel(
                 }
                 is Recommend.DiscoverSpec -> TODO()
                 is Recommend.NewRelease -> TODO()
+                is Recommend.CwSpec -> TODO()
             }
         }
     )
