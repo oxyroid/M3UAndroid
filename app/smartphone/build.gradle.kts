@@ -18,8 +18,8 @@ android {
         applicationId = "com.m3u.smartphone"
         minSdk = 26
         targetSdk = 33
-        versionCode = 144
-        versionName = "1.15.0"
+        versionCode = 145
+        versionName = "1.15.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -121,6 +121,7 @@ hilt {
 baselineProfile {
     dexLayoutOptimization = true
     saveInSrc = true
+    mergeIntoMain = true
 }
 
 dependencies {
