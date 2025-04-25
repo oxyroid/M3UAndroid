@@ -1,198 +1,170 @@
+@file:Suppress("INVISIBLE_REFERENCE", "UNCHECKED_CAST")
+
 package com.m3u.core.architecture.preferences
 
 import android.content.Context
-import android.content.SharedPreferences
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Stable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
-import com.m3u.core.util.context.booleanAsState
-import com.m3u.core.util.context.intAsState
-import com.m3u.core.util.context.longAsState
-import dagger.hilt.EntryPoint
-import dagger.hilt.InstallIn
-import dagger.hilt.android.EntryPointAccessors
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Inject
-import javax.inject.Singleton
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.properties.ReadOnlyProperty
+import kotlin.reflect.KProperty
+
+typealias Settings = DataStore<Preferences>
+
+val Context.settings: Settings by preferencesDataStore("settings")
 
 @Composable
-fun hiltPreferences(): Preferences {
-    val context = LocalContext.current
-    return remember {
-        val applicationContext = context.applicationContext ?: throw IllegalStateException()
-        EntryPointAccessors
-            .fromApplication<PreferencesEntryPoint>(applicationContext)
-            .preferences
+fun <T> preferenceOf(
+    key: Preferences.Key<T>,
+    initial: T = PREFERENCES[key] as T,
+    dataStore: Settings = LocalContext.current.settings
+): State<T> = produceState(initial, key1 = dataStore) {
+    dataStore.data.map { it[key] ?: initial }.collect {
+        value = it
     }
 }
 
-@EntryPoint
-@InstallIn(SingletonComponent::class)
-private interface PreferencesEntryPoint {
-    val preferences: Preferences
+@Composable
+fun <T> mutablePreferenceOf(
+    key: Preferences.Key<T>,
+    initial: T = remember(key) { PREFERENCES[key] as T },
+    dataStore: Settings = LocalContext.current.settings
+): MutableState<T> {
+    val coroutineScope = rememberCoroutineScope()
+    val state = produceState(initial, key1 = dataStore) {
+        dataStore.data.map { it[key] ?: initial }.collect {
+            value = it
+        }
+    }
+    return object : MutableState<T> {
+        override fun component1(): T = this.value
+        override fun component2(): (T) -> Unit = { this.value = it }
+        override var value: T
+            get() = state.value
+            set(value) {
+                coroutineScope.launch {
+                    dataStore.edit {
+                        it[key] = value
+                    }
+                }
+            }
+    } as MutableState<T>
 }
 
-@Stable
-@Singleton
-class Preferences @Inject constructor(
-    @ApplicationContext context: Context
-) {
-    private val sharedPreferences: SharedPreferences =
-        context.getSharedPreferences(SHARED_SETTINGS, Context.MODE_PRIVATE)
+@Suppress("UNCHECKED_CAST")
+fun <T> Settings.asStateFlow(
+    key: Preferences.Key<T>,
+    initial: T = PREFERENCES[key] as T,
+    coroutineScope: CoroutineScope = MainScope(),
+    started: SharingStarted = SharingStarted.Lazily
+): StateFlow<T> = data
+        .map { it[key] ?: initial }
+        .stateIn(coroutineScope, started, initial)
 
-    @PlaylistStrategy
-    var playlistStrategy: Int by
-    sharedPreferences.intAsState(DEFAULT_PLAYLIST_STRATEGY, PLAYLIST_STRATEGY)
+operator fun <T> Settings.get(key: Preferences.Key<T>): T = asStateFlow(
+    key,
+    PREFERENCES[key] as T,
+    MainScope(),
+    SharingStarted.Lazily
+).value
 
-    var rowCount: Int by
-    sharedPreferences.intAsState(DEFAULT_ROW_COUNT, ROW_COUNT)
+operator fun <T> Settings.set(key: Preferences.Key<T>, value: T) = runBlocking { // FIXME
+    edit { it[key] = value }
+}
 
-    @ConnectTimeout
-    var connectTimeout: Long by
-    sharedPreferences.longAsState(DEFAULT_CONNECT_TIMEOUT, CONNECT_TIMEOUT)
-    var godMode: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_GOD_MODE, GOD_MODE)
+fun <T> Settings.asReadOnlyProperty(
+    key: Preferences.Key<T>,
+    initial: T = PREFERENCES[key] as T,
+    coroutineScope: CoroutineScope = MainScope(),
+    started: SharingStarted = SharingStarted.Lazily
+): ReadOnlyProperty<Any, T> = object : ReadOnlyProperty<Any, T> {
+    private val state = asStateFlow(key, initial, coroutineScope, started)
 
-    @ClipMode
-    var clipMode: Int by
-    sharedPreferences.intAsState(DEFAULT_CLIP_MODE, CLIP_MODE)
+    override fun getValue(thisRef: Any, property: KProperty<*>): T = state.value
+}
 
-    var autoRefreshChannels: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_AUTO_REFRESH_CHANNELS, AUTO_REFRESH_CHANNELS)
+private val PREFERENCES: Map<Preferences.Key<*>, *> = listOf(
+    PreferencesKeys.PLAYLIST_STRATEGY to PlaylistStrategy.ALL,
+    PreferencesKeys.ROW_COUNT to 1,
+    PreferencesKeys.CONNECT_TIMEOUT to ConnectTimeout.SHORT,
+    PreferencesKeys.GOD_MODE to false,
+    PreferencesKeys.CLIP_MODE to ClipMode.ADAPTIVE,
+    PreferencesKeys.AUTO_REFRESH_CHANNELS to false,
+    PreferencesKeys.FULL_INFO_PLAYER to false,
+    PreferencesKeys.NO_PICTURE_MODE to false,
+    PreferencesKeys.DARK_MODE to true,
+    PreferencesKeys.USE_DYNAMIC_COLORS to false,
+    PreferencesKeys.FOLLOW_SYSTEM_THEME to false,
+    PreferencesKeys.ZAPPING_MODE to false,
+    PreferencesKeys.BRIGHTNESS_GESTURE to true,
+    PreferencesKeys.VOLUME_GESTURE to true,
+    PreferencesKeys.SCREENCAST to true,
+    PreferencesKeys.SCREEN_ROTATING to false,
+    PreferencesKeys.UNSEENS_MILLISECONDS to UnseensMilliseconds.DAYS_3,
+    PreferencesKeys.RECONNECT_MODE to ReconnectMode.NO,
+    PreferencesKeys.COLOR_ARGB to 0x5E6738,
+    PreferencesKeys.TUNNELING to false,
+    PreferencesKeys.CLOCK_MODE to false,
+    PreferencesKeys.REMOTE_CONTROL to false,
+    PreferencesKeys.SLIDER to true,
+    PreferencesKeys.ALWAYS_SHOW_REPLAY to false,
+    PreferencesKeys.PLAYER_PANEL to true,
+    PreferencesKeys.COLORFUL_BACKGROUND to false,
+    PreferencesKeys.COMPACT_DIMENSION to false
+)
+    .associateBy { it.key }
+    .mapValues { it.value.value }
 
-    var fullInfoPlayer: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_FULL_INFO_PLAYER, FULL_INFO_PLAYER)
-    var noPictureMode: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_NO_PICTURE_MODE, NO_PICTURE_MODE)
+object PreferencesKeys {
+    val PLAYLIST_STRATEGY = intPreferencesKey("playlist-strategy")
+    val ROW_COUNT = intPreferencesKey("rowCount")
 
-    var darkMode: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_DARK_MODE, DARK_MODE)
-    var useDynamicColors: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_USE_DYNAMIC_COLORS, USE_DYNAMIC_COLORS)
-    var followSystemTheme: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_FOLLOW_SYSTEM_THEME, FOLLOW_SYSTEM_THEME)
+    val CONNECT_TIMEOUT = longPreferencesKey("connect-timeout")
+    val GOD_MODE = booleanPreferencesKey("god-mode")
 
-    var zappingMode: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_ZAPPING_MODE, ZAPPING_MODE)
-    var brightnessGesture: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_BRIGHTNESS_GESTURE, BRIGHTNESS_GESTURE)
-    var volumeGesture: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_VOLUME_GESTURE, VOLUME_GESTURE)
-    var screencast: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_SCREENCAST, SCREENCAST)
-    var screenRotating: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_SCREEN_ROTATING, SCREEN_ROTATING)
+    val CLIP_MODE = intPreferencesKey("clip-mode")
+    val AUTO_REFRESH_CHANNELS = booleanPreferencesKey("auto-refresh-channels")
+    val FULL_INFO_PLAYER = booleanPreferencesKey("full-info-player")
+    val NO_PICTURE_MODE = booleanPreferencesKey("no-picture-mode")
+    val DARK_MODE = booleanPreferencesKey("dark-mode")
+    val USE_DYNAMIC_COLORS = booleanPreferencesKey("use-dynamic-colors")
+    val FOLLOW_SYSTEM_THEME = booleanPreferencesKey("follow-system-theme")
+    val ZAPPING_MODE = booleanPreferencesKey("zapping-mode")
+    val BRIGHTNESS_GESTURE = booleanPreferencesKey("brightness-gesture")
+    val VOLUME_GESTURE = booleanPreferencesKey("volume-gesture")
+    val SCREENCAST = booleanPreferencesKey("screencast")
+    val SCREEN_ROTATING = booleanPreferencesKey("screen-rotating")
+    val UNSEENS_MILLISECONDS = longPreferencesKey("unseens-milliseconds")
+    val RECONNECT_MODE = intPreferencesKey("reconnect-mode")
+    val COLOR_ARGB = intPreferencesKey("color-argb")
+    val TUNNELING = booleanPreferencesKey("tunneling")
+    val CLOCK_MODE = booleanPreferencesKey("12h-clock-mode")
+    val REMOTE_CONTROL = booleanPreferencesKey("remote-control")
 
-    @UnseensMilliseconds
-    var unseensMilliseconds: Long by
-    sharedPreferences.longAsState(DEFAULT_UNSEENS_MILLISECONDS, UNSEENS_MILLISECONDS)
-    var reconnectMode: Int by
-    sharedPreferences.intAsState(DEFAULT_RECONNECT_MODE, RECONNECT_MODE)
-    var argb: Int by
-    sharedPreferences.intAsState(DEFAULT_COLOR_ARGB, COLOR_ARGB)
-    var tunneling: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_TUNNELING, TUNNELING)
-    var remoteControl: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_REMOTE_CONTROL, REMOTE_CONTROL)
-    var twelveHourClock: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_12_H_CLOCK_MODE, CLOCK_MODE)
-    var slider: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_SLIDER, SLIDER)
-    var alwaysShowReplay: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_ALWAYS_SHOW_REFRESH, ALWAYS_SHOW_REFRESH)
-    var paging: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_PAGING, PAGING)
-    var panel: Boolean by sharedPreferences.booleanAsState(DEFAULT_PLAYER_PANEL, PLAYER_PANEL)
-    var cache: Boolean by sharedPreferences.booleanAsState(DEFAULT_CACHE, CACHE)
-    var randomlyInFavorite: Boolean by
-    sharedPreferences.booleanAsState(DEFAULT_RANDOMLY_IN_FAVOURITE, RANDOMLY_IN_FAVOURITE)
-    var colorfulBackground by
-    sharedPreferences.booleanAsState(DEFAULT_COLORFUL_BACKGROUND, COLORFUL_BACKGROUND)
-    var compactDimension by
-    sharedPreferences.booleanAsState(DEFAULT_COMPACT_DIMENSION, COMPACT_DIMENSION)
+    val SLIDER = booleanPreferencesKey("slider")
+    val ALWAYS_SHOW_REPLAY = booleanPreferencesKey("always-show-replay")
+    val PLAYER_PANEL = booleanPreferencesKey("player_panel")
 
-
-    companion object {
-        private const val SHARED_SETTINGS = "shared_settings"
-
-        @PlaylistStrategy
-        const val DEFAULT_PLAYLIST_STRATEGY = PlaylistStrategy.KEEP
-        const val DEFAULT_ROW_COUNT = 1
-
-        @ConnectTimeout
-        const val DEFAULT_CONNECT_TIMEOUT = ConnectTimeout.SHORT
-        const val DEFAULT_GOD_MODE = false
-
-        @ClipMode
-        const val DEFAULT_CLIP_MODE = ClipMode.ADAPTIVE
-        const val DEFAULT_AUTO_REFRESH_CHANNELS = false
-        const val DEFAULT_FULL_INFO_PLAYER = false
-        const val DEFAULT_NO_PICTURE_MODE = false
-        const val DEFAULT_DARK_MODE = true
-
-        const val DEFAULT_USE_DYNAMIC_COLORS = false
-        const val DEFAULT_FOLLOW_SYSTEM_THEME = false
-
-        const val DEFAULT_ZAPPING_MODE = false
-        const val DEFAULT_BRIGHTNESS_GESTURE = true
-        const val DEFAULT_VOLUME_GESTURE = true
-        const val DEFAULT_SCREENCAST = true
-        const val DEFAULT_SCREEN_ROTATING = false
-
-        @UnseensMilliseconds
-        const val DEFAULT_UNSEENS_MILLISECONDS = UnseensMilliseconds.DAYS_3
-        const val DEFAULT_RECONNECT_MODE = ReconnectMode.NO
-        const val DEFAULT_COLOR_ARGB = 0x5E6738
-        const val DEFAULT_TUNNELING = false
-        const val DEFAULT_REMOTE_CONTROL = false
-        const val DEFAULT_SLIDER = true
-        const val DEFAULT_ALWAYS_SHOW_REFRESH = false
-        const val DEFAULT_PAGING = true
-        const val DEFAULT_PLAYER_PANEL = true
-        const val DEFAULT_CACHE = false
-        const val DEFAULT_RANDOMLY_IN_FAVOURITE = false
-
-        const val DEFAULT_12_H_CLOCK_MODE = false
-        const val DEFAULT_COLORFUL_BACKGROUND = false
-        const val DEFAULT_COMPACT_DIMENSION = false
-
-        const val PLAYLIST_STRATEGY = "playlist-strategy"
-        const val ROW_COUNT = "rowCount"
-
-        const val CONNECT_TIMEOUT = "connect-timeout"
-        const val GOD_MODE = "god-mode"
-
-        const val CLIP_MODE = "clip-mode"
-        const val AUTO_REFRESH_CHANNELS = "auto-refresh-channels"
-        const val FULL_INFO_PLAYER = "full-info-player"
-        const val NO_PICTURE_MODE = "no-picture-mode"
-        const val DARK_MODE = "dark-mode"
-        const val USE_DYNAMIC_COLORS = "use-dynamic-colors"
-        const val FOLLOW_SYSTEM_THEME = "follow-system-theme"
-        const val ZAPPING_MODE = "zapping-mode"
-        const val BRIGHTNESS_GESTURE = "brightness-gesture"
-        const val VOLUME_GESTURE = "volume-gesture"
-        const val SCREENCAST = "screencast"
-        const val SCREEN_ROTATING = "screen-rotating"
-        const val UNSEENS_MILLISECONDS = "unseens-milliseconds"
-        const val RECONNECT_MODE = "reconnect-mode"
-        const val COLOR_ARGB = "color-argb"
-        const val TUNNELING = "tunneling"
-        const val CLOCK_MODE = "12h-clock-mode"
-        const val REMOTE_CONTROL = "remote-control"
-
-        const val SLIDER = "slider"
-        const val ALWAYS_SHOW_REFRESH = "always-show-refresh"
-        const val PAGING = "paging"
-        const val PLAYER_PANEL = "player_panel"
-        const val CACHE = "cache"
-        const val RANDOMLY_IN_FAVOURITE = "randomly-in-favourite"
-
-        const val COLORFUL_BACKGROUND = "colorful-background"
-        const val COMPACT_DIMENSION = "compact-dimension"
-    }
+    val COLORFUL_BACKGROUND = booleanPreferencesKey("colorful-background")
+    val COMPACT_DIMENSION = booleanPreferencesKey("compact-dimension")
 }

@@ -8,18 +8,18 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import com.m3u.business.playlist.configuration.navigateToPlaylistConfiguration
 import com.m3u.business.playlist.navigateToPlaylist
-import com.m3u.core.architecture.preferences.hiltPreferences
+import com.m3u.core.architecture.preferences.PreferencesKeys
+import com.m3u.core.architecture.preferences.preferenceOf
 import com.m3u.core.wrapper.eventOf
 import com.m3u.smartphone.ui.business.channel.PlayerActivity
 import com.m3u.smartphone.ui.business.configuration.playlistConfigurationScreen
-import com.m3u.smartphone.ui.business.extension.extensionScreen
-import com.m3u.smartphone.ui.business.extension.navigateToExtension
 import com.m3u.smartphone.ui.business.playlist.playlistScreen
 import com.m3u.smartphone.ui.common.internal.Events
 import com.m3u.smartphone.ui.material.components.Destination
@@ -35,7 +35,8 @@ fun AppNavHost(
     startDestination: String = Destination.Root.Foryou.name
 ) {
     val context = LocalContext.current
-    val preferences = hiltPreferences()
+
+    val zappingMode by preferenceOf(PreferencesKeys.ZAPPING_MODE)
 
     NavHost(
         navController = navController,
@@ -56,14 +57,11 @@ fun AppNavHost(
             },
             navigateToPlaylistConfiguration = {
                 navController.navigateToPlaylistConfiguration(it.url)
-            },
-            navigateToExtension = {
-                navController.navigateToExtension()
             }
         )
         playlistScreen(
             navigateToChannel = {
-                if (preferences.zappingMode && PlayerActivity.isInPipMode) return@playlistScreen
+                if (zappingMode && PlayerActivity.isInPipMode) return@playlistScreen
                 val options = ActivityOptions.makeCustomAnimation(
                     context,
                     0,
@@ -79,6 +77,5 @@ fun AppNavHost(
             contentPadding = contentPadding
         )
         playlistConfigurationScreen(contentPadding)
-        extensionScreen(contentPadding)
     }
 }

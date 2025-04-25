@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -25,7 +26,8 @@ import androidx.compose.ui.unit.IntOffset
 import coil.compose.AsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
-import com.m3u.core.architecture.preferences.hiltPreferences
+import com.m3u.core.architecture.preferences.PreferencesKeys
+import com.m3u.core.architecture.preferences.preferenceOf
 import com.m3u.smartphone.ui.material.transformation.BlurTransformation
 import com.m3u.smartphone.ui.common.helper.LocalHelper
 import com.m3u.smartphone.ui.common.helper.Metadata
@@ -39,10 +41,18 @@ internal fun HeadlineBackground(modifier: Modifier = Modifier) {
     val helper = LocalHelper.current
     val colorScheme = MaterialTheme.colorScheme
 
-    val preferences = hiltPreferences()
+    val darkMode by preferenceOf(PreferencesKeys.DARK_MODE)
+    val followSystemTheme by preferenceOf(PreferencesKeys.FOLLOW_SYSTEM_THEME)
+    val noPictureMode by preferenceOf(PreferencesKeys.NO_PICTURE_MODE)
+    val colorfulBackground by preferenceOf(PreferencesKeys.COLORFUL_BACKGROUND)
+    
+    val isSystemInDarkTheme = isSystemInDarkTheme()
 
-    val useDarkTheme =
-        preferences.darkMode || (preferences.followSystemTheme && isSystemInDarkTheme())
+    val useDarkTheme by remember {
+        derivedStateOf {
+            darkMode || (followSystemTheme && isSystemInDarkTheme)
+        }
+    }
 
     val url = Metadata.headlineUrl
     val fraction = Metadata.headlineFraction
@@ -60,7 +70,7 @@ internal fun HeadlineBackground(modifier: Modifier = Modifier) {
         animationSpec = tween(800)
     )
 
-    if (!preferences.noPictureMode && !preferences.colorfulBackground) {
+    if (!noPictureMode && !colorfulBackground) {
         AsyncImage(
             model = remember(url) {
                 ImageRequest.Builder(context)

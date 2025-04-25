@@ -4,9 +4,11 @@ import android.os.Parcelable
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Collections
+import androidx.compose.material.icons.outlined.Extension
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.rounded.Collections
+import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.runtime.Immutable
@@ -31,6 +33,11 @@ sealed interface Destination {
             selectedIcon = Icons.Rounded.Collections,
             unselectedIcon = Icons.Outlined.Collections,
             iconTextId = string.ui_destination_favourite
+        ),
+        Extension(
+            selectedIcon = Icons.Rounded.Extension,
+            unselectedIcon = Icons.Outlined.Extension,
+            iconTextId = string.ui_destination_extension
         ),
         Setting(
             selectedIcon = Icons.Rounded.Settings,

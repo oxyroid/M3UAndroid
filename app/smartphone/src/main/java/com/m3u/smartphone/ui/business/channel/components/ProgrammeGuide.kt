@@ -60,7 +60,8 @@ import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.zIndex
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.paging.compose.LazyPagingItems
-import com.m3u.core.architecture.preferences.hiltPreferences
+import com.m3u.core.architecture.preferences.PreferencesKeys
+import com.m3u.core.architecture.preferences.preferenceOf
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.ProgrammeRange
 import com.m3u.data.database.model.ProgrammeRange.Companion.HOUR_LENGTH
@@ -320,8 +321,8 @@ private fun ProgrammeCell(
 ) {
     val currentOnPressed by rememberUpdatedState(onPressed)
     val spacing = LocalSpacing.current
-    val preferences = hiltPreferences()
-    val clockMode = preferences.twelveHourClock
+    val clockMode by preferenceOf(PreferencesKeys.CLOCK_MODE)
+
     val content = @Composable {
         Column(
             modifier = Modifier
@@ -421,8 +422,9 @@ private fun CurrentTimelineCell(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    val preferences = hiltPreferences()
-    val twelveHourClock = preferences.twelveHourClock
+
+    val twelveHourClock by preferenceOf(PreferencesKeys.CLOCK_MODE)
+
     val color = MaterialTheme.colorScheme.error
     val contentColor = MaterialTheme.colorScheme.onError
     val currentMilliseconds by rememberUpdatedState(milliseconds)

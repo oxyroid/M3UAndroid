@@ -31,7 +31,8 @@ import androidx.graphics.shapes.CornerRounding
 import androidx.graphics.shapes.RoundedPolygon
 import androidx.graphics.shapes.star
 import androidx.graphics.shapes.toPath
-import com.m3u.core.architecture.preferences.hiltPreferences
+import com.m3u.core.architecture.preferences.PreferencesKeys
+import com.m3u.core.architecture.preferences.preferenceOf
 
 data class StarSpec(
     val numVertices: Int,
@@ -87,10 +88,12 @@ fun StarBackground(
     modifier: Modifier = Modifier,
     colors: StarColors = StarColors.defaults(),
 ) {
-    val preferences = hiltPreferences()
+    val colorfulBackground by preferenceOf(PreferencesKeys.COLORFUL_BACKGROUND)
+
     val specs = remember(colors) { createStarSpecs(colors) }
+
     AnimatedVisibility(
-        visible = preferences.colorfulBackground,
+        visible = colorfulBackground,
         enter = fadeIn() + scaleIn(initialScale = 2.3f),
         exit = fadeOut() + scaleOut(targetScale = 2.3f),
         modifier = modifier

@@ -78,7 +78,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.media3.common.Player
 import com.m3u.business.channel.PlayerState
-import com.m3u.core.architecture.preferences.hiltPreferences
+import com.m3u.core.architecture.preferences.PreferencesKeys
+import com.m3u.core.architecture.preferences.preferenceOf
 import com.m3u.core.foundation.suggest.any
 import com.m3u.core.foundation.suggest.suggestAll
 import com.m3u.core.foundation.ui.composableOf
@@ -137,7 +138,6 @@ fun ChannelMask(
     onDimensionChanged: (MaskDimension) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val preferences = hiltPreferences()
     val helper = LocalHelper.current
     val spacing = LocalSpacing.current
     val coroutineScope = rememberCoroutineScope()
@@ -167,7 +167,11 @@ fun ChannelMask(
         }
     }
 
-    val isProgressEnabled = preferences.slider
+    val slider by preferenceOf(PreferencesKeys.SLIDER)
+    val screencast by preferenceOf(PreferencesKeys.SCREENCAST)
+    val alwaysShowReplay by preferenceOf(PreferencesKeys.ALWAYS_SHOW_REPLAY)
+    val screenRotating by preferenceOf(PreferencesKeys.SCREEN_ROTATING)
+
     val isStaticAndSeekable by remember(
         playerState.player,
         playerState.playState
@@ -196,9 +200,9 @@ fun ChannelMask(
     val contentPosition by produceState(
         initialValue = -1L,
         isStaticAndSeekable,
-        isProgressEnabled
+        slider
     ) {
-        while (isProgressEnabled && isStaticAndSeekable) {
+        while (slider && isStaticAndSeekable) {
             delay(50.milliseconds)
             value = playerState.player?.currentPosition ?: -1L
         }
@@ -207,9 +211,9 @@ fun ChannelMask(
     val contentDuration by produceState(
         initialValue = -1L,
         isStaticAndSeekable,
-        isProgressEnabled
+        slider
     ) {
-        while (isProgressEnabled && isStaticAndSeekable) {
+        while (slider && isStaticAndSeekable) {
             delay(50.milliseconds)
             value = playerState.player?.duration?.absoluteValue ?: -1L
         }
@@ -311,7 +315,7 @@ fun ChannelMask(
                     )
                 }
 
-                if (preferences.screencast) {
+                if (screencast) {
                     MaskButton(
                         state = maskState,
                         icon = Icons.Rounded.Cast,
@@ -333,7 +337,7 @@ fun ChannelMask(
                 val centerRole = MaskCenterRole.of(
                     playerState.playState,
                     playerState.isPlaying,
-                    preferences.alwaysShowReplay,
+                    alwaysShowReplay,
                     playerState.playerError
                 )
                 Box(Modifier.size(36.dp)) {
@@ -395,7 +399,7 @@ fun ChannelMask(
                     suggest { exceptionDisplayText.isNotEmpty() }
                     suggestAll {
                         suggest { isStaticAndSeekable }
-                        suggest { isProgressEnabled }
+                        suggest { slider }
                     }
                 }
             ) {
@@ -429,7 +433,7 @@ fun ChannelMask(
                     }
                     if (playStateDisplayText.isNotEmpty()
                         || exceptionDisplayText.isNotEmpty()
-                        || (isStaticAndSeekable && isProgressEnabled)
+                        || (isStaticAndSeekable && slider)
                     ) {
                         Spacer(
                             modifier = Modifier.height(spacing.small)
@@ -463,7 +467,7 @@ fun ChannelMask(
                             ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
                     }
                 }
-                if (preferences.screenRotating && !autoRotating) {
+                if (screenRotating && !autoRotating) {
                     MaskButton(
                         state = maskState,
                         icon = Icons.Rounded.ScreenRotationAlt,
@@ -477,7 +481,7 @@ fun ChannelMask(
                     )
                 }
             },
-            slider = composableOf(isProgressEnabled && isStaticAndSeekable) {
+            slider = composableOf(slider && isStaticAndSeekable) {
                 SliderImpl(
                     contentDuration = contentDuration,
                     contentPosition = contentPosition,

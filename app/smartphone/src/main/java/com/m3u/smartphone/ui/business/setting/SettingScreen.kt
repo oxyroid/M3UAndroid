@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChangeCircle
-import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
@@ -31,7 +30,8 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.business.setting.BackingUpAndRestoringState
 import com.m3u.business.setting.SettingViewModel
-import com.m3u.core.architecture.preferences.hiltPreferences
+import com.m3u.core.architecture.preferences.PreferencesKeys
+import com.m3u.core.architecture.preferences.preferenceOf
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.ColorScheme
@@ -43,7 +43,6 @@ import com.m3u.smartphone.ui.business.setting.fragments.AppearanceFragment
 import com.m3u.smartphone.ui.business.setting.fragments.OptionalFragment
 import com.m3u.smartphone.ui.business.setting.fragments.SubscriptionsFragment
 import com.m3u.smartphone.ui.business.setting.fragments.preferences.PreferencesFragment
-import com.m3u.smartphone.ui.common.helper.Action
 import com.m3u.smartphone.ui.common.helper.Fob
 import com.m3u.smartphone.ui.common.helper.Metadata
 import com.m3u.smartphone.ui.common.internal.Events
@@ -57,7 +56,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun SettingRoute(
     contentPadding: PaddingValues,
-    navigateToExtension: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingViewModel = hiltViewModel()
 ) {
@@ -125,7 +123,6 @@ fun SettingRoute(
         onDeleteEpgPlaylist = { viewModel.deleteEpgPlaylist(it) },
         modifier = modifier.fillMaxSize(),
         contentPadding = contentPadding,
-        navigateToExtension = navigateToExtension,
     )
     CanvasBottomSheet(
         sheetState = sheetState,
@@ -167,19 +164,17 @@ private fun SettingScreen(
     restoreSchemes: () -> Unit,
     epgs: List<Playlist>,
     onDeleteEpgPlaylist: (String) -> Unit,
-    navigateToExtension: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val preferences = hiltPreferences()
 
     val defaultTitle = stringResource(string.ui_title_setting)
     val playlistTitle = stringResource(string.feat_setting_playlist_management)
     val appearanceTitle = stringResource(string.feat_setting_appearance)
     val optionalTitle = stringResource(string.feat_setting_optional_features)
 
-    val colorArgb = preferences.argb
+    val colorArgb by preferenceOf(PreferencesKeys.COLOR_ARGB)
 
     val navigator = rememberListDetailPaneScaffoldNavigator<SettingDestination>()
     val destination = navigator.currentDestination?.contentKey ?: SettingDestination.Default
@@ -210,17 +205,8 @@ private fun SettingScreen(
                 }
             }
         }
-        Metadata.actions = listOf(
-            Action(
-                icon = Icons.Rounded.Extension,
-                contentDescription = "extension"
-            ) {
-                navigateToExtension()
-            }
-        )
         onPauseOrDispose {
             Metadata.fob = null
-            Metadata.actions = emptyList()
         }
     }
 

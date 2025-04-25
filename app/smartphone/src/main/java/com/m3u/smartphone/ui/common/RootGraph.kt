@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.m3u.data.database.model.Playlist
+import com.m3u.smartphone.ui.business.extension.ExtensionRoute
 import com.m3u.smartphone.ui.material.ktx.Edge
 import com.m3u.smartphone.ui.material.ktx.blurEdge
 import com.m3u.smartphone.ui.business.favourite.FavoriteRoute
@@ -20,7 +21,6 @@ fun NavGraphBuilder.rootGraph(
     contentPadding: PaddingValues,
     navigateToPlaylist: (Playlist) -> Unit,
     navigateToChannel: () -> Unit,
-    navigateToExtension: () -> Unit,
     navigateToSettingPlaylistManagement: () -> Unit,
     navigateToPlaylistConfiguration: (Playlist) -> Unit,
 ) {
@@ -61,13 +61,28 @@ fun NavGraphBuilder.rootGraph(
     }
 
     composable(
+        route = Destination.Root.Extension.name,
+        enterTransition = { fadeIn() },
+        exitTransition = { fadeOut() }
+    ) {
+        ExtensionRoute(
+            contentPadding = contentPadding,
+            modifier = Modifier
+                .fillMaxSize()
+                .blurEdge(
+                    edge = Edge.Bottom,
+                    color = MaterialTheme.colorScheme.background
+                )
+        )
+    }
+
+    composable(
         route = Destination.Root.Setting.name,
         enterTransition = { fadeIn() },
         exitTransition = { fadeOut() }
     ) {
         SettingRoute(
             contentPadding = contentPadding,
-            navigateToExtension = navigateToExtension,
             modifier = Modifier
                 .fillMaxSize()
                 .blurEdge(

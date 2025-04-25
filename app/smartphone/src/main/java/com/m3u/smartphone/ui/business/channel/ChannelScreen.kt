@@ -45,7 +45,8 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.business.channel.ChannelViewModel
 import com.m3u.business.channel.PlayerState
-import com.m3u.core.architecture.preferences.hiltPreferences
+import com.m3u.core.architecture.preferences.PreferencesKeys
+import com.m3u.core.architecture.preferences.preferenceOf
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.AdjacentChannels
@@ -83,10 +84,12 @@ fun ChannelRoute(
     val openInExternalPlayerString = stringResource(string.feat_channel_open_in_external_app)
 
     val helper = LocalHelper.current
-    val preferences = hiltPreferences()
     val context = LocalContext.current
     val density = LocalDensity.current
     val windowInfo = LocalWindowInfo.current
+
+    val isPanelEnabled by preferenceOf(PreferencesKeys.PLAYER_PANEL)
+    val zappingMode by preferenceOf(PreferencesKeys.ZAPPING_MODE)
 
     val requestIgnoreBatteryOptimizations =
         rememberPermissionState(Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
@@ -121,7 +124,6 @@ fun ChannelRoute(
     var choosing by remember { mutableStateOf(false) }
 
     val useVertical = PullPanelLayoutDefaults.UseVertical
-    val isPanelEnabled = preferences.panel
 
     val maskState = rememberMaskState()
     val pullPanelLayoutState = rememberPullPanelLayoutState()
@@ -151,9 +153,9 @@ fun ChannelRoute(
         }
     }
 
-    LaunchedEffect(preferences.zappingMode, playerState.videoSize) {
+    LaunchedEffect(zappingMode, playerState.videoSize) {
         val videoSize = playerState.videoSize
-        if (isAutoZappingMode && preferences.zappingMode && !isPipMode) {
+        if (isAutoZappingMode && zappingMode && !isPipMode) {
             maskState.sleep()
             val rect = if (videoSize.isNotEmpty) videoSize
             else Rect(0, 0, 1920, 1080)
@@ -368,7 +370,10 @@ private fun ChannelPlayer(
     val currentBrightness by rememberUpdatedState(brightness)
     val currentVolume by rememberUpdatedState(volume)
     val currentSpeed by rememberUpdatedState(speed)
-    val preferences = hiltPreferences()
+
+    val clipMode by preferenceOf(PreferencesKeys.CLIP_MODE)
+    val brightnessGesture by preferenceOf(PreferencesKeys.BRIGHTNESS_GESTURE)
+    val volumeGesture by preferenceOf(PreferencesKeys.VOLUME_GESTURE)
 
     val useVertical = with(windowInfo.containerSize) { width < height }
 
@@ -380,7 +385,7 @@ private fun ChannelPlayer(
     Box(modifier) {
         val state = rememberPlayerState(
             player = playerState.player,
-            clipMode = preferences.clipMode
+            clipMode = clipMode
         )
         var dimension: MaskDimension by remember { mutableStateOf(MaskDimension()) }
         val topPadding = with(density) { dimension.top.takeOrElse { 0.dp }.toPx() }
@@ -406,7 +411,7 @@ private fun ChannelPlayer(
                 .fillMaxHeight(0.7f)
                 .fillMaxWidth(0.18f)
                 .align(Alignment.CenterStart),
-            enabled = preferences.brightnessGesture
+            enabled = brightnessGesture
         )
 
         VerticalGestureArea(
@@ -423,7 +428,7 @@ private fun ChannelPlayer(
                 .align(Alignment.CenterEnd)
                 .fillMaxHeight(0.7f)
                 .fillMaxWidth(0.18f),
-            enabled = preferences.volumeGesture
+            enabled = volumeGesture
         )
 
         ChannelMask(

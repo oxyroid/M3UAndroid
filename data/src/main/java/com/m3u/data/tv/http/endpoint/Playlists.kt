@@ -2,7 +2,6 @@ package com.m3u.data.tv.http.endpoint
 
 import android.content.Context
 import androidx.work.WorkManager
-import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.worker.SubscriptionWorker
@@ -17,7 +16,6 @@ import javax.inject.Singleton
 @Singleton
 data class Playlists @Inject constructor(
     private val workManager: WorkManager,
-    private val preferences: Preferences,
     private val playlistRepository: PlaylistRepository,
     @ApplicationContext private val context: Context
 ) : Endpoint {

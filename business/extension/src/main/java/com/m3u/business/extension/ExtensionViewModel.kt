@@ -12,9 +12,11 @@ import androidx.lifecycle.viewModelScope
 import com.m3u.extension.api.CallTokenConst
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import java.util.UUID
 import javax.inject.Inject
@@ -63,6 +65,7 @@ class ExtensionViewModel @Inject constructor(
             .toList()
         emit(extensions)
     }
+        .flowOn(Dispatchers.Default)
         .stateIn(
             scope = viewModelScope,
             initialValue = emptyList(),

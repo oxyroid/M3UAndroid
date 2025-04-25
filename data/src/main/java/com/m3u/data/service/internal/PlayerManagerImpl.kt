@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Rect
 import android.net.Uri
-import androidx.compose.runtime.snapshotFlow
 import androidx.core.net.toUri
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -18,7 +17,6 @@ import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.cache.Cache
-import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.datasource.rtmp.RtmpDataSource
 import androidx.media3.exoplayer.ExoPlayer
@@ -55,8 +53,10 @@ import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.logger.post
-import com.m3u.core.architecture.preferences.Preferences
+import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.ReconnectMode
+import com.m3u.core.architecture.preferences.Settings
+import com.m3u.core.architecture.preferences.asReadOnlyProperty
 import com.m3u.data.SSLs
 import com.m3u.data.api.OkhttpClient
 import com.m3u.data.codec.Codecs
@@ -73,8 +73,6 @@ import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
@@ -82,9 +80,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -107,10 +103,10 @@ import kotlin.time.Duration.Companion.seconds
 class PlayerManagerImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     @OkhttpClient(false) private val okHttpClient: OkHttpClient,
-    private val preferences: Preferences,
     private val playlistRepository: PlaylistRepository,
     private val channelRepository: ChannelRepository,
     private val cache: Cache,
+    settings: Settings,
     publisher: Publisher,
     delegate: Logger
 ) : PlayerManager, Player.Listener, MediaSession.Callback {
@@ -179,11 +175,6 @@ class PlayerManagerImpl @Inject constructor(
 
     private val playbackPosition = MutableStateFlow(-1L)
 
-    private var currentConnectTimeout = preferences.connectTimeout
-    private var currentTunneling = preferences.tunneling
-    private var currentCache = preferences.cache
-    private var observePreferencesChangingJob: Job? = null
-
     init {
         mainCoroutineScope.launch {
             playbackState.collectLatest { state ->
@@ -242,19 +233,6 @@ class PlayerManagerImpl @Inject constructor(
                 licenseKey = licenseKey,
                 applyContinueWatching = applyContinueWatching
             )
-
-            observePreferencesChangingJob?.cancel()
-            observePreferencesChangingJob = mainCoroutineScope.launch {
-                observePreferencesChanging { timeout, tunneling, cache ->
-                    if (timeout != currentConnectTimeout || tunneling != currentTunneling || cache != currentCache) {
-                        logger.post { "preferences changed, replaying..." }
-                        replay()
-                        currentConnectTimeout = timeout
-                        currentTunneling = tunneling
-                        currentCache = cache
-                    }
-                }
-            }
         }
     }
 
@@ -267,7 +245,7 @@ class PlayerManagerImpl @Inject constructor(
         applyContinueWatching: Boolean
     ) {
         val rtmp: Boolean = Url(url).protocol.name == "rtmp"
-        val tunneling: Boolean = preferences.tunneling
+        val tunneling: Boolean = tunneling
 
         val mimeType = when (val chain = chain) {
             is MimetypeChain.Remembered -> chain.mimeType
@@ -370,8 +348,6 @@ class PlayerManagerImpl @Inject constructor(
 
     override fun release() {
         logger.post { "release" }
-        observePreferencesChangingJob?.cancel()
-        observePreferencesChangingJob = null
         extractor = null
         player.update {
             it ?: return
@@ -495,25 +471,13 @@ class PlayerManagerImpl @Inject constructor(
     private fun createHttpDataSourceFactory(userAgent: String?): DataSource.Factory {
         val upstream = OkHttpDataSource.Factory(okHttpClient)
             .setUserAgent(userAgent)
-        return if (preferences.cache) {
-            CacheDataSource.Factory()
-                .setUpstreamDataSourceFactory(upstream)
-                .setCache(cache)
-                .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
-        } else upstream
-    }
-
-    private suspend fun observePreferencesChanging(
-        onChanged: suspend (timeout: Long, tunneling: Boolean, cache: Boolean) -> Unit
-    ): Unit = coroutineScope {
-        combine(
-            snapshotFlow { preferences.connectTimeout },
-            snapshotFlow { preferences.tunneling },
-            snapshotFlow { preferences.cache }
-        ) { timeout, tunneling, cache ->
-            onChanged(timeout, tunneling, cache)
-        }
-            .collect()
+//        return if (cache) {
+//            CacheDataSource.Factory()
+//                .setUpstreamDataSourceFactory(upstream)
+//                .setCache(cache)
+//                .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+//        }
+        return upstream
     }
 
     override fun onVideoSizeChanged(videoSize: VideoSize) {
@@ -748,8 +712,11 @@ class PlayerManagerImpl @Inject constructor(
         }
     }
 
+    private val tunneling by settings.asReadOnlyProperty(PreferencesKeys.TUNNELING)
+    private val reconnectMode by settings.asReadOnlyProperty(PreferencesKeys.RECONNECT_MODE)
+
     private suspend fun onPlaybackEnded() {
-        if (preferences.reconnectMode == ReconnectMode.RECONNECT) {
+        if (reconnectMode == ReconnectMode.RECONNECT) {
             mainCoroutineScope.launch { replay() }
         }
         val channelUrl = chain.url

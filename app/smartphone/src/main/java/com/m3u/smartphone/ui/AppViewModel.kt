@@ -9,7 +9,9 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.WorkManager
 import com.m3u.smartphone.ui.common.connect.RemoteControlSheetValue
 import com.m3u.core.architecture.Publisher
-import com.m3u.core.architecture.preferences.Preferences
+import com.m3u.core.architecture.preferences.PreferencesKeys
+import com.m3u.core.architecture.preferences.Settings
+import com.m3u.core.architecture.preferences.asStateFlow
 import com.m3u.data.api.TvApiDelegate
 import com.m3u.data.tv.model.RemoteDirection
 import com.m3u.data.repository.tv.ConnectionToTvValue
@@ -41,8 +43,8 @@ class AppViewModel @Inject constructor(
     private val tvRepository: TvRepository,
     private val tvApi: TvApiDelegate,
     private val workManager: WorkManager,
-    private val preferences: Preferences,
     private val publisher: Publisher,
+    private val settings: Settings
 ) : ViewModel() {
     init {
         refreshProgrammes()
@@ -127,7 +129,8 @@ class AppViewModel @Inject constructor(
             tvCodeOnSmartphone.emit(code)
         }
         checkTvCodeOnSmartphoneJob?.cancel()
-        checkTvCodeOnSmartphoneJob = snapshotFlow { preferences.remoteControl }
+        checkTvCodeOnSmartphoneJob = settings
+            .asStateFlow(PreferencesKeys.REMOTE_CONTROL)
             .onEach { remoteControl ->
                 if (!remoteControl) {
                     forgetTvCodeOnSmartphone()

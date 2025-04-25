@@ -1,19 +1,17 @@
 package com.m3u.data.repository.channel
 
-import androidx.paging.PagingData
 import androidx.paging.PagingSource
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.execute
 import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.logger.sandBox
-import com.m3u.core.architecture.preferences.Preferences
+import com.m3u.core.architecture.preferences.Settings
+import com.m3u.core.wrapper.Sort
 import com.m3u.data.database.dao.ChannelDao
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.data.database.model.Channel
-import com.m3u.data.database.model.isSeries
-import com.m3u.core.wrapper.Sort
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.datetime.Clock
@@ -23,7 +21,7 @@ import kotlin.time.Duration
 internal class ChannelRepositoryImpl @Inject constructor(
     private val channelDao: ChannelDao,
     private val playlistDao: PlaylistDao,
-    private val preferences: Preferences,
+    private val settings: Settings,
     logger: Logger,
 ) : ChannelRepository {
     private val logger = logger.install(Profiles.REPOS_CHANNEL)
@@ -65,16 +63,6 @@ internal class ChannelRepositoryImpl @Inject constructor(
         playlistUrl = playlistUrl,
         category = category
     )
-
-    override suspend fun getRandomIgnoreSeriesAndHidden(): Channel? = logger.execute {
-        val playlists = playlistDao.getAll()
-        val seriesPlaylistUrls = playlists
-            .filter { it.isSeries }
-            .map { it.url }
-            .toTypedArray()
-        if (!preferences.randomlyInFavorite) channelDao.randomIgnoreSeriesAndHidden(*seriesPlaylistUrls)
-        else channelDao.randomIgnoreSeriesInFavorite(*seriesPlaylistUrls)
-    }
 
     override suspend fun getByPlaylistUrl(playlistUrl: String): List<Channel> = logger.execute {
         channelDao.getByPlaylistUrl(playlistUrl)

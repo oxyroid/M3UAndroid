@@ -6,6 +6,7 @@
 
     <string name="ui_destination_foryou">For You</string>
     <string name="ui_destination_favourite">Favorite</string>
+    <string name="ui_destination_extension">Extension</string>
     <string name="ui_destination_setting">Settings</string>
     <string name="ui_destination_playlist">Playlist</string>
 

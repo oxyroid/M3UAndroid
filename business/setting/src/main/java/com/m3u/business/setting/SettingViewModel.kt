@@ -3,7 +3,6 @@ package com.m3u.business.setting
 import android.net.Uri
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.OneTimeWorkRequestBuilder
@@ -16,18 +15,21 @@ import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
-import com.m3u.core.architecture.preferences.Preferences
+import com.m3u.core.architecture.preferences.PreferencesKeys
+import com.m3u.core.architecture.preferences.Settings
+import com.m3u.core.architecture.preferences.asStateFlow
+import com.m3u.core.architecture.preferences.set
 import com.m3u.core.util.basic.startWithHttpScheme
 import com.m3u.data.api.TvApiDelegate
 import com.m3u.data.database.dao.ColorSchemeDao
 import com.m3u.data.database.example.ColorSchemeExample
+import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.ColorScheme
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
-import com.m3u.data.database.model.Channel
 import com.m3u.data.parser.xtream.XtreamInput
-import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.channel.ChannelRepository
+import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.service.Messager
 import com.m3u.data.worker.BackupWorker
 import com.m3u.data.worker.RestoreWorker
@@ -51,7 +53,7 @@ class SettingViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val channelRepository: ChannelRepository,
     private val workManager: WorkManager,
-    private val preferences: Preferences,
+    private val settings: Settings,
     private val messager: Messager,
     private val tvApi: TvApiDelegate,
     publisher: Publisher,
@@ -100,7 +102,7 @@ class SettingViewModel @Inject constructor(
 
     val colorSchemes: StateFlow<List<ColorScheme>> = combine(
         colorSchemeDao.observeAll().catch { emit(emptyList()) },
-        snapshotFlow { preferences.followSystemTheme }
+        settings.asStateFlow(PreferencesKeys.FOLLOW_SYSTEM_THEME)
     ) { all, followSystemTheme -> if (followSystemTheme) all.filter { !it.isDark } else all }
         .flowOn(Dispatchers.Default)
         .stateIn(
@@ -311,8 +313,7 @@ class SettingViewModel @Inject constructor(
         argb: Int,
         isDark: Boolean
     ) {
-        preferences.argb = argb
-        preferences.darkMode = isDark
+        settings[PreferencesKeys.DARK_MODE] = isDark
         viewModelScope.launch {
             if (prev != null) {
                 colorSchemeDao.delete(prev)

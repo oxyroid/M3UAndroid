@@ -1,12 +1,13 @@
 package com.m3u.data.repository.tv
 
 import android.net.nsd.NsdServiceInfo
-import androidx.compose.runtime.snapshotFlow
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
-import com.m3u.core.architecture.preferences.Preferences
+import com.m3u.core.architecture.preferences.PreferencesKeys
+import com.m3u.core.architecture.preferences.Settings
+import com.m3u.core.architecture.preferences.asStateFlow
 import com.m3u.core.util.coroutine.timeout
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.asResource
@@ -42,7 +43,7 @@ class TvRepositoryImpl @Inject constructor(
     private val httpServer: HttpServer,
     private val tvApi: TvApiDelegate,
     logger: Logger,
-    preferences: Preferences,
+    settings: Settings,
     publisher: Publisher,
 ) : TvRepository() {
     private val logger = logger.install(Profiles.REPOS_LEANBACK)
@@ -50,7 +51,8 @@ class TvRepositoryImpl @Inject constructor(
     private val coroutineScope = CoroutineScope(SupervisorJob())
 
     init {
-        snapshotFlow { preferences.remoteControl }
+        settings
+            .asStateFlow(PreferencesKeys.REMOTE_CONTROL)
             .onEach { remoteControl ->
                 when {
                     !remoteControl -> closeBroadcastOnTv()
@@ -180,5 +182,6 @@ class TvRepositoryImpl @Inject constructor(
         _connected.value = null
     }
 
-    private fun NsdServiceInfo.getAttribute(key: String): String? = attributes[key]?.decodeToString()
+    private fun NsdServiceInfo.getAttribute(key: String): String? =
+        attributes[key]?.decodeToString()
 }

@@ -1,6 +1,5 @@
 package com.m3u.smartphone.ui.business.foryou.components.recommend
 
-import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -26,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,7 +43,8 @@ import androidx.compose.ui.util.lerp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.m3u.business.foryou.Recommend
-import com.m3u.core.architecture.preferences.hiltPreferences
+import com.m3u.core.architecture.preferences.PreferencesKeys
+import com.m3u.core.architecture.preferences.preferenceOf
 import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 import com.m3u.core.foundation.ui.composableOf
 import com.m3u.core.util.basic.title
@@ -113,9 +114,8 @@ private fun RecommendItemContent(
 ) {
     val context = LocalContext.current
     val spacing = LocalSpacing.current
-    val preferences = hiltPreferences()
 
-    val noPictureMode = preferences.noPictureMode
+    val noPictureMode by preferenceOf(PreferencesKeys.NO_PICTURE_MODE)
 
     Box(Modifier.fillMaxSize()) {
         val info = @Composable {

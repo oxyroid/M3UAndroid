@@ -20,7 +20,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -50,14 +49,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -66,7 +63,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.business.playlist.PlaylistViewModel
-import com.m3u.core.architecture.preferences.hiltPreferences
+import com.m3u.core.architecture.preferences.PreferencesKeys
+import com.m3u.core.architecture.preferences.mutablePreferenceOf
+import com.m3u.core.architecture.preferences.preferenceOf
 import com.m3u.core.foundation.ui.thenIf
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Event
@@ -115,11 +114,14 @@ internal fun PlaylistRoute(
     contentPadding: PaddingValues = PaddingValues()
 ) {
     val context = LocalContext.current
-    val preferences = hiltPreferences()
     val helper = LocalHelper.current
     val coroutineScope = rememberCoroutineScope()
     val colorScheme = MaterialTheme.colorScheme
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    val autoRefreshChannels by preferenceOf(PreferencesKeys.AUTO_REFRESH_CHANNELS)
+    var rowCount by mutablePreferenceOf(PreferencesKeys.ROW_COUNT)
+    var godMode by mutablePreferenceOf(PreferencesKeys.GOD_MODE)
 
     val zapping by viewModel.zapping.collectAsStateWithLifecycle()
     val playlistUrl by viewModel.playlistUrl.collectAsStateWithLifecycle()
@@ -199,8 +201,8 @@ internal fun PlaylistRoute(
         }
     }
 
-    LaunchedEffect(preferences.autoRefreshChannels, playlistUrl) {
-        if (playlistUrl.isNotEmpty() && preferences.autoRefreshChannels) {
+    LaunchedEffect(autoRefreshChannels, playlistUrl) {
+        if (playlistUrl.isNotEmpty() && autoRefreshChannels) {
             viewModel.refresh()
         }
     }
@@ -213,7 +215,7 @@ internal fun PlaylistRoute(
         title = playlist?.title.orEmpty(),
         query = query,
         onQuery = { viewModel.query.value = it },
-        rowCount = preferences.rowCount,
+        rowCount = rowCount,
         zapping = zapping,
         categoryWithChannels = channels,
         pinnedCategories = pinnedCategories,
@@ -275,14 +277,14 @@ internal fun PlaylistRoute(
         },
         modifier = Modifier
             .fillMaxSize()
-            .thenIf(preferences.godMode) {
+            .thenIf(godMode) {
                 Modifier.interceptVolumeEvent { event ->
-                    preferences.rowCount = when (event) {
+                    rowCount = when (event) {
                         KeyEvent.KEYCODE_VOLUME_UP ->
-                            (preferences.rowCount - 1).coerceAtLeast(1)
+                            (rowCount - 1).coerceAtLeast(1)
 
                         KeyEvent.KEYCODE_VOLUME_DOWN ->
-                            (preferences.rowCount + 1).coerceAtMost(2)
+                            (rowCount + 1).coerceAtMost(2)
 
                         else -> return@interceptVolumeEvent
                     }

@@ -13,17 +13,20 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Programme
 import com.m3u.business.playlist.PlaylistViewModel
+import com.m3u.core.architecture.preferences.PreferencesKeys
+import com.m3u.core.architecture.preferences.preferenceOf
 import com.m3u.core.foundation.components.CircularProgressIndicator
 import com.m3u.smartphone.ui.material.components.VerticalDraggableScrollbar
 import com.m3u.smartphone.ui.material.ktx.plus
@@ -48,12 +51,17 @@ internal fun ChannelGallery(
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
     val spacing = LocalSpacing.current
-    val preferences = hiltPreferences()
 
-    val actualRowCount = when {
-        preferences.noPictureMode -> rowCount
-        isVodOrSeriesPlaylist -> rowCount + 2
-        else -> rowCount
+    val noPictureMode by preferenceOf(PreferencesKeys.NO_PICTURE_MODE)
+
+    val actualRowCount by remember(isVodOrSeriesPlaylist, rowCount) {
+        derivedStateOf {
+            when {
+                noPictureMode -> rowCount
+                isVodOrSeriesPlaylist -> rowCount + 2
+                else -> rowCount
+            }
+        }
     }
 
     val channels = categoryWithChannels?.channels?.collectAsLazyPagingItems()

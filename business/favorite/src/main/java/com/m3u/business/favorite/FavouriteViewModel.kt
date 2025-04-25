@@ -3,7 +3,6 @@ package com.m3u.business.favorite
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import androidx.compose.runtime.snapshotFlow
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
@@ -18,7 +17,9 @@ import com.m3u.core.Contracts
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
-import com.m3u.core.architecture.preferences.Preferences
+import com.m3u.core.architecture.preferences.PreferencesKeys
+import com.m3u.core.architecture.preferences.Settings
+import com.m3u.core.architecture.preferences.asStateFlow
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.Sort
 import com.m3u.core.wrapper.mapResource
@@ -50,13 +51,13 @@ class FavoriteViewModel @Inject constructor(
     private val channelRepository: ChannelRepository,
     private val mediaRepository: MediaRepository,
     private val playerManager: PlayerManager,
-    preferences: Preferences,
+    settings: Settings,
     delegate: Logger
 ) : ViewModel() {
     private val logger = delegate.install(Profiles.VIEWMODEL_FAVOURITE)
 
     val zapping: StateFlow<Channel?> = combine(
-        snapshotFlow { preferences.zappingMode },
+        settings.asStateFlow(PreferencesKeys.ZAPPING_MODE),
         playerManager.channel
     ) { zappingMode, channel ->
         channel.takeIf { zappingMode }

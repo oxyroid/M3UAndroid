@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,11 +30,14 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.m3u.core.architecture.preferences.ClipMode
-import com.m3u.core.architecture.preferences.hiltPreferences
+import com.m3u.core.architecture.preferences.PreferencesKeys
+import com.m3u.core.architecture.preferences.mutablePreferenceOf
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.ColorScheme
 import com.m3u.i18n.R.string
@@ -46,8 +48,6 @@ import com.m3u.smartphone.ui.material.components.TextPreference
 import com.m3u.smartphone.ui.material.components.ThemeSelection
 import com.m3u.smartphone.ui.material.ktx.Edge
 import com.m3u.smartphone.ui.material.ktx.blurEdges
-import com.m3u.smartphone.ui.material.ktx.minus
-import com.m3u.smartphone.ui.material.ktx.only
 import com.m3u.smartphone.ui.material.ktx.plus
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 
@@ -61,10 +61,16 @@ internal fun AppearanceFragment(
     contentPadding: PaddingValues = PaddingValues()
 ) {
     val spacing = LocalSpacing.current
-    val preferences = hiltPreferences()
 
-    val isDarkMode = preferences.darkMode
-    val useDynamicColors = preferences.useDynamicColors
+    var isDarkMode by mutablePreferenceOf(PreferencesKeys.DARK_MODE)
+    var useDynamicColors by mutablePreferenceOf(PreferencesKeys.USE_DYNAMIC_COLORS)
+    var argb by mutablePreferenceOf(PreferencesKeys.COLOR_ARGB)
+    var clipMode by mutablePreferenceOf(PreferencesKeys.CLIP_MODE)
+    var compactDimension by mutablePreferenceOf(PreferencesKeys.COMPACT_DIMENSION)
+    var noPictureMode by mutablePreferenceOf(PreferencesKeys.NO_PICTURE_MODE)
+    var followSystemTheme by mutablePreferenceOf(PreferencesKeys.FOLLOW_SYSTEM_THEME)
+    var colorfulBackground by mutablePreferenceOf(PreferencesKeys.COLORFUL_BACKGROUND)
+    var godMode by mutablePreferenceOf(PreferencesKeys.GOD_MODE)
 
     val colorScheme = MaterialTheme.colorScheme
 
@@ -137,9 +143,9 @@ internal fun AppearanceFragment(
                             isDark = colorScheme.isDark,
                             selected = selected,
                             onClick = {
-                                preferences.useDynamicColors = false
-                                preferences.argb = colorScheme.argb
-                                preferences.darkMode = colorScheme.isDark
+                                useDynamicColors = false
+                                argb = colorScheme.argb
+                                isDarkMode = colorScheme.isDark
                             },
                             onLongClick = { openColorCanvas(colorScheme) },
                         )
@@ -168,14 +174,14 @@ internal fun AppearanceFragment(
             TextPreference(
                 title = stringResource(string.feat_setting_clip_mode).title(),
                 icon = Icons.Rounded.FitScreen,
-                trailing = when (preferences.clipMode) {
+                trailing = when (clipMode) {
                     ClipMode.ADAPTIVE -> stringResource(string.feat_setting_clip_mode_adaptive)
                     ClipMode.CLIP -> stringResource(string.feat_setting_clip_mode_clip)
                     ClipMode.STRETCHED -> stringResource(string.feat_setting_clip_mode_stretched)
                     else -> ""
                 }.title(),
                 onClick = {
-                    preferences.clipMode = when (preferences.clipMode) {
+                    clipMode = when (clipMode) {
                         ClipMode.ADAPTIVE -> ClipMode.CLIP
                         ClipMode.CLIP -> ClipMode.STRETCHED
                         ClipMode.STRETCHED -> ClipMode.ADAPTIVE
@@ -188,8 +194,8 @@ internal fun AppearanceFragment(
             SwitchSharedPreference(
                 title = string.feat_setting_compact_dimension,
                 icon = Icons.Rounded.FormatSize,
-                checked = preferences.compactDimension,
-                onChanged = { preferences.compactDimension = !preferences.compactDimension }
+                checked = compactDimension,
+                onChanged = { compactDimension = !compactDimension }
             )
         }
         item {
@@ -197,16 +203,16 @@ internal fun AppearanceFragment(
                 title = string.feat_setting_no_picture_mode,
                 content = string.feat_setting_no_picture_mode_description,
                 icon = Icons.Rounded.HideImage,
-                checked = preferences.noPictureMode,
-                onChanged = { preferences.noPictureMode = !preferences.noPictureMode }
+                checked = noPictureMode,
+                onChanged = { noPictureMode = !noPictureMode }
             )
         }
         item {
             SwitchSharedPreference(
                 title = string.feat_setting_follow_system_theme,
                 icon = Icons.Rounded.DarkMode,
-                checked = preferences.followSystemTheme,
-                onChanged = { preferences.followSystemTheme = !preferences.followSystemTheme },
+                checked = followSystemTheme,
+                onChanged = { followSystemTheme = !followSystemTheme },
             )
         }
         item {
@@ -217,7 +223,7 @@ internal fun AppearanceFragment(
                 content = string.feat_setting_use_dynamic_colors_unavailable.takeUnless { useDynamicColorsAvailable },
                 icon = Icons.Rounded.ColorLens,
                 checked = useDynamicColors,
-                onChanged = { preferences.useDynamicColors = !useDynamicColors },
+                onChanged = { useDynamicColors = !useDynamicColors },
                 enabled = useDynamicColorsAvailable
             )
         }
@@ -225,9 +231,9 @@ internal fun AppearanceFragment(
             SwitchSharedPreference(
                 title = string.feat_setting_colorful_background,
                 icon = Icons.Rounded.Stars,
-                checked = preferences.colorfulBackground,
+                checked = colorfulBackground,
                 onChanged = {
-                    preferences.colorfulBackground = !preferences.colorfulBackground
+                    colorfulBackground = !colorfulBackground
                 }
             )
         }
@@ -243,8 +249,8 @@ internal fun AppearanceFragment(
                 title = string.feat_setting_god_mode,
                 content = string.feat_setting_god_mode_description,
                 icon = Icons.Rounded.DeviceHub,
-                checked = preferences.godMode,
-                onChanged = { preferences.godMode = !preferences.godMode }
+                checked = godMode,
+                onChanged = { godMode = !godMode }
             )
         }
     }

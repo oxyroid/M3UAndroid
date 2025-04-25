@@ -34,10 +34,11 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
 import com.m3u.smartphone.ui.common.connect.RemoteControlSheet
 import com.m3u.smartphone.ui.common.connect.RemoteControlSheetValue
-import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.tv.model.RemoteDirection
 import androidx.compose.material3.Icon
 import androidx.compose.ui.platform.LocalContext
+import com.m3u.core.architecture.preferences.PreferencesKeys
+import com.m3u.core.architecture.preferences.preferenceOf
 import com.m3u.smartphone.ui.business.channel.PlayerActivity
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.smartphone.ui.common.AppNavHost
@@ -112,7 +113,9 @@ private fun AppImpl(
 ) {
     val context = LocalContext.current
     val spacing = LocalSpacing.current
-    val preferences = hiltPreferences()
+
+    val zappingMode by preferenceOf(PreferencesKeys.ZAPPING_MODE)
+    val remoteControl by preferenceOf(PreferencesKeys.REMOTE_CONTROL)
 
     val entry by navController.currentBackStackEntryAsState()
 
@@ -123,7 +126,7 @@ private fun AppImpl(
     }
 
     val navigateToChannel: () -> Unit = {
-        if (!preferences.zappingMode || !PlayerActivity.isInPipMode) {
+        if (!zappingMode || !PlayerActivity.isInPipMode) {
             val options = ActivityOptions.makeCustomAnimation(
                 context,
                 0,
@@ -168,7 +171,7 @@ private fun AppImpl(
         ) {
             SnackHost(Modifier.weight(1f))
             AnimatedVisibility(
-                visible = preferences.remoteControl,
+                visible = remoteControl,
                 enter = scaleIn(initialScale = 0.65f) + fadeIn(),
                 exit = scaleOut(targetScale = 0.65f) + fadeOut()
             ) {

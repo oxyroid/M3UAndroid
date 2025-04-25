@@ -33,7 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
 import com.google.accompanist.permissions.rememberPermissionState
-import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Channel
@@ -41,6 +40,9 @@ import com.m3u.business.setting.BackingUpAndRestoringState
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.material.components.HorizontalPagerIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.runtime.getValue
+import com.m3u.core.architecture.preferences.PreferencesKeys
+import com.m3u.core.architecture.preferences.preferenceOf
 import com.m3u.smartphone.ui.material.components.PlaceholderField
 import com.m3u.smartphone.ui.material.ktx.checkPermissionOrRationale
 import com.m3u.smartphone.ui.material.ktx.textHorizontalLabel
@@ -167,11 +169,10 @@ private fun MainContentImpl(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    val preferences = hiltPreferences()
     val clipboardManager = LocalClipboardManager.current
     val helper = LocalHelper.current
 
-    val remoteControl = preferences.remoteControl
+    val remoteControl by preferenceOf(PreferencesKeys.REMOTE_CONTROL)
 
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(spacing.small),

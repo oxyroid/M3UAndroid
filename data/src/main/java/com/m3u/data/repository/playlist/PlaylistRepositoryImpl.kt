@@ -12,7 +12,9 @@ import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.logger.post
 import com.m3u.core.architecture.logger.sandBox
 import com.m3u.core.architecture.preferences.PlaylistStrategy
-import com.m3u.core.architecture.preferences.Preferences
+import com.m3u.core.architecture.preferences.PreferencesKeys
+import com.m3u.core.architecture.preferences.Settings
+import com.m3u.core.architecture.preferences.asReadOnlyProperty
 import com.m3u.core.util.basic.startsWithAny
 import com.m3u.core.util.copyToFile
 import com.m3u.core.util.readFileName
@@ -78,11 +80,12 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     @OkhttpClient(true) private val okHttpClient: OkHttpClient,
     private val m3uParser: M3UParser,
     private val xtreamParser: XtreamParser,
-    private val preferences: Preferences,
     private val workManager: WorkManager,
     @ApplicationContext private val context: Context,
+    settings: Settings
 ) : PlaylistRepository {
     private val logger = delegate.install(Profiles.REPOS_PLAYLIST)
+    private val playlistStrategy by settings.asReadOnlyProperty(PreferencesKeys.PLAYLIST_STRATEGY)
 
     override suspend fun m3uOrThrow(
         title: String,
@@ -98,20 +101,20 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                 actualUrl: $actualUrl
             """.trimIndent()
         }
-        val favOrHiddenRelationIds = when (preferences.playlistStrategy) {
+        val favOrHiddenRelationIds = when (playlistStrategy) {
             PlaylistStrategy.ALL -> emptyList()
             else -> {
                 channelDao.getFavOrHiddenRelationIdsByPlaylistUrl(url)
             }
         }
-        val favOrHiddenUrls = when (preferences.playlistStrategy) {
+        val favOrHiddenUrls = when (playlistStrategy) {
             PlaylistStrategy.ALL -> emptyList()
             else -> {
                 channelDao.getFavOrHiddenUrlsByPlaylistUrlNotContainsRelationId(url)
             }
         }
 
-        when (preferences.playlistStrategy) {
+        when (playlistStrategy) {
             PlaylistStrategy.ALL -> {
                 channelDao.deleteByPlaylistUrl(url)
             }
@@ -240,7 +243,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         val requiredVods = type == null || type == DataSource.Xtream.TYPE_VOD
         val requiredSeries = type == null || type == DataSource.Xtream.TYPE_SERIES
         if (requiredLives) {
-            when (preferences.playlistStrategy) {
+            when (playlistStrategy) {
                 PlaylistStrategy.ALL -> {
                     channelDao.deleteByPlaylistUrl(livePlaylist.url)
                 }
@@ -252,7 +255,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             playlistDao.insertOrReplace(livePlaylist)
         }
         if (requiredVods) {
-            when (preferences.playlistStrategy) {
+            when (playlistStrategy) {
                 PlaylistStrategy.ALL -> {
                     channelDao.deleteByPlaylistUrl(vodPlaylist.url)
                 }
@@ -264,7 +267,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             playlistDao.insertOrReplace(vodPlaylist)
         }
         if (requiredSeries) {
-            when (preferences.playlistStrategy) {
+            when (playlistStrategy) {
                 PlaylistStrategy.ALL -> {
                     channelDao.deleteByPlaylistUrl(seriesPlaylist.url)
                 }

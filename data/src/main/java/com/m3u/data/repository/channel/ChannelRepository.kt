@@ -27,8 +27,6 @@ interface ChannelRepository {
         category: String,
     ): Flow<AdjacentChannels>
 
-    suspend fun getRandomIgnoreSeriesAndHidden(): Channel?
-
     suspend fun getByPlaylistUrl(playlistUrl: String): List<Channel>
     suspend fun favouriteOrUnfavourite(id: Int)
     suspend fun hide(id: Int, target: Boolean)

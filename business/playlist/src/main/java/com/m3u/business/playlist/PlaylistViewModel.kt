@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.snapshotFlow
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
@@ -20,14 +19,18 @@ import androidx.paging.cachedIn
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkQuery
+import com.m3u.business.playlist.PlaylistMessage.ChannelCoverSaved
 import com.m3u.core.Contracts
 import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
-import com.m3u.core.architecture.preferences.Preferences
+import com.m3u.core.architecture.preferences.PreferencesKeys
+import com.m3u.core.architecture.preferences.Settings
+import com.m3u.core.architecture.preferences.asStateFlow
 import com.m3u.core.util.coroutine.flatmapCombined
 import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.Resource
+import com.m3u.core.wrapper.Sort
 import com.m3u.core.wrapper.handledEvent
 import com.m3u.core.wrapper.mapResource
 import com.m3u.core.wrapper.resource
@@ -36,16 +39,14 @@ import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.isSeries
 import com.m3u.data.parser.xtream.XtreamChannelInfo
+import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.media.MediaRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
-import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManager
 import com.m3u.data.worker.SubscriptionWorker
-import com.m3u.business.playlist.PlaylistMessage.ChannelCoverSaved
-import com.m3u.core.wrapper.Sort
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -80,7 +81,7 @@ class PlaylistViewModel @Inject constructor(
     private val programmeRepository: ProgrammeRepository,
     private val messager: Messager,
     private val playerManager: PlayerManager,
-    preferences: Preferences,
+    settings: Settings,
     workManager: WorkManager,
     delegate: Logger
 ) : ViewModel() {
@@ -99,7 +100,7 @@ class PlaylistViewModel @Inject constructor(
         )
 
     val zapping: StateFlow<Channel?> = combine(
-        snapshotFlow { preferences.zappingMode },
+        settings.asStateFlow(PreferencesKeys.ZAPPING_MODE),
         playerManager.channel,
         playlistUrl.flatMapLatest { channelRepository.observeAllByPlaylistUrl(it) }
     ) { zappingMode, channel, channels ->
@@ -361,6 +362,7 @@ class PlaylistViewModel @Inject constructor(
     suspend fun reloadThumbnail(channelUrl: String): Uri? {
         return playerManager.reloadThumbnail(channelUrl)
     }
+
     suspend fun syncThumbnail(channelUrl: String): Uri? {
         return playerManager.syncThumbnail(channelUrl)
     }

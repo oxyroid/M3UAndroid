@@ -4,7 +4,6 @@ import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.preferences.Preferences
 import com.m3u.extension.runtime.Utils
 import com.m3u.smartphone.ui.business.crash.CrashHandler
 import dagger.hilt.android.HiltAndroidApp
@@ -21,9 +20,6 @@ class M3UApplication : Application(), Configuration.Provider {
     @Inject
     @Logger.MessageImpl
     lateinit var messager: Logger
-
-    @Inject
-    lateinit var preferences: Preferences
 
 //    private val coroutineScope = CoroutineScope(SupervisorJob())
 

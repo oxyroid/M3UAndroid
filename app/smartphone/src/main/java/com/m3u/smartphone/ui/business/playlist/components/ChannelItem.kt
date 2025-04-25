@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -41,7 +42,8 @@ import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import coil.size.Size
-import com.m3u.core.architecture.preferences.hiltPreferences
+import com.m3u.core.architecture.preferences.PreferencesKeys
+import com.m3u.core.architecture.preferences.preferenceOf
 import com.m3u.core.foundation.components.CircularProgressIndicator
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Programme
@@ -73,14 +75,13 @@ internal fun ChannelItem(
 ) {
     val context = LocalContext.current
     val spacing = LocalSpacing.current
-    val preferences = hiltPreferences()
 
     val favourite = channel.favourite
 
     val recentlyString = stringResource(string.ui_sort_recently)
     val neverPlayedString = stringResource(string.ui_sort_never_played)
 
-    val noPictureMode = preferences.noPictureMode
+    val noPictureMode by preferenceOf(PreferencesKeys.NO_PICTURE_MODE)
 
     val star = remember(favourite) {
         movableContentOf {
@@ -238,8 +239,8 @@ internal fun ChannelItem(
 internal fun Programme.readText(
     timeColor: Color = MaterialTheme.colorScheme.secondary
 ): AnnotatedString = buildAnnotatedString {
-    val preferences = hiltPreferences()
-    val clockMode = preferences.twelveHourClock
+    val clockMode by preferenceOf(PreferencesKeys.CLOCK_MODE)
+
     val start = Instant.fromEpochMilliseconds(start)
         .toLocalDateTime(TimeZone.currentSystemDefault())
         .formatEOrSh(clockMode)
