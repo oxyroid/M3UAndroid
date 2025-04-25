@@ -1,4 +1,5 @@
 @file:Suppress("INVISIBLE_REFERENCE", "UNCHECKED_CAST")
+@file:OptIn(ExperimentalAtomicApi::class)
 
 package com.m3u.core.architecture.preferences
 
@@ -18,15 +19,33 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
+import kotlin.concurrent.atomics.AtomicBoolean
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.properties.ReadOnlyProperty
+import kotlin.reflect.KProperty
 
 typealias Settings = DataStore<Preferences>
 
-val Context.settings: Settings by preferencesDataStore("settings")
+private val settingsDataStore: ReadOnlyProperty<Context, Settings> = object : ReadOnlyProperty<Context, Settings> {
+    private val property = preferencesDataStore("settings")
+    private var instance: Settings? = null
+    override fun getValue(
+        thisRef: Context,
+        ignored: KProperty<*>
+    ): Settings = instance ?: property.getValue(thisRef, ignored).apply {
+        // FIXME
+        MainScope().launch {
+            applyDefaultValues()
+        }
+    }
+}
+val Context.settings: Settings by settingsDataStore
 
 @Composable
 fun <T> preferenceOf(
@@ -108,6 +127,20 @@ private val PREFERENCES: Map<Preferences.Key<*>, *> = listOf(
 )
     .associateBy { it.key }
     .mapValues { it.value.value }
+
+suspend fun Settings.applyDefaultValues() {
+    if (applied.compareAndSet(false, true)) {
+        edit { pref ->
+            PREFERENCES.forEach { (key, defaultValue) ->
+                if (key !in pref) {
+                    pref.set<Any>(key as Preferences.Key<Any>, defaultValue as Any)
+                }
+            }
+        }
+    }
+}
+
+private val applied = AtomicBoolean(false)
 
 object PreferencesKeys {
     val PLAYLIST_STRATEGY = intPreferencesKey("playlist-strategy")

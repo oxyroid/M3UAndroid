@@ -1,6 +1,5 @@
 package com.m3u.smartphone.ui.material.components.mask
 
-import android.util.Log
 import androidx.annotation.IntRange
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
@@ -63,12 +62,10 @@ private class MaskStateCoroutineImpl(
     private val systemClock: Long get() = System.currentTimeMillis() / 1000
 
     override fun wake(duration: Duration) {
-        Log.e("TAG", "ChannelPlayer: weak", )
         lastTime = currentTime + duration.inWholeMilliseconds / 1000
     }
 
     override fun sleep() {
-        Log.e("TAG", "ChannelPlayer: sleep", )
         lastTime = 0
         val iterator = unlockedJobs.iterator()
         while (iterator.hasNext()) {
