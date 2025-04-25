@@ -14,7 +14,7 @@ import com.m3u.core.architecture.logger.sandBox
 import com.m3u.core.architecture.preferences.PlaylistStrategy
 import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.Settings
-import com.m3u.core.architecture.preferences.asReadOnlyProperty
+import com.m3u.core.architecture.preferences.get
 import com.m3u.core.util.basic.startsWithAny
 import com.m3u.core.util.copyToFile
 import com.m3u.core.util.readFileName
@@ -82,10 +82,9 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     private val xtreamParser: XtreamParser,
     private val workManager: WorkManager,
     @ApplicationContext private val context: Context,
-    settings: Settings
+    private val settings: Settings
 ) : PlaylistRepository {
     private val logger = delegate.install(Profiles.REPOS_PLAYLIST)
-    private val playlistStrategy by settings.asReadOnlyProperty(PreferencesKeys.PLAYLIST_STRATEGY)
 
     override suspend fun m3uOrThrow(
         title: String,
@@ -101,6 +100,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                 actualUrl: $actualUrl
             """.trimIndent()
         }
+        val playlistStrategy = settings[PreferencesKeys.PLAYLIST_STRATEGY]
         val favOrHiddenRelationIds = when (playlistStrategy) {
             PlaylistStrategy.ALL -> emptyList()
             else -> {
@@ -242,6 +242,9 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         val requiredLives = type == null || type == DataSource.Xtream.TYPE_LIVE
         val requiredVods = type == null || type == DataSource.Xtream.TYPE_VOD
         val requiredSeries = type == null || type == DataSource.Xtream.TYPE_SERIES
+
+        val playlistStrategy = settings[PreferencesKeys.PLAYLIST_STRATEGY]
+
         if (requiredLives) {
             when (playlistStrategy) {
                 PlaylistStrategy.ALL -> {

@@ -18,16 +18,11 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import java.util.concurrent.ConcurrentHashMap
-import kotlin.properties.ReadOnlyProperty
-import kotlin.reflect.KProperty
 
 typealias Settings = DataStore<Preferences>
 
@@ -36,11 +31,13 @@ val Context.settings: Settings by preferencesDataStore("settings")
 @Composable
 fun <T> preferenceOf(
     key: Preferences.Key<T>,
-    initial: T = PREFERENCES[key] as T,
-    dataStore: Settings = LocalContext.current.settings
-): State<T> = produceState(initial, key1 = dataStore) {
-    dataStore.data.map { it[key] ?: initial }.collect {
-        value = it
+    initial: T = remember(key) { PREFERENCES[key] as T },
+): State<T> {
+    val dataStore: Settings = LocalContext.current.settings
+    return produceState(initial, key1 = dataStore) {
+        dataStore.data.mapNotNull { it[key] }.collect {
+            value = it
+        }
     }
 }
 
@@ -48,14 +45,11 @@ fun <T> preferenceOf(
 fun <T> mutablePreferenceOf(
     key: Preferences.Key<T>,
     initial: T = remember(key) { PREFERENCES[key] as T },
-    dataStore: Settings = LocalContext.current.settings
+    coroutineScope: CoroutineScope = rememberCoroutineScope()
 ): MutableState<T> {
-    val coroutineScope = rememberCoroutineScope()
-    val state = produceState(initial, key1 = dataStore) {
-        dataStore.data.map { it[key] ?: initial }.collect {
-            value = it
-        }
-    }
+    val state = preferenceOf(key, initial)
+    val dataStore: Settings = LocalContext.current.settings
+
     return object : MutableState<T> {
         override fun component1(): T = this.value
         override fun component2(): (T) -> Unit = { this.value = it }
@@ -71,36 +65,16 @@ fun <T> mutablePreferenceOf(
     } as MutableState<T>
 }
 
-@Suppress("UNCHECKED_CAST")
-fun <T> Settings.asStateFlow(
-    key: Preferences.Key<T>,
-    initial: T = PREFERENCES[key] as T,
-    coroutineScope: CoroutineScope = MainScope(),
-    started: SharingStarted = SharingStarted.Lazily
-): StateFlow<T> = data
-        .map { it[key] ?: initial }
-        .stateIn(coroutineScope, started, initial)
+fun <T> Settings.flowOf(key: Preferences.Key<T>): Flow<T> = data.mapNotNull { it[key] }
 
-operator fun <T> Settings.get(key: Preferences.Key<T>): T = asStateFlow(
-    key,
-    PREFERENCES[key] as T,
-    MainScope(),
-    SharingStarted.Lazily
-).value
-
-operator fun <T> Settings.set(key: Preferences.Key<T>, value: T) = runBlocking { // FIXME
-    edit { it[key] = value }
+suspend operator fun <T> Settings.get(key: Preferences.Key<T>): T = coroutineScope {
+    data // cold flow
+        .mapNotNull { it[key] }
+        .first()
 }
 
-fun <T> Settings.asReadOnlyProperty(
-    key: Preferences.Key<T>,
-    initial: T = PREFERENCES[key] as T,
-    coroutineScope: CoroutineScope = MainScope(),
-    started: SharingStarted = SharingStarted.Lazily
-): ReadOnlyProperty<Any, T> = object : ReadOnlyProperty<Any, T> {
-    private val state = asStateFlow(key, initial, coroutineScope, started)
-
-    override fun getValue(thisRef: Any, property: KProperty<*>): T = state.value
+suspend operator fun <T> Settings.set(key: Preferences.Key<T>, value: T) {
+    edit { it[key] = value }
 }
 
 private val PREFERENCES: Map<Preferences.Key<*>, *> = listOf(

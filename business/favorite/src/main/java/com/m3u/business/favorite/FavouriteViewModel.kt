@@ -19,7 +19,7 @@ import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.Settings
-import com.m3u.core.architecture.preferences.asStateFlow
+import com.m3u.core.architecture.preferences.flowOf
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.Sort
 import com.m3u.core.wrapper.mapResource
@@ -57,7 +57,7 @@ class FavoriteViewModel @Inject constructor(
     private val logger = delegate.install(Profiles.VIEWMODEL_FAVOURITE)
 
     val zapping: StateFlow<Channel?> = combine(
-        settings.asStateFlow(PreferencesKeys.ZAPPING_MODE),
+        settings.flowOf(PreferencesKeys.ZAPPING_MODE),
         playerManager.channel
     ) { zappingMode, channel ->
         channel.takeIf { zappingMode }

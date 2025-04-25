@@ -56,7 +56,7 @@ import com.m3u.core.architecture.logger.post
 import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.ReconnectMode
 import com.m3u.core.architecture.preferences.Settings
-import com.m3u.core.architecture.preferences.asReadOnlyProperty
+import com.m3u.core.architecture.preferences.get
 import com.m3u.data.SSLs
 import com.m3u.data.api.OkhttpClient
 import com.m3u.data.codec.Codecs
@@ -81,6 +81,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -106,7 +107,7 @@ class PlayerManagerImpl @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val channelRepository: ChannelRepository,
     private val cache: Cache,
-    settings: Settings,
+    private val settings: Settings,
     publisher: Publisher,
     delegate: Logger
 ) : PlayerManager, Player.Listener, MediaSession.Callback {
@@ -237,7 +238,7 @@ class PlayerManagerImpl @Inject constructor(
     }
 
     private var extractor: MediaExtractorCompat? = null
-    private fun tryPlay(
+    private suspend fun tryPlay(
         url: String = channel.value?.url.orEmpty(),
         userAgent: String? = getUserAgent(channel.value?.url.orEmpty(), playlist.value),
         licenseType: String = channel.value?.licenseType.orEmpty(),
@@ -245,7 +246,7 @@ class PlayerManagerImpl @Inject constructor(
         applyContinueWatching: Boolean
     ) {
         val rtmp: Boolean = Url(url).protocol.name == "rtmp"
-        val tunneling: Boolean = tunneling
+        val tunneling = settings[PreferencesKeys.TUNNELING]
 
         val mimeType = when (val chain = chain) {
             is MimetypeChain.Remembered -> chain.mimeType
@@ -262,8 +263,7 @@ class PlayerManagerImpl @Inject constructor(
             "tryPlay, mimetype: $mimeType," +
                     " url: $url," +
                     " user-agent: $userAgent," +
-                    " rtmp: $rtmp, " +
-                    "tunneling: $tunneling"
+                    " rtmp: $rtmp"
         }
         val dataSourceFactory = if (rtmp) {
             RtmpDataSource.Factory()
@@ -537,7 +537,7 @@ class PlayerManagerImpl @Inject constructor(
                             playbackException.value = exception
                         }
 
-                        else -> tryPlay(applyContinueWatching = false)
+                        else -> mainCoroutineScope.launch { tryPlay(applyContinueWatching = false) }
                     }
                 }
             }
@@ -712,11 +712,8 @@ class PlayerManagerImpl @Inject constructor(
         }
     }
 
-    private val tunneling by settings.asReadOnlyProperty(PreferencesKeys.TUNNELING)
-    private val reconnectMode by settings.asReadOnlyProperty(PreferencesKeys.RECONNECT_MODE)
-
     private suspend fun onPlaybackEnded() {
-        if (reconnectMode == ReconnectMode.RECONNECT) {
+        if (settings[PreferencesKeys.RECONNECT_MODE] == ReconnectMode.RECONNECT) {
             mainCoroutineScope.launch { replay() }
         }
         val channelUrl = chain.url

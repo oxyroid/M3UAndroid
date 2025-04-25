@@ -11,7 +11,7 @@ import com.m3u.smartphone.ui.common.connect.RemoteControlSheetValue
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.Settings
-import com.m3u.core.architecture.preferences.asStateFlow
+import com.m3u.core.architecture.preferences.flowOf
 import com.m3u.data.api.TvApiDelegate
 import com.m3u.data.tv.model.RemoteDirection
 import com.m3u.data.repository.tv.ConnectionToTvValue
@@ -130,7 +130,7 @@ class AppViewModel @Inject constructor(
         }
         checkTvCodeOnSmartphoneJob?.cancel()
         checkTvCodeOnSmartphoneJob = settings
-            .asStateFlow(PreferencesKeys.REMOTE_CONTROL)
+            .flowOf(PreferencesKeys.REMOTE_CONTROL)
             .onEach { remoteControl ->
                 if (!remoteControl) {
                     forgetTvCodeOnSmartphone()

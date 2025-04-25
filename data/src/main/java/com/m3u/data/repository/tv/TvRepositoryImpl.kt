@@ -7,7 +7,7 @@ import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.Settings
-import com.m3u.core.architecture.preferences.asStateFlow
+import com.m3u.core.architecture.preferences.flowOf
 import com.m3u.core.util.coroutine.timeout
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.asResource
@@ -52,7 +52,7 @@ class TvRepositoryImpl @Inject constructor(
 
     init {
         settings
-            .asStateFlow(PreferencesKeys.REMOTE_CONTROL)
+            .flowOf(PreferencesKeys.REMOTE_CONTROL)
             .onEach { remoteControl ->
                 when {
                     !remoteControl -> closeBroadcastOnTv()

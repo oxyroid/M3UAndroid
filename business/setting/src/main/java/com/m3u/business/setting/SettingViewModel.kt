@@ -17,7 +17,7 @@ import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.Settings
-import com.m3u.core.architecture.preferences.asStateFlow
+import com.m3u.core.architecture.preferences.flowOf
 import com.m3u.core.architecture.preferences.set
 import com.m3u.core.util.basic.startWithHttpScheme
 import com.m3u.data.api.TvApiDelegate
@@ -102,7 +102,7 @@ class SettingViewModel @Inject constructor(
 
     val colorSchemes: StateFlow<List<ColorScheme>> = combine(
         colorSchemeDao.observeAll().catch { emit(emptyList()) },
-        settings.asStateFlow(PreferencesKeys.FOLLOW_SYSTEM_THEME)
+        settings.flowOf(PreferencesKeys.FOLLOW_SYSTEM_THEME)
     ) { all, followSystemTheme -> if (followSystemTheme) all.filter { !it.isDark } else all }
         .flowOn(Dispatchers.Default)
         .stateIn(
@@ -313,8 +313,8 @@ class SettingViewModel @Inject constructor(
         argb: Int,
         isDark: Boolean
     ) {
-        settings[PreferencesKeys.DARK_MODE] = isDark
         viewModelScope.launch {
+            settings[PreferencesKeys.DARK_MODE] = isDark
             if (prev != null) {
                 colorSchemeDao.delete(prev)
             }

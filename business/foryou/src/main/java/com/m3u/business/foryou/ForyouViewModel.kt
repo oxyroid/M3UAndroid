@@ -10,7 +10,7 @@ import com.m3u.core.architecture.logger.Profiles
 import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.Settings
-import com.m3u.core.architecture.preferences.asStateFlow
+import com.m3u.core.architecture.preferences.flowOf
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.asResource
 import com.m3u.core.wrapper.mapResource
@@ -84,7 +84,7 @@ class ForyouViewModel @Inject constructor(
 
     val refreshingEpgUrls: Flow<List<String>> = programmeRepository.refreshingEpgUrls
 
-    private val unseensDuration = settings.asStateFlow(PreferencesKeys.UNSEENS_MILLISECONDS)
+    private val unseensDuration = settings.flowOf(PreferencesKeys.UNSEENS_MILLISECONDS)
         .map { it.toDuration(DurationUnit.MILLISECONDS) }
         .stateIn(
             scope = viewModelScope,
