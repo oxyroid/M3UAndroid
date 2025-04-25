@@ -408,6 +408,7 @@ fun ChannelMask(
                     modifier = Modifier
                         .semantics(mergeDescendants = true) { }
                         .weight(1f)
+                        .padding(bottom = spacing.small)
                 ) {
                     val alpha by animateFloatAsState(
                         if (!isPanelExpanded || !useVertical) 1f else 0f

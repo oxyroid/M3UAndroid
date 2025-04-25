@@ -19,6 +19,7 @@ import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -163,18 +164,30 @@ fun ChannelRoute(
         }
     }
 
+    val isBarVisible by remember {
+        derivedStateOf {
+            if (pullPanelLayoutState.isExpanded) true
+            else maskState.visible
+        }
+    }
+
     LaunchedEffect(Unit) {
         snapshotFlow { brightness }
             .drop(1)
             .onEach { helper.brightness = it }
             .launchIn(this)
 
-        snapshotFlow { maskState.visible }
-            .onEach { visible ->
-                helper.navigationBarVisibility = visible
-                viewModel.onMaskStateChanged(visible)
+        snapshotFlow { isBarVisible }
+            .onEach { isBarVisible ->
+                helper.statusBarVisibility = isBarVisible
+                helper.navigationBarVisibility = isBarVisible
             }
             .launchIn(this)
+
+        snapshotFlow { maskState.visible }
+            .onEach { viewModel.onMaskStateChanged(it) }
+            .launchIn(this)
+
         snapshotFlow { pullPanelLayoutState.fraction }
             .drop(1)
             .onEach { maskState.sleep() }
