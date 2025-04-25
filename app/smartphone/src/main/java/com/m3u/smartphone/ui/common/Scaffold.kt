@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material.icons.Icons
@@ -277,7 +278,9 @@ internal fun MainContent(
                 onLongClick = {},
                 getProgrammeCurrently = { null },
                 reloadThumbnail = { null },
-                syncThumbnail = { null }
+                syncThumbnail = { null },
+                showScrollbar = false,
+                contentPadding = WindowInsets.ime.asPaddingValues()
             )
         }
         HazeMaterials.regular()

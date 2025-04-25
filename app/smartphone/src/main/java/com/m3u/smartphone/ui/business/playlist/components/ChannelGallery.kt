@@ -49,6 +49,7 @@ internal fun ChannelGallery(
     syncThumbnail: suspend (channelUrl: String) -> Uri?,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
+    showScrollbar: Boolean = true
 ) {
     val spacing = LocalSpacing.current
 
@@ -73,7 +74,10 @@ internal fun ChannelGallery(
     Row(
         modifier = modifier
             .fillMaxSize()
-            .padding(start = spacing.medium),
+            .padding(
+                start = spacing.medium,
+                end = if (showScrollbar) 0.dp else spacing.medium
+            ),
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         LazyVerticalStaggeredGrid(
@@ -131,8 +135,10 @@ internal fun ChannelGallery(
                 }
             }
         }
-        VerticalDraggableScrollbar(
-            lazyStaggeredGridState = state
-        )
+        if (showScrollbar) {
+            VerticalDraggableScrollbar(
+                lazyStaggeredGridState = state
+            )
+        }
     }
 }
