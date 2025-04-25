@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.properties.ReadOnlyProperty
@@ -39,8 +40,7 @@ private val settingsDataStore: ReadOnlyProperty<Context, Settings> = object : Re
         thisRef: Context,
         ignored: KProperty<*>
     ): Settings = instance ?: property.getValue(thisRef, ignored).apply {
-        // FIXME
-        MainScope().launch {
+        runBlocking {
             applyDefaultValues()
         }
     }

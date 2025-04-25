@@ -68,8 +68,6 @@ import com.m3u.data.database.model.ProgrammeRange.Companion.HOUR_LENGTH
 import com.m3u.smartphone.TimeUtils.formatEOrSh
 import com.m3u.smartphone.TimeUtils.toEOrSh
 import com.m3u.smartphone.ui.material.components.FontFamilies
-import com.m3u.smartphone.ui.material.ktx.Edge
-import com.m3u.smartphone.ui.material.ktx.blurEdges
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import eu.wewox.minabox.MinaBox
 import eu.wewox.minabox.MinaBoxItem
@@ -153,10 +151,6 @@ internal fun ProgramGuide(
             scrollDirection = MinaBoxScrollDirection.VERTICAL,
             modifier = Modifier
                 .fillMaxSize()
-                .blurEdges(
-                    MaterialTheme.colorScheme.surfaceContainerHigh,
-                    listOf(Edge.Top, Edge.Bottom)
-                )
                 .background(MaterialTheme.colorScheme.surfaceContainer)
                 .then(zoomGestureModifier)
                 .then(modifier)

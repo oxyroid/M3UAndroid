@@ -53,7 +53,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -308,25 +307,23 @@ fun PlayerPanelImpl(
                 modifier = Modifier
                     .weight(1f)
             ) {
-                if (isPanelExpanded && useVertical) {
-                    Text(
-                        text = title.trim(),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.ExtraBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.basicMarquee()
-                    )
-                    Text(
-                        text = playlistTitle.trim().uppercase(),
-                        style = MaterialTheme.typography.labelMedium,
-                        maxLines = 1,
-                        color = LocalContentColor.current.copy(0.54f),
-                        fontFamily = FontFamilies.LexendExa,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.basicMarquee()
-                    )
-                }
+                Text(
+                    text = title.trim(),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.basicMarquee()
+                )
+                Text(
+                    text = playlistTitle.trim().uppercase(),
+                    style = MaterialTheme.typography.labelMedium,
+                    maxLines = 1,
+                    color = LocalContentColor.current.copy(0.54f),
+                    fontFamily = FontFamilies.LexendExa,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.basicMarquee()
+                )
             }
             Icon(
                 imageVector = Icons.Rounded.Close,
