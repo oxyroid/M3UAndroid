@@ -32,25 +32,6 @@ dependencies {
     implementation(project(":lint:annotation"))
     ksp(project(":lint:processor"))
 
-    implementation(project(":data:codec"))
-    val isTvBuild = gradle
-        .startParameter
-        .taskNames
-        .any { ":app:tv" in it }
-    if (isTvBuild) {
-        implementation(project(":data:codec:rich"))
-    } else {
-        val richCodec = gradle
-            .startParameter
-            .taskNames
-            .find { it.contains("richCodec", ignoreCase = true) } != null
-        if (richCodec) {
-            implementation(project(":data:codec:rich"))
-        } else {
-            implementation(project(":data:codec:lite"))
-        }
-    }
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
 
@@ -84,6 +65,9 @@ dependencies {
     implementation(libs.androidx.media3.common.ktx)
     implementation(libs.androidx.media3.transformer)
     implementation(libs.androidx.media3.muxer)
+
+    implementation(libs.nextlib.media3ext)
+    implementation(libs.nextlib.mediainfo)
 
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.hilt.work)

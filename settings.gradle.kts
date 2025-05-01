@@ -19,7 +19,6 @@ rootProject.name = "M3U"
 include(":app:smartphone", ":app:tv", ":app:extension")
 include(":core", ":core:foundation", ":core:extension")
 include(":data")
-include(":data:codec", ":data:codec:lite", ":data:codec:rich")
 include(
     ":business:foryou",
     ":business:favorite",

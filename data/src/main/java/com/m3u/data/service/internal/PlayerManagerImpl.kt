@@ -59,7 +59,6 @@ import com.m3u.core.architecture.preferences.Settings
 import com.m3u.core.architecture.preferences.get
 import com.m3u.data.SSLs
 import com.m3u.data.api.OkhttpClient
-import com.m3u.data.codec.Codecs
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.copyXtreamEpisode
@@ -81,7 +80,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -414,7 +412,7 @@ class PlayerManagerImpl @Inject constructor(
     }
 
     override suspend fun syncThumbnail(channelUrl: String): Uri? = withContext(Dispatchers.IO) {
-        val thumbnail = codecs.getThumbnail(context, channelUrl.toUri()) ?: return@withContext null
+        val thumbnail = Codecs.getThumbnail(context, channelUrl.toUri()) ?: return@withContext null
         val filename = UUID.randomUUID().toString() + ".jpeg"
         val file = File(thumbnailDir, filename)
         while (!file.createNewFile()) {
@@ -453,9 +451,8 @@ class PlayerManagerImpl @Inject constructor(
             addListener(this@PlayerManagerImpl)
         }
 
-    private val codecs: Codecs by lazy { Codecs.load() }
     private val renderersFactory: RenderersFactory by lazy {
-        codecs.createRenderersFactory(context)
+        Codecs.createRenderersFactory(context)
     }
 
     private fun createTrackSelector(tunneling: Boolean): TrackSelector {
