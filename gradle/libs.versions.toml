@@ -33,7 +33,7 @@ chucker = "4.1.0"
 logback = "3.0.0"
 lottie-compose = "6.6.6"
 m3u-extension = "1.9"
-nextLib = "0.8.5"
+nextLib = "0.8.41"
 slf4j-api = "2.0.17"
 
 squareup-retrofit2 = "2.11.0"
