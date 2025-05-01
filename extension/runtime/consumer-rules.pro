@@ -1,1 +1,0 @@
--keep class com.m3u.extension.runtime.** { *; }

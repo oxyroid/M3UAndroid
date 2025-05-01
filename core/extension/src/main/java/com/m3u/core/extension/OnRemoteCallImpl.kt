@@ -1,13 +1,13 @@
-package com.m3u.extension.runtime
+package com.m3u.core.extension
 
 import com.google.auto.service.AutoService
 import com.m3u.extension.api.IRemoteCallback
 import com.m3u.extension.api.Method
 import com.m3u.extension.api.Module
 import com.m3u.extension.api.Samplings
-import com.m3u.extension.runtime.business.InfoModule
-import com.m3u.extension.runtime.business.RemoteModule
-import com.m3u.extension.runtime.business.SubscribeModule
+import com.m3u.core.extension.business.InfoModule
+import com.m3u.core.extension.business.RemoteModule
+import com.m3u.core.extension.business.SubscribeModule
 import com.squareup.wire.ProtoAdapter
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction

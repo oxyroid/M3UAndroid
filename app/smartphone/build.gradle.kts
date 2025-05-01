@@ -1,6 +1,3 @@
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-
 plugins {
     alias(libs.plugins.com.android.application)
     alias(libs.plugins.org.jetbrains.kotlin.android)
@@ -22,29 +19,6 @@ android {
         versionName = "1.15.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
-    flavorDimensions += setOf("channel", "codec")
-    productFlavors {
-        // Official
-        create("stableChannel") {
-            dimension = "channel"
-            isDefault = true
-        }
-        // Github Workflow
-        create("snapshotChannel") {
-            dimension = "channel"
-            versionNameSuffix =
-                "-snapshot[${LocalDateTime.now().format(DateTimeFormatter.ofPattern("MMddHHmm"))}]"
-            applicationIdSuffix = ".snapshot"
-        }
-        create("richCodec") {
-            dimension = "codec"
-            isDefault = true
-        }
-        create("liteCodec") {
-            dimension = "codec"
-            versionNameSuffix = "-lite"
-        }
     }
     buildTypes {
         release {
@@ -127,11 +101,11 @@ baselineProfile {
 dependencies {
     implementation(project(":core"))
     implementation(project(":core:foundation"))
+    implementation(project(":core:extension"))
     implementation(project(":data"))
     implementation(libs.m3u.extension.api)
     implementation(libs.m3u.extension.annotation)
     ksp(libs.m3u.extension.processor)
-    implementation(project(":extension:runtime"))
     // business
     implementation(project(":business:foryou"))
     implementation(project(":business:favorite"))

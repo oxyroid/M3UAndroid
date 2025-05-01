@@ -1,0 +1,1 @@
+-keep class com.m3u.core.extension.** { *; }

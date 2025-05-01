@@ -1,7 +1,7 @@
-package com.m3u.extension.runtime.business
+package com.m3u.core.extension.business
 
+import com.m3u.core.extension.Utils.asProtoResult
 import com.m3u.extension.api.model.Result
-import com.m3u.extension.runtime.Utils.asProtoResult
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

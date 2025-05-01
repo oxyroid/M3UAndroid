@@ -1,4 +1,4 @@
-package com.m3u.extension.runtime
+package com.m3u.core.extension
 
 import com.google.auto.service.AutoService
 import com.m3u.data.database.dao.ChannelDao

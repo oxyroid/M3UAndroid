@@ -1,4 +1,4 @@
-package com.m3u.extension.runtime
+package com.m3u.core.extension
 
 import android.app.NotificationChannel
 import android.app.NotificationManager

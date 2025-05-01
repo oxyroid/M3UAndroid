@@ -21,11 +21,11 @@ android {
 
 dependencies {
     implementation(project(":core"))
+    implementation(project(":core:extension"))
     implementation(project(":data"))
     implementation(libs.m3u.extension.api)
     implementation(libs.m3u.extension.annotation)
     ksp(libs.m3u.extension.processor)
-    implementation(project(":extension:runtime"))
 
     implementation(libs.androidx.core.ktx)
 

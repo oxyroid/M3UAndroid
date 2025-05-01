@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "com.m3u.extension.runtime"
+    namespace = "com.m3u.core.extension"
     kotlinOptions {
         jvmTarget = "17"
     }

@@ -28,14 +28,6 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    flavorDimensions += listOf("channel", "codec")
-    productFlavors {
-        create("stableChannel") { dimension = "channel" }
-        create("snapshotChannel") { dimension = "channel" }
-        create("richCodec") { dimension = "codec" }
-        create("liteCodec") { dimension = "codec" }
-    }
-
     testOptions.managedDevices.allDevices {
         create<ManagedVirtualDevice>("Pixel5Api31") {
             device = "Pixel 5"

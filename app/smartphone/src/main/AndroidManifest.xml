@@ -63,7 +63,7 @@
             android:theme="@style/Theme.M3U" />
 
         <service
-            android:name="com.m3u.extension.runtime.RemoteService"
+            android:name="com.m3u.core.extension.RemoteService"
             android:exported="true"
             android:foregroundServiceType="mediaPlayback"
             android:process=":remote"

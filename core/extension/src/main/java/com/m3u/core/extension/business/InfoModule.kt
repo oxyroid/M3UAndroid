@@ -1,4 +1,4 @@
-package com.m3u.extension.runtime.business
+package com.m3u.core.extension.business
 
 import com.m3u.extension.api.Method
 import com.m3u.extension.api.Module

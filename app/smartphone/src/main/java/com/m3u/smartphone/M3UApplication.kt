@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.m3u.core.architecture.logger.Logger
-import com.m3u.extension.runtime.Utils
+import com.m3u.core.extension.Utils
 import com.m3u.smartphone.ui.business.crash.CrashHandler
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject

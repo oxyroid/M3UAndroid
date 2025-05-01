@@ -1,4 +1,4 @@
-package com.m3u.extension.runtime
+package com.m3u.core.extension
 
 import com.m3u.extension.api.IRemoteCallback
 

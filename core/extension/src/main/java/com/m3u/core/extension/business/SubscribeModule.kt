@@ -1,9 +1,10 @@
-package com.m3u.extension.runtime.business
+package com.m3u.core.extension.business
 
 import com.m3u.data.database.dao.ChannelDao
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
+import com.m3u.core.extension.RemoteServiceDependencies
 import com.m3u.extension.api.Method
 import com.m3u.extension.api.Module
 import com.m3u.extension.api.business.SubscribeApi
@@ -13,7 +14,6 @@ import com.m3u.extension.api.model.ObtainPlaylistsResponse
 import com.m3u.extension.api.model.Result
 import com.m3u.extension.api.model.Playlist as ApiPlaylist
 import com.m3u.extension.api.model.Channel as ApiChannel
-import com.m3u.extension.runtime.RemoteServiceDependencies
 import kotlinx.coroutines.Dispatchers
 
 @Module("subscribe")
