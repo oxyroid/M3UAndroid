@@ -458,12 +458,13 @@ private fun PlaylistScreen(
             getProgrammeCurrently = getProgrammeCurrently,
             reloadThumbnail = reloadThumbnail,
             syncThumbnail = syncThumbnail,
-            modifier = Modifier.hazeSource(LocalHazeState.current)
+            modifier = Modifier
+                .hazeSource(LocalHazeState.current)
+                .background(MaterialTheme.colorScheme.surfaceContainerHighest)
         )
     }
     Column(
         Modifier
-            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
             .padding(contentPadding.minus(contentPadding.only(WindowInsetsSides.Bottom)))
             .then(modifier)
     ) {

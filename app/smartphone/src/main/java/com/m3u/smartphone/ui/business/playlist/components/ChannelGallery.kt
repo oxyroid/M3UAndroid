@@ -28,7 +28,6 @@ import com.m3u.business.playlist.PlaylistViewModel
 import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.preferenceOf
 import com.m3u.core.foundation.components.CircularProgressIndicator
-import com.m3u.smartphone.ui.material.components.VerticalDraggableScrollbar
 import com.m3u.smartphone.ui.material.ktx.plus
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import kotlinx.coroutines.delay
@@ -76,7 +75,7 @@ internal fun ChannelGallery(
             .fillMaxSize()
             .padding(
                 start = spacing.medium,
-                end = if (showScrollbar) 0.dp else spacing.medium
+                end = spacing.medium
             ),
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
@@ -99,7 +98,10 @@ internal fun ChannelGallery(
                     ) {
                         value = currentGetProgrammeCurrently(channel.id)
                     }
-                    val loadedUrl: Any? by produceState<Any?>(initialValue = channel.cover) {
+                    val loadedUrl: Any? by produceState<Any?>(
+                        initialValue = channel.cover,
+                        key1 = channel,
+                    ) {
                         val default = channel.cover
                         delay(1200.milliseconds)
                         val channelUrl = channel.url
@@ -128,17 +130,12 @@ internal fun ChannelGallery(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .aspectRatio(1f)
+                            .aspectRatio(4 / 3f)
                     ) {
                         CircularProgressIndicator()
                     }
                 }
             }
-        }
-        if (showScrollbar) {
-            VerticalDraggableScrollbar(
-                lazyStaggeredGridState = state
-            )
         }
     }
 }

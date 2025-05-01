@@ -16,7 +16,6 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import com.m3u.core.foundation.components.CircularProgressIndicator
 import com.m3u.data.database.model.Channel
-import com.m3u.smartphone.ui.material.components.VerticalDraggableScrollbar
 import com.m3u.smartphone.ui.material.ktx.plus
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 
@@ -51,11 +50,6 @@ internal fun FavoriteGallery(
                 .fillMaxHeight()
                 .weight(1f),
         ) {
-//                    item(span = StaggeredGridItemSpan.FullLine) {
-//                        RandomTips(
-//                            onClick = onClickRandomTips
-//                        )
-//                    }
             items(
                 count = channels.itemCount,
             ) {
@@ -74,6 +68,5 @@ internal fun FavoriteGallery(
                 }
             }
         }
-        VerticalDraggableScrollbar(lazyStaggeredGridState = lazyStaggeredGridState)
     }
 }

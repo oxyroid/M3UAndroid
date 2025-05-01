@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="BaselineProfile Smartphone" type="AndroidBaselineProfileRunConfigurationType" factoryName="Android Baseline Profile Configuration Factory">
     <module name="M3U.app.smartphone" />
-    <option name="generateAllVariants" value="true" />
+    <option name="generateAllVariants" value="false" />
     <option name="CLEAR_LOGCAT" value="false" />
     <option name="SHOW_LOGCAT_AUTOMATICALLY" value="false" />
     <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />

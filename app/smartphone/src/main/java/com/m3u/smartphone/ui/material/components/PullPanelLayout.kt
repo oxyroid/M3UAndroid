@@ -87,8 +87,10 @@ sealed class PullPanelLayoutState {
     abstract val fraction: Float
     abstract fun expand()
     abstract fun collapse()
-    abstract val isExpanded: Boolean
 }
+
+val PullPanelLayoutState.isExpanded: Boolean
+    inline get() = value == PullPanelLayoutValue.EXPANDED
 
 @Composable
 fun rememberPullPanelLayoutState(
@@ -144,7 +146,4 @@ private class PullPanelLayoutStateImpl(
             }
             field = newValue
         }
-
-    override val isExpanded: Boolean
-        get() = value == PullPanelLayoutValue.EXPANDED
 }

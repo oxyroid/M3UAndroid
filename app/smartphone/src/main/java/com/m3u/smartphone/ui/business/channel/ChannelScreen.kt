@@ -65,6 +65,7 @@ import com.m3u.smartphone.ui.common.helper.OnPipModeChanged
 import com.m3u.smartphone.ui.material.components.Player
 import com.m3u.smartphone.ui.material.components.PullPanelLayout
 import com.m3u.smartphone.ui.material.components.PullPanelLayoutDefaults
+import com.m3u.smartphone.ui.material.components.isExpanded
 import com.m3u.smartphone.ui.material.components.mask.MaskInterceptor
 import com.m3u.smartphone.ui.material.components.mask.MaskState
 import com.m3u.smartphone.ui.material.components.mask.rememberMaskState
