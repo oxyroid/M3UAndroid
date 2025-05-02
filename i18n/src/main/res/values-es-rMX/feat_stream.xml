@@ -13,6 +13,7 @@
     <string name="feat_channel_tooltip_download">descargar</string>
     <string name="feat_channel_tooltip_stop_download">detener descarga</string>
     <string name="feat_channel_tooltip_cast">transmitir en pantalla</string>
+    <string name="feat_channel_tooltip_open_panel">abrir panel</string>
     <string name="feat_channel_tooltip_enter_pip_mode">modo PIP</string>
     <string name="feat_channel_tooltip_screen_rotating">rotación de pantalla</string>
     <string name="feat_channel_tooltip_choose_format">Elegir formato</string>
@@ -21,4 +22,7 @@
     <string name="feat_channel_dialog_choose_tracks">Elegir pista</string>
 
     <string name="feat_channel_open_in_external_app">abrir en una app externa</string>
+
+    <string name="feat_channel_cw_position_title">Reproducido a las %s</string>
+    <string name="feat_channel_cw_position_button">Rebobinar</string>
 </resources>
