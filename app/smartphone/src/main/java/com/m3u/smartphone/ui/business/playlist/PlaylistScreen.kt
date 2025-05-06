@@ -27,6 +27,8 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material.icons.rounded.KeyboardDoubleArrowUp
@@ -61,6 +63,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.paging.PagingData
 import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.business.playlist.PlaylistViewModel
 import com.m3u.core.architecture.preferences.PreferencesKeys
@@ -100,6 +103,8 @@ import com.m3u.smartphone.ui.material.model.LocalHazeState
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import dev.chrisbanes.haze.hazeSource
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -127,7 +132,7 @@ internal fun PlaylistRoute(
     val playlistUrl by viewModel.playlistUrl.collectAsStateWithLifecycle()
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
 
-    val channels by viewModel.channels.collectAsStateWithLifecycle(
+    val channels: Map<String, Flow<PagingData<Channel>>> by viewModel.channels.collectAsStateWithLifecycle(
         minActiveState = Lifecycle.State.RESUMED
     )
 
@@ -217,7 +222,7 @@ internal fun PlaylistRoute(
         onQuery = { viewModel.query.value = it },
         rowCount = rowCount,
         zapping = zapping,
-        categoryWithChannels = channels,
+        channels = channels,
         pinnedCategories = pinnedCategories,
         onPinOrUnpinCategory = { viewModel.onPinOrUnpinCategory(it) },
         onHideCategory = { viewModel.onHideCategory(it) },
@@ -325,7 +330,7 @@ private fun PlaylistScreen(
     onQuery: (String) -> Unit,
     rowCount: Int,
     zapping: Channel?,
-    categoryWithChannels: List<PlaylistViewModel.CategoryWithChannels>,
+    channels: Map<String, Flow<PagingData<Channel>>>,
     pinnedCategories: List<String>,
     onPinOrUnpinCategory: (String) -> Unit,
     onHideCategory: (String) -> Unit,
@@ -400,7 +405,7 @@ private fun PlaylistScreen(
         }
     }
 
-    val categories = remember(categoryWithChannels) { categoryWithChannels.map { it.category } }
+    val categories = remember(channels) { channels.map { it.key } }
     var category by remember(categories) { mutableStateOf(categories.firstOrNull().orEmpty()) }
 
     val state = rememberLazyStaggeredGridState()
@@ -425,6 +430,8 @@ private fun PlaylistScreen(
     }
     BackHandler(isExpanded) { isExpanded = false }
 
+    var targetPageIndex: Event<Int> by remember { mutableStateOf(Event.Handled()) }
+
     val tabs = @Composable {
         PlaylistTabRow(
             selectedCategory = category,
@@ -432,7 +439,13 @@ private fun PlaylistScreen(
             isExpanded = isExpanded,
             bottomContentPadding = contentPadding only WindowInsetsSides.Bottom,
             onExpanded = { isExpanded = !isExpanded },
-            onCategoryChanged = { category = it },
+            onCategoryChanged = {
+                category = it
+                targetPageIndex = categories.indexOf(it)
+                    .takeIf { it != -1 }
+                    ?.let { eventOf(it) }
+                    ?: Event.Handled()
+            },
             pinnedCategories = pinnedCategories,
             onPinOrUnpinCategory = onPinOrUnpinCategory,
             onHideCategory = onHideCategory
@@ -440,28 +453,42 @@ private fun PlaylistScreen(
     }
 
     val gallery = @Composable {
-        val channel = remember(categoryWithChannels, category) {
-            categoryWithChannels.find { it.category == category }
+        val pagerState = rememberPagerState { channels.size }
+        val entries = channels.entries.toList()
+        LaunchedEffect(entries) {
+            snapshotFlow { pagerState.settledPage }
+                .collectLatest { index ->
+                    category = entries.getOrNull(index)?.key.orEmpty()
+                }
         }
-        ChannelGallery(
-            state = state,
-            rowCount = actualRowCount,
-            categoryWithChannels = channel,
-            zapping = zapping,
-            recently = sort == Sort.RECENTLY,
-            isVodOrSeriesPlaylist = isVodPlaylist || isSeriesPlaylist,
-            onClick = onPlayChannel,
-            contentPadding = contentPadding.minus(contentPadding.only(WindowInsetsSides.Top)),
-            onLongClick = {
-                mediaSheetValue = MediaSheetValue.PlaylistScreen(it)
-            },
-            getProgrammeCurrently = getProgrammeCurrently,
-            reloadThumbnail = reloadThumbnail,
-            syncThumbnail = syncThumbnail,
+        EventHandler(targetPageIndex) {
+            pagerState.scrollToPage(it)
+        }
+        HorizontalPager(
+            state = pagerState,
             modifier = Modifier
                 .hazeSource(LocalHazeState.current)
                 .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-        )
+        ) { index ->
+            val (_, channels) = entries[index]
+
+            ChannelGallery(
+                state = state,
+                rowCount = actualRowCount,
+                channels = channels,
+                zapping = zapping,
+                recently = sort == Sort.RECENTLY,
+                isVodOrSeriesPlaylist = isVodPlaylist || isSeriesPlaylist,
+                onClick = onPlayChannel,
+                contentPadding = contentPadding.minus(contentPadding.only(WindowInsetsSides.Top)),
+                onLongClick = {
+                    mediaSheetValue = MediaSheetValue.PlaylistScreen(it)
+                },
+                getProgrammeCurrently = getProgrammeCurrently,
+                reloadThumbnail = reloadThumbnail,
+                syncThumbnail = syncThumbnail,
+            )
+        }
     }
     Column(
         Modifier

@@ -101,6 +101,7 @@ internal fun PlayerPanel(
     programmeReminderIds: List<Int>,
     onRemindProgramme: (Programme) -> Unit,
     onCancelRemindProgramme: (Programme) -> Unit,
+    onRequestClosed: () -> Unit,
 ) {
     val spacing = LocalSpacing.current
 
@@ -134,6 +135,7 @@ internal fun PlayerPanel(
             programmes = programmes,
             programmeRange = programmeRange,
             programmeReminderIds = programmeReminderIds,
+            onRequestClosed = onRequestClosed,
             onProgrammePressed = {
                 programme = it
                 animProgramme = it
@@ -285,7 +287,8 @@ fun PlayerPanelImpl(
     programmeRange: ProgrammeRange,
     programmeReminderIds: List<Int>,
     modifier: Modifier = Modifier,
-    onProgrammePressed: (Programme) -> Unit
+    onProgrammePressed: (Programme) -> Unit,
+    onRequestClosed: () -> Unit,
 ) {
     val spacing = LocalSpacing.current
     Column(
@@ -327,7 +330,8 @@ fun PlayerPanelImpl(
             }
             Icon(
                 imageVector = Icons.Rounded.Close,
-                contentDescription = null
+                contentDescription = null,
+                modifier = Modifier.clickable { onRequestClosed() }
             )
         }
 

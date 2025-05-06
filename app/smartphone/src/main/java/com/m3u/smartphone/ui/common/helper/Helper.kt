@@ -82,10 +82,14 @@ class Helper(private val activity: ComponentActivity) {
             )
         }
     var brightness: Float
-        get() = Settings.System.getInt(
-            activity.contentResolver,
-            Settings.System.SCREEN_BRIGHTNESS
-        ) / 255f
+        get() = try {
+            Settings.System.getInt(
+                activity.contentResolver,
+                Settings.System.SCREEN_BRIGHTNESS
+            ) / 255f
+        } catch (_: Settings.SettingNotFoundException) {
+            -1f
+        }
         set(value) {
             activity.window.attributes = activity.window.attributes.apply {
                 screenBrightness = value

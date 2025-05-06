@@ -243,12 +243,6 @@ class PlaylistViewModel @Inject constructor(
         val categories: List<String>,
     )
 
-    @Immutable
-    data class CategoryWithChannels(
-        val category: String,
-        val channels: Flow<PagingData<Channel>>,
-    )
-
     @OptIn(FlowPreview::class)
     private val categories: StateFlow<List<String>> =
         flatmapCombined(playlistUrl, query, sort) { playlistUrl, query, sort ->
@@ -267,7 +261,7 @@ class PlaylistViewModel @Inject constructor(
                 started = SharingStarted.Lazily
             )
 
-    val channels: StateFlow<List<CategoryWithChannels>> = combine(
+    val channels: StateFlow<Map<String, Flow<PagingData<Channel>>>> = combine(
         playlistUrl,
         categories,
         query, sort
@@ -281,42 +275,36 @@ class PlaylistViewModel @Inject constructor(
     }
         .mapLatest { (playlistUrl, query, sort, categories) ->
             if (sort == Sort.MIXED) {
-                listOf(
-                    CategoryWithChannels(
-                        category = "",
-                        channels = Pager(PagingConfig(15)) {
-                            channelRepository.pagingAllByPlaylistUrl(
-                                playlistUrl,
-                                "",
-                                query,
-                                sort
-                            )
-                        }
-                            .flow
-                            .cachedIn(viewModelScope)
-                    )
+                mapOf(
+                    "" to Pager(PagingConfig(15)) {
+                        channelRepository.pagingAllByPlaylistUrl(
+                            playlistUrl,
+                            "",
+                            query,
+                            sort
+                        )
+                    }
+                        .flow
+                        .cachedIn(viewModelScope)
                 )
             } else {
-                categories.map { category ->
-                    CategoryWithChannels(
-                        category = category,
-                        channels = Pager(PagingConfig(15)) {
-                            channelRepository.pagingAllByPlaylistUrl(
-                                playlistUrl,
-                                category,
-                                query,
-                                sort
-                            )
-                        }
-                            .flow
-                            .cachedIn(viewModelScope)
-                    )
+                categories.associate { category ->
+                    category to Pager(PagingConfig(15)) {
+                        channelRepository.pagingAllByPlaylistUrl(
+                            playlistUrl,
+                            category,
+                            query,
+                            sort
+                        )
+                    }
+                        .flow
+                        .cachedIn(viewModelScope)
                 }
             }
         }
         .stateIn(
             scope = viewModelScope,
-            initialValue = emptyList(),
+            initialValue = emptyMap(),
             started = SharingStarted.Lazily
         )
 

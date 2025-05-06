@@ -72,20 +72,28 @@ internal object ChannelMaskUtils {
         @Composable get() {
             val context = LocalContext.current
             val contentResolver = context.contentResolver
-            val initialValue = Settings.System.getInt(
-                contentResolver,
-                Settings.System.ACCELEROMETER_ROTATION
-            ) == 1
+            val initialValue = try {
+                Settings.System.getInt(
+                    contentResolver,
+                    Settings.System.ACCELEROMETER_ROTATION
+                ) == 1
+            } catch (_: Settings.SettingNotFoundException) {
+                false
+            }
             return produceState(initialValue) {
                 val uri = Settings.System.getUriFor(Settings.System.ACCELEROMETER_ROTATION)
                 val handler = Handler(Looper.getMainLooper())
                 val observer = object : ContentObserver(handler) {
                     override fun onChange(selfChange: Boolean) {
                         super.onChange(selfChange)
-                        value = Settings.System.getInt(
-                            contentResolver,
-                            Settings.System.ACCELEROMETER_ROTATION
-                        ) == 1
+                        value = try {
+                            Settings.System.getInt(
+                                contentResolver,
+                                Settings.System.ACCELEROMETER_ROTATION
+                            ) == 1
+                        } catch (_: Settings.SettingNotFoundException) {
+                            false
+                        }
                     }
                 }
                 contentResolver.registerContentObserver(

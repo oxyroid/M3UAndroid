@@ -134,10 +134,10 @@ internal fun PlaylistTabRow(
                 }
             }
         }
-        LaunchedEffect(Unit) {
+        LaunchedEffect(selectedCategory) {
             val index = categories.indexOf(selectedCategory)
             if (index != -1) {
-                state.scrollToItem(index)
+                state.animateScrollToItem(index)
             }
         }
         val categoriesContent: LazyListScope.() -> Unit = {

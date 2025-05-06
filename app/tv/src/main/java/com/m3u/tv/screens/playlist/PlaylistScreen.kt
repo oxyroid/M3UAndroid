@@ -11,16 +11,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.PagingData
 import com.m3u.business.playlist.PlaylistViewModel
 import com.m3u.data.database.model.Channel
 import com.m3u.tv.screens.dashboard.rememberChildPadding
+import kotlinx.coroutines.flow.Flow
 
 @Composable
 fun PlaylistScreen(
     onChannelClick: (channel: Channel) -> Unit,
     viewModel: PlaylistViewModel = hiltViewModel(),
 ) {
-    val channels by viewModel.channels.collectAsStateWithLifecycle()
+    val channels: Map<String, Flow<PagingData<Channel>>> by viewModel.channels.collectAsStateWithLifecycle()
     val pinnedCategories by viewModel.pinnedCategories.collectAsStateWithLifecycle()
     Catalog(
         channels = channels,
@@ -36,7 +38,7 @@ fun PlaylistScreen(
 
 @Composable
 private fun Catalog(
-    channels: List<PlaylistViewModel.CategoryWithChannels>,
+    channels: Map<String, Flow<PagingData<Channel>>>,
     pinnedCategories: List<String>,
     onPinOrUnpinCategory: (String) -> Unit,
     onHideCategory: (String) -> Unit,

@@ -21,23 +21,24 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Programme
-import com.m3u.business.playlist.PlaylistViewModel
 import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.preferenceOf
 import com.m3u.core.foundation.components.CircularProgressIndicator
 import com.m3u.smartphone.ui.material.ktx.plus
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 internal fun ChannelGallery(
     state: LazyStaggeredGridState,
     rowCount: Int,
-    categoryWithChannels: PlaylistViewModel.CategoryWithChannels?,
+    channels: Flow<PagingData<Channel>>,
     zapping: Channel?,
     recently: Boolean,
     isVodOrSeriesPlaylist: Boolean,
@@ -47,8 +48,7 @@ internal fun ChannelGallery(
     reloadThumbnail: suspend (channelUrl: String) -> Uri?,
     syncThumbnail: suspend (channelUrl: String) -> Uri?,
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(0.dp),
-    showScrollbar: Boolean = true
+    contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     val spacing = LocalSpacing.current
 
@@ -64,7 +64,7 @@ internal fun ChannelGallery(
         }
     }
 
-    val channels = categoryWithChannels?.channels?.collectAsLazyPagingItems()
+    val channels = channels.collectAsLazyPagingItems()
 
     val currentGetProgrammeCurrently by rememberUpdatedState(getProgrammeCurrently)
     val currentReloadThumbnail by rememberUpdatedState(reloadThumbnail)
@@ -89,8 +89,8 @@ internal fun ChannelGallery(
                 .fillMaxSize()
                 .weight(1f)
         ) {
-            items(channels?.itemCount ?: 0) { index ->
-                val channel = channels?.get(index)
+            items(channels.itemCount) { index ->
+                val channel = channels[index]
                 if (channel != null) {
                     val programme: Programme? by produceState<Programme?>(
                         initialValue = null,

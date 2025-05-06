@@ -3,6 +3,8 @@ package com.m3u.smartphone.ui.material.components.mask
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.runtime.Composable
@@ -19,7 +21,8 @@ fun Mask(
     state: MaskState,
     color: Color,
     modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit
+    control: @Composable BoxScope.() -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     val focusRequester = remember { FocusRequester() }
     AnimatedVisibility(
@@ -30,12 +33,16 @@ fun Mask(
         LaunchedEffect(Unit) {
             focusRequester.requestFocus()
         }
-        Column(
+        Box(
             modifier = Modifier
                 .focusRequester(focusRequester)
                 .drawBehind { drawRect(color) }
-                .then(modifier),
-            content = content
-        )
+                .then(modifier)
+        ) {
+            Column(
+                content = content
+            )
+            control()
+        }
     }
 }

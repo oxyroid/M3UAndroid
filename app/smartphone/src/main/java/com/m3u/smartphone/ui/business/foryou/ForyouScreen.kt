@@ -167,7 +167,7 @@ fun ForyouRoute(
 @Composable
 private fun ForyouScreen(
     rowCount: Int,
-    playlists: Resource<List<PlaylistWithCount>>,
+    playlists: Map<Playlist, Int>,
     subscribingPlaylistUrls: List<String>,
     refreshingEpgUrls: List<String>,
     specs: List<Recommend.Spec>,
@@ -178,7 +178,6 @@ private fun ForyouScreen(
     onUnsubscribePlaylist: (playlistUrl: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val spacing = LocalSpacing.current
     val configuration = LocalConfiguration.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -209,56 +208,36 @@ private fun ForyouScreen(
 
     Box(modifier) {
         HeadlineBackground()
-        when (playlists) {
-            Resource.Loading -> {
-                LinearProgressIndicator(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(contentPadding)
-                )
-            }
-
-            is Resource.Success -> {
-                val header = @Composable {
-                    RecommendGallery(
-                        specs = specs,
-                        navigateToPlaylist = navigateToPlaylist,
-                        onPlayChannel = onPlayChannel,
-                        onSpecChanged = { spec -> headlineSpec = spec },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-                PlaylistGallery(
-                    rowCount = actualRowCount,
-                    playlists = playlists.data,
-                    subscribingPlaylistUrls = subscribingPlaylistUrls,
-                    refreshingEpgUrls = refreshingEpgUrls,
-                    onClick = navigateToPlaylist,
-                    onLongClick = { mediaSheetValue = MediaSheetValue.ForyouScreen(it) },
-                    header = composableOf(specs.isNotEmpty(), header),
-                    contentPadding = contentPadding,
-                    modifier = Modifier.fillMaxSize()
-                )
-                MediaSheet(
-                    value = mediaSheetValue,
-                    onUnsubscribePlaylist = {
-                        onUnsubscribePlaylist(it.url)
-                        mediaSheetValue = MediaSheetValue.ForyouScreen()
-                    },
-                    onPlaylistConfiguration = navigateToPlaylistConfiguration,
-                    onDismissRequest = {
-                        mediaSheetValue = MediaSheetValue.ForyouScreen()
-                    }
-                )
-            }
-
-            is Resource.Failure -> {
-                Text(
-                    text = playlists.message.orEmpty(),
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
+        val header = @Composable {
+            RecommendGallery(
+                specs = specs,
+                navigateToPlaylist = navigateToPlaylist,
+                onPlayChannel = onPlayChannel,
+                onSpecChanged = { spec -> headlineSpec = spec },
+                modifier = Modifier.fillMaxWidth()
+            )
         }
+        PlaylistGallery(
+            rowCount = actualRowCount,
+            playlists = playlists,
+            subscribingPlaylistUrls = subscribingPlaylistUrls,
+            refreshingEpgUrls = refreshingEpgUrls,
+            onClick = navigateToPlaylist,
+            onLongClick = { mediaSheetValue = MediaSheetValue.ForyouScreen(it) },
+            header = composableOf(specs.isNotEmpty(), header),
+            contentPadding = contentPadding,
+            modifier = Modifier.fillMaxSize()
+        )
+        MediaSheet(
+            value = mediaSheetValue,
+            onUnsubscribePlaylist = {
+                onUnsubscribePlaylist(it.url)
+                mediaSheetValue = MediaSheetValue.ForyouScreen()
+            },
+            onPlaylistConfiguration = navigateToPlaylistConfiguration,
+            onDismissRequest = {
+                mediaSheetValue = MediaSheetValue.ForyouScreen()
+            }
+        )
     }
 }

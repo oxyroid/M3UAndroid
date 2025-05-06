@@ -28,6 +28,7 @@ import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithChannels
 import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.database.model.fromLocal
+import com.m3u.data.database.model.toMap
 import com.m3u.data.parser.m3u.M3UData
 import com.m3u.data.parser.m3u.M3UParser
 import com.m3u.data.parser.m3u.toChannel
@@ -577,9 +578,10 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             playlistDao.updateUserAgent(url, userAgent)
         }
 
-    override fun observeAllCounts(): Flow<List<PlaylistWithCount>> =
+    override fun observeAllCounts(): Flow<Map<Playlist, Int>> =
         playlistDao.observeAllCounts()
-            .catch { emit(emptyList()) }
+            .map { it.toMap() }
+            .catch { emit(emptyMap()) }
 
     override suspend fun readEpisodesOrThrow(series: Channel): List<XtreamChannelInfo.Episode> {
         val playlist = checkNotNull(get(series.playlistUrl)) { "playlist is not exist" }

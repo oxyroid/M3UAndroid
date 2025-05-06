@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.VisibilityOff
@@ -50,6 +49,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.tv.material3.Border
 import androidx.tv.material3.CardDefaults
@@ -62,16 +62,16 @@ import androidx.tv.material3.Text
 import coil.compose.AsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
-import com.m3u.business.playlist.PlaylistViewModel
 import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 import com.m3u.core.foundation.ui.thenIf
 import com.m3u.data.database.model.Channel
 import com.m3u.tv.theme.JetStreamBorderWidth
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlin.time.Duration.Companion.milliseconds
 
 fun LazyListScope.channelGallery(
-    channels: List<PlaylistViewModel.CategoryWithChannels>,
+    channels: Map<String, Flow<PagingData<Channel>>>,
     pinnedCategories: List<String>,
     onPinOrUnpinCategory: (String) -> Unit,
     onHideCategory: (String) -> Unit,
@@ -81,7 +81,9 @@ fun LazyListScope.channelGallery(
     reloadThumbnail: suspend (channelUrl: String) -> Uri?,
     syncThumbnail: suspend (channelUrl: String) -> Uri?,
 ) {
-    itemsIndexed(channels, key = { _, (category, _) -> category }) { i, (category, channels) ->
+    val entries = channels.entries.toList()
+    items(entries.size) { index ->
+        val (category, channels) = entries[index]
         var hasFocus by remember { mutableStateOf(false) }
         Column {
             val pagingChannels = channels.collectAsLazyPagingItems()

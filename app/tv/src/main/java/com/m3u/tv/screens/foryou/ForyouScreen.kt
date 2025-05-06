@@ -12,14 +12,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -36,10 +34,8 @@ import androidx.tv.material3.Text
 import com.m3u.business.foryou.ForyouViewModel
 import com.m3u.business.foryou.Recommend
 import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
-import com.m3u.core.foundation.components.CircularProgressIndicator
 import com.m3u.core.foundation.ui.SugarColors
-import com.m3u.core.wrapper.Resource
-import com.m3u.data.database.model.PlaylistWithCount
+import com.m3u.data.database.model.Playlist
 import com.m3u.tv.screens.dashboard.rememberChildPadding
 import com.m3u.tv.theme.LexendExa
 
@@ -51,40 +47,24 @@ fun ForyouScreen(
     isTopBarVisible: Boolean,
     viewModel: ForyouViewModel = hiltViewModel(),
 ) {
-    val playlists: Resource<List<PlaylistWithCount>> by viewModel.playlists.collectAsStateWithLifecycle()
+    val playlists: Map<Playlist, Int> by viewModel.playlists.collectAsStateWithLifecycle()
     val specs: List<Recommend.Spec> by viewModel.specs.collectAsStateWithLifecycle()
     Box(Modifier.fillMaxSize()) {
-        when (val playlists = playlists) {
-            Resource.Loading -> {
-                CircularProgressIndicator(
-                    Modifier.align(Alignment.Center)
-                )
-            }
-
-            is Resource.Success -> {
-                Catalog(
-                    playlists = playlists.data,
-                    specs = specs,
-                    onScroll = onScroll,
-                    navigateToPlaylist = navigateToPlaylist,
-                    navigateToChannel = navigateToChannel,
-                    isTopBarVisible = isTopBarVisible,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-
-            is Resource.Failure -> {
-                Text(
-                    text = playlists.message.orEmpty()
-                )
-            }
-        }
+        Catalog(
+            playlists = playlists,
+            specs = specs,
+            onScroll = onScroll,
+            navigateToPlaylist = navigateToPlaylist,
+            navigateToChannel = navigateToChannel,
+            isTopBarVisible = isTopBarVisible,
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }
 
 @Composable
 private fun Catalog(
-    playlists: List<PlaylistWithCount>,
+    playlists: Map<Playlist, Int>,
     specs: List<Recommend.Spec>,
     onScroll: (isTopBarVisible: Boolean) -> Unit,
     navigateToPlaylist: (playlistUrl: String) -> Unit,
@@ -152,7 +132,9 @@ private fun Catalog(
                     .padding(top = 16.dp),
                 contentPadding = PaddingValues(start = startPadding, end = endPadding)
             ) {
-                items(playlists) { (playlist, _) ->
+                val entries = playlists.entries.toList()
+                items(entries.size) {
+                    val (playlist, _) = entries[it]
                     val (color, contentColor) = remember {
                         SugarColors.entries.random()
                     }

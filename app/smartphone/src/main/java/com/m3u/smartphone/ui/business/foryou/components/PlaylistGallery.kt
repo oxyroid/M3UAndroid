@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,7 +24,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
-import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.database.model.epgUrlsOrXtreamXmlUrl
 import com.m3u.data.database.model.fromLocal
 import com.m3u.data.database.model.type
@@ -45,7 +43,7 @@ import kotlin.math.absoluteValue
 @Composable
 internal fun PlaylistGallery(
     rowCount: Int,
-    playlists: List<PlaylistWithCount>,
+    playlists: Map<Playlist, Int>,
     subscribingPlaylistUrls: List<String>,
     refreshingEpgUrls: List<String>,
     onClick: (Playlist) -> Unit,
@@ -94,12 +92,9 @@ internal fun PlaylistGallery(
                 header()
             }
         }
-        itemsIndexed(
-            items = playlists,
-            key = { _, playlistCount -> playlistCount.playlist.url }
-        ) { index, playlistCount ->
-            val playlist = playlistCount.playlist
-            val count = playlistCount.count
+        val entries = playlists.entries.toList()
+        items(entries.size) { index ->
+            val (playlist, count) = entries[index]
             val subscribing = playlist.url in subscribingPlaylistUrls
             val refreshing = playlist
                 .epgUrlsOrXtreamXmlUrl()

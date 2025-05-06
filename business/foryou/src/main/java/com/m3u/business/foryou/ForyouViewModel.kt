@@ -12,12 +12,10 @@ import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.Settings
 import com.m3u.core.architecture.preferences.flowOf
 import com.m3u.core.wrapper.Resource
-import com.m3u.core.wrapper.asResource
 import com.m3u.core.wrapper.mapResource
 import com.m3u.core.wrapper.resource
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
-import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.parser.xtream.XtreamChannelInfo
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
@@ -54,15 +52,13 @@ class ForyouViewModel @Inject constructor(
 ) : ViewModel() {
     private val logger = delegate.install(Profiles.VIEWMODEL_FORYOU)
 
-    val playlists: StateFlow<Resource<List<PlaylistWithCount>>> =
-        playlistRepository
-            .observeAllCounts()
-            .asResource()
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.Lazily,
-                initialValue = Resource.Loading
-            )
+    val playlists: StateFlow<Map<Playlist, Int>> = playlistRepository
+        .observeAllCounts()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Lazily,
+            initialValue = emptyMap()
+        )
 
     val subscribingPlaylistUrls: StateFlow<List<String>> =
         workManager.getWorkInfosFlow(

@@ -56,7 +56,7 @@ import com.m3u.data.database.model.Playlist
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.business.channel.components.DlnaDevicesBottomSheet
 import com.m3u.smartphone.ui.business.channel.components.FormatsBottomSheet
-import com.m3u.smartphone.ui.business.channel.components.MaskDimension
+import com.m3u.smartphone.ui.business.channel.components.Paddings
 import com.m3u.smartphone.ui.business.channel.components.MaskGestureValuePanel
 import com.m3u.smartphone.ui.business.channel.components.PlayerPanel
 import com.m3u.smartphone.ui.business.channel.components.VerticalGestureArea
@@ -120,10 +120,17 @@ fun ChannelRoute(
     val programmeReminderIds by viewModel.programmeReminderIds.collectAsStateWithLifecycle()
 
     var brightness by remember { mutableFloatStateOf(helper.brightness) }
+    val isSupportBrightnessGesture by remember { derivedStateOf { brightness != -1f } }
     var speed by remember { mutableFloatStateOf(1f) }
     var isPipMode by remember { mutableStateOf(false) }
     var isAutoZappingMode by remember { mutableStateOf(true) }
     var choosing by remember { mutableStateOf(false) }
+
+    val brightnessGesture by preferenceOf(PreferencesKeys.BRIGHTNESS_GESTURE)
+    val volumeGesture by preferenceOf(PreferencesKeys.VOLUME_GESTURE)
+
+    val brightnessGestureEnabled by remember { derivedStateOf { isSupportBrightnessGesture && brightnessGesture } }
+    val volumeGestureEnabled by remember { derivedStateOf { volumeGesture } }
 
     val useVertical = PullPanelLayoutDefaults.UseVertical
 
@@ -173,10 +180,12 @@ fun ChannelRoute(
     }
 
     LaunchedEffect(Unit) {
-        snapshotFlow { brightness }
-            .drop(1)
-            .onEach { helper.brightness = it }
-            .launchIn(this)
+        if (isSupportBrightnessGesture) {
+            snapshotFlow { brightness }
+                .drop(1)
+                .onEach { helper.brightness = it }
+                .launchIn(this)
+        }
 
         snapshotFlow { isBarVisible }
             .onEach { isBarVisible ->
@@ -195,10 +204,12 @@ fun ChannelRoute(
             .launchIn(this)
     }
 
-    DisposableEffect(Unit) {
-        val prev = helper.brightness
-        onDispose {
-            helper.brightness = prev
+    if (brightnessGestureEnabled) {
+        DisposableEffect(Unit) {
+            val prev = helper.brightness
+            onDispose {
+                helper.brightness = prev
+            }
         }
     }
 
@@ -207,12 +218,14 @@ fun ChannelRoute(
         maskState.intercept(interceptor)
     }
 
-    var dimension: MaskDimension by remember { mutableStateOf(MaskDimension()) }
-    val onDimensionChanged = { size: MaskDimension -> dimension = size }
-    val topPadding by animateDpAsState(dimension.top.takeOrElse { 0.dp }.takeIf { isPanelExpanded }
-        ?: 0.dp)
-    val bottomPadding by animateDpAsState(dimension.bottom.takeOrElse { 0.dp }
-        .takeIf { isPanelExpanded } ?: 0.dp)
+    var currentPaddings: Paddings by remember { mutableStateOf(Paddings()) }
+    val onPaddingsChanged = { paddings: Paddings -> currentPaddings = paddings }
+    val topPadding by animateDpAsState(
+        currentPaddings.top.takeOrElse { 0.dp }.takeIf { isPanelExpanded } ?: 0.dp
+    )
+    val bottomPadding by animateDpAsState(
+        currentPaddings.bottom.takeOrElse { 0.dp }.takeIf { isPanelExpanded } ?: 0.dp
+    )
 
     val aspectRatio = with(density) {
         val source = playerState.videoSize
@@ -259,6 +272,7 @@ fun ChannelRoute(
                     }
                 },
                 onCancelRemindProgramme = viewModel::onCancelRemindProgramme,
+                onRequestClosed = { pullPanelLayoutState.collapse() }
             )
         },
         content = {
@@ -287,10 +301,12 @@ fun ChannelRoute(
                 channel = channel,
                 hasTrack = tracks.isNotEmpty(),
                 isPanelExpanded = isPanelExpanded,
-                volume = volume,
-                onVolume = viewModel::onVolume,
                 brightness = brightness,
                 onBrightness = { brightness = it },
+                volume = volume,
+                onVolume = viewModel::onVolume,
+                brightnessGestureEnabled = brightnessGestureEnabled,
+                volumeGestureEnabled = volumeGestureEnabled,
                 speed = speed,
                 onSpeedUpdated = {
                     viewModel.onSpeedUpdated(it)
@@ -305,7 +321,7 @@ fun ChannelRoute(
                     maskState.unlockAll()
                     pullPanelLayoutState.collapse()
                 },
-                onDimensionChanged = onDimensionChanged,
+                onPaddingsChanged = onPaddingsChanged,
                 onAlignment = onAlignment
             )
         },
@@ -354,8 +370,10 @@ private fun ChannelPlayer(
     isSeriesPlaylist: Boolean,
     hasTrack: Boolean,
     isPanelExpanded: Boolean,
-    volume: Float,
     brightness: Float,
+    volume: Float,
+    brightnessGestureEnabled: Boolean,
+    volumeGestureEnabled: Boolean,
     speed: Float,
     cwPosition: Long,
     onResetPlayback: () -> Unit,
@@ -369,7 +387,7 @@ private fun ChannelPlayer(
     onNextChannelClick: () -> Unit,
     onEnterPipMode: () -> Unit,
     onSpeedUpdated: (Float) -> Unit,
-    onDimensionChanged: (MaskDimension) -> Unit,
+    onPaddingsChanged: (Paddings) -> Unit,
     onAlignment: (size: IntSize, space: IntSize) -> IntOffset,
     modifier: Modifier = Modifier,
 ) {
@@ -386,8 +404,6 @@ private fun ChannelPlayer(
     val currentSpeed by rememberUpdatedState(speed)
 
     val clipMode by preferenceOf(PreferencesKeys.CLIP_MODE)
-    val brightnessGesture by preferenceOf(PreferencesKeys.BRIGHTNESS_GESTURE)
-    val volumeGesture by preferenceOf(PreferencesKeys.VOLUME_GESTURE)
 
     val useVertical = with(windowInfo.containerSize) { width < height }
 
@@ -401,8 +417,6 @@ private fun ChannelPlayer(
             player = playerState.player,
             clipMode = clipMode
         )
-        var dimension: MaskDimension by remember { mutableStateOf(MaskDimension()) }
-        val topPadding = with(density) { dimension.top.takeOrElse { 0.dp }.toPx() }
         Player(
             state = state,
             modifier = Modifier
@@ -425,7 +439,7 @@ private fun ChannelPlayer(
                 .fillMaxHeight(0.7f)
                 .fillMaxWidth(0.18f)
                 .align(Alignment.CenterStart),
-            enabled = brightnessGesture
+            enabled = brightnessGestureEnabled
         )
 
         VerticalGestureArea(
@@ -442,7 +456,7 @@ private fun ChannelPlayer(
                 .align(Alignment.CenterEnd)
                 .fillMaxHeight(0.7f)
                 .fillMaxWidth(0.18f),
-            enabled = volumeGesture
+            enabled = volumeGestureEnabled
         )
 
         ChannelMask(
@@ -472,10 +486,7 @@ private fun ChannelPlayer(
             onSpeedStart = { gesture = MaskGesture.SPEED },
             onSpeedEnd = { gesture = null },
             gesture = gesture,
-            onDimensionChanged = {
-                dimension = it
-                onDimensionChanged(it)
-            }
+            onPaddingsChanged = onPaddingsChanged
         )
 
         if (gesture != null) {

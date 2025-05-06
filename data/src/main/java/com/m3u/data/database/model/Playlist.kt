@@ -165,13 +165,16 @@ data class PlaylistWithChannels(
     val channels: List<Channel>
 )
 
-@Immutable
 data class PlaylistWithCount(
     @Embedded
     val playlist: Playlist,
     @ColumnInfo("count")
     val count: Int
 )
+
+fun Iterable<PlaylistWithCount>.toMap(): Map<Playlist, Int> = associate {
+    it.playlist to it.count
+}
 
 private object DataSourceSerializer : KSerializer<DataSource> {
     override fun deserialize(decoder: Decoder): DataSource {
