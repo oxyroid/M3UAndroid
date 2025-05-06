@@ -10,6 +10,7 @@
     <string name="feat_foryou_recommend_unseen_more_than_days">más de %d días</string>
     <string name="feat_foryou_recommend_unseen_days">%d días</string>
     <string name="feat_foryou_recommend_unseen_hours">%d horas</string>
+    <string name="feat_foryou_recommend_cw_label">sigue viendo</string>
     <string name="feat_foryou_new_release">nueva versión</string>
     <string name="feat_foryou_connect_title">ingresar el código de la televisión</string>
     <string name="feat_foryou_connect_subtitle">Asegura de estar en la misma red Wi-Fi</string>
