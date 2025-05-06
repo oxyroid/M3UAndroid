@@ -128,7 +128,19 @@ fun FeaturedSpecsCarousel(
                 }
                 is Recommend.DiscoverSpec -> TODO()
                 is Recommend.NewRelease -> TODO()
-                is Recommend.CwSpec -> TODO()
+                is Recommend.CwSpec -> {
+                    // background
+                    CarouselItemBackground(
+                        channel = spec.channel,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    // foreground
+                    CarouselItemForeground(
+                        channel = spec.channel,
+                        isCarouselFocused = isCarouselFocused,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
         }
     )

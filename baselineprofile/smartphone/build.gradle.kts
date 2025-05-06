@@ -49,12 +49,9 @@ baselineProfile {
 
 androidComponents {
     onVariants { v ->
-        val isSnapshot = "snapshot" in v.name
-
         v.instrumentationRunnerArguments.put(
             "targetAppId",
-            if (isSnapshot) "com.m3u.smartphone.snapshot"
-            else "com.m3u.smartphone"
+            "com.m3u.smartphone"
         )
     }
 }

@@ -8,11 +8,8 @@ interface Publisher {
     val versionName: String
     val versionCode: Int
     val debug: Boolean
-    val snapshot: Boolean
-    val lite: Boolean
     val model: String
     val abi: Abi
-    val tv: Boolean
 }
 
 @JvmInline

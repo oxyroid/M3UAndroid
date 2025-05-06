@@ -1,4 +1,5 @@
 @file:Suppress("unused")
+
 package com.m3u.data.api
 
 import android.content.Context
@@ -20,7 +21,6 @@ import okhttp3.Protocol
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 import retrofit2.Retrofit
-import retrofit2.create
 import javax.inject.Qualifier
 import javax.inject.Singleton
 
@@ -61,18 +61,7 @@ internal object ApiModule {
             .addInterceptor { chain ->
                 val request = chain.request()
                 try {
-                    chain.proceed(request).apply {
-                        val body = body
-                        if (body != null) {
-                            val contentType = body.contentType()
-                            val isWebPage = contentType != null &&
-                                    contentType.type == "text" &&
-                                    contentType.subtype == "html"
-                            if (isWebPage) {
-                                WebPageManager.push(body)
-                            }
-                        }
-                    }
+                    chain.proceed(request)
                 } catch (e: Exception) {
                     logger.log(e)
                     Response.Builder()
@@ -103,12 +92,4 @@ internal object ApiModule {
             .addConverterFactory(json.asConverterFactory(mediaType))
             .client(okHttpClient)
     }
-
-    @Provides
-    fun provideGithubApi(
-        builder: Retrofit.Builder
-    ): GithubApi = builder
-        .baseUrl(BaseUrls.GITHUB_BASE_URL)
-        .build()
-        .create()
 }

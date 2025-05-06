@@ -52,8 +52,6 @@ import com.m3u.smartphone.ui.business.setting.components.EpgPlaylistItem
 import com.m3u.smartphone.ui.business.setting.components.HiddenChannelItem
 import com.m3u.smartphone.ui.business.setting.components.HiddenPlaylistGroupItem
 import com.m3u.smartphone.ui.business.setting.components.LocalStorageButton
-import com.m3u.smartphone.ui.business.setting.components.LocalStorageSwitch
-import com.m3u.smartphone.ui.business.setting.components.RemoteControlSubscribeSwitch
 import com.m3u.smartphone.ui.common.helper.LocalHelper
 
 private enum class SubscriptionsFragmentPage {
@@ -71,7 +69,6 @@ internal fun SubscriptionsFragment(
     passwordState: MutableState<String>,
     epgState: MutableState<String>,
     localStorageState: MutableState<Boolean>,
-    forTvState: MutableState<Boolean>,
     backingUpOrRestoring: BackingUpAndRestoringState,
     hiddenChannels: List<Channel>,
     hiddenCategoriesWithPlaylists: List<Pair<Playlist, String>>,
@@ -107,7 +104,6 @@ internal fun SubscriptionsFragment(
                         usernameState = usernameState,
                         passwordState = passwordState,
                         localStorageState = localStorageState,
-                        forTvState = forTvState,
                         backingUpOrRestoring = backingUpOrRestoring,
                         epgState = epgState,
                         onClipboard = onClipboard,
@@ -159,7 +155,6 @@ private fun MainContentImpl(
     usernameState: MutableState<String>,
     passwordState: MutableState<String>,
     localStorageState: MutableState<Boolean>,
-    forTvState: MutableState<Boolean>,
     backingUpOrRestoring: BackingUpAndRestoringState,
     epgState: MutableState<String>,
     onClipboard: (String) -> Unit,
@@ -225,22 +220,6 @@ private fun MainContentImpl(
         }
 
         item {
-            if (selectedState.value == DataSource.M3U) {
-                LocalStorageSwitch(
-                    checked = localStorageState.value,
-                    onChanged = { localStorageState.value = it },
-                    enabled = !forTvState.value
-                )
-            }
-            if (remoteControl) {
-                RemoteControlSubscribeSwitch(
-                    checked = forTvState.value,
-                    onChanged = { forTvState.value = !forTvState.value },
-                    enabled = !localStorageState.value
-                )
-            }
-        }
-        item {
             @SuppressLint("InlinedApi")
             val postNotificationPermission = rememberPermissionState(
                 Manifest.permission.POST_NOTIFICATIONS
@@ -286,14 +265,14 @@ private fun MainContentImpl(
 
         item {
             FilledTonalButton(
-                enabled = !forTvState.value && backingUpOrRestoring == BackingUpAndRestoringState.NONE,
+                enabled = backingUpOrRestoring == BackingUpAndRestoringState.NONE,
                 onClick = backup,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(text = stringResource(string.feat_setting_label_backup).uppercase())
             }
             FilledTonalButton(
-                enabled = !forTvState.value && backingUpOrRestoring == BackingUpAndRestoringState.NONE,
+                enabled = backingUpOrRestoring == BackingUpAndRestoringState.NONE,
                 onClick = restore,
                 modifier = Modifier.fillMaxWidth()
             ) {

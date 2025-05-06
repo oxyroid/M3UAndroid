@@ -20,7 +20,6 @@ import com.m3u.core.architecture.preferences.Settings
 import com.m3u.core.architecture.preferences.flowOf
 import com.m3u.core.architecture.preferences.set
 import com.m3u.core.util.basic.startWithHttpScheme
-import com.m3u.data.api.TvApiDelegate
 import com.m3u.data.database.dao.ColorSchemeDao
 import com.m3u.data.database.example.ColorSchemeExample
 import com.m3u.data.database.model.Channel
@@ -55,7 +54,6 @@ class SettingViewModel @Inject constructor(
     private val workManager: WorkManager,
     private val settings: Settings,
     private val messager: Messager,
-    private val tvApi: TvApiDelegate,
     publisher: Publisher,
     // FIXME: do not use dao in viewmodel
     private val colorSchemeDao: ColorSchemeDao,
@@ -160,20 +158,6 @@ class SettingViewModel @Inject constructor(
         else "http://$inputBasicUrl"
 
         when {
-            forTvState.value -> {
-                viewModelScope.launch {
-                    tvApi.subscribe(
-                        title,
-                        urlOrUri,
-                        basicUrl,
-                        username,
-                        password,
-                        epg.ifBlank { null },
-                        selected
-                    )
-                }
-            }
-
             else -> when (selected) {
                 DataSource.M3U -> {
                     if (title.isEmpty()) {
@@ -342,7 +326,6 @@ class SettingViewModel @Inject constructor(
     val urlState = mutableStateOf("")
     val uriState = mutableStateOf(Uri.EMPTY)
     val localStorageState = mutableStateOf(false)
-    val forTvState = mutableStateOf(false)
     val basicUrlState = mutableStateOf("")
     val usernameState = mutableStateOf("")
     val passwordState = mutableStateOf("")
