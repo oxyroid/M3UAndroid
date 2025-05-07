@@ -441,7 +441,7 @@ private fun XtreamInputContent(
         PlaceholderField(
             text = titleState.value,
             placeholder = stringResource(string.feat_setting_placeholder_title).uppercase(),
-            onValueChange = { titleState.value = Uri.encode(it) },
+            onValueChange = { titleState.value = Uri.decode(it) },
             modifier = Modifier.fillMaxWidth()
         )
         PlaceholderField(
