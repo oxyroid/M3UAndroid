@@ -36,7 +36,7 @@ m3u-extension = "1.9"
 nextLib = "0.8.5"
 slf4j-api = "2.0.17"
 
-squareup-retrofit2 = "2.11.0"
+squareup-retrofit2 = "2.12.0"
 squareup-leakcanary = "2.14"
 
 kotlin = "2.1.20"
