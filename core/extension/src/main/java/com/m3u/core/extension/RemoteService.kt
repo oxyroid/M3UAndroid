@@ -79,8 +79,8 @@ class RemoteService : Service() {
     override fun onCreate() {
         super.onCreate()
         val channel = NotificationChannel(
-            "remote-service",
-            "remote-service",
+            CHANNEL_ID,
+            CHANNEL_ID,
             NotificationManager.IMPORTANCE_LOW
         )
         channel.description = "Remote service is running"
@@ -93,7 +93,7 @@ class RemoteService : Service() {
         ServiceCompat.startForeground(
             this,
             startId,
-            NotificationCompat.Builder(this, "remote_service")
+            NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_menu_info_details)
                 .setContentTitle("Remote Service")
                 .setContentText("Remote service is running")
@@ -118,6 +118,7 @@ class RemoteService : Service() {
     }
 
     companion object {
+        private const val CHANNEL_ID = "remote-service"
         private const val TAG = "RemoteClient"
     }
 }
