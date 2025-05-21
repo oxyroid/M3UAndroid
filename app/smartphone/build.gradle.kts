@@ -19,6 +19,8 @@ android {
         versionName = "1.15.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "SUPABASE_URL", "\"<public-url>\"")
+        buildConfigField("String", "SUPABASE_ANON_KEY", "\"<anon-key>\"")
     }
     buildTypes {
         release {

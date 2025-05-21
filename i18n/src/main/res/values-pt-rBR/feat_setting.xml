@@ -120,4 +120,5 @@
     <string name="feat_setting_error_empty_epg">O link do EPG está vazio</string>
     <string name="feat_setting_placeholder_epg">Link do EPG</string>
     <string name="feat_setting_epg_added">Você pode associar uma playlist ao EPG</string>
+    <string name="feat_setting_device_id">ID do dispositivo</string>
 </resources>

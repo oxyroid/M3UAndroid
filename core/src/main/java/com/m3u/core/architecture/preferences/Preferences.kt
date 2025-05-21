@@ -17,6 +17,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
@@ -26,10 +27,12 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.util.UUID
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
+import java.util.UUID
 
 typealias Settings = DataStore<Preferences>
 
@@ -97,8 +100,10 @@ suspend operator fun <T> Settings.set(key: Preferences.Key<T>, value: T) {
 }
 
 private val PREFERENCES: Map<Preferences.Key<*>, *> = listOf(
+    PreferencesKeys.DEVICE_ID to "",
     PreferencesKeys.PLAYLIST_STRATEGY to PlaylistStrategy.ALL,
     PreferencesKeys.ROW_COUNT to 1,
+    PreferencesKeys.DEVICE_ID to UUID.randomUUID().toString(),
     PreferencesKeys.CONNECT_TIMEOUT to ConnectTimeout.SHORT,
     PreferencesKeys.GOD_MODE to false,
     PreferencesKeys.CLIP_MODE to ClipMode.ADAPTIVE,
@@ -136,6 +141,9 @@ suspend fun Settings.applyDefaultValues() {
                     pref.set<Any>(key as Preferences.Key<Any>, defaultValue as Any)
                 }
             }
+            if (PreferencesKeys.DEVICE_ID !in pref) {
+                pref[PreferencesKeys.DEVICE_ID] = UUID.randomUUID().toString()
+            }
         }
     }
 }
@@ -143,8 +151,11 @@ suspend fun Settings.applyDefaultValues() {
 private val applied = AtomicBoolean(false)
 
 object PreferencesKeys {
+    val DEVICE_ID = stringPreferencesKey("device_id")
     val PLAYLIST_STRATEGY = intPreferencesKey("playlist-strategy")
     val ROW_COUNT = intPreferencesKey("rowCount")
+
+    val DEVICE_ID = stringPreferencesKey("device-id")
 
     val CONNECT_TIMEOUT = longPreferencesKey("connect-timeout")
     val GOD_MODE = booleanPreferencesKey("god-mode")
