@@ -126,4 +126,5 @@
     <string name="feat_setting_error_empty_epg">EPG链接为空</string>
 
     <string name="feat_setting_randomly_in_favourite">随机播放只播放已收藏的频道</string>
+    <string name="feat_setting_device_id">设备 ID</string>
 </resources>

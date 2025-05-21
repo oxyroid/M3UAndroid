@@ -45,12 +45,13 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil.compose.AsyncImage
 import com.m3u.data.database.model.Channel
+import androidx.compose.runtime.ImmutableList
 import com.m3u.tv.screens.dashboard.rememberChildPadding
 import com.m3u.tv.theme.JetStreamBorderWidth
 
 @Composable
 fun ChannelsRow(
-    channels: List<Channel>,
+    channels: ImmutableList<Channel>,
     modifier: Modifier = Modifier,
     startPadding: Dp = rememberChildPadding().start,
     endPadding: Dp = rememberChildPadding().end,
@@ -141,7 +142,7 @@ fun ChannelsRow(
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ImmersiveListChannelsRow(
-    channels: List<Channel>,
+    channels: ImmutableList<Channel>,
     modifier: Modifier = Modifier,
     startPadding: Dp = rememberChildPadding().start,
     endPadding: Dp = rememberChildPadding().end,

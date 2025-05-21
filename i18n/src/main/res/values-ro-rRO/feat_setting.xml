@@ -84,4 +84,5 @@
     <string name="feat_setting_restoring">restaurare toate listele si canalele</string>
 
     <string name="feat_setting_follow_system_theme">la fel ca tema telefonului</string>
+    <string name="feat_setting_device_id">ID dispozitiv</string>
 </resources>
