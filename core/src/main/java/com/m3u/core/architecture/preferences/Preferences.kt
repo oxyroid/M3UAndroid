@@ -17,6 +17,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
@@ -30,6 +31,7 @@ import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
+import java.util.UUID
 
 typealias Settings = DataStore<Preferences>
 
@@ -99,6 +101,7 @@ suspend operator fun <T> Settings.set(key: Preferences.Key<T>, value: T) {
 private val PREFERENCES: Map<Preferences.Key<*>, *> = listOf(
     PreferencesKeys.PLAYLIST_STRATEGY to PlaylistStrategy.ALL,
     PreferencesKeys.ROW_COUNT to 1,
+    PreferencesKeys.DEVICE_ID to UUID.randomUUID().toString(),
     PreferencesKeys.CONNECT_TIMEOUT to ConnectTimeout.SHORT,
     PreferencesKeys.GOD_MODE to false,
     PreferencesKeys.CLIP_MODE to ClipMode.ADAPTIVE,
@@ -145,6 +148,8 @@ private val applied = AtomicBoolean(false)
 object PreferencesKeys {
     val PLAYLIST_STRATEGY = intPreferencesKey("playlist-strategy")
     val ROW_COUNT = intPreferencesKey("rowCount")
+
+    val DEVICE_ID = stringPreferencesKey("device-id")
 
     val CONNECT_TIMEOUT = longPreferencesKey("connect-timeout")
     val GOD_MODE = booleanPreferencesKey("god-mode")
