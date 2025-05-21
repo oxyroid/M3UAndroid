@@ -32,6 +32,7 @@ import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
+import java.util.UUID
 
 typealias Settings = DataStore<Preferences>
 
@@ -102,6 +103,7 @@ private val PREFERENCES: Map<Preferences.Key<*>, *> = listOf(
     PreferencesKeys.DEVICE_ID to "",
     PreferencesKeys.PLAYLIST_STRATEGY to PlaylistStrategy.ALL,
     PreferencesKeys.ROW_COUNT to 1,
+    PreferencesKeys.DEVICE_ID to UUID.randomUUID().toString(),
     PreferencesKeys.CONNECT_TIMEOUT to ConnectTimeout.SHORT,
     PreferencesKeys.GOD_MODE to false,
     PreferencesKeys.CLIP_MODE to ClipMode.ADAPTIVE,
@@ -152,6 +154,8 @@ object PreferencesKeys {
     val DEVICE_ID = stringPreferencesKey("device_id")
     val PLAYLIST_STRATEGY = intPreferencesKey("playlist-strategy")
     val ROW_COUNT = intPreferencesKey("rowCount")
+
+    val DEVICE_ID = stringPreferencesKey("device-id")
 
     val CONNECT_TIMEOUT = longPreferencesKey("connect-timeout")
     val GOD_MODE = booleanPreferencesKey("god-mode")
