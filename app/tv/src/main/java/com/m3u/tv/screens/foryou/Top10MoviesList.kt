@@ -33,13 +33,14 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.m3u.data.database.model.Channel
 import com.m3u.tv.common.ImmersiveListChannelsRow
+import androidx.compose.runtime.ImmutableList
 import com.m3u.tv.common.PosterImage
 import com.m3u.tv.screens.dashboard.rememberChildPadding
 import com.m3u.tv.utils.bringIntoViewIfChildrenAreFocused
 
 @Composable
 fun Top10ChannelsList(
-    channels: List<Channel>,
+    channels: ImmutableList<Channel>,
     modifier: Modifier = Modifier,
     gradientColor: Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
     onChannelClick: (channel: Channel) -> Unit
@@ -77,7 +78,7 @@ private fun ImmersiveList(
     selectedChannel: Channel,
     isListFocused: Boolean,
     gradientColor: Color,
-    channels: List<Channel>,
+    channels: ImmutableList<Channel>,
     sectionTitle: String?,
     onFocusChanged: (FocusState) -> Unit,
     onChannelFocused: (Channel) -> Unit,
