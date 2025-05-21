@@ -17,6 +17,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
@@ -26,6 +27,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.util.UUID
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.properties.ReadOnlyProperty
@@ -97,6 +99,7 @@ suspend operator fun <T> Settings.set(key: Preferences.Key<T>, value: T) {
 }
 
 private val PREFERENCES: Map<Preferences.Key<*>, *> = listOf(
+    PreferencesKeys.DEVICE_ID to "",
     PreferencesKeys.PLAYLIST_STRATEGY to PlaylistStrategy.ALL,
     PreferencesKeys.ROW_COUNT to 1,
     PreferencesKeys.CONNECT_TIMEOUT to ConnectTimeout.SHORT,
@@ -136,6 +139,9 @@ suspend fun Settings.applyDefaultValues() {
                     pref.set<Any>(key as Preferences.Key<Any>, defaultValue as Any)
                 }
             }
+            if (PreferencesKeys.DEVICE_ID !in pref) {
+                pref[PreferencesKeys.DEVICE_ID] = UUID.randomUUID().toString()
+            }
         }
     }
 }
@@ -143,6 +149,7 @@ suspend fun Settings.applyDefaultValues() {
 private val applied = AtomicBoolean(false)
 
 object PreferencesKeys {
+    val DEVICE_ID = stringPreferencesKey("device_id")
     val PLAYLIST_STRATEGY = intPreferencesKey("playlist-strategy")
     val ROW_COUNT = intPreferencesKey("rowCount")
 
