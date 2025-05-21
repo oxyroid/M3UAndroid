@@ -16,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import com.m3u.core.architecture.preferences.PreferencesKeys
+import com.m3u.core.architecture.preferences.preferenceOf
 import com.m3u.core.unit.DataUnit
 import com.m3u.core.util.basic.title
 import com.m3u.i18n.R.string
@@ -32,6 +34,7 @@ internal fun OtherPreferences(
     val spacing = LocalSpacing.current
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
+    val deviceId by preferenceOf(PreferencesKeys.DEVICE_ID)
     Column(
         verticalArrangement = Arrangement.spacedBy(spacing.small),
         modifier = modifier
@@ -47,6 +50,11 @@ internal fun OtherPreferences(
                     }
                 context.startActivity(intent)
             }
+        )
+        Preference(
+            title = stringResource(string.feat_setting_device_id).title(),
+            content = deviceId,
+            icon = Icons.Rounded.PermDeviceInformation
         )
         Preference(
             title = stringResource(string.feat_setting_app_version).title(),
