@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_label_crash">Aplikasi Tidak Berfungsi</string>
+    <string name="app_shortcut_channel_recently_short_label">Baru saja</string>
+    <string name="app_shortcut_channel_recently_long_label">Putar yang Baru Saja Diputar</string>
+    <string name="app_shortcut_channel_recently_disabled">Tidak Tersedia</string>
+</resources>

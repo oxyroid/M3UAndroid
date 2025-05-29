@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="data_error_file_not_found">file tidak ditemukan</string>
+    <string name="data_error_empty_title">Nama Playlist kosong</string>
+    <string name="data_channel_name_stream_download_service">Layanan Unduhan Streaming</string>
+    <string name="data_channel_description_stream_download_service">Deskripsi Layanan Unduhan Streaming</string>
+
+    <string name="data_worker_subscription_action_cancel">Batal</string>
+    <string name="data_worker_subscription_action_retry">Coba Ulang</string>
+    <string name="data_worker_subscription_content_completed">Selesai (+%d)</string>
+    <string name="data_worker_subscription_content_channel_progress">%d saluran telah diunduh</string>
+    <string name="data_worker_subscription_content_programme_progress">%d program telah diunduh</string>
+</resources>
