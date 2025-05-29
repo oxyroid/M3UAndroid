@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feat_foryou_hidden_channels_playlist">Saluran Tersembunyi</string>
+    <string name="feat_foryou_unsubscribe_playlist">Hapus Langganan</string>
+    <string name="feat_foryou_copy_playlist_url">Salin URL</string>
+    <string name="feat_foryou_rename_playlist">Ganti nama</string>
+    <string name="feat_foryou_imported_playlist_title">Ditambahkan</string>
+    <string name="feat_foryou_prompt_add_playlist">Tambahkan Playlist</string>
+    <string name="feat_foryou_recommend_unseen_label">Favorit yang ingin Anda tonton lagi</string>
+    <string name="feat_foryou_recommend_unseen_more_than_days">lebih dari %d hari</string>
+    <string name="feat_foryou_recommend_unseen_days">%d Hari</string>
+    <string name="feat_foryou_recommend_unseen_hours">%d Jam</string>
+    <string name="feat_foryou_recommend_cw_label">Lanjutkan menonton</string>
+    <string name="feat_foryou_new_release">Rilis Terbaru</string>
+    <string name="feat_foryou_connect_title">Masukkan kode dari TV</string>
+    <string name="feat_foryou_connect_subtitle">Pastikan terhubung ke Wi-Fi yang sama</string>
+</resources>

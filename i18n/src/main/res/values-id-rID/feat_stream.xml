@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feat_channel_playback_state_idle">menunggu</string>
+    <string name="feat_channel_playback_state_buffering">buffering</string>
+    <string name="feat_channel_playback_state_ready">siap</string>
+    <string name="feat_channel_playback_state_ended">selesai</string>
+
+    <string name="feat_channel_tooltip_on_back_pressed">kembali</string>
+    <string name="feat_channel_tooltip_mute">bisukan</string>
+    <string name="feat_channel_tooltip_unmute">aktifkan suara</string>
+    <string name="feat_channel_tooltip_favourite">favorit</string>
+    <string name="feat_channel_tooltip_unfavourite">tidak disukai</string>
+    <string name="feat_channel_tooltip_download">Unduh</string>
+    <string name="feat_channel_tooltip_stop_download">berhenti mengunduh</string>
+    <string name="feat_channel_tooltip_cast">transmisikan layar</string>
+    <string name="feat_channel_tooltip_open_panel">buka panel</string>
+    <string name="feat_channel_tooltip_enter_pip_mode">mode PIP</string>
+    <string name="feat_channel_tooltip_screen_rotating">rotasi layar</string>
+    <string name="feat_channel_tooltip_choose_format">pilih format</string>
+
+    <string name="feat_channel_dialog_dlna_devices">Perangkat DLNA</string>
+    <string name="feat_channel_dialog_choose_tracks">Pilih Track</string>
+
+    <string name="feat_channel_open_in_external_app">buka dengan aplikasi lain</string>
+
+    <string name="feat_channel_cw_position_title">terakhir diputar pada %s</string>
+    <string name="feat_channel_cw_position_button">Putar mundur</string>
+</resources>
