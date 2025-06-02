@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feat_playlist_configuration_title">Başlık</string>
+    <string name="feat_playlist_configuration_user_agent">Kullanıcı aracısı</string>
+    <string name="feat_playlist_configuration_enabled_epgs">Etkin EPGler</string>
+    <string name="feat_playlist_configuration_sync_programmes">Programları eşitle</string>
+    <string name="feat_playlist_configuration_cancel_sync_programmes">Eşitlemeyi iptal et</string>
+    <string name="feat_playlist_configuration_programmes_expired_time">Süresi doldu: %s</string>
+    <string name="feat_playlist_configuration_programmes_expired">Önbellekteki programların süresi dolmuş</string>
+    <string name="feat_playlist_configuration_auto_refresh_programmes">Programları Otomatik Yenile</string>
+    <string name="feat_playlist_configuration_auto_refresh_programmes_description">Uygulama başlatıldığında</string>
+</resources>

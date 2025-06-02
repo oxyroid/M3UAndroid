@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ui_title_foryou">M3U</string>
+    <string name="ui_title_favourite">Favori</string>
+    <string name="ui_title_setting">Ayarlar</string>
+
+    <string name="ui_destination_foryou">Sana Özel</string>
+    <string name="ui_destination_favourite">Favori</string>
+    <string name="ui_destination_extension">Uzantı</string>
+    <string name="ui_destination_setting">Ayarlar</string>
+    <string name="ui_destination_playlist">Oynatma Listesi</string>
+
+    <string name="ui_error_unknown">Bilinmeyen Hata</string>
+    <string name="ui_cd_top_bar_on_back_pressed">Geri</string>
+
+    <string name="ui_theme_card_left">Biliyor musun?</string>
+    <string name="ui_theme_card_right">İzleme ilerlemeni Kaydedeceğiz Ve Bir Sonraki İzlemede Kaldığın Yerden Devam Edeceğiz</string>
+
+    <string name="ui_sort">Sırala</string>
+    <string name="ui_sort_asc">A-Z</string>
+    <string name="ui_sort_desc">Z-A</string>
+    <string name="ui_sort_recently">Son Eklenenler</string>
+    <string name="ui_sort_mixed">Karışık</string>
+    <string name="ui_sort_never_played">Hiç Oynatılmamış</string>
+    <string name="ui_sort_unspecified">Belirtilmemiş</string>
+
+    <string name="ui_connect">Bağlan</string>
+</resources>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feat_channel_playback_state_idle">boşta</string>
+    <string name="feat_channel_playback_state_buffering">yükleniyor</string>
+    <string name="feat_channel_playback_state_ready">hazır</string>
+    <string name="feat_channel_playback_state_ended">tamamlandı</string>
+
+    <string name="feat_channel_tooltip_on_back_pressed">geri</string>
+    <string name="feat_channel_tooltip_mute">sessize al</string>
+    <string name="feat_channel_tooltip_unmute">sesi aç</string>
+    <string name="feat_channel_tooltip_favourite">favorilere ekle</string>
+    <string name="feat_channel_tooltip_unfavourite">favorilerden çıkar</string>
+    <string name="feat_channel_tooltip_download">indir</string>
+    <string name="feat_channel_tooltip_stop_download">indirmeyi durdur</string>
+    <string name="feat_channel_tooltip_cast">ekrana yansıt</string>
+    <string name="feat_channel_tooltip_open_panel">paneli aç</string>
+    <string name="feat_channel_tooltip_enter_pip_mode">PIP Modu</string>
+    <string name="feat_channel_tooltip_screen_rotating">ekran döndürülüyor</string>
+    <string name="feat_channel_tooltip_choose_format">format seç</string>
+
+    <string name="feat_channel_dialog_dlna_devices">DLNA Cihazları</string>
+    <string name="feat_channel_dialog_choose_tracks">Parça Seç</string>
+
+    <string name="feat_channel_open_in_external_app">harici uygulamada aç</string>
+
+    <string name="feat_channel_cw_position_title">Son izlenen konum: %s</string>
+    <string name="feat_channel_cw_position_button">Geri Sar</string>
+</resources>
+
