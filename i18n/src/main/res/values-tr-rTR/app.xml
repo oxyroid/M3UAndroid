@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_label_crash">uygulama çöktü</string>
+    <string name="app_shortcut_channel_recently_short_label">Son İzlenen</string>
+    <string name="app_shortcut_channel_recently_long_label">Son izlenen kanalı oynat</string>
+    <string name="app_shortcut_channel_recently_disabled">kullanılamıyor</string>
+</resources> 

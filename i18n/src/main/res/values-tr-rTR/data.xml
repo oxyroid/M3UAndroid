@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+<string name="data_error_file_not_found">Dosya bulunamadı</string>
+<string name="data_error_empty_title">Oynatma listesi adı boş</string>
+<string name="data_channel_name_stream_download_service">Akış İndirme Servisi</string>
+<string name="data_channel_description_stream_download_service">Akış indirme servisi açıklaması</string>
+
+<string name="data_worker_subscription_action_cancel">İptal Et</string>
+<string name="data_worker_subscription_action_retry">Yeniden Dene</string>
+<string name="data_worker_subscription_content_completed">Tamamlandı (+%d)</string>
+<string name="data_worker_subscription_content_channel_progress">%d kanal indirildi</string>
+<string name="data_worker_subscription_content_programme_progress">%d program indirildi</string>
+
+</resources> 

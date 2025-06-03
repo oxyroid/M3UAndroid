@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feat_setting_app_version">uygulama sürümü</string>
+    <string name="feat_setting_label_subscribe">Ekle</string>
+    <string name="feat_setting_success_subscribe">başarıyla abone olundu</string>
+    <string name="feat_setting_failed_malformed_url">geçersiz URL (%%s)</string>
+    <string name="feat_setting_error_empty_title">oynatma listesi adı boş</string>
+    <string name="feat_setting_placeholder_title">oynatma listesi adı</string>
+    <string name="feat_setting_placeholder_url">oynatma listesi bağlantısı</string>
+    <string name="feat_setting_label_subscribing">abonelik işlemi</string>
+    <string name="feat_setting_sync_mode_all">tümü</string>
+    <string name="feat_setting_sync_mode_keep">koru</string>
+    <string name="feat_setting_sync_mode">senkronizasyon stratejisi</string>
+    <string name="feat_setting_playlist_management">oynatma listesi yönetimi</string>
+    <string name="feat_setting_connect_timeout">bağlantı zaman aşımı</string>
+    <string name="feat_setting_god_mode">tanrı modu</string>
+    <string name="feat_setting_god_mode_description">fiziksel ses düğmeleriyle düzeni ayarla</string>
+    <string name="feat_setting_experimental_mode">deneysel mod</string>
+    <string name="feat_setting_experimental_mode_description">kararsız özellikler ciddi hatalar verebilir</string>
+    <string name="feat_setting_label_epg_playlists">EPG listesi</string>
+    <string name="feat_setting_label_hidden_channels">gizli kanallar</string>
+    <string name="feat_setting_label_hidden_playlist_groups">gizli oynatma listesi kategorileri</string>
+    <string name="feat_setting_label_add_playlist">oynatma listesi ekle</string>
+    <string name="feat_setting_label_parse_from_clipboard">panodan ayrıştır</string>
+    <string name="feat_setting_label_select_from_local_storage">dosya seç</string>
+    <string name="feat_setting_label_parse_from_disk">dosyadan ayrıştır</string>
+    <string name="feat_setting_clip_mode">video kırpma modu</string>
+    <string name="feat_setting_clip_mode_adaptive">uyarlanabilir</string>
+    <string name="feat_setting_clip_mode_clip">kırp</string>
+    <string name="feat_setting_clip_mode_stretched">gerilmiş</string>
+    <string name="feat_setting_auto_refresh_channels">kanalları otomatik yenile</string>
+    <string name="feat_setting_auto_refresh_channels_description">kanala girildiğinde otomatik olarak yenilenir</string>
+
+    <string name="feat_setting_full_info_player">tam bilgi oynatıcısı</string>
+    <string name="feat_setting_full_info_player_description">oynatıcıda daha fazla bilgi göster</string>
+    <string name="feat_setting_slider">kaydırıcı</string>
+    <string name="feat_setting_no_picture_mode">resimsiz mod</string>
+    <string name="feat_setting_no_picture_mode_description">performansı artırabilir</string>
+    <string name="feat_setting_system_setting">sistem ayarı</string>
+    <string name="feat_setting_script_management_import_js">Javascript içe aktar</string>
+    <string name="feat_setting_enqueue_subscribe">abonelik görevi kuyruğa eklendi</string>
+    <string name="feat_setting_dropbox">Dropbox</string>
+    <string name="feat_setting_project_about">proje hakkında</string>
+    <string name="feat_setting_local_storage">yerel depolama</string>
+    <string name="feat_setting_error_unselected_file">henüz dosya seçilmedi</string>
+    <string name="feat_setting_error_blank_url">URL boş</string>
+    <string name="feat_setting_use_dynamic_colors">dinamik renkler</string>
+    <string name="feat_setting_use_dynamic_colors_unavailable">Android 12 ve üzeri için kullanılabilir</string>
+    <string name="feat_setting_colorful_background">renkli arka plan</string>
+    <string name="feat_setting_restore_schemes">şemaları geri yükle</string>
+    <string name="feat_setting_not_implementation">bu özellik mevcut sürümde kullanılamıyor</string>
+    <string name="feat_setting_zapping_mode">zap modu</string>
+    <string name="feat_setting_zapping_mode_description">kanalı oynatmadan önce hızlı önizleme</string>
+    <string name="feat_setting_gesture_brightness">parlaklık hareketi</string>
+    <string name="feat_setting_gesture_volume">ses hareketi</string>
+    <string name="feat_setting_screencast">ekran yansıtma</string>
+    <string name="feat_setting_screen_rotating">ekran döndürme</string>
+    <string name="feat_setting_screen_rotating_description">sistem döndürme açıkken kullanılabilir</string>
+    <string name="feat_setting_optional_features">isteğe bağlı özellikler</string>
+    <string name="feat_setting_unseen_limit">uzun süredir izlenmeyen favori kanalları öner</string>
+    <string name="feat_setting_reconnect_mode">otomatik yeniden bağlan</string>
+    <string name="feat_setting_reconnect_mode_no">asla</string>
+    <string name="feat_setting_reconnect_mode_retry">sadece başarısız olursa</string>
+    <string name="feat_setting_reconnect_mode_reconnect">her zaman</string>
+
+    <string name="feat_setting_appearance">görünüm</string>
+    <string name="feat_setting_appearance_hint_edit_color">renk düzenlemek için uzun basın</string>
+
+    <string name="feat_setting_tunneling">tünelleme modu</string>
+    <string name="feat_setting_tunneling_description">4K/HDR içeriğin oynatılmasını iyileştirir</string>
+    <string name="feat_setting_label_backup">yedekle</string>
+    <string name="feat_setting_label_restore">geri yükle</string>
+
+    <string name="feat_setting_canvas_dark">koyu</string>
+    <string name="feat_setting_canvas_light">açık</string>
+    <string name="feat_setting_canvas_apply">uygula</string>
+    <string name="feat_setting_canvas_reset">sıfırla</string>
+
+    <string name="feat_setting_epg_clock_mode">program 12 saat modu</string>
+
+    <string name="feat_setting_remote_control">uzaktan kumanda</string>
+    <string name="feat_setting_remote_control_description">TVnizi uzaktan kontrol etme özelliğini açın</string>
+
+    <string name="feat_setting_remote_control_tv_side">uzaktan kumanda</string>
+    <string name="feat_setting_remote_control_tv_side_description">akıllı telefonların TVnizi kontrol etmesine izin verin</string>
+
+    <string name="feat_setting_subscribe_for_tv">TV için</string>
+
+    <string name="feat_setting_backing_up">tüm oynatma listeleri ve kanallar yedekleniyor</string>
+    <string name="feat_setting_restoring">tüm oynatma listeleri ve kanallar geri yükleniyor</string>
+
+    <string name="feat_setting_follow_system_theme">sistem temasını takip et</string>
+
+    <string name="feat_setting_data_source_m3u" translatable="false">M3U</string>
+    <string name="feat_setting_data_source_epg" translatable="false">EPG</string>
+    <string name="feat_setting_data_source_xtream" translatable="false">Xtream</string>
+    <string name="feat_setting_data_source_emby" translatable="false">Emby</string>
+    <string name="feat_setting_data_source_dropbox" translatable="false">Dropbox</string>
+
+    <string name="feat_setting_placeholder_basic_url">adres</string>
+    <string name="feat_setting_placeholder_username">kullanıcı adı</string>
+    <string name="feat_setting_placeholder_password">şifre</string>
+
+    <string name="feat_setting_warning_xtream_takes_much_more_time">bu işlem çok daha uzun sürebilir</string>
+
+    <string name="feat_setting_back_home">ana sayfaya dön</string>
+
+    <string name="feat_setting_always_replay">tekrar oynat düğmesini her zaman göster</string>
+
+    <string name="feat_setting_player_panel">oynatıcı paneli</string>
+    <string name="feat_setting_player_panel_description">dikey modda oynatıcıyı genişletmek için yukarı kaydır</string>
+
+    <string name="feat_setting_cache">oynatırken önbelleğe al</string>
+    <string name="feat_setting_cache_description">bu seçenek normal oynatmayı engelleyebilir</string>
+    <string name="feat_setting_clear_cache">önbelleği temizle</string>
+
+    <string name="feat_setting_paging">kanalları sayfala</string>
+    <string name="feat_setting_paging_description">çok sayıda kanal için faydalıdır\nancak gruplama devre dışı kalacaktır</string>
+    <string name="feat_setting_source_code">kaynak kod</string>
+
+    <string name="feat_setting_compact_dimension">sıkıştırılmış boyut</string>
+
+    <!-- EPG -->
+    <string name="feat_setting_placeholder_epg_title">EPG adı</string>
+    <string name="feat_setting_error_empty_epg_title">EPG adı boş</string>
+    <string name="feat_setting_error_empty_epg">EPG bağlantısı boş</string>
+    <string name="feat_setting_placeholder_epg">EPG bağlantısı</string>
+    <string name="feat_setting_epg_added">sonrasında oynatma listesi ile eşleştirebilirsiniz</string>
+
+    <string name="feat_setting_randomly_in_favourite">yalnızca favorilerden rastgele oynat</string>
+</resources>
