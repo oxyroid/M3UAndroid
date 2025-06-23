@@ -39,7 +39,7 @@ slf4j-api = "2.0.17"
 squareup-retrofit2 = "2.11.0"
 squareup-leakcanary = "2.14"
 
-kotlin = "2.1.20"
+kotlin = "2.2.0"
 android-gradle-plugin = "8.9.1"
 kotlin-symbol-processor = "2.1.20-2.0.0"
 
