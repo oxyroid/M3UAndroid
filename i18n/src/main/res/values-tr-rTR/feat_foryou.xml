@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feat_foryou_hidden_channels_playlist">Gizli kanallar</string>
+    <string name="feat_foryou_unsubscribe_playlist">Oynatma listesini iptal et</string>
+    <string name="feat_foryou_copy_playlist_url">URLyi kopyala</string>
+    <string name="feat_foryou_rename_playlist">Yeniden adlandır</string>
+    <string name="feat_foryou_imported_playlist_title">İçe aktarıldı</string>
+    <string name="feat_foryou_prompt_add_playlist">Bir oynatma listesi ekle</string>
+    <string name="feat_foryou_recommend_unseen_label">Tekrar izlemek isteyebileceğin favoriler</string>
+    <string name="feat_foryou_recommend_unseen_more_than_days">%d günden uzun süre önce</string>
+    <string name="feat_foryou_recommend_unseen_days">%d gün</string>
+    <string name="feat_foryou_recommend_unseen_hours">%d saat</string>
+    <string name="feat_foryou_recommend_cw_label">İzlemeye devam et</string>
+    <string name="feat_foryou_new_release">Yeni çıkış</string>
+    <string name="feat_foryou_connect_title">TVden gelen kodu girin</string>
+    <string name="feat_foryou_connect_subtitle">Aynı Wi-Fi ağına bağlı olduğunuzdan emin olun</string>
+</resources>
