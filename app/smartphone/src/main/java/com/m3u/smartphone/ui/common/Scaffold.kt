@@ -1,6 +1,5 @@
 package com.m3u.smartphone.ui.common
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -26,6 +25,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.InternalComposeApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -70,8 +70,11 @@ import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 import androidx.compose.ui.graphics.lerp as lerpColor
 import androidx.compose.ui.unit.lerp as lerpDp
 import androidx.compose.ui.util.lerp as lerpf
@@ -150,7 +153,6 @@ internal fun MainContent(
     val coroutineScope = rememberCoroutineScope()
 
     val title = Metadata.title
-    val subtitle = Metadata.subtitle
     val actions = Metadata.actions
 
     val backStackEntry by currentBackStackEntry()
@@ -189,7 +191,7 @@ internal fun MainContent(
                     expanded = showQuery,
                     onExpandedChange = currentOnShowQueryChange,
                     placeholder = {
-                        Column(Modifier.padding(start = 4.dp)) {
+                        Column(modifier = Modifier.padding(start = 4.dp)) {
                             Text(
                                 text = if (!showQuery) title
                                 else AnnotatedString(stringResource(R.string.feat_playlist_query_placeholder)),
@@ -201,14 +203,6 @@ internal fun MainContent(
                                     alpha = if (showQuery) 0.65f else 1f
                                 )
                             )
-                            AnimatedVisibility(!showQuery && subtitle.text.isNotEmpty()) {
-                                Text(
-                                    text = subtitle,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
                         }
                     },
                     leadingIcon = onBackPressed?.let { onClick ->
@@ -237,10 +231,6 @@ internal fun MainContent(
                             }
                         }
                     },
-                    colors = SearchBarDefaults.inputFieldColors(
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedContainerColor = Color.Transparent
-                    ),
                     modifier = Modifier.onLayoutRectChanged {
                         searchBarHeight = with(density) { it.height.toDp() }
                     }
@@ -261,10 +251,14 @@ internal fun MainContent(
                 .fillMaxWidth()
         ) {
             val state = rememberLazyStaggeredGridState()
+            val lazy: Flow<PagingData<Channel>> by produceState(emptyFlow(), channels) {
+                delay(300.milliseconds)
+                value = channels
+            }
             ChannelGallery(
                 state = state,
                 rowCount = 1,
-                channels = channels,
+                channels = lazy,
                 zapping = null,
                 recently = false,
                 isVodOrSeriesPlaylist = false,

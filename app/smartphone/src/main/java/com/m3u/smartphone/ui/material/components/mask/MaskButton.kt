@@ -30,7 +30,7 @@ fun MaskButton(
 ) {
     TooltipBox(
         state = tooltipState,
-        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
+        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
         tooltip = {
             PlainTooltip {
                 Text(text = contentDescription.uppercase())

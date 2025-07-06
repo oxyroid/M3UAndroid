@@ -29,6 +29,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.business.setting.BackingUpAndRestoringState
+import com.m3u.business.setting.SettingProperties
 import com.m3u.business.setting.SettingViewModel
 import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.preferenceOf
@@ -89,40 +90,34 @@ fun SettingRoute(
         openDocumentLauncher.launch(arrayOf("text/*"))
     }
 
-    SettingScreen(
-        versionName = viewModel.versionName,
-        versionCode = viewModel.versionCode,
-        titleState = viewModel.titleState,
-        urlState = viewModel.urlState,
-        uriState = viewModel.uriState,
-        basicUrlState = viewModel.basicUrlState,
-        usernameState = viewModel.usernameState,
-        passwordState = viewModel.passwordState,
-        epgState = viewModel.epgState,
-        localStorageState = viewModel.localStorageState,
-        selectedState = viewModel.selectedState,
-        backingUpOrRestoring = backingUpOrRestoring,
-        epgs = epgs,
-        hiddenChannels = hiddenChannels,
-        hiddenCategoriesWithPlaylists = hiddenCategoriesWithPlaylists,
-        backup = backup,
-        restore = restore,
-        colorSchemes = colorSchemes,
-        openColorCanvas = { colorScheme = it },
-        restoreSchemes = viewModel::restoreSchemes,
-        onClipboard = { viewModel.onClipboard(it) },
-        onSubscribe = {
-            controller?.hide()
-            viewModel.subscribe()
-        },
-        onUnhideChannel = { viewModel.onUnhideChannel(it) },
-        onUnhidePlaylistCategory = { playlistUrl, group ->
-            viewModel.onUnhidePlaylistCategory(playlistUrl, group)
-        },
-        onDeleteEpgPlaylist = { viewModel.deleteEpgPlaylist(it) },
-        modifier = modifier.fillMaxSize(),
-        contentPadding = contentPadding,
-    )
+    with(viewModel.properties) {
+        SettingScreen(
+            versionName = viewModel.versionName,
+            versionCode = viewModel.versionCode,
+            backingUpOrRestoring = backingUpOrRestoring,
+            epgs = epgs,
+            hiddenChannels = hiddenChannels,
+            hiddenCategoriesWithPlaylists = hiddenCategoriesWithPlaylists,
+            backup = backup,
+            restore = restore,
+            colorSchemes = colorSchemes,
+            openColorCanvas = { colorScheme = it },
+            restoreSchemes = viewModel::restoreSchemes,
+            onClipboard = { viewModel.onClipboard(it) },
+            onSubscribe = {
+                controller?.hide()
+                viewModel.subscribe()
+            },
+            onUnhideChannel = { viewModel.onUnhideChannel(it) },
+            onUnhidePlaylistCategory = { playlistUrl, group ->
+                viewModel.onUnhidePlaylistCategory(playlistUrl, group)
+            },
+            onDeleteEpgPlaylist = { viewModel.deleteEpgPlaylist(it) },
+            modifier = modifier.fillMaxSize(),
+            contentPadding = contentPadding,
+        )
+    }
+
     CanvasBottomSheet(
         sheetState = sheetState,
         colorScheme = colorScheme,
@@ -136,16 +131,8 @@ fun SettingRoute(
 }
 
 @Composable
+context(_: SettingProperties)
 private fun SettingScreen(
-    titleState: MutableState<String>,
-    urlState: MutableState<String>,
-    uriState: MutableState<Uri>,
-    selectedState: MutableState<DataSource>,
-    basicUrlState: MutableState<String>,
-    usernameState: MutableState<String>,
-    passwordState: MutableState<String>,
-    epgState: MutableState<String>,
-    localStorageState: MutableState<Boolean>,
     versionName: String,
     versionCode: Int,
     backingUpOrRestoring: BackingUpAndRestoringState,
@@ -248,15 +235,6 @@ private fun SettingScreen(
             when (destination) {
                 SettingDestination.Playlists -> {
                     SubscriptionsFragment(
-                        titleState = titleState,
-                        urlState = urlState,
-                        uriState = uriState,
-                        selectedState = selectedState,
-                        basicUrlState = basicUrlState,
-                        usernameState = usernameState,
-                        passwordState = passwordState,
-                        epgState = epgState,
-                        localStorageState = localStorageState,
                         backingUpOrRestoring = backingUpOrRestoring,
                         hiddenChannels = hiddenChannels,
                         hiddenCategoriesWithPlaylists = hiddenCategoriesWithPlaylists,

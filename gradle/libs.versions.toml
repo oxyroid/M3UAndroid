@@ -1,18 +1,18 @@
 [versions]
 androidx-core = "1.16.0"
 androidx-core-splashscreen = "1.0.1"
-androidx-appcompat = "1.7.0"
+androidx-appcompat = "1.7.1"
 androidx-activity = "1.10.1"
-androidx-lifecycle = "2.9.0"
-androidx-compose-bom = "2025.05.00"
+androidx-lifecycle = "2.9.1"
+androidx-compose-bom = "2025.06.01"
 androidx-compose-material3-adaptive = "1.1.0"
 androidx-constraintlayout-compose = "1.1.1"
-androidx-navigation = "2.9.0"
+androidx-navigation = "2.9.1"
 androidx-hilt = "1.2.0"
 androidx-tv = "1.1.0-alpha01"
-androidx-media3 = "1.6.1"
-androidx-work = "2.10.1"
-androidx-room = "2.7.1"
+androidx-media3 = "1.7.1"
+androidx-work = "2.10.2"
+androidx-room = "2.7.2"
 androidx-startup = "1.2.0"
 androidx-paging = "3.3.6"
 
@@ -39,9 +39,9 @@ slf4j-api = "2.0.17"
 squareup-retrofit2 = "2.11.0"
 squareup-leakcanary = "2.14"
 
-kotlin = "2.1.20"
+kotlin = "2.2.0"
 android-gradle-plugin = "8.9.1"
-kotlin-symbol-processor = "2.1.20-2.0.0"
+kotlin-symbol-processor = "2.2.0-2.0.2"
 
 androidx-test-ext-junit = "1.2.1"
 espresso-core = "3.6.1"
@@ -66,7 +66,7 @@ androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecyc
 androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "androidx-lifecycle" }
 
-androidx-compose-bom = { group = "androidx.compose", name = "compose-bom-alpha", version.ref = "androidx-compose-bom" }
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "androidx-compose-bom" }
 androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
 androidx-compose-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout" }
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }

@@ -1,8 +1,6 @@
 package com.m3u.business.setting
 
 import android.net.Uri
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.OneTimeWorkRequestBuilder
@@ -13,8 +11,6 @@ import androidx.work.WorkQuery
 import androidx.work.workDataOf
 import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.Profiles
-import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.Settings
 import com.m3u.core.architecture.preferences.flowOf
@@ -59,8 +55,6 @@ class SettingViewModel @Inject constructor(
     private val colorSchemeDao: ColorSchemeDao,
     delegate: Logger
 ) : ViewModel() {
-    private val logger = delegate.install(Profiles.VIEWMODEL_SETTING)
-
     val epgs: StateFlow<List<Playlist>> = playlistRepository
         .observeAllEpgs()
         .stateIn(
@@ -115,15 +109,15 @@ class SettingViewModel @Inject constructor(
             val fileSplit = filePath.lastOrNull()?.split(".") ?: emptyList()
             fileSplit.firstOrNull() ?: "Playlist_${System.currentTimeMillis()}"
         }
-        titleState.value = Uri.decode(title)
-        urlState.value = Uri.decode(url)
-        when (selectedState.value) {
+        properties.titleState.value = Uri.decode(title)
+        properties.urlState.value = Uri.decode(url)
+        when (properties.selectedState.value) {
             is DataSource.Xtream -> {
                 val input = XtreamInput.decodeFromPlaylistUrlOrNull(url) ?: return
-                basicUrlState.value = input.basicUrl
-                usernameState.value = input.username
-                passwordState.value = input.password
-                titleState.value = Uri.decode("Xtream_${Clock.System.now().toEpochMilliseconds()}")
+                properties.basicUrlState.value = input.basicUrl
+                properties.usernameState.value = input.username
+                properties.passwordState.value = input.password
+                properties.titleState.value = Uri.decode("Xtream_${Clock.System.now().toEpochMilliseconds()}")
             }
 
             else -> {}
@@ -140,15 +134,15 @@ class SettingViewModel @Inject constructor(
     }
 
     fun subscribe() {
-        val title = titleState.value
-        val url = urlState.value
-        val uri = uriState.value
-        val inputBasicUrl = basicUrlState.value
-        val username = usernameState.value
-        val password = passwordState.value
-        val epg = epgState.value
-        val selected = selectedState.value
-        val localStorage = localStorageState.value
+        val title = properties.titleState.value
+        val url = properties.urlState.value
+        val uri = properties.uriState.value
+        val inputBasicUrl = properties.basicUrlState.value
+        val username = properties.usernameState.value
+        val password = properties.passwordState.value
+        val epg = properties.epgState.value
+        val selected = properties.selectedState.value
+        val localStorage = properties.localStorageState.value
         val urlOrUri = uri
             .takeIf { uri != Uri.EMPTY }?.toString().orEmpty()
             .takeIf { localStorage }
@@ -276,13 +270,15 @@ class SettingViewModel @Inject constructor(
     }
 
     private fun resetAllInputs() {
-        titleState.value = ""
-        urlState.value = ""
-        uriState.value = Uri.EMPTY
-        basicUrlState.value = ""
-        usernameState.value = ""
-        passwordState.value = ""
-        epgState.value = ""
+        with(properties) {
+            titleState.value = ""
+            urlState.value = ""
+            uriState.value = Uri.EMPTY
+            basicUrlState.value = ""
+            usernameState.value = ""
+            passwordState.value = ""
+            epgState.value = ""
+        }
     }
 
     fun deleteEpgPlaylist(epgUrl: String) {
@@ -322,13 +318,5 @@ class SettingViewModel @Inject constructor(
     val versionName: String = publisher.versionName
     val versionCode: Int = publisher.versionCode
 
-    val titleState = mutableStateOf("")
-    val urlState = mutableStateOf("")
-    val uriState = mutableStateOf(Uri.EMPTY)
-    val localStorageState = mutableStateOf(false)
-    val basicUrlState = mutableStateOf("")
-    val usernameState = mutableStateOf("")
-    val passwordState = mutableStateOf("")
-    val epgState = mutableStateOf("")
-    val selectedState: MutableState<DataSource> = mutableStateOf(DataSource.M3U)
+    val properties = SettingProperties()
 }

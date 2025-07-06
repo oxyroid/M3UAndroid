@@ -16,9 +16,13 @@ plugins {
     alias(libs.plugins.androidx.baselineprofile) apply false
     id("com.squareup.wire") version "5.3.1" apply false
 }
-
 subprojects {
     tasks.withType<KotlinCompile>().configureEach {
+        compilerOptions {
+            freeCompilerArgs.addAll(
+                "-Xcontext-parameters"
+            )
+        }
         kotlinExtension.sourceSets.all {
             languageSettings {
                 optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
@@ -31,6 +35,7 @@ subprojects {
                 optIn("androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi")
                 optIn("androidx.tv.material3.ExperimentalTvMaterial3Api")
                 optIn("com.google.accompanist.permissions.ExperimentalPermissionsApi")
+
             }
         }
     }

@@ -157,53 +157,15 @@ internal fun PlaylistRoute(
     else rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
 
     val title by remember { derivedStateOf { playlist?.title?.title().orEmpty() } }
-    val subtitle by remember {
-        derivedStateOf {
-            val spans = buildMap {
-                val typeWithSource = playlist.run {
-                    when {
-                        this == null || query.isNotEmpty() -> null
-                        source == DataSource.Xtream -> "$source $type".uppercase()
-                        else -> null
-                    }
-                }
-                if (typeWithSource != null) {
-                    put(typeWithSource, SpanStyle(color = colorScheme.secondary))
-                }
-                if (query.isNotEmpty()) {
-                    put("\"$query\"", SpanStyle(color = colorScheme.primary))
-                }
-            }
-
-            buildAnnotatedString {
-                spans.entries.forEachIndexed { index, (text, span) ->
-                    withStyle(span) { append(text) }
-                    if (index != spans.entries.size - 1) {
-                        append(" ")
-                    }
-                }
-            }
-        }
-    }
 
     LifecycleResumeEffect(
         title,
-        subtitle,
         colorScheme
     ) {
         Metadata.title = AnnotatedString(title)
-        coroutineScope.launch {
-            lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                delay(400.milliseconds)
-                Metadata.subtitle = subtitle
-            }
-        }
-
         Metadata.color = colorScheme.secondaryContainer
         Metadata.contentColor = colorScheme.onSecondaryContainer
-        onPauseOrDispose {
-            Metadata.subtitle = AnnotatedString("")
-        }
+        onPauseOrDispose {}
     }
 
     LaunchedEffect(autoRefreshChannels, playlistUrl) {

@@ -11,7 +11,6 @@ import androidx.compose.ui.text.AnnotatedString
 @Stable
 object Metadata {
     var title: AnnotatedString by mutableStateOf(AnnotatedString(""))
-    var subtitle: AnnotatedString by mutableStateOf(AnnotatedString(""))
     var headlineUrl: String by mutableStateOf("")
     var headlineFraction: Float by mutableFloatStateOf(0f)
     var actions: List<Action> by mutableStateOf(emptyList())
