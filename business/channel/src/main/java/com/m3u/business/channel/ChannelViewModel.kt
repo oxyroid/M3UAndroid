@@ -1,7 +1,6 @@
 package com.m3u.business.channel
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.media.AudioManager
 import android.net.Uri
 import androidx.compose.runtime.getValue
@@ -20,9 +19,6 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkQuery
 import com.m3u.core.architecture.Signal
-import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.Profiles
-import com.m3u.core.architecture.logger.install
 import com.m3u.core.util.coroutine.flatmapCombined
 import com.m3u.core.wrapper.Sort
 import com.m3u.data.database.model.AdjacentChannels
@@ -42,7 +38,6 @@ import com.m3u.data.service.currentTracks
 import com.m3u.data.service.tracks
 import com.m3u.data.worker.ProgrammeReminder
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
@@ -77,10 +72,7 @@ class ChannelViewModel @Inject constructor(
     private val audioManager: AudioManager,
     private val programmeRepository: ProgrammeRepository,
     private val workManager: WorkManager,
-    @ApplicationContext private val context: Context,
-    delegate: Logger,
 ) : ViewModel(), ControlPoint.DiscoveryListener {
-    private val logger = delegate.install(Profiles.VIEWMODEL_CHANNEL)
 
     var cwPosition: Long by mutableLongStateOf(-1L)
         private set

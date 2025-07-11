@@ -1,8 +1,5 @@
 package com.m3u.data.parser.xtream
 
-import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.Profiles
-import com.m3u.core.architecture.logger.install
 import com.m3u.data.api.OkhttpClient
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.parser.ParserUtils
@@ -19,9 +16,7 @@ import javax.inject.Inject
 
 internal class XtreamParserImpl @Inject constructor(
     @OkhttpClient(true) okHttpClient: OkHttpClient,
-    delegate: Logger
 ) : XtreamParser {
-    private val logger = delegate.install(Profiles.PARSER_XTREAM)
 
     @OptIn(ExperimentalSerializationApi::class)
     private val json: Json
@@ -35,7 +30,6 @@ internal class XtreamParserImpl @Inject constructor(
         ParserUtils(
             json = json,
             okHttpClient = okHttpClient,
-            logger = logger
         )
     }
 
@@ -133,7 +127,10 @@ internal class XtreamParserImpl @Inject constructor(
         )
     }
 
-    override suspend fun getSeriesInfoOrThrow(input: XtreamInput, seriesId: Int): XtreamChannelInfo {
+    override suspend fun getSeriesInfoOrThrow(
+        input: XtreamInput,
+        seriesId: Int
+    ): XtreamChannelInfo {
         val (basicUrl, username, password, type) = input
         check(type == DataSource.Xtream.TYPE_SERIES) { "xtream input type must be `series`" }
         return utils.newCallOrThrow(

@@ -5,9 +5,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkQuery
-import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.Profiles
-import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.Settings
 import com.m3u.core.architecture.preferences.flowOf
@@ -48,10 +45,7 @@ class ForyouViewModel @Inject constructor(
     private val playerManager: PlayerManager,
     settings: Settings,
     workManager: WorkManager,
-    delegate: Logger
 ) : ViewModel() {
-    private val logger = delegate.install(Profiles.VIEWMODEL_FORYOU)
-
     val playlists: StateFlow<Map<Playlist, Int>> = playlistRepository
         .observeAllCounts()
         .stateIn(

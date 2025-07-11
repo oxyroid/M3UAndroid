@@ -12,17 +12,13 @@ import coil.Coil
 import coil.request.ErrorResult
 import coil.request.ImageRequest
 import coil.request.SuccessResult
-import com.m3u.core.architecture.logger.Profiles
-import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.execute
-import com.m3u.core.architecture.logger.install
-import com.m3u.core.architecture.logger.sandBox
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.ktor.util.cio.writeChannel
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.copyAndClose
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
@@ -32,9 +28,8 @@ private const val BITMAP_QUALITY = 100
 
 internal class MediaRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
-    delegate: Logger,
 ) : MediaRepository {
-    private val logger = delegate.install(Profiles.REPOS_MEDIA)
+    private val timber = Timber.tag("MediaRepositoryImpl")
     private val applicationName = "M3U"
     private val pictureDirectory = File(
         Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
@@ -58,7 +53,7 @@ internal class MediaRepositoryImpl @Inject constructor(
         file
     }
 
-    override suspend fun installApk(channel: ByteReadChannel) = logger.sandBox {
+    override suspend fun installApk(channel: ByteReadChannel) = withContext(Dispatchers.IO) {
         val dir = downloadDirectory.resolve("apks")
         dir.mkdirs()
         val file = File(dir, "${System.currentTimeMillis()}.apk")
@@ -71,12 +66,12 @@ internal class MediaRepositoryImpl @Inject constructor(
         context.startActivity(intent)
     }
 
-    override suspend fun loadDrawable(url: String): Drawable? = logger.execute<Drawable> {
+    override suspend fun loadDrawable(url: String): Drawable? = withContext(Dispatchers.IO) {
         val loader = Coil.imageLoader(context)
         val request: ImageRequest = ImageRequest.Builder(context)
             .data(url)
             .build()
-        return when (val result = loader.execute(request)) {
+        when (val result = loader.execute(request)) {
             is SuccessResult -> result.drawable
             is ErrorResult -> throw result.throwable
         }

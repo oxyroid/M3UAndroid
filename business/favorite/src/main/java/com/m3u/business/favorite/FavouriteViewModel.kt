@@ -14,9 +14,6 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.m3u.core.Contracts
-import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.Profiles
-import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.Settings
 import com.m3u.core.architecture.preferences.flowOf
@@ -52,10 +49,7 @@ class FavoriteViewModel @Inject constructor(
     private val mediaRepository: MediaRepository,
     private val playerManager: PlayerManager,
     settings: Settings,
-    delegate: Logger
 ) : ViewModel() {
-    private val logger = delegate.install(Profiles.VIEWMODEL_FAVOURITE)
-
     val zapping: StateFlow<Channel?> = combine(
         settings.flowOf(PreferencesKeys.ZAPPING_MODE),
         playerManager.channel

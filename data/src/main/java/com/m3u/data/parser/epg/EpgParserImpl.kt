@@ -1,9 +1,6 @@
 package com.m3u.data.parser.epg
 
 import android.util.Xml
-import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.Profiles
-import com.m3u.core.architecture.logger.install
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -13,10 +10,7 @@ import java.io.InputStream
 import javax.inject.Inject
 
 internal class EpgParserImpl @Inject constructor(
-    delegate: Logger
 ) : EpgParser {
-    private val logger = delegate.install(Profiles.PARSER_EPG)
-
     override fun readProgrammes(input: InputStream): Flow<EpgProgramme> = channelFlow {
         val parser = Xml.newPullParser()
         parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false)
@@ -30,6 +24,7 @@ internal class EpgParserImpl @Inject constructor(
                         val programme = readProgramme()
                         send(programme)
                     }
+
                     else -> skip()
                 }
             }
@@ -120,6 +115,5 @@ internal class EpgParserImpl @Inject constructor(
 
     private inline fun optional(block: () -> String): String? =
         runCatching { block() }
-            .onFailure { logger.log(it) }
             .getOrNull()
 }

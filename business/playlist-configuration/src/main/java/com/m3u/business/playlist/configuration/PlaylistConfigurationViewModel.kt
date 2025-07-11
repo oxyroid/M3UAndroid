@@ -6,9 +6,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkQuery
-import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.Profiles
-import com.m3u.core.architecture.logger.install
 import com.m3u.core.wrapper.Resource
 import com.m3u.core.wrapper.asResource
 import com.m3u.data.database.model.DataSource
@@ -20,7 +17,6 @@ import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.data.worker.SubscriptionWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -35,6 +31,7 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import timber.log.Timber
 import javax.inject.Inject
 
 typealias EpgManifest = Map<Playlist, Boolean>
@@ -46,9 +43,8 @@ class PlaylistConfigurationViewModel @Inject constructor(
     private val xtreamParser: XtreamParser,
     private val workManager: WorkManager,
     savedStateHandle: SavedStateHandle,
-    delegate: Logger
 ) : ViewModel() {
-    private val logger = delegate.install(Profiles.VIEWMODEL_PLAYLIST_CONFIGURATION)
+    private val timber = Timber.tag("PlaylistConfigurationViewModel")
     private val playlistUrl: StateFlow<String> = savedStateHandle
         .getStateFlow(PlaylistConfigurationNavigation.TYPE_PLAYLIST_URL, "")
     val playlist: StateFlow<Playlist?> = playlistUrl.flatMapLatest {

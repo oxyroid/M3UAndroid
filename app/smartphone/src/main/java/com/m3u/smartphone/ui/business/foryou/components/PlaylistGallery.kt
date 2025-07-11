@@ -25,7 +25,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.epgUrlsOrXtreamXmlUrl
-import com.m3u.data.database.model.fromLocal
+import com.m3u.data.database.model.refreshable
 import com.m3u.data.database.model.type
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.common.helper.LocalHelper
@@ -102,7 +102,7 @@ internal fun PlaylistGallery(
             PlaylistItem(
                 label = PlaylistGalleryDefaults.calculateUiTitle(
                     title = playlist.title,
-                    fromLocal = playlist.fromLocal
+                    refreshable = playlist.refreshable
                 ),
                 type = with(playlist) {
                     when (source) {
@@ -113,7 +113,7 @@ internal fun PlaylistGallery(
                 },
                 count = count,
                 subscribingOrRefreshing = subscribing || refreshing,
-                local = playlist.fromLocal,
+                refreshable = playlist.refreshable,
                 onClick = { onClick(playlist) },
                 onLongClick = { onLongClick(playlist) },
                 modifier = Modifier
@@ -131,9 +131,9 @@ internal fun PlaylistGallery(
 
 private object PlaylistGalleryDefaults {
     @Composable
-    fun calculateUiTitle(title: String, fromLocal: Boolean): String {
+    fun calculateUiTitle(title: String, refreshable: Boolean): String {
         val actual = title.ifEmpty {
-            if (fromLocal) stringResource(string.feat_foryou_imported_playlist_title)
+            if (!refreshable) stringResource(string.feat_foryou_imported_playlist_title)
             else ""
         }
         return actual.uppercase()

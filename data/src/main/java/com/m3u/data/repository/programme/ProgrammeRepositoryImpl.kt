@@ -3,11 +3,6 @@ package com.m3u.data.repository.programme
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
-import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.Profiles
-import com.m3u.core.architecture.logger.execute
-import com.m3u.core.architecture.logger.install
-import com.m3u.core.architecture.logger.post
 import com.m3u.core.util.basic.letIf
 import com.m3u.data.api.OkhttpClient
 import com.m3u.data.database.dao.ChannelDao
@@ -34,6 +29,7 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.datetime.Clock
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import timber.log.Timber
 import java.util.zip.GZIPInputStream
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.days
@@ -44,9 +40,8 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
     private val programmeDao: ProgrammeDao,
     private val epgParser: EpgParser,
     @OkhttpClient(true) private val okHttpClient: OkHttpClient,
-    delegate: Logger
 ) : ProgrammeRepository {
-    private val logger = delegate.install(Profiles.REPOS_PROGRAMME)
+    private val timber = Timber.tag("ProgrammeRepositoryImpl")
     override val refreshingEpgUrls = MutableStateFlow<List<String>>(emptyList())
 
     override fun pagingProgrammes(
@@ -111,9 +106,7 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getById(id: Int): Programme? = logger.execute {
-        programmeDao.getById(id)
-    }
+    override suspend fun getById(id: Int): Programme? = programmeDao.getById(id)
 
     override suspend fun getProgrammeCurrently(channelId: Int): Programme? {
         val channel = channelDao.get(channelId) ?: return null
@@ -140,7 +133,7 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
         val jobs = epgUrls.map { epgUrl ->
             async {
                 if (epgUrl in refreshingEpgUrls.value) run {
-                    logger.post { "skipped! epgUrl is refreshing. [$epgUrl]" }
+                    timber.d("skipped! epgUrl is refreshing. [$epgUrl]")
                     return@async
                 }
                 supervisorScope {
@@ -148,7 +141,7 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
                         refreshingEpgUrls.value += epgUrl
                         val cacheMaxEnd = programmeDao.getMaxEndByEpgUrl(epgUrl)
                         if (!ignoreCache && cacheMaxEnd != null && cacheMaxEnd > now) run {
-                            logger.post { "skipped! exist validate programmes. [$epgUrl]" }
+                            timber.d("skipped! exist validate programmes. [$epgUrl]")
                             return@supervisorScope
                         }
 

@@ -5,7 +5,6 @@ package com.m3u.data.api
 import android.content.Context
 import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
-import com.m3u.core.architecture.logger.Logger
 import com.m3u.data.Certs
 import com.m3u.data.SSLs
 import dagger.Module
@@ -53,9 +52,7 @@ internal object ApiModule {
     @Provides
     @Singleton
     @OkhttpClient(false)
-    fun provideOkhttpClient(
-        logger: Logger
-    ): OkHttpClient {
+    fun provideOkhttpClient(): OkHttpClient {
         return OkHttpClient.Builder()
             .authenticator(Authenticator.JAVA_NET_AUTHENTICATOR)
             .addInterceptor { chain ->
@@ -63,7 +60,6 @@ internal object ApiModule {
                 try {
                     chain.proceed(request)
                 } catch (e: Exception) {
-                    logger.log(e)
                     Response.Builder()
                         .request(request)
                         .protocol(Protocol.HTTP_1_1)

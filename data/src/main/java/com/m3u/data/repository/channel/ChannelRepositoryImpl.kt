@@ -1,11 +1,6 @@
 package com.m3u.data.repository.channel
 
 import androidx.paging.PagingSource
-import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.Profiles
-import com.m3u.core.architecture.logger.execute
-import com.m3u.core.architecture.logger.install
-import com.m3u.core.architecture.logger.sandBox
 import com.m3u.core.architecture.preferences.Settings
 import com.m3u.core.wrapper.Sort
 import com.m3u.data.database.dao.ChannelDao
@@ -22,9 +17,7 @@ internal class ChannelRepositoryImpl @Inject constructor(
     private val channelDao: ChannelDao,
     private val playlistDao: PlaylistDao,
     private val settings: Settings,
-    logger: Logger,
 ) : ChannelRepository {
-    private val logger = logger.install(Profiles.REPOS_CHANNEL)
     override fun observe(id: Int): Flow<Channel?> = channelDao
         .observeById(id)
         .catch { emit(null) }
@@ -50,9 +43,7 @@ internal class ChannelRepositoryImpl @Inject constructor(
         Sort.MIXED -> channelDao.pagingAllByPlaylistUrlMixed(url, query)
     }
 
-    override suspend fun get(id: Int): Channel? = logger.execute {
-        channelDao.get(id)
-    }
+    override suspend fun get(id: Int): Channel? = channelDao.get(id)
 
     override fun observeAdjacentChannels(
         channelId: Int,
@@ -64,26 +55,24 @@ internal class ChannelRepositoryImpl @Inject constructor(
         category = category
     )
 
-    override suspend fun getByPlaylistUrl(playlistUrl: String): List<Channel> = logger.execute {
-        channelDao.getByPlaylistUrl(playlistUrl)
-    } ?: emptyList()
+    override suspend fun getByPlaylistUrl(playlistUrl: String): List<Channel> = channelDao.getByPlaylistUrl(playlistUrl)
 
-    override suspend fun favouriteOrUnfavourite(id: Int) = logger.sandBox {
-        val current = channelDao.get(id)?.favourite ?: return@sandBox
+    override suspend fun favouriteOrUnfavourite(id: Int) {
+        val current = channelDao.get(id)?.favourite ?: return
         channelDao.favouriteOrUnfavourite(id, !current)
     }
 
-    override suspend fun hide(id: Int, target: Boolean) = logger.sandBox {
+    override suspend fun hide(id: Int, target: Boolean) {
         channelDao.hide(id, target)
     }
 
-    override suspend fun reportPlayed(id: Int) = logger.sandBox {
+    override suspend fun reportPlayed(id: Int) {
         val current = Clock.System.now().toEpochMilliseconds()
         channelDao.updateSeen(id, current)
     }
 
-    override suspend fun getPlayedRecently(): Channel? = logger.execute {
-        channelDao.getPlayedRecently()
+    override suspend fun getPlayedRecently(): Channel? {
+        return channelDao.getPlayedRecently()
     }
 
     override fun observePlayedRecently(): Flow<Channel?> = channelDao.observePlayedRecently()

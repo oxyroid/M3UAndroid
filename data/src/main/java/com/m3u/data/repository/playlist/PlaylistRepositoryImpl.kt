@@ -5,12 +5,6 @@ import android.content.Context
 import android.net.Uri
 import androidx.core.net.toUri
 import androidx.work.WorkManager
-import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.Profiles
-import com.m3u.core.architecture.logger.execute
-import com.m3u.core.architecture.logger.install
-import com.m3u.core.architecture.logger.post
-import com.m3u.core.architecture.logger.sandBox
 import com.m3u.core.architecture.preferences.PlaylistStrategy
 import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.Settings
@@ -26,8 +20,7 @@ import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithChannels
-import com.m3u.data.database.model.PlaylistWithCount
-import com.m3u.data.database.model.fromLocal
+import com.m3u.data.database.model.refreshable
 import com.m3u.data.database.model.toMap
 import com.m3u.data.parser.m3u.M3UData
 import com.m3u.data.parser.m3u.M3UParser
@@ -64,6 +57,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import timber.log.Timber
 import java.io.File
 import java.io.InputStream
 import java.io.Reader
@@ -77,7 +71,6 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     private val playlistDao: PlaylistDao,
     private val channelDao: ChannelDao,
     private val programmeDao: ProgrammeDao,
-    delegate: Logger,
     @OkhttpClient(true) private val okHttpClient: OkHttpClient,
     private val m3uParser: M3UParser,
     private val xtreamParser: XtreamParser,
@@ -85,7 +78,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val settings: Settings
 ) : PlaylistRepository {
-    private val logger = delegate.install(Profiles.REPOS_PLAYLIST)
+    private val timber = Timber.tag("PlaylistRepositoryImpl")
 
     override suspend fun m3uOrThrow(
         title: String,
@@ -94,13 +87,8 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     ) {
         var currentCount = 0
         callback(currentCount)
-        val actualUrl = url.actualUrl()
-        logger.post {
-            """
-                url: $url
-                actualUrl: $actualUrl
-            """.trimIndent()
-        }
+        val internalUrl = url.copyToInternalDirPath()
+        timber.d("m3uOrThrow: url=$url, internalUrl=$internalUrl")
         val playlistStrategy = settings[PreferencesKeys.PLAYLIST_STRATEGY]
         val favOrHiddenRelationIds = when (playlistStrategy) {
             PlaylistStrategy.ALL -> emptyList()
@@ -125,23 +113,23 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             }
         }
 
-        val playlist = playlistDao.get(actualUrl)?.copy(
+        val playlist = playlistDao.get(internalUrl)?.copy(
             title = title,
             // maybe be saved as epg or any other sources.
             source = DataSource.M3U
-        ) ?: Playlist(title, actualUrl, source = DataSource.M3U)
+        ) ?: Playlist(title, internalUrl, source = DataSource.M3U)
         playlistDao.insertOrReplace(playlist)
 
         val cache = createCoroutineCache<M3UData>(BUFFER_M3U_CAPACITY) { all ->
-            channelDao.insertOrReplaceAll(*all.map { it.toChannel(actualUrl) }.toTypedArray())
+            channelDao.insertOrReplaceAll(*all.map { it.toChannel(internalUrl) }.toTypedArray())
             currentCount += all.size
             callback(currentCount)
         }
 
         channelFlow {
             when {
-                url.isSupportedNetworkUrl() -> openNetworkInput(actualUrl)
-                url.isSupportedAndroidUrl() -> openAndroidInput(actualUrl)
+                url.isSupportedNetworkUrl() -> openNetworkInput(internalUrl)
+                url.isSupportedAndroidUrl() -> openAndroidInput(internalUrl)
                 else -> null
             }?.use { input ->
                 m3uParser
@@ -362,9 +350,15 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun refresh(url: String) = logger.sandBox {
-        val playlist = checkNotNull(get(url)) { "Cannot find playlist: $url" }
-        check(!playlist.fromLocal) { "refreshing is not needed for local storage playlist." }
+    override suspend fun refresh(url: String) {
+        val playlist = get(url) ?: run {
+            timber.w("Playlist not found for url: $url")
+            return
+        }
+        if (!playlist.refreshable) {
+            timber.w("Playlist is not refreshable: $playlist")
+            return
+        }
 
         when (playlist.source) {
             DataSource.M3U -> {
@@ -399,138 +393,101 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         context.contentResolver.openOutputStream(uri)?.use {
             val writer = it.bufferedWriter()
             all.forEach { (playlist, channels) ->
-                if (playlist.fromLocal) {
-                    logger.log("The playlist is from local storage, skipped. ($playlist)")
-                    return@forEach
-                }
-                logger.sandBox {
-                    val encodedPlaylist = json.encodeToString(playlist)
-                    val wrappedPlaylist = BackupOrRestoreContracts.wrapPlaylist(encodedPlaylist)
-                    writer.appendLine(wrappedPlaylist)
-                }
+                val encodedPlaylist = json.encodeToString(playlist)
+                val wrappedPlaylist = BackupOrRestoreContracts.wrapPlaylist(encodedPlaylist)
+                writer.appendLine(wrappedPlaylist)
 
                 channels.forEach { channel ->
-                    logger.sandBox {
-                        val encodedChannel = json.encodeToString(channel)
-                        val wrappedChannel = BackupOrRestoreContracts.wrapChannel(encodedChannel)
-                        logger.log(wrappedChannel)
-                        writer.appendLine(wrappedChannel)
-                    }
+                    val encodedChannel = json.encodeToString(channel)
+                    val wrappedChannel = BackupOrRestoreContracts.wrapChannel(encodedChannel)
+                    writer.appendLine(wrappedChannel)
                 }
             }
             writer.flush()
         }
     }
 
-    override suspend fun restoreOrThrow(uri: Uri) = logger.sandBox {
-        withContext(Dispatchers.IO) {
-            val json = Json {
-                ignoreUnknownKeys = true
-            }
-            val mutex = Mutex()
-            context.contentResolver.openInputStream(uri)?.use {
-                val reader = it.bufferedReader()
+    override suspend fun restoreOrThrow(uri: Uri): Unit = withContext(Dispatchers.IO) {
+        val json = Json {
+            ignoreUnknownKeys = true
+        }
+        val mutex = Mutex()
+        context.contentResolver.openInputStream(uri)?.use {
+            val reader = it.bufferedReader()
 
-                val channels = mutableListOf<Channel>()
-                reader.forEachLine { line ->
-                    if (line.isBlank()) return@forEachLine
-                    val encodedPlaylist = BackupOrRestoreContracts.unwrapPlaylist(line)
-                    val encodedChannel = BackupOrRestoreContracts.unwrapChannel(line)
-                    when {
-                        encodedPlaylist != null -> logger.sandBox {
-                            val playlist = json.decodeFromString<Playlist>(encodedPlaylist)
-                            playlistDao.insertOrReplace(playlist)
-                        }
+            val channels = mutableListOf<Channel>()
+            reader.forEachLine { line ->
+                if (line.isBlank()) return@forEachLine
+                val encodedPlaylist = BackupOrRestoreContracts.unwrapPlaylist(line)
+                val encodedChannel = BackupOrRestoreContracts.unwrapChannel(line)
+                when {
+                    encodedPlaylist != null -> {
+                        val playlist = json.decodeFromString<Playlist>(encodedPlaylist)
+                        playlistDao.insertOrReplace(playlist)
+                    }
 
-                        encodedChannel != null -> logger.sandBox {
-                            val channel = json.decodeFromString<Channel>(encodedChannel)
-                            channels.add(channel)
-                            if (channels.size >= BUFFER_RESTORE_CAPACITY) {
-                                mutex.withLock {
-                                    if (channels.size >= BUFFER_RESTORE_CAPACITY) {
-                                        channelDao.insertOrReplaceAll(*channels.toTypedArray())
-                                        channels.clear()
-                                    }
+                    encodedChannel != null -> {
+                        val channel = json.decodeFromString<Channel>(encodedChannel)
+                        channels.add(channel)
+                        if (channels.size >= BUFFER_RESTORE_CAPACITY) {
+                            mutex.withLock {
+                                if (channels.size >= BUFFER_RESTORE_CAPACITY) {
+                                    channelDao.insertOrReplaceAll(*channels.toTypedArray())
+                                    channels.clear()
                                 }
                             }
                         }
-
-                        else -> {}
                     }
+
+                    else -> {}
                 }
-                mutex.withLock {
-                    channelDao.insertOrReplaceAll(*channels.toTypedArray())
-                }
+            }
+            mutex.withLock {
+                channelDao.insertOrReplaceAll(*channels.toTypedArray())
             }
         }
     }
 
-    override suspend fun pinOrUnpinCategory(url: String, category: String) = logger.sandBox {
+    override suspend fun pinOrUnpinCategory(url: String, category: String) {
         playlistDao.updatePinnedCategories(url) { prev ->
             if (category in prev) prev - category
             else prev + category
         }
     }
 
-    override suspend fun hideOrUnhideCategory(url: String, category: String) = logger.sandBox {
+    override suspend fun hideOrUnhideCategory(url: String, category: String) {
         playlistDao.hideOrUnhideCategory(url, category)
     }
 
     override fun observeAll(): Flow<List<Playlist>> = playlistDao
         .observeAll()
-        .catch {
-            logger.log(it)
-            emit(emptyList())
-        }
+        .catch { emit(emptyList()) }
 
     override fun observeAllEpgs(): Flow<List<Playlist>> = playlistDao
         .observeAllEpgs()
-        .catch {
-            logger.log(it)
-            emit(emptyList())
-        }
+        .catch { emit(emptyList()) }
 
     override fun observePlaylistUrls(): Flow<List<String>> = playlistDao
         .observePlaylistUrls()
-        .catch {
-            logger.log(it)
-            emit(emptyList())
-        }
+        .catch { emit(emptyList()) }
 
     override fun observe(url: String): Flow<Playlist?> = playlistDao
         .observeByUrl(url)
-        .catch {
-            logger.log(it)
-            emit(null)
-        }
+        .catch { emit(null) }
 
     override fun observePlaylistWithChannels(url: String): Flow<PlaylistWithChannels?> = playlistDao
         .observeByUrlWithChannels(url)
-        .catch {
-            logger.log(it)
-            emit(null)
-        }
+        .catch { emit(null) }
 
-    override suspend fun getPlaylistWithChannels(url: String): PlaylistWithChannels? =
-        logger.execute {
-            playlistDao.getByUrlWithChannels(url)
-        }
+    override suspend fun getPlaylistWithChannels(url: String): PlaylistWithChannels? = playlistDao.getByUrlWithChannels(url)
 
-    override suspend fun get(url: String): Playlist? = logger.execute {
-        playlistDao.get(url)
-    }
+    override suspend fun get(url: String): Playlist? = playlistDao.get(url)
 
-    override suspend fun getAll(): List<Playlist> = logger.execute {
-        playlistDao.getAll()
-    } ?: emptyList()
+    override suspend fun getAll(): List<Playlist> = playlistDao.getAll()
 
-    override suspend fun getAllAutoRefresh(): List<Playlist> = logger.execute {
-        playlistDao.getAllAutoRefresh()
-    } ?: emptyList()
+    override suspend fun getAllAutoRefresh(): List<Playlist> = playlistDao.getAllAutoRefresh()
 
-    override suspend fun getBySource(source: DataSource): List<Playlist> = logger.execute {
-        playlistDao.getBySource(source)
-    } ?: emptyList()
+    override suspend fun getBySource(source: DataSource): List<Playlist> = playlistDao.getBySource(source)
 
     override suspend fun getCategoriesByPlaylistUrlIgnoreHidden(
         url: String,
@@ -561,25 +518,19 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     }
         .flowOn(Dispatchers.Default)
 
-    override suspend fun unsubscribe(url: String): Playlist? = logger.execute {
+    override suspend fun unsubscribe(url: String): Playlist? {
         val playlist = playlistDao.get(url)
         channelDao.deleteByPlaylistUrl(url)
-        playlist?.also {
+        return playlist?.also {
             playlistDao.delete(it)
         }
     }
 
-    override suspend fun onUpdatePlaylistTitle(url: String, title: String) = logger.sandBox {
-        playlistDao.updateTitle(url, title)
-    }
+    override suspend fun onUpdatePlaylistTitle(url: String, title: String) = playlistDao.updateTitle(url, title)
 
-    override suspend fun onUpdatePlaylistUserAgent(url: String, userAgent: String?) =
-        logger.sandBox {
-            playlistDao.updateUserAgent(url, userAgent)
-        }
+    override suspend fun onUpdatePlaylistUserAgent(url: String, userAgent: String?) = playlistDao.updateUserAgent(url, userAgent)
 
-    override fun observeAllCounts(): Flow<Map<Playlist, Int>> =
-        playlistDao.observeAllCounts()
+    override fun observeAllCounts(): Flow<Map<Playlist, Int>> = playlistDao.observeAllCounts()
             .map { it.toMap() }
             .catch { emit(emptyMap()) }
 
@@ -647,7 +598,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         ignoreCase = true
     )
 
-    private suspend fun String.actualUrl(): String {
+    private suspend fun String.copyToInternalDirPath(): String {
         if (!isSupportedAndroidUrl()) return this
         val uri = this.toUri()
         if (uri.scheme == ContentResolver.SCHEME_FILE) return uri.toString()
@@ -658,11 +609,11 @@ internal class PlaylistRepositoryImpl @Inject constructor(
 
             val success = uri.copyToFile(contentResolver, destinationFile)
             if (!success) {
-                return@withContext this@actualUrl
+                return@withContext this@copyToInternalDirPath
             }
 
             val newUrl = Uri.decode(destinationFile.toUri().toString())
-            playlistDao.updateUrl(this@actualUrl, newUrl)
+            playlistDao.updateUrl(this@copyToInternalDirPath, newUrl)
             newUrl
         }
     }

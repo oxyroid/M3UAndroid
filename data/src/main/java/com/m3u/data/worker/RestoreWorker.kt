@@ -9,9 +9,6 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
-import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.Profiles
-import com.m3u.core.architecture.logger.install
 import com.m3u.data.R
 import com.m3u.data.repository.playlist.PlaylistRepository
 import dagger.assisted.Assisted
@@ -23,10 +20,7 @@ class RestoreWorker @AssistedInject constructor(
     @Assisted params: WorkerParameters,
     private val playlistRepository: PlaylistRepository,
     private val notificationManager: NotificationManager,
-    delegate: Logger
 ) : CoroutineWorker(context, params) {
-    private val logger = delegate.install(Profiles.WORKER_RESTORE)
-
     private val uri = inputData.getString(INPUT_URI)?.let { Uri.parse(it) }
 
     override suspend fun doWork(): Result {

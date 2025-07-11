@@ -4,18 +4,15 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import android.net.Uri
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
-import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.Profiles
-import com.m3u.core.architecture.logger.install
 import com.m3u.data.R
 import com.m3u.data.repository.playlist.PlaylistRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import androidx.core.net.toUri
 
 @HiltWorker
 class BackupWorker @AssistedInject constructor(
@@ -23,17 +20,14 @@ class BackupWorker @AssistedInject constructor(
     @Assisted params: WorkerParameters,
     private val playlistRepository: PlaylistRepository,
     private val notificationManager: NotificationManager,
-    delegate: Logger
 ) : CoroutineWorker(context, params) {
-    private val logger = delegate.install(Profiles.WORKER_BACKUP)
-
-    private val uri = inputData.getString(INPUT_URI)?.let { Uri.parse(it) }
+    private val uri = inputData.getString(INPUT_URI)?.toUri()
     override suspend fun doWork(): Result {
         createChannel()
         uri ?: return Result.failure()
         try {
             playlistRepository.backupOrThrow(uri)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             return Result.failure()
         }
         return Result.success()

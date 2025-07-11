@@ -49,10 +49,6 @@ import androidx.media3.transformer.InAppMp4Muxer
 import androidx.media3.transformer.TransformationRequest
 import androidx.media3.transformer.Transformer
 import com.m3u.core.architecture.Publisher
-import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.Profiles
-import com.m3u.core.architecture.logger.install
-import com.m3u.core.architecture.logger.post
 import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.ReconnectMode
 import com.m3u.core.architecture.preferences.Settings
@@ -93,6 +89,7 @@ import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
+import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
@@ -107,8 +104,8 @@ class PlayerManagerImpl @Inject constructor(
     private val cache: Cache,
     private val settings: Settings,
     publisher: Publisher,
-    delegate: Logger
 ) : PlayerManager, Player.Listener, MediaSession.Callback {
+    private val timber = Timber.tag("PlayerManagerImpl")
     private val mainCoroutineScope = CoroutineScope(Dispatchers.Main)
     private val ioCoroutineScope = CoroutineScope(Dispatchers.IO)
 
@@ -150,7 +147,7 @@ class PlayerManagerImpl @Inject constructor(
         )
 
     override val channel: StateFlow<Channel?> = mediaCommand
-        .onEach { logger.post { "receive media command: $it" } }
+        .onEach { timber.d("received media command: $it") }
         .flatMapLatest { command ->
             when (command) {
                 is MediaCommand.Common -> channelRepository.observe(command.channelId)
@@ -177,7 +174,7 @@ class PlayerManagerImpl @Inject constructor(
     init {
         mainCoroutineScope.launch {
             playbackState.collectLatest { state ->
-                logger.post { "playbackState changed: $state" }
+                timber.d("onPlaybackStateChanged: $state")
                 when (state) {
                     Player.STATE_IDLE -> onPlaybackIdle()
                     Player.STATE_BUFFERING -> onPlaybackBuffering()
@@ -199,7 +196,7 @@ class PlayerManagerImpl @Inject constructor(
         command: MediaCommand,
         applyContinueWatching: Boolean
     ) {
-        logger.post { "play" }
+        timber.d("play")
         release()
         mediaCommand.value = command
         val channel = when (command) {
@@ -223,7 +220,7 @@ class PlayerManagerImpl @Inject constructor(
                 ?.let { MimetypeChain.Remembered(channelUrl, it) }
                 ?: MimetypeChain.Unspecified(channelUrl)
 
-            logger.post { "init mimetype: $chain" }
+            timber.d("init mimetype: $chain")
 
             tryPlay(
                 url = channelUrl,
@@ -257,12 +254,7 @@ class PlayerManagerImpl @Inject constructor(
             is MimetypeChain.Unsupported -> throw UnsupportedOperationException()
         }
 
-        logger.post {
-            "tryPlay, mimetype: $mimeType," +
-                    " url: $url," +
-                    " user-agent: $userAgent," +
-                    " rtmp: $rtmp"
-        }
+        timber.d("tryPlay, mimetype: $mimeType, url: $url, user-agent: $userAgent, rtmp: $rtmp")
         val dataSourceFactory = if (rtmp) {
             RtmpDataSource.Factory()
         } else {
@@ -289,7 +281,7 @@ class PlayerManagerImpl @Inject constructor(
 
             else -> DefaultMediaSourceFactory(dataSourceFactory, extractorsFactory)
         }
-        logger.post { "media-source-factory: ${mediaSourceFactory::class.qualifiedName}" }
+        timber.d("media-source-factory: ${mediaSourceFactory::class.qualifiedName}")
         if (licenseType.isNotEmpty()) {
             val drmCallback = when {
                 (licenseType in arrayOf(
@@ -322,7 +314,7 @@ class PlayerManagerImpl @Inject constructor(
             }
         }
         val player = player.updateAndGet { prev ->
-            logger.post { "player instance updated" }
+            timber.d("player instance updated")
             prev ?: createPlayer(mediaSourceFactory, tunneling)
         }!!
         val mediaItem = MediaItem.fromUri(url)
@@ -345,7 +337,7 @@ class PlayerManagerImpl @Inject constructor(
     }
 
     override fun release() {
-        logger.post { "release" }
+        timber.d("release")
         extractor = null
         player.update {
             it ?: return
@@ -479,7 +471,7 @@ class PlayerManagerImpl @Inject constructor(
 
     override fun onVideoSizeChanged(videoSize: VideoSize) {
         super.onVideoSizeChanged(videoSize)
-        logger.post { "onVideoSizeChanged, [${videoSize.toRect()}]" }
+        timber.d("onVideoSizeChanged, [${videoSize.toRect()}]")
         size.value = videoSize.toRect()
     }
 
@@ -490,9 +482,9 @@ class PlayerManagerImpl @Inject constructor(
 
     override fun onPlayerErrorChanged(exception: PlaybackException?) {
         super.onPlayerErrorChanged(exception)
-        when (exception?.errorCode) {
+        when (val errorCode = exception?.errorCode) {
             PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW -> {
-                logger.post { "error! behind live window" }
+                timber.w("onPlayerErrorChanged, ERROR_CODE_BEHIND_LIVE_WINDOW, trying to replay")
                 player.value?.let {
                     it.seekToDefaultPosition()
                     it.prepare()
@@ -503,10 +495,10 @@ class PlayerManagerImpl @Inject constructor(
             PlaybackException.ERROR_CODE_PARSING_MANIFEST_MALFORMED,
             PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED,
             PlaybackException.ERROR_CODE_PARSING_MANIFEST_UNSUPPORTED -> {
+                timber.w("onPlayerErrorChanged, ${PlaybackException.getErrorCodeName(errorCode)}")
                 when (val chain = chain) {
                     is MimetypeChain.Remembered -> {
                         ioCoroutineScope.launch {
-                            logger.post { "onPlayerErrorChanged, parsing error! invalidate remembered mimeType!" }
                             val channelPreference = getChannelPreference(chain.url)
                             if (channelPreference != null) {
                                 addChannelPreference(
@@ -517,18 +509,11 @@ class PlayerManagerImpl @Inject constructor(
                         }
                     }
 
-                    else -> {
-
-                        logger.post { "onPlayerErrorChanged, parsing error! Trying another mimeType." }
-                    }
+                    else -> {}
                 }
                 if (chain.hasNext()) {
                     val next = chain.next()
                     chain = next
-                    logger.post {
-                        "[${PlaybackException.getErrorCodeName(exception.errorCode)}] " +
-                                "Try another mimetype, from $chain to $next"
-                    }
                     when (next) {
                         is MimetypeChain.Unsupported -> {
                             playbackException.value = exception
@@ -543,9 +528,7 @@ class PlayerManagerImpl @Inject constructor(
 
             else -> {
                 if (exception != null) {
-                    logger.post {
-                        "[${PlaybackException.getErrorCodeName(exception.errorCode)}] See player for detail"
-                    }
+                    timber.e(exception, PlaybackException.getErrorCodeName(exception.errorCode))
                 }
                 playbackException.value = exception
             }
@@ -605,7 +588,7 @@ class PlayerManagerImpl @Inject constructor(
                     }
 
                     else -> {
-                        logger.post { "recordVideo, unsupported video formats: $formats" }
+                        timber.e("Failed to record frame, Unsupported video formats: $formats")
                         return@withContext
                     }
                 }
@@ -629,7 +612,7 @@ class PlayerManagerImpl @Inject constructor(
                                 exportResult: ExportResult
                             ) {
                                 super.onCompleted(composition, exportResult)
-                                logger.post { "transformer, onCompleted" }
+                                timber.d("transformer, onCompleted")
                             }
 
                             override fun onError(
@@ -638,7 +621,7 @@ class PlayerManagerImpl @Inject constructor(
                                 exportException: ExportException
                             ) {
                                 super.onError(composition, exportResult, exportException)
-                                logger.post { "transformer, onError. message=${exportException.message}, code=[${exportException.errorCode}]${exportException.errorCodeName}" }
+                                timber.e(exportException, "transformer, onError")
                             }
 
                             override fun onFallbackApplied(
@@ -651,7 +634,6 @@ class PlayerManagerImpl @Inject constructor(
                                     originalTransformationRequest,
                                     fallbackTransformationRequest
                                 )
-                                logger.post { "transformer, onFallbackApplied" }
                             }
                         }
                     )
@@ -664,7 +646,7 @@ class PlayerManagerImpl @Inject constructor(
                     )
                 }
             } finally {
-                logger.post { "record video completed" }
+                timber.d("Record frame completed")
             }
         }
     }
@@ -689,7 +671,7 @@ class PlayerManagerImpl @Inject constructor(
     private suspend fun onPlaybackBuffering() {}
 
     private suspend fun onPlaybackReady() {
-        logger.post { "onPlaybackReady, chain=$chain" }
+        timber.d("onPlaybackReady, trying the playChain $chain")
         when (val chain = chain) {
             is MimetypeChain.Remembered -> {
                 storeContinueWatching(chain.url)
@@ -721,20 +703,20 @@ class PlayerManagerImpl @Inject constructor(
 
     @OptIn(FlowPreview::class)
     private suspend fun storeContinueWatching(channelUrl: String) {
-        logger.post { "storeContinueWatching" }
+        timber.d("start storeContinueWatching")
         // avoid memory leaks caused by loops
         fun checkContinueWatching(): Boolean {
             val currentPlayer = player.value ?: return false
             return continueWatchingCondition.isStoringSupported(currentPlayer)
         }
         if (!checkContinueWatching()) {
-            logger.post { "storeContinueWatching, playback is not supported." }
+            timber.w("failed to storeContinueWatching, playback is not supported.")
             return
         }
         playbackPosition
             .sample(5.seconds)
             .collect { cwPosition ->
-                logger.post { "storeContinueWatching, received new position: $cwPosition" }
+                timber.d("storeContinueWatching, received new position: $cwPosition")
                 if (cwPosition == -1L) return@collect
                 val channelPreference = getChannelPreference(channelUrl)
                 addChannelPreference(
@@ -753,7 +735,7 @@ class PlayerManagerImpl @Inject constructor(
         }
         withContext(Dispatchers.Main) {
             if (continueWatchingCondition.isRestoringSupported(player)) {
-                logger.post { "restoreContinueWatching, $cwPosition" }
+                timber.d("restoreContinueWatching, $cwPosition")
                 cwPositionObserver.emit(cwPosition)
                 player.seekTo(cwPosition)
             }
@@ -764,7 +746,7 @@ class PlayerManagerImpl @Inject constructor(
         channelUrl: String,
         ignorePositionCondition: Boolean = false
     ) {
-        logger.post { "resetContinueWatching, channelUrl=$channelUrl, ignorePositionCondition=$ignorePositionCondition" }
+        timber.d("resetContinueWatching, channelUrl=$channelUrl, ignorePositionCondition=$ignorePositionCondition")
         val channelPreference = getChannelPreference(channelUrl)
         val player = this@PlayerManagerImpl.player.value
         withContext(Dispatchers.Main) {
@@ -782,8 +764,6 @@ class PlayerManagerImpl @Inject constructor(
     }
 
     private var chain: MimetypeChain = MimetypeChain.Unsupported("")
-
-    private val logger = delegate.install(Profiles.SERVICE_PLAYER)
 
     /**
      * Get the kodi url options like this:

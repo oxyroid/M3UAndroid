@@ -4,31 +4,27 @@ import android.app.Application
 import android.content.Context
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
-import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.extension.Utils
 import com.m3u.i18n.R.string
 import dagger.hilt.android.HiltAndroidApp
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import org.acra.config.mailSender
 import org.acra.config.notification
 import org.acra.data.StringFormat
 import org.acra.ktx.initAcra
+import timber.log.Timber
+import timber.log.Timber.DebugTree
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.seconds
 
 @HiltAndroidApp
 class M3UApplication : Application(), Configuration.Provider {
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
 
-    @Inject
-    @Logger.MessageImpl
-    lateinit var messager: Logger
-
     override fun onCreate() {
         super.onCreate()
+        if (BuildConfig.DEBUG) {
+            Timber.plant(DebugTree())
+        }
         Utils.init(this)
     }
 
@@ -47,10 +43,6 @@ class M3UApplication : Application(), Configuration.Provider {
                 reportAsFile = true
                 reportFileName = "Crash.txt"
             }
-        }
-        MainScope().launch {
-            delay(3.seconds)
-            throw RuntimeException("Test crash to check ACRA integration")
         }
     }
 

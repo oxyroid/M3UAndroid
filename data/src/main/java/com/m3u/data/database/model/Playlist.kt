@@ -74,15 +74,13 @@ data class Playlist(
 val Playlist.isSeries: Boolean get() = type in Playlist.SERIES_TYPES
 val Playlist.isVod: Boolean get() = type in Playlist.VOD_TYPES
 
-val Playlist.fromLocal: Boolean
-    get() {
-        if (source != DataSource.M3U) return false
-        return url == Playlist.URL_IMPORTED || url.startsWithAny(
-            "file://",
-            "content://",
-            ignoreCase = true
-        )
-    }
+val Playlist.refreshable: Boolean
+    get() = source == DataSource.M3U && url == Playlist.URL_IMPORTED || url.startsWithAny(
+        "file://",
+        "content://",
+        ignoreCase = true
+    )
+
 
 val Playlist.type: String?
     get() = when (source) {

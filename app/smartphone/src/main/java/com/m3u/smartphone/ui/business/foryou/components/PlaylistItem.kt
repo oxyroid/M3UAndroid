@@ -38,7 +38,7 @@ internal fun PlaylistItem(
     label: String,
     type: String?,
     count: Int,
-    local: Boolean,
+    refreshable: Boolean,
     subscribingOrRefreshing: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
@@ -47,7 +47,7 @@ internal fun PlaylistItem(
     val spacing = LocalSpacing.current
     OutlinedCard(
         shape = AbsoluteSmoothCornerShape(spacing.medium, 65),
-        border = CardDefaults.outlinedCardBorder(local),
+        border = CardDefaults.outlinedCardBorder(!refreshable),
         colors = CardDefaults.cardColors(Color.Transparent),
         modifier = modifier.semantics(mergeDescendants = true) { }
     ) {
@@ -111,7 +111,7 @@ internal fun PlaylistItem(
                     Row(
                         Modifier.height(16.dp)
                     ) {
-                        if (local) {
+                        if (!refreshable) {
                             Badge(
                                 color = MaterialTheme.colorScheme.secondary,
                                 shape = AbsoluteSmoothCornerShape(

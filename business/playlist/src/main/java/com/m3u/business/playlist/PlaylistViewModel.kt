@@ -21,9 +21,6 @@ import androidx.work.WorkManager
 import androidx.work.WorkQuery
 import com.m3u.business.playlist.PlaylistMessage.ChannelCoverSaved
 import com.m3u.core.Contracts
-import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.Profiles
-import com.m3u.core.architecture.logger.install
 import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.Settings
 import com.m3u.core.architecture.preferences.flowOf
@@ -69,6 +66,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 
@@ -83,9 +81,8 @@ class PlaylistViewModel @Inject constructor(
     private val playerManager: PlayerManager,
     settings: Settings,
     workManager: WorkManager,
-    delegate: Logger
 ) : ViewModel() {
-    private val logger = delegate.install(Profiles.VIEWMODEL_PLAYLIST)
+    private val timber = Timber.tag("PlaylistViewModel")
 
     val playlistUrl: StateFlow<String> = savedStateHandle
         .getStateFlow(PlaylistNavigation.TYPE_URL, "")

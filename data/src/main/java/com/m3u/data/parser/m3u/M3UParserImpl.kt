@@ -1,21 +1,15 @@
 package com.m3u.data.parser.m3u
 
-import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.Profiles
-import com.m3u.core.architecture.logger.install
-import com.m3u.core.architecture.logger.post
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import timber.log.Timber
 import java.io.InputStream
 import javax.inject.Inject
 
-internal class M3UParserImpl @Inject constructor(
-    delegate: Logger
-) : M3UParser {
-    private val logger = delegate.install(Profiles.PARSER_M3U)
-
+internal class M3UParserImpl @Inject constructor() : M3UParser {
+    private val timber = Timber.tag("M3UParserImpl")
     companion object {
         private const val M3U_HEADER_MARK = "#EXTM3U"
         private const val M3U_INFO_MARK = "#EXTINF:"
@@ -50,7 +44,7 @@ internal class M3UParserImpl @Inject constructor(
         while (lines.hasNext()) {
             currentLine = lines.next()
             while (currentLine.startsWith("#")) {
-                logger.post { currentLine }
+                timber.d("Parsing protocol line: $currentLine")
                 if (currentLine.startsWith(M3U_INFO_MARK)) {
                     infoMatch = infoRegex
                         .matchEntire(currentLine.drop(M3U_INFO_MARK.length).trim())

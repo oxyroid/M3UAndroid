@@ -18,9 +18,6 @@ import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
-import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.Profiles
-import com.m3u.core.architecture.logger.install
 import com.m3u.data.R
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.parser.xtream.XtreamInput
@@ -44,10 +41,7 @@ class SubscriptionWorker @AssistedInject constructor(
     private val programmeRepository: ProgrammeRepository,
     private val notificationManager: NotificationManager,
     private val workManager: WorkManager,
-    delegate: Logger
 ) : CoroutineWorker(context, params) {
-    private val logger = delegate.install(Profiles.WORKER_SUBSCRIPTION)
-
     private val dataSource = inputData
         .getString(INPUT_STRING_DATA_SOURCE_VALUE)
         ?.let { DataSource.ofOrNull(it) }

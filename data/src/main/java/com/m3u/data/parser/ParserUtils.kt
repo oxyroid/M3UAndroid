@@ -1,7 +1,5 @@
 package com.m3u.data.parser
 
-import com.m3u.core.architecture.logger.Logger
-import com.m3u.core.architecture.logger.execute
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -14,20 +12,17 @@ import okhttp3.Request
 class ParserUtils(
     val json: Json,
     val okHttpClient: OkHttpClient,
-    val logger: Logger,
 ) {
     @OptIn(ExperimentalSerializationApi::class)
     suspend inline fun <reified T> newCall(url: String): T? = withContext(Dispatchers.IO) {
-        logger.execute {
-            okHttpClient.newCall(
-                Request.Builder().url(url).build()
-            )
-                .execute()
-                .takeIf { it.isSuccessful }
-                ?.body
-                ?.byteStream()
-                ?.let { json.decodeFromStream(it) }
-        }
+        okHttpClient.newCall(
+            Request.Builder().url(url).build()
+        )
+            .execute()
+            .takeIf { it.isSuccessful }
+            ?.body
+            ?.byteStream()
+            ?.let { json.decodeFromStream(it) }
     }
 
     @OptIn(ExperimentalSerializationApi::class)
@@ -44,15 +39,13 @@ class ParserUtils(
         }
 
     @OptIn(ExperimentalSerializationApi::class)
-    inline fun <reified T> newSequenceCall(url: String): Sequence<T> =
-        logger.execute {
-            okHttpClient.newCall(
-                Request.Builder().url(url).build()
-            )
-                .execute()
-                .takeIf { it.isSuccessful }
-                ?.body
-                ?.byteStream()
-                ?.let { json.decodeToSequence(it) }
-        } ?: sequence { }
+    inline fun <reified T> newSequenceCall(url: String): Sequence<T> = okHttpClient.newCall(
+        Request.Builder().url(url).build()
+    )
+        .execute()
+        .takeIf { it.isSuccessful }
+        ?.body
+        ?.byteStream()
+        ?.let { json.decodeToSequence(it) }
+        ?: emptySequence()
 }

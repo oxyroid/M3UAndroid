@@ -10,7 +10,6 @@ import androidx.work.WorkManager
 import androidx.work.WorkQuery
 import androidx.work.workDataOf
 import com.m3u.core.architecture.Publisher
-import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.Settings
 import com.m3u.core.architecture.preferences.flowOf
@@ -53,7 +52,6 @@ class SettingViewModel @Inject constructor(
     publisher: Publisher,
     // FIXME: do not use dao in viewmodel
     private val colorSchemeDao: ColorSchemeDao,
-    delegate: Logger
 ) : ViewModel() {
     val epgs: StateFlow<List<Playlist>> = playlistRepository
         .observeAllEpgs()
