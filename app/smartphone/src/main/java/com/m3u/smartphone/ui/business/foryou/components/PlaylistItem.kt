@@ -47,7 +47,6 @@ internal fun PlaylistItem(
     val spacing = LocalSpacing.current
     OutlinedCard(
         shape = AbsoluteSmoothCornerShape(spacing.medium, 65),
-        border = CardDefaults.outlinedCardBorder(!refreshable),
         colors = CardDefaults.cardColors(Color.Transparent),
         modifier = modifier.semantics(mergeDescendants = true) { }
     ) {

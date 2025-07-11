@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
@@ -47,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.business.setting.BackingUpAndRestoringState
 import com.m3u.business.setting.SettingProperties
@@ -98,7 +100,10 @@ internal fun SubscriptionsFragment(
             state = pagerState,
             verticalAlignment = Alignment.Top,
             contentPadding = contentPadding,
-            modifier = modifier
+            modifier = modifier,
+            key = { SubscriptionsFragmentPage.entries[it] },
+            pageSize = PageSize.Fill,
+            pageSpacing = 1.dp
         ) { page ->
             when (SubscriptionsFragmentPage.entries[page]) {
                 SubscriptionsFragmentPage.MAIN -> {
@@ -257,7 +262,6 @@ private fun MainContentImpl(
             ButtonGroup(
                 overflowIndicator = { menuState ->
                     FilledIconButton(
-                        shape = ButtonGroupDefaults.connectedLeadingButtonPressShape,
                         onClick = {
                             if (menuState.isExpanded) {
                                 menuState.dismiss()
