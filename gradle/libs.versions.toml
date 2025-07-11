@@ -55,6 +55,7 @@ ktor-server = "3.1.2"
 mm2d-mmupnp = "3.1.6"
 profileinstaller = "1.4.1"
 jakewharton-disklrucache = "2.0.2"
+acra = "5.12.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
@@ -70,7 +71,7 @@ androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", versi
 androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
 androidx-compose-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout" }
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
-androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3", version = "1.4.0-alpha17" }
 androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime" }
 androidx-compose-ui-util = { group = "androidx.compose.ui", name = "ui-util" }
 
@@ -175,6 +176,8 @@ androidx-graphics-shapes = { group = "androidx.graphics", name = "graphics-shape
 symbol-processing-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "kotlin-symbol-processor" }
 androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
 jakewharton-disklrucache = { group = "com.jakewharton", name = "disklrucache", version.ref = "jakewharton-disklrucache" }
+acra-mail = { group = "ch.acra", name = "acra-mail", version.ref = "acra" }
+acra-notification = { group = "ch.acra", name = "acra-notification", version.ref = "acra" }
 
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }

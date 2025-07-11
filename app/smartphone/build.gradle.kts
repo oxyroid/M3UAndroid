@@ -99,6 +99,7 @@ baselineProfile {
 }
 
 dependencies {
+    implementation(project(":i18n"))
     implementation(project(":core"))
     implementation(project(":core:foundation"))
     implementation(project(":core:extension"))
@@ -171,4 +172,6 @@ dependencies {
     implementation(libs.net.mm2d.mmupnp.mmupnp)
     implementation(libs.haze)
     implementation(libs.haze.materials)
+    implementation(libs.acra.notification)
+    implementation(libs.acra.mail)
 }
