@@ -39,5 +39,5 @@ dependencies {
 
     api(libs.timber)
 
-    api("androidx.datastore:datastore-preferences:1.1.4")
+    api("androidx.datastore:datastore-preferences:1.1.7")
 }
