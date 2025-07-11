@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ColorLens
 import androidx.compose.material.icons.rounded.DarkMode
@@ -24,7 +25,6 @@ import androidx.compose.material.icons.rounded.FitScreen
 import androidx.compose.material.icons.rounded.FormatSize
 import androidx.compose.material.icons.rounded.HideImage
 import androidx.compose.material.icons.rounded.Restore
-import androidx.compose.material.icons.rounded.Stars
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -38,6 +38,7 @@ import androidx.compose.ui.res.stringResource
 import com.m3u.core.architecture.preferences.ClipMode
 import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.mutablePreferenceOf
+import com.m3u.core.foundation.ui.thenIf
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.ColorScheme
 import com.m3u.i18n.R.string
@@ -48,6 +49,7 @@ import com.m3u.smartphone.ui.material.components.TextPreference
 import com.m3u.smartphone.ui.material.components.ThemeSelection
 import com.m3u.smartphone.ui.material.ktx.Edge
 import com.m3u.smartphone.ui.material.ktx.blurEdges
+import com.m3u.smartphone.ui.material.ktx.isAtTop
 import com.m3u.smartphone.ui.material.ktx.plus
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 
@@ -55,7 +57,7 @@ import com.m3u.smartphone.ui.material.model.LocalSpacing
 internal fun AppearanceFragment(
     colorSchemes: List<ColorScheme>,
     colorArgb: Int,
-    openColorCanvas: (ColorScheme) -> Unit,
+    openColorScheme: (ColorScheme) -> Unit,
     restoreSchemes: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
@@ -121,12 +123,16 @@ internal fun AppearanceFragment(
 
                 }
                 HorizontalDivider()
+                val lazyListState = rememberLazyListState()
                 LazyRow(
+                    state = lazyListState,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .blurEdges(
-                            colorScheme.surface, edges = listOf(Edge.Start, Edge.End)
-                        ),
+                        .thenIf(!lazyListState.isAtTop) {
+                            Modifier.blurEdges(
+                                colorScheme.surface, edges = listOf(Edge.Start, Edge.End)
+                            )
+                        },
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(spacing.small),
                     contentPadding = PaddingValues(spacing.medium)
@@ -146,13 +152,13 @@ internal fun AppearanceFragment(
                                 argb = colorScheme.argb
                                 isDarkMode = colorScheme.isDark
                             },
-                            onLongClick = { openColorCanvas(colorScheme) },
+                            onLongClick = { openColorScheme(colorScheme) },
                         )
                     }
 //                        item {
 //                            val inDarkTheme = isSystemInDarkTheme()
 //                            ThemeAddSelection {
-//                                openColorCanvas(
+//                                openColorScheme(
 //                                    ColorScheme(
 //                                        argb = Color(
 //                                            red = (0..0xFF).random(),

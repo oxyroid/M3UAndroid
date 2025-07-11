@@ -98,7 +98,7 @@ fun SettingRoute(
             backup = backup,
             restore = restore,
             colorSchemes = colorSchemes,
-            openColorCanvas = { colorScheme = it },
+            openColorScheme = { colorScheme = it },
             restoreSchemes = viewModel::restoreSchemes,
             onClipboard = { viewModel.onClipboard(it) },
             onSubscribe = {
@@ -142,7 +142,7 @@ private fun SettingScreen(
     restore: () -> Unit,
     onClipboard: (String) -> Unit,
     colorSchemes: List<ColorScheme>,
-    openColorCanvas: (ColorScheme) -> Unit,
+    openColorScheme: (ColorScheme) -> Unit,
     restoreSchemes: () -> Unit,
     epgs: List<Playlist>,
     onDeleteEpgPlaylist: (String) -> Unit,
@@ -252,7 +252,7 @@ private fun SettingScreen(
                     AppearanceFragment(
                         colorSchemes = colorSchemes,
                         colorArgb = colorArgb,
-                        openColorCanvas = openColorCanvas,
+                        openColorScheme = openColorScheme,
                         restoreSchemes = restoreSchemes,
                         contentPadding = contentPadding,
                         modifier = Modifier.fillMaxSize()

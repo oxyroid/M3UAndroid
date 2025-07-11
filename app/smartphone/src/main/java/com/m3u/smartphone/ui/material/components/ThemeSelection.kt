@@ -111,11 +111,7 @@ fun ThemeSelection(
     Box(
         contentAlignment = Alignment.Center
     ) {
-        val corner by animateDpAsState(
-            targetValue = if (!selected) spacing.extraLarge else spacing.medium,
-            label = "corner"
-        )
-        val shape = AbsoluteSmoothCornerShape(corner, 65)
+        val shape = AbsoluteSmoothCornerShape(spacing.large, 65)
         val brush = Brush.createPremiumBrush(
             colorScheme.primary,
             colorScheme.secondary
