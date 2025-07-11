@@ -25,7 +25,7 @@ fun NavGraphBuilder.rootGraph(
     navigateToPlaylistConfiguration: (Playlist) -> Unit,
 ) {
     composable(
-        route = Destination.Root.Foryou.name,
+        route = Destination.Foryou.name,
         enterTransition = { fadeIn() },
         exitTransition = { fadeOut() }
     ) {
@@ -44,7 +44,7 @@ fun NavGraphBuilder.rootGraph(
         )
     }
     composable(
-        route = Destination.Root.Favorite.name,
+        route = Destination.Favorite.name,
         enterTransition = { fadeIn() },
         exitTransition = { fadeOut() }
     ) {
@@ -61,7 +61,7 @@ fun NavGraphBuilder.rootGraph(
     }
 
     composable(
-        route = Destination.Root.Extension.name,
+        route = Destination.Extension.name,
         enterTransition = { fadeIn() },
         exitTransition = { fadeOut() }
     ) {
@@ -77,7 +77,7 @@ fun NavGraphBuilder.rootGraph(
     }
 
     composable(
-        route = Destination.Root.Setting.name,
+        route = Destination.Setting.name,
         enterTransition = { fadeIn() },
         exitTransition = { fadeOut() }
     ) {

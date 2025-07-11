@@ -39,7 +39,7 @@ internal fun DataSourceSelection(
         modifier = Modifier
             .fillMaxSize()
             .wrapContentSize(Alignment.TopStart)
-            .border(1.dp, LocalContentColor.current.copy(0.38f), SelectionsDefaults.Shape)
+            .border(2.dp, LocalContentColor.current.copy(0.38f), SelectionsDefaults.Shape)
             .then(modifier)
     ) {
         ClickableSelection(

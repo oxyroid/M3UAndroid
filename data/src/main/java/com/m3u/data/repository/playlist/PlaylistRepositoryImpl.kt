@@ -559,7 +559,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                 }
             }
 
-            is PlaylistRepository.EpgPlaylistUseCase.Upward -> {
+            is PlaylistRepository.EpgPlaylistUseCase.Upgrade -> {
                 val epgUrl = useCase.epgUrl
                 playlistDao.updateEpgUrls(useCase.playlistUrl) { epgUrls ->
                     val index = epgUrls.indexOf(epgUrl)

@@ -69,7 +69,6 @@ internal fun AppearanceFragment(
     var compactDimension by mutablePreferenceOf(PreferencesKeys.COMPACT_DIMENSION)
     var noPictureMode by mutablePreferenceOf(PreferencesKeys.NO_PICTURE_MODE)
     var followSystemTheme by mutablePreferenceOf(PreferencesKeys.FOLLOW_SYSTEM_THEME)
-    var colorfulBackground by mutablePreferenceOf(PreferencesKeys.COLORFUL_BACKGROUND)
     var godMode by mutablePreferenceOf(PreferencesKeys.GOD_MODE)
 
     val colorScheme = MaterialTheme.colorScheme
@@ -225,16 +224,6 @@ internal fun AppearanceFragment(
                 checked = useDynamicColors,
                 onChanged = { useDynamicColors = !useDynamicColors },
                 enabled = useDynamicColorsAvailable
-            )
-        }
-        item {
-            SwitchSharedPreference(
-                title = string.feat_setting_colorful_background,
-                icon = Icons.Rounded.Stars,
-                checked = colorfulBackground,
-                onChanged = {
-                    colorfulBackground = !colorfulBackground
-                }
             )
         }
         item {

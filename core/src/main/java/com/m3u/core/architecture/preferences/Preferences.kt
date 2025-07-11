@@ -19,7 +19,6 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -33,18 +32,19 @@ import kotlin.reflect.KProperty
 
 typealias Settings = DataStore<Preferences>
 
-private val settingsDataStore: ReadOnlyProperty<Context, Settings> = object : ReadOnlyProperty<Context, Settings> {
-    private val property = preferencesDataStore("settings")
-    private var instance: Settings? = null
-    override fun getValue(
-        thisRef: Context,
-        ignored: KProperty<*>
-    ): Settings = instance ?: property.getValue(thisRef, ignored).apply {
-        runBlocking {
-            applyDefaultValues()
+private val settingsDataStore: ReadOnlyProperty<Context, Settings> =
+    object : ReadOnlyProperty<Context, Settings> {
+        private val property = preferencesDataStore("settings")
+        private var instance: Settings? = null
+        override fun getValue(
+            thisRef: Context,
+            ignored: KProperty<*>
+        ): Settings = instance ?: property.getValue(thisRef, ignored).apply {
+            runBlocking {
+                applyDefaultValues()
+            }
         }
     }
-}
 val Context.settings: Settings by settingsDataStore
 
 @Composable
@@ -122,14 +122,13 @@ private val PREFERENCES: Map<Preferences.Key<*>, *> = listOf(
     PreferencesKeys.SLIDER to true,
     PreferencesKeys.ALWAYS_SHOW_REPLAY to false,
     PreferencesKeys.PLAYER_PANEL to true,
-    PreferencesKeys.COLORFUL_BACKGROUND to false,
     PreferencesKeys.COMPACT_DIMENSION to false
 )
     .associateBy { it.key }
     .mapValues { it.value.value }
 
 suspend fun Settings.applyDefaultValues() {
-    if (applied.compareAndSet(false, true)) {
+    if (applied.compareAndSet(expectedValue = false, newValue = true)) {
         edit { pref ->
             PREFERENCES.forEach { (key, defaultValue) ->
                 if (key !in pref) {
@@ -172,6 +171,5 @@ object PreferencesKeys {
     val ALWAYS_SHOW_REPLAY = booleanPreferencesKey("always-show-replay")
     val PLAYER_PANEL = booleanPreferencesKey("player_panel")
 
-    val COLORFUL_BACKGROUND = booleanPreferencesKey("colorful-background")
     val COMPACT_DIMENSION = booleanPreferencesKey("compact-dimension")
 }

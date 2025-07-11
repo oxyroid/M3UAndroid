@@ -44,8 +44,7 @@ internal fun HeadlineBackground(modifier: Modifier = Modifier) {
     val darkMode by preferenceOf(PreferencesKeys.DARK_MODE)
     val followSystemTheme by preferenceOf(PreferencesKeys.FOLLOW_SYSTEM_THEME)
     val noPictureMode by preferenceOf(PreferencesKeys.NO_PICTURE_MODE)
-    val colorfulBackground by preferenceOf(PreferencesKeys.COLORFUL_BACKGROUND)
-    
+
     val isSystemInDarkTheme = isSystemInDarkTheme()
 
     val useDarkTheme by remember {
@@ -70,7 +69,7 @@ internal fun HeadlineBackground(modifier: Modifier = Modifier) {
         animationSpec = tween(800)
     )
 
-    if (!noPictureMode && !colorfulBackground) {
+    if (!noPictureMode) {
         AsyncImage(
             model = remember(url) {
                 ImageRequest.Builder(context)

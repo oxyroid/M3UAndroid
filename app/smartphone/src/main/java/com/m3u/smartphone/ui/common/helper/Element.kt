@@ -15,7 +15,7 @@ data class Action(
 
 @Immutable
 data class Fob(
-    val rootDestination: Destination.Root,
+    val destination: Destination,
     val icon: ImageVector,
     @StringRes val iconTextId: Int,
     val onClick: () -> Unit

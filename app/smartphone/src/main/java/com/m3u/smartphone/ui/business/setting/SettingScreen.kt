@@ -1,6 +1,5 @@
 package com.m3u.smartphone.ui.business.setting
 
-import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -13,7 +12,6 @@ import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,7 +34,6 @@ import com.m3u.core.architecture.preferences.preferenceOf
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.ColorScheme
-import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.business.setting.components.CanvasBottomSheet
@@ -181,7 +178,7 @@ private fun SettingScreen(
         Metadata.contentColor = Color.Unspecified
         if (destination != SettingDestination.Default) {
             Metadata.fob = Fob(
-                rootDestination = Destination.Root.Setting,
+                destination = Destination.Setting,
                 icon = Icons.Rounded.ChangeCircle,
                 iconTextId = string.feat_setting_back_home
             ) {

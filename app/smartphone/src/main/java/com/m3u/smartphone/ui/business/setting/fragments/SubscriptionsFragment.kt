@@ -9,6 +9,7 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,51 +17,64 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.rounded.ContentPaste
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ButtonGroup
+import androidx.compose.material3.ButtonGroupDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SplitButtonDefaults
+import androidx.compose.material3.SplitButtonDefaults.SmallContainerHeight
+import androidx.compose.material3.SplitButtonDefaults.trailingButtonShapesFor
+import androidx.compose.material3.SplitButtonLayout
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
 import com.google.accompanist.permissions.rememberPermissionState
-import com.m3u.data.database.model.DataSource
-import com.m3u.data.database.model.Playlist
-import com.m3u.data.database.model.Channel
 import com.m3u.business.setting.BackingUpAndRestoringState
-import com.m3u.i18n.R.string
-import com.m3u.smartphone.ui.material.components.HorizontalPagerIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.runtime.getValue
 import com.m3u.business.setting.SettingProperties
 import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.preferenceOf
-import com.m3u.smartphone.ui.material.components.PlaceholderField
-import com.m3u.smartphone.ui.material.ktx.checkPermissionOrRationale
-import com.m3u.smartphone.ui.material.ktx.textHorizontalLabel
-import com.m3u.smartphone.ui.material.model.LocalSpacing
+import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.DataSource
+import com.m3u.data.database.model.Playlist
+import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.business.setting.components.DataSourceSelection
 import com.m3u.smartphone.ui.business.setting.components.EpgPlaylistItem
 import com.m3u.smartphone.ui.business.setting.components.HiddenChannelItem
 import com.m3u.smartphone.ui.business.setting.components.HiddenPlaylistGroupItem
 import com.m3u.smartphone.ui.business.setting.components.LocalStorageButton
 import com.m3u.smartphone.ui.common.helper.LocalHelper
+import com.m3u.smartphone.ui.material.components.HorizontalPagerIndicator
+import com.m3u.smartphone.ui.material.components.PlaceholderField
+import com.m3u.smartphone.ui.material.components.SelectionsDefaults
+import com.m3u.smartphone.ui.material.ktx.checkPermissionOrRationale
+import com.m3u.smartphone.ui.material.ktx.textHorizontalLabel
+import com.m3u.smartphone.ui.material.model.LocalSpacing
 
 private enum class SubscriptionsFragmentPage {
     MAIN, EPG_PLAYLISTS, HIDDEN_STREAMS, HIDDEN_PLAYLIST_CATEGORIES
 }
 
 @Composable
-context(_ :SettingProperties)
+context(_: SettingProperties)
 internal fun SubscriptionsFragment(
     backingUpOrRestoring: BackingUpAndRestoringState,
     hiddenChannels: List<Channel>,
@@ -133,8 +147,9 @@ internal fun SubscriptionsFragment(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-context(properties :SettingProperties)
+context(properties: SettingProperties)
 private fun MainContentImpl(
     backingUpOrRestoring: BackingUpAndRestoringState,
     onClipboard: (String) -> Unit,
@@ -178,63 +193,96 @@ private fun MainContentImpl(
         }
 
         item {
+            Spacer(Modifier.size(spacing.medium))
+        }
+        item {
             @SuppressLint("InlinedApi")
             val postNotificationPermission = rememberPermissionState(
                 Manifest.permission.POST_NOTIFICATIONS
             )
-            Button(
-                onClick = {
-                    postNotificationPermission.checkPermissionOrRationale(
-                        showRationale = {
-                            val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                                .apply {
-                                    putExtra(
-                                        Settings.EXTRA_APP_PACKAGE,
-                                        helper.activityContext.packageName
+            FlowRow {
+                val size = SplitButtonDefaults.SmallContainerHeight
+                SplitButtonLayout(
+                    leadingButton = {
+                        SplitButtonDefaults.LeadingButton(
+                            shapes = SplitButtonDefaults.leadingButtonShapesFor(size),
+                            contentPadding = SplitButtonDefaults.leadingButtonContentPaddingFor(size),
+                            onClick = {
+                                postNotificationPermission.checkPermissionOrRationale(
+                                    showRationale = {
+                                        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                            .apply {
+                                                putExtra(
+                                                    Settings.EXTRA_APP_PACKAGE,
+                                                    helper.activityContext.packageName
+                                                )
+                                            }
+                                        helper.activityContext.startActivity(intent)
+                                    },
+                                    block = {
+                                        onSubscribe()
+                                    }
+                                )
+                            }
+                        ) {
+                            Text(stringResource(string.feat_setting_label_subscribe).uppercase())
+                        }
+                    },
+                    trailingButton = {
+                        when (properties.selectedState.value) {
+                            DataSource.M3U, DataSource.Xtream -> {
+                                SplitButtonDefaults.TrailingButton(
+                                    shapes = SplitButtonDefaults.trailingButtonShapesFor(size),
+                                    contentPadding = SplitButtonDefaults.trailingButtonContentPaddingFor(size),
+                                    enabled = !properties.localStorageState.value,
+                                    onClick = {
+                                        onClipboard(clipboardManager.getText()?.text.orEmpty())
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.ContentPaste,
+                                        contentDescription = null
                                     )
                                 }
-                            helper.activityContext.startActivity(intent)
-                        },
-                        block = {
-                            onSubscribe()
+                            }
+
+                            else -> {}
                         }
-                    )
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(stringResource(string.feat_setting_label_subscribe).uppercase())
+                    },
+                    spacing = SplitButtonDefaults.Spacing
+                )
             }
-            when (properties.selectedState.value) {
-                DataSource.M3U, DataSource.Xtream -> {
-                    FilledTonalButton(
-                        enabled = !properties.localStorageState.value,
+            val backupText = stringResource(string.feat_setting_label_backup).uppercase()
+            val restoreText = stringResource(string.feat_setting_label_restore).uppercase()
+            ButtonGroup(
+                overflowIndicator = { menuState ->
+                    FilledIconButton(
+                        shape = ButtonGroupDefaults.connectedLeadingButtonPressShape,
                         onClick = {
-                            onClipboard(clipboardManager.getText()?.text.orEmpty())
-                        },
-                        modifier = Modifier.fillMaxWidth()
+                            if (menuState.isExpanded) {
+                                menuState.dismiss()
+                            } else {
+                                menuState.show()
+                            }
+                        }
                     ) {
-                        Text(stringResource(string.feat_setting_label_parse_from_clipboard).uppercase())
+                        Icon(
+                            imageVector = Icons.Filled.MoreVert,
+                            contentDescription = "Localized description",
+                        )
                     }
                 }
-
-                else -> {}
-            }
-        }
-
-        item {
-            FilledTonalButton(
-                enabled = backingUpOrRestoring == BackingUpAndRestoringState.NONE,
-                onClick = backup,
-                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(text = stringResource(string.feat_setting_label_backup).uppercase())
-            }
-            FilledTonalButton(
-                enabled = backingUpOrRestoring == BackingUpAndRestoringState.NONE,
-                onClick = restore,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(text = stringResource(string.feat_setting_label_restore).uppercase())
+                clickableItem(
+                    onClick = backup,
+                    label = backupText,
+                    enabled = backingUpOrRestoring == BackingUpAndRestoringState.NONE,
+                )
+                clickableItem(
+                    onClick = restore,
+                    label = restoreText,
+                    enabled = backingUpOrRestoring == BackingUpAndRestoringState.NONE,
+                )
             }
         }
 
@@ -317,7 +365,7 @@ private fun HiddenPlaylistCategoriesContentImpl(
 }
 
 @Composable
-context(properties :SettingProperties)
+context(properties: SettingProperties)
 private fun M3UInputContent(
     modifier: Modifier = Modifier
 ) {
@@ -354,7 +402,7 @@ private fun M3UInputContent(
 }
 
 @Composable
-context(properties :SettingProperties)
+context(properties: SettingProperties)
 private fun EPGInputContent(
     modifier: Modifier = Modifier
 ) {
@@ -379,7 +427,7 @@ private fun EPGInputContent(
 }
 
 @Composable
-context(properties :SettingProperties)
+context(properties: SettingProperties)
 private fun XtreamInputContent(modifier: Modifier = Modifier) {
     val spacing = LocalSpacing.current
 

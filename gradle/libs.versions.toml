@@ -22,22 +22,23 @@ glance = "1.1.1"
 google-accompanist = "0.37.3"
 google-dagger = "2.56.2"
 
-haze = "1.6.0"
+haze = "1.6.7"
 io-coil = "2.7.0"
-kotlinpoet = "2.1.0"
-kotlinx-serialization-json = "1.8.1"
+kotlinpoet = "2.2.0"
+kotlinx-serialization-json = "1.9.0"
 kotlinx-serialization-converter-retrofit = "1.0.0"
 kotlinx-datetime = "0.6.2"
 
 chucker = "4.1.0"
 logback = "3.0.0"
-lottie-compose = "6.6.6"
+lottie-compose = "6.6.7"
 m3u-extension = "1.9"
 nextLib = "0.8.5"
 slf4j-api = "2.0.17"
 
-squareup-retrofit2 = "2.11.0"
+squareup-retrofit2 = "3.0.0"
 squareup-leakcanary = "2.14"
+squareup-wire = "5.3.5"
 
 kotlin = "2.2.0"
 android-gradle-plugin = "8.9.1"
@@ -57,6 +58,7 @@ profileinstaller = "1.4.1"
 jakewharton-disklrucache = "2.0.2"
 acra = "5.12.0"
 timber = "5.0.1"
+wireRuntime = "5.3.5"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
@@ -80,6 +82,7 @@ androidx-compose-material3-window-size-clazz = { group = "androidx.compose.mater
 androidx-compose-material3-adaptive = { group = "androidx.compose.material3.adaptive", name = "adaptive", version.ref = "androidx-compose-material3-adaptive" }
 androidx-compose-material3-adaptive-layout = { group = "androidx.compose.material3.adaptive", name = "adaptive-layout", version.ref = "androidx-compose-material3-adaptive" }
 androidx-compose-material3-adaptive-navigation = { group = "androidx.compose.material3.adaptive", name = "adaptive-navigation", version.ref = "androidx-compose-material3-adaptive" }
+androidx-compose-material3-adaptive-navigation-suite = { module = "androidx.compose.material3:material3-adaptive-navigation-suite" }
 
 androidx-glance-appwidget = { module = "androidx.glance:glance-appwidget", version.ref = "glance" }
 androidx-glance-material3 = { module = "androidx.glance:glance-material3", version.ref = "glance" }
@@ -180,15 +183,17 @@ jakewharton-disklrucache = { group = "com.jakewharton", name = "disklrucache", v
 acra-mail = { group = "ch.acra", name = "acra-mail", version.ref = "acra" }
 acra-notification = { group = "ch.acra", name = "acra-notification", version.ref = "acra" }
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
+wire-runtime = { module = "com.squareup.wire:wire-runtime", version.ref = "wireRuntime" }
 
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }
 com-android-library = { id = "com.android.library", version.ref = "android-gradle-plugin" }
+com-android-test = { id = "com.android.test", version.ref = "android-gradle-plugin" }
+org-jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 org-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 org-jetbrains-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+androidx-baselineprofile = { id = "androidx.baselineprofile", version.ref = "androidx-benchmark" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 com-google-dagger-hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "google-dagger" }
 com-google-devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "kotlin-symbol-processor" }
-com-android-test = { id = "com.android.test", version.ref = "android-gradle-plugin" }
-androidx-baselineprofile = { id = "androidx.baselineprofile", version.ref = "androidx-benchmark" }
-org-jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+com-squareup-wire = { id = "com.squareup.wire", version.ref = "squareup-wire" }

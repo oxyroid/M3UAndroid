@@ -54,15 +54,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withStyle
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.paging.PagingData
 import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.business.playlist.PlaylistViewModel
@@ -75,11 +71,9 @@ import com.m3u.core.wrapper.Event
 import com.m3u.core.wrapper.Sort
 import com.m3u.core.wrapper.eventOf
 import com.m3u.data.database.model.Channel
-import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.isSeries
 import com.m3u.data.database.model.isVod
-import com.m3u.data.database.model.type
 import com.m3u.data.service.MediaCommand
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.business.playlist.components.ChannelGallery
@@ -102,14 +96,12 @@ import com.m3u.smartphone.ui.material.ktx.only
 import com.m3u.smartphone.ui.material.model.LocalHazeState
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import dev.chrisbanes.haze.hazeSource
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 internal fun PlaylistRoute(
@@ -328,7 +320,7 @@ private fun PlaylistScreen(
                 else {
                     Fob(
                         icon = Icons.Rounded.KeyboardDoubleArrowUp,
-                        rootDestination = Destination.Root.Foryou,
+                        destination = Destination.Foryou,
                         iconTextId = string.feat_playlist_scroll_up,
                         onClick = currentOnScrollUp
                     )

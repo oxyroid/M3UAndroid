@@ -75,7 +75,7 @@ val Playlist.isSeries: Boolean get() = type in Playlist.SERIES_TYPES
 val Playlist.isVod: Boolean get() = type in Playlist.VOD_TYPES
 
 val Playlist.refreshable: Boolean
-    get() = source == DataSource.M3U && url == Playlist.URL_IMPORTED || url.startsWithAny(
+    get() = source == DataSource.M3U && url != Playlist.URL_IMPORTED && !url.startsWithAny(
         "file://",
         "content://",
         ignoreCase = true

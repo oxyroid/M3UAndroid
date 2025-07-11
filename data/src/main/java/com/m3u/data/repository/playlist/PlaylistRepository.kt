@@ -4,7 +4,6 @@ import android.net.Uri
 import androidx.compose.runtime.Immutable
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
-import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.database.model.PlaylistWithChannels
 import com.m3u.data.database.model.Channel
 import com.m3u.data.parser.xtream.XtreamChannelInfo
@@ -73,7 +72,7 @@ interface PlaylistRepository {
             val epgUrl: String,
             val action: Boolean
         ): EpgPlaylistUseCase
-        data class Upward(
+        data class Upgrade(
             val playlistUrl: String,
             val epgUrl: String
         ): EpgPlaylistUseCase

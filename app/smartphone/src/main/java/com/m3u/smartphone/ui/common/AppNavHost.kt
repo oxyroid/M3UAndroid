@@ -28,11 +28,11 @@ import com.m3u.smartphone.ui.material.components.SettingDestination
 @Composable
 fun AppNavHost(
     navController: NavHostController,
-    navigateToRootDestination: (Destination.Root) -> Unit,
+    navigateToDestination: (Destination) -> Unit,
     navigateToChannel: () -> Unit,
-    contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
-    startDestination: String = Destination.Root.Foryou.name
+    contentPadding: PaddingValues = PaddingValues(),
+    startDestination: String = Destination.Foryou.name
 ) {
     val context = LocalContext.current
 
@@ -52,7 +52,7 @@ fun AppNavHost(
             },
             navigateToChannel = navigateToChannel,
             navigateToSettingPlaylistManagement = {
-                navigateToRootDestination(Destination.Root.Setting)
+                navigateToDestination(Destination.Setting)
                 Events.settingDestination = eventOf(SettingDestination.Playlists)
             },
             navigateToPlaylistConfiguration = {

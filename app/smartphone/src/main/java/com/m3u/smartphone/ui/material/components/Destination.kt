@@ -17,39 +17,37 @@ import com.m3u.i18n.R.string
 import kotlinx.parcelize.Parcelize
 
 @Immutable
-sealed interface Destination {
-    @Immutable
-    enum class Root(
-        val selectedIcon: ImageVector,
-        val unselectedIcon: ImageVector,
-        @StringRes val iconTextId: Int
-    ) : Destination {
-        Foryou(
-            selectedIcon = Icons.Rounded.Home,
-            unselectedIcon = Icons.Outlined.Home,
-            iconTextId = string.ui_destination_foryou
-        ),
-        Favorite(
-            selectedIcon = Icons.Rounded.Collections,
-            unselectedIcon = Icons.Outlined.Collections,
-            iconTextId = string.ui_destination_favourite
-        ),
-        Extension(
-            selectedIcon = Icons.Rounded.Extension,
-            unselectedIcon = Icons.Outlined.Extension,
-            iconTextId = string.ui_destination_extension
-        ),
-        Setting(
-            selectedIcon = Icons.Rounded.Settings,
-            unselectedIcon = Icons.Outlined.Settings,
-            iconTextId = string.ui_destination_setting
-        );
-        companion object {
-            fun of(route: String?): Root? = try {
-                route?.let { valueOf(it) }
-            } catch (ignored: Exception) {
-                null
-            }
+enum class Destination(
+    val selectedIcon: ImageVector,
+    val unselectedIcon: ImageVector,
+    @param:StringRes @field:StringRes val iconTextId: Int
+) {
+    Foryou(
+        selectedIcon = Icons.Rounded.Home,
+        unselectedIcon = Icons.Outlined.Home,
+        iconTextId = string.ui_destination_foryou
+    ),
+    Favorite(
+        selectedIcon = Icons.Rounded.Collections,
+        unselectedIcon = Icons.Outlined.Collections,
+        iconTextId = string.ui_destination_favourite
+    ),
+    Extension(
+        selectedIcon = Icons.Rounded.Extension,
+        unselectedIcon = Icons.Outlined.Extension,
+        iconTextId = string.ui_destination_extension
+    ),
+    Setting(
+        selectedIcon = Icons.Rounded.Settings,
+        unselectedIcon = Icons.Outlined.Settings,
+        iconTextId = string.ui_destination_setting
+    );
+
+    companion object {
+        fun of(route: String?): Destination? = try {
+            route?.let { valueOf(it) }
+        } catch (ignored: Exception) {
+            null
         }
     }
 }
