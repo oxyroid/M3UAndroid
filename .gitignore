@@ -20,3 +20,13 @@ jks.txt
 *.jks
 /sample/
 /.kotlin
+
+# CI/CD Build artifacts
+**/build/reports/
+**/build/dependencyUpdates/
+**/build/outputs/lint-results-*.html
+**/build/outputs/lint-results-*.xml
+**/build/reports/dependency-check-report.html
+**/build/reports/dependency-check-report.xml
+**/build/compose_metrics/
+/config/detekt/baseline.xml

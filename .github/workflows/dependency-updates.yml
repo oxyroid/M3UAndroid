@@ -1,0 +1,149 @@
+name: Dependency Updates
+
+on:
+  schedule:
+    # Run weekly on Monday at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-dependencies:
+    name: 🔄 Update Dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: "zulu"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-home-cache-cleanup: true
+
+      - name: Check for Gradle Updates
+        id: gradle-updates
+        run: |
+          ./gradlew dependencyUpdates --refresh-dependencies > dependency_updates.txt
+          if grep -q "outdated" dependency_updates.txt; then
+            echo "updates-available=true" >> $GITHUB_OUTPUT
+          else
+            echo "updates-available=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate Dependency Report
+        if: steps.gradle-updates.outputs.updates-available == 'true'
+        run: |
+          echo "## 🔄 Available Dependency Updates" > dependency_report.md
+          echo "" >> dependency_report.md
+          echo "The following dependencies have updates available:" >> dependency_report.md
+          echo "" >> dependency_report.md
+          echo '```' >> dependency_report.md
+          grep -A 20 "outdated" dependency_updates.txt >> dependency_report.md || true
+          echo '```' >> dependency_report.md
+
+      - name: Create Issue for Updates
+        if: steps.gradle-updates.outputs.updates-available == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const reportPath = 'dependency_report.md';
+            
+            if (fs.existsSync(reportPath)) {
+              const body = fs.readFileSync(reportPath, 'utf8');
+              
+              // Check if an issue already exists
+              const issues = await github.rest.issues.listForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: 'dependencies',
+                state: 'open'
+              });
+              
+              const existingIssue = issues.data.find(issue => 
+                issue.title.includes('Dependency Updates Available')
+              );
+              
+              if (!existingIssue) {
+                await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: '🔄 Dependency Updates Available',
+                  body: body,
+                  labels: ['dependencies', 'maintenance']
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: existingIssue.number,
+                  body: 'New dependency updates detected!\n\n' + body
+                });
+              }
+            }
+
+      - name: Upload Dependency Report
+        if: steps.gradle-updates.outputs.updates-available == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-updates
+          path: |
+            dependency_updates.txt
+            dependency_report.md
+          retention-days: 30
+
+  security-audit:
+    name: 🔒 Security Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: "zulu"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-home-cache-cleanup: true
+
+      - name: Run Security Audit
+        continue-on-error: true
+        run: |
+          ./gradlew dependencyCheckAnalyze
+          
+      - name: Upload Security Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-audit
+          path: |
+            **/build/reports/dependency-check-report.html
+            **/build/reports/dependency-check-report.xml
+          retention-days: 30
+
+      - name: Check for Critical Vulnerabilities
+        run: |
+          if find . -name "dependency-check-report.xml" -exec grep -l "severity=\"HIGH\|severity=\"CRITICAL\"" {} \; | grep -q .; then
+            echo "⚠️ Critical vulnerabilities found! Check the security report." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No critical vulnerabilities detected." >> $GITHUB_STEP_SUMMARY
+          fi

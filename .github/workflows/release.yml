@@ -1,0 +1,194 @@
+name: Release Automation
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g., v1.0.0)'
+        required: true
+        type: string
+      prerelease:
+        description: 'Mark as pre-release'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+env:
+  GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx6g -Dorg.gradle.daemon=false"
+
+jobs:
+  build-release:
+    name: 🏗️ Build Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract Version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION="${{ inputs.tag }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building release $VERSION"
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: "zulu"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-home-cache-cleanup: true
+          dependency-graph: generate-and-submit
+
+      - name: Clean GMD
+        run: ./gradlew cleanManagedDevices --unused-only
+
+      - name: Run Final Quality Checks
+        run: |
+          ./gradlew lint --continue
+          ./gradlew compileReleaseKotlin
+
+      - name: Generate Baseline Profiles
+        run: |
+          ./gradlew generateBaselineProfile \
+            -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile \
+            -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect" \
+            -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true
+
+      - name: Build Release APKs
+        run: |
+          ./gradlew :app:smartphone:assembleRelease \
+            -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile
+          ./gradlew :app:tv:assembleRelease
+
+      - name: Sign APKs
+        id: sign
+        continue-on-error: true
+        run: |
+          # This step would require signing keys to be configured
+          echo "APK signing would happen here if keys are configured"
+          echo "signed=false" >> $GITHUB_OUTPUT
+
+      - name: Generate Checksums
+        run: |
+          cd app/smartphone/build/outputs/apk/release
+          sha256sum *.apk > checksums.txt
+          cd ../../../tv/build/outputs/apk/release
+          sha256sum *.apk >> checksums.txt
+
+      - name: Prepare Release Assets
+        run: |
+          mkdir -p release-assets
+          cp app/smartphone/build/outputs/apk/release/*.apk release-assets/
+          cp app/tv/build/outputs/apk/release/*.apk release-assets/
+          find . -name "checksums.txt" -exec cp {} release-assets/ \;
+          
+          # Generate release info
+          echo "# M3UAndroid ${{ steps.version.outputs.version }}" > release-assets/RELEASE_NOTES.md
+          echo "" >> release-assets/RELEASE_NOTES.md
+          echo "## 📱 Downloads" >> release-assets/RELEASE_NOTES.md
+          echo "- **Smartphone APK**: $(basename app/smartphone/build/outputs/apk/release/*.apk)" >> release-assets/RELEASE_NOTES.md
+          echo "- **TV APK**: $(basename app/tv/build/outputs/apk/release/*.apk)" >> release-assets/RELEASE_NOTES.md
+          echo "" >> release-assets/RELEASE_NOTES.md
+          echo "## 🔍 Checksums" >> release-assets/RELEASE_NOTES.md
+          echo "\`\`\`" >> release-assets/RELEASE_NOTES.md
+          cat release-assets/checksums.txt >> release-assets/RELEASE_NOTES.md
+          echo "\`\`\`" >> release-assets/RELEASE_NOTES.md
+
+      - name: Upload Release Assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ steps.version.outputs.version }}
+          path: release-assets/
+          retention-days: 90
+
+  create-release:
+    name: 🚀 Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: build-release
+    timeout-minutes: 10
+    
+    steps:
+      - name: Download Release Assets
+        uses: actions/download-artifact@v4
+        with:
+          name: release-${{ needs.build-release.outputs.version }}
+          path: release-assets/
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.build-release.outputs.version }}
+          release_name: M3UAndroid ${{ needs.build-release.outputs.version }}
+          body_path: release-assets/RELEASE_NOTES.md
+          draft: false
+          prerelease: ${{ inputs.prerelease || false }}
+
+      - name: Upload APK Assets
+        run: |
+          for apk in release-assets/*.apk; do
+            if [ -f "$apk" ]; then
+              echo "Uploading $(basename "$apk")"
+              curl -X POST \
+                -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                -H "Content-Type: application/vnd.android.package-archive" \
+                --data-binary @"$apk" \
+                "${{ steps.create_release.outputs.upload_url }}?name=$(basename "$apk")"
+            fi
+          done
+
+      - name: Upload Checksums
+        if: always()
+        run: |
+          if [ -f "release-assets/checksums.txt" ]; then
+            curl -X POST \
+              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Content-Type: text/plain" \
+              --data-binary @"release-assets/checksums.txt" \
+              "${{ steps.create_release.outputs.upload_url }}?name=checksums.txt"
+          fi
+
+  notify-release:
+    name: 📢 Notify Release
+    runs-on: ubuntu-latest
+    needs: [build-release, create-release]
+    if: always() && needs.create-release.result == 'success'
+    
+    steps:
+      - name: Notify Telegram
+        if: success()
+        uses: xireiki/channel-post@v1.0.10
+        with:
+          bot_token: ${{ secrets.BOT_TOKEN }}
+          chat_id: ${{ secrets.CHAT_ID }}
+          api_id: ${{ secrets.API_ID }}
+          api_hash: ${{ secrets.API_HASH }}
+          text: |
+            🎉 **M3UAndroid ${{ needs.build-release.outputs.version }}** Released!
+            
+            📱 Download from: https://github.com/${{ github.repository }}/releases/tag/${{ needs.build-release.outputs.version }}
+            
+            #M3UAndroid #Release #Android

@@ -15,6 +15,75 @@ plugins {
     alias(libs.plugins.org.jetbrains.kotlin.jvm) apply false
     alias(libs.plugins.androidx.baselineprofile) apply false
     alias(libs.plugins.com.squareup.wire) apply false
+    
+    // Code quality and security plugins
+    alias(libs.plugins.com.github.ben.manes.versions) apply true
+    alias(libs.plugins.org.owasp.dependencycheck) apply true
+    alias(libs.plugins.io.gitlab.arturbosch.detekt) apply true
+    alias(libs.plugins.com.diffplug.spotless) apply true
+}
+
+// Dependency updates configuration
+dependencyUpdates {
+    checkForGradleUpdate = true
+    outputFormatter = "json"
+    outputDir = "build/dependencyUpdates"
+    reportfileName = "report"
+    
+    rejectVersionIf {
+        candidate.version.isNonStable()
+    }
+}
+
+// Security configuration
+dependencyCheck {
+    analyzers {
+        experimentalEnabled = true
+        archiveEnabled = true
+        jarEnabled = true
+        centralEnabled = true
+    }
+    format = "ALL"
+    outputDirectory = "build/reports"
+    scanConfigurations = ["implementation", "api", "kapt", "runtimeOnly"]
+}
+
+// Code formatting
+spotless {
+    kotlin {
+        target("**/*.kt")
+        targetExclude("**/build/**/*.kt")
+        ktlint("1.0.1")
+    }
+    kotlinGradle {
+        target("*.gradle.kts")
+        ktlint("1.0.1")
+    }
+}
+
+// Static analysis
+detekt {
+    buildUponDefaultConfig = true
+    allRules = false
+    config.setFrom("$projectDir/config/detekt/detekt.yml")
+    baseline = file("$projectDir/config/detekt/baseline.xml")
+    
+    reports {
+        html.required = true
+        xml.required = true
+        txt.required = true
+        sarif.required = true
+    }
+}
+
+// Extension function for version stability check
+fun String.isNonStable(): Boolean {
+    val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { 
+        uppercase().contains(it) 
+    }
+    val regex = "^[0-9,.v-]+(-r)?$".toRegex()
+    val isStable = stableKeyword || regex.matches(this)
+    return isStable.not()
 }
 subprojects {
     tasks.withType<KotlinCompile>().configureEach {

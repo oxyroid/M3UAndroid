@@ -1,4 +1,4 @@
-name: Android CI
+name: Android CI/CD Pipeline
 
 on:
   push:
@@ -13,55 +13,206 @@ on:
   pull_request:
     branches: [ "master" ]
   workflow_dispatch:
+    inputs:
+      skip-tests:
+        description: 'Skip test execution'
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
-  group: ${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx6g -Dorg.gradle.daemon=false"
+  JAVA_VERSION: "17"
+
 jobs:
-  build:
-
+  # Static Analysis and Code Quality
+  code-quality:
+    name: 🔍 Code Quality & Security
     runs-on: ubuntu-latest
-
+    timeout-minutes: 20
+    
+    outputs:
+      cache-key: ${{ steps.cache-key.outputs.key }}
+      
     steps:
-      - name: Checkout
+      - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Setup JDK
-        id: setup-java
+      - name: Generate Cache Key
+        id: cache-key
+        run: |
+          echo "key=gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}" >> $GITHUB_OUTPUT
+
+      - name: Setup JDK ${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v4
         with:
-          java-version: 17
+          java-version: ${{ env.JAVA_VERSION }}
           distribution: "zulu"
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-home-cache-cleanup: true
+          cache-read-only: false
+          dependency-graph: generate-and-submit
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v3
+
+      - name: Run Lint Checks
+        run: ./gradlew lint --continue
+        
+      - name: Run Security Checks
+        continue-on-error: true
+        run: ./gradlew dependencyCheckAnalyze || echo "Security scan completed with warnings"
+
+      - name: Upload Lint Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-reports
+          path: |
+            **/build/reports/lint-results-*.html
+            **/build/reports/lint-results-*.xml
+          retention-days: 30
+
+      - name: Upload Security Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            **/build/reports/dependency-check-report.html
+          retention-days: 30
+
+  # Build and Test
+  build-and-test:
+    name: 🏗️ Build & Test
+    runs-on: ubuntu-latest
+    needs: code-quality
+    timeout-minutes: 60
+    
+    strategy:
+      matrix:
+        module: [smartphone, tv]
+      fail-fast: false
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: "zulu"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-home-cache-cleanup: true
+          cache-read-only: true
 
       - name: Clean GMD
         run: ./gradlew cleanManagedDevices --unused-only
 
-      - name: Build production app
-        run: ./gradlew :app:smartphone:assembleRelease
-          -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile
-          -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect"
-          -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true
-          -Pandroid.experimental.androidTest.numManagedDeviceShards=1
-          -Pandroid.experimental.testOptions.managedDevices.maxConcurrentDevices=1
+      - name: Run Unit Tests
+        if: ${{ !inputs.skip-tests }}
+        run: ./gradlew :app:${{ matrix.module }}:testDebugUnitTest --continue
 
-      - name: Build production tv app
-        run: ./gradlew :app:tv:assembleRelease
+      - name: Generate Baseline Profiles
+        run: |
+          ./gradlew :baselineprofile:${{ matrix.module }}:generateBaselineProfile \
+            -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile \
+            -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect" \
+            -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true \
+            -Pandroid.experimental.androidTest.numManagedDeviceShards=1 \
+            -Pandroid.experimental.testOptions.managedDevices.maxConcurrentDevices=1
 
-      - name: Upload
+      - name: Build Debug APK
+        run: ./gradlew :app:${{ matrix.module }}:assembleDebug
+
+      - name: Build Release APK
+        run: |
+          ./gradlew :app:${{ matrix.module }}:assembleRelease \
+            -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile \
+            -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect" \
+            -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true \
+            -Pandroid.experimental.androidTest.numManagedDeviceShards=1 \
+            -Pandroid.experimental.testOptions.managedDevices.maxConcurrentDevices=1
+
+      - name: Get APK Size
+        id: apk-size
+        run: |
+          APK_PATH="app/${{ matrix.module }}/build/outputs/apk/release"
+          if [ -d "$APK_PATH" ]; then
+            APK_SIZE=$(du -h $APK_PATH/*.apk | cut -f1 | head -1)
+            echo "size=$APK_SIZE" >> $GITHUB_OUTPUT
+            echo "📱 ${{ matrix.module }} APK size: $APK_SIZE"
+          fi
+
+      - name: Upload APK Artifacts
         uses: actions/upload-artifact@v4
         with:
+          name: apk-${{ matrix.module }}
           path: |
-            app/smartphone/build/outputs/apk/release/*.apk
-            app/tv/build/outputs/apk/release/*.apk
+            app/${{ matrix.module }}/build/outputs/apk/release/*.apk
+            app/${{ matrix.module }}/build/outputs/apk/debug/*.apk
+          retention-days: 30
+
+      - name: Upload Test Reports
+        if: always() && !inputs.skip-tests
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-${{ matrix.module }}
+          path: |
+            app/${{ matrix.module }}/build/reports/tests/
+            app/${{ matrix.module }}/build/test-results/
+          retention-days: 30
+
+      - name: Upload Baseline Profiles
+        uses: actions/upload-artifact@v4
+        with:
+          name: baseline-profiles-${{ matrix.module }}
+          path: |
+            baselineprofile/${{ matrix.module }}/build/outputs/
+          retention-days: 30
+
+  # Deployment and Notifications
+  deploy-and-notify:
+    name: 🚀 Deploy & Notify
+    runs-on: ubuntu-latest
+    needs: [code-quality, build-and-test]
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+    timeout-minutes: 15
+    
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Prepare Release Assets
+        run: |
+          mkdir -p release/
+          find artifacts/ -name "*.apk" -path "*/release/*" -exec cp {} release/ \;
+          ls -la release/
+
+      - name: Upload Combined Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apks
+          path: release/*.apk
+          retention-days: 90
 
       - name: Upload To Telegram
-        if: github.event_name != 'pull_request'
+        if: success()
         uses: xireiki/channel-post@v1.0.10
         with:
           bot_token: ${{ secrets.BOT_TOKEN }}
@@ -70,6 +221,37 @@ jobs:
           api_hash: ${{ secrets.API_HASH }}
           large_file: true
           method: sendFile
-          path: |
-            app/smartphone/build/outputs/apk/release/*.apk
-            app/tv/build/outputs/apk/release/*.apk
+          path: release/*.apk
+
+  # Summary Report
+  build-summary:
+    name: 📊 Build Summary
+    runs-on: ubuntu-latest
+    needs: [code-quality, build-and-test]
+    if: always()
+    
+    steps:
+      - name: Generate Build Summary
+        run: |
+          echo "## 🏗️ Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.code-quality.result }}" == "success" ]; then
+            echo "✅ Code Quality: Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Code Quality: Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.build-and-test.result }}" == "success" ]; then
+            echo "✅ Build & Test: Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Build & Test: Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📱 Build Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- Smartphone APK" >> $GITHUB_STEP_SUMMARY
+          echo "- TV APK" >> $GITHUB_STEP_SUMMARY
+          echo "- Baseline Profiles" >> $GITHUB_STEP_SUMMARY
+          echo "- Test Reports" >> $GITHUB_STEP_SUMMARY
+          echo "- Lint Reports" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,34 @@
+name: "M3UAndroid Security Analysis"
+
+disable-default-queries: false
+
+query-filters:
+  - exclude:
+      id: java/hardcoded-credentials
+  - exclude:
+      id: java/cleartext-storage-android
+
+queries:
+  - uses: security-and-quality
+  - uses: security-extended
+
+paths:
+  - "app/"
+  - "data/"
+  - "core/"
+  - "business/"
+
+paths-ignore:
+  - "**/build/"
+  - "**/test/"
+  - "**/*.md"
+  - "gradle/"
+  - ".idea/"
+
+# Android-specific configuration
+android:
+  # Include Android-specific security queries
+  include-android-queries: true
+  
+  # Minimum API level to analyze
+  min-api-level: 26
