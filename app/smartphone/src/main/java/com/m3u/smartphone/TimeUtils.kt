@@ -11,23 +11,16 @@ object TimeUtils {
     ): String {
         return if (twelveHourClock) {
             val hour12 = if (hour > 12) hour - 12 else if (hour == 0) 12 else hour
-            val formattedHour = if (hour12 < 10) "0$hour12" else hour12.toString()
-            val formattedMinute = if (minute < 10) "0$minute" else minute.toString()
-            val formattedSecond = if (second < 10) "0$second" else second.toString()
-            buildString {
-                append("$formattedHour:")
-                append(formattedMinute)
-                if (!ignoreSeconds) {
-                    append(":$formattedSecond")
-                }
+            if (ignoreSeconds) {
+                "%02d:%02d".format(hour12, minute)
+            } else {
+                "%02d:%02d:%02d".format(hour12, minute, second)
             }
         } else {
-            buildString {
-                append("${if (hour < 10) "0$hour" else hour}:")
-                append("${if (minute < 10) "0$minute" else minute}")
-                if (!ignoreSeconds) {
-                    append(":${if (second < 10) "0$second" else second}")
-                }
+            if (ignoreSeconds) {
+                "%02d:%02d".format(hour, minute)
+            } else {
+                "%02d:%02d:%02d".format(hour, minute, second)
             }
         }
     }
@@ -35,20 +28,17 @@ object TimeUtils {
     fun Float.formatEOrSh(use12HourFormat: Boolean): String {
         val hour = (this / 1).toInt()
         val minute = (this % 1 * 60).toInt()
-        val amPm = if (hour < 12) "AM" else "PM"
         val hour12 = when {
             !use12HourFormat -> hour
             hour > 12 -> hour - 12
             hour == 0 -> 12
             else -> hour
         }
-        val formattedHour = if (hour12 < 10) "0$hour12" else hour12.toString()
-        val formattedMinute = if (minute < 10) "0$minute" else minute.toString()
         return if (use12HourFormat) {
-            "$formattedHour:$formattedMinute $amPm"
+            val amPm = if (hour < 12) "AM" else "PM"
+            "%02d:%02d %s".format(hour12, minute, amPm)
         } else {
-            "$formattedHour:$formattedMinute"// $amPm"
+            "%02d:%02d".format(hour12, minute)
         }
-
     }
 }

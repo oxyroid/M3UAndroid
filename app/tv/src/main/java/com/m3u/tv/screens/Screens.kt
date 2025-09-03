@@ -62,22 +62,18 @@ enum class Screens(
     Dashboard;
 
     operator fun invoke(): String {
-        val argList = StringBuilder()
-        args?.let { nnArgs ->
-            nnArgs.forEach { arg -> argList.append("/{$arg}") }
-        }
+        val argList = args?.joinToString("", transform = { "/{$it}" }) ?: ""
         return name + argList
     }
 
     fun withArgs(vararg args: Any): String {
-        val destination = StringBuilder()
-        args.forEach { arg ->
+        val argString = args.joinToString("") { arg ->
             val path = when (arg) {
                 is String -> Uri.encode(arg)
                 else -> arg
             }
-            destination.append("/$path")
+            "/$path"
         }
-        return name + destination
+        return name + argString
     }
 }
