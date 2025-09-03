@@ -216,13 +216,6 @@ We welcome contributions from the community! Here's how you can help:
 3. **Write tests** for new functionality
 4. **Submit a pull request** with a clear description
 
-### 📋 Development Guidelines
-- **100% Kotlin** - No Java code allowed
-- **Jetpack Compose** - No XML layouts (except for AndroidView)
-- **Clean Architecture** - Follow MVVM patterns
-- **No Star Imports** - Explicit imports only
-- **Thread Safety** - Avoid AndroidViewModel, use proper coroutine scoping
-
 For detailed development rules, please read our [`RULES.md`](RULES.md) file.
 
 ### 🎯 Areas We Need Help With
@@ -236,25 +229,10 @@ For detailed development rules, please read our [`RULES.md`](RULES.md) file.
 
 ### Common Issues
 
-**Q: The app crashes on startup**
-- Ensure your device runs Android 8.0+ (API 26)
-- Clear app data and cache from Android Settings
-- Check if you have sufficient storage space
-
-**Q: Streams are buffering frequently**
-- Verify your internet connection speed (minimum 5 Mbps for HD)
-- Try switching to a different server/stream if available
-- Check your network stability and switch between WiFi/mobile data
-
 **Q: DLNA casting is not working**
 - Ensure both devices are on the same Wi-Fi network
 - Check if your target device supports DLNA/UPnP
 - Restart the app and try discovering devices again
-
-**Q: TV interface looks different**
-- The TV UI is optimized for leanback experience
-- Use D-pad navigation on your remote
-- Some features may vary between mobile and TV versions
 
 ### 🆘 Getting Help
 
