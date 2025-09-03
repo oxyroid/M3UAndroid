@@ -34,9 +34,15 @@ class PlayerActivity : ComponentActivity() {
     private val helper: Helper = Helper(this)
 
     companion object {
-        // FIXME: the property is worked only when activity has one instance at most.
+        // Thread-safe atomic boolean for PiP mode state
+        // Note: This is a known limitation - works only when there's at most one activity instance
+        @Volatile
         var isInPipMode: Boolean = false
             private set
+            
+        internal fun updatePipMode(newValue: Boolean) {
+            isInPipMode = newValue
+        }
     }
 
     @Inject
@@ -66,9 +72,9 @@ class PlayerActivity : ComponentActivity() {
                 }
             }
         }
-        addOnPictureInPictureModeChangedListener {
-            isInPipMode = it.isInPictureInPictureMode
-            if (!it.isInPictureInPictureMode && lifecycle.currentState !in arrayOf(
+        addOnPictureInPictureModeChangedListener { pictureInPictureMode ->
+            updatePipMode(pictureInPictureMode.isInPictureInPictureMode)
+            if (!pictureInPictureMode.isInPictureInPictureMode && lifecycle.currentState !in arrayOf(
                     Lifecycle.State.RESUMED,
                     Lifecycle.State.STARTED
                 )
