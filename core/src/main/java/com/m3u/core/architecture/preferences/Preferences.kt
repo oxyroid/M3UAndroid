@@ -39,10 +39,9 @@ private val settingsDataStore: ReadOnlyProperty<Context, Settings> =
         override fun getValue(
             thisRef: Context,
             ignored: KProperty<*>
-        ): Settings = instance ?: property.getValue(thisRef, ignored).apply {
-            runBlocking {
-                applyDefaultValues()
-            }
+        ): Settings = instance ?: property.getValue(thisRef, ignored).also { dataStore ->
+            instance = dataStore
+            // Apply defaults lazily when first accessed - no blocking
         }
     }
 val Context.settings: Settings by settingsDataStore
@@ -54,7 +53,9 @@ fun <T> preferenceOf(
 ): State<T> {
     val dataStore: Settings = LocalContext.current.settings
     return produceState(initial, key1 = dataStore) {
-        dataStore.data.mapNotNull { it[key] }.collect {
+        // Ensure defaults are applied first time
+        dataStore.applyDefaultValues()
+        dataStore.data.mapNotNull { it[key] ?: initial }.collect {
             value = it
         }
     }

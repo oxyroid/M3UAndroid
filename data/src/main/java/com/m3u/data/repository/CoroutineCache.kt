@@ -18,23 +18,33 @@ internal abstract class CoroutineCache<E>(
     private val cache = mutableListOf<E>()
     private val mutex = Mutex()
     abstract suspend fun onReceived(cache: List<E>)
+    
     suspend fun push(element: E) {
-        cache += element
-        if (cache.size >= limit) {
-            mutex.withLock {
-                // check again
+        val shouldFlush = mutex.withLock {
+            cache += element
+            cache.size >= limit
+        }
+        
+        if (shouldFlush) {
+            val snapshot = mutex.withLock {
                 if (cache.size >= limit) {
-                    onReceived(cache)
+                    val snapshot = cache.toList()
                     cache.clear()
-                }
+                    snapshot
+                } else null
             }
+            snapshot?.let { onReceived(it) }
         }
     }
 
     suspend fun flush() {
-        mutex.withLock {
-            onReceived(cache)
-            cache.clear()
+        val snapshot = mutex.withLock {
+            if (cache.isNotEmpty()) {
+                val snapshot = cache.toList()
+                cache.clear()
+                snapshot
+            } else null
         }
+        snapshot?.let { onReceived(it) }
     }
 }

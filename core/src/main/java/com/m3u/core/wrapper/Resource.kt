@@ -22,17 +22,25 @@ sealed class Resource<out T> {
 fun <T, R> Flow<Resource<T>>.mapResource(transform: (T) -> R): Flow<Resource<R>> = map {
     when (it) {
         Resource.Loading -> Resource.Loading
-        is Resource.Success -> Resource.Success(transform(it.data))
+        is Resource.Success -> try {
+            Resource.Success(transform(it.data))
+        } catch (e: Exception) {
+            Resource.Failure(e.message)
+        }
         is Resource.Failure -> Resource.Failure(it.message)
     }
 }
 
 fun <T> Flow<T>.asResource(): Flow<Resource<T>> = map<T, Resource<T>> { Resource.Success(it) }
     .onStart { emit(Resource.Loading) }
-    .catch { emit(Resource.Failure(it.message)) }
+    .catch { emit(Resource.Failure(it.message ?: it::class.simpleName)) }
 
 fun <T> resource(block: suspend () -> T): Flow<Resource<T>> = channelFlow<Resource<T>> {
-    trySend(Resource.Success(block()))
+    try {
+        trySend(Resource.Success(block()))
+    } catch (e: Exception) {
+        trySend(Resource.Failure(e.message ?: e::class.simpleName))
+    }
 }
     .onStart { emit(Resource.Loading) }
-    .catch { emit(Resource.Failure(it.message)) }
+    .catch { emit(Resource.Failure(it.message ?: it::class.simpleName)) }
