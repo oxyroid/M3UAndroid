@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="data_error_file_not_found">file non trovato</string>
+    <string name="data_error_empty_title">il nome della playlist è vuoto</string>
+    <string name="data_channel_name_stream_download_service">Servizio Download Stream</string>
+    <string name="data_channel_description_stream_download_service">Descrizione Download Stream</string>
+
+    <string name="data_worker_subscription_action_cancel">Annulla</string>
+    <string name="data_worker_subscription_action_retry">Riprova</string>
+    <string name="data_worker_subscription_content_completed">Completati (+%d)</string>
+    <string name="data_worker_subscription_content_channel_progress">%d canali sono stati scaricati</string>
+    <string name="data_worker_subscription_content_programme_progress">%d programmi sono stati scaricati</string>
+</resources>

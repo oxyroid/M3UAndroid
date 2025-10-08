@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feat_setting_app_version">versione app</string>
+    <string name="feat_setting_label_subscribe">iscriviti</string>
+    <string name="feat_setting_success_subscribe">iscrizione completata</string>
+    <string name="feat_setting_failed_malformed_url">url non valido (%s)</string>
+    <string name="feat_setting_error_empty_title">il nome della playlist è vuoto</string>
+    <string name="feat_setting_placeholder_title">nome playlist</string>
+    <string name="feat_setting_placeholder_url">link playlist</string>
+    <string name="feat_setting_label_subscribing">iscrizione in corso</string>
+    <string name="feat_setting_sync_mode_all">tutti</string>
+    <string name="feat_setting_sync_mode_keep">mantieni</string>
+    <string name="feat_setting_sync_mode">strategia di sincronizzazione</string>
+    <string name="feat_setting_playlist_management">gestione playlist</string>
+    <string name="feat_setting_connect_timeout">timeout di connessione</string>
+    <string name="feat_setting_god_mode">modalità esperto</string>
+    <string name="feat_setting_god_mode_description">regola il layout con i tasti volume fisici</string>
+    <string name="feat_setting_experimental_mode">modalità sperimentale</string>
+    <string name="feat_setting_experimental_mode_description">le funzionalità instabili possono causare errori critici</string>
+    <string name="feat_setting_label_epg_playlists">Lista EPG</string>
+    <string name="feat_setting_label_hidden_channels">canali nascosti</string>
+    <string name="feat_setting_label_hidden_playlist_groups">categorie playlist nascoste</string>
+    <string name="feat_setting_label_add_playlist">aggiungi playlist</string>
+    <string name="feat_setting_label_parse_from_clipboard">analizza appunti</string>
+    <string name="feat_setting_label_select_from_local_storage">seleziona file</string>
+    <string name="feat_setting_label_parse_from_disk">analizza file</string>
+    <string name="feat_setting_clip_mode">modalità video clip</string>
+    <string name="feat_setting_clip_mode_adaptive">adattivo</string>
+    <string name="feat_setting_clip_mode_clip">clip</string>
+    <string name="feat_setting_clip_mode_stretched">esteso</string>
+    <string name="feat_setting_auto_refresh_channels">aggiorna canali automaticamente</string>
+    <string name="feat_setting_auto_refresh_channels_description">aggiornamento automatico all\'ingresso nel canale</string>
+
+    <string name="feat_setting_full_info_player">player con informazioni complete</string>
+    <string name="feat_setting_full_info_player_description">mostra più informazioni nel player</string>
+    <string name="feat_setting_slider">slider</string>
+    <string name="feat_setting_no_picture_mode">modalità senza immagini</string>
+    <string name="feat_setting_no_picture_mode_description">può migliorare le prestazioni</string>
+    <string name="feat_setting_system_setting">impostazioni di sistema</string>
+    <string name="feat_setting_script_management_import_js">importa Javascript</string>
+    <string name="feat_setting_enqueue_subscribe">un subscription task è stato aggiunto alla coda</string>
+    <string name="feat_setting_dropbox">dropbox</string>
+    <string name="feat_setting_project_about">informazioni sul progetto</string>
+    <string name="feat_setting_local_storage">archivio locale</string>
+    <string name="feat_setting_error_unselected_file">nessun file selezionato</string>
+    <string name="feat_setting_error_blank_url">url vuoto</string>
+    <string name="feat_setting_use_dynamic_colors">colori dinamici</string>
+    <string name="feat_setting_use_dynamic_colors_unavailable">disponibile su Android 12 e versioni successive</string>
+    <string name="feat_setting_colorful_background">sfondo colorato</string>
+    <string name="feat_setting_restore_schemes">ripristina schemi</string>
+    <string name="feat_setting_not_implementation">questa funzionalità non è disponibile nella versione attuale</string>
+    <string name="feat_setting_zapping_mode">modalità zapping</string>
+    <string name="feat_setting_zapping_mode_description">anteprima rapida prima di riprodurre il canale</string>
+    <string name="feat_setting_gesture_brightness">gesture luminosità</string>
+    <string name="feat_setting_gesture_volume">gesture volume</string>
+    <string name="feat_setting_screencast">trasmissione schermo</string>
+    <string name="feat_setting_screen_rotating">rotazione schermo</string>
+    <string name="feat_setting_screen_rotating_description">disponibile quando la rotazione di sistema è sbloccata</string>
+    <string name="feat_setting_optional_features">funzionalità opzionali</string>
+    <string name="feat_setting_unseen_limit">mostra canali preferiti non visti di recente</string>
+    <string name="feat_setting_reconnect_mode">riconnessione automatica</string>
+    <string name="feat_setting_reconnect_mode_no">mai</string>
+    <string name="feat_setting_reconnect_mode_retry">solo in caso di errore</string>
+    <string name="feat_setting_reconnect_mode_reconnect">sempre</string>
+
+    <string name="feat_setting_appearance">aspetto</string>
+    <string name="feat_setting_appearance_hint_edit_color">tieni premuto per modificare il colore</string>
+
+    <string name="feat_setting_tunneling">modalità tunneling</string>
+    <string name="feat_setting_tunneling_description">migliora la riproduzione di contenuti 4K/HDR</string>
+    <string name="feat_setting_label_backup">backup</string>
+    <string name="feat_setting_label_restore">ripristina</string>
+
+    <string name="feat_setting_canvas_dark">scuro</string>
+    <string name="feat_setting_canvas_light">chiaro</string>
+    <string name="feat_setting_canvas_apply">applica</string>
+    <string name="feat_setting_canvas_reset">ripristina</string>
+
+    <string name="feat_setting_epg_clock_mode">modalità programmazione orario 12h</string>
+
+    <string name="feat_setting_remote_control">controllo remoto</string>
+    <string name="feat_setting_remote_control_description">attiva la possibilità di controllare la TV da remoto</string>
+
+    <string name="feat_setting_remote_control_tv_side">controllo remoto</string>
+    <string name="feat_setting_remote_control_tv_side_description">consenti agli smartphone di controllare la tua TV</string>
+
+    <string name="feat_setting_subscribe_for_tv">per TV</string>
+
+    <string name="feat_setting_backing_up">backup in corso di tutte le playlist e canali</string>
+    <string name="feat_setting_restoring">ripristino in corso di tutte le playlist e canali</string>
+
+    <string name="feat_setting_follow_system_theme">segui tema di sistema</string>
+
+    <string name="feat_setting_data_source_m3u" translatable="false">M3U</string>
+    <string name="feat_setting_data_source_epg" translatable="false">EPG</string>
+    <string name="feat_setting_data_source_xtream" translatable="false">Xtream</string>
+    <string name="feat_setting_data_source_emby" translatable="false">Emby</string>
+    <string name="feat_setting_data_source_dropbox" translatable="false">Dropbox</string>
+
+    <string name="feat_setting_placeholder_basic_url">indirizzo</string>
+    <string name="feat_setting_placeholder_username">username</string>
+    <string name="feat_setting_placeholder_password">password</string>
+
+    <string name="feat_setting_warning_xtream_takes_much_more_time">potrebbe richiedere molto più tempo</string>
+
+    <string name="feat_setting_back_home">torna alla home</string>
+
+    <string name="feat_setting_always_replay">mostra sempre pulsante replay</string>
+
+    <string name="feat_setting_player_panel">pannello player</string>
+    <string name="feat_setting_player_panel_description">scorri verso l\'alto il player per espanderlo in modalità verticale</string>
+
+    <string name="feat_setting_cache">cache durante la riproduzione</string>
+    <string name="feat_setting_cache_description">questa opzione potrebbe impedire la riproduzione normale</string>
+    <string name="feat_setting_clear_cache">svuota cache</string>
+
+    <string name="feat_setting_paging">paginazione canali</string>
+    <string name="feat_setting_paging_description">
+        utile per grandi quantità di canali,
+        ma contemporaneamente il raggruppamento verrà disabilitato 
+    </string>
+    <string name="feat_setting_source_code">codice sorgente</string>
+
+    <string name="feat_setting_compact_dimension">dimensione compatta</string>
+    <!-- EPG -->
+    <string name="feat_setting_placeholder_epg_title">nome epg</string>
+    <string name="feat_setting_error_empty_epg_title">il nome epg è vuoto</string>
+    <string name="feat_setting_error_empty_epg">il link epg è vuoto</string>
+    <string name="feat_setting_placeholder_epg">link epg</string>
+    <string name="feat_setting_epg_added">puoi associare la playlist all\'EPG</string>
+
+    <string name="feat_setting_randomly_in_favourite">riproduzione casuale solo dai preferiti</string>
+</resources>

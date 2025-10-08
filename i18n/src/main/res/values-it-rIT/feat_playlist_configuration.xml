@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feat_playlist_configuration_title">titolo</string>
+    <string name="feat_playlist_configuration_user_agent">user agent</string>
+    <string name="feat_playlist_configuration_enabled_epgs">EPG abilitati</string>
+    <string name="feat_playlist_configuration_sync_programmes">sincronizza programmi</string>
+    <string name="feat_playlist_configuration_cancel_sync_programmes">annulla sincronizzazione programmi</string>
+    <string name="feat_playlist_configuration_programmes_expired_time">Scadenza: %s</string>
+    <string name="feat_playlist_configuration_programmes_expired">I programmi memorizzati non sono aggiornati</string>
+    <string name="feat_playlist_configuration_auto_refresh_programmes">Aggiorna automaticamente programmi</string>
+    <string name="feat_playlist_configuration_auto_refresh_programmes_description">All\'avvio dell\'app</string>
+</resources>

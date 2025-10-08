@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_label_crash">arresti anomali dell\'app</string>
+    <string name="app_shortcut_channel_recently_short_label">Recenti</string>
+    <string name="app_shortcut_channel_recently_long_label">Riproduci canale recenti</string>
+    <string name="app_shortcut_channel_recently_disabled">non disponibile</string>
+    <string name="crash_notification_title">Ops! L\'app si è bloccata</string>
+    <string name="crash_notification_text">Il log è stato conservato, potrai condividerlo con noi più tardi!</string>
+    <string name="crash_notification_channel_name">Protetto</string>
+</resources>
