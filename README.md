@@ -64,6 +64,7 @@ Help us translate the app! Current support:
 | 🇨🇳 [Simplified Chinese](i18n/src/main/res/values-zh-rCN) | 🇷🇴 [Romanian](i18n/src/main/res/values-ro-rRO) by [@iboboc](https://github.com/iboboc) |
 |  | 🇧🇷 [Portuguese (BR)](i18n/src/main/res/values-pt-rBR) by [@Suburbanno](https://github.com/Suburbanno) |
 |  | 🇹🇷 [Turkish](i18n/src/main/res/values-tr-rTR) by [@patr0nq](https://github.com/patr0nq) |
+|  | 🇮🇹 [Italian](i18n/src/main/res/values-it-rIT) by [@LucaMaroglio](https://github.com/LucaMaroglio) |
 
 ## 🤝 Contribution
 
