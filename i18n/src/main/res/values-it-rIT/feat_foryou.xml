@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feat_foryou_hidden_channels_playlist">canali nascosti</string>
+    <string name="feat_foryou_unsubscribe_playlist">annulla iscrizione</string>
+    <string name="feat_foryou_copy_playlist_url">copia url</string>
+    <string name="feat_foryou_rename_playlist">rinomina</string>
+    <string name="feat_foryou_imported_playlist_title">importate</string>
+    <string name="feat_foryou_prompt_add_playlist">aggiungi una playlist</string>
+    <string name="feat_foryou_recommend_unseen_label">preferiti che vorresti rivedere</string>
+    <string name="feat_foryou_recommend_unseen_more_than_days">più di %d giorni</string>
+    <string name="feat_foryou_recommend_unseen_days">%d giorni</string>
+    <string name="feat_foryou_recommend_unseen_hours">%d ore</string>
+    <string name="feat_foryou_recommend_cw_label">continua a guardare</string>
+    <string name="feat_foryou_new_release">nuova release</string>
+    <string name="feat_foryou_connect_title">inserisci il codice dalla TV</string>
+    <string name="feat_foryou_connect_subtitle">Assicurati di essere connesso alla stessa rete Wi-Fi</string>
+</resources>
