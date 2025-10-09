@@ -22,7 +22,7 @@ glance = "1.1.1"
 google-accompanist = "0.37.3"
 google-dagger = "2.56.2"
 
-haze = "1.6.7"
+haze = "1.6.10"
 io-coil = "2.7.0"
 kotlinpoet = "2.2.0"
 kotlinx-serialization-json = "1.9.0"
