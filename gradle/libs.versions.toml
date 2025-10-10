@@ -40,7 +40,7 @@ squareup-retrofit2 = "3.0.0"
 squareup-leakcanary = "2.14"
 squareup-wire = "5.3.5"
 
-kotlin = "2.2.0"
+kotlin = "2.2.20"
 android-gradle-plugin = "8.9.1"
 kotlin-symbol-processor = "2.2.0-2.0.2"
 
