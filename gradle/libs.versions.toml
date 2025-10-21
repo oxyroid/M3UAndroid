@@ -41,7 +41,7 @@ squareup-leakcanary = "2.14"
 squareup-wire = "5.3.5"
 
 kotlin = "2.2.0"
-android-gradle-plugin = "8.9.1"
+android-gradle-plugin = "8.13.0"
 kotlin-symbol-processor = "2.2.0-2.0.2"
 
 androidx-test-ext-junit = "1.2.1"
