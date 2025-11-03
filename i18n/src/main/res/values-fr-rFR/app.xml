@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_label_crash">L'application plante</string>
+    <string name="app_shortcut_channel_recently_short_label">Récemment</string>
+    <string name="app_shortcut_channel_recently_long_label">Chaîne récemment jouée</string>
+    <string name="app_shortcut_channel_recently_disabled">indisponible</string>
+    <string name="crash_notification_title">Oups ! L'application a planté</string>
+    <string name="crash_notification_text">Les traces ont été collectées, vous pouvez nous les partager plus tard !</string>
+    <string name="crash_notification_channel_name">Protégé</string>
+</resources>

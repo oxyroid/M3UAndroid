@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="data_error_file_not_found">fichier introuvable</string>
+    <string name="data_error_empty_title">le nom de la playlist est vide</string>
+    <string name="data_channel_name_stream_download_service">Service de téléchargement de flux</string>
+    <string name="data_channel_description_stream_download_service">Description du téléchargement de flux</string>
+
+    <string name="data_worker_subscription_action_cancel">Annuler</string>
+    <string name="data_worker_subscription_action_retry">Réessayer</string>
+    <string name="data_worker_subscription_content_completed">Terminé (+%d)</string>
+    <string name="data_worker_subscription_content_channel_progress">%d chaînes ont été téléchargées</string>
+    <string name="data_worker_subscription_content_programme_progress">%d programmes ont été téléchargés</string>
+</resources>
