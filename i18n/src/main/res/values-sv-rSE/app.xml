@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_label_crash">appen kraschar</string>
+    <string name="app_shortcut_channel_recently_short_label">Nyligen</string>
+    <string name="app_shortcut_channel_recently_long_label">Spela senaste kanal</string>
+    <string name="app_shortcut_channel_recently_disabled">otillgänglig</string>
+    <string name="crash_notification_title">Hoppsan! Appen kraschade</string>
+    <string name="crash_notification_text">Spårningen har samlats in, du kan dela den med oss senare!</string>
+    <string name="crash_notification_channel_name">Skyddad</string>
+</resources>

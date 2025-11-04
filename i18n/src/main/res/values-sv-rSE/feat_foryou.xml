@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feat_foryou_hidden_channels_playlist">dolda kanaler</string>
+    <string name="feat_foryou_unsubscribe_playlist">avsluta prenumeration</string>
+    <string name="feat_foryou_copy_playlist_url">kopiera URL</string>
+    <string name="feat_foryou_rename_playlist">byt namn</string>
+    <string name="feat_foryou_imported_playlist_title">importerad</string>
+    <string name="feat_foryou_prompt_add_playlist">lägg till en spellista</string>
+    <string name="feat_foryou_recommend_unseen_label">favorit som du skulle vilja se igen</string>
+    <string name="feat_foryou_recommend_unseen_more_than_days">mer än %d dagar</string>
+    <string name="feat_foryou_recommend_unseen_days">%d dagar</string>
+    <string name="feat_foryou_recommend_unseen_hours">%d timmar</string>
+    <string name="feat_foryou_recommend_cw_label">fortsätt titta</string>
+    <string name="feat_foryou_new_release">ny utgåva</string>
+    <string name="feat_foryou_connect_title">ange kod från TV</string>
+    <string name="feat_foryou_connect_subtitle">Se till att ansluta till samma Wi-Fi</string>
+</resources>

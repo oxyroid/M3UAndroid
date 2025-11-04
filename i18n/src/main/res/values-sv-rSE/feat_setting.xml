@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feat_setting_app_version">appversion</string>
+    <string name="feat_setting_label_subscribe">prenumerera</string>
+    <string name="feat_setting_success_subscribe">prenumeration lyckades</string>
+    <string name="feat_setting_failed_malformed_url">felaktig URL (%s)</string>
+    <string name="feat_setting_error_empty_title">spellistans namn är tomt</string>
+    <string name="feat_setting_placeholder_title">spellistans namn</string>
+    <string name="feat_setting_placeholder_url">spellistans länk</string>
+    <string name="feat_setting_label_subscribing">prenumererar</string>
+    <string name="feat_setting_sync_mode_all">alla</string>
+    <string name="feat_setting_sync_mode_keep">behåll</string>
+    <string name="feat_setting_sync_mode">synkroniseringsstrategi</string>
+    <string name="feat_setting_playlist_management">hantera spellistor</string>
+    <string name="feat_setting_connect_timeout">timeout för anslutning</string>
+    <string name="feat_setting_god_mode">god mode</string>
+    <string name="feat_setting_god_mode_description">justera layouter med fysiska volymknappar</string>
+    <string name="feat_setting_experimental_mode">experimentläge</string>
+    <string name="feat_setting_experimental_mode_description">instabila funktioner kan orsaka allvarliga fel</string>
+    <string name="feat_setting_label_epg_playlists">EPG-lista</string>
+    <string name="feat_setting_label_hidden_channels">dolda kanaler</string>
+    <string name="feat_setting_label_hidden_playlist_groups">dolda spellistekategorier</string>
+    <string name="feat_setting_label_add_playlist">lägg till spellista</string>
+    <string name="feat_setting_label_parse_from_clipboard">tolka urklipp</string>
+    <string name="feat_setting_label_select_from_local_storage">välj fil</string>
+    <string name="feat_setting_label_parse_from_disk">tolka fil</string>
+    <string name="feat_setting_clip_mode">videoklippläge</string>
+    <string name="feat_setting_clip_mode_adaptive">adaptivt</string>
+    <string name="feat_setting_clip_mode_clip">beskär</string>
+    <string name="feat_setting_clip_mode_stretched">sträckt</string>
+    <string name="feat_setting_auto_refresh_channels">uppdatera kanaler automatiskt</string>
+    <string name="feat_setting_auto_refresh_channels_description">uppdateras automatiskt när du går in i kanalen</string>
+
+    <string name="feat_setting_full_info_player">fullständig informationsspelare</string>
+    <string name="feat_setting_full_info_player_description">visa mer information i spelaren</string>
+    <string name="feat_setting_slider">skjutreglage</string>
+    <string name="feat_setting_no_picture_mode">bildlöst läge</string>
+    <string name="feat_setting_no_picture_mode_description">kan förbättra prestandan</string>
+    <string name="feat_setting_system_setting">systeminställningar</string>
+    <string name="feat_setting_script_management_import_js">importera Javascript</string>
+    <string name="feat_setting_enqueue_subscribe">en prenumerationsuppgift har lagts till i kön</string>
+    <string name="feat_setting_dropbox">dropbox</string>
+    <string name="feat_setting_project_about">om projektet</string>
+    <string name="feat_setting_local_storage">lokal lagring</string>
+    <string name="feat_setting_error_unselected_file">ingen fil vald än</string>
+    <string name="feat_setting_error_blank_url">tom URL</string>
+    <string name="feat_setting_use_dynamic_colors">dynamiska färger</string>
+    <string name="feat_setting_use_dynamic_colors_unavailable">tillgängligt på Android 12 och högre</string>
+    <string name="feat_setting_colorful_background">färgglad bakgrund</string>
+    <string name="feat_setting_restore_schemes">återställ scheman</string>
+    <string name="feat_setting_not_implementation">denna funktion är inte tillgänglig för nuvarande version</string>
+    <string name="feat_setting_zapping_mode">zappingläge</string>
+    <string name="feat_setting_zapping_mode_description">snabbförhandsvisning innan kanal spelas</string>
+    <string name="feat_setting_gesture_brightness">ljusstyrkegest</string>
+    <string name="feat_setting_gesture_volume">volymgest</string>
+    <string name="feat_setting_screencast">skärmdelning</string>
+    <string name="feat_setting_screen_rotating">skärmrotation</string>
+    <string name="feat_setting_screen_rotating_description">tillgänglig när systemrotation är upplåst</string>
+    <string name="feat_setting_optional_features">valfria funktioner</string>
+    <string name="feat_setting_unseen_limit">rekommendera längesedan sedda favoritkanaler</string>
+    <string name="feat_setting_reconnect_mode">återanslut automatiskt</string>
+    <string name="feat_setting_reconnect_mode_no">aldrig</string>
+    <string name="feat_setting_reconnect_mode_retry">endast vid fel</string>
+    <string name="feat_setting_reconnect_mode_reconnect">alltid</string>
+
+    <string name="feat_setting_appearance">utseende</string>
+    <string name="feat_setting_appearance_hint_edit_color">långtryck för att redigera färg</string>
+
+    <string name="feat_setting_tunneling">tunnelläge</string>
+    <string name="feat_setting_tunneling_description">förbättra uppspelning av 4K/HDR-innehåll</string>
+    <string name="feat_setting_label_backup">säkerhetskopiera</string>
+    <string name="feat_setting_label_restore">återställ</string>
+
+    <string name="feat_setting_canvas_dark">mörk</string>
+    <string name="feat_setting_canvas_light">ljus</string>
+    <string name="feat_setting_canvas_apply">tillämpa</string>
+    <string name="feat_setting_canvas_reset">återställ</string>
+
+    <string name="feat_setting_epg_clock_mode">program 12-timmars klockläge</string>
+
+    <string name="feat_setting_remote_control">fjärrkontroll</string>
+    <string name="feat_setting_remote_control_description">aktivera möjligheten att fjärrstyra din TV</string>
+
+    <string name="feat_setting_remote_control_tv_side">fjärrkontroll</string>
+    <string name="feat_setting_remote_control_tv_side_description">låt smartphones styra din TV</string>
+
+    <string name="feat_setting_subscribe_for_tv">för TV</string>
+
+    <string name="feat_setting_backing_up">säkerhetskopierar alla spellistor och kanaler</string>
+    <string name="feat_setting_restoring">återställer alla spellistor och kanaler</string>
+
+    <string name="feat_setting_follow_system_theme">följ systemtema</string>
+
+    <string name="feat_setting_data_source_m3u" translatable="false">M3U</string>
+    <string name="feat_setting_data_source_epg" translatable="false">EPG</string>
+    <string name="feat_setting_data_source_xtream" translatable="false">Xtream</string>
+    <string name="feat_setting_data_source_emby" translatable="false">Emby</string>
+    <string name="feat_setting_data_source_dropbox" translatable="false">Dropbox</string>
+
+    <string name="feat_setting_placeholder_basic_url">adress</string>
+    <string name="feat_setting_placeholder_username">användarnamn</string>
+    <string name="feat_setting_placeholder_password">lösenord</string>
+
+    <string name="feat_setting_warning_xtream_takes_much_more_time">det kan ta mycket längre tid</string>
+
+    <string name="feat_setting_back_home">tillbaka hem</string>
+
+    <string name="feat_setting_always_replay">visa alltid uppspelningsknapp</string>
+
+    <string name="feat_setting_player_panel">spelarpanel</string>
+    <string name="feat_setting_player_panel_description">svep upp spelaren för att utöka den i stående läge</string>
+
+    <string name="feat_setting_cache">cache under uppspelning</string>
+    <string name="feat_setting_cache_description">detta alternativ kan förhindra normal uppspelning</string>
+    <string name="feat_setting_clear_cache">rensa cache</string>
+
+    <string name="feat_setting_paging">sidindela kanaler</string>
+    <string name="feat_setting_paging_description">
+        användbart för stora mängder kanaler,
+        men gruppering kommer att inaktiveras samtidigt
+    </string>
+    <string name="feat_setting_source_code">källkod</string>
+
+    <string name="feat_setting_compact_dimension">kompakt storlek</string>
+    <!-- EPG -->
+    <string name="feat_setting_placeholder_epg_title">EPG-namn</string>
+    <string name="feat_setting_error_empty_epg_title">EPG-namnet är tomt</string>
+    <string name="feat_setting_error_empty_epg">EPG-länken är tom</string>
+    <string name="feat_setting_placeholder_epg">EPG-länk</string>
+    <string name="feat_setting_epg_added">du kan sedan associera spellistan med EPG</string>
+
+    <string name="feat_setting_randomly_in_favourite">spela slumpmässigt endast från favoriter</string>
+</resources>
