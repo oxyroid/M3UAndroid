@@ -15,4 +15,7 @@
     <string name="feat_playlist_error_channel_not_found">频道不存在</string>
     <string name="feat_playlist_success_save_cover">保存到了（%s）</string>
     <string name="feat_playlist_scroll_up">回到顶部</string>
+    <string name="feat_playlist_web_server_started">Web server started - Open browser to upload playlists</string>
+    <string name="feat_playlist_web_server_stopped">Web server stopped</string>
+    <string name="feat_playlist_web_server_error">Web server error: %s</string>
 </resources>

@@ -10,6 +10,8 @@ import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.playlist.PlaylistRepositoryImpl
 import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.data.repository.programme.ProgrammeRepositoryImpl
+import com.m3u.data.repository.webserver.WebServerRepository
+import com.m3u.data.repository.webserver.WebServerRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -42,4 +44,10 @@ internal interface RepositoryModule {
     fun bindMediaRepository(
         repository: MediaRepositoryImpl
     ): MediaRepository
+
+    @Binds
+    @Singleton
+    fun bindWebServerRepository(
+        repository: WebServerRepositoryImpl
+    ): WebServerRepository
 }

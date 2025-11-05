@@ -72,7 +72,7 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.hilt.work)
 
-    implementation(libs.ktor.server.netty)
+    implementation("io.ktor:ktor-server-cio:3.3.1")
     implementation(libs.ktor.server.websockets)
     implementation(libs.ktor.server.cors)
     implementation(libs.ktor.server.content.negotiation)

@@ -63,4 +63,10 @@ sealed class SettingMessage(
         type = TYPE_SNACK,
         resId = string.feat_setting_restoring
     )
+
+    data object WebDropNoSubscribe : SettingMessage(
+        level = LEVEL_ERROR,
+        type = TYPE_SNACK,
+        resId = string.feat_setting_error_webdrop_no_subscribe
+    )
 }

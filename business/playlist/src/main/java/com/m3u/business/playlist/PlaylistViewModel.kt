@@ -40,6 +40,8 @@ import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.media.MediaRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.programme.ProgrammeRepository
+import com.m3u.data.repository.webserver.WebServerRepository
+import com.m3u.data.repository.webserver.WebServerState
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManager
@@ -77,9 +79,10 @@ class PlaylistViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val mediaRepository: MediaRepository,
     private val programmeRepository: ProgrammeRepository,
+    private val webServerRepository: WebServerRepository,
     private val messager: Messager,
     private val playerManager: PlayerManager,
-    settings: Settings,
+    private val settings: Settings,
     workManager: WorkManager,
 ) : ViewModel() {
     private val timber = Timber.tag("PlaylistViewModel")
@@ -368,4 +371,44 @@ class PlaylistViewModel @Inject constructor(
             // don't lose
             started = SharingStarted.Lazily
         )
+
+    // Web Server
+    val webServerState: StateFlow<WebServerState> = webServerRepository.state
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = WebServerState(),
+            started = SharingStarted.WhileSubscribed(5_000L)
+        )
+
+    fun startWebServer() {
+        viewModelScope.launch {
+            val port = settings.flowOf(PreferencesKeys.WEB_SERVER_PORT).take(1).stateIn(viewModelScope).value
+            webServerRepository.start(port).onSuccess {
+                timber.d("Web server started successfully")
+                messager.emit(PlaylistMessage.WebServerStarted)
+            }.onFailure { error ->
+                timber.e(error, "Failed to start web server")
+                messager.emit(PlaylistMessage.WebServerError(error.message ?: "Failed to start server"))
+            }
+        }
+    }
+
+    fun stopWebServer() {
+        viewModelScope.launch {
+            webServerRepository.stop().onSuccess {
+                timber.d("Web server stopped successfully")
+                messager.emit(PlaylistMessage.WebServerStopped)
+            }.onFailure { error ->
+                timber.e(error, "Failed to stop web server")
+            }
+        }
+    }
+
+    fun toggleWebServer() {
+        if (webServerState.value.isRunning) {
+            stopWebServer()
+        } else {
+            startWebServer()
+        }
+    }
 }

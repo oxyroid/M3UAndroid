@@ -44,6 +44,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -63,6 +65,8 @@ import com.m3u.smartphone.ui.business.setting.components.EpgPlaylistItem
 import com.m3u.smartphone.ui.business.setting.components.HiddenChannelItem
 import com.m3u.smartphone.ui.business.setting.components.HiddenPlaylistGroupItem
 import com.m3u.smartphone.ui.business.setting.components.LocalStorageButton
+import com.m3u.smartphone.ui.business.setting.components.WebDropInputContent
+import com.m3u.business.playlist.PlaylistViewModel
 import com.m3u.smartphone.ui.common.helper.LocalHelper
 import com.m3u.smartphone.ui.material.components.HorizontalPagerIndicator
 import com.m3u.smartphone.ui.material.components.PlaceholderField
@@ -182,7 +186,8 @@ private fun MainContentImpl(
                     DataSource.EPG,
                     DataSource.Xtream,
                     DataSource.Emby,
-                    DataSource.Dropbox
+                    DataSource.Dropbox,
+                    DataSource.WebDrop
                 )
             )
         }
@@ -194,6 +199,19 @@ private fun MainContentImpl(
                 DataSource.Xtream -> XtreamInputContent()
                 DataSource.Emby -> {}
                 DataSource.Dropbox -> {}
+                DataSource.WebDrop -> {
+                    val playlistViewModel: PlaylistViewModel = hiltViewModel()
+                    val webServerState by playlistViewModel.webServerState.collectAsStateWithLifecycle()
+
+                    WebDropInputContent(
+                        webServerState = webServerState,
+                        onStartServer = { playlistViewModel.startWebServer() },
+                        onStopServer = { playlistViewModel.stopWebServer() },
+                        onCopyUrl = { url ->
+                            // URL copied notification handled internally
+                        }
+                    )
+                }
             }
         }
 
@@ -212,6 +230,7 @@ private fun MainContentImpl(
                         SplitButtonDefaults.LeadingButton(
                             shapes = SplitButtonDefaults.leadingButtonShapesFor(size),
                             contentPadding = SplitButtonDefaults.leadingButtonContentPaddingFor(size),
+                            enabled = properties.selectedState.value != DataSource.WebDrop,
                             onClick = {
                                 postNotificationPermission.checkPermissionOrRationale(
                                     showRationale = {

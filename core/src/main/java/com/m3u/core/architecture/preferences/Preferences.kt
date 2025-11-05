@@ -122,7 +122,9 @@ private val PREFERENCES: Map<Preferences.Key<*>, *> = listOf(
     PreferencesKeys.SLIDER to true,
     PreferencesKeys.ALWAYS_SHOW_REPLAY to false,
     PreferencesKeys.PLAYER_PANEL to true,
-    PreferencesKeys.COMPACT_DIMENSION to false
+    PreferencesKeys.COMPACT_DIMENSION to false,
+    PreferencesKeys.WEB_SERVER_ENABLED to false,
+    PreferencesKeys.WEB_SERVER_PORT to 8080
 )
     .associateBy { it.key }
     .mapValues { it.value.value }
@@ -172,4 +174,8 @@ object PreferencesKeys {
     val PLAYER_PANEL = booleanPreferencesKey("player_panel")
 
     val COMPACT_DIMENSION = booleanPreferencesKey("compact-dimension")
+
+    // Web Server
+    val WEB_SERVER_ENABLED = booleanPreferencesKey("web-server-enabled")
+    val WEB_SERVER_PORT = intPreferencesKey("web-server-port")
 }

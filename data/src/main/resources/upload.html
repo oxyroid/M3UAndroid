@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M3U Playlist Upload</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .drop-zone {
+            border: 3px dashed #ccc;
+            border-radius: 12px;
+            padding: 60px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+        .drop-zone.dragover {
+            border-color: #667eea;
+            background-color: #f0f4ff;
+        }
+        .drop-zone:hover {
+            border-color: #667eea;
+        }
+        .drop-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        .drop-text {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        .drop-subtext {
+            color: #999;
+            font-size: 13px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        input[type="text"],
+        input[type="url"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus,
+        input[type="url"]:focus,
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button[type="submit"] {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button[type="submit"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        button[type="submit"]:active {
+            transform: translateY(0);
+        }
+        button[type="submit"]:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .progress {
+            display: none;
+            margin-top: 20px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .progress-text {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+        .message {
+            padding: 14px 18px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 14px;
+            display: none;
+        }
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .file-info {
+            margin-top: 10px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #666;
+            display: none;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+            .drop-zone {
+                padding: 40px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📺 M3U Playlist Upload</h1>
+        <p class="subtitle">Import your IPTV playlists easily</p>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="file">📁 File Upload</button>
+            <button class="tab" data-tab="url">🔗 URL Import</button>
+            <button class="tab" data-tab="xtream">🎬 Xtream Codes</button>
+        </div>
+
+        <!-- File Upload Tab -->
+        <div class="tab-content active" id="file-tab">
+            <div class="drop-zone" id="dropZone">
+                <div class="drop-icon">📤</div>
+                <div class="drop-text">Drag & drop M3U file here</div>
+                <div class="drop-subtext">or click to browse (max 400 MB)</div>
+            </div>
+            <input type="file" id="fileInput" accept=".m3u,.m3u8" style="display: none;">
+            <div class="file-info" id="fileInfo"></div>
+            <form id="fileForm">
+                <div class="form-group">
+                    <label for="fileTitle">Playlist Name (Optional)</label>
+                    <input type="text" id="fileTitle" placeholder="e.g., My IPTV Channels">
+                </div>
+                <button type="submit" id="fileSubmit">Upload Playlist</button>
+            </form>
+        </div>
+
+        <!-- URL Import Tab -->
+        <div class="tab-content" id="url-tab">
+            <form id="urlForm">
+                <div class="form-group">
+                    <label for="urlInput">M3U URL *</label>
+                    <input type="url" id="urlInput" placeholder="http://example.com/playlist.m3u" required>
+                </div>
+                <div class="form-group">
+                    <label for="urlTitle">Playlist Name (Optional)</label>
+                    <input type="text" id="urlTitle" placeholder="e.g., IPTV Provider">
+                </div>
+                <button type="submit">Import from URL</button>
+            </form>
+        </div>
+
+        <!-- Xtream Codes Tab -->
+        <div class="tab-content" id="xtream-tab">
+            <form id="xtreamForm">
+                <div class="form-group">
+                    <label for="xtreamTitle">Provider Name *</label>
+                    <input type="text" id="xtreamTitle" placeholder="e.g., IPTV Provider" required>
+                </div>
+                <div class="form-group">
+                    <label for="xtreamUrl">Server URL *</label>
+                    <input type="url" id="xtreamUrl" placeholder="http://server.com:8080" required>
+                </div>
+                <div class="form-group">
+                    <label for="xtreamUsername">Username *</label>
+                    <input type="text" id="xtreamUsername" placeholder="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="xtreamPassword">Password *</label>
+                    <input type="password" id="xtreamPassword" placeholder="password" required>
+                </div>
+                <button type="submit">Import Xtream</button>
+            </form>
+        </div>
+
+        <div class="progress" id="progress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">Uploading...</div>
+        </div>
+
+        <div class="message" id="message"></div>
+    </div>
+
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab + '-tab').classList.add('active');
+            });
+        });
+
+        // File drag & drop
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        let selectedFile = null;
+
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) handleFile(files[0]);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) handleFile(e.target.files[0]);
+        });
+
+        function handleFile(file) {
+            if (!file.name.match(/\.(m3u|m3u8)$/i)) {
+                showMessage('Please select a valid M3U file', 'error');
+                return;
+            }
+            // Check file size (400 MB max)
+            const maxSize = 400 * 1024 * 1024; // 400 MB in bytes
+            if (file.size > maxSize) {
+                showMessage(`File too large! Maximum size is 400 MB. Your file is ${formatFileSize(file.size)}`, 'error');
+                return;
+            }
+            selectedFile = file;
+            fileInfo.style.display = 'block';
+            fileInfo.textContent = `📄 ${file.name} (${formatFileSize(file.size)})`;
+            if (!document.getElementById('fileTitle').value) {
+                document.getElementById('fileTitle').value = file.name.replace(/\.(m3u|m3u8)$/i, '');
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        // File upload
+        document.getElementById('fileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!selectedFile) {
+                showMessage('Please select a file first', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('title', document.getElementById('fileTitle').value || selectedFile.name.replace(/\.(m3u|m3u8)$/i, ''));
+
+            await uploadData('/upload', formData);
+        });
+
+        // URL import
+        document.getElementById('urlForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                url: document.getElementById('urlInput').value,
+                title: document.getElementById('urlTitle').value || 'M3U Playlist'
+            };
+            await uploadData('/import-url', JSON.stringify(data), 'application/json');
+        });
+
+        // Xtream codes import
+        document.getElementById('xtreamForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                title: document.getElementById('xtreamTitle').value,
+                basicUrl: document.getElementById('xtreamUrl').value,
+                username: document.getElementById('xtreamUsername').value,
+                password: document.getElementById('xtreamPassword').value
+            };
+            await uploadData('/import-xtream', JSON.stringify(data), 'application/json');
+        });
+
+        async function uploadData(endpoint, data, contentType = null) {
+            const progress = document.getElementById('progress');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            const submitButtons = document.querySelectorAll('button[type="submit"]');
+
+            try {
+                submitButtons.forEach(btn => btn.disabled = true);
+                progress.style.display = 'block';
+                hideMessage();
+
+                const options = {
+                    method: 'POST',
+                    body: data
+                };
+                if (contentType) {
+                    options.headers = { 'Content-Type': contentType };
+                }
+
+                // Simulate progress (since we can't track real progress easily)
+                let simulatedProgress = 0;
+                const progressInterval = setInterval(() => {
+                    if (simulatedProgress < 90) {
+                        simulatedProgress += 10;
+                        progressFill.style.width = simulatedProgress + '%';
+                    }
+                }, 200);
+
+                const response = await fetch(endpoint, options);
+                clearInterval(progressInterval);
+                progressFill.style.width = '100%';
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    progressText.textContent = `Success! ${result.count || 0} channels imported`;
+                    showMessage(`✅ ${result.message || 'Playlist imported successfully!'}`, 'success');
+                    setTimeout(() => {
+                        // Reset forms
+                        document.querySelectorAll('form').forEach(f => f.reset());
+                        selectedFile = null;
+                        fileInfo.style.display = 'none';
+                        progress.style.display = 'none';
+                    }, 3000);
+                } else {
+                    throw new Error(result.error || 'Upload failed');
+                }
+            } catch (error) {
+                showMessage(`❌ Error: ${error.message}`, 'error');
+                progress.style.display = 'none';
+            } finally {
+                submitButtons.forEach(btn => btn.disabled = false);
+            }
+        }
+
+        function showMessage(text, type) {
+            const message = document.getElementById('message');
+            message.textContent = text;
+            message.className = 'message ' + type;
+            message.style.display = 'block';
+        }
+
+        function hideMessage() {
+            document.getElementById('message').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

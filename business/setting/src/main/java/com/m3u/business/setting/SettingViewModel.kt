@@ -202,6 +202,11 @@ class SettingViewModel @Inject constructor(
                     messager.emit(SettingMessage.Enqueued)
                 }
 
+                DataSource.WebDrop -> {
+                    messager.emit(SettingMessage.WebDropNoSubscribe)
+                    return
+                }
+
                 else -> return
             }
         }
