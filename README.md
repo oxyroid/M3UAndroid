@@ -60,11 +60,16 @@ Help us translate the app! Current support:
 
 | Core Languages | Community Translations |
 |----------------|------------------------|
-| 🇬🇧 [English](i18n/src/main/res/values) | 🇪🇸 [Spanish](i18n/src/main/res/values-es-rES) by [@sguinetti](https://github.com/sguinetti) |
-| 🇨🇳 [Simplified Chinese](i18n/src/main/res/values-zh-rCN) | 🇷🇴 [Romanian](i18n/src/main/res/values-ro-rRO) by [@iboboc](https://github.com/iboboc) |
-|  | 🇧🇷 [Portuguese (BR)](i18n/src/main/res/values-pt-rBR) by [@Suburbanno](https://github.com/Suburbanno) |
-|  | 🇹🇷 [Turkish](i18n/src/main/res/values-tr-rTR) by [@patr0nq](https://github.com/patr0nq) |
+| 🇬🇧 [English](i18n/src/main/res/values) | 🇫🇷 [French](i18n/src/main/res/values-fr-rFR) by [@Gouar](https://github.com/Gouar) |
+| 🇨🇳 [Simplified Chinese](i18n/src/main/res/values-zh-rCN) | 🇩🇪 [German](i18n/src/main/res/values-de-rDE) by [@PhynixP](https://github.com/PhynixP) |
+|  | 🇮🇩 [Indonesian](i18n/src/main/res/values-id-rID) by [@ca-kraa](https://github.com/ca-kraa) |
 |  | 🇮🇹 [Italian](i18n/src/main/res/values-it-rIT) by [@LucaMaroglio](https://github.com/LucaMaroglio) |
+|  | 🇧🇷 [Portuguese (BR)](i18n/src/main/res/values-pt-rBR) by [@Suburbanno](https://github.com/Suburbanno) |
+|  | 🇷🇴 [Romanian](i18n/src/main/res/values-ro-rRO) by [@iboboc](https://github.com/iboboc) |
+|  | 🇪🇸 [Spanish](i18n/src/main/res/values-es-rES) by [@sguinetti](https://github.com/sguinetti) |
+|  | 🇪🇸 [Spanish (MX)](i18n/src/main/res/values-es-rMX) by [@sguinetti](https://github.com/sguinetti) |
+|  | 🇸🇪 [Swedish](i18n/src/main/res/values-sv-rSE) by [@optiix](https://github.com/optiix) |
+|  | 🇹🇷 [Turkish](i18n/src/main/res/values-tr-rTR) by [@patr0nq](https://github.com/patr0nq) |
 
 ## 🤝 Contribution
 
