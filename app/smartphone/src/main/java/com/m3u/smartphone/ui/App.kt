@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -47,6 +48,7 @@ import com.m3u.data.database.model.Channel
 import com.m3u.data.service.MediaCommand
 import com.m3u.smartphone.ui.business.channel.PlayerActivity
 import com.m3u.smartphone.ui.business.playlist.components.ChannelGallery
+import com.m3u.smartphone.ui.business.setting.USBLockScreen
 import com.m3u.smartphone.ui.common.AppNavHost
 import com.m3u.smartphone.ui.common.helper.LocalHelper
 import com.m3u.smartphone.ui.material.components.Destination
@@ -54,19 +56,29 @@ import com.m3u.smartphone.ui.material.components.SnackHost
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @Composable
 fun App(
     modifier: Modifier = Modifier,
-    viewModel: AppViewModel = hiltViewModel(),
+    viewModel: AppViewModel = hiltViewModel()
 ) {
     val navController = rememberNavController()
+    val usbKeyState by viewModel.usbKeyRepository.state.collectAsStateWithLifecycle()
 
-    AppImpl(
-        navController = navController,
-        channels = viewModel.channels,
-        modifier = modifier
-    )
+    // Check if database is locked
+    if (usbKeyState.isEncryptionEnabled && !usbKeyState.isDatabaseUnlocked) {
+        USBLockScreen(
+            deviceName = usbKeyState.deviceName,
+            modifier = modifier
+        )
+    } else {
+        AppImpl(
+            navController = navController,
+            channels = viewModel.channels,
+            modifier = modifier
+        )
+    }
 }
 
 @Composable

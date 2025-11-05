@@ -17,6 +17,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
@@ -124,7 +125,9 @@ private val PREFERENCES: Map<Preferences.Key<*>, *> = listOf(
     PreferencesKeys.PLAYER_PANEL to true,
     PreferencesKeys.COMPACT_DIMENSION to false,
     PreferencesKeys.WEB_SERVER_ENABLED to false,
-    PreferencesKeys.WEB_SERVER_PORT to 8080
+    PreferencesKeys.WEB_SERVER_PORT to 8080,
+    PreferencesKeys.USB_ENCRYPTION_ENABLED to false,
+    PreferencesKeys.USB_ENCRYPTION_DEVICE_ID to ""
 )
     .associateBy { it.key }
     .mapValues { it.value.value }
@@ -178,4 +181,8 @@ object PreferencesKeys {
     // Web Server
     val WEB_SERVER_ENABLED = booleanPreferencesKey("web-server-enabled")
     val WEB_SERVER_PORT = intPreferencesKey("web-server-port")
+
+    // USB Encryption
+    val USB_ENCRYPTION_ENABLED = booleanPreferencesKey("usb-encryption-enabled")
+    val USB_ENCRYPTION_DEVICE_ID = stringPreferencesKey("usb-encryption-device-id")
 }

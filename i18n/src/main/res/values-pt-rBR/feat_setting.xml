@@ -132,4 +132,33 @@
     <string name="feat_setting_error_empty_epg">O link do EPG está vazio</string>
     <string name="feat_setting_placeholder_epg">Link do EPG</string>
     <string name="feat_setting_epg_added">Você pode associar uma playlist ao EPG</string>
+
+    <!-- USB Encryption -->
+    <string name="feat_setting_security">Security</string>
+    <string name="feat_setting_usb_encryption_group">USB Encryption</string>
+    <string name="feat_setting_usb_encryption_status_error">Error: %s</string>
+    <string name="feat_setting_usb_encryption_status_unlocked">Database Unlocked</string>
+    <string name="feat_setting_usb_encryption_status_locked">Database Locked - Insert USB Key</string>
+    <string name="feat_setting_usb_encryption_status_disabled">Encryption Disabled</string>
+    <string name="feat_setting_usb_encryption_device_connected">USB Device Connected</string>
+    <string name="feat_setting_usb_encryption_enable">Enable USB Encryption</string>
+    <string name="feat_setting_usb_encryption_connect_usb">Connect USB Stick</string>
+    <string name="feat_setting_usb_encryption_disable">Disable Encryption</string>
+    <string name="feat_setting_usb_encryption_info">⚠️ WARNING: All playlists, channels, and VOD will only be accessible with this specific USB stick. If you lose the USB stick, you will permanently lose access to all content. There is no recovery option.</string>
+    <string name="feat_setting_usb_encryption_enable_title">Enable USB Encryption?</string>
+    <string name="feat_setting_usb_encryption_enable_message">This will encrypt your entire database with military-grade encryption. Only this USB stick will unlock your content. Without the USB stick, all data will be permanently inaccessible.\n\nThis action will:\n• Encrypt all playlists and channels\n• Require USB stick for app access\n• Cannot be recovered if USB is lost\n\nAre you sure?</string>
+    <string name="feat_setting_usb_encryption_enable_confirm">Enable Encryption</string>
+    <string name="feat_setting_usb_encryption_disable_title">Disable Encryption?</string>
+    <string name="feat_setting_usb_encryption_disable_message">This will remove USB encryption and make your database accessible without the USB stick. Your existing data will remain, but will no longer be encrypted.</string>
+    <string name="feat_setting_usb_encryption_disable_confirm">Disable</string>
+    <string name="feat_setting_usb_encryption_cancel">Cancel</string>
+    <string name="feat_setting_usb_encryption_locked_title">Database Locked</string>
+    <string name="feat_setting_usb_encryption_locked_message">Your database is encrypted and requires the USB encryption key to access.</string>
+    <string name="feat_setting_usb_encryption_insert_usb">Please insert your USB encryption key</string>
+    <string name="feat_setting_usb_encryption_enabled_success">USB encryption enabled successfully</string>
+    <string name="feat_setting_usb_encryption_disabled_success">USB encryption disabled</string>
+    <string name="feat_setting_usb_encryption_error">Encryption error: %s</string>
+    <string name="feat_setting_usb_encryption_not_connected">No USB device connected. Please connect your USB stick first.</string>
+    <string name="feat_setting_usb_encryption_waiting_for_device">Waiting for: %s</string>
+    <string name="feat_setting_usb_encryption_no_access_without_key">No access to content without USB key</string>
 </resources>

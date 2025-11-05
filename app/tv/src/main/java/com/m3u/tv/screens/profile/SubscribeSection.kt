@@ -64,7 +64,7 @@ fun SettingViewModel.SubscribeSection() {
         item {
             val (parent, child) = createInitialFocusRestorerModifiers()
             val tabIndex =
-                remember(selectedState.value) { dataSources.indexOf(selectedState.value) }
+                remember(properties.selectedState.value) { dataSources.indexOf(properties.selectedState.value) }
             var isTabRowFocused by remember { mutableStateOf(false) }
             TabRow(
                 selectedTabIndex = tabIndex,
@@ -89,10 +89,10 @@ fun SettingViewModel.SubscribeSection() {
                     .then(parent)
             ) {
                 dataSources.forEachIndexed { index, dataSource ->
-                    val isSelected = dataSource == selectedState.value
+                    val isSelected = dataSource == properties.selectedState.value
                     Tab(
                         selected = isSelected,
-                        onFocus = { selectedState.value = dataSource },
+                        onFocus = { properties.selectedState.value = dataSource },
                         modifier = Modifier
                             .height(32.dp)
                             .focusRequester(focusRequesters[index + 1])
@@ -112,7 +112,7 @@ fun SettingViewModel.SubscribeSection() {
             }
         }
 
-        when (selectedState.value) {
+        when (properties.selectedState.value) {
             DataSource.M3U -> m3uPageConfiguration(this)
             DataSource.EPG -> epgPageConfiguration(this)
             DataSource.Xtream -> xtreamPageConfiguration(this)
@@ -126,13 +126,13 @@ private fun SettingViewModel.m3uPageConfiguration(
 ) {
     with(scope) {
         input(
-            value = titleState.value,
-            onValueChanged = { titleState.value = it },
+            value = properties.titleState.value,
+            onValueChanged = { properties.titleState.value = it },
             placeholder = R.string.feat_setting_placeholder_title
         )
         input(
-            value = urlState.value,
-            onValueChanged = { urlState.value = it },
+            value = properties.urlState.value,
+            onValueChanged = { properties.urlState.value = it },
             placeholder = R.string.feat_setting_placeholder_url
         )
         item {
@@ -153,13 +153,13 @@ private fun SettingViewModel.epgPageConfiguration(
 ) {
     with(scope) {
         input(
-            value = titleState.value,
-            onValueChanged = { titleState.value = it },
+            value = properties.titleState.value,
+            onValueChanged = { properties.titleState.value = it },
             placeholder = R.string.feat_setting_placeholder_epg_title
         )
         input(
-            value = epgState.value,
-            onValueChanged = { epgState.value = it },
+            value = properties.epgState.value,
+            onValueChanged = { properties.epgState.value = it },
             placeholder = R.string.feat_setting_placeholder_epg
         )
         item {
@@ -180,23 +180,23 @@ private fun SettingViewModel.xtreamPageConfiguration(
 ) {
     with(scope) {
         input(
-            value = titleState.value,
-            onValueChanged = { titleState.value = it },
+            value = properties.titleState.value,
+            onValueChanged = { properties.titleState.value = it },
             placeholder = R.string.feat_setting_placeholder_title
         )
         input(
-            value = urlState.value,
-            onValueChanged = { urlState.value = it },
+            value = properties.urlState.value,
+            onValueChanged = { properties.urlState.value = it },
             placeholder = R.string.feat_setting_placeholder_url
         )
         input(
-            value = usernameState.value,
-            onValueChanged = { usernameState.value = it },
+            value = properties.usernameState.value,
+            onValueChanged = { properties.usernameState.value = it },
             placeholder = R.string.feat_setting_placeholder_username
         )
         input(
-            value = passwordState.value,
-            onValueChanged = { passwordState.value = it },
+            value = properties.passwordState.value,
+            onValueChanged = { properties.passwordState.value = it },
             placeholder = R.string.feat_setting_placeholder_password
         )
         item {

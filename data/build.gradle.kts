@@ -88,4 +88,8 @@ dependencies {
     // auto
     implementation(libs.auto.service.annotations)
     ksp(libs.auto.service.ksp)
+
+    // SQLCipher for database encryption
+    implementation("net.zetetic:android-database-sqlcipher:4.5.4")
+    implementation("androidx.sqlite:sqlite-ktx:2.4.0")
 }
