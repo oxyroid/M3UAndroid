@@ -13,6 +13,7 @@ import androidx.work.WorkManager
 import com.m3u.data.database.model.Channel
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
+import com.m3u.data.repository.usbkey.USBKeyRepository
 import com.m3u.data.worker.SubscriptionWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
@@ -26,6 +27,7 @@ class AppViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val channelRepository: ChannelRepository,
     private val workManager: WorkManager,
+    val usbKeyRepository: USBKeyRepository,
 ) : ViewModel() {
     init {
         refreshProgrammes()

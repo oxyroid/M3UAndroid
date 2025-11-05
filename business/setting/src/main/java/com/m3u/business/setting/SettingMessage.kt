@@ -69,4 +69,31 @@ sealed class SettingMessage(
         type = TYPE_SNACK,
         resId = string.feat_setting_error_webdrop_no_subscribe
     )
+
+    data object USBEncryptionEnabled : SettingMessage(
+        level = LEVEL_INFO,
+        type = TYPE_SNACK,
+        duration = 5.seconds,
+        resId = string.feat_setting_usb_encryption_enabled_success
+    )
+
+    data object USBEncryptionDisabled : SettingMessage(
+        level = LEVEL_INFO,
+        type = TYPE_SNACK,
+        resId = string.feat_setting_usb_encryption_disabled_success
+    )
+
+    data class USBEncryptionError(val message: String) : SettingMessage(
+        level = LEVEL_ERROR,
+        type = TYPE_SNACK,
+        duration = 5.seconds,
+        resId = string.feat_setting_usb_encryption_error,
+        formatArgs = arrayOf(message)
+    )
+
+    data object USBNotConnected : SettingMessage(
+        level = LEVEL_ERROR,
+        type = TYPE_SNACK,
+        resId = string.feat_setting_usb_encryption_not_connected
+    )
 }

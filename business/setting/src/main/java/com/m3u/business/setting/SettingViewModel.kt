@@ -24,6 +24,7 @@ import com.m3u.data.database.model.Playlist
 import com.m3u.data.parser.xtream.XtreamInput
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
+import com.m3u.data.repository.usbkey.USBKeyRepository
 import com.m3u.data.service.Messager
 import com.m3u.data.worker.BackupWorker
 import com.m3u.data.worker.RestoreWorker
@@ -49,6 +50,7 @@ class SettingViewModel @Inject constructor(
     private val workManager: WorkManager,
     private val settings: Settings,
     private val messager: Messager,
+    private val usbKeyRepository: USBKeyRepository,
     publisher: Publisher,
     // FIXME: do not use dao in viewmodel
     private val colorSchemeDao: ColorSchemeDao,
@@ -320,6 +322,46 @@ class SettingViewModel @Inject constructor(
 
     val versionName: String = publisher.versionName
     val versionCode: Int = publisher.versionCode
+
+    val usbKeyState = usbKeyRepository.state
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = com.m3u.data.repository.usbkey.USBKeyState(),
+            started = SharingStarted.WhileSubscribed(5_000L)
+        )
+
+    fun enableUSBEncryption() {
+        viewModelScope.launch {
+            if (!usbKeyState.value.isConnected) {
+                messager.emit(SettingMessage.USBNotConnected)
+                return@launch
+            }
+
+            usbKeyRepository.initializeEncryption().onSuccess {
+                messager.emit(SettingMessage.USBEncryptionEnabled)
+            }.onFailure { error ->
+                messager.emit(SettingMessage.USBEncryptionError(error.message ?: "Unknown error"))
+            }
+        }
+    }
+
+    fun disableUSBEncryption() {
+        viewModelScope.launch {
+            usbKeyRepository.disableEncryption().onSuccess {
+                messager.emit(SettingMessage.USBEncryptionDisabled)
+            }.onFailure { error ->
+                messager.emit(SettingMessage.USBEncryptionError(error.message ?: "Unknown error"))
+            }
+        }
+    }
+
+    fun requestUSBPermission() {
+        viewModelScope.launch {
+            usbKeyRepository.requestUSBPermission().onFailure { error ->
+                messager.emit(SettingMessage.USBEncryptionError(error.message ?: "Permission denied"))
+            }
+        }
+    }
 
     val properties = SettingProperties()
 }

@@ -19,6 +19,11 @@
         android:name="android.hardware.touchscreen"
         android:required="false" />
 
+    <!-- USB Host permissions for encryption -->
+    <uses-feature
+        android:name="android.hardware.usb.host"
+        android:required="false" />
+
     <application
         android:name=".M3UApplication"
         android:allowBackup="true"
