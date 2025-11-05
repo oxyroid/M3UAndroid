@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feat_playlist_scheme_unknown">okänd</string>
+    <string name="feat_playlist_dialog_favourite_title">gilla</string>
+    <string name="feat_playlist_dialog_favourite_cancel_title">avbryt gilla</string>
+    <string name="feat_playlist_dialog_hide_title">dölj</string>
+    <string name="feat_playlist_dialog_save_picture_title">spara i galleri</string>
+    <string name="feat_playlist_dialog_create_shortcut_title">skapa genväg</string>
+    <string name="feat_playlist_error_playlist_not_found">spellistan finns inte (%s)</string>
+    <string name="feat_playlist_query_placeholder">ange sökord</string>
+    <string name="feat_playlist_error_playlist_url_not_found">spellistans URL finns inte</string>
+    <string name="feat_playlist_error_channel_cover_not_found">omslag finns inte</string>
+    <string name="feat_playlist_error_channel_not_found">kanalen finns inte</string>
+    <string name="feat_playlist_success_save_cover">sparad i (%s)</string>
+    <string name="feat_playlist_scroll_up">scrolla upp</string>
+</resources>

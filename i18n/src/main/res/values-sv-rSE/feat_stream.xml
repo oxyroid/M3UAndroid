@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feat_channel_playback_state_idle">inaktiv</string>
+    <string name="feat_channel_playback_state_buffering">buffrar</string>
+    <string name="feat_channel_playback_state_ready">klar</string>
+    <string name="feat_channel_playback_state_ended">slutförd</string>
+
+    <string name="feat_channel_tooltip_on_back_pressed">tillbaka</string>
+    <string name="feat_channel_tooltip_mute">tysta</string>
+    <string name="feat_channel_tooltip_unmute">slå på ljud</string>
+    <string name="feat_channel_tooltip_favourite">favorit</string>
+    <string name="feat_channel_tooltip_unfavourite">ta bort favorit</string>
+    <string name="feat_channel_tooltip_download">ladda ner</string>
+    <string name="feat_channel_tooltip_stop_download">stoppa nedladdning</string>
+    <string name="feat_channel_tooltip_cast">strömma skärm</string>
+    <string name="feat_channel_tooltip_open_panel">öppna panel</string>
+    <string name="feat_channel_tooltip_enter_pip_mode">PIP-läge</string>
+    <string name="feat_channel_tooltip_screen_rotating">skärmrotation</string>
+    <string name="feat_channel_tooltip_choose_format">välj format</string>
+
+    <string name="feat_channel_dialog_dlna_devices">DLNA-enheter</string>
+    <string name="feat_channel_dialog_choose_tracks">Välj spår</string>
+
+    <string name="feat_channel_open_in_external_app">öppna i extern app</string>
+
+    <string name="feat_channel_cw_position_title">Senast spelad vid %s</string>
+    <string name="feat_channel_cw_position_button">Spola tillbaka</string>
+</resources>
