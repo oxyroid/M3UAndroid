@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ui_title_foryou">M3U</string>
+    <string name="ui_title_favourite">Favorit</string>
+    <string name="ui_title_setting">Inställningar</string>
+
+    <string name="ui_destination_foryou">För Dig</string>
+    <string name="ui_destination_favourite">Favorit</string>
+    <string name="ui_destination_extension">Tillägg</string>
+    <string name="ui_destination_setting">Inställningar</string>
+    <string name="ui_destination_playlist">Spellista</string>
+
+    <string name="ui_error_unknown">okänt fel</string>
+    <string name="ui_cd_top_bar_on_back_pressed">tillbaka</string>
+
+    <string name="ui_theme_card_left">Visste du?</string>
+    <string name="ui_theme_card_right">Vi kommer att spara din **visningshistorik** och återuppta nästa gång du spelar</string>
+
+    <string name="ui_sort">Sortera</string>
+    <string name="ui_sort_asc">A-Ö</string>
+    <string name="ui_sort_desc">Ö-A</string>
+    <string name="ui_sort_recently">Nyligen</string>
+    <string name="ui_sort_mixed">Blandad</string>
+    <string name="ui_sort_never_played">aldrig spelad</string>
+    <string name="ui_sort_unspecified">Ospecificerad</string>
+
+    <string name="ui_connect">Anslut</string>
+</resources>

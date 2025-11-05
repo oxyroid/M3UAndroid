@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feat_playlist_configuration_title">titel</string>
+    <string name="feat_playlist_configuration_user_agent">user agent</string>
+    <string name="feat_playlist_configuration_enabled_epgs">aktiverade EPG:er</string>
+    <string name="feat_playlist_configuration_sync_programmes">synkronisera program</string>
+    <string name="feat_playlist_configuration_cancel_sync_programmes">avbryt synkronisering av program</string>
+    <string name="feat_playlist_configuration_programmes_expired_time">Utgår: %s</string>
+    <string name="feat_playlist_configuration_programmes_expired">Cachade program är föråldrade</string>
+    <string name="feat_playlist_configuration_auto_refresh_programmes">Uppdatera program automatiskt</string>
+    <string name="feat_playlist_configuration_auto_refresh_programmes_description">Vid appstart</string>
+</resources>
