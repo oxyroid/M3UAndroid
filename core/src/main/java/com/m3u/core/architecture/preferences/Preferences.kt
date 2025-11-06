@@ -127,7 +127,17 @@ private val PREFERENCES: Map<Preferences.Key<*>, *> = listOf(
     PreferencesKeys.WEB_SERVER_ENABLED to false,
     PreferencesKeys.WEB_SERVER_PORT to 8080,
     PreferencesKeys.USB_ENCRYPTION_ENABLED to false,
-    PreferencesKeys.USB_ENCRYPTION_DEVICE_ID to ""
+    PreferencesKeys.USB_ENCRYPTION_DEVICE_ID to "",
+    PreferencesKeys.USB_ENCRYPTION_KEY_FINGERPRINT to "",
+    PreferencesKeys.USB_ENCRYPTION_LAST_VERIFIED to 0L,
+    PreferencesKeys.USB_ENCRYPTION_IN_PROGRESS to false,
+    PreferencesKeys.USB_ENCRYPTION_LAST_OPERATION to "",
+    PreferencesKeys.USB_ENCRYPTION_AUTO_LOCK to true,
+    PreferencesKeys.DIAGNOSTIC_LOG_SANITIZATION_ENABLED to true,
+    PreferencesKeys.PIN_ENCRYPTION_ENABLED to false,
+    PreferencesKeys.ENCRYPTED_DATABASE_KEY to "",
+    PreferencesKeys.ENCRYPTION_KEY_IV to "",
+    PreferencesKeys.ENCRYPTION_SALT to ""
 )
     .associateBy { it.key }
     .mapValues { it.value.value }
@@ -185,4 +195,20 @@ object PreferencesKeys {
     // USB Encryption
     val USB_ENCRYPTION_ENABLED = booleanPreferencesKey("usb-encryption-enabled")
     val USB_ENCRYPTION_DEVICE_ID = stringPreferencesKey("usb-encryption-device-id")
+
+    // USB Encryption - Enhanced Features
+    val USB_ENCRYPTION_KEY_FINGERPRINT = stringPreferencesKey("usb-encryption-key-fingerprint")
+    val USB_ENCRYPTION_LAST_VERIFIED = longPreferencesKey("usb-encryption-last-verified")
+    val USB_ENCRYPTION_IN_PROGRESS = booleanPreferencesKey("usb-encryption-in-progress")
+    val USB_ENCRYPTION_LAST_OPERATION = stringPreferencesKey("usb-encryption-last-operation")
+    val USB_ENCRYPTION_AUTO_LOCK = booleanPreferencesKey("usb-encryption-auto-lock")
+
+    // Diagnostic Logs
+    val DIAGNOSTIC_LOG_SANITIZATION_ENABLED = booleanPreferencesKey("diagnostic-log-sanitization-enabled")
+
+    // PIN Encryption
+    val PIN_ENCRYPTION_ENABLED = booleanPreferencesKey("pin-encryption-enabled")
+    val ENCRYPTED_DATABASE_KEY = stringPreferencesKey("encrypted-database-key")
+    val ENCRYPTION_KEY_IV = stringPreferencesKey("encryption-key-iv")
+    val ENCRYPTION_SALT = stringPreferencesKey("encryption-salt")
 }

@@ -29,7 +29,8 @@ internal object DatabaseModule {
     @Singleton
     fun provideDatabase(
         @ApplicationContext context: Context,
-        usbKeyRepository: USBKeyRepository
+        usbKeyRepository: USBKeyRepository,
+        pinKeyManager: com.m3u.data.security.PINKeyManager
     ): M3UDatabase {
         val builder = Room.databaseBuilder(
             context,
@@ -40,8 +41,24 @@ internal object DatabaseModule {
         // Load SQLCipher library
         System.loadLibrary("sqlcipher")
 
-        // Apply encryption if enabled
-        if (usbKeyRepository.isEncryptionEnabled()) {
+        // Check PIN encryption first (takes priority over USB)
+        val pinEncryptionEnabled = runBlocking {
+            pinKeyManager.isPINEncryptionEnabled()
+        }
+
+        if (pinEncryptionEnabled) {
+            // Get encryption key from PIN key manager
+            val encryptionKey = runBlocking {
+                pinKeyManager.getEncryptionKeyIfUnlocked()
+            }
+
+            if (encryptionKey != null) {
+                builder.openHelperFactory(SupportFactory(encryptionKey))
+            } else {
+                throw SecurityException("Database is locked - PIN unlock required")
+            }
+        } else if (usbKeyRepository.isEncryptionEnabled()) {
+            // Fallback to USB encryption if PIN is not enabled
             val encryptionKey = runBlocking {
                 usbKeyRepository.getEncryptionKey()
             }
