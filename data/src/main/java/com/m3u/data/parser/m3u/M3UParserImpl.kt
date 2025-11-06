@@ -29,17 +29,38 @@ internal class M3UParserImpl @Inject constructor() : M3UParser {
     }
 
     override fun parse(input: InputStream): Flow<M3UData> = flow {
-        val lines = input
-            .bufferedReader()
-            .lineSequence()
-            .filter { it.isNotEmpty() }
-            .map { it.trimEnd() }
-            .dropWhile { it.startsWith(M3U_HEADER_MARK) }
-            .iterator()
+        try {
+            timber.d("=== M3U PARSER START ===")
+            timber.d("InputStream available (buffered): ${input.available()} bytes")
 
-        var currentLine: String
-        var infoMatch: MatchResult? = null
-        val kodiMatches = mutableListOf<MatchResult>()
+            val bufferedReader = input.bufferedReader()
+            val allLines = mutableListOf<String>()
+
+            // Read all lines and log them
+            bufferedReader.use { reader ->
+                reader.forEachLine { line ->
+                    allLines.add(line)
+                }
+            }
+
+            timber.d("Total lines read from stream: ${allLines.size}")
+            if (allLines.isNotEmpty()) {
+                timber.d("First line: ${allLines.first().take(100)}")
+                timber.d("Last line: ${allLines.last().take(100)}")
+            }
+
+            val lines = allLines
+                .asSequence()
+                .filter { it.isNotEmpty() }
+                .map { it.trimEnd() }
+                .dropWhile { it.startsWith(M3U_HEADER_MARK) }
+                .iterator()
+
+            timber.d("Lines iterator created, starting parse loop")
+            var entryCount = 0
+            var currentLine: String
+            var infoMatch: MatchResult? = null
+            val kodiMatches = mutableListOf<MatchResult>()
 
         while (lines.hasNext()) {
             currentLine = lines.next()
@@ -93,7 +114,15 @@ internal class M3UParserImpl @Inject constructor() : M3UParser {
             infoMatch = null
             kodiMatches.clear()
 
+            entryCount++
+            timber.d("Emitting entry #$entryCount: ${entry.title}")
             emit(entry)
+        }
+
+            timber.d("=== M3U PARSER COMPLETE: $entryCount entries found ===")
+        } catch (e: Exception) {
+            timber.e(e, "M3U Parser error!")
+            throw e
         }
     }
         .flowOn(Dispatchers.Default)

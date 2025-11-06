@@ -266,7 +266,7 @@
                 </div>
                 <div class="form-group">
                     <label for="xtreamPassword">Password *</label>
-                    <input type="password" id="xtreamPassword" placeholder="password" required>
+                    <input type="password" id="xtreamPassword" placeholder="password" autocomplete="current-password" required>
                 </div>
                 <button type="submit">Import Xtream</button>
             </form>
@@ -415,9 +415,16 @@
                 clearInterval(progressInterval);
                 progressFill.style.width = '100%';
 
-                const result = await response.json();
+                let result;
+                try {
+                    result = await response.json();
+                } catch (jsonError) {
+                    // If JSON parsing fails, try to get text response
+                    const textResponse = await response.text();
+                    throw new Error(textResponse || 'Server returned invalid response');
+                }
 
-                if (response.ok) {
+                if (response.ok && result.success) {
                     progressText.textContent = `Success! ${result.count || 0} channels imported`;
                     showMessage(`✅ ${result.message || 'Playlist imported successfully!'}`, 'success');
                     setTimeout(() => {
@@ -428,7 +435,7 @@
                         progress.style.display = 'none';
                     }, 3000);
                 } else {
-                    throw new Error(result.error || 'Upload failed');
+                    throw new Error(result.error || result.message || 'Upload failed');
                 }
             } catch (error) {
                 showMessage(`❌ Error: ${error.message}`, 'error');

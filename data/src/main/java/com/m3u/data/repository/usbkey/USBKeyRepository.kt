@@ -35,4 +35,10 @@ interface USBKeyRepository {
      * Request USB permission from user
      */
     suspend fun requestUSBPermission(): Result<Unit>
+
+    /**
+     * Perform pending encryption that was deferred due to database being open
+     * This is called on app startup when ENCRYPTION_PENDING flag is detected
+     */
+    suspend fun performPendingEncryption(): Result<Unit>
 }

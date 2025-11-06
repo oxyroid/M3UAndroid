@@ -96,4 +96,44 @@ sealed class SettingMessage(
         type = TYPE_SNACK,
         resId = string.feat_setting_usb_encryption_not_connected
     )
+
+    // PIN Encryption Messages
+    data object PINInvalid : SettingMessage(
+        level = LEVEL_ERROR,
+        type = TYPE_SNACK,
+        resId = string.feat_setting_pin_invalid
+    )
+
+    data object PINEncryptionEnabled : SettingMessage(
+        level = LEVEL_INFO,
+        type = TYPE_SNACK,
+        duration = 5.seconds,
+        resId = string.feat_setting_pin_encryption_enabled_success
+    )
+
+    data object PINEncryptionDisabled : SettingMessage(
+        level = LEVEL_INFO,
+        type = TYPE_SNACK,
+        resId = string.feat_setting_pin_encryption_disabled_success
+    )
+
+    data class PINEncryptionError(val message: String) : SettingMessage(
+        level = LEVEL_ERROR,
+        type = TYPE_SNACK,
+        duration = 5.seconds,
+        resId = string.feat_setting_pin_encryption_error,
+        formatArgs = arrayOf(message)
+    )
+
+    data object PINIncorrect : SettingMessage(
+        level = LEVEL_ERROR,
+        type = TYPE_SNACK,
+        resId = string.feat_setting_pin_incorrect
+    )
+
+    data object PINUnlocked : SettingMessage(
+        level = LEVEL_INFO,
+        type = TYPE_SNACK,
+        resId = string.feat_setting_pin_unlocked
+    )
 }

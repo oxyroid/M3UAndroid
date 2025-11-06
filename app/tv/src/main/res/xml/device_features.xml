@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Enable touchscreen support for emulator testing -->
+    <bool name="config_enableTouchscreen">true</bool>
+
+    <!-- Enable mouse/pointer support for development -->
+    <bool name="config_enablePointerInput">true</bool>
+
+    <!-- Allow clicking instead of D-pad only -->
+    <bool name="config_allowClickNavigation">true</bool>
+</resources>

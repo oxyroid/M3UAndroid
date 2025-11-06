@@ -208,7 +208,7 @@ internal class WebServerRepositoryImpl @Inject constructor(
 
                     playlistRepository.m3uOrThrow(
                         title = playlistTitle,
-                        url = tempFile.absolutePath,
+                        url = tempFile.toURI().toString(),
                         callback = { count -> channelCount = count }
                     )
 

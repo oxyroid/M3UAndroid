@@ -176,4 +176,26 @@
     <string name="feat_setting_usb_encryption_status">Status</string>
     <string name="feat_setting_usb_encryption_request_permission">Request Permission</string>
     <string name="feat_setting_usb_encryption_warning">⚠️ WARNING: Without the USB stick, you will permanently lose all data!</string>
+
+    <!-- PIN Encryption -->
+    <string name="feat_setting_pin_encryption_group">PIN Encryption</string>
+    <string name="feat_setting_pin_encryption_enable">Enable PIN Encryption</string>
+    <string name="feat_setting_pin_encryption_disable">Disable Encryption</string>
+    <string name="feat_setting_pin_encryption_change_pin">Change PIN</string>
+    <string name="feat_setting_pin_encryption_status_enabled">Encryption Enabled</string>
+    <string name="feat_setting_pin_encryption_status_disabled">Encryption Disabled</string>
+    <string name="feat_setting_pin_encryption_enter_pin">Enter 6-Digit PIN</string>
+    <string name="feat_setting_pin_encryption_confirm_pin">Confirm PIN</string>
+    <string name="feat_setting_pin_encryption_setup_title">Set Up PIN Encryption</string>
+    <string name="feat_setting_pin_encryption_setup_subtitle">Create a 6-digit PIN to encrypt your database</string>
+    <string name="feat_setting_pin_encryption_unlock_title">Enter PIN to Unlock</string>
+    <string name="feat_setting_pin_encryption_enabled_success">PIN encryption enabled successfully</string>
+    <string name="feat_setting_pin_encryption_disabled_success">PIN encryption disabled successfully</string>
+    <string name="feat_setting_pin_encryption_error">Encryption error: %s</string>
+    <string name="feat_setting_pin_invalid">PIN must be exactly 6 digits</string>
+    <string name="feat_setting_pin_incorrect">Incorrect PIN. Please try again.</string>
+    <string name="feat_setting_pin_unlocked">Database unlocked successfully</string>
+    <string name="feat_setting_pin_encryption_info">⚠️ Your database will be encrypted with AES-256. Only the correct 6-digit PIN can unlock your content. If you forget your PIN, you must uninstall the app to reset (all data will be lost).</string>
+    <string name="feat_setting_pin_encryption_warning">⚠️ WARNING: Forgetting your PIN means permanent data loss!</string>
+    <string name="feat_setting_pin_mismatch">PINs do not match. Please try again.</string>
 </resources>

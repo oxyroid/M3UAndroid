@@ -127,11 +127,34 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         }
 
         channelFlow {
-            when {
-                url.isSupportedNetworkUrl() -> openNetworkInput(internalUrl)
-                url.isSupportedAndroidUrl() -> openAndroidInput(internalUrl)
-                else -> null
-            }?.use { input ->
+            timber.d("=== OPENING INPUT STREAM ===")
+            timber.d("url: $url")
+            timber.d("internalUrl: $internalUrl")
+            timber.d("isSupportedNetworkUrl: ${url.isSupportedNetworkUrl()}")
+            timber.d("isSupportedAndroidUrl: ${url.isSupportedAndroidUrl()}")
+
+            val inputStream = when {
+                url.isSupportedNetworkUrl() -> {
+                    timber.d("Using openNetworkInput")
+                    openNetworkInput(internalUrl)
+                }
+                url.isSupportedAndroidUrl() -> {
+                    timber.d("Using openAndroidInput")
+                    openAndroidInput(internalUrl)
+                }
+                else -> {
+                    timber.w("No supported URL type matched!")
+                    null
+                }
+            }
+
+            if (inputStream == null) {
+                timber.e("Failed to open input stream!")
+            } else {
+                timber.d("Input stream opened, available: ${inputStream.available()} bytes")
+            }
+
+            inputStream?.use { input ->
                 m3uParser
                     .parse(input.buffered())
                     .filterNot {
