@@ -44,7 +44,7 @@
     <application
         android:name=".M3UApplication"
         android:allowBackup="true"
-        android:banner="@mipmap/ic_launcher"
+        android:banner="@drawable/banner"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"

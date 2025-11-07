@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,6 +21,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Button
@@ -39,13 +42,28 @@ fun PINUnlockScreen(
 ) {
     var pin by remember { mutableStateOf("") }
     var localError by remember { mutableStateOf(errorMessage) }
+    val focusRequester = remember { FocusRequester() }
+
+    Timber.tag("PINUnlockScreen").d("=== PINUnlockScreen COMPOSING === errorMessage=$errorMessage")
+
+    // Request focus when screen appears
+    LaunchedEffect(Unit) {
+        try {
+            focusRequester.requestFocus()
+            Timber.tag("PINUnlockScreen").d("Focus requested for keyboard input")
+        } catch (e: Exception) {
+            Timber.tag("PINUnlockScreen").w(e, "Failed to request focus")
+        }
+    }
 
     // Handle hardware keyboard input for emulator/testing
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
+            .focusRequester(focusRequester)
             .onKeyEvent { keyEvent ->
+                Timber.tag("PINUnlockScreen").d("Key event detected: ${keyEvent.nativeKeyEvent.keyCode}")
                 if (keyEvent.nativeKeyEvent.action == KeyEvent.ACTION_DOWN) {
                     val keyCode = keyEvent.nativeKeyEvent.keyCode
                     when {
@@ -58,8 +76,13 @@ fun PINUnlockScreen(
 
                                 // Auto-submit when 6 digits entered
                                 if (pin.length == 6) {
-                                    Timber.tag("PINUnlockScreen").d("6 digits entered, submitting...")
-                                    onPINEntered(pin)
+                                    Timber.tag("PINUnlockScreen").d("6 digits entered, submitting PIN: $pin")
+                                    try {
+                                        onPINEntered(pin)
+                                        Timber.tag("PINUnlockScreen").d("onPINEntered callback completed")
+                                    } catch (e: Exception) {
+                                        Timber.tag("PINUnlockScreen").e(e, "Error in onPINEntered callback")
+                                    }
                                     // Don't clear PIN here - let the parent handle success/failure
                                 }
                             }
@@ -73,8 +96,13 @@ fun PINUnlockScreen(
                                 localError = null
 
                                 if (pin.length == 6) {
-                                    Timber.tag("PINUnlockScreen").d("6 digits entered via numpad, submitting...")
-                                    onPINEntered(pin)
+                                    Timber.tag("PINUnlockScreen").d("6 digits entered via numpad, submitting PIN: $pin")
+                                    try {
+                                        onPINEntered(pin)
+                                        Timber.tag("PINUnlockScreen").d("onPINEntered callback completed")
+                                    } catch (e: Exception) {
+                                        Timber.tag("PINUnlockScreen").e(e, "Error in onPINEntered callback")
+                                    }
                                 }
                             }
                             true
@@ -97,34 +125,34 @@ fun PINUnlockScreen(
         Column(
             modifier = Modifier
                 .align(Alignment.Center)
-                .padding(32.dp),
+                .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Title
             Text(
                 text = "Enter PIN to Unlock",
-                style = MaterialTheme.typography.displaySmall
+                style = MaterialTheme.typography.headlineMedium
             )
 
             // Subtitle
             Text(
                 text = "Database is encrypted",
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // PIN indicator dots (6 circles)
             Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.padding(vertical = 16.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.padding(vertical = 8.dp)
             ) {
                 repeat(6) { index ->
                     Box(
                         modifier = Modifier
-                            .size(20.dp)
+                            .size(16.dp)
                             .clip(CircleShape)
                             .background(
                                 if (index < pin.length)
@@ -140,12 +168,12 @@ fun PINUnlockScreen(
             if (localError != null) {
                 Text(
                     text = localError!!,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Numeric keypad
             NumericKeypad(
@@ -156,8 +184,13 @@ fun PINUnlockScreen(
 
                         // Auto-submit when 6 digits entered
                         if (pin.length == 6) {
-                            Timber.tag("PINUnlockScreen").d("6 digits entered via keypad, submitting...")
-                            onPINEntered(pin)
+                            Timber.tag("PINUnlockScreen").d("6 digits entered via keypad, submitting PIN: $pin")
+                            try {
+                                onPINEntered(pin)
+                                Timber.tag("PINUnlockScreen").d("onPINEntered callback completed")
+                            } catch (e: Exception) {
+                                Timber.tag("PINUnlockScreen").e(e, "Error in onPINEntered callback")
+                            }
                         }
                     }
                 },
@@ -193,21 +226,21 @@ private fun NumericKeypad(
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Rows 1-3 (digits 1-9)
         for (row in 0..2) {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 for (col in 0..2) {
                     val digit = (row * 3 + col + 1).toString()
                     Button(
                         onClick = { onDigitClick(digit) },
-                        modifier = Modifier.size(width = 80.dp, height = 60.dp)
+                        modifier = Modifier.size(width = 70.dp, height = 50.dp)
                     ) {
                         Text(
                             text = digit,
-                            style = MaterialTheme.typography.titleLarge
+                            style = MaterialTheme.typography.titleMedium
                         )
                     }
                 }
@@ -215,34 +248,34 @@ private fun NumericKeypad(
         }
 
         // Row 4 (Clear, 0, Backspace)
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(
                 onClick = onClearClick,
-                modifier = Modifier.size(width = 80.dp, height = 60.dp)
+                modifier = Modifier.size(width = 70.dp, height = 50.dp)
             ) {
                 Text(
                     text = "CLR",
-                    style = MaterialTheme.typography.titleSmall
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
 
             Button(
                 onClick = { onDigitClick("0") },
-                modifier = Modifier.size(width = 80.dp, height = 60.dp)
+                modifier = Modifier.size(width = 70.dp, height = 50.dp)
             ) {
                 Text(
                     text = "0",
-                    style = MaterialTheme.typography.titleLarge
+                    style = MaterialTheme.typography.titleMedium
                 )
             }
 
             Button(
                 onClick = onBackspaceClick,
-                modifier = Modifier.size(width = 80.dp, height = 60.dp)
+                modifier = Modifier.size(width = 70.dp, height = 50.dp)
             ) {
                 Text(
                     text = "←",
-                    style = MaterialTheme.typography.titleLarge
+                    style = MaterialTheme.typography.titleMedium
                 )
             }
         }

@@ -183,6 +183,11 @@
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+        .message.warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
         .file-info {
             margin-top: 10px;
             padding: 12px;
@@ -191,6 +196,42 @@
             font-size: 14px;
             color: #666;
             display: none;
+        }
+        .countdown-timer {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .countdown-timer.active {
+            display: block;
+        }
+        .countdown-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        .countdown-time {
+            font-size: 48px;
+            font-weight: 700;
+            color: #667eea;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+        }
+        .countdown-message {
+            font-size: 14px;
+            color: #856404;
+            line-height: 1.6;
+        }
+        .countdown-warning {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #856404;
+            font-weight: 600;
         }
         @media (max-width: 600px) {
             .container {
@@ -280,6 +321,17 @@
         </div>
 
         <div class="message" id="message"></div>
+
+        <div class="countdown-timer" id="countdownTimer">
+            <div class="countdown-title">⏳ Processing Import</div>
+            <div class="countdown-time" id="countdownTime">03:00</div>
+            <div class="countdown-message">
+                If you have encrypted your M3UAndroid database, please wait before accessing the playlist on your device.
+            </div>
+            <div class="countdown-warning">
+                ⚠️ For encrypted databases: Wait for the countdown to finish before browsing channels to prevent crashes.
+            </div>
+        </div>
     </div>
 
     <script>
@@ -427,6 +479,14 @@
                 if (response.ok && result.success) {
                     progressText.textContent = `Success! ${result.count || 0} channels imported`;
                     showMessage(`✅ ${result.message || 'Playlist imported successfully!'}`, 'success');
+
+                    // Fixed safety timer: Always 4 minutes regardless of channel count
+                    // This gives the database enough time to complete all write operations
+                    // while keeping the wait time reasonable for users
+                    const waitTimeSeconds = 240; // 4 minutes
+
+                    startCountdown(waitTimeSeconds);
+
                     setTimeout(() => {
                         // Reset forms
                         document.querySelectorAll('form').forEach(f => f.reset());
@@ -454,6 +514,58 @@
 
         function hideMessage() {
             document.getElementById('message').style.display = 'none';
+        }
+
+        let countdownInterval = null;
+
+        function startCountdown(totalSeconds) {
+            const countdownTimer = document.getElementById('countdownTimer');
+            const countdownTime = document.getElementById('countdownTime');
+
+            // Show the countdown timer
+            countdownTimer.classList.add('active');
+
+            let remainingSeconds = totalSeconds;
+
+            // Clear any existing countdown
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+
+            // Update immediately
+            updateCountdownDisplay(remainingSeconds);
+
+            // Update every second
+            countdownInterval = setInterval(() => {
+                remainingSeconds--;
+
+                if (remainingSeconds <= 0) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                    countdownTime.textContent = '00:00';
+                    countdownTime.style.color = '#28a745';
+                    document.querySelector('.countdown-title').textContent = '✅ Processing Complete!';
+                    document.querySelector('.countdown-warning').textContent = '✓ You can now safely access your playlist on the device.';
+
+                    // Hide countdown after 5 seconds
+                    setTimeout(() => {
+                        countdownTimer.classList.remove('active');
+                        // Reset for next time
+                        countdownTime.style.color = '#667eea';
+                        document.querySelector('.countdown-title').textContent = '⏳ Processing Import';
+                        document.querySelector('.countdown-warning').textContent = '⚠️ For encrypted databases: Wait for the countdown to finish before browsing channels to prevent crashes.';
+                    }, 5000);
+                } else {
+                    updateCountdownDisplay(remainingSeconds);
+                }
+            }, 1000);
+        }
+
+        function updateCountdownDisplay(seconds) {
+            const countdownTime = document.getElementById('countdownTime');
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            countdownTime.textContent = `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
         }
     </script>
 </body>

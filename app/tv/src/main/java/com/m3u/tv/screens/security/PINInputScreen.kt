@@ -124,18 +124,18 @@ fun PINInputScreen(
                     false
                 }
             }
-            .padding(48.dp),
+            .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.width(600.dp)
         ) {
             // Title
             Text(
                 text = title,
-                style = MaterialTheme.typography.headlineLarge,
+                style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
 
@@ -143,22 +143,22 @@ fun PINInputScreen(
             subtitle?.let {
                 Text(
                     text = it,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // PIN indicator dots
             Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.padding(vertical = 16.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.padding(vertical = 8.dp)
             ) {
                 repeat(6) { index ->
                     Box(
                         modifier = Modifier
-                            .size(20.dp)
+                            .size(16.dp)
                             .clip(CircleShape)
                             .background(
                                 if (index < pin.length)
@@ -173,7 +173,7 @@ fun PINInputScreen(
             // Status text
             Text(
                 text = if (!showConfirm) "Enter 6-digit PIN" else "Confirm PIN",
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
@@ -182,12 +182,12 @@ fun PINInputScreen(
             if (displayError != null) {
                 Text(
                     text = displayError,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Numeric keypad with D-pad navigation
             NumericKeypad(
@@ -226,7 +226,7 @@ fun PINInputScreen(
                 }
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Cancel button
             onCancel?.let { cancelAction ->
@@ -236,13 +236,6 @@ fun PINInputScreen(
                     Text("Cancel")
                 }
             }
-
-            // Instructions
-            Text(
-                text = "Use D-pad or number keys (0-9) to enter PIN",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }
@@ -259,23 +252,23 @@ private fun NumericKeypad(
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Rows 1-3 (digits 1-9)
         for (row in 0..2) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 for (col in 0..2) {
                     val digit = (row * 3 + col + 1).toString()
                     Button(
                         onClick = { onDigitClick(digit) },
-                        modifier = Modifier.size(width = 80.dp, height = 60.dp)
+                        modifier = Modifier.size(width = 70.dp, height = 50.dp)
                     ) {
                         Text(
                             text = digit,
-                            style = MaterialTheme.typography.titleLarge
+                            style = MaterialTheme.typography.titleMedium
                         )
                     }
                 }
@@ -284,35 +277,35 @@ private fun NumericKeypad(
 
         // Row 4 (Clear, 0, Backspace)
         Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Button(
                 onClick = onClearClick,
-                modifier = Modifier.size(width = 80.dp, height = 60.dp)
+                modifier = Modifier.size(width = 70.dp, height = 50.dp)
             ) {
                 Text(
                     text = "CLR",
-                    style = MaterialTheme.typography.titleSmall
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
 
             Button(
                 onClick = { onDigitClick("0") },
-                modifier = Modifier.size(width = 80.dp, height = 60.dp)
+                modifier = Modifier.size(width = 70.dp, height = 50.dp)
             ) {
                 Text(
                     text = "0",
-                    style = MaterialTheme.typography.titleLarge
+                    style = MaterialTheme.typography.titleMedium
                 )
             }
 
             Button(
                 onClick = onBackspaceClick,
-                modifier = Modifier.size(width = 80.dp, height = 60.dp)
+                modifier = Modifier.size(width = 70.dp, height = 50.dp)
             ) {
                 Text(
                     text = "←",
-                    style = MaterialTheme.typography.titleLarge
+                    style = MaterialTheme.typography.titleMedium
                 )
             }
         }
@@ -377,32 +370,32 @@ fun PINUnlockScreen(
                     false
                 }
             }
-            .padding(48.dp),
+            .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.width(600.dp)
         ) {
             // Title
             Text(
                 text = "Enter PIN to Unlock",
-                style = MaterialTheme.typography.headlineLarge,
+                style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // PIN indicator dots
             Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.padding(vertical = 16.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.padding(vertical = 8.dp)
             ) {
                 repeat(6) { index ->
                     Box(
                         modifier = Modifier
-                            .size(20.dp)
+                            .size(16.dp)
                             .clip(CircleShape)
                             .background(
                                 if (index < pin.length)
@@ -418,12 +411,12 @@ fun PINUnlockScreen(
             errorMessage?.let {
                 Text(
                     text = it,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Numeric keypad with D-pad navigation
             NumericKeypad(
@@ -446,7 +439,7 @@ fun PINUnlockScreen(
                 }
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Cancel button
             onCancel?.let { cancelAction ->
@@ -456,13 +449,6 @@ fun PINUnlockScreen(
                     Text("Cancel")
                 }
             }
-
-            // Instructions
-            Text(
-                text = "Use D-pad or number keys (0-9) to enter PIN",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }
