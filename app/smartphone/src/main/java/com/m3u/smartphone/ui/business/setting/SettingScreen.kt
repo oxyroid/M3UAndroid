@@ -39,6 +39,7 @@ import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.business.setting.components.CanvasBottomSheet
 import com.m3u.smartphone.ui.business.setting.fragments.AppearanceFragment
 import com.m3u.smartphone.ui.business.setting.fragments.OptionalFragment
+import com.m3u.smartphone.ui.business.setting.fragments.SecurityFragment
 import com.m3u.smartphone.ui.business.setting.fragments.SubscriptionsFragment
 import com.m3u.smartphone.ui.business.setting.fragments.preferences.PreferencesFragment
 import com.m3u.smartphone.ui.common.helper.Fob
@@ -155,6 +156,7 @@ private fun SettingScreen(
     val playlistTitle = stringResource(string.feat_setting_playlist_management)
     val appearanceTitle = stringResource(string.feat_setting_appearance)
     val optionalTitle = stringResource(string.feat_setting_optional_features)
+    val securityTitle = stringResource(string.feat_setting_security)
 
     val colorArgb by preferenceOf(PreferencesKeys.COLOR_ARGB)
 
@@ -165,12 +167,13 @@ private fun SettingScreen(
         navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, it)
     }
 
-    LifecycleResumeEffect(destination, defaultTitle, playlistTitle, appearanceTitle) {
+    LifecycleResumeEffect(destination, defaultTitle, playlistTitle, appearanceTitle, securityTitle) {
         Metadata.title = when (destination) {
             SettingDestination.Default -> defaultTitle
             SettingDestination.Playlists -> playlistTitle
             SettingDestination.Appearance -> appearanceTitle
             SettingDestination.Optional -> optionalTitle
+            SettingDestination.Security -> securityTitle
         }
             .title()
             .let(::AnnotatedString)
@@ -225,6 +228,14 @@ private fun SettingScreen(
                         )
                     }
                 },
+                navigateToSecurity = {
+                    coroutineScope.launch {
+                        navigator.navigateTo(
+                            pane = ListDetailPaneScaffoldRole.Detail,
+                            contentKey = SettingDestination.Security
+                        )
+                    }
+                },
                 modifier = Modifier.fillMaxSize()
             )
         },
@@ -261,6 +272,13 @@ private fun SettingScreen(
 
                 SettingDestination.Optional -> {
                     OptionalFragment(
+                        contentPadding = contentPadding,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+
+                SettingDestination.Security -> {
+                    SecurityFragment(
                         contentPadding = contentPadding,
                         modifier = Modifier.fillMaxSize()
                     )

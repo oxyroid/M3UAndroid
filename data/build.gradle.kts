@@ -72,7 +72,7 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.hilt.work)
 
-    implementation(libs.ktor.server.netty)
+    implementation("io.ktor:ktor-server-cio:3.3.1")
     implementation(libs.ktor.server.websockets)
     implementation(libs.ktor.server.cors)
     implementation(libs.ktor.server.content.negotiation)
@@ -88,4 +88,11 @@ dependencies {
     // auto
     implementation(libs.auto.service.annotations)
     ksp(libs.auto.service.ksp)
+
+    // SQLCipher for database encryption
+    implementation("net.zetetic:android-database-sqlcipher:4.5.4")
+    implementation("androidx.sqlite:sqlite-ktx:2.4.0")
+
+    // Security crypto for key verification
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 }

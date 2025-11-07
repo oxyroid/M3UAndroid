@@ -21,3 +21,23 @@
 #-renamesourcefileattribute SourceFile
 
 -dontwarn reactor.blockhound.integration.BlockHoundIntegration
+
+# Ktor debug detection - these classes are not available on Android
+-dontwarn java.lang.management.ManagementFactory
+-dontwarn java.lang.management.RuntimeMXBean
+
+# Keep Ktor classes
+-keep class io.ktor.** { *; }
+-keepclassmembers class io.ktor.** { *; }
+-dontwarn io.ktor.**
+
+# SQLCipher - keep all classes and native methods
+-keep class net.sqlcipher.** { *; }
+-keep class net.sqlcipher.database.** { *; }
+-keepclassmembers class net.sqlcipher.** { *; }
+-keepclassmembers class net.sqlcipher.database.** {
+    native <methods>;
+    public <methods>;
+    private <methods>;
+}
+-dontwarn net.sqlcipher.**

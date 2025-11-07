@@ -165,6 +165,9 @@ fun ProfileScreen(
                 composable(ProfileScreens.Optional()) {
 
                 }
+                composable(ProfileScreens.Security()) {
+                    viewModel.SecuritySection()
+                }
                 composable(ProfileScreens.HelpAndSupport()) {
                     AboutSection()
                 }

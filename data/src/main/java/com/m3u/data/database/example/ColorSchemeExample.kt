@@ -25,7 +25,7 @@ object ColorSchemeExample {
 
         db.execSQL(
             """
-            INSERT INTO 'color_pack' ('argb', 'dark', 'name')
+            INSERT OR IGNORE INTO 'color_pack' ('argb', 'dark', 'name')
             VALUES
             $values
             """.trimIndent()

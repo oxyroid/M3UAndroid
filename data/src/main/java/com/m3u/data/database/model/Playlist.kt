@@ -137,6 +137,8 @@ sealed class DataSource(
 
     object Dropbox : DataSource(R.string.feat_setting_data_source_dropbox, "dropbox")
 
+    object WebDrop : DataSource(R.string.feat_setting_data_source_webdrop, "webdrop", true)
+
     override fun toString(): String = value
 
     companion object {
@@ -146,6 +148,7 @@ sealed class DataSource(
             "xtream" -> Xtream
             "emby" -> Emby
             "dropbox" -> Dropbox
+            "webdrop" -> WebDrop
             else -> throw UnsupportedOperationException()
         }
 

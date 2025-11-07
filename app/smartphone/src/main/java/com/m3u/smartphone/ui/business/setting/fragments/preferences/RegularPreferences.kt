@@ -6,6 +6,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ColorLens
 import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.MusicNote
+import androidx.compose.material.icons.rounded.Security
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -21,6 +22,7 @@ internal fun RegularPreferences(
     navigateToPlaylistManagement: () -> Unit,
     navigateToThemeSelector: () -> Unit,
     navigateToOptional: () -> Unit,
+    navigateToSecurity: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -45,6 +47,12 @@ internal fun RegularPreferences(
             icon = Icons.Rounded.Extension,
             enabled = fragment != SettingDestination.Optional,
             onClick = navigateToOptional
+        )
+        Preference(
+            title = stringResource(string.feat_setting_security).title(),
+            icon = Icons.Rounded.Security,
+            enabled = fragment != SettingDestination.Security,
+            onClick = navigateToSecurity
         )
     }
 }

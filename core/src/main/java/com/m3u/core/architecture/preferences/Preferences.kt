@@ -17,6 +17,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
@@ -122,7 +123,21 @@ private val PREFERENCES: Map<Preferences.Key<*>, *> = listOf(
     PreferencesKeys.SLIDER to true,
     PreferencesKeys.ALWAYS_SHOW_REPLAY to false,
     PreferencesKeys.PLAYER_PANEL to true,
-    PreferencesKeys.COMPACT_DIMENSION to false
+    PreferencesKeys.COMPACT_DIMENSION to false,
+    PreferencesKeys.WEB_SERVER_ENABLED to false,
+    PreferencesKeys.WEB_SERVER_PORT to 8080,
+    PreferencesKeys.USB_ENCRYPTION_ENABLED to false,
+    PreferencesKeys.USB_ENCRYPTION_DEVICE_ID to "",
+    PreferencesKeys.USB_ENCRYPTION_KEY_FINGERPRINT to "",
+    PreferencesKeys.USB_ENCRYPTION_LAST_VERIFIED to 0L,
+    PreferencesKeys.USB_ENCRYPTION_IN_PROGRESS to false,
+    PreferencesKeys.USB_ENCRYPTION_LAST_OPERATION to "",
+    PreferencesKeys.USB_ENCRYPTION_AUTO_LOCK to true,
+    PreferencesKeys.DIAGNOSTIC_LOG_SANITIZATION_ENABLED to true,
+    PreferencesKeys.PIN_ENCRYPTION_ENABLED to false,
+    PreferencesKeys.ENCRYPTED_DATABASE_KEY to "",
+    PreferencesKeys.ENCRYPTION_KEY_IV to "",
+    PreferencesKeys.ENCRYPTION_SALT to ""
 )
     .associateBy { it.key }
     .mapValues { it.value.value }
@@ -172,4 +187,33 @@ object PreferencesKeys {
     val PLAYER_PANEL = booleanPreferencesKey("player_panel")
 
     val COMPACT_DIMENSION = booleanPreferencesKey("compact-dimension")
+
+    // Web Server
+    val WEB_SERVER_ENABLED = booleanPreferencesKey("web-server-enabled")
+    val WEB_SERVER_PORT = intPreferencesKey("web-server-port")
+
+    // USB Encryption
+    val USB_ENCRYPTION_ENABLED = booleanPreferencesKey("usb-encryption-enabled")
+    val USB_ENCRYPTION_DEVICE_ID = stringPreferencesKey("usb-encryption-device-id")
+
+    // USB Encryption - Enhanced Features
+    val USB_ENCRYPTION_KEY_FINGERPRINT = stringPreferencesKey("usb-encryption-key-fingerprint")
+    val USB_ENCRYPTION_LAST_VERIFIED = longPreferencesKey("usb-encryption-last-verified")
+    val USB_ENCRYPTION_IN_PROGRESS = booleanPreferencesKey("usb-encryption-in-progress")
+    val USB_ENCRYPTION_LAST_OPERATION = stringPreferencesKey("usb-encryption-last-operation")
+    val USB_ENCRYPTION_AUTO_LOCK = booleanPreferencesKey("usb-encryption-auto-lock")
+
+    // Diagnostic Logs
+    val DIAGNOSTIC_LOG_SANITIZATION_ENABLED = booleanPreferencesKey("diagnostic-log-sanitization-enabled")
+
+    // PIN Encryption
+    val PIN_ENCRYPTION_ENABLED = booleanPreferencesKey("pin-encryption-enabled")
+    val ENCRYPTED_DATABASE_KEY = stringPreferencesKey("encrypted-database-key")
+    val ENCRYPTION_KEY_IV = stringPreferencesKey("encryption-key-iv")
+    val ENCRYPTION_SALT = stringPreferencesKey("encryption-salt")
+
+    // PIN Rate Limiting (Persistent)
+    val PIN_FAILED_ATTEMPTS = intPreferencesKey("pin-failed-attempts")
+    val PIN_LOCKOUT_UNTIL = longPreferencesKey("pin-lockout-until")
+    val PIN_ATTEMPT_TIMESTAMPS = stringPreferencesKey("pin-attempt-timestamps")
 }

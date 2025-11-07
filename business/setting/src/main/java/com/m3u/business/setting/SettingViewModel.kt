@@ -24,6 +24,8 @@ import com.m3u.data.database.model.Playlist
 import com.m3u.data.parser.xtream.XtreamInput
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
+import com.m3u.data.repository.usbkey.USBKeyRepository
+import com.m3u.data.repository.encryption.PINEncryptionRepository
 import com.m3u.data.service.Messager
 import com.m3u.data.worker.BackupWorker
 import com.m3u.data.worker.RestoreWorker
@@ -40,6 +42,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -49,10 +52,15 @@ class SettingViewModel @Inject constructor(
     private val workManager: WorkManager,
     private val settings: Settings,
     private val messager: Messager,
+    private val usbKeyRepository: USBKeyRepository,
+    private val pinEncryptionRepository: PINEncryptionRepository,
+    val metricsCalculator: com.m3u.data.security.EncryptionMetricsCalculator,
     publisher: Publisher,
     // FIXME: do not use dao in viewmodel
     private val colorSchemeDao: ColorSchemeDao,
 ) : ViewModel() {
+    private val timber = Timber.tag("SettingViewModel")
+
     val epgs: StateFlow<List<Playlist>> = playlistRepository
         .observeAllEpgs()
         .stateIn(
@@ -202,6 +210,11 @@ class SettingViewModel @Inject constructor(
                     messager.emit(SettingMessage.Enqueued)
                 }
 
+                DataSource.WebDrop -> {
+                    messager.emit(SettingMessage.WebDropNoSubscribe)
+                    return
+                }
+
                 else -> return
             }
         }
@@ -315,6 +328,160 @@ class SettingViewModel @Inject constructor(
 
     val versionName: String = publisher.versionName
     val versionCode: Int = publisher.versionCode
+
+    val usbKeyState = usbKeyRepository.state
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = com.m3u.data.repository.usbkey.USBKeyState(),
+            started = SharingStarted.WhileSubscribed(5_000L)
+        )
+
+    fun enableUSBEncryption() {
+        viewModelScope.launch {
+            timber.d("=== enableUSBEncryption() CALLED ===")
+            timber.d("Current USB state: ${usbKeyState.value}")
+            timber.d("Is connected: ${usbKeyState.value.isConnected}")
+            timber.d("Device name: ${usbKeyState.value.deviceName}")
+            timber.d("Is encryption enabled: ${usbKeyState.value.isEncryptionEnabled}")
+
+            if (!usbKeyState.value.isConnected) {
+                timber.w("USB not connected - sending USBNotConnected message")
+                messager.emit(SettingMessage.USBNotConnected)
+                return@launch
+            }
+
+            timber.d("Calling usbKeyRepository.initializeEncryption()...")
+            val result = usbKeyRepository.initializeEncryption()
+
+            result.onSuccess {
+                timber.d("✓ USB encryption initialized successfully")
+                messager.emit(SettingMessage.USBEncryptionEnabled)
+            }.onFailure { error ->
+                timber.e(error, "✗ USB encryption initialization failed")
+                timber.e("Error type: ${error.javaClass.simpleName}")
+                timber.e("Error message: ${error.message}")
+                timber.e("Stack trace: ${error.stackTraceToString()}")
+                messager.emit(SettingMessage.USBEncryptionError(error.message ?: "Unknown error"))
+            }
+
+            timber.d("=== enableUSBEncryption() COMPLETED ===")
+        }
+    }
+
+    fun disableUSBEncryption() {
+        viewModelScope.launch {
+            usbKeyRepository.disableEncryption().onSuccess {
+                messager.emit(SettingMessage.USBEncryptionDisabled)
+            }.onFailure { error ->
+                messager.emit(SettingMessage.USBEncryptionError(error.message ?: "Unknown error"))
+            }
+        }
+    }
+
+    fun requestUSBPermission() {
+        viewModelScope.launch {
+            usbKeyRepository.requestUSBPermission().onFailure { error ->
+                messager.emit(SettingMessage.USBEncryptionError(error.message ?: "Permission denied"))
+            }
+        }
+    }
+
+    // ========================================
+    // PIN Encryption Methods
+    // ========================================
+
+    /**
+     * Enable database encryption with a 6-digit PIN
+     * @param pin Must be exactly 6 digits
+     */
+    fun enablePINEncryption(pin: String) {
+        viewModelScope.launch {
+            timber.d("=== enablePINEncryption() CALLED ===")
+            timber.d("PIN length: ${pin.length}")
+
+            // Validate PIN format
+            if (!pinEncryptionRepository.isValidPIN(pin)) {
+                timber.w("Invalid PIN format")
+                messager.emit(SettingMessage.PINInvalid)
+                return@launch
+            }
+
+            timber.d("Calling pinEncryptionRepository.initializeEncryption()...")
+            val result = pinEncryptionRepository.initializeEncryption(pin)
+
+            result.onSuccess {
+                timber.d("✓ PIN encryption initialized successfully")
+                messager.emit(SettingMessage.PINEncryptionEnabled)
+            }.onFailure { error ->
+                timber.e(error, "✗ PIN encryption initialization failed")
+                timber.e("Error type: ${error.javaClass.simpleName}")
+                timber.e("Error message: ${error.message}")
+                messager.emit(SettingMessage.PINEncryptionError(error.message ?: "Unknown error"))
+            }
+
+            timber.d("=== enablePINEncryption() COMPLETED ===")
+        }
+    }
+
+    /**
+     * Unlock the encrypted database with PIN
+     * @param pin The 6-digit PIN
+     */
+    fun unlockWithPIN(pin: String) {
+        viewModelScope.launch {
+            timber.d("=== unlockWithPIN() CALLED ===")
+
+            val result = pinEncryptionRepository.unlockWithPIN(pin)
+
+            result.onSuccess {
+                timber.d("✓ Database unlocked successfully")
+                messager.emit(SettingMessage.PINUnlocked)
+            }.onFailure { error ->
+                timber.w("✗ PIN unlock failed: ${error.message}")
+                messager.emit(SettingMessage.PINIncorrect)
+            }
+
+            timber.d("=== unlockWithPIN() COMPLETED ===")
+        }
+    }
+
+    /**
+     * Disable PIN encryption and decrypt database
+     * @param pin Current PIN for verification
+     */
+    fun disablePINEncryption(pin: String) {
+        viewModelScope.launch {
+            timber.d("=== disablePINEncryption() CALLED ===")
+
+            val result = pinEncryptionRepository.disableEncryption(pin)
+
+            result.onSuccess {
+                timber.d("✓ PIN encryption disabled successfully")
+                messager.emit(SettingMessage.PINEncryptionDisabled)
+            }.onFailure { error ->
+                timber.e(error, "✗ PIN encryption disable failed")
+                if (error is SecurityException) {
+                    messager.emit(SettingMessage.PINIncorrect)
+                } else {
+                    messager.emit(SettingMessage.PINEncryptionError(error.message ?: "Unknown error"))
+                }
+            }
+
+            timber.d("=== disablePINEncryption() COMPLETED ===")
+        }
+    }
+
+    /**
+     * Check if PIN encryption is currently enabled
+     */
+    suspend fun isPINEncryptionEnabled(): Boolean {
+        return pinEncryptionRepository.isEncryptionEnabled()
+    }
+
+    /**
+     * Get current encryption progress (if any operation is in progress)
+     */
+    suspend fun getPINEncryptionProgress() = pinEncryptionRepository.getEncryptionProgress()
 
     val properties = SettingProperties()
 }

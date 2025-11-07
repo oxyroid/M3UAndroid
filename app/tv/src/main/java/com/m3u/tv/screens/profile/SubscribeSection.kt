@@ -2,6 +2,7 @@ package com.m3u.tv.screens.profile
 
 import android.view.KeyEvent.KEYCODE_DPAD_UP
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +29,9 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Tab
 import androidx.tv.material3.TabRow
 import androidx.tv.material3.Text
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.m3u.business.playlist.PlaylistViewModel
 import com.m3u.business.setting.SettingViewModel
 import com.m3u.core.foundation.ui.thenIf
 import com.m3u.data.database.model.DataSource
@@ -49,10 +53,12 @@ data class AccountsSectionData(
 @Composable
 fun SettingViewModel.SubscribeSection() {
     val childPadding = rememberChildPadding()
+    val playlistViewModel: PlaylistViewModel = hiltViewModel()
     val dataSources = listOf(
         DataSource.M3U,
         DataSource.EPG,
-        DataSource.Xtream
+        DataSource.Xtream,
+        DataSource.WebDrop
     )
 
     val focusRequesters = remember { List(size = dataSources.size + 1) { FocusRequester() } }
@@ -64,7 +70,7 @@ fun SettingViewModel.SubscribeSection() {
         item {
             val (parent, child) = createInitialFocusRestorerModifiers()
             val tabIndex =
-                remember(selectedState.value) { dataSources.indexOf(selectedState.value) }
+                remember(properties.selectedState.value) { dataSources.indexOf(properties.selectedState.value) }
             var isTabRowFocused by remember { mutableStateOf(false) }
             TabRow(
                 selectedTabIndex = tabIndex,
@@ -89,10 +95,10 @@ fun SettingViewModel.SubscribeSection() {
                     .then(parent)
             ) {
                 dataSources.forEachIndexed { index, dataSource ->
-                    val isSelected = dataSource == selectedState.value
+                    val isSelected = dataSource == properties.selectedState.value
                     Tab(
                         selected = isSelected,
-                        onFocus = { selectedState.value = dataSource },
+                        onFocus = { properties.selectedState.value = dataSource },
                         modifier = Modifier
                             .height(32.dp)
                             .focusRequester(focusRequesters[index + 1])
@@ -112,10 +118,11 @@ fun SettingViewModel.SubscribeSection() {
             }
         }
 
-        when (selectedState.value) {
+        when (properties.selectedState.value) {
             DataSource.M3U -> m3uPageConfiguration(this)
             DataSource.EPG -> epgPageConfiguration(this)
             DataSource.Xtream -> xtreamPageConfiguration(this)
+            DataSource.WebDrop -> webDropPageConfiguration(this, playlistViewModel)
             else -> {}
         }
     }
@@ -126,13 +133,13 @@ private fun SettingViewModel.m3uPageConfiguration(
 ) {
     with(scope) {
         input(
-            value = titleState.value,
-            onValueChanged = { titleState.value = it },
+            value = properties.titleState.value,
+            onValueChanged = { properties.titleState.value = it },
             placeholder = R.string.feat_setting_placeholder_title
         )
         input(
-            value = urlState.value,
-            onValueChanged = { urlState.value = it },
+            value = properties.urlState.value,
+            onValueChanged = { properties.urlState.value = it },
             placeholder = R.string.feat_setting_placeholder_url
         )
         item {
@@ -153,13 +160,13 @@ private fun SettingViewModel.epgPageConfiguration(
 ) {
     with(scope) {
         input(
-            value = titleState.value,
-            onValueChanged = { titleState.value = it },
+            value = properties.titleState.value,
+            onValueChanged = { properties.titleState.value = it },
             placeholder = R.string.feat_setting_placeholder_epg_title
         )
         input(
-            value = epgState.value,
-            onValueChanged = { epgState.value = it },
+            value = properties.epgState.value,
+            onValueChanged = { properties.epgState.value = it },
             placeholder = R.string.feat_setting_placeholder_epg
         )
         item {
@@ -180,23 +187,23 @@ private fun SettingViewModel.xtreamPageConfiguration(
 ) {
     with(scope) {
         input(
-            value = titleState.value,
-            onValueChanged = { titleState.value = it },
+            value = properties.titleState.value,
+            onValueChanged = { properties.titleState.value = it },
             placeholder = R.string.feat_setting_placeholder_title
         )
         input(
-            value = urlState.value,
-            onValueChanged = { urlState.value = it },
+            value = properties.urlState.value,
+            onValueChanged = { properties.urlState.value = it },
             placeholder = R.string.feat_setting_placeholder_url
         )
         input(
-            value = usernameState.value,
-            onValueChanged = { usernameState.value = it },
+            value = properties.usernameState.value,
+            onValueChanged = { properties.usernameState.value = it },
             placeholder = R.string.feat_setting_placeholder_username
         )
         input(
-            value = passwordState.value,
-            onValueChanged = { passwordState.value = it },
+            value = properties.passwordState.value,
+            onValueChanged = { properties.passwordState.value = it },
             placeholder = R.string.feat_setting_placeholder_password
         )
         item {
@@ -207,6 +214,60 @@ private fun SettingViewModel.xtreamPageConfiguration(
                 Text(
                     text = stringResource(R.string.feat_setting_label_subscribe).uppercase(),
                 )
+            }
+        }
+    }
+}
+
+private fun SettingViewModel.webDropPageConfiguration(
+    scope: LazyListScope,
+    playlistViewModel: PlaylistViewModel
+) {
+    with(scope) {
+        item {
+            val webServerState by playlistViewModel.webServerState.collectAsStateWithLifecycle()
+
+            Column(
+                modifier = Modifier.padding(vertical = 16.dp),
+                verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp)
+            ) {
+                // Info text
+                Text(
+                    text = stringResource(R.string.feat_setting_webdrop_info),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                // Server URL (when running)
+                if (webServerState.accessUrl != null) {
+                    Column(
+                        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.feat_setting_webdrop_access_url),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = webServerState.accessUrl ?: "",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
+                // Start/Stop button
+                Button(
+                    onClick = { playlistViewModel.toggleWebServer() }
+                ) {
+                    Text(
+                        text = if (webServerState.isRunning) {
+                            stringResource(R.string.feat_setting_webdrop_stop_server)
+                        } else {
+                            stringResource(R.string.feat_setting_webdrop_start_server)
+                        }.uppercase()
+                    )
+                }
             }
         }
     }

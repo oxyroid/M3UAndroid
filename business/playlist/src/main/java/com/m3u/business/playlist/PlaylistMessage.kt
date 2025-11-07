@@ -31,4 +31,23 @@ sealed class PlaylistMessage(
         resId = string.feat_playlist_success_save_cover,
         formatArgs = arrayOf(path)
     )
+
+    data object WebServerStarted : PlaylistMessage(
+        level = LEVEL_INFO,
+        type = TYPE_SNACK,
+        resId = string.feat_playlist_web_server_started
+    )
+
+    data object WebServerStopped : PlaylistMessage(
+        level = LEVEL_INFO,
+        type = TYPE_SNACK,
+        resId = string.feat_playlist_web_server_stopped
+    )
+
+    data class WebServerError(val error: String) : PlaylistMessage(
+        level = LEVEL_ERROR,
+        type = TYPE_SNACK,
+        resId = string.feat_playlist_web_server_error,
+        formatArgs = arrayOf(error)
+    )
 }
