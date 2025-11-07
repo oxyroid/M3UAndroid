@@ -2,6 +2,8 @@ package com.m3u.business.setting
 
 import com.m3u.data.repository.encryption.PINEncryptionRepository
 import com.m3u.data.security.PINKeyManager
+import com.m3u.data.security.SessionTimeoutMonitor
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,11 +23,14 @@ import javax.inject.Singleton
  * 3. If Locked → Show PIN unlock screen
  * 4. User enters PIN → `attemptUnlock()` called
  * 5. On success → State becomes Unlocked → Main app can proceed
+ * 6. 6-hour timer starts (if encryption enabled)
+ * 7. After 6 hours → App shuts down, requires restart + PIN
  */
 @Singleton
 class UnlockManager @Inject constructor(
     private val pinKeyManager: PINKeyManager,
-    private val pinRepository: PINEncryptionRepository
+    private val pinRepository: PINEncryptionRepository,
+    val sessionTimeoutMonitor: SessionTimeoutMonitor
 ) {
     private val timber = Timber.tag("UnlockManager")
 
@@ -91,15 +96,17 @@ class UnlockManager @Inject constructor(
      * - The encryption key is cached in memory by PINKeyManager
      * - State changes to Unlocked
      * - Database can now be accessed
+     * - 6-hour session timer starts
      *
      * On failure:
      * - State remains Locked
      * - User can try again
      *
      * @param pin The 6-digit PIN to verify
+     * @param scope CoroutineScope for launching the session timer
      * @return Result.success if PIN is correct, Result.failure otherwise
      */
-    suspend fun attemptUnlock(pin: String): Result<Unit> {
+    suspend fun attemptUnlock(pin: String, scope: CoroutineScope): Result<Unit> {
         return try {
             timber.d("=== ATTEMPTING UNLOCK ===")
             timber.d("PIN length: ${pin.length}")
@@ -110,6 +117,11 @@ class UnlockManager @Inject constructor(
             if (result.isSuccess) {
                 timber.d("✓ PIN correct - unlocking database")
                 _lockState.value = LockState.Unlocked
+
+                // Start 6-hour session timer for security
+                sessionTimeoutMonitor.startTimer(scope)
+                timber.d("✓ 6-hour session timer started")
+
                 Result.success(Unit)
             } else {
                 timber.w("✗ PIN incorrect")
@@ -130,12 +142,14 @@ class UnlockManager @Inject constructor(
      * - Manual lock feature
      * - Auto-lock after timeout
      * - Security-sensitive operations
+     * - App shutdown
      */
     fun lock() {
         timber.d("=== LOCKING DATABASE ===")
         pinKeyManager.lockDatabase()
+        sessionTimeoutMonitor.stopTimer()
         _lockState.value = LockState.Locked
-        timber.d("✓ Database locked")
+        timber.d("✓ Database locked, session timer stopped")
     }
 
     /**

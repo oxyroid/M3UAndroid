@@ -14,12 +14,15 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
@@ -30,6 +33,7 @@ import com.m3u.business.setting.UnlockManager
 import com.m3u.tv.screens.common.ErrorScreen
 import com.m3u.tv.screens.common.LoadingScreen
 import com.m3u.tv.screens.security.PINUnlockScreen
+import com.m3u.tv.ui.components.SessionCountdownWarning
 import com.m3u.tv.utils.Helper
 import com.m3u.tv.utils.LocalHelper
 import dagger.hilt.android.AndroidEntryPoint
@@ -119,12 +123,12 @@ class MainActivity : ComponentActivity() {
                                 onPINEntered = { pin ->
                                     timber.d("PIN entered in unlock screen, attempting unlock...")
                                     lifecycleScope.launch {
-                                        val result = unlockManager.attemptUnlock(pin)
+                                        val result = unlockManager.attemptUnlock(pin, lifecycleScope)
                                         if (result.isFailure) {
                                             timber.w("Unlock failed: ${result.exceptionOrNull()?.message}")
                                             errorMessage = "Incorrect PIN. Please try again."
                                         } else {
-                                            timber.d("✓ Unlock successful!")
+                                            timber.d("✓ Unlock successful! 6-hour timer started.")
                                             errorMessage = null
                                             // State will automatically change to Unlocked
                                         }
@@ -139,12 +143,37 @@ class MainActivity : ComponentActivity() {
                             // No encryption OR successfully unlocked - proceed to main app
                             timber.d("Proceeding to main app (unlocked or no encryption)")
 
-                            CompositionLocalProvider(
-                                LocalHelper provides helper,
-                                LocalContentColor provides MaterialTheme.colorScheme.onBackground
-                            ) {
-                                App {
-                                    onBackPressedDispatcher.onBackPressed()
+                            // Track current route to hide timer during media playback
+                            var currentRoute by remember { mutableStateOf("") }
+
+                            Box {
+                                CompositionLocalProvider(
+                                    LocalHelper provides helper,
+                                    LocalContentColor provides MaterialTheme.colorScheme.onBackground
+                                ) {
+                                    App(
+                                        onBackPressed = {
+                                            onBackPressedDispatcher.onBackPressed()
+                                        },
+                                        onRouteChange = { route ->
+                                            currentRoute = route
+                                            timber.d("Route changed to: $route")
+                                        }
+                                    )
+                                }
+
+                                // Show session countdown timer
+                                // Only visible when:
+                                // 1. Encryption is enabled and timer is active
+                                // 2. NOT on the player screen (Channel route)
+                                val isOnPlayerScreen = currentRoute.startsWith("channel")
+                                if (lockState is UnlockManager.LockState.Unlocked && !isOnPlayerScreen) {
+                                    SessionCountdownWarning(
+                                        monitor = unlockManager.sessionTimeoutMonitor,
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .padding(24.dp)
+                                    )
                                 }
                             }
                         }

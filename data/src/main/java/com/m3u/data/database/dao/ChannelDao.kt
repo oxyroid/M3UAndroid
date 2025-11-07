@@ -18,6 +18,9 @@ interface ChannelDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrReplaceAll(vararg channels: Channel)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertOrReplaceAll(channels: List<Channel>)
+
     @Query(
         """
             SELECT DISTINCT `group`

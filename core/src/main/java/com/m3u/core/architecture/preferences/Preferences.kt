@@ -211,4 +211,9 @@ object PreferencesKeys {
     val ENCRYPTED_DATABASE_KEY = stringPreferencesKey("encrypted-database-key")
     val ENCRYPTION_KEY_IV = stringPreferencesKey("encryption-key-iv")
     val ENCRYPTION_SALT = stringPreferencesKey("encryption-salt")
+
+    // PIN Rate Limiting (Persistent)
+    val PIN_FAILED_ATTEMPTS = intPreferencesKey("pin-failed-attempts")
+    val PIN_LOCKOUT_UNTIL = longPreferencesKey("pin-lockout-until")
+    val PIN_ATTEMPT_TIMESTAMPS = stringPreferencesKey("pin-attempt-timestamps")
 }

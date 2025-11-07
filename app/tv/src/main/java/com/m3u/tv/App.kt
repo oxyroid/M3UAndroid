@@ -2,6 +2,7 @@ package com.m3u.tv
 
 import androidx.compose.animation.fadeIn
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,12 +25,23 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun App(
-    onBackPressed: () -> Unit
+    onBackPressed: () -> Unit,
+    onRouteChange: (String) -> Unit = {}
 ) {
     val helper = LocalHelper.current
     val navController = rememberNavController()
     val coroutineScope = rememberCoroutineScope()
     var isComingBackFromDifferentScreen by remember { mutableStateOf(false) }
+
+    // Track current route and notify MainActivity
+    val currentRoute by navController.currentBackStackEntryFlow
+        .collectAsState(initial = navController.currentBackStackEntry)
+
+    androidx.compose.runtime.LaunchedEffect(currentRoute) {
+        currentRoute?.destination?.route?.let { route ->
+            onRouteChange(route)
+        }
+    }
     val navigateToChannel: (Int) -> Unit = { channelId: Int ->
         coroutineScope.launch {
             helper.play(MediaCommand.Common(channelId))

@@ -188,6 +188,8 @@
     <string name="feat_setting_pin_encryption_confirm_pin">Confirm PIN</string>
     <string name="feat_setting_pin_encryption_setup_title">Set Up PIN Encryption</string>
     <string name="feat_setting_pin_encryption_setup_subtitle">Create a 6-digit PIN to encrypt your database</string>
+    <string name="feat_setting_pin_encryption_disable_title">Disable PIN Encryption</string>
+    <string name="feat_setting_pin_encryption_disable_subtitle">Enter your PIN to permanently decrypt the database</string>
     <string name="feat_setting_pin_encryption_unlock_title">Enter PIN to Unlock</string>
     <string name="feat_setting_pin_encryption_enabled_success">PIN encryption enabled successfully</string>
     <string name="feat_setting_pin_encryption_disabled_success">PIN encryption disabled successfully</string>
@@ -197,5 +199,6 @@
     <string name="feat_setting_pin_unlocked">Database unlocked successfully</string>
     <string name="feat_setting_pin_encryption_info">⚠️ Your database will be encrypted with AES-256. Only the correct 6-digit PIN can unlock your content. If you forget your PIN, you must uninstall the app to reset (all data will be lost).</string>
     <string name="feat_setting_pin_encryption_warning">⚠️ WARNING: Forgetting your PIN means permanent data loss!</string>
+    <string name="feat_setting_pin_encryption_time_warning">ℹ️ NOTE: Database encryption may take 5 minutes or more depending on the amount of data.</string>
     <string name="feat_setting_pin_mismatch">PINs do not match. Please try again.</string>
 </resources>

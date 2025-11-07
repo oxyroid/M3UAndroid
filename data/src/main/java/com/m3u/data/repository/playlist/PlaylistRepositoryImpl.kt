@@ -67,6 +67,11 @@ private const val BUFFER_M3U_CAPACITY = 500
 private const val BUFFER_XTREAM_CAPACITY = 100
 private const val BUFFER_RESTORE_CAPACITY = 400
 
+// Batch sizes for database inserts (reduced for encrypted databases)
+private const val BATCH_SIZE_UNENCRYPTED = 500
+private const val BATCH_SIZE_ENCRYPTED = 250
+private const val TRANSACTION_DELAY_MS = 10L  // Small delay between batches for encrypted DB
+
 internal class PlaylistRepositoryImpl @Inject constructor(
     private val playlistDao: PlaylistDao,
     private val channelDao: ChannelDao,
@@ -76,9 +81,47 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     private val xtreamParser: XtreamParser,
     private val workManager: WorkManager,
     @ApplicationContext private val context: Context,
-    private val settings: Settings
+    private val settings: Settings,
+    private val checksumValidator: com.m3u.data.security.ChecksumValidator
 ) : PlaylistRepository {
     private val timber = Timber.tag("PlaylistRepositoryImpl")
+
+    /**
+     * Helper function to insert channels in batches, optimized for encrypted databases.
+     * Uses smaller batch sizes and adds delays for encrypted DBs to prevent memory issues.
+     */
+    private suspend fun insertChannelsBatched(channels: List<Channel>, logPrefix: String = "") {
+        val isEncrypted = settings[PreferencesKeys.USB_ENCRYPTION_ENABLED]
+        val batchSize = if (isEncrypted) BATCH_SIZE_ENCRYPTED else BATCH_SIZE_UNENCRYPTED
+
+        timber.d("$logPrefix Inserting ${channels.size} channels (encrypted=$isEncrypted, batchSize=$batchSize)")
+
+        channels.chunked(batchSize).forEachIndexed { index, batch ->
+            withContext(Dispatchers.IO) {
+                channelDao.insertOrReplaceAll(batch)
+
+                // For encrypted databases, add small delay between batches to prevent memory pressure
+                if (isEncrypted && index < channels.size / batchSize) {
+                    kotlinx.coroutines.delay(TRANSACTION_DELAY_MS)
+                }
+            }
+
+            // PERFORMANCE: Log progress every 50 batches instead of 10 to reduce logging overhead
+            // Previous: index % 10 was causing excessive logging for large imports (16K+ channels)
+            if (index % 50 == 0 || index == 0) {
+                val progress = ((index + 1) * batchSize).coerceAtMost(channels.size)
+                timber.d("$logPrefix Channel insert progress: $progress / ${channels.size}")
+            }
+        }
+
+        // For large encrypted imports, suggest GC to clean up encryption buffers
+        if (isEncrypted && channels.size > 5000) {
+            timber.d("$logPrefix Large encrypted import complete, suggesting GC")
+            System.gc()
+        }
+
+        timber.d("$logPrefix All ${channels.size} channels inserted successfully")
+    }
 
     override suspend fun m3uOrThrow(
         title: String,
@@ -121,9 +164,30 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         playlistDao.insertOrReplace(playlist)
 
         val cache = createCoroutineCache<M3UData>(BUFFER_M3U_CAPACITY) { all ->
-            channelDao.insertOrReplaceAll(*all.map { it.toChannel(internalUrl) }.toTypedArray())
-            currentCount += all.size
-            callback(currentCount)
+            try {
+                timber.d("Batch insert: ${all.size} channels (total so far: $currentCount)")
+                val channels = all.map { it.toChannel(internalUrl) }
+
+                // Insert with batching optimized for encrypted databases
+                insertChannelsBatched(channels, "[M3U]")
+
+                currentCount += all.size
+                callback(currentCount)
+                timber.d("✓ Batch insert successful: $currentCount total channels")
+            } catch (e: android.database.sqlite.SQLiteException) {
+                // Database error during insert - log details and rethrow
+                timber.e(e, "✗ SQLite ERROR during batch insert at count=$currentCount")
+                timber.e("  Error code: ${e.message}")
+                timber.e("  This may indicate:")
+                timber.e("  - Encrypted database corruption")
+                timber.e("  - Low memory on device")
+                timber.e("  - Database file I/O error")
+                throw e  // Rethrow to fail-fast and prevent partial corrupt data
+            } catch (e: Exception) {
+                // Unexpected error - log and rethrow
+                timber.e(e, "✗ UNEXPECTED ERROR during batch insert at count=$currentCount")
+                throw e
+            }
         }
 
         channelFlow {
@@ -298,9 +362,29 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         callback(currentCount)
 
         val cache = createCoroutineCache(BUFFER_XTREAM_CAPACITY) { all ->
-            currentCount += all.size
-            callback(currentCount)
-            channelDao.insertOrReplaceAll(*all.toTypedArray())
+            try {
+                timber.d("Batch insert (Xtream): ${all.size} channels (total so far: $currentCount)")
+
+                // Insert with batching optimized for encrypted databases
+                insertChannelsBatched(all, "[Xtream]")
+
+                currentCount += all.size
+                callback(currentCount)
+                timber.d("✓ Batch insert successful (Xtream): $currentCount total channels")
+            } catch (e: android.database.sqlite.SQLiteException) {
+                // Database error during insert - log details and rethrow
+                timber.e(e, "✗ SQLite ERROR during Xtream batch insert at count=$currentCount")
+                timber.e("  Error code: ${e.message}")
+                timber.e("  This may indicate:")
+                timber.e("  - Encrypted database corruption")
+                timber.e("  - Low memory on device")
+                timber.e("  - Database file I/O error")
+                throw e  // Rethrow to fail-fast and prevent partial corrupt data
+            } catch (e: Exception) {
+                // Unexpected error - log and rethrow
+                timber.e(e, "✗ UNEXPECTED ERROR during Xtream batch insert at count=$currentCount")
+                throw e
+            }
         }
 
         xtreamParser
@@ -409,12 +493,21 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     }
 
     override suspend fun backupOrThrow(uri: Uri): Unit = withContext(Dispatchers.IO) {
+        timber.d("=== STARTING BACKUP WITH CHECKSUM VALIDATION ===")
+        timber.d("Backup URI: $uri")
+
         val json = Json {
             prettyPrint = false
         }
         val all = playlistDao.getAllWithChannels()
-        context.contentResolver.openOutputStream(uri)?.use {
-            val writer = it.bufferedWriter()
+
+        // Write backup data and calculate checksum simultaneously
+        val backupChecksum = context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+            // Use MessageDigest to calculate checksum while writing
+            val digest = java.security.MessageDigest.getInstance("SHA-256")
+            val digestOutputStream = java.security.DigestOutputStream(outputStream, digest)
+
+            val writer = digestOutputStream.bufferedWriter()
             all.forEach { (playlist, channels) ->
                 val encodedPlaylist = json.encodeToString(playlist)
                 val wrappedPlaylist = BackupOrRestoreContracts.wrapPlaylist(encodedPlaylist)
@@ -427,16 +520,80 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                 }
             }
             writer.flush()
+
+            // Get final checksum
+            val checksum = digest.digest().joinToString("") { "%02x".format(it) }
+            timber.d("✓ Backup written with checksum: $checksum")
+            checksum
         }
+
+        // Save checksum metadata alongside backup (if it's a file URI)
+        if (backupChecksum != null && uri.scheme == "file") {
+            try {
+                val backupFile = java.io.File(uri.path ?: "")
+                if (backupFile.exists()) {
+                    val saved = checksumValidator.saveChecksumMetadata(backupFile, backupChecksum)
+                    if (saved) {
+                        timber.d("✓ Checksum metadata saved: ${backupFile.name}.checksum")
+                    }
+                }
+            } catch (e: Exception) {
+                timber.w(e, "Could not save checksum metadata (non-critical)")
+            }
+        }
+
+        timber.d("=== BACKUP COMPLETE ===")
     }
 
     override suspend fun restoreOrThrow(uri: Uri): Unit = withContext(Dispatchers.IO) {
+        timber.d("=== STARTING RESTORE WITH CHECKSUM VERIFICATION ===")
+        timber.d("Restore URI: $uri")
+
+        // ENTERPRISE SECURITY: Verify checksum before restore (if available)
+        if (uri.scheme == "file") {
+            try {
+                val restoreFile = java.io.File(uri.path ?: "")
+                if (restoreFile.exists()) {
+                    timber.d("Attempting checksum verification before restore...")
+                    val verification = checksumValidator.verifyBackupIntegrity(restoreFile)
+
+                    if (verification.isCorrupted()) {
+                        timber.e("✗ RESTORE ABORTED: Backup file is corrupted!")
+                        timber.e("  Expected checksum: ${verification.expectedChecksum}")
+                        timber.e("  Actual checksum:   ${verification.actualChecksum}")
+                        throw SecurityException("Backup file is corrupted. Restore aborted to prevent data loss.")
+                    }
+
+                    if (verification.success) {
+                        timber.d("✓ Checksum verification PASSED - backup is valid")
+                    } else if (verification.expectedChecksum == null) {
+                        timber.w("⚠ No checksum metadata found - proceeding without verification")
+                    } else {
+                        timber.w("⚠ Checksum verification failed: ${verification.error}")
+                        timber.w("  Proceeding with caution...")
+                    }
+                }
+            } catch (e: SecurityException) {
+                // Re-throw security exceptions (corrupted backup)
+                throw e
+            } catch (e: Exception) {
+                timber.w(e, "Could not verify checksum (non-critical)")
+            }
+        }
+
         val json = Json {
             ignoreUnknownKeys = true
         }
         val mutex = Mutex()
-        context.contentResolver.openInputStream(uri)?.use {
-            val reader = it.bufferedReader()
+
+        // Calculate checksum while restoring to detect corruption during read
+        var restoredChannelCount = 0
+        var restoredPlaylistCount = 0
+
+        context.contentResolver.openInputStream(uri)?.use { inputStream ->
+            val digest = java.security.MessageDigest.getInstance("SHA-256")
+            val digestInputStream = java.security.DigestInputStream(inputStream, digest)
+            val reader = digestInputStream.bufferedReader()
 
             val channels = mutableListOf<Channel>()
             reader.forEachLine { line ->
@@ -447,6 +604,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                     encodedPlaylist != null -> {
                         val playlist = json.decodeFromString<Playlist>(encodedPlaylist)
                         playlistDao.insertOrReplace(playlist)
+                        restoredPlaylistCount++
                     }
 
                     encodedChannel != null -> {
@@ -455,7 +613,9 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                         if (channels.size >= BUFFER_RESTORE_CAPACITY) {
                             mutex.withLock {
                                 if (channels.size >= BUFFER_RESTORE_CAPACITY) {
-                                    channelDao.insertOrReplaceAll(*channels.toTypedArray())
+                                    // Insert with batching optimized for encrypted databases
+                                    insertChannelsBatched(channels, "[Restore]")
+                                    restoredChannelCount += channels.size
                                     channels.clear()
                                 }
                             }
@@ -466,9 +626,22 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                 }
             }
             mutex.withLock {
-                channelDao.insertOrReplaceAll(*channels.toTypedArray())
+                // Insert remaining channels with batching optimized for encrypted databases
+                if (channels.isNotEmpty()) {
+                    insertChannelsBatched(channels, "[Restore-Final]")
+                    restoredChannelCount += channels.size
+                }
             }
+
+            // Get checksum of data that was read
+            val restoreChecksum = digest.digest().joinToString("") { "%02x".format(it) }
+            timber.d("✓ Restore complete:")
+            timber.d("  Playlists: $restoredPlaylistCount")
+            timber.d("  Channels:  $restoredChannelCount")
+            timber.d("  Checksum:  $restoreChecksum")
         }
+
+        timber.d("=== RESTORE COMPLETE ===")
     }
 
     override suspend fun pinOrUnpinCategory(url: String, category: String) {

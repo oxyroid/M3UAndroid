@@ -17,6 +17,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,7 +38,9 @@ import timber.log.Timber
 @Composable
 internal fun SettingViewModel.SecuritySection() {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var showPINSetup by remember { mutableStateOf(false) }
+    var showPINDisable by remember { mutableStateOf(false) }
     var pinEncryptionEnabled by remember { mutableStateOf(false) }
 
     // Check PIN encryption status
@@ -133,8 +136,8 @@ internal fun SettingViewModel.SecuritySection() {
                         Button(
                             onClick = {
                                 Timber.tag("SecuritySection").d("=== DISABLE PIN ENCRYPTION BUTTON CLICKED ===")
-                                // TODO: Prompt for PIN confirmation before disabling
-                                Timber.tag("SecuritySection").w("Disable not yet implemented - need PIN confirmation")
+                                // Show PIN input dialog for security confirmation
+                                showPINDisable = true
                             }
                         ) {
                             Text(stringResource(R.string.feat_setting_pin_encryption_disable))
@@ -150,6 +153,46 @@ internal fun SettingViewModel.SecuritySection() {
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error
                     )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = stringResource(R.string.feat_setting_pin_encryption_time_warning),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                // 6-Hour Timer Explanation (when encryption is enabled)
+                if (pinEncryptionEnabled) {
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "⏱️ Security Session Timer",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
+                        Text(
+                            text = "When PIN encryption is enabled, a 6-hour countdown timer appears in the top-right corner. This is a security feature that automatically shuts down the app after 6 hours to protect your data.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Text(
+                            text = "• Timer starts when you enter your PIN\n• Displays remaining time (HH:MM:SS)\n• Changes color as time runs out\n• App closes completely at 00:00:00\n• Restart app and enter PIN to get a new 6-hour session",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            lineHeight = MaterialTheme.typography.bodySmall.lineHeight * 1.5f
+                        )
+                    }
                 }
             }
 
@@ -171,6 +214,26 @@ internal fun SettingViewModel.SecuritySection() {
                 onCancel = {
                     Timber.tag("SecuritySection").d("PIN setup cancelled")
                     showPINSetup = false
+                }
+            )
+        }
+
+        // Show PIN disable confirmation dialog
+        if (showPINDisable) {
+            PINInputScreen(
+                title = stringResource(R.string.feat_setting_pin_encryption_disable_title),
+                subtitle = stringResource(R.string.feat_setting_pin_encryption_disable_subtitle),
+                onPINEntered = { pin ->
+                    Timber.tag("SecuritySection").d("=== PIN ENTERED FOR DISABLE: length=${pin.length} ===")
+                    Timber.tag("SecuritySection").d("Calling disablePINEncryption()...")
+                    disablePINEncryption(pin)
+                    showPINDisable = false
+                    pinEncryptionEnabled = false
+                    Timber.tag("SecuritySection").d("PIN disable complete")
+                },
+                onCancel = {
+                    Timber.tag("SecuritySection").d("PIN disable cancelled")
+                    showPINDisable = false
                 }
             )
         }
