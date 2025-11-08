@@ -137,7 +137,8 @@ private val PREFERENCES: Map<Preferences.Key<*>, *> = listOf(
     PreferencesKeys.PIN_ENCRYPTION_ENABLED to false,
     PreferencesKeys.ENCRYPTED_DATABASE_KEY to "",
     PreferencesKeys.ENCRYPTION_KEY_IV to "",
-    PreferencesKeys.ENCRYPTION_SALT to ""
+    PreferencesKeys.ENCRYPTION_SALT to "",
+    PreferencesKeys.CONTENT_TYPE_MODE to false
 )
     .associateBy { it.key }
     .mapValues { it.value.value }
@@ -216,4 +217,7 @@ object PreferencesKeys {
     val PIN_FAILED_ATTEMPTS = intPreferencesKey("pin-failed-attempts")
     val PIN_LOCKOUT_UNTIL = longPreferencesKey("pin-lockout-until")
     val PIN_ATTEMPT_TIMESTAMPS = stringPreferencesKey("pin-attempt-timestamps")
+
+    // Content Type Mode (for Xtream playlists)
+    val CONTENT_TYPE_MODE = booleanPreferencesKey("content-type-mode")
 }
