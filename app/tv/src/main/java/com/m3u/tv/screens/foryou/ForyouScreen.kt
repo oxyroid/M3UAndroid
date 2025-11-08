@@ -66,23 +66,25 @@ fun ForyouScreen(
 ) {
     val playlists: Map<Playlist, Int> by viewModel.playlists.collectAsStateWithLifecycle()
     val specs: List<Recommend.Spec> by viewModel.specs.collectAsStateWithLifecycle()
-    Box(Modifier.fillMaxSize()) {
-        Catalog(
-            playlists = playlists,
-            specs = specs,
-            onScroll = onScroll,
-            navigateToPlaylist = navigateToPlaylist,
-            navigateToChannel = navigateToChannel,
-            isTopBarVisible = isTopBarVisible,
-            modifier = Modifier.fillMaxSize()
-        )
-    }
+    val continueWatching by viewModel.continueWatching.collectAsStateWithLifecycle()
+
+    Catalog(
+        playlists = playlists,
+        specs = specs,
+        continueWatching = continueWatching,
+        onScroll = onScroll,
+        navigateToPlaylist = navigateToPlaylist,
+        navigateToChannel = navigateToChannel,
+        isTopBarVisible = isTopBarVisible,
+        modifier = Modifier.fillMaxSize()
+    )
 }
 
 @Composable
 private fun Catalog(
     playlists: Map<Playlist, Int>,
     specs: List<Recommend.Spec>,
+    continueWatching: List<com.m3u.business.foryou.ContinueWatchingItem>,
     onScroll: (isTopBarVisible: Boolean) -> Unit,
     navigateToPlaylist: (playlistUrl: String) -> Unit,
     navigateToChannel: (channelId: Int) -> Unit,
@@ -112,33 +114,6 @@ private fun Catalog(
         contentPadding = PaddingValues(bottom = 108.dp),
         modifier = modifier
     ) {
-        if (specs.isNotEmpty()) {
-            item(contentType = "FeaturedChannelsCarousel") {
-                FeaturedSpecsCarousel(
-                    specs = specs,
-                    padding = childPadding,
-                    onClickSpec = { spec ->
-                        when (spec) {
-                            is Recommend.UnseenSpec -> {
-                                navigateToChannel(spec.channel.id)
-                            }
-
-                            is Recommend.DiscoverSpec -> TODO()
-                            is Recommend.NewRelease -> TODO()
-                            is Recommend.CwSpec -> TODO()
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(324.dp)
-                    /*
-                     Setting height for the FeaturedChannelCarousel to keep it rendered with same height,
-                     regardless of the top bar's visibility
-                     */
-                )
-            }
-        }
-
         item(contentType = "PlaylistsRow") {
             if (contentTypeMode) {
                 // Show Content Type Cards (Live TV, Movies, Series)
@@ -213,6 +188,17 @@ private fun Catalog(
                         )
                     }
                 }
+            }
+        }
+
+        // Continue Watching Row
+        if (continueWatching.isNotEmpty()) {
+            item(contentType = "ContinueWatchingRow") {
+                ContinueWatchingRow(
+                    items = continueWatching,
+                    navigateToChannel = navigateToChannel,
+                    modifier = Modifier.padding(top = 24.dp)
+                )
             }
         }
     }
@@ -361,6 +347,134 @@ private fun ContentTypeCard(
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White.copy(alpha = 0.8f)
                 )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+private fun ContinueWatchingRow(
+    items: List<com.m3u.business.foryou.ContinueWatchingItem>,
+    navigateToChannel: (channelId: Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val startPadding: Dp = rememberChildPadding().start
+    val endPadding: Dp = rememberChildPadding().end
+
+    Column(modifier = modifier) {
+        Text(
+            text = "Continue Watching",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            modifier = Modifier.padding(start = startPadding, bottom = 12.dp)
+        )
+
+        LazyRow(
+            modifier = Modifier.focusGroup(),
+            contentPadding = PaddingValues(start = startPadding, end = endPadding),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(items.size) { index ->
+                ContinueWatchingCard(
+                    item = items[index],
+                    onClick = { navigateToChannel(items[index].channel.id) }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+private fun ContinueWatchingCard(
+    item: com.m3u.business.foryou.ContinueWatchingItem,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        onClick = onClick,
+        modifier = modifier
+            .width(320.dp)
+            .height(180.dp),
+        colors = CardDefaults.colors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+            contentColor = Color.White
+        ),
+        shape = CardDefaults.shape(MaterialTheme.shapes.medium),
+        border = CardDefaults.border(
+            focusedBorder = Border(
+                BorderStroke(4.dp, Color.White),
+                shape = MaterialTheme.shapes.medium
+            )
+        )
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // Background gradient
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        androidx.compose.ui.graphics.Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.8f)
+                            )
+                        )
+                    )
+            )
+
+            // Content
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Title
+                Text(
+                    text = item.channel.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    maxLines = 2
+                )
+
+                // Progress info
+                Column {
+                    // Progress bar
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(4.dp)
+                            .background(
+                                Color.White.copy(alpha = 0.3f),
+                                MaterialTheme.shapes.small
+                            )
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(item.progressPercentage / 100f)
+                                .height(4.dp)
+                                .background(
+                                    Color(0xFFE50914), // Netflix red
+                                    MaterialTheme.shapes.small
+                                )
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Progress text
+                    Text(
+                        text = "${item.progressPercentage.toInt()}% watched",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.7f)
+                    )
+                }
             }
         }
     }

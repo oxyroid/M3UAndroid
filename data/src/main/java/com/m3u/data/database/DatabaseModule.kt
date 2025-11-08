@@ -166,6 +166,12 @@ internal object DatabaseModule {
         database: M3UDatabase
     ): ColorSchemeDao = database.colorSchemeDao()
 
+    @Provides
+    @Singleton
+    fun provideWatchProgressDao(
+        database: M3UDatabase
+    ): com.m3u.data.database.dao.WatchProgressDao = database.watchProgressDao()
+
     /**
      * ENTERPRISE FEATURE: Database Integrity Check
      *

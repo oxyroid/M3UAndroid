@@ -10,6 +10,8 @@ import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.playlist.PlaylistRepositoryImpl
 import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.data.repository.programme.ProgrammeRepositoryImpl
+import com.m3u.data.repository.watchprogress.WatchProgressRepository
+import com.m3u.data.repository.watchprogress.WatchProgressRepositoryImpl
 import com.m3u.data.repository.webserver.WebServerRepository
 import com.m3u.data.repository.webserver.WebServerRepositoryImpl
 import dagger.Binds
@@ -50,4 +52,10 @@ internal interface RepositoryModule {
     fun bindWebServerRepository(
         repository: WebServerRepositoryImpl
     ): WebServerRepository
+
+    @Binds
+    @Singleton
+    fun bindWatchProgressRepository(
+        repository: WatchProgressRepositoryImpl
+    ): WatchProgressRepository
 }

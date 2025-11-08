@@ -40,6 +40,8 @@ data class XtreamInfo(
 //        val auth: Int?,
         @SerialName("created_at")
         val createdAt: String? = null,
+        @SerialName("exp_date")
+        val expDate: String? = null,
         @SerialName("is_trial")
         val isTrial: String? = null,
         @SerialName("max_connections")

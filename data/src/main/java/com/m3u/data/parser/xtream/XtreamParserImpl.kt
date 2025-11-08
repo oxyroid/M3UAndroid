@@ -123,7 +123,8 @@ internal class XtreamParserImpl @Inject constructor(
             serialCategories = serialCategories,
             allowedOutputFormats = allowedOutputFormats,
             serverProtocol = serverProtocol,
-            port = if (serverProtocol == "http") port else httpsPort
+            port = if (serverProtocol == "http") port else httpsPort,
+            expDate = info.userInfo.expDate
         )
     }
 

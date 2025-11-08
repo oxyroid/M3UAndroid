@@ -43,6 +43,7 @@ class ForyouViewModel @Inject constructor(
     channelRepository: ChannelRepository,
     programmeRepository: ProgrammeRepository,
     private val playerManager: PlayerManager,
+    watchProgressRepository: com.m3u.data.repository.watchprogress.WatchProgressRepository,
     settings: Settings,
     workManager: WorkManager,
 ) : ViewModel() {
@@ -52,6 +53,22 @@ class ForyouViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.Lazily,
             initialValue = emptyMap()
+        )
+
+    val continueWatching: StateFlow<List<ContinueWatchingItem>> = watchProgressRepository
+        .getContinueWatching(limit = 4)
+        .flatMapLatest { watchProgressList ->
+            combine(
+                watchProgressList.map { watchProgress ->
+                    channelRepository.observe(watchProgress.channelId)
+                        .map { channel -> channel?.let { ContinueWatchingItem(it, watchProgress) } }
+                }
+            ) { items -> items.filterNotNull() }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000L),
+            initialValue = emptyList()
         )
 
     val subscribingPlaylistUrls: StateFlow<List<String>> =
@@ -124,4 +141,14 @@ class ForyouViewModel @Inject constructor(
 
     suspend fun getPlaylist(playlistUrl: String): Playlist? =
         playlistRepository.get(playlistUrl)
+}
+
+data class ContinueWatchingItem(
+    val channel: Channel,
+    val watchProgress: com.m3u.data.database.model.WatchProgress
+) {
+    val progressPercentage: Float
+        get() = if (watchProgress.duration > 0) {
+            (watchProgress.position.toFloat() / watchProgress.duration.toFloat()) * 100f
+        } else 0f
 }

@@ -134,73 +134,30 @@ private fun CategoryListItem(
     modifier: Modifier = Modifier
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    var showControls by remember { mutableStateOf(false) }
 
-    // Auto-select category when focused + show controls
+    // Auto-select category when focused
     LaunchedEffect(isFocused) {
         if (isFocused) {
             onCategorySelected()
         }
-        showControls = isFocused
     }
 
+    // TODO: Determine if category is hidden from playlist hidden categories list
+    val isHidden = false // Placeholder - will need to pass this from parent
+
+    // Just show categories normally in viewing mode - management is in Settings
     ListItem(
         selected = isSelected,
         onClick = onCategorySelected,
         headlineContent = {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = category,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                    color = if (isSelected || isFocused) Color.White else MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
-                )
-
-                if (showControls) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        // Pin/Unpin button
-                        IconButton(
-                            onClick = onPinOrUnpin,
-                            colors = IconButtonDefaults.colors(
-                                containerColor = if (isPinned)
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
-                                else
-                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f),
-                                contentColor = if (isPinned)
-                                    MaterialTheme.colorScheme.onPrimary
-                                else
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                            ),
-                            modifier = Modifier.padding(0.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.PushPin,
-                                contentDescription = "Pin category",
-                            )
-                        }
-
-                        // Hide button
-                        IconButton(
-                            onClick = onHide,
-                            modifier = Modifier.padding(0.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.VisibilityOff,
-                                contentDescription = "Hide category"
-                            )
-                        }
-                    }
-                }
-            }
+            Text(
+                text = category,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                color = if (isSelected || isFocused) Color.White else MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         },
         colors = ListItemDefaults.colors(
             selectedContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),

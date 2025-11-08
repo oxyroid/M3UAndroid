@@ -56,9 +56,11 @@ import com.m3u.core.architecture.preferences.get
 import com.m3u.data.SSLs
 import com.m3u.data.api.OkhttpClient
 import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.DataSource as PlaylistDataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.copyXtreamEpisode
 import com.m3u.data.database.model.copyXtreamSeries
+import com.m3u.data.database.model.type
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.service.MediaCommand
@@ -101,6 +103,7 @@ class PlayerManagerImpl @Inject constructor(
     @OkhttpClient(false) private val okHttpClient: OkHttpClient,
     private val playlistRepository: PlaylistRepository,
     private val channelRepository: ChannelRepository,
+    private val watchProgressRepository: com.m3u.data.repository.watchprogress.WatchProgressRepository,
     private val cache: Cache,
     private val settings: Settings,
     publisher: Publisher,
@@ -675,6 +678,10 @@ class PlayerManagerImpl @Inject constructor(
         when (val chain = chain) {
             is MimetypeChain.Remembered -> {
                 storeContinueWatching(chain.url)
+                // Launch VOD progress tracking in a separate coroutine
+                mainCoroutineScope.launch {
+                    storeVodWatchProgress()
+                }
             }
 
             is MimetypeChain.Trying -> {
@@ -685,6 +692,10 @@ class PlayerManagerImpl @Inject constructor(
                         ?: ChannelPreference(mineType = chain.mimetype)
                 )
                 storeContinueWatching(chain.url)
+                // Launch VOD progress tracking in a separate coroutine
+                mainCoroutineScope.launch {
+                    storeVodWatchProgress()
+                }
             }
 
             else -> {}
@@ -698,6 +709,19 @@ class PlayerManagerImpl @Inject constructor(
         val channelUrl = chain.url
         if (channelUrl.isNotEmpty()) {
             resetContinueWatching(channelUrl)
+        }
+
+        // Clean up VOD watch progress when video ends
+        val currentChannel = channel.value
+        val currentPlaylist = playlist.value
+        if (currentChannel != null && currentPlaylist != null) {
+            if (currentPlaylist.source == PlaylistDataSource.Xtream) {
+                val playlistType = currentPlaylist.type
+                if (playlistType == PlaylistDataSource.Xtream.TYPE_VOD || playlistType == PlaylistDataSource.Xtream.TYPE_SERIES) {
+                    timber.d("cleaning up VOD watch progress for channel ${currentChannel.id}")
+                    watchProgressRepository.deleteByChannelId(currentChannel.id)
+                }
+            }
         }
     }
 
@@ -724,6 +748,68 @@ class PlayerManagerImpl @Inject constructor(
                     channelPreference?.copy(cwPosition = cwPosition)
                         ?: ChannelPreference(cwPosition = cwPosition)
                 )
+            }
+    }
+
+    @OptIn(FlowPreview::class)
+    private suspend fun storeVodWatchProgress() {
+        timber.d("start storeVodWatchProgress")
+
+        val currentChannel = channel.value ?: run {
+            timber.w("failed to storeVodWatchProgress, channel is null")
+            return
+        }
+
+        val currentPlaylist = playlist.value ?: run {
+            timber.w("failed to storeVodWatchProgress, playlist is null")
+            return
+        }
+
+        // Only track VOD content from Xtream playlists
+        if (currentPlaylist.source != PlaylistDataSource.Xtream) {
+            timber.d("not tracking, playlist source is not Xtream: ${currentPlaylist.source}")
+            return
+        }
+
+        val playlistType = currentPlaylist.type
+        if (playlistType != PlaylistDataSource.Xtream.TYPE_VOD && playlistType != PlaylistDataSource.Xtream.TYPE_SERIES) {
+            timber.d("not tracking, playlist type is not VOD or Series: $playlistType")
+            return
+        }
+
+        val currentPlayer = player.value ?: run {
+            timber.w("failed to storeVodWatchProgress, player is null")
+            return
+        }
+
+        timber.d("tracking VOD progress for channel ${currentChannel.id}, playlist type: $playlistType")
+
+        playbackPosition
+            .sample(30.seconds)
+            .collect { position ->
+                timber.d("storeVodWatchProgress, received position: $position")
+                if (position == -1L) return@collect
+
+                val duration = currentPlayer.duration
+                if (duration == C.TIME_UNSET || duration <= 0) {
+                    timber.w("storeVodWatchProgress, invalid duration: $duration")
+                    return@collect
+                }
+
+                // Save position minus 30 seconds (but not less than 0)
+                val adjustedPosition = (position - 30_000L).coerceAtLeast(0L)
+
+                timber.d("saving VOD progress: channelId=${currentChannel.id}, position=$adjustedPosition, duration=$duration")
+
+                val watchProgress = com.m3u.data.database.model.WatchProgress(
+                    channelId = currentChannel.id,
+                    position = adjustedPosition,
+                    duration = duration,
+                    lastWatched = System.currentTimeMillis(),
+                    playlistUrl = currentPlaylist.url
+                )
+
+                watchProgressRepository.upsert(watchProgress)
             }
     }
 

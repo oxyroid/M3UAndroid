@@ -9,6 +9,7 @@ import com.m3u.core.architecture.preferences.PlaylistStrategy
 import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.Settings
 import com.m3u.core.architecture.preferences.get
+import com.m3u.core.architecture.preferences.set
 import com.m3u.core.util.basic.startsWithAny
 import com.m3u.core.util.copyToFile
 import com.m3u.core.util.readFileName
@@ -253,8 +254,14 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             serialCategories,
             allowedOutputFormats,
             serverProtocol,
-            port
+            port,
+            expDate
         ) = xtreamParser.getXtreamOutput(input)
+
+        // Convert Unix timestamp string to Long (milliseconds)
+        val expirationDate = expDate?.toLongOrNull()?.times(1000)
+            ?: 1767225600000L // Test: Dec 31, 2025 if no exp_date provided
+        timber.d("Xtream expiration: expDate=$expDate, converted=$expirationDate")
 
         // we like ts but not m3u8.
         val liveContainerExtension = if ("ts" in allowedOutputFormats) "ts"
@@ -268,12 +275,14 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             playlistDao.get(url)
                 ?.takeIf { it.source == DataSource.Xtream }
                 ?.copy(
-                    title = title
+                    title = title,
+                    expirationDate = expirationDate
                 )
                 ?: Playlist(
                     title = title,
                     url = url,
-                    source = DataSource.Xtream
+                    source = DataSource.Xtream,
+                    expirationDate = expirationDate
                 )
         }
         val vodPlaylist = XtreamInput.encodeToPlaylistUrl(
@@ -284,12 +293,14 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             playlistDao.get(url)
                 ?.takeIf { it.source == DataSource.Xtream }
                 ?.copy(
-                    title = title
+                    title = title,
+                    expirationDate = expirationDate
                 )
                 ?: Playlist(
                     title = title,
                     url = url,
-                    source = DataSource.Xtream
+                    source = DataSource.Xtream,
+                    expirationDate = expirationDate
                 )
         }
         val seriesPlaylist = XtreamInput.encodeToPlaylistUrl(
@@ -300,12 +311,14 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             playlistDao.get(url)
                 ?.takeIf { it.source == DataSource.Xtream }
                 ?.copy(
-                    title = title
+                    title = title,
+                    expirationDate = expirationDate
                 )
                 ?: Playlist(
                     title = title,
                     url = url,
-                    source = DataSource.Xtream
+                    source = DataSource.Xtream,
+                    expirationDate = expirationDate
                 )
         }
 
@@ -444,6 +457,10 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             .onEach(cache::push)
             .onCompletion { cache.flush() }
             .collect()
+
+        // Auto-enable Content Type Mode for Xtream playlists
+        settings[PreferencesKeys.CONTENT_TYPE_MODE] = true
+        timber.d("Auto-enabled Content Type Mode after Xtream import")
     }
 
     override suspend fun insertEpgAsPlaylist(title: String, epg: String) {

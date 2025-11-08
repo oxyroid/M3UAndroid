@@ -14,5 +14,5 @@ class SettingProperties(
     val usernameState: MutableState<String> = mutableStateOf(""),
     val passwordState: MutableState<String> = mutableStateOf(""),
     val epgState: MutableState<String> = mutableStateOf(""),
-    val selectedState: MutableState<DataSource> = mutableStateOf(DataSource.M3U)
+    val selectedState: MutableState<DataSource> = mutableStateOf(DataSource.WebDrop)
 )

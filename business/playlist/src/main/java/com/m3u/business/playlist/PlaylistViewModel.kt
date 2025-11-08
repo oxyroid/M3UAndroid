@@ -323,10 +323,24 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
+    // Overload for management view where playlistUrl is explicitly provided
+    fun onPinOrUnpinCategory(playlistUrl: String, category: String) {
+        viewModelScope.launch {
+            playlistRepository.pinOrUnpinCategory(playlistUrl, category)
+        }
+    }
+
     fun onHideCategory(category: String) {
         val currentPlaylistUrl = playlistUrl.value
         viewModelScope.launch {
             playlistRepository.hideOrUnhideCategory(currentPlaylistUrl, category)
+        }
+    }
+
+    // Overload for management view where playlistUrl is explicitly provided
+    fun onHideCategory(playlistUrl: String, category: String) {
+        viewModelScope.launch {
+            playlistRepository.hideOrUnhideCategory(playlistUrl, category)
         }
     }
 
@@ -410,5 +424,10 @@ class PlaylistViewModel @Inject constructor(
         } else {
             startWebServer()
         }
+    }
+
+    // Helper method for management view to get all channels including those in hidden categories
+    fun getAllChannelsForPlaylist(playlistUrl: String): Flow<List<Channel>> {
+        return channelRepository.observeAllByPlaylistUrl(playlistUrl)
     }
 }

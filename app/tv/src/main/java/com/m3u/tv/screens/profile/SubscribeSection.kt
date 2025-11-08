@@ -55,13 +55,16 @@ fun SettingViewModel.SubscribeSection() {
     val childPadding = rememberChildPadding()
     val playlistViewModel: PlaylistViewModel = hiltViewModel()
     val dataSources = listOf(
-        DataSource.M3U,
-        DataSource.EPG,
+        DataSource.WebDrop,
         DataSource.Xtream,
-        DataSource.WebDrop
+        DataSource.M3U,
+        DataSource.EPG
     )
 
-    val focusRequesters = remember { List(size = dataSources.size + 1) { FocusRequester() } }
+    // Track if "Manage" tab is selected
+    var isManageTabSelected by remember { mutableStateOf(false) }
+
+    val focusRequesters = remember { List(size = dataSources.size + 2) { FocusRequester() } }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -70,7 +73,10 @@ fun SettingViewModel.SubscribeSection() {
         item {
             val (parent, child) = createInitialFocusRestorerModifiers()
             val tabIndex =
-                remember(properties.selectedState.value) { dataSources.indexOf(properties.selectedState.value) }
+                remember(properties.selectedState.value, isManageTabSelected) {
+                    if (isManageTabSelected) dataSources.size
+                    else dataSources.indexOf(properties.selectedState.value)
+                }
             var isTabRowFocused by remember { mutableStateOf(false) }
             TabRow(
                 selectedTabIndex = tabIndex,
@@ -95,10 +101,13 @@ fun SettingViewModel.SubscribeSection() {
                     .then(parent)
             ) {
                 dataSources.forEachIndexed { index, dataSource ->
-                    val isSelected = dataSource == properties.selectedState.value
+                    val isSelected = dataSource == properties.selectedState.value && !isManageTabSelected
                     Tab(
                         selected = isSelected,
-                        onFocus = { properties.selectedState.value = dataSource },
+                        onFocus = {
+                            properties.selectedState.value = dataSource
+                            isManageTabSelected = false
+                        },
                         modifier = Modifier
                             .height(32.dp)
                             .focusRequester(focusRequesters[index + 1])
@@ -115,15 +124,39 @@ fun SettingViewModel.SubscribeSection() {
                         )
                     }
                 }
+
+                // Manage Playlists tab
+                Tab(
+                    selected = isManageTabSelected,
+                    onFocus = { isManageTabSelected = true },
+                    modifier = Modifier
+                        .height(32.dp)
+                        .focusRequester(focusRequesters[dataSources.size + 1])
+                        .thenIf(isManageTabSelected) { child }
+                ) {
+                    Text(
+                        text = "MANAGE PLAYLISTS",
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            color = LocalContentColor.current
+                        ),
+                        modifier = Modifier
+                            .occupyScreenSize()
+                            .padding(horizontal = 16.dp)
+                    )
+                }
             }
         }
 
-        when (properties.selectedState.value) {
-            DataSource.M3U -> m3uPageConfiguration(this)
-            DataSource.EPG -> epgPageConfiguration(this)
-            DataSource.Xtream -> xtreamPageConfiguration(this)
-            DataSource.WebDrop -> webDropPageConfiguration(this, playlistViewModel)
-            else -> {}
+        if (isManageTabSelected) {
+            managePlaylistsPageConfiguration(this, playlistViewModel)
+        } else {
+            when (properties.selectedState.value) {
+                DataSource.M3U -> m3uPageConfiguration(this)
+                DataSource.EPG -> epgPageConfiguration(this)
+                DataSource.Xtream -> xtreamPageConfiguration(this)
+                DataSource.WebDrop -> webDropPageConfiguration(this, playlistViewModel)
+                else -> {}
+            }
         }
     }
 }
@@ -267,6 +300,78 @@ private fun SettingViewModel.webDropPageConfiguration(
                             stringResource(R.string.feat_setting_webdrop_start_server)
                         }.uppercase()
                     )
+                }
+            }
+        }
+    }
+}
+
+private fun managePlaylistsPageConfiguration(
+    scope: LazyListScope,
+    playlistViewModel: PlaylistViewModel
+) {
+    with(scope) {
+        item {
+            val foryouViewModel: com.m3u.business.foryou.ForyouViewModel = hiltViewModel()
+            val playlists by foryouViewModel.playlists.collectAsStateWithLifecycle()
+            var selectedPlaylistUrl by remember { mutableStateOf<String?>(null) }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(vertical = 16.dp),
+                verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(24.dp)
+            ) {
+                // Info text
+                Text(
+                    text = "Manage your playlists: select a playlist to delete it. To hide/unhide categories, use the Settings in the playlist view.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                if (playlists.isEmpty()) {
+                    Text(
+                        text = "No playlists available. Add a playlist first from the tabs above.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 32.dp)
+                    )
+                } else {
+                    // Playlist selector cards (horizontal)
+                    androidx.compose.foundation.lazy.LazyRow(
+                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp),
+                        contentPadding = PaddingValues(bottom = 16.dp)
+                    ) {
+                        playlists.keys.forEach { playlist ->
+                            item {
+                                PlaylistManagementCard(
+                                    playlist = playlist,
+                                    isSelected = playlist.url == selectedPlaylistUrl,
+                                    onClick = {
+                                        selectedPlaylistUrl = if (selectedPlaylistUrl == playlist.url) null
+                                        else playlist.url
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    // Show management options when a playlist is selected
+                    selectedPlaylistUrl?.let { playlistUrl ->
+                        val selectedPlaylist = playlists.keys.find { it.url == playlistUrl }
+                        val channelCount = playlists[selectedPlaylist] ?: 0
+                        if (selectedPlaylist != null) {
+                            // Use a separate composable for full management
+                            FullPlaylistManagementView(
+                                playlist = selectedPlaylist,
+                                channelCount = channelCount,
+                                playlistUrl = playlistUrl,
+                                foryouViewModel = foryouViewModel,
+                                playlistViewModel = playlistViewModel,
+                                onPlaylistDeleted = { selectedPlaylistUrl = null }
+                            )
+                        }
+                    }
                 }
             }
         }

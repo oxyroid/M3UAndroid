@@ -10,13 +10,17 @@ import io.ktor.server.engine.*
 import io.ktor.server.cio.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.cors.routing.*
+import kotlin.time.Duration.Companion.minutes
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -65,6 +69,9 @@ internal class WebServerRepositoryImpl @Inject constructor(
     override val state: StateFlow<WebServerState> = _state.asStateFlow()
 
     private var server: EmbeddedServer<*, *>? = null
+
+    // Background scope for long-running imports that shouldn't be cancelled
+    private val backgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override suspend fun start(port: Int): Result<Unit> = withContext(Dispatchers.IO) {
         try {

@@ -3,6 +3,7 @@ package com.m3u.tv.screens.dashboard
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -18,9 +20,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -30,14 +34,21 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.tv.material3.MaterialTheme
+import androidx.tv.material3.Text
+import com.m3u.business.foryou.ForyouViewModel
+import com.m3u.data.database.model.DataSource
 import com.m3u.tv.screens.Screens
 import com.m3u.tv.screens.favorite.FavoriteScreen
 import com.m3u.tv.screens.foryou.ForyouScreen
@@ -153,6 +164,48 @@ fun DashboardScreen(
             navController = navController,
             modifier = Modifier.offset(y = navHostTopPaddingDp),
         )
+
+        // Display expiration date in lower left corner
+        ExpirationDateBadge(modifier = Modifier.align(Alignment.BottomStart))
+    }
+}
+
+@Composable
+private fun ExpirationDateBadge(
+    modifier: Modifier = Modifier,
+    viewModel: ForyouViewModel = hiltViewModel()
+) {
+    val playlists by viewModel.playlists.collectAsStateWithLifecycle()
+
+    // Get earliest expiration date from Xtream playlists
+    val earliestExpiration = remember(playlists) {
+        playlists.keys
+            .filter { it.source == DataSource.Xtream && it.expirationDate != null }
+            .mapNotNull { it.expirationDate }
+            .minOrNull()
+    }
+
+    earliestExpiration?.let { expDate ->
+        val formattedDate = remember(expDate) {
+            java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                .format(java.util.Date(expDate))
+        }
+        Box(
+            modifier = modifier
+                .padding(start = 58.dp, bottom = 32.dp)
+                .background(
+                    color = Color.Black.copy(alpha = 0.7f),
+                    shape = RoundedCornerShape(8.dp)
+                )
+                .padding(horizontal = 20.dp, vertical = 10.dp)
+        ) {
+            Text(
+                text = "Expires $formattedDate",
+                style = MaterialTheme.typography.titleSmall,
+                color = Color.White,
+                fontWeight = FontWeight.Medium
+            )
+        }
     }
 }
 

@@ -6,5 +6,6 @@ data class XtreamOutput(
     val serialCategories: List<XtreamCategory> = emptyList(),
     val allowedOutputFormats: List<String> = emptyList(),
     val serverProtocol: String = "http",
-    val port: Int? = null
+    val port: Int? = null,
+    val expDate: String? = null
 )

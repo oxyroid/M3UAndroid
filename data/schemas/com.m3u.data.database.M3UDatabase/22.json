@@ -1,0 +1,386 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 22,
+    "identityHash": "f758607864f4875886becc73da418932",
+    "entities": [
+      {
+        "tableName": "playlists",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`title` TEXT NOT NULL, `url` TEXT NOT NULL, `pinned_groups` TEXT NOT NULL DEFAULT '[]', `hidden_groups` TEXT NOT NULL DEFAULT '[]', `source` TEXT NOT NULL DEFAULT '0', `user_agent` TEXT DEFAULT NULL, `epg_urls` TEXT NOT NULL DEFAULT '[]', `auto_refresh_programmes` INTEGER NOT NULL DEFAULT 0, `expiration_date` INTEGER DEFAULT NULL, PRIMARY KEY(`url`))",
+        "fields": [
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "url",
+            "columnName": "url",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pinnedCategories",
+            "columnName": "pinned_groups",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'[]'"
+          },
+          {
+            "fieldPath": "hiddenCategories",
+            "columnName": "hidden_groups",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'[]'"
+          },
+          {
+            "fieldPath": "source",
+            "columnName": "source",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'0'"
+          },
+          {
+            "fieldPath": "userAgent",
+            "columnName": "user_agent",
+            "affinity": "TEXT",
+            "defaultValue": "NULL"
+          },
+          {
+            "fieldPath": "epgUrls",
+            "columnName": "epg_urls",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'[]'"
+          },
+          {
+            "fieldPath": "autoRefreshProgrammes",
+            "columnName": "auto_refresh_programmes",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "expirationDate",
+            "columnName": "expiration_date",
+            "affinity": "INTEGER",
+            "defaultValue": "NULL"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "url"
+          ]
+        }
+      },
+      {
+        "tableName": "streams",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`url` TEXT NOT NULL, `group` TEXT NOT NULL, `title` TEXT NOT NULL, `cover` TEXT, `playlist_url` TEXT NOT NULL, `license_type` TEXT DEFAULT NULL, `license_key` TEXT DEFAULT NULL, `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `favourite` INTEGER NOT NULL, `hidden` INTEGER NOT NULL DEFAULT 0, `seen` INTEGER NOT NULL DEFAULT 0, `relation_id` TEXT DEFAULT NULL)",
+        "fields": [
+          {
+            "fieldPath": "url",
+            "columnName": "url",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "group",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cover",
+            "columnName": "cover",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "playlistUrl",
+            "columnName": "playlist_url",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "licenseType",
+            "columnName": "license_type",
+            "affinity": "TEXT",
+            "defaultValue": "NULL"
+          },
+          {
+            "fieldPath": "licenseKey",
+            "columnName": "license_key",
+            "affinity": "TEXT",
+            "defaultValue": "NULL"
+          },
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "favourite",
+            "columnName": "favourite",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hidden",
+            "columnName": "hidden",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "seen",
+            "columnName": "seen",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "relationId",
+            "columnName": "relation_id",
+            "affinity": "TEXT",
+            "defaultValue": "NULL"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_streams_playlist_url",
+            "unique": false,
+            "columnNames": [
+              "playlist_url"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_streams_playlist_url` ON `${TABLE_NAME}` (`playlist_url`)"
+          },
+          {
+            "name": "index_streams_favourite",
+            "unique": false,
+            "columnNames": [
+              "favourite"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_streams_favourite` ON `${TABLE_NAME}` (`favourite`)"
+          }
+        ]
+      },
+      {
+        "tableName": "programmes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`relation_id` TEXT NOT NULL, `epg_url` TEXT NOT NULL, `start` INTEGER NOT NULL, `end` INTEGER NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `icon` TEXT, `categories` TEXT NOT NULL, `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "channelId",
+            "columnName": "relation_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "epgUrl",
+            "columnName": "epg_url",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "start",
+            "columnName": "start",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "end",
+            "columnName": "end",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "icon",
+            "columnName": "icon",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "categories",
+            "columnName": "categories",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_programmes_epg_url",
+            "unique": false,
+            "columnNames": [
+              "epg_url"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_programmes_epg_url` ON `${TABLE_NAME}` (`epg_url`)"
+          }
+        ]
+      },
+      {
+        "tableName": "episodes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`title` TEXT NOT NULL, `series_id` INTEGER NOT NULL, `season` TEXT NOT NULL, `number` INTEGER NOT NULL, `url` TEXT NOT NULL, `id` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "seriesId",
+            "columnName": "series_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "season",
+            "columnName": "season",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "number",
+            "columnName": "number",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "url",
+            "columnName": "url",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "color_pack",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`argb` INTEGER NOT NULL, `dark` INTEGER NOT NULL, `name` TEXT NOT NULL, PRIMARY KEY(`argb`, `dark`))",
+        "fields": [
+          {
+            "fieldPath": "argb",
+            "columnName": "argb",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isDark",
+            "columnName": "dark",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "argb",
+            "dark"
+          ]
+        }
+      },
+      {
+        "tableName": "watch_progress",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`channel_id` INTEGER NOT NULL, `position` INTEGER NOT NULL, `duration` INTEGER NOT NULL, `last_watched` INTEGER NOT NULL, `playlist_url` TEXT NOT NULL, PRIMARY KEY(`channel_id`))",
+        "fields": [
+          {
+            "fieldPath": "channelId",
+            "columnName": "channel_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "position",
+            "columnName": "position",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "duration",
+            "columnName": "duration",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastWatched",
+            "columnName": "last_watched",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "playlistUrl",
+            "columnName": "playlist_url",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "channel_id"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f758607864f4875886becc73da418932')"
+    ]
+  }
+}

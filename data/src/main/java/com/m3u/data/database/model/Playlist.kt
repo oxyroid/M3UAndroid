@@ -47,7 +47,7 @@ data class Playlist(
     val hiddenCategories: List<String> = emptyList(),
     @ColumnInfo(name = "source", defaultValue = "0")
     @Serializable(with = DataSourceSerializer::class)
-    val source: DataSource = DataSource.M3U,
+    val source: DataSource = DataSource.WebDrop,
     @ColumnInfo(name = "user_agent", defaultValue = "NULL")
     @Exclude
     val userAgent: String? = null,
@@ -57,7 +57,10 @@ data class Playlist(
     val epgUrls: List<String> = emptyList(),
     @ColumnInfo(name = "auto_refresh_programmes", defaultValue = "0")
     @Exclude
-    val autoRefreshProgrammes: Boolean = false
+    val autoRefreshProgrammes: Boolean = false,
+    @ColumnInfo(name = "expiration_date", defaultValue = "NULL")
+    @Exclude
+    val expirationDate: Long? = null
 ) {
     companion object {
         const val URL_IMPORTED = "imported"
@@ -118,6 +121,14 @@ sealed class DataSource(
     val value: String,
     val supported: Boolean = false
 ) {
+    object WebDrop : DataSource(R.string.feat_setting_data_source_webdrop, "webdrop", true)
+
+    object Xtream : DataSource(R.string.feat_setting_data_source_xtream, "xtream", true) {
+        const val TYPE_LIVE = "live"
+        const val TYPE_VOD = "vod"
+        const val TYPE_SERIES = "series"
+    }
+
     object M3U : DataSource(R.string.feat_setting_data_source_m3u, "m3u", true)
 
     // special playlist type.
@@ -127,17 +138,9 @@ sealed class DataSource(
     // xtream playlist need not save or refer epg playlists.
     object EPG : DataSource(R.string.feat_setting_data_source_epg, "epg", true)
 
-    object Xtream : DataSource(R.string.feat_setting_data_source_xtream, "xtream", true) {
-        const val TYPE_LIVE = "live"
-        const val TYPE_VOD = "vod"
-        const val TYPE_SERIES = "series"
-    }
-
     object Emby : DataSource(R.string.feat_setting_data_source_emby, "emby")
 
     object Dropbox : DataSource(R.string.feat_setting_data_source_dropbox, "dropbox")
-
-    object WebDrop : DataSource(R.string.feat_setting_data_source_webdrop, "webdrop", true)
 
     override fun toString(): String = value
 

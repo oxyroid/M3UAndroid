@@ -9,11 +9,13 @@ import com.m3u.data.database.dao.ColorSchemeDao
 import com.m3u.data.database.dao.EpisodeDao
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.ProgrammeDao
+import com.m3u.data.database.dao.WatchProgressDao
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.ColorScheme
 import com.m3u.data.database.model.Episode
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Programme
+import com.m3u.data.database.model.WatchProgress
 
 @Database(
     entities = [
@@ -21,9 +23,10 @@ import com.m3u.data.database.model.Programme
         Channel::class,
         Programme::class,
         Episode::class,
-        ColorScheme::class
+        ColorScheme::class,
+        WatchProgress::class
     ],
-    version = 20,
+    version = 22,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(
@@ -61,6 +64,8 @@ import com.m3u.data.database.model.Programme
             to = 20,
             spec = DatabaseMigrations.AutoMigrate19To20::class
         ),
+        AutoMigration(from = 20, to = 21),
+        AutoMigration(from = 21, to = 22),
     ]
 )
 @TypeConverters(Converters::class)
@@ -70,4 +75,5 @@ internal abstract class M3UDatabase : RoomDatabase() {
     abstract fun episodeDao(): EpisodeDao
     abstract fun programmeDao(): ProgrammeDao
     abstract fun colorSchemeDao(): ColorSchemeDao
+    abstract fun watchProgressDao(): WatchProgressDao
 }
