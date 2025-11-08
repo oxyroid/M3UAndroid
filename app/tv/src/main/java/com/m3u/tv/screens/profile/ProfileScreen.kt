@@ -163,7 +163,11 @@ fun ProfileScreen(
 //                    )
 //                }
                 composable(ProfileScreens.Optional()) {
-
+                    OptionalFeaturesSection(
+                        onNavigateToAdultContent = {
+                            // TODO: Navigate to adult content viewer with PIN check (666666)
+                        }
+                    )
                 }
                 composable(ProfileScreens.Security()) {
                     viewModel.SecuritySection()
