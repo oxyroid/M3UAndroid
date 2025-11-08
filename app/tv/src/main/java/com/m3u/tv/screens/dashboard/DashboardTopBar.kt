@@ -171,7 +171,7 @@ private fun Logo(
                 .size(IconSize)
         )
         Text(
-            text = "M3U",
+            text = "M3U CiNEMA",
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Medium,
             fontFamily = LexendExa
