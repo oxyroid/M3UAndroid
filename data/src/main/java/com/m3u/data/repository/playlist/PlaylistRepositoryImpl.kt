@@ -569,7 +569,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                     } else if (verification.expectedChecksum == null) {
                         timber.w("⚠ No checksum metadata found - proceeding without verification")
                     } else {
-                        timber.w("⚠ Checksum verification failed: ${verification.error}")
+                        timber.w("⚠ Checksum verification failed: ${verification.message}")
                         timber.w("  Proceeding with caution...")
                     }
                 }
