@@ -49,6 +49,10 @@ enum class Screens(
         title = R.string.ui_destination_playlist,
         args = listOf(PlaylistNavigation.TYPE_URL)
     ),
+    Epg(
+        title = R.string.ui_destination_epg,
+        isTabItem = true
+    ),
     Favorite(
         title = R.string.ui_destination_favourite,
         isTabItem = true,

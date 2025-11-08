@@ -4,7 +4,8 @@
     <string name="ui_title_favourite">Favorit</string>
     <string name="ui_title_setting">Inställningar</string>
 
-    <string name="ui_destination_foryou">För Dig</string>
+    <string name="ui_destination_foryou">Hem</string>
+    <string name="ui_destination_epg">EPG</string>
     <string name="ui_destination_favourite">Favorit</string>
     <string name="ui_destination_extension">Tillägg</string>
     <string name="ui_destination_setting">Inställningar</string>

@@ -1,27 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="ui_title_foryou">M3U</string>
-    <string name="ui_title_setting">Ajustes</string>
     <string name="ui_title_favourite">Favoritos</string>
+    <string name="ui_title_setting">Configuración</string>
 
-    <string name="ui_destination_foryou">Para Ti</string>
+    <string name="ui_destination_foryou">Inicio</string>
+    <string name="ui_destination_epg">EPG</string>
     <string name="ui_destination_favourite">Favoritos</string>
     <string name="ui_destination_extension">Extensión</string>
-    <string name="ui_destination_setting">Ajustes</string>
-    <string name="ui_destination_playlist">List. reproducción</string>
-    
+    <string name="ui_destination_setting">Configuración</string>
+    <string name="ui_destination_playlist">Lista de reproducción</string>
 
     <string name="ui_error_unknown">error desconocido</string>
-    <string name="ui_cd_top_bar_on_back_pressed">atrás</string>
+    <string name="ui_cd_top_bar_on_back_pressed">volver</string>
 
-    <string name="ui_theme_card_left">ho</string>
-    <string name="ui_theme_card_right">la</string>
+    <string name="ui_theme_card_left">¿Sabías?</string>
+    <string name="ui_theme_card_right">Registraremos tu **progreso de visualización** y lo reanudaremos la próxima vez que reproduzcas</string>
 
     <string name="ui_sort">Ordenar</string>
     <string name="ui_sort_asc">A-Z</string>
     <string name="ui_sort_desc">Z-A</string>
     <string name="ui_sort_recently">Recientemente</string>
-    <string name="ui_sort_never_played">no reproducido</string>
+    <string name="ui_sort_mixed">Mezclado</string>
+    <string name="ui_sort_never_played">nunca reproducido</string>
     <string name="ui_sort_unspecified">Sin especificar</string>
 
     <string name="ui_connect">Conectar</string>

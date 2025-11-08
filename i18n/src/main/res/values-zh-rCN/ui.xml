@@ -1,25 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="ui_title_foryou">M3U</string>
+    <string name="ui_title_favourite">收藏</string>
+    <string name="ui_title_setting">设置</string>
 
     <string name="ui_destination_foryou">主页</string>
-    <string name="ui_destination_favourite">喜欢</string>
+    <string name="ui_destination_epg">EPG</string>
+    <string name="ui_destination_favourite">收藏</string>
+    <string name="ui_destination_extension">扩展</string>
     <string name="ui_destination_setting">设置</string>
-
-    <string name="ui_title_setting">设置</string>
-    <string name="ui_title_favourite">喜欢</string>
+    <string name="ui_destination_playlist">播放列表</string>
 
     <string name="ui_error_unknown">未知错误</string>
     <string name="ui_cd_top_bar_on_back_pressed">返回</string>
 
     <string name="ui_theme_card_left">你知道吗？</string>
-    <string name="ui_theme_card_right">我们会记录您的**观看进度**，并在下次播放时恢复进度</string>
+    <string name="ui_theme_card_right">我们会记录您的**观看进度**，并在下次播放时恢复</string>
 
     <string name="ui_sort">排序</string>
     <string name="ui_sort_asc">A-Z</string>
     <string name="ui_sort_desc">Z-A</string>
     <string name="ui_sort_recently">最近</string>
     <string name="ui_sort_mixed">混合</string>
-    <string name="ui_sort_never_played">从未播放过</string>
-    <string name="ui_sort_unspecified">默认</string>
+    <string name="ui_sort_never_played">从未播放</string>
+    <string name="ui_sort_unspecified">未指定</string>
+
+    <string name="ui_connect">连接</string>
 </resources>

@@ -2,27 +2,28 @@
 <resources>
     <string name="ui_title_foryou">M3U</string>
     <string name="ui_title_favourite">Favorit</string>
-    <string name="ui_title_setting">pengaturan</string>
+    <string name="ui_title_setting">Pengaturan</string>
 
-    <string name="ui_destination_foryou">Untuk Anda</string>
+    <string name="ui_destination_foryou">Beranda</string>
+    <string name="ui_destination_epg">EPG</string>
     <string name="ui_destination_favourite">Favorit</string>
     <string name="ui_destination_extension">Ekstensi</string>
-    <string name="ui_destination_setting">pengaturan</string>
-    <string name="ui_destination_playlist">Playlist</string>
+    <string name="ui_destination_setting">Pengaturan</string>
+    <string name="ui_destination_playlist">Daftar Putar</string>
 
-    <string name="ui_error_unknown">kesalahan yang tidak diketahui</string>
+    <string name="ui_error_unknown">kesalahan tidak diketahui</string>
     <string name="ui_cd_top_bar_on_back_pressed">kembali</string>
 
-    <string name="ui_theme_card_left">Apa kamu tahu?</string>
-    <string name="ui_theme_card_right"> Kami akan mencatat **progres menonton** Anda dan melanjutkannya saat Anda memutar kembali nanti</string>
+    <string name="ui_theme_card_left">Tahukah kamu?</string>
+    <string name="ui_theme_card_right">Kami akan mencatat **progres menonton** Anda dan melanjutkannya saat Anda memutar lagi</string>
 
     <string name="ui_sort">Urutkan</string>
     <string name="ui_sort_asc">A-Z</string>
     <string name="ui_sort_desc">Z-A</string>
-    <string name="ui_sort_recently">Baru-baru ini</string>
-    <string name="ui_sort_mixed">Campuran</string>
-    <string name="ui_sort_never_played">tidak pernah diputar</string>
-    <string name="ui_sort_unspecified">Tidak disebutkan</string>
+    <string name="ui_sort_recently">Terbaru</string>
+    <string name="ui_sort_mixed">Campur</string>
+    <string name="ui_sort_never_played">belum pernah diputar</string>
+    <string name="ui_sort_unspecified">Tidak ditentukan</string>
 
-    <string name="ui_connect">Terhubung</string>
+    <string name="ui_connect">Hubungkan</string>
 </resources>

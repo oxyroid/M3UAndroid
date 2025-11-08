@@ -50,6 +50,7 @@ import androidx.tv.material3.Text
 import com.m3u.business.foryou.ForyouViewModel
 import com.m3u.data.database.model.DataSource
 import com.m3u.tv.screens.Screens
+import com.m3u.tv.screens.epg.EpgScreen
 import com.m3u.tv.screens.favorite.FavoriteScreen
 import com.m3u.tv.screens.foryou.ForyouScreen
 import com.m3u.tv.screens.profile.ProfileScreen
@@ -257,6 +258,9 @@ private fun Body(
                 onScroll = updateTopBarVisibility,
                 isTopBarVisible = isTopBarVisible
             )
+        }
+        composable(Screens.Epg()) {
+            EpgScreen()
         }
         composable(Screens.Favorite()) {
             FavoriteScreen(

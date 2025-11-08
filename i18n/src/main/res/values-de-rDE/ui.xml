@@ -5,8 +5,11 @@
     <string name="ui_title_setting">Einstellungen</string>
 
     <string name="ui_destination_foryou">Home</string>
+    <string name="ui_destination_epg">EPG</string>
     <string name="ui_destination_favourite">Favoriten</string>
+    <string name="ui_destination_extension">Erweiterung</string>
     <string name="ui_destination_setting">Einstellungen</string>
+    <string name="ui_destination_playlist">Wiedergabeliste</string>
 
     <string name="ui_error_unknown">unbekannter Fehler</string>
     <string name="ui_cd_top_bar_on_back_pressed">zurück</string>

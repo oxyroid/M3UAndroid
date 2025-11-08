@@ -4,21 +4,25 @@
     <string name="ui_title_favourite">Favoritos</string>
     <string name="ui_title_setting">Configurações</string>
 
-    <string name="ui_destination_foryou">Para Você</string>
+    <string name="ui_destination_foryou">Início</string>
+    <string name="ui_destination_epg">EPG</string>
     <string name="ui_destination_favourite">Favoritos</string>
+    <string name="ui_destination_extension">Extensão</string>
     <string name="ui_destination_setting">Configurações</string>
+    <string name="ui_destination_playlist">Lista de reprodução</string>
 
-    <string name="ui_error_unknown">Erro Desconhecido</string>
-    <string name="ui_cd_top_bar_on_back_pressed">Voltar</string>
+    <string name="ui_error_unknown">erro desconhecido</string>
+    <string name="ui_cd_top_bar_on_back_pressed">voltar</string>
 
-    <string name="ui_theme_card_left">ho</string>
-    <string name="ui_theme_card_right">la</string>
+    <string name="ui_theme_card_left">Você sabia?</string>
+    <string name="ui_theme_card_right">Registraremos seu **progresso de visualização** e retornaremos na próxima vez que você reproduzir</string>
 
-    <string name="ui_sort">Reordenar</string>
+    <string name="ui_sort">Ordenar</string>
     <string name="ui_sort_asc">A-Z</string>
     <string name="ui_sort_desc">Z-A</string>
-    <string name="ui_sort_recently">Recentes</string>
-    <string name="ui_sort_never_played">Não assistiu ainda</string>
+    <string name="ui_sort_recently">Recentemente</string>
+    <string name="ui_sort_mixed">Misto</string>
+    <string name="ui_sort_never_played">nunca reproduzido</string>
     <string name="ui_sort_unspecified">Não especificado</string>
 
     <string name="ui_connect">Conectar</string>
