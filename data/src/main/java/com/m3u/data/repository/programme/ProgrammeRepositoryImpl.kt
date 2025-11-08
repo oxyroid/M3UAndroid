@@ -124,6 +124,23 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
         )
     }
 
+    override suspend fun getProgrammesInTimeRange(
+        epgUrls: List<String>,
+        relationId: String,
+        startTime: Long,
+        endTime: Long,
+        limit: Int
+    ): List<Programme> {
+        if (epgUrls.isEmpty()) return emptyList()
+        return programmeDao.getByEpgUrlsAndRelationIdInTimeRange(
+            epgUrls = epgUrls,
+            relationId = relationId,
+            startTime = startTime,
+            endTime = endTime,
+            limit = limit
+        )
+    }
+
     private fun checkOrRefreshProgrammesOrThrowImpl(
         epgUrls: List<String>,
         ignoreCache: Boolean

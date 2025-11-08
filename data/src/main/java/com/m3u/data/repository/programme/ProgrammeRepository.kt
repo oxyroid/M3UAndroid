@@ -29,4 +29,11 @@ interface ProgrammeRepository {
 
     suspend fun getById(id: Int): Programme?
     suspend fun getProgrammeCurrently(channelId: Int): Programme?
+    suspend fun getProgrammesInTimeRange(
+        epgUrls: List<String>,
+        relationId: String,
+        startTime: Long,
+        endTime: Long,
+        limit: Int = 10
+    ): List<Programme>
 }

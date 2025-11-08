@@ -100,4 +100,23 @@ interface ProgrammeDao {
     fun observeProgrammeRange(
         epgUrls: List<String>
     ): Flow<ProgrammeRange>
+
+    @Query(
+        """
+        SELECT * FROM programmes
+        WHERE epg_url in (:epgUrls)
+        AND relation_id = :relationId
+        AND start >= :startTime
+        AND start < :endTime
+        ORDER BY start
+        LIMIT :limit
+        """
+    )
+    suspend fun getByEpgUrlsAndRelationIdInTimeRange(
+        epgUrls: List<String>,
+        relationId: String,
+        startTime: Long,
+        endTime: Long,
+        limit: Int = 10
+    ): List<Programme>
 }
