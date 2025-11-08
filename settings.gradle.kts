@@ -16,7 +16,7 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "M3U"
-include(":app:smartphone", ":app:tv", ":app:extension")
+include(":app:tv", ":app:extension")
 include(":core", ":core:foundation", ":core:extension")
 include(":data")
 include(
@@ -28,7 +28,7 @@ include(
     ":business:channel",
     ":business:extension",
 )
-include(":baselineprofile:smartphone", ":baselineprofile:tv")
+include(":baselineprofile:tv")
 include(":i18n")
 include(
     ":lint:annotation",
