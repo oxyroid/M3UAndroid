@@ -251,14 +251,21 @@
         <h1>📺 M3U Playlist Upload</h1>
         <p class="subtitle">Import your IPTV playlists easily</p>
 
+        <!-- Xtream Mode Recommendation -->
+        <div class="message warning" style="display: block; margin-bottom: 20px;">
+            <strong>⭐ ALWAYS TRY XTREAM MODE FIRST!</strong><br>
+            Xtream provides enhanced features: automatic categorization (Live/Movies/Series), better player experience, VOD metadata, and series episode tracking. Only use M3U/File upload if your provider doesn't support Xtream.
+        </div>
+
         <div class="tabs">
-            <button class="tab active" data-tab="file">📁 File Upload</button>
+            <button class="tab active" data-tab="xtream">⭐ Xtream Codes</button>
             <button class="tab" data-tab="url">🔗 URL Import</button>
-            <button class="tab" data-tab="xtream">🎬 Xtream Codes</button>
+            <button class="tab" data-tab="file">📁 File Upload</button>
+            <button class="tab" data-tab="epg">📅 EPG Source</button>
         </div>
 
         <!-- File Upload Tab -->
-        <div class="tab-content active" id="file-tab">
+        <div class="tab-content" id="file-tab">
             <div class="drop-zone" id="dropZone">
                 <div class="drop-icon">📤</div>
                 <div class="drop-text">Drag & drop M3U file here</div>
@@ -291,7 +298,7 @@
         </div>
 
         <!-- Xtream Codes Tab -->
-        <div class="tab-content" id="xtream-tab">
+        <div class="tab-content active" id="xtream-tab">
             <form id="xtreamForm">
                 <div class="form-group">
                     <label for="xtreamTitle">Provider Name *</label>
@@ -310,6 +317,25 @@
                     <input type="password" id="xtreamPassword" placeholder="password" autocomplete="current-password" required>
                 </div>
                 <button type="submit">Import Xtream</button>
+            </form>
+        </div>
+
+        <!-- EPG Source Tab -->
+        <div class="tab-content" id="epg-tab">
+            <div class="message warning" style="display: block; margin-bottom: 20px;">
+                <strong>ℹ️ About EPG Sources</strong><br>
+                EPG (Electronic Program Guide) sources provide TV schedule data in XMLTV format. You can find community-maintained EPG sources online. M3UCiNEMA does not host or recommend specific sources - you provide your own URLs.
+            </div>
+            <form id="epgForm">
+                <div class="form-group">
+                    <label for="epgUrl">EPG URL (XMLTV format) *</label>
+                    <input type="url" id="epgUrl" placeholder="https://example.com/epg.xml" required>
+                </div>
+                <div class="form-group">
+                    <label for="epgName">EPG Source Name (Optional)</label>
+                    <input type="text" id="epgName" placeholder="e.g., My Country EPG">
+                </div>
+                <button type="submit">Add EPG Source</button>
             </form>
         </div>
 
@@ -433,6 +459,16 @@
                 password: document.getElementById('xtreamPassword').value
             };
             await uploadData('/import-xtream', JSON.stringify(data), 'application/json');
+        });
+
+        // EPG source import
+        document.getElementById('epgForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                url: document.getElementById('epgUrl').value,
+                name: document.getElementById('epgName').value || 'EPG Source'
+            };
+            await uploadData('/import-epg', JSON.stringify(data), 'application/json');
         });
 
         async function uploadData(endpoint, data, contentType = null) {

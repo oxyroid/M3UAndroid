@@ -2,7 +2,9 @@ package com.m3u.tv.screens.profile
 
 import android.view.KeyEvent.KEYCODE_DPAD_UP
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -502,20 +504,20 @@ private fun EpgPlaylistItem(
     playlist: com.m3u.data.database.model.Playlist,
     onDelete: () -> Unit
 ) {
-    androidx.tv.material3.Surface(
-        onClick = { },
+    // Non-focusable container - only DELETE button is focusable
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(72.dp),
-        shape = androidx.tv.material3.ClickableSurfaceDefaults.shape(JetStreamCardShape),
-        colors = androidx.tv.material3.ClickableSurfaceDefaults.colors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-        )
+            .height(72.dp)
+            .background(
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                shape = JetStreamCardShape
+            )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(horizontal = 20.dp, vertical = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
         ) {
@@ -542,9 +544,14 @@ private fun EpgPlaylistItem(
 
             Spacer(modifier = Modifier.width(16.dp))
 
+            // Only the DELETE button is focusable in the entire row
             Button(
                 onClick = onDelete,
-                modifier = Modifier.height(40.dp)
+                modifier = Modifier.height(40.dp),
+                colors = androidx.tv.material3.ButtonDefaults.colors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError
+                )
             ) {
                 Text("DELETE")
             }

@@ -33,6 +33,10 @@ import com.m3u.business.setting.SettingViewModel
 import com.m3u.core.architecture.preferences.settings
 import com.m3u.i18n.R
 import com.m3u.tv.screens.security.PINInputScreen
+import com.m3u.tv.screens.security.PINUnlockScreen
+import com.m3u.tv.ui.components.EncryptionProgressDialog
+import com.m3u.data.repository.usbkey.EncryptionProgress
+import kotlinx.coroutines.delay
 import timber.log.Timber
 
 @Composable
@@ -42,10 +46,41 @@ internal fun SettingViewModel.SecuritySection() {
     var showPINSetup by remember { mutableStateOf(false) }
     var showPINDisable by remember { mutableStateOf(false) }
     var pinEncryptionEnabled by remember { mutableStateOf(false) }
+    var encryptionProgress by remember { mutableStateOf<EncryptionProgress?>(null) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var previousProgressStep by remember { mutableStateOf<com.m3u.data.repository.usbkey.EncryptionStep?>(null) }
 
-    // Check PIN encryption status
+    // Check PIN encryption status and progress
     LaunchedEffect(Unit) {
         pinEncryptionEnabled = isPINEncryptionEnabled()
+        Timber.tag("SecuritySection").d("Initial encryption status: $pinEncryptionEnabled")
+
+        // Poll for encryption progress
+        while (true) {
+            val currentProgress = getPINEncryptionProgress()
+            encryptionProgress = currentProgress
+
+            // Log progress changes
+            if (currentProgress?.step != previousProgressStep) {
+                Timber.tag("SecuritySection").d("Progress step changed: ${currentProgress?.step} - ${currentProgress?.percentage}% - ${currentProgress?.currentOperation}")
+                previousProgressStep = currentProgress?.step
+            }
+
+            delay(100) // Update every 100ms
+        }
+    }
+
+    // Update encryption status when progress completes
+    LaunchedEffect(encryptionProgress) {
+        if (encryptionProgress == null && previousProgressStep != null) {
+            // Progress was running but now completed
+            Timber.tag("SecuritySection").d("Progress completed, refreshing encryption status...")
+            delay(500) // Small delay to ensure backend state is updated
+            val newStatus = isPINEncryptionEnabled()
+            Timber.tag("SecuritySection").d("New encryption status after completion: $newStatus")
+            pinEncryptionEnabled = newStatus
+            previousProgressStep = null
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -218,18 +253,15 @@ internal fun SettingViewModel.SecuritySection() {
             )
         }
 
-        // Show PIN disable confirmation dialog
+        // Show PIN disable confirmation dialog (unlock screen - no confirmation needed)
         if (showPINDisable) {
-            PINInputScreen(
-                title = stringResource(R.string.feat_setting_pin_encryption_disable_title),
-                subtitle = stringResource(R.string.feat_setting_pin_encryption_disable_subtitle),
+            PINUnlockScreen(
                 onPINEntered = { pin ->
                     Timber.tag("SecuritySection").d("=== PIN ENTERED FOR DISABLE: length=${pin.length} ===")
                     Timber.tag("SecuritySection").d("Calling disablePINEncryption()...")
                     disablePINEncryption(pin)
                     showPINDisable = false
-                    pinEncryptionEnabled = false
-                    Timber.tag("SecuritySection").d("PIN disable complete")
+                    Timber.tag("SecuritySection").d("PIN disable initiated")
                 },
                 onCancel = {
                     Timber.tag("SecuritySection").d("PIN disable cancelled")
@@ -237,5 +269,10 @@ internal fun SettingViewModel.SecuritySection() {
                 }
             )
         }
+
+        // Show encryption progress dialog during encrypt/decrypt operations
+        EncryptionProgressDialog(
+            progress = encryptionProgress
+        )
     }
 }

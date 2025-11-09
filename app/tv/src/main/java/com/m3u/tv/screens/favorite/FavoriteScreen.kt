@@ -1,24 +1,18 @@
 package com.m3u.tv.screens.favorite
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
-import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.paging.compose.LazyPagingItems
-import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.tv.material3.MaterialTheme
+import androidx.tv.material3.Text
 import com.m3u.business.favorite.FavoriteViewModel
 import com.m3u.data.database.model.Channel
-import com.m3u.tv.screens.dashboard.rememberChildPadding
 
 @Composable
 fun FavoriteScreen(
@@ -27,55 +21,21 @@ fun FavoriteScreen(
     isTopBarVisible: Boolean,
     viewModel: FavoriteViewModel = hiltViewModel(),
 ) {
-    val channels = viewModel.channels.collectAsLazyPagingItems()
-    Catalog(
-        channels = channels,
-        onChannelClick = onChannelClick,
-        isTopBarVisible = isTopBarVisible,
-        onScroll = onScroll,
-        modifier = Modifier.fillMaxSize()
-    )
-}
-
-@Composable
-private fun Catalog(
-    channels: LazyPagingItems<Channel>,
-    onChannelClick: (channel: Channel) -> Unit,
-    onScroll: (isTopBarVisible: Boolean) -> Unit,
-    isTopBarVisible: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    val childPadding = rememberChildPadding()
-    val lazyListState = rememberLazyStaggeredGridState()
-    val shouldShowTopBar by remember {
-        derivedStateOf {
-            lazyListState.firstVisibleItemIndex == 0 &&
-                    lazyListState.firstVisibleItemScrollOffset == 0
-        }
+    // Always show top bar for Coming Soon page
+    LaunchedEffect(Unit) {
+        onScroll(true)
     }
 
-    LaunchedEffect(shouldShowTopBar) {
-        onScroll(shouldShowTopBar)
-    }
-    LaunchedEffect(isTopBarVisible) {
-        if (isTopBarVisible) lazyListState.animateScrollToItem(0)
-    }
-
-    LazyVerticalStaggeredGrid(
-        modifier = modifier,
-        state = lazyListState,
-        columns = StaggeredGridCells.Fixed(2),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(
-            top = childPadding.top,
-            bottom = 104.dp,
-            start = childPadding.start,
-            end = childPadding.end
-        )
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
-        favoriteGallery(
-            channels = channels,
-            onChannelClick = onChannelClick
+        Text(
+            text = "Coming Soon",
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.Bold,
+            fontSize = 48.sp,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         )
     }
 }

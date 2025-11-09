@@ -50,6 +50,12 @@ data class XtreamImportRequest(
 )
 
 @Serializable
+data class EpgImportRequest(
+    val url: String,
+    val name: String
+)
+
+@Serializable
 data class UploadResponse(
     val success: Boolean,
     val message: String,
@@ -306,6 +312,36 @@ internal class WebServerRepositoryImpl @Inject constructor(
                         UploadResponse(
                             success = false,
                             message = "Xtream import failed",
+                            error = e.message
+                        )
+                    )
+                }
+            }
+
+            // EPG source import endpoint
+            post("/import-epg") {
+                try {
+                    val request = call.receive<EpgImportRequest>()
+
+                    playlistRepository.insertEpgAsPlaylist(
+                        title = request.name,
+                        epg = request.url
+                    )
+
+                    call.respond(
+                        UploadResponse(
+                            success = true,
+                            message = "EPG source added successfully"
+                        )
+                    )
+                    timber.d("EPG import successful: ${request.name} at ${request.url}")
+                } catch (e: Exception) {
+                    timber.e(e, "EPG import failed")
+                    call.respond(
+                        HttpStatusCode.InternalServerError,
+                        UploadResponse(
+                            success = false,
+                            message = "EPG import failed",
                             error = e.message
                         )
                     )

@@ -31,6 +31,7 @@ class DatabaseMigrationHelper @Inject constructor(
         private const val DATABASE_NAME = "m3u-database"
         private const val BACKUP_SUFFIX = ".backup"
         private const val TEMP_SUFFIX = ".temp-encrypted"
+        private const val TEMP_UNENCRYPTED_SUFFIX = ".temp-plaintext"
         private const val EXPECTED_KEY_SIZE_BYTES = 32 // 256 bits
     }
 
@@ -314,7 +315,7 @@ class DatabaseMigrationHelper @Inject constructor(
             timber.d("Database file exists, size: ${dbFile.length()} bytes")
 
             val backupFile = File(dbFile.parentFile, "$DATABASE_NAME$BACKUP_SUFFIX")
-            val tempUnencryptedFile = File(dbFile.parentFile, "$DATABASE_NAME$TEMP_SUFFIX")
+            val tempUnencryptedFile = File(dbFile.parentFile, "$DATABASE_NAME$TEMP_UNENCRYPTED_SUFFIX")
 
             try {
                 // Step 1: Backup current encrypted database
@@ -346,11 +347,23 @@ class DatabaseMigrationHelper @Inject constructor(
                 progressCallback?.invoke(40)
 
                 try {
-                    // Step 3: Attach the new unencrypted database with CORRECT SQL syntax
+                    // Step 3: Prepare temp file for attachment
+                    timber.d("Step 3: Preparing temp file for attachment...")
+                    if (tempUnencryptedFile.exists()) {
+                        timber.d("Deleting existing temp unencrypted file...")
+                        tempUnencryptedFile.delete()
+                    }
+
+                    // CRITICAL: Create empty file - SQLCipher on Android cannot create files via ATTACH
+                    timber.d("Creating empty temp file for plaintext database...")
+                    tempUnencryptedFile.createNewFile()
+                    timber.d("Empty temp file created at: ${tempUnencryptedFile.absolutePath}")
+
+                    // Step 3: Attach the new unencrypted database
                     timber.d("Step 3: Attaching unencrypted database...")
                     progressCallback?.invoke(50)
 
-                    // CRITICAL FIX: Empty string key for plaintext database (no outer quotes!)
+                    // Use standard SQLCipher syntax for plaintext: KEY '' (empty string)
                     val attachSql = "ATTACH DATABASE '${tempUnencryptedFile.absolutePath}' AS plaintext KEY ''"
                     timber.d("Executing ATTACH command...")
                     timber.d("SQL: $attachSql")

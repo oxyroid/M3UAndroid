@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="ui_title_foryou">M3U</string>
-    <string name="ui_title_favourite">Favorite</string>
+    <string name="ui_title_favourite">Continue Watch</string>
     <string name="ui_title_setting">Settings</string>
 
     <string name="ui_destination_foryou">Home</string>
     <string name="ui_destination_epg">EPG</string>
-    <string name="ui_destination_favourite">Favorite</string>
+    <string name="ui_destination_favourite">Continue Watch</string>
     <string name="ui_destination_extension">Extension</string>
     <string name="ui_destination_setting">Settings</string>
     <string name="ui_destination_playlist">Playlist</string>
