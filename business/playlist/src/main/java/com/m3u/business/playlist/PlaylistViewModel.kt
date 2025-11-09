@@ -187,6 +187,42 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
+    // Toggle channel state: Normal -> Hidden -> Favorite -> Normal
+    fun toggleChannelState(id: Int) {
+        viewModelScope.launch {
+            val channel = channelRepository.get(id)
+            if (channel == null) {
+                messager.emit(PlaylistMessage.ChannelNotFound)
+                return@launch
+            }
+
+            when {
+                // State 1: Normal -> Hidden
+                !channel.hidden && !channel.favourite -> {
+                    channelRepository.hide(channel.id, true)
+                }
+                // State 2: Hidden -> Favorite (unhide and favorite)
+                channel.hidden && !channel.favourite -> {
+                    channelRepository.hide(channel.id, false)  // Unhide
+                    channelRepository.favouriteOrUnfavourite(channel.id)  // Favorite
+                }
+                // State 3: Favorite -> Normal (unfavorite)
+                !channel.hidden && channel.favourite -> {
+                    channelRepository.favouriteOrUnfavourite(channel.id)  // Unfavorite
+                }
+                // Edge case: Hidden AND Favorite -> Normal (shouldn't happen but handle it)
+                else -> {
+                    if (channel.hidden) {
+                        channelRepository.hide(channel.id, false)
+                    }
+                    if (channel.favourite) {
+                        channelRepository.favouriteOrUnfavourite(channel.id)
+                    }
+                }
+            }
+        }
+    }
+
     fun createShortcut(context: Context, id: Int) {
         val shortcutId = "channel_$id"
         viewModelScope.launch {

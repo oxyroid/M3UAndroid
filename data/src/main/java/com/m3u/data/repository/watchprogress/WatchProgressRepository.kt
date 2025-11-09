@@ -7,7 +7,12 @@ interface WatchProgressRepository {
     suspend fun upsert(watchProgress: WatchProgress)
     suspend fun getByChannelId(channelId: Int): WatchProgress?
     fun observeByChannelId(channelId: Int): Flow<WatchProgress?>
-    fun getContinueWatching(limit: Int = 4): Flow<List<WatchProgress>>
+
+    // Enterprise-level: Continue Watching queries
+    fun getContinueWatching(limit: Int = 5): Flow<List<WatchProgress>>
+    fun getLastStartedMovies(limit: Int = 5): Flow<List<WatchProgress>>
+    fun getLastStartedSeries(limit: Int = 5): Flow<List<WatchProgress>>
+
     suspend fun deleteByChannelId(channelId: Int)
     suspend fun deleteAll()
 }

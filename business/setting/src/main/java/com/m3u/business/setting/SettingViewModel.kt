@@ -148,6 +148,10 @@ class SettingViewModel @Inject constructor(
         val password = properties.passwordState.value
         val epg = properties.epgState.value
         val selected = properties.selectedState.value
+
+        // Debug logging
+        android.util.Log.d("SUBSCRIBE", "subscribe() called with selected=$selected")
+        android.util.Log.d("SUBSCRIBE", "title=$title, epg=$epg")
         val localStorage = properties.localStorageState.value
         val urlOrUri = uri
             .takeIf { uri != Uri.EMPTY }?.toString().orEmpty()
@@ -180,18 +184,25 @@ class SettingViewModel @Inject constructor(
                 }
 
                 DataSource.EPG -> {
+                    android.util.Log.d("SUBSCRIBE", "EPG case triggered")
                     if (title.isEmpty()) {
+                        android.util.Log.w("SUBSCRIBE", "Title is empty")
                         messager.emit(SettingMessage.EmptyEpgTitle)
                         return
                     }
                     if (epg.isEmpty()) {
+                        android.util.Log.w("SUBSCRIBE", "EPG URL is empty")
                         messager.emit(SettingMessage.EmptyEpg)
                         return
                     }
+                    android.util.Log.d("SUBSCRIBE", "Launching coroutine to insert EPG")
                     viewModelScope.launch {
+                        android.util.Log.d("SUBSCRIBE", "Inside coroutine, calling insertEpgAsPlaylist")
                         playlistRepository.insertEpgAsPlaylist(title, epg)
+                        android.util.Log.d("SUBSCRIBE", "insertEpgAsPlaylist call completed")
                     }
                     messager.emit(SettingMessage.EpgAdded)
+                    android.util.Log.d("SUBSCRIBE", "EpgAdded message emitted")
                 }
 
                 DataSource.Xtream -> {

@@ -2,19 +2,25 @@ package com.m3u.tv.screens.profile
 
 import android.view.KeyEvent.KEYCODE_DPAD_UP
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -22,6 +28,8 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Button
 import androidx.tv.material3.LocalContentColor
@@ -42,6 +50,7 @@ import com.m3u.tv.theme.JetStreamCardShape
 import com.m3u.tv.ui.component.TextField
 import com.m3u.tv.utils.createInitialFocusRestorerModifiers
 import com.m3u.tv.utils.occupyScreenSize
+import kotlinx.coroutines.launch
 
 @Immutable
 data class AccountsSectionData(
@@ -152,7 +161,7 @@ fun SettingViewModel.SubscribeSection() {
         } else {
             when (properties.selectedState.value) {
                 DataSource.M3U -> m3uPageConfiguration(this)
-                DataSource.EPG -> epgPageConfiguration(this)
+                DataSource.EPG -> epgPageConfiguration(this, playlistViewModel)
                 DataSource.Xtream -> xtreamPageConfiguration(this)
                 DataSource.WebDrop -> webDropPageConfiguration(this, playlistViewModel)
                 else -> {}
@@ -189,9 +198,21 @@ private fun SettingViewModel.m3uPageConfiguration(
 }
 
 private fun SettingViewModel.epgPageConfiguration(
-    scope: LazyListScope
+    scope: LazyListScope,
+    playlistViewModel: PlaylistViewModel
 ) {
     with(scope) {
+        // Set default test values for EPG if fields are empty
+        item {
+            LaunchedEffect(Unit) {
+                if (properties.titleState.value.isEmpty()) {
+                    properties.titleState.value = "sweden"
+                }
+                if (properties.epgState.value.isEmpty()) {
+                    properties.epgState.value = "https://raw.githubusercontent.com/globetvapp/epg/refs/heads/main/Sweden/sweden1.xml"
+                }
+            }
+        }
         input(
             value = properties.titleState.value,
             onValueChanged = { properties.titleState.value = it },
@@ -203,13 +224,97 @@ private fun SettingViewModel.epgPageConfiguration(
             placeholder = R.string.feat_setting_placeholder_epg
         )
         item {
-            Button(
-                onClick = this@epgPageConfiguration::subscribe,
-                modifier = Modifier.padding(top = 16.dp)
+            var isSubscribing by remember { mutableStateOf(false) }
+            var showSuccess by remember { mutableStateOf(false) }
+            val coroutineScope = rememberCoroutineScope()
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Button(
+                    onClick = {
+                        coroutineScope.launch {
+                            isSubscribing = true
+                            showSuccess = false
+                            try {
+                                this@epgPageConfiguration.subscribe()
+                                showSuccess = true
+                                // Auto-hide success message after 3 seconds
+                                kotlinx.coroutines.delay(3000)
+                                showSuccess = false
+                            } catch (e: Exception) {
+                                android.util.Log.e("EPG_SUBSCRIBE", "Subscription failed", e)
+                            } finally {
+                                isSubscribing = false
+                            }
+                        }
+                    },
+                    enabled = !isSubscribing,
+                    modifier = Modifier.padding(top = 16.dp)
+                ) {
+                    Text(
+                        text = if (isSubscribing) {
+                            "SUBSCRIBING..."
+                        } else {
+                            stringResource(R.string.feat_setting_label_subscribe).uppercase()
+                        },
+                    )
+                }
+
+                // Success/Progress message
+                if (showSuccess) {
+                    Text(
+                        text = "✓ EPG subscription successful! Downloading TV guide data in background...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    )
+                }
+            }
+        }
+
+        // List of subscribed EPG playlists
+        item {
+            val epgPlaylists by this@epgPageConfiguration.epgs.collectAsStateWithLifecycle()
+            val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
+
+            // Debug logging
+            android.util.Log.d("EPG_LIST", "EPG playlists: ${epgPlaylists.size}")
+            epgPlaylists.forEach { playlist ->
+                android.util.Log.d("EPG_LIST", "EPG: ${playlist.title}, url: ${playlist.url}")
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(vertical = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.feat_setting_label_subscribe).uppercase(),
+                    text = "SUBSCRIBED EPG LISTS",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = 8.dp)
                 )
+
+                if (epgPlaylists.isNotEmpty()) {
+                    epgPlaylists.forEach { playlist ->
+                        EpgPlaylistItem(
+                            playlist = playlist,
+                            onDelete = {
+                                this@epgPageConfiguration.deleteEpgPlaylist(playlist.url)
+                            }
+                        )
+                    }
+                } else {
+                    Text(
+                        text = "No EPG lists subscribed yet. Add one using the form above.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
+                }
             }
         }
     }
@@ -389,5 +494,60 @@ private fun LazyListScope.input(
             onValueChange = onValueChanged,
             placeholder = stringResource(placeholder).uppercase()
         )
+    }
+}
+
+@Composable
+private fun EpgPlaylistItem(
+    playlist: com.m3u.data.database.model.Playlist,
+    onDelete: () -> Unit
+) {
+    androidx.tv.material3.Surface(
+        onClick = { },
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(72.dp),
+        shape = androidx.tv.material3.ClickableSurfaceDefaults.shape(JetStreamCardShape),
+        colors = androidx.tv.material3.ClickableSurfaceDefaults.colors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = playlist.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = playlist.url,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Button(
+                onClick = onDelete,
+                modifier = Modifier.height(40.dp)
+            ) {
+                Text("DELETE")
+            }
+        }
     }
 }

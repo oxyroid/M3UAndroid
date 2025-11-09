@@ -37,5 +37,6 @@ interface ChannelRepository {
     fun observeAllFavorite(): Flow<List<Channel>>
     fun pagingAllFavorite(sort: Sort): PagingSource<Int, Channel>
     fun observeAllHidden(): Flow<List<Channel>>
+    fun observeAllUnhidden(): Flow<List<Channel>>
     fun search(query: String): PagingSource<Int, Channel>
 }

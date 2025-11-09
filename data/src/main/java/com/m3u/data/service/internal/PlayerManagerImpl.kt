@@ -70,6 +70,7 @@ import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
@@ -78,6 +79,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -117,7 +119,16 @@ class PlayerManagerImpl @Inject constructor(
         appVersion = publisher.versionCode
     )
 
+    // Enterprise-level: Properly managed coroutine job to prevent memory leaks
+    private var watchProgressJob: Job? = null
+
     private val continueWatchingCondition = ContinueWatchingCondition.getInstance<Player>()
+
+    companion object {
+        // Enterprise-level: Named constants instead of magic numbers
+        private val WATCH_PROGRESS_SAMPLE_INTERVAL = 30.seconds
+        private const val RESUME_POSITION_OFFSET_MS = 30_000L  // 30 seconds in milliseconds
+    }
 
     override val player = MutableStateFlow<ExoPlayer?>(null)
     override val size = MutableStateFlow(Rect())
@@ -678,8 +689,9 @@ class PlayerManagerImpl @Inject constructor(
         when (val chain = chain) {
             is MimetypeChain.Remembered -> {
                 storeContinueWatching(chain.url)
-                // Launch VOD progress tracking in a separate coroutine
-                mainCoroutineScope.launch {
+                // Enterprise-level: Cancel previous job and start new one (prevents memory leaks)
+                watchProgressJob?.cancel()
+                watchProgressJob = mainCoroutineScope.launch {
                     storeVodWatchProgress()
                 }
             }
@@ -692,8 +704,9 @@ class PlayerManagerImpl @Inject constructor(
                         ?: ChannelPreference(mineType = chain.mimetype)
                 )
                 storeContinueWatching(chain.url)
-                // Launch VOD progress tracking in a separate coroutine
-                mainCoroutineScope.launch {
+                // Enterprise-level: Cancel previous job and start new one (prevents memory leaks)
+                watchProgressJob?.cancel()
+                watchProgressJob = mainCoroutineScope.launch {
                     storeVodWatchProgress()
                 }
             }
@@ -703,6 +716,10 @@ class PlayerManagerImpl @Inject constructor(
     }
 
     private suspend fun onPlaybackEnded() {
+        // Enterprise-level: Cancel watch progress tracking job to prevent memory leaks
+        watchProgressJob?.cancel()
+        watchProgressJob = null
+
         if (settings[PreferencesKeys.RECONNECT_MODE] == ReconnectMode.RECONNECT) {
             mainCoroutineScope.launch { replay() }
         }
@@ -711,16 +728,15 @@ class PlayerManagerImpl @Inject constructor(
             resetContinueWatching(channelUrl)
         }
 
-        // Clean up VOD watch progress when video ends
+        // Clean up watch progress when video ends (enterprise-level: works for all sources)
         val currentChannel = channel.value
-        val currentPlaylist = playlist.value
-        if (currentChannel != null && currentPlaylist != null) {
-            if (currentPlaylist.source == PlaylistDataSource.Xtream) {
-                val playlistType = currentPlaylist.type
-                if (playlistType == PlaylistDataSource.Xtream.TYPE_VOD || playlistType == PlaylistDataSource.Xtream.TYPE_SERIES) {
-                    timber.d("cleaning up VOD watch progress for channel ${currentChannel.id}")
-                    watchProgressRepository.deleteByChannelId(currentChannel.id)
-                }
+        if (currentChannel != null) {
+            timber.d("cleaning up watch progress for finished video: channelId=${currentChannel.id}")
+            try {
+                watchProgressRepository.deleteByChannelId(currentChannel.id)
+                timber.d("✓ Watch progress cleaned up successfully")
+            } catch (e: Exception) {
+                timber.e("✗ Failed to clean up watch progress: ${e.message}", e)
             }
         }
     }
@@ -765,30 +781,19 @@ class PlayerManagerImpl @Inject constructor(
             return
         }
 
-        // Only track VOD content from Xtream playlists
-        if (currentPlaylist.source != PlaylistDataSource.Xtream) {
-            timber.d("not tracking, playlist source is not Xtream: ${currentPlaylist.source}")
-            return
-        }
-
-        val playlistType = currentPlaylist.type
-        if (playlistType != PlaylistDataSource.Xtream.TYPE_VOD && playlistType != PlaylistDataSource.Xtream.TYPE_SERIES) {
-            timber.d("not tracking, playlist type is not VOD or Series: $playlistType")
-            return
-        }
-
         val currentPlayer = player.value ?: run {
             timber.w("failed to storeVodWatchProgress, player is null")
             return
         }
 
-        timber.d("tracking VOD progress for channel ${currentChannel.id}, playlist type: $playlistType")
+        // Track ALL playback - works with M3U, Xtream, and any other source (enterprise-level)
+        timber.d("tracking watch progress for '${currentChannel.title}' (id=${currentChannel.id}, playlist=${currentPlaylist.title})")
 
         playbackPosition
-            .sample(30.seconds)
+            .filter { it != -1L }  // Enterprise-level: Filter out invalid positions BEFORE sampling
+            .sample(WATCH_PROGRESS_SAMPLE_INTERVAL)
             .collect { position ->
-                timber.d("storeVodWatchProgress, received position: $position")
-                if (position == -1L) return@collect
+                timber.d("storeVodWatchProgress, received valid position: $position")
 
                 val duration = currentPlayer.duration
                 if (duration == C.TIME_UNSET || duration <= 0) {
@@ -796,8 +801,8 @@ class PlayerManagerImpl @Inject constructor(
                     return@collect
                 }
 
-                // Save position minus 30 seconds (but not less than 0)
-                val adjustedPosition = (position - 30_000L).coerceAtLeast(0L)
+                // Save position minus offset (to resume slightly before stop point)
+                val adjustedPosition = (position - RESUME_POSITION_OFFSET_MS).coerceAtLeast(0L)
 
                 timber.d("saving VOD progress: channelId=${currentChannel.id}, position=$adjustedPosition, duration=$duration")
 
@@ -809,7 +814,14 @@ class PlayerManagerImpl @Inject constructor(
                     playlistUrl = currentPlaylist.url
                 )
 
-                watchProgressRepository.upsert(watchProgress)
+                // Enterprise-level: Error handling for database operations
+                try {
+                    watchProgressRepository.upsert(watchProgress)
+                    timber.d("✓ Watch progress saved successfully")
+                } catch (e: Exception) {
+                    timber.e("✗ Failed to save watch progress: ${e.message}", e)
+                    // Continue tracking even if one save fails
+                }
             }
     }
 

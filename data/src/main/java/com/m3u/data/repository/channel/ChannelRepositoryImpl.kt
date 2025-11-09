@@ -99,6 +99,9 @@ internal class ChannelRepositoryImpl @Inject constructor(
     override fun observeAllHidden(): Flow<List<Channel>> = channelDao.observeAllHidden()
         .catch { emit(emptyList()) }
 
+    override fun observeAllUnhidden(): Flow<List<Channel>> = channelDao.observeAllUnhidden()
+        .catch { emit(emptyList()) }
+
     override fun search(query: String): PagingSource<Int, Channel> {
         return channelDao.query(query)
     }

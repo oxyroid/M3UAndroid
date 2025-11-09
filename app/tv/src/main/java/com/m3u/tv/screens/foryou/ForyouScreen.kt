@@ -66,12 +66,18 @@ fun ForyouScreen(
 ) {
     val playlists: Map<Playlist, Int> by viewModel.playlists.collectAsStateWithLifecycle()
     val specs: List<Recommend.Spec> by viewModel.specs.collectAsStateWithLifecycle()
+    val contentTypeMode by viewModel.contentTypeMode.collectAsStateWithLifecycle()
     val continueWatching by viewModel.continueWatching.collectAsStateWithLifecycle()
+    val continueWatchingMovies by viewModel.continueWatchingMovies.collectAsStateWithLifecycle()
+    val continueWatchingSeries by viewModel.continueWatchingSeries.collectAsStateWithLifecycle()
 
     Catalog(
         playlists = playlists,
         specs = specs,
+        contentTypeMode = contentTypeMode,
         continueWatching = continueWatching,
+        continueWatchingMovies = continueWatchingMovies,
+        continueWatchingSeries = continueWatchingSeries,
         onScroll = onScroll,
         navigateToPlaylist = navigateToPlaylist,
         navigateToChannel = navigateToChannel,
@@ -84,14 +90,16 @@ fun ForyouScreen(
 private fun Catalog(
     playlists: Map<Playlist, Int>,
     specs: List<Recommend.Spec>,
+    contentTypeMode: Boolean,
     continueWatching: List<com.m3u.business.foryou.ContinueWatchingItem>,
+    continueWatchingMovies: List<com.m3u.business.foryou.ContinueWatchingItem>,
+    continueWatchingSeries: List<com.m3u.business.foryou.ContinueWatchingItem>,
     onScroll: (isTopBarVisible: Boolean) -> Unit,
     navigateToPlaylist: (playlistUrl: String) -> Unit,
     navigateToChannel: (channelId: Int) -> Unit,
     modifier: Modifier = Modifier,
     isTopBarVisible: Boolean = true,
 ) {
-    val contentTypeMode by preferenceOf(PreferencesKeys.CONTENT_TYPE_MODE)
     val lazyListState = rememberLazyListState()
     val childPadding = rememberChildPadding()
 
@@ -191,14 +199,41 @@ private fun Catalog(
             }
         }
 
-        // Continue Watching Row
-        if (continueWatching.isNotEmpty()) {
-            item(contentType = "ContinueWatchingRow") {
-                ContinueWatchingRow(
-                    items = continueWatching,
-                    navigateToChannel = navigateToChannel,
-                    modifier = Modifier.padding(top = 24.dp)
-                )
+        // Enterprise-level: Conditional Continue Watching rows based on Content Type Mode
+        if (contentTypeMode) {
+            // Content Type Mode ON: Show separate Movies and Series rows
+            if (continueWatchingMovies.isNotEmpty()) {
+                item(contentType = "ContinueWatchingMoviesRow") {
+                    ContinueWatchingRow(
+                        title = "Continue Watching Movies",
+                        items = continueWatchingMovies,
+                        navigateToChannel = navigateToChannel,
+                        modifier = Modifier.padding(top = 24.dp)
+                    )
+                }
+            }
+
+            if (continueWatchingSeries.isNotEmpty()) {
+                item(contentType = "ContinueWatchingSeriesRow") {
+                    ContinueWatchingRow(
+                        title = "Continue Watching Series",
+                        items = continueWatchingSeries,
+                        navigateToChannel = navigateToChannel,
+                        modifier = Modifier.padding(top = 24.dp)
+                    )
+                }
+            }
+        } else {
+            // Content Type Mode OFF: Show single mixed Continue Watching row
+            if (continueWatching.isNotEmpty()) {
+                item(contentType = "ContinueWatchingRow") {
+                    ContinueWatchingRow(
+                        title = "Continue Watching",
+                        items = continueWatching,
+                        navigateToChannel = navigateToChannel,
+                        modifier = Modifier.padding(top = 24.dp)
+                    )
+                }
             }
         }
     }
@@ -355,6 +390,7 @@ private fun ContentTypeCard(
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 private fun ContinueWatchingRow(
+    title: String,
     items: List<com.m3u.business.foryou.ContinueWatchingItem>,
     navigateToChannel: (channelId: Int) -> Unit,
     modifier: Modifier = Modifier
@@ -364,7 +400,7 @@ private fun ContinueWatchingRow(
 
     Column(modifier = modifier) {
         Text(
-            text = "Continue Watching",
+            text = title,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = Color.White,

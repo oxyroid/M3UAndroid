@@ -464,14 +464,31 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     }
 
     override suspend fun insertEpgAsPlaylist(title: String, epg: String) {
-        // just save epg playlist to db
-        playlistDao.insertOrReplace(
-            Playlist(
-                title = title,
-                url = epg,
-                source = DataSource.EPG
+        android.util.Log.d("INSERT_EPG", "insertEpgAsPlaylist called: title=$title, url=$epg")
+        try {
+            // Step 1: Save EPG playlist metadata to database
+            playlistDao.insertOrReplace(
+                Playlist(
+                    title = title,
+                    url = epg,
+                    source = DataSource.EPG
+                )
             )
-        )
+            android.util.Log.d("INSERT_EPG", "EPG playlist inserted successfully")
+
+            // Step 2: Immediately trigger EPG download and parsing
+            // This ensures the programmes table is populated for the EPG tab
+            android.util.Log.d("INSERT_EPG", "Triggering EPG download worker for: $epg")
+            SubscriptionWorker.epg(
+                workManager = workManager,
+                playlistUrl = epg,
+                ignoreCache = true  // Force download to ensure fresh data
+            )
+            android.util.Log.d("INSERT_EPG", "EPG download worker enqueued successfully")
+        } catch (e: Exception) {
+            android.util.Log.e("INSERT_EPG", "Failed to insert EPG playlist or trigger download", e)
+            throw e  // Propagate exception so UI can show error
+        }
     }
 
     override suspend fun refresh(url: String) {

@@ -27,6 +27,14 @@ internal class WatchProgressRepositoryImpl @Inject constructor(
         return watchProgressDao.getContinueWatching(limit)
     }
 
+    override fun getLastStartedMovies(limit: Int): Flow<List<WatchProgress>> {
+        return watchProgressDao.getLastStartedMovies(limit)
+    }
+
+    override fun getLastStartedSeries(limit: Int): Flow<List<WatchProgress>> {
+        return watchProgressDao.getLastStartedSeries(limit)
+    }
+
     override suspend fun deleteByChannelId(channelId: Int) {
         watchProgressDao.deleteByChannelId(channelId)
     }

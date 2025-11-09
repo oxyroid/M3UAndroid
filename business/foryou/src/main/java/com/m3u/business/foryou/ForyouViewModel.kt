@@ -55,8 +55,67 @@ class ForyouViewModel @Inject constructor(
             initialValue = emptyMap()
         )
 
+    // Enterprise-level: Content Type Mode setting
+    val contentTypeMode: StateFlow<Boolean> = settings
+        .flowOf(PreferencesKeys.CONTENT_TYPE_MODE)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000L),
+            initialValue = false
+        )
+
+    // Enterprise-level: Continue Watching for all content (used when Content Type Mode is OFF or for M3U)
     val continueWatching: StateFlow<List<ContinueWatchingItem>> = watchProgressRepository
-        .getContinueWatching(limit = 4)
+        .getContinueWatching(limit = 5)
+        .map { list ->
+            android.util.Log.d("ForyouViewModel", "=== Continue Watching (All Content) ===")
+            android.util.Log.d("ForyouViewModel", "Watch progress entries from DB: ${list.size}")
+            list.forEach { wp ->
+                android.util.Log.d("ForyouViewModel", "  - channelId=${wp.channelId}, position=${wp.position}, playlist=${wp.playlistUrl}")
+            }
+            list
+        }
+        .flatMapLatest { watchProgressList ->
+            combine(
+                watchProgressList.map { watchProgress ->
+                    channelRepository.observe(watchProgress.channelId)
+                        .map { channel -> channel?.let { ContinueWatchingItem(it, watchProgress) } }
+                }
+            ) { items -> items.filterNotNull() }
+        }
+        .map { items ->
+            android.util.Log.d("ForyouViewModel", "Continue Watching final items: ${items.size}")
+            items.forEach { item ->
+                android.util.Log.d("ForyouViewModel", "  - ${item.channel.title} (${item.progressPercentage.toInt()}%)")
+            }
+            items
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000L),
+            initialValue = emptyList()
+        )
+
+    // Enterprise-level: Continue Watching Movies (used when Content Type Mode is ON)
+    val continueWatchingMovies: StateFlow<List<ContinueWatchingItem>> = watchProgressRepository
+        .getLastStartedMovies(limit = 5)
+        .flatMapLatest { watchProgressList ->
+            combine(
+                watchProgressList.map { watchProgress ->
+                    channelRepository.observe(watchProgress.channelId)
+                        .map { channel -> channel?.let { ContinueWatchingItem(it, watchProgress) } }
+                }
+            ) { items -> items.filterNotNull() }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000L),
+            initialValue = emptyList()
+        )
+
+    // Enterprise-level: Continue Watching Series (used when Content Type Mode is ON)
+    val continueWatchingSeries: StateFlow<List<ContinueWatchingItem>> = watchProgressRepository
+        .getLastStartedSeries(limit = 5)
         .flatMapLatest { watchProgressList ->
             combine(
                 watchProgressList.map { watchProgress ->

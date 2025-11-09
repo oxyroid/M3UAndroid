@@ -91,24 +91,37 @@ val Playlist.type: String?
         else -> null
     }
 
-fun Playlist.epgUrlsOrXtreamXmlUrl(): List<String> = when (source) {
-    DataSource.Xtream -> {
-        when (type) {
-            DataSource.Xtream.TYPE_LIVE -> {
-                val input = XtreamInput.decodeFromPlaylistUrl(url)
-                val epgUrl = XtreamParser.createXmlUrl(
-                    basicUrl = input.basicUrl,
-                    username = input.username,
-                    password = input.password
-                )
-                listOf(epgUrl)
-            }
-
-            else -> emptyList()
-        }
+fun Playlist.epgUrlsOrXtreamXmlUrl(): List<String> {
+    // Priority 1: If user manually added EPG URLs, use those (override auto-generated)
+    if (epgUrls.isNotEmpty()) {
+        return epgUrls
     }
 
-    else -> epgUrls
+    // Priority 2: For EPG playlists (manual EPG subscriptions), return the url field
+    if (source == DataSource.EPG) {
+        return listOf(url)
+    }
+
+    // Priority 3: Auto-generate EPG URL for Xtream LIVE playlists
+    return when (source) {
+        DataSource.Xtream -> {
+            when (type) {
+                DataSource.Xtream.TYPE_LIVE -> {
+                    val input = XtreamInput.decodeFromPlaylistUrl(url)
+                    val epgUrl = XtreamParser.createXmlUrl(
+                        basicUrl = input.basicUrl,
+                        username = input.username,
+                        password = input.password
+                    )
+                    listOf(epgUrl)
+                }
+
+                else -> emptyList()
+            }
+        }
+
+        else -> emptyList()
+    }
 }
 
 fun Playlist.copyXtreamSeries(series: Channel): Playlist = copy(

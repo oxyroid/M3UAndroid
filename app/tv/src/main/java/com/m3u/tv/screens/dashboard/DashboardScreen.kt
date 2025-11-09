@@ -166,8 +166,8 @@ fun DashboardScreen(
             modifier = Modifier.offset(y = navHostTopPaddingDp),
         )
 
-        // Display expiration date in lower left corner
-        ExpirationDateBadge(modifier = Modifier.align(Alignment.BottomStart))
+        // Enterprise-level: Expiration badge moved to Settings > Manage Playlists
+        // for per-playlist clarity with color-coded urgency indicators
     }
 }
 
@@ -260,7 +260,9 @@ private fun Body(
             )
         }
         composable(Screens.Epg()) {
-            EpgScreen()
+            EpgScreen(
+                onChannelClick = { channel -> navigateToChannel(channel.id) }
+            )
         }
         composable(Screens.Favorite()) {
             FavoriteScreen(

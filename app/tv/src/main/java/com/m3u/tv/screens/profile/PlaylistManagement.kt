@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -123,6 +124,37 @@ fun PlaylistManagementCard(
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            // Enterprise-level: Expiration date badge for Xtream playlists
+            playlist.expirationDate?.let { expirationMs ->
+                val currentTime = System.currentTimeMillis()
+                val daysRemaining = ((expirationMs - currentTime) / (1000 * 60 * 60 * 24)).toInt()
+
+                // Color coding based on urgency
+                val (badgeColor, textColor) = when {
+                    daysRemaining < 0 -> Color.Red.copy(alpha = 0.9f) to Color.White // Expired
+                    daysRemaining < 30 -> Color.Red.copy(alpha = 0.7f) to Color.White // < 30 days
+                    daysRemaining < 90 -> Color(0xFFFF9800).copy(alpha = 0.7f) to Color.Black // < 90 days (orange)
+                    else -> Color.Green.copy(alpha = 0.5f) to Color.White // > 90 days
+                }
+
+                val formattedDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                    .format(java.util.Date(expirationMs))
+
+                Box(
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .background(badgeColor, RoundedCornerShape(4.dp))
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = if (daysRemaining < 0) "EXPIRED" else "Expires $formattedDate",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = textColor,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
         }
     }
 }
@@ -272,7 +304,7 @@ fun FullPlaylistManagementView(
                     color = Color.White
                 )
                 Text(
-                    text = "Total channels: $channelCount • Press SELECT on group to hide/unhide",
+                    text = "Total channels: $channelCount • Press SELECT on group/channel to toggle color",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -441,7 +473,11 @@ fun FullPlaylistManagementView(
                             ManagementChannelItem(
                                 channel = channel,
                                 isSelected = channel.id == selectedChannel?.id,
-                                onSelected = { selectedChannel = channel }
+                                onSelected = { selectedChannel = channel },
+                                onToggleState = {
+                                    // Cycle through Normal -> Hidden -> Favorite -> Normal
+                                    playlistViewModel.toggleChannelState(channel.id)
+                                }
                             )
                         }
                     }
@@ -571,6 +607,7 @@ private fun ManagementChannelItem(
     channel: Channel,
     isSelected: Boolean,
     onSelected: () -> Unit,
+    onToggleState: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var isFocused by remember { mutableStateOf(false) }
@@ -582,23 +619,46 @@ private fun ManagementChannelItem(
         }
     }
 
+    // Determine container colors based on state
+    val containerColor = when {
+        channel.hidden -> Color.Red.copy(alpha = 0.4f)
+        channel.favourite -> Color.Green.copy(alpha = 0.4f)
+        else -> Color.Transparent
+    }
+
+    val selectedContainerColor = when {
+        channel.hidden -> Color.Red.copy(alpha = 0.5f)
+        channel.favourite -> Color.Green.copy(alpha = 0.5f)
+        else -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+    }
+
+    val focusedSelectedContainerColor = when {
+        channel.hidden -> Color.Red.copy(alpha = 0.6f)
+        channel.favourite -> Color.Green.copy(alpha = 0.6f)
+        else -> MaterialTheme.colorScheme.primaryContainer
+    }
+
     ListItem(
         selected = isSelected,
-        onClick = onSelected,
+        onClick = {
+            onSelected()
+            // Cycle through states on SELECT press
+            onToggleState()
+        },
         headlineContent = {
             Text(
                 text = channel.title,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                color = if (channel.hidden) Color.Red else Color.White,
+                color = Color.White,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
         },
         colors = ListItemDefaults.colors(
-            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-            focusedSelectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-            containerColor = Color.Transparent,
+            containerColor = containerColor,
+            selectedContainerColor = selectedContainerColor,
+            focusedSelectedContainerColor = focusedSelectedContainerColor,
         ),
         modifier = modifier.onFocusChanged { isFocused = it.isFocused || it.hasFocus }
     )
