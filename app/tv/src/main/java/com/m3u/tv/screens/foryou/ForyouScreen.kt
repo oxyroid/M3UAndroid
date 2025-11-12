@@ -95,33 +95,35 @@ private fun Catalog(
         contentPadding = PaddingValues(bottom = 108.dp),
         modifier = modifier
     ) {
-        if (specs.isNotEmpty()) {
-            item(contentType = "FeaturedChannelsCarousel") {
-                FeaturedSpecsCarousel(
-                    specs = specs,
-                    padding = childPadding,
-                    onClickSpec = { spec ->
-                        when (spec) {
-                            is Recommend.UnseenSpec -> {
-                                navigateToChannel(spec.channel.id)
-                            }
-
-                            is Recommend.DiscoverSpec -> TODO()
-                            is Recommend.NewRelease -> TODO()
-                            is Recommend.CwSpec -> TODO()
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(324.dp)
-                    /*
-                     Setting height for the FeaturedChannelCarousel to keep it rendered with same height,
-                     regardless of the top bar's visibility
-                     */
+        // Continue Watching Hero (Netflix-style) - User's #1 priority
+        val continueWatching = specs.filterIsInstance<Recommend.CwSpec>().firstOrNull()
+        if (continueWatching != null) {
+            item(contentType = "ContinueWatchingHero") {
+                ContinueWatchingHero(
+                    channel = continueWatching.channel,
+                    position = continueWatching.position,
+                    duration = 0L, // Duration can be added from player state if available
+                    onPlay = { navigateToChannel(continueWatching.channel.id) },
+                    onInfo = { /* Navigate to channel details */ },
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
 
+        // Unseen Favorites Row (Netflix-style horizontal carousel)
+        val unseenChannels = specs.filterIsInstance<Recommend.UnseenSpec>().map { it.channel }
+        if (unseenChannels.isNotEmpty()) {
+            item(contentType = "UnseenFavoritesRow") {
+                ContentRow(
+                    title = "Unseen Favorites",
+                    channels = unseenChannels.take(10), // Limit to 10 items for performance
+                    onChannelClick = { channel -> navigateToChannel(channel.id) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+
+        // Playlists Row (My Lists)
         item(contentType = "PlaylistsRow") {
             val startPadding: Dp = rememberChildPadding().start
             val endPadding: Dp = rememberChildPadding().end
