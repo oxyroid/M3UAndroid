@@ -47,6 +47,7 @@ import com.m3u.data.database.model.isSeries
 import com.m3u.data.service.MediaCommand
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.business.foryou.components.HeadlineBackground
+import com.m3u.smartphone.ui.business.foryou.components.NetflixStyleHome
 import com.m3u.smartphone.ui.business.foryou.components.PlaylistGallery
 import com.m3u.smartphone.ui.business.foryou.components.recommend.RecommendGallery
 import com.m3u.smartphone.ui.common.helper.Action
@@ -199,6 +200,7 @@ private fun ForyouScreen(
             delay(400.milliseconds)
             Metadata.headlineUrl = when (spec) {
                 is Recommend.UnseenSpec -> spec.channel.cover.orEmpty()
+                is Recommend.CwSpec -> spec.channel.cover.orEmpty()
                 is Recommend.DiscoverSpec -> ""
                 is Recommend.NewRelease -> ""
                 else -> ""
@@ -207,27 +209,17 @@ private fun ForyouScreen(
     }
 
     Box(modifier) {
-        HeadlineBackground()
-        val header = @Composable {
-            RecommendGallery(
-                specs = specs,
-                navigateToPlaylist = navigateToPlaylist,
-                onPlayChannel = onPlayChannel,
-                onSpecChanged = { spec -> headlineSpec = spec },
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-        PlaylistGallery(
-            rowCount = actualRowCount,
+        // Use Netflix-style home layout
+        NetflixStyleHome(
+            specs = specs,
             playlists = playlists,
-            subscribingPlaylistUrls = subscribingPlaylistUrls,
-            refreshingEpgUrls = refreshingEpgUrls,
-            onClick = navigateToPlaylist,
-            onLongClick = { mediaSheetValue = MediaSheetValue.ForyouScreen(it) },
-            header = composableOf(specs.isNotEmpty(), header),
+            onPlayChannel = onPlayChannel,
+            onNavigateToPlaylist = navigateToPlaylist,
+            onChannelLongClick = { /* Can be used for future features */ },
             contentPadding = contentPadding,
             modifier = Modifier.fillMaxSize()
         )
+
         MediaSheet(
             value = mediaSheetValue,
             onUnsubscribePlaylist = {
