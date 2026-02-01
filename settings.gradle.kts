@@ -32,7 +32,10 @@ include(
     ":business:channel",
     ":business:extension",
 )
-include(":baselineprofile:smartphone", ":baselineprofile:tv")
+include(
+    ":baselineprofile:smartphone",
+//    ":baselineprofile:tv"
+)
 include(":i18n")
 include(
     ":lint:annotation",
