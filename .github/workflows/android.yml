@@ -50,15 +50,15 @@ jobs:
           -Pandroid.experimental.androidTest.numManagedDeviceShards=1
           -Pandroid.experimental.testOptions.managedDevices.maxConcurrentDevices=1
 
-      - name: Build production tv app
-        run: ./gradlew :app:tv:assembleRelease
+#      - name: Build production tv app
+#        run: ./gradlew :app:tv:assembleRelease
 
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
           path: |
             app/smartphone/build/outputs/apk/release/*.apk
-            app/tv/build/outputs/apk/release/*.apk
+#            app/tv/build/outputs/apk/release/*.apk
 
       - name: Upload To Telegram
         if: github.event_name != 'pull_request'
@@ -72,4 +72,4 @@ jobs:
           method: sendFile
           path: |
             app/smartphone/build/outputs/apk/release/*.apk
-            app/tv/build/outputs/apk/release/*.apk
+#            app/tv/build/outputs/apk/release/*.apk

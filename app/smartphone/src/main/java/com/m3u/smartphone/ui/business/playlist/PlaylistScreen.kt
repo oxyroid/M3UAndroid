@@ -54,10 +54,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleResumeEffect
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.PagingData
 import com.google.accompanist.permissions.rememberPermissionState
@@ -114,7 +113,6 @@ internal fun PlaylistRoute(
     val helper = LocalHelper.current
     val coroutineScope = rememberCoroutineScope()
     val colorScheme = MaterialTheme.colorScheme
-    val lifecycleOwner = LocalLifecycleOwner.current
 
     val autoRefreshChannels by preferenceOf(PreferencesKeys.AUTO_REFRESH_CHANNELS)
     var rowCount by mutablePreferenceOf(PreferencesKeys.ROW_COUNT)
