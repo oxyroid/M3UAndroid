@@ -1,64 +1,63 @@
 [versions]
-androidx-core = "1.16.0"
-androidx-core-splashscreen = "1.0.1"
+androidx-core = "1.17.0"
+androidx-core-splashscreen = "1.2.0"
 androidx-appcompat = "1.7.1"
-androidx-activity = "1.10.1"
-androidx-lifecycle = "2.9.1"
-androidx-compose-bom = "2025.06.01"
-androidx-compose-material3-adaptive = "1.1.0"
+androidx-activity = "1.12.3"
+androidx-lifecycle = "2.10.0"
+androidx-compose-bom = "2026.01.01"
+androidx-compose-material3-adaptive = "1.2.0"
 androidx-constraintlayout-compose = "1.1.1"
-androidx-navigation = "2.9.1"
-androidx-hilt = "1.2.0"
+androidx-navigation = "2.9.7"
+androidx-hilt = "1.3.0"
 androidx-tv = "1.1.0-alpha01"
-androidx-media3 = "1.7.1"
-androidx-work = "2.10.2"
-androidx-room = "2.7.2"
+androidx-media3 = "1.9.1"
+androidx-work = "2.11.1"
+androidx-room = "2.8.4"
 androidx-startup = "1.2.0"
-androidx-paging = "3.3.6"
+androidx-paging = "3.4.0"
 
 auto-annotations = "1.1.1"
 auto-ksp = "1.2.0"
 glance = "1.1.1"
 google-accompanist = "0.37.3"
-google-dagger = "2.56.2"
+google-dagger = "2.58" # 2.59 requires AGP9+
 
-haze = "1.6.7"
+haze = "1.7.1"
 io-coil = "2.7.0"
 kotlinpoet = "2.2.0"
-kotlinx-serialization-json = "1.9.0"
+kotlinx-serialization-json = "1.10.0"
 kotlinx-serialization-converter-retrofit = "1.0.0"
-kotlinx-datetime = "0.6.2"
+kotlinx-datetime = "0.7.1"
 
-chucker = "4.1.0"
+chucker = "4.3.0"
 logback = "3.0.0"
-lottie-compose = "6.6.7"
+lottie-compose = "6.7.1"
 m3u-extension = "1.9"
 nextLib = "0.8.5"
 slf4j-api = "2.0.17"
 
 squareup-retrofit2 = "3.0.0"
 squareup-leakcanary = "2.14"
-squareup-wire = "5.3.5"
+squareup-wire = "5.5.0"
 
-kotlin = "2.2.0"
-android-gradle-plugin = "8.9.1"
-kotlin-symbol-processor = "2.2.0-2.0.2"
+kotlin = "2.3.0"
+android-gradle-plugin = "8.9.3"
+kotlin-symbol-processor = "2.3.5"
 
-androidx-test-ext-junit = "1.2.1"
-espresso-core = "3.6.1"
-com-google-android-material = "1.12.0"
+androidx-test-ext-junit = "1.3.0"
+espresso-core = "3.7.0"
+com-google-android-material = "1.13.0"
 androidx-test-uiautomator = "2.3.0"
-androidx-benchmark = "1.3.4"
-androidx-graphics-shapes = "1.0.1"
+androidx-benchmark = "1.4.1"
+androidx-graphics-shapes = "1.1.0"
 
 minabox = "1.10.0"
-ktor-server = "3.3.1"
+ktor-server = "3.4.0"
 mm2d-mmupnp = "3.1.6"
 profileinstaller = "1.4.1"
 jakewharton-disklrucache = "2.0.2"
-acra = "5.12.0"
+acra = "5.13.1"
 timber = "5.0.1"
-wireRuntime = "5.3.5"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
@@ -74,7 +73,7 @@ androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", versi
 androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
 androidx-compose-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout" }
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
-androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3", version = "1.4.0-alpha17" }
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3", version = "1.4.0" }
 androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime" }
 androidx-compose-ui-util = { group = "androidx.compose.ui", name = "ui-util" }
 
@@ -183,7 +182,7 @@ jakewharton-disklrucache = { group = "com.jakewharton", name = "disklrucache", v
 acra-mail = { group = "ch.acra", name = "acra-mail", version.ref = "acra" }
 acra-notification = { group = "ch.acra", name = "acra-notification", version.ref = "acra" }
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
-wire-runtime = { module = "com.squareup.wire:wire-runtime", version.ref = "wireRuntime" }
+wire-runtime = { module = "com.squareup.wire:wire-runtime", version.ref = "squareup-wire" }
 
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }

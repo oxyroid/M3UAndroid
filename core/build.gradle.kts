@@ -9,9 +9,6 @@ plugins {
 
 android {
     namespace = "com.m3u.core"
-    kotlinOptions {
-        jvmTarget = "17"
-    }
     buildFeatures {
         compose = true
     }

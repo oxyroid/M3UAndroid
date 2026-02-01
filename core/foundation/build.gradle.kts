@@ -8,9 +8,6 @@ plugins {
 
 android {
     namespace = "com.m3u.core.foundation"
-    kotlinOptions {
-        jvmTarget = "17"
-    }
 }
 
 dependencies {

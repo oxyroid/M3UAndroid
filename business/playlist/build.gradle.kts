@@ -10,9 +10,6 @@ plugins {
 
 android {
     namespace = "com.m3u.business.playlist"
-    kotlinOptions {
-        jvmTarget = "17"
-    }
     buildFeatures {
         compose = true
     }

@@ -8,9 +8,6 @@ plugins {
 
 android {
     namespace = "com.m3u.core.extension"
-    kotlinOptions {
-        jvmTarget = "17"
-    }
     buildFeatures {
         aidl = true
     }
