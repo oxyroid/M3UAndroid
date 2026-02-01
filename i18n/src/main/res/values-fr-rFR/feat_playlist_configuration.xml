@@ -8,5 +8,5 @@
     <string name="feat_playlist_configuration_programmes_expired_time">Expire: %s</string>
     <string name="feat_playlist_configuration_programmes_expired">Les programmes mis en cache sont obsolètes</string>
     <string name="feat_playlist_configuration_auto_refresh_programmes">Actualiser automatiquement les programmes</string>
-    <string name="feat_playlist_configuration_auto_refresh_programmes_description">Au démarrage de l'application</string>
+    <string name="feat_playlist_configuration_auto_refresh_programmes_description">Au démarrage de l\'application</string>
 </resources>

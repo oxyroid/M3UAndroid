@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="feat_setting_app_version">version de l'application</string>
-    <string name="feat_setting_label_subscribe">s'abonner</string>
+    <string name="feat_setting_app_version">version de l\'application</string>
+    <string name="feat_setting_label_subscribe">s\'abonner</string>
     <string name="feat_setting_success_subscribe">abonnement réussi</string>
     <string name="feat_setting_failed_malformed_url">URL malformée (%s)</string>
     <string name="feat_setting_error_empty_title">le nom de la playlist est vide</string>
@@ -32,13 +32,13 @@
     <string name="feat_setting_auto_refresh_channels_description">actualisé automatiquement à la lecture de la chaîne</string>
 
     <string name="feat_setting_full_info_player">informations complètes du lecteur</string>
-    <string name="feat_setting_full_info_player_description">afficher plus d'informations dans le lecteur</string>
+    <string name="feat_setting_full_info_player_description">afficher plus d\'informations dans le lecteur</string>
     <string name="feat_setting_slider">curseur</string>
     <string name="feat_setting_no_picture_mode">mode sans image</string>
     <string name="feat_setting_no_picture_mode_description">peut améliorer les performances</string>
     <string name="feat_setting_system_setting">paramètres système</string>
     <string name="feat_setting_script_management_import_js">importer Javascript</string>
-    <string name="feat_setting_enqueue_subscribe">une tâche d'abonnement a été ajoutée à la file d'attente</string>
+    <string name="feat_setting_enqueue_subscribe">une tâche d\'abonnement a été ajoutée à la file d\'attente</string>
     <string name="feat_setting_dropbox">dropbox</string>
     <string name="feat_setting_project_about">à propos du projet</string>
     <string name="feat_setting_local_storage">stockage local</string>
@@ -48,19 +48,19 @@
     <string name="feat_setting_use_dynamic_colors_unavailable">disponible sur Android 12 et supérieur</string>
     <string name="feat_setting_colorful_background">fond coloré</string>
     <string name="feat_setting_restore_schemes">restaurer les schémas</string>
-    <string name="feat_setting_not_implementation">cette fonctionnalité n'est pas disponible pour la version actuelle</string>
+    <string name="feat_setting_not_implementation">cette fonctionnalité n\'est pas disponible pour la version actuelle</string>
     <string name="feat_setting_zapping_mode">mode zapping</string>
     <string name="feat_setting_zapping_mode_description">aperçu rapide avant la lecture de la chaîne</string>
     <string name="feat_setting_gesture_brightness">geste de luminosité</string>
     <string name="feat_setting_gesture_volume">geste de volume</string>
-    <string name="feat_setting_screencast">diffusion d'écran</string>
-    <string name="feat_setting_screen_rotating">rotation d'écran</string>
+    <string name="feat_setting_screencast">diffusion d\'écran</string>
+    <string name="feat_setting_screen_rotating">rotation d\'écran</string>
     <string name="feat_setting_screen_rotating_description">disponible lorsque la rotation système est déverrouillée</string>
     <string name="feat_setting_optional_features">fonctionnalités optionnelles</string>
     <string name="feat_setting_unseen_limit">recommander les chaînes favorites non-vues depuis longtemps</string>
     <string name="feat_setting_reconnect_mode">reconnexion automatique</string>
     <string name="feat_setting_reconnect_mode_no">jamais</string>
-    <string name="feat_setting_reconnect_mode_retry">uniquement en cas d'échec</string>
+    <string name="feat_setting_reconnect_mode_retry">uniquement en cas d\'échec</string>
     <string name="feat_setting_reconnect_mode_reconnect">toujours</string>
 
     <string name="feat_setting_appearance">apparence</string>
@@ -98,17 +98,17 @@
     <string name="feat_setting_data_source_dropbox" translatable="false">Dropbox</string>
 
     <string name="feat_setting_placeholder_basic_url">adresse</string>
-    <string name="feat_setting_placeholder_username">nom d'utilisateur</string>
+    <string name="feat_setting_placeholder_username">nom d\'utilisateur</string>
     <string name="feat_setting_placeholder_password">mot de passe</string>
 
     <string name="feat_setting_warning_xtream_takes_much_more_time">cela peut prendre beaucoup plus de temps</string>
 
-    <string name="feat_setting_back_home">retour à l'accueil</string>
+    <string name="feat_setting_back_home">retour à l\'accueil</string>
 
     <string name="feat_setting_always_replay">toujours afficher le bouton replay</string>
 
     <string name="feat_setting_player_panel">panneau du lecteur</string>
-    <string name="feat_setting_player_panel_description">glissez vers le haut le lecteur pour l'agrandir en mode portrait</string>
+    <string name="feat_setting_player_panel_description">glissez vers le haut le lecteur pour l\'agrandir en mode portrait</string>
 
     <string name="feat_setting_cache">mettre en cache pendant la lecture</string>
     <string name="feat_setting_cache_description">cette option peut empêcher la lecture normale</string>
@@ -123,11 +123,11 @@
 
     <string name="feat_setting_compact_dimension">dimension compacte</string>
     <!-- EPG -->
-    <string name="feat_setting_placeholder_epg_title">nom de l'epg</string>
-    <string name="feat_setting_error_empty_epg_title">le nom de l'epg est vide</string>
-    <string name="feat_setting_error_empty_epg">le lien de l'epg est vide</string>
-    <string name="feat_setting_placeholder_epg">lien de l'epg</string>
-    <string name="feat_setting_epg_added">vous pouvez ensuite associer la playlist à l'EPG</string>
+    <string name="feat_setting_placeholder_epg_title">nom de l\'epg</string>
+    <string name="feat_setting_error_empty_epg_title">le nom de l\'epg est vide</string>
+    <string name="feat_setting_error_empty_epg">le lien de l\'epg est vide</string>
+    <string name="feat_setting_placeholder_epg">lien de l\'epg</string>
+    <string name="feat_setting_epg_added">vous pouvez ensuite associer la playlist à l\'EPG</string>
 
     <string name="feat_setting_randomly_in_favourite">lecture aléatoire uniquement depuis les favoris</string>
 </resources>

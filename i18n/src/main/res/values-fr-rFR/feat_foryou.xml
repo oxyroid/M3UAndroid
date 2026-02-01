@@ -2,7 +2,7 @@
 <resources>
     <string name="feat_foryou_hidden_channels_playlist">chaînes masquées</string>
     <string name="feat_foryou_unsubscribe_playlist">se désabonner</string>
-    <string name="feat_foryou_copy_playlist_url">copier l'URL</string>
+    <string name="feat_foryou_copy_playlist_url">copier l\'URL</string>
     <string name="feat_foryou_rename_playlist">renommer</string>
     <string name="feat_foryou_imported_playlist_title">importé</string>
     <string name="feat_foryou_prompt_add_playlist">ajouter une playlist</string>
@@ -13,5 +13,5 @@
     <string name="feat_foryou_recommend_cw_label">continuer à regarder</string>
     <string name="feat_foryou_new_release">nouvelle sortie</string>
     <string name="feat_foryou_connect_title">entrez le code depuis la TV</string>
-    <string name="feat_foryou_connect_subtitle">Assurez-vous d'être connecté au même Wi-Fi</string>
+    <string name="feat_foryou_connect_subtitle">Assurez-vous d\'être connecté au même Wi-Fi</string>
 </resources>
