@@ -47,7 +47,7 @@ interface PlayerManager {
 
     suspend fun recordVideo(uri: Uri)
 
-    val cwPositionObserver: SharedFlow<Long>
+    val cwPosition: SharedFlow<Long>
     suspend fun onResetPlayback(channelUrl: String)
     suspend fun getCwPosition(channelUrl: String): Long
     suspend fun reloadThumbnail(channelUrl: String): Uri?

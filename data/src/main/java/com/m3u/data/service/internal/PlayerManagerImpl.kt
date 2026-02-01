@@ -325,7 +325,7 @@ class PlayerManagerImpl @Inject constructor(
             if (applyContinueWatching) {
                 restoreContinueWatching(player, url)
             } else {
-                cwPositionObserver.emit(-1L)
+                cwPosition.emit(-1L)
             }
         }
     }
@@ -651,10 +651,10 @@ class PlayerManagerImpl @Inject constructor(
         }
     }
 
-    override val cwPositionObserver = MutableSharedFlow<Long>(replay = 1)
+    override val cwPosition = MutableSharedFlow<Long>(replay = 1)
 
     override suspend fun onResetPlayback(channelUrl: String) {
-        cwPositionObserver.emit(-1L)
+        cwPosition.emit(-1L)
         resetContinueWatching(channelUrl, ignorePositionCondition = true)
         val currentPlayer = player.value ?: return
         if (currentPlayer.isCommandAvailable(Player.COMMAND_SEEK_TO_DEFAULT_POSITION)) {
@@ -715,29 +715,29 @@ class PlayerManagerImpl @Inject constructor(
         }
         playbackPosition
             .sample(5.seconds)
-            .collect { cwPosition ->
-                timber.d("storeContinueWatching, received new position: $cwPosition")
-                if (cwPosition == -1L) return@collect
+            .collect { newCwPosition ->
+                timber.d("storeContinueWatching, received new position: $newCwPosition")
+                if (newCwPosition == -1L) return@collect
                 val channelPreference = getChannelPreference(channelUrl)
                 addChannelPreference(
                     channelUrl,
-                    channelPreference?.copy(cwPosition = cwPosition)
-                        ?: ChannelPreference(cwPosition = cwPosition)
+                    channelPreference?.copy(cwPosition = newCwPosition)
+                        ?: ChannelPreference(cwPosition = newCwPosition)
                 )
             }
     }
 
     private suspend fun restoreContinueWatching(player: Player, channelUrl: String) {
         val channelPreference = getChannelPreference(channelUrl)
-        val cwPosition = channelPreference?.cwPosition?.takeIf { it != -1L } ?: run {
-            cwPositionObserver.emit(-1L)
+        val cachedCwPosition = channelPreference?.cwPosition?.takeIf { it != -1L } ?: run {
+            cwPosition.emit(-1L)
             return
         }
         withContext(Dispatchers.Main) {
             if (continueWatchingCondition.isRestoringSupported(player)) {
-                timber.d("restoreContinueWatching, $cwPosition")
-                cwPositionObserver.emit(cwPosition)
-                player.seekTo(cwPosition)
+                timber.d("restoreContinueWatching, $cachedCwPosition")
+                cwPosition.emit(cachedCwPosition)
+                player.seekTo(cachedCwPosition)
             }
         }
     }

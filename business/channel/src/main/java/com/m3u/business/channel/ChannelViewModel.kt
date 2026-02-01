@@ -18,7 +18,6 @@ import androidx.paging.cachedIn
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkQuery
-import com.m3u.core.architecture.Signal
 import com.m3u.core.util.coroutine.flatmapCombined
 import com.m3u.core.wrapper.Sort
 import com.m3u.data.database.model.AdjacentChannels
@@ -40,13 +39,11 @@ import com.m3u.data.worker.ProgrammeReminder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -74,21 +71,17 @@ class ChannelViewModel @Inject constructor(
     private val workManager: WorkManager,
 ) : ViewModel(), ControlPoint.DiscoveryListener {
 
+    /**
+     * it is not real-time position but last played position.
+     */
     var cwPosition: Long by mutableLongStateOf(-1L)
         private set
 
-    init {
-        viewModelScope.launch {
-            playerManager.cwPositionObserver.collectLatest {
-                ensureActive() // make sure the cwPosition has not been recycled by GC.
-                cwPosition = it
-                if (it != -1L) {
-                    Signal.lock("ChannelViewModel-cwPosition")
-                    ensureActive() // make sure the cwPosition has not been recycled by GC.
-                    cwPosition = -1L
-                }
-            }
-        }
+    private val cwPositionConsumer = CwPositionConsumer(
+        flow = playerManager.cwPosition,
+        coroutineScope = viewModelScope
+    ) {
+        this@ChannelViewModel.cwPosition = it
     }
 
     fun onResetPlayback() {
@@ -100,7 +93,7 @@ class ChannelViewModel @Inject constructor(
 
     fun onMaskStateChanged(visible: Boolean) {
         if (!visible) {
-            Signal.unlock("ChannelViewModel-cwPosition")
+            cwPositionConsumer.notifyConsumed()
         }
     }
 
