@@ -7,6 +7,7 @@ import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -68,20 +69,21 @@ fun <T> mutablePreferenceOf(
 ): MutableState<T> {
     val state = preferenceOf(key, initial)
     val dataStore: Settings = LocalContext.current.settings
-
-    return object : MutableState<T> {
-        override fun component1(): T = this.value
-        override fun component2(): (T) -> Unit = { this.value = it }
-        override var value: T
-            get() = state.value
-            set(value) {
-                coroutineScope.launch {
-                    dataStore.edit {
-                        it[key] = value
+    return remember(key, initial) {
+        object : MutableState<T> {
+            override fun component1(): T = this.value
+            override fun component2(): (T) -> Unit = { this.value = it }
+            override var value: T
+                get() = state.value
+                set(value) {
+                    coroutineScope.launch {
+                        dataStore.edit {
+                            it[key] = value
+                        }
                     }
                 }
-            }
-    } as MutableState<T>
+        }
+    }
 }
 
 fun <T> Settings.flowOf(key: Preferences.Key<T>): Flow<T> = data.mapNotNull { it[key] }

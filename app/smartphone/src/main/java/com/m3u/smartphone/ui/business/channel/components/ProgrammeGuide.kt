@@ -76,8 +76,8 @@ import eu.wewox.minabox.MinaBoxState
 import eu.wewox.minabox.rememberSaveableMinaBoxState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.math.absoluteValue

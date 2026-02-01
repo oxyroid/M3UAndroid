@@ -28,19 +28,14 @@ import androidx.compose.material.icons.rounded.ContentPaste
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ButtonGroup
-import androidx.compose.material3.ButtonGroupDefaults
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SplitButtonDefaults
-import androidx.compose.material3.SplitButtonDefaults.SmallContainerHeight
-import androidx.compose.material3.SplitButtonDefaults.trailingButtonShapesFor
-import androidx.compose.material3.SplitButtonLayout
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -152,7 +147,6 @@ internal fun SubscriptionsFragment(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 context(properties: SettingProperties)
 private fun MainContentImpl(
@@ -205,89 +199,71 @@ private fun MainContentImpl(
             val postNotificationPermission = rememberPermissionState(
                 Manifest.permission.POST_NOTIFICATIONS
             )
-            FlowRow {
-                val size = SplitButtonDefaults.SmallContainerHeight
-                SplitButtonLayout(
-                    leadingButton = {
-                        SplitButtonDefaults.LeadingButton(
-                            shapes = SplitButtonDefaults.leadingButtonShapesFor(size),
-                            contentPadding = SplitButtonDefaults.leadingButtonContentPaddingFor(size),
-                            onClick = {
-                                postNotificationPermission.checkPermissionOrRationale(
-                                    showRationale = {
-                                        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                                            .apply {
-                                                putExtra(
-                                                    Settings.EXTRA_APP_PACKAGE,
-                                                    helper.activityContext.packageName
-                                                )
-                                            }
-                                        helper.activityContext.startActivity(intent)
-                                    },
-                                    block = {
-                                        onSubscribe()
-                                    }
-                                )
-                            }
-                        ) {
-                            Text(stringResource(string.feat_setting_label_subscribe).uppercase())
-                        }
-                    },
-                    trailingButton = {
-                        when (properties.selectedState.value) {
-                            DataSource.M3U, DataSource.Xtream -> {
-                                SplitButtonDefaults.TrailingButton(
-                                    shapes = SplitButtonDefaults.trailingButtonShapesFor(size),
-                                    contentPadding = SplitButtonDefaults.trailingButtonContentPaddingFor(size),
-                                    enabled = !properties.localStorageState.value,
-                                    onClick = {
-                                        onClipboard(clipboardManager.getText()?.text.orEmpty())
-                                    }
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.ContentPaste,
-                                        contentDescription = null
-                                    )
-                                }
-                            }
-
-                            else -> {}
-                        }
-                    },
-                    spacing = SplitButtonDefaults.Spacing
-                )
-            }
-            val backupText = stringResource(string.feat_setting_label_backup).uppercase()
-            val restoreText = stringResource(string.feat_setting_label_restore).uppercase()
-            ButtonGroup(
-                overflowIndicator = { menuState ->
-                    FilledIconButton(
+            Column {
+                Row {
+                    Button(
+                        modifier = Modifier.weight(1f),
                         onClick = {
-                            if (menuState.isExpanded) {
-                                menuState.dismiss()
-                            } else {
-                                menuState.show()
-                            }
+                            postNotificationPermission.checkPermissionOrRationale(
+                                showRationale = {
+                                    val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                        .apply {
+                                            putExtra(
+                                                Settings.EXTRA_APP_PACKAGE,
+                                                helper.activityContext.packageName
+                                            )
+                                        }
+                                    helper.activityContext.startActivity(intent)
+                                },
+                                block = {
+                                    onSubscribe()
+                                }
+                            )
                         }
                     ) {
-                        Icon(
-                            imageVector = Icons.Filled.MoreVert,
-                            contentDescription = "Localized description",
-                        )
+                        Text(stringResource(string.feat_setting_label_subscribe).uppercase())
+                    }
+                    when (properties.selectedState.value) {
+                        DataSource.M3U, DataSource.Xtream -> {
+                            IconButton(
+                                onClick = {
+                                    onClipboard(clipboardManager.getText()?.text.orEmpty())
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.ContentPaste,
+                                    contentDescription = null
+                                )
+                            }
+                        }
+
+                        else -> {}
                     }
                 }
-            ) {
-                clickableItem(
+                val backupText = stringResource(string.feat_setting_label_backup).uppercase()
+                val restoreText = stringResource(string.feat_setting_label_restore).uppercase()
+
+
+                TextButton(
                     onClick = backup,
-                    label = backupText,
                     enabled = backingUpOrRestoring == BackingUpAndRestoringState.NONE,
-                )
-                clickableItem(
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                ) {
+                    Text(
+                        text = backupText
+                    )
+                }
+                TextButton(
                     onClick = restore,
-                    label = restoreText,
                     enabled = backingUpOrRestoring == BackingUpAndRestoringState.NONE,
-                )
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                ) {
+                    Text(
+                        text = restoreText
+                    )
+                }
             }
+
         }
 
         item {

@@ -9,7 +9,7 @@ plugins {
 }
 android {
     namespace = "com.m3u.tv"
-    compileSdk = 35
+    compileSdk = 36
     defaultConfig {
         applicationId = "com.m3u.tv"
         minSdk = 26

@@ -18,9 +18,9 @@ import com.m3u.data.repository.media.MediaRepository
 import com.m3u.data.repository.programme.ProgrammeRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlinx.datetime.Clock
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Clock
 
 @HiltWorker
 class ProgrammeReminder @AssistedInject constructor(

@@ -3,6 +3,13 @@ plugins {
     alias(libs.plugins.com.google.devtools.ksp)
 }
 
+kotlin {
+    jvmToolchain(17)
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
 ksp {
     arg("autoserviceKsp.verify", "true")
     arg("autoserviceKsp.verbose", "true")

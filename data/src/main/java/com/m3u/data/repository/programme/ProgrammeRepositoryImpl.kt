@@ -26,12 +26,12 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.supervisorScope
-import kotlinx.datetime.Clock
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import timber.log.Timber
 import java.util.zip.GZIPInputStream
 import javax.inject.Inject
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 
 internal class ProgrammeRepositoryImpl @Inject constructor(
@@ -173,9 +173,9 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
 
         response
             .body
-            ?.byteStream()
-            ?.letIf(isGzip) { GZIPInputStream(it).buffered() }
-            ?.use { input ->
+            .byteStream()
+            .letIf(isGzip) { GZIPInputStream(it).buffered() }
+            .use { input ->
                 epgParser
                     .readProgrammes(input)
                     .collect { send(it) }

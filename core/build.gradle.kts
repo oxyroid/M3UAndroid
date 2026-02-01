@@ -20,6 +20,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     api(libs.androidx.compose.runtime)
+    api(libs.androidx.compose.ui)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.squareup.retrofit2)
     implementation(libs.androidx.media3.exoplayer)

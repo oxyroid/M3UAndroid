@@ -19,6 +19,7 @@ plugins {
 subprojects {
     tasks.withType<KotlinCompile>().configureEach {
         compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
             freeCompilerArgs.addAll(
                 "-Xcontext-parameters"
             )
@@ -52,7 +53,7 @@ subprojects {
     }
     plugins.withId("com.android.library") {
         configure<LibraryExtension> {
-            compileSdk = 35
+            compileSdk = 36
             defaultConfig {
                 minSdk = 26
                 testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

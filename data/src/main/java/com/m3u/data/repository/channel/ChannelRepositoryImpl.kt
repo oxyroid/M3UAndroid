@@ -9,8 +9,8 @@ import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.data.database.model.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
-import kotlinx.datetime.Clock
 import javax.inject.Inject
+import kotlin.time.Clock
 import kotlin.time.Duration
 
 internal class ChannelRepositoryImpl @Inject constructor(
@@ -67,7 +67,7 @@ internal class ChannelRepositoryImpl @Inject constructor(
     }
 
     override suspend fun reportPlayed(id: Int) {
-        val current = Clock.System.now().toEpochMilliseconds()
+        val current = kotlin.time.Clock.System.now().toEpochMilliseconds()
         channelDao.updateSeen(id, current)
     }
 

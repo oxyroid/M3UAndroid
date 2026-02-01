@@ -53,8 +53,8 @@ import com.m3u.smartphone.ui.material.brush.RecommendCardContainerBrush
 import com.m3u.smartphone.ui.material.components.FontFamilies
 import com.m3u.smartphone.ui.material.components.createPremiumBrush
 import com.m3u.smartphone.ui.material.model.LocalSpacing
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlin.time.Duration.Companion.days
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration

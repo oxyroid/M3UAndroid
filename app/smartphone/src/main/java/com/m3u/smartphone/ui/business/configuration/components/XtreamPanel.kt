@@ -27,7 +27,7 @@ import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.smartphone.ui.material.components.Badge
 import com.m3u.smartphone.ui.material.components.FontFamilies
 import com.m3u.smartphone.ui.material.components.TextBadge
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 @Composable
 internal fun XtreamPanel(

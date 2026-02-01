@@ -10,7 +10,7 @@ plugins {
 
 android {
     namespace = "com.m3u.baselineprofile.tv"
-    compileSdk = 35
+    compileSdk = 36
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
