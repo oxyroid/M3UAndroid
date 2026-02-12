@@ -315,3 +315,6 @@
 -dontwarn com.github.luben.zstd.util.Native
 -dontwarn com.sun.nio.file.SensitivityWatchEventModifier
 -dontwarn org.osgi.annotation.bundle.Export
+-dontwarn io.netty.pkitesting.**
+-dontwarn jdk.jfr.**
+-dontwarn com.m3u.i18n.R$string
