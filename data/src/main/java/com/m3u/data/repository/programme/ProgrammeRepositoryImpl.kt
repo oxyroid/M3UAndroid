@@ -14,6 +14,7 @@ import com.m3u.data.database.model.epgUrlsOrXtreamXmlUrl
 import com.m3u.data.parser.epg.EpgParser
 import com.m3u.data.parser.epg.EpgProgramme
 import com.m3u.data.parser.epg.toProgramme
+import com.m3u.data.repository.createCoroutineCache
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -99,11 +100,16 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
             epgUrls = epgUrls,
             ignoreCache = ignoreCache
         )
-        var count = 0
-        producer.collect { programme ->
-            programmeDao.insertOrReplace(programme)
-            send(++count)
+        var currentCount = 0
+        val cache = createCoroutineCache<Programme>(500) { all ->
+            programmeDao.insertOrReplaceAll(all)
+            currentCount += all.size
+            send(currentCount)
         }
+        producer.collect { programme ->
+            cache.push(programme)
+        }
+        cache.flush()
     }
 
     override suspend fun getById(id: Int): Programme? = programmeDao.getById(id)

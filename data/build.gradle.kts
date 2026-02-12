@@ -85,4 +85,7 @@ dependencies {
     // auto
     implementation(libs.auto.service.annotations)
     ksp(libs.auto.service.ksp)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
 }

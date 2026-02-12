@@ -67,7 +67,8 @@ internal class M3UParserImpl @Inject constructor() : M3UParser {
                 val matches = metadataRegex.findAll(text)
                 for (match in matches) {
                     val key = match.groups[1]!!.value
-                    val value = match.groups[2]?.value?.ifBlank { null } ?: continue
+                    val value = (match.groups[2]?.value ?: match.groups[3]?.value)
+                        ?.ifBlank { null } ?: continue
                     put(key.trim(), value.trim())
                 }
             }
