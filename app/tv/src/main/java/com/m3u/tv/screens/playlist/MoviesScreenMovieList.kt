@@ -48,6 +48,7 @@ fun LazyListScope.channelGallery(
     startPadding: Dp,
     endPadding: Dp,
     itemWidth: Dp,
+    onChannelClick: (channel: Channel) -> Unit,
     onChannelLongClick: (channel: Channel) -> Unit,
 ) {
     items(channels, key = { (cwc, _) -> cwc.category }) { (_, pagingChannels) ->
@@ -60,6 +61,7 @@ fun LazyListScope.channelGallery(
                 if (channel != null) {
                     ChannelGalleryItem(
                         itemWidth = itemWidth,
+                        onChannelClick = onChannelClick,
                         onChannelLongClick = onChannelLongClick,
                         channel = channel,
                     )
@@ -78,6 +80,7 @@ fun LazyListScope.favouriteChannelGallery(
     startPadding: Dp,
     endPadding: Dp,
     itemWidth: Dp,
+    onChannelClick: (channel: Channel) -> Unit,
     onChannelLongClick: (channel: Channel) -> Unit,
 ) {
     item {
@@ -88,6 +91,7 @@ fun LazyListScope.favouriteChannelGallery(
             items(channels, key = { it.id }) { channel ->
                 ChannelGalleryItem(
                     itemWidth = itemWidth,
+                    onChannelClick = onChannelClick,
                     onChannelLongClick = onChannelLongClick,
                     channel = channel,
                 )
@@ -101,6 +105,7 @@ internal fun ChannelGalleryItem(
     itemWidth: Dp,
     channel: Channel,
     modifier: Modifier = Modifier,
+    onChannelClick: (channel: Channel) -> Unit,
     onChannelLongClick: (channel: Channel) -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
@@ -117,7 +122,7 @@ internal fun ChannelGalleryItem(
                 .aspectRatio(2f)
                 .padding(end = 32.dp)
                 .longPressKeyHandler(
-                    onClick = { },
+                    onClick = { onChannelClick(channel) },
                     onLongClick = { onChannelLongClick(channel) },
                 )
         ) {

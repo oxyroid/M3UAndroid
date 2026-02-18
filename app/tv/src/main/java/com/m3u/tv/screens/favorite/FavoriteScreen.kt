@@ -43,6 +43,7 @@ import androidx.tv.material3.Text
 @Composable
 fun FavoriteScreen(
     favoriteTabFocusRequester: FocusRequester?,
+    onChannelClick: (Channel) -> Unit,
     onChannelLongClick: (Channel) -> Unit,
     onScroll: (isTopBarVisible: Boolean) -> Unit,
     isTopBarVisible: Boolean,
@@ -103,6 +104,7 @@ fun FavoriteScreen(
             ) {
                 favouriteChannelGallery(
                     channels = channels.data,
+                    onChannelClick = onChannelClick,
                     onChannelLongClick = { channel ->
                         channelForRemoveMenu = channel
                         consumeNextCenterKeyUp.value = true

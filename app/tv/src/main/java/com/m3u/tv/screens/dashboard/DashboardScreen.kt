@@ -264,6 +264,7 @@ private fun Body(
         composable(Screens.Favourite()) {
             FavoriteScreen(
                 favoriteTabFocusRequester = favoriteTabFocusRequester,
+                onChannelClick = { channel -> openChannelScreen(channel.id) },
                 onChannelLongClick = { channel -> openChannelDetailsScreen(channel.id) },
                 onScroll = updateTopBarVisibility,
                 isTopBarVisible = isTopBarVisible
@@ -272,6 +273,7 @@ private fun Body(
         composable(Screens.Playlist()) {
             PlaylistScreen(
                 playlistTabFocusRequester = playlistTabFocusRequester,
+                onChannelClick = { channel -> openChannelScreen(channel.id) },
                 onChannelLongClick = { channel -> openChannelDetailsScreen(channel.id) },
                 onScroll = updateTopBarVisibility,
                 isTopBarVisible = isTopBarVisible

@@ -25,6 +25,7 @@ import com.m3u.tv.screens.dashboard.rememberChildPadding
 @Composable
 fun PlaylistScreen(
     playlistTabFocusRequester: FocusRequester?,
+    onChannelClick: (channel: Channel) -> Unit,
     onChannelLongClick: (channel: Channel) -> Unit,
     onScroll: (isTopBarVisible: Boolean) -> Unit,
     isTopBarVisible: Boolean,
@@ -40,6 +41,7 @@ fun PlaylistScreen(
 
     Catalog(
         channels = pagingChannels,
+        onChannelClick = onChannelClick,
         onChannelLongClick = onChannelLongClick,
         onScroll = onScroll,
         isTopBarVisible = isTopBarVisible,
@@ -51,6 +53,7 @@ fun PlaylistScreen(
 @Composable
 private fun Catalog(
     channels: List<Pair<PlaylistViewModel.CategoryWithChannels, LazyPagingItems<Channel>>>,
+    onChannelClick: (channel: Channel) -> Unit,
     onChannelLongClick: (channel: Channel) -> Unit,
     onScroll: (isTopBarVisible: Boolean) -> Unit,
     isTopBarVisible: Boolean,
@@ -89,6 +92,7 @@ private fun Catalog(
     ) {
         channelGallery(
             channels = channels,
+            onChannelClick = onChannelClick,
             onChannelLongClick = onChannelLongClick,
             startPadding = childPadding.start,
             endPadding = childPadding.end,
