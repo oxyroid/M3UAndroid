@@ -191,12 +191,13 @@ fun Modifier.ifElse(
 ): Modifier = ifElse({ condition }, ifTrueModifier, ifFalseModifier)
 
 /**
- * Handles D-pad center/enter long press only. Short press is consumed but does nothing.
+ * Handles D-pad center/enter with short press ([onClick]) and long press ([onLongClick]).
  * Long press duration defaults to 500ms (Google TV convention for "details and actions").
  * Consumes all center/enter key events so the focused component's default click never fires.
  */
 @Composable
 fun Modifier.longPressKeyHandler(
+    onClick: () -> Unit,
     onLongClick: () -> Unit,
     longPressMs: Long = 500L
 ): Modifier = composed {
@@ -224,9 +225,10 @@ fun Modifier.longPressKeyHandler(
                     true
                 }
                 KeyEvent.ACTION_UP -> {
+                    val wasLongPress = longPressHandled.value
                     job.value?.cancel()
                     job.value = null
-                    // Short press: consumed, no action.
+                    if (!wasLongPress) onClick()
                     true
                 }
                 else -> false

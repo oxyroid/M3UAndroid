@@ -117,6 +117,7 @@ internal fun ChannelGalleryItem(
                 .aspectRatio(2f)
                 .padding(end = 32.dp)
                 .longPressKeyHandler(
+                    onClick = { },
                     onLongClick = { onChannelLongClick(channel) },
                 )
         ) {

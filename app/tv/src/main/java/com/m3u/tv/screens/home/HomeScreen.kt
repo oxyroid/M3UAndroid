@@ -179,6 +179,7 @@ private fun Catalog(
                         onClick = { },
                         modifier = Modifier
                             .longPressKeyHandler(
+                                onClick = { navigateToPlaylist(playlist.url) },
                                 onLongClick = {
                                     playlistMenuPlaylist = playlist
                                     consumeNextCenterKeyUp.value = true
