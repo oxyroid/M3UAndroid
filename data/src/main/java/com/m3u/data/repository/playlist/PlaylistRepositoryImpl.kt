@@ -134,10 +134,22 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         ) ?: Playlist(title, actualUrl, source = DataSource.M3U, lastRefreshedAt = now)
         playlistDao.insertOrReplace(playlist)
 
-        val cache = createCoroutineCache<M3UData>(BUFFER_M3U_CAPACITY) { all ->
-            channelDao.insertOrReplaceAll(*all.map { it.toChannel(actualUrl) }.toTypedArray())
-            currentCount += all.size
+        // Insert channels in batches, but flush a small first batch quickly so
+        // the UI can render something almost immediately (especially on TV
+        // where ~5 items already fill the first row).
+        val firstVisibleBatch = 5
+        val buffer = mutableListOf<M3UData>()
+        var hasFlushedOnce = false
+
+        suspend fun flushBuffer() {
+            if (buffer.isEmpty()) return
+            channelDao.insertOrReplaceAll(
+                *buffer.map { it.toChannel(actualUrl) }.toTypedArray()
+            )
+            currentCount += buffer.size
             callback(currentCount)
+            buffer.clear()
+            hasFlushedOnce = true
         }
 
         channelFlow {
@@ -159,8 +171,15 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             }
             close()
         }
-            .onEach(cache::push)
-            .onCompletion { cache.flush() }
+            .onEach { data ->
+                buffer += data
+                val shouldFlushFirstBatch = !hasFlushedOnce && buffer.size >= firstVisibleBatch
+                val shouldFlushRegularBatch = buffer.size >= BUFFER_M3U_CAPACITY
+                if (shouldFlushFirstBatch || shouldFlushRegularBatch) {
+                    flushBuffer()
+                }
+            }
+            .onCompletion { flushBuffer() }
             .flowOn(ioDispatcher)
             .collect()
     }

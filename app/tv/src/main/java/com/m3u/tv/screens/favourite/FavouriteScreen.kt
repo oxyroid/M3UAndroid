@@ -12,6 +12,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -30,7 +32,8 @@ import androidx.tv.material3.Text
 
 @Composable
 fun FavouriteScreen(
-    onChannelClick: (Channel) -> Unit,
+    favouriteTabFocusRequester: FocusRequester?,
+    onChannelLongClick: (Channel) -> Unit,
     onScroll: (isTopBarVisible: Boolean) -> Unit,
     isTopBarVisible: Boolean,
     viewModel: FavouriteViewModel = hiltViewModel(),
@@ -74,11 +77,21 @@ fun FavouriteScreen(
                     top = childPadding.top,
                     bottom = 104.dp
                 ),
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .then(
+                        if (favouriteTabFocusRequester != null) {
+                            Modifier.focusProperties {
+                                up = favouriteTabFocusRequester
+                            }
+                        } else {
+                            Modifier
+                        }
+                    )
             ) {
                 favouriteChannelGallery(
                     channels = channels.data,
-                    onChannelClick = onChannelClick,
+                    onChannelLongClick = onChannelLongClick,
                     startPadding = childPadding.start,
                     endPadding = childPadding.end,
                     itemWidth = itemWidth

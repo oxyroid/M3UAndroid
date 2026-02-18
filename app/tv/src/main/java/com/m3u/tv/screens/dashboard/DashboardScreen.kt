@@ -22,6 +22,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -65,6 +66,7 @@ fun rememberChildPadding(direction: LayoutDirection = LocalLayoutDirection.curre
 @Composable
 fun DashboardScreen(
     openChannelScreen: (channelId: Int) -> Unit,
+    openChannelDetailsScreen: (channelId: Int) -> Unit,
     isComingBackFromDifferentScreen: Boolean,
     resetIsComingBackFromDifferentScreen: () -> Unit,
     onBackPressed: () -> Unit
@@ -113,6 +115,16 @@ fun DashboardScreen(
 
         var topBarHeightPx: Int by rememberSaveable { mutableIntStateOf(0) }
 
+        var lastPlaylistUrl by rememberSaveable { mutableStateOf<String?>(null) }
+
+        val tabRouteToFocusRequester = remember {
+            Screens.tabDestinations.mapIndexed { index, route ->
+                route to TopBarFocusRequesters[index + 1]
+            }.toMap()
+        }
+        val playlistTabFocusRequester = tabRouteToFocusRequester[Screens.Playlist()]
+        val favouriteTabFocusRequester = tabRouteToFocusRequester[Screens.Favourite()]
+
         // Used to show/hide DashboardTopBar
         val topBarYOffsetPx by animateIntAsState(
             targetValue = if (isTopBarVisible) 0 else -topBarHeightPx,
@@ -157,6 +169,23 @@ fun DashboardScreen(
             selectedTabIndex = currentTopBarSelectedTabIndex,
         ) { screen ->
             val currentRoute = screen()
+            if (screen == Screens.Playlist) {
+                val playlistRoutePattern = Screens.Playlist()
+                // If we're already on a playlist destination, do nothing.
+                if (navController.currentDestination?.route == playlistRoutePattern) {
+                    return@DashboardTopBar
+                }
+                // Try to pop back to an existing playlist in the back stack.
+                if (navController.popBackStack(playlistRoutePattern, false)) {
+                    return@DashboardTopBar
+                }
+                // Fall back to navigating to the last known playlist url if we have one.
+                val url = lastPlaylistUrl
+                if (!url.isNullOrEmpty()) {
+                    navController.navigate(Screens.Playlist.withArgs(url))
+                }
+                return@DashboardTopBar
+            }
             if (navController.currentDestination?.route == currentRoute) return@DashboardTopBar
             navController.navigate(currentRoute) {
                 if (screen == TopBarTabs[0]) popUpTo(TopBarTabs[0].invoke())
@@ -166,10 +195,14 @@ fun DashboardScreen(
 
         Body(
             openChannelScreen = openChannelScreen,
+            openChannelDetailsScreen = openChannelDetailsScreen,
             updateTopBarVisibility = { isTopBarVisible = it },
             isTopBarVisible = isTopBarVisible,
             navController = navController,
             modifier = Modifier.offset(y = navHostTopPaddingDp),
+            onPlaylistOpened = { lastPlaylistUrl = it },
+            playlistTabFocusRequester = playlistTabFocusRequester,
+            favouriteTabFocusRequester = favouriteTabFocusRequester,
         )
     }
 }
@@ -198,7 +231,11 @@ private fun BackPressHandledArea(
 @Composable
 private fun Body(
     openChannelScreen: (channelId: Int) -> Unit,
+    openChannelDetailsScreen: (channelId: Int) -> Unit,
     updateTopBarVisibility: (Boolean) -> Unit,
+    onPlaylistOpened: (String) -> Unit,
+    playlistTabFocusRequester: FocusRequester?,
+    favouriteTabFocusRequester: FocusRequester?,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
     isTopBarVisible: Boolean = true,
@@ -214,6 +251,7 @@ private fun Body(
         composable(Screens.Home()) {
             HomeScreen(
                 navigateToPlaylist = { playlistUrl ->
+                    onPlaylistOpened(playlistUrl)
                     navController.navigate(
                         Screens.Playlist.withArgs(playlistUrl)
                     )
@@ -225,14 +263,16 @@ private fun Body(
         }
         composable(Screens.Favourite()) {
             FavouriteScreen(
-                onChannelClick = { channel -> openChannelScreen(channel.id) },
+                favouriteTabFocusRequester = favouriteTabFocusRequester,
+                onChannelLongClick = { channel -> openChannelDetailsScreen(channel.id) },
                 onScroll = updateTopBarVisibility,
                 isTopBarVisible = isTopBarVisible
             )
         }
         composable(Screens.Playlist()) {
             PlaylistScreen(
-                onChannelClick = { channel -> openChannelScreen(channel.id) },
+                playlistTabFocusRequester = playlistTabFocusRequester,
+                onChannelLongClick = { channel -> openChannelDetailsScreen(channel.id) },
                 onScroll = updateTopBarVisibility,
                 isTopBarVisible = isTopBarVisible
             )

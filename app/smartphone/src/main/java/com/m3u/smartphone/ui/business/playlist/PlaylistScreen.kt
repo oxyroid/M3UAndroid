@@ -216,12 +216,6 @@ internal fun PlaylistRoute(
         }
     }
 
-    LaunchedEffect(preferences.autoRefreshChannels, playlistUrl) {
-        if (playlistUrl.isNotEmpty() && preferences.autoRefreshChannels) {
-            viewModel.refresh()
-        }
-    }
-
     BackHandler(query.isNotEmpty()) {
         viewModel.query.value = ""
     }

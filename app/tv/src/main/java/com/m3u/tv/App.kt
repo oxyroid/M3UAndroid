@@ -65,6 +65,9 @@ fun App(
                             navController.navigate(Screens.Channel.withArgs(channelId))
                         }
                     },
+                    openChannelDetailsScreen = { channelId ->
+                        navController.navigate(Screens.Channel.withArgs(channelId))
+                    },
                     onBackPressed = onBackPressed,
                     isComingBackFromDifferentScreen = isComingBackFromDifferentScreen,
                     resetIsComingBackFromDifferentScreen = {

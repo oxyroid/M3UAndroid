@@ -33,8 +33,10 @@ fun VideoPlayerControls(
         mediaTitle = {
             VideoPlayerMediaTitle(
                 title = channel.title,
-                secondaryText = "channel.releaseDate",
-                tertiaryText = "channel.director",
+                secondaryText = "",
+                // secondaryText = "channel.releaseDate",
+                tertiaryText = "",
+                // tertiaryText = "channel.director",
                 type = VideoPlayerMediaTitleType.DEFAULT
             )
         },

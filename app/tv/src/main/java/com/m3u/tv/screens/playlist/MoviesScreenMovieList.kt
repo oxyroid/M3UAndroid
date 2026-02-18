@@ -2,6 +2,7 @@ package com.m3u.tv.screens.playlist
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -37,6 +38,7 @@ import coil.compose.AsyncImage
 import com.m3u.business.playlist.PlaylistViewModel
 import com.m3u.data.database.model.Channel
 import com.m3u.tv.theme.JetStreamBorderWidth
+import com.m3u.tv.utils.longPressKeyHandler
 
 /** Item widths for playlist item size: Large, Medium, Small, Compact */
 private val PLAYLIST_ITEM_WIDTHS = listOf(432.dp, 340.dp, 260.dp, 200.dp)
@@ -46,7 +48,7 @@ fun LazyListScope.channelGallery(
     startPadding: Dp,
     endPadding: Dp,
     itemWidth: Dp,
-    onChannelClick: (channel: Channel) -> Unit
+    onChannelLongClick: (channel: Channel) -> Unit,
 ) {
     items(channels, key = { (cwc, _) -> cwc.category }) { (_, pagingChannels) ->
         LazyRow(
@@ -58,7 +60,7 @@ fun LazyListScope.channelGallery(
                 if (channel != null) {
                     ChannelGalleryItem(
                         itemWidth = itemWidth,
-                        onChannelClick = onChannelClick,
+                        onChannelLongClick = onChannelLongClick,
                         channel = channel,
                     )
                 }
@@ -76,7 +78,7 @@ fun LazyListScope.favouriteChannelGallery(
     startPadding: Dp,
     endPadding: Dp,
     itemWidth: Dp,
-    onChannelClick: (channel: Channel) -> Unit
+    onChannelLongClick: (channel: Channel) -> Unit,
 ) {
     item {
         LazyRow(
@@ -86,7 +88,7 @@ fun LazyListScope.favouriteChannelGallery(
             items(channels, key = { it.id }) { channel ->
                 ChannelGalleryItem(
                     itemWidth = itemWidth,
-                    onChannelClick = onChannelClick,
+                    onChannelLongClick = onChannelLongClick,
                     channel = channel,
                 )
             }
@@ -99,68 +101,83 @@ internal fun ChannelGalleryItem(
     itemWidth: Dp,
     channel: Channel,
     modifier: Modifier = Modifier,
-    onChannelClick: (channel: Channel) -> Unit
+    onChannelLongClick: (channel: Channel) -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         Spacer(modifier = Modifier.height(JetStreamBorderWidth))
         var isFocused by remember { mutableStateOf(false) }
-        CompactCard(
+        // longPressKeyHandler MUST live on a parent Box, not on CompactCard itself.
+        // onPreviewKeyEvent intercepts events before *children* — but CompactCard's internal
+        // Clickable fires its onClick via performClick() on ACTION_UP, which bypasses the key
+        // event pipeline when the modifier is on the card's own node. A parent Box's
+        // onPreviewKeyEvent runs before the event ever reaches the card subtree.
+        Box(
             modifier = modifier
                 .width(itemWidth)
                 .aspectRatio(2f)
                 .padding(end = 32.dp)
-                .onFocusChanged { isFocused = it.isFocused || it.hasFocus },
-            scale = CardDefaults.scale(focusedScale = 1f),
-            border = CardDefaults.border(
-                focusedBorder = Border(
-                    border = BorderStroke(
-                        width = JetStreamBorderWidth, color = MaterialTheme.colorScheme.onSurface
+                .longPressKeyHandler(
+                    onLongClick = { onChannelLongClick(channel) },
+                )
+        ) {
+            CompactCard(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .onFocusChanged { isFocused = it.isFocused || it.hasFocus },
+                scale = CardDefaults.scale(focusedScale = 1f),
+                border = CardDefaults.border(
+                    focusedBorder = Border(
+                        border = BorderStroke(
+                            width = JetStreamBorderWidth, color = MaterialTheme.colorScheme.onSurface
+                        )
                     )
-                )
-            ),
-            colors = CardDefaults.colors(
-                containerColor = Color.Transparent,
-                contentColor = MaterialTheme.colorScheme.onSurface,
-            ),
-            onClick = { onChannelClick(channel) },
-            image = {
-                val contentAlpha by animateFloatAsState(
-                    targetValue = if (isFocused) 1f else 0.5f,
-                    label = "",
-                )
-                AsyncImage(
-                    model = channel.cover,
-                    contentDescription = channel.title,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .graphicsLayer { alpha = contentAlpha }
-                )
-            },
-            title = {
-                Column {
-                    Text(
-                        text = channel.category,
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Normal
-                        ),
+                ),
+                colors = CardDefaults.colors(
+                    containerColor = Color.Transparent,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                ),
+                // No-op: parent Box's longPressKeyHandler consumes all center/enter events
+                // before they reach here. Non-null onClick keeps the card focusable.
+                onClick = {},
+                image = {
+                    val contentAlpha by animateFloatAsState(
+                        targetValue = if (isFocused) 1f else 0.5f,
+                        label = "",
+                    )
+                    AsyncImage(
+                        model = channel.cover,
+                        contentDescription = channel.title,
+                        contentScale = ContentScale.Crop,
                         modifier = Modifier
-                            .graphicsLayer { alpha = 0.6f }
-                            .padding(start = 24.dp)
+                            .fillMaxSize()
+                            .graphicsLayer { alpha = contentAlpha }
                     )
-                    Text(
-                        text = channel.title,
-                        style = MaterialTheme.typography.headlineSmall,
-                        modifier = Modifier.padding(
-                            start = 24.dp,
-                            end = 24.dp,
-                            bottom = 24.dp
-                        ),
-                        // TODO: Remove this when CardContent is not overriding contentColor anymore
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+                },
+                title = {
+                    Column {
+                        Text(
+                            text = channel.category,
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Normal
+                            ),
+                            modifier = Modifier
+                                .graphicsLayer { alpha = 0.6f }
+                                .padding(start = 24.dp)
+                        )
+                        Text(
+                            text = channel.title,
+                            style = MaterialTheme.typography.headlineSmall,
+                            modifier = Modifier.padding(
+                                start = 24.dp,
+                                end = 24.dp,
+                                bottom = 24.dp
+                            ),
+                            // TODO: Remove this when CardContent is not overriding contentColor anymore
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                 }
-            }
-        )
+            )
+        }
     }
 }

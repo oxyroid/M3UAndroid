@@ -137,6 +137,12 @@ class ForyouViewModel @Inject constructor(
         }
     }
 
+    fun onUpdatePlaylistTitle(url: String, title: String) {
+        viewModelScope.launch {
+            playlistRepository.onUpdatePlaylistTitle(url, title)
+        }
+    }
+
     val series = MutableStateFlow<Channel?>(null)
     val seriesReplay = MutableStateFlow(0)
     val episodes: StateFlow<Resource<List<XtreamChannelInfo.Episode>>> = series

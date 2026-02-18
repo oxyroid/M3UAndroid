@@ -10,6 +10,8 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -22,7 +24,8 @@ import com.m3u.tv.screens.dashboard.rememberChildPadding
 
 @Composable
 fun PlaylistScreen(
-    onChannelClick: (channel: Channel) -> Unit,
+    playlistTabFocusRequester: FocusRequester?,
+    onChannelLongClick: (channel: Channel) -> Unit,
     onScroll: (isTopBarVisible: Boolean) -> Unit,
     isTopBarVisible: Boolean,
     viewModel: PlaylistViewModel = hiltViewModel(),
@@ -31,22 +34,16 @@ fun PlaylistScreen(
     val playlistUrl by viewModel.playlistUrl.collectAsStateWithLifecycle()
     val channels by viewModel.channels.collectAsStateWithLifecycle()
 
-    // Fix 2: gate auto-refresh with the 6h timestamp, same as smartphone
-    LaunchedEffect(preferences.autoRefreshChannels, playlistUrl) {
-        if (playlistUrl.isNotEmpty() && preferences.autoRefreshChannels) {
-            viewModel.refresh()
-        }
-    }
-
     // Fix 1A: collect all paging flows here in composable scope, not inside LazyListScope
     val pagingChannels: List<Pair<PlaylistViewModel.CategoryWithChannels, LazyPagingItems<Channel>>> =
         channels.map { it to it.channels.collectAsLazyPagingItems() }
 
     Catalog(
         channels = pagingChannels,
-        onChannelClick = onChannelClick,
+        onChannelLongClick = onChannelLongClick,
         onScroll = onScroll,
         isTopBarVisible = isTopBarVisible,
+        playlistTabFocusRequester = playlistTabFocusRequester,
         modifier = Modifier.fillMaxSize(),
     )
 }
@@ -54,9 +51,10 @@ fun PlaylistScreen(
 @Composable
 private fun Catalog(
     channels: List<Pair<PlaylistViewModel.CategoryWithChannels, LazyPagingItems<Channel>>>,
-    onChannelClick: (channel: Channel) -> Unit,
+    onChannelLongClick: (channel: Channel) -> Unit,
     onScroll: (isTopBarVisible: Boolean) -> Unit,
     isTopBarVisible: Boolean,
+    playlistTabFocusRequester: FocusRequester?,
     modifier: Modifier = Modifier,
 ) {
     val preferences = hiltPreferences()
@@ -77,13 +75,21 @@ private fun Catalog(
         if (isTopBarVisible) lazyListState.animateScrollToItem(0)
     }
     LazyColumn(
-        modifier = modifier,
+        modifier = modifier.then(
+            if (playlistTabFocusRequester != null) {
+                Modifier.focusProperties {
+                    up = playlistTabFocusRequester
+                }
+            } else {
+                Modifier
+            }
+        ),
         state = lazyListState,
         contentPadding = PaddingValues(top = childPadding.top, bottom = 104.dp)
     ) {
         channelGallery(
             channels = channels,
-            onChannelClick = onChannelClick,
+            onChannelLongClick = onChannelLongClick,
             startPadding = childPadding.start,
             endPadding = childPadding.end,
             itemWidth = itemWidth,
