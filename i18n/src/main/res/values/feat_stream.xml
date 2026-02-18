@@ -20,6 +20,8 @@
 
     <string name="feat_channel_dialog_dlna_devices">DLNA Devices</string>
     <string name="feat_channel_dialog_choose_tracks">Choose Tracks</string>
+    <string name="feat_channel_dialog_choose_tracks_description">Select video quality, audio track, or subtitles from the stream.</string>
+    <string name="feat_channel_dialog_close">Close</string>
 
     <string name="feat_channel_open_in_external_app">open in external app</string>
 </resources>

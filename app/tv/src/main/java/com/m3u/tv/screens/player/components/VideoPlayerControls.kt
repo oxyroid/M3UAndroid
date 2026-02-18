@@ -28,6 +28,7 @@ fun VideoPlayerControls(
     onShowControls: () -> Unit = {},
     onFavourite: () -> Unit = {},
     onEnterPip: () -> Unit = {},
+    onSettingsClick: () -> Unit = {},
 ) {
     VideoPlayerMainFrame(
         mediaTitle = {
@@ -71,7 +72,8 @@ fun VideoPlayerControls(
                     icon = Icons.Default.Settings,
                     isPlaying = isPlaying,
                     contentDescription = "VideoPlayerControlSettingsButton",
-                    onShowControls = onShowControls
+                    onShowControls = onShowControls,
+                    onClick = onSettingsClick
                 )
                 VideoPlayerControlsIcon(
                     modifier = Modifier.padding(start = 12.dp),

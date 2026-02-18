@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -29,6 +30,7 @@ import com.m3u.core.util.basic.rational
 import com.m3u.data.database.model.Channel
 import com.m3u.tv.screens.player.components.VideoPlayerControls
 import com.m3u.tv.screens.player.components.VideoPlayerOverlay
+import com.m3u.tv.screens.player.components.VideoPlayerTrackSelectionDialog
 import com.m3u.tv.screens.player.components.VideoPlayerPulse
 import com.m3u.tv.screens.player.components.VideoPlayerPulse.Type.BACK
 import com.m3u.tv.screens.player.components.VideoPlayerPulse.Type.FORWARD
@@ -75,6 +77,7 @@ fun PlayerScreen(
             VideoPlayerScreenContent(
                 channel = channel,
                 playerState = playerState,
+                viewModel = viewModel,
                 onBackPressed = onBackPressed,
                 onFavourite = viewModel::onFavourite,
                 onEnterPip = viewModel::enterPip,
@@ -87,11 +90,15 @@ fun PlayerScreen(
 fun VideoPlayerScreenContent(
     channel: Channel,
     playerState: PlayerState,
+    viewModel: ChannelViewModel,
     onBackPressed: () -> Unit,
     onFavourite: () -> Unit,
     onEnterPip: () -> Unit,
 ) {
     val player = playerState.player
+    var showTrackSelection by remember { mutableStateOf(false) }
+    val tracks by viewModel.tracks.collectAsStateWithLifecycle(emptyMap())
+    val selectedFormats by viewModel.currentTracks.collectAsStateWithLifecycle(emptyMap())
     if (player != null) {
         val videoPlayerState = rememberVideoPlayerState(
             player = player,
@@ -152,10 +159,20 @@ fun VideoPlayerScreenContent(
                         onPlayPauseToggle = videoPlayerState::togglePlayPause,
                         onFavourite = onFavourite,
                         onEnterPip = onEnterPip,
+                        onSettingsClick = { showTrackSelection = true },
                     )
                 }
             )
         }
+
+        VideoPlayerTrackSelectionDialog(
+            visible = showTrackSelection,
+            tracks = tracks,
+            selectedFormats = selectedFormats,
+            onDismiss = { showTrackSelection = false },
+            onChooseTrack = { type, format -> viewModel.chooseTrack(type, format) },
+            onClearTrack = { type -> viewModel.clearTrack(type) },
+        )
     }
 }
 
