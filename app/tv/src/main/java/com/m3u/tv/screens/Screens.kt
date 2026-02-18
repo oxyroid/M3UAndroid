@@ -21,6 +21,10 @@ enum class Screens(
         title = R.string.ui_destination_foryou,
         isTabItem = true
     ),
+    Favourite(
+        title = R.string.ui_destination_favourite,
+        isTabItem = true
+    ),
     Playlist(
         title = R.string.ui_destination_playlist,
         isTabItem = true,

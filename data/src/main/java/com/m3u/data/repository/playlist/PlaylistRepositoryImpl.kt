@@ -125,11 +125,13 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             }
         }
 
+        val now = System.currentTimeMillis()
         val playlist = playlistDao.get(actualUrl)?.copy(
             title = title,
             // maybe be saved as epg or any other sources.
-            source = DataSource.M3U
-        ) ?: Playlist(title, actualUrl, source = DataSource.M3U)
+            source = DataSource.M3U,
+            lastRefreshedAt = now
+        ) ?: Playlist(title, actualUrl, source = DataSource.M3U, lastRefreshedAt = now)
         playlistDao.insertOrReplace(playlist)
 
         val cache = createCoroutineCache<M3UData>(BUFFER_M3U_CAPACITY) { all ->
@@ -185,6 +187,8 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         val liveContainerExtension = if ("ts" in allowedOutputFormats) "ts"
         else allowedOutputFormats.firstOrNull() ?: "ts"
 
+        val now = System.currentTimeMillis()
+
         val livePlaylist = XtreamInput.encodeToPlaylistUrl(
             input = input.copy(type = DataSource.Xtream.TYPE_LIVE),
             serverProtocol = serverProtocol,
@@ -193,12 +197,14 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             playlistDao.get(url)
                 ?.takeIf { it.source == DataSource.Xtream }
                 ?.copy(
-                    title = title
+                    title = title,
+                    lastRefreshedAt = now
                 )
                 ?: Playlist(
                     title = title,
                     url = url,
-                    source = DataSource.Xtream
+                    source = DataSource.Xtream,
+                    lastRefreshedAt = now
                 )
         }
         val vodPlaylist = XtreamInput.encodeToPlaylistUrl(
@@ -209,12 +215,14 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             playlistDao.get(url)
                 ?.takeIf { it.source == DataSource.Xtream }
                 ?.copy(
-                    title = title
+                    title = title,
+                    lastRefreshedAt = now
                 )
                 ?: Playlist(
                     title = title,
                     url = url,
-                    source = DataSource.Xtream
+                    source = DataSource.Xtream,
+                    lastRefreshedAt = now
                 )
         }
         val seriesPlaylist = XtreamInput.encodeToPlaylistUrl(
@@ -225,12 +233,14 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             playlistDao.get(url)
                 ?.takeIf { it.source == DataSource.Xtream }
                 ?.copy(
-                    title = title
+                    title = title,
+                    lastRefreshedAt = now
                 )
                 ?: Playlist(
                     title = title,
                     url = url,
-                    source = DataSource.Xtream
+                    source = DataSource.Xtream,
+                    lastRefreshedAt = now
                 )
         }
 
@@ -355,7 +365,8 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                 Playlist(
                     title = title,
                     url = epg,
-                    source = DataSource.EPG
+                    source = DataSource.EPG,
+                    lastRefreshedAt = System.currentTimeMillis()
                 )
             )
         }

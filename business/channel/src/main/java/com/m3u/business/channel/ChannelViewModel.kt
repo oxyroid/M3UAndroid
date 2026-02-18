@@ -396,6 +396,17 @@ class ChannelViewModel @Inject constructor(
         }
     }
 
+    private val _enterPipMode = MutableStateFlow(false)
+    val enterPipMode = _enterPipMode.asStateFlow()
+
+    fun enterPip() {
+        _enterPipMode.value = true
+    }
+
+    fun onPipEntered() {
+        _enterPipMode.value = false
+    }
+
     companion object {
         private const val ACTION_SET_AV_TRANSPORT_URI = "SetAVTransportURI"
         private const val ACTION_PLAY = "Play"

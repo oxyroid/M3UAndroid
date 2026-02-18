@@ -80,4 +80,24 @@ internal object DatabaseMigrations {
     )
     class AutoMigrate19To20: AutoMigrationSpec
 
+    val MIGRATION_20_21 = object : Migration(20, 21) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "ALTER TABLE playlists ADD COLUMN last_refreshed_at INTEGER NOT NULL DEFAULT 0"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS index_streams_playlist_url_group " +
+                    "ON streams(playlist_url, \"group\")"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS index_streams_playlist_url_title " +
+                    "ON streams(playlist_url, title)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS index_streams_playlist_url_hidden " +
+                    "ON streams(playlist_url, hidden)"
+            )
+        }
+    }
+
 }

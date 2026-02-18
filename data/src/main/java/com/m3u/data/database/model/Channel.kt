@@ -3,6 +3,7 @@ package com.m3u.data.database.model
 import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.m3u.annotation.Exclude
 import com.m3u.annotation.Likable
@@ -14,7 +15,12 @@ import io.ktor.http.path
 import kotlinx.serialization.Serializable
 
 @Entity(
-    tableName = "streams"
+    tableName = "streams",
+    indices = [
+        Index(value = ["playlist_url", "group"]),
+        Index(value = ["playlist_url", "title"]),
+        Index(value = ["playlist_url", "hidden"])
+    ]
 )
 @Immutable
 @Serializable

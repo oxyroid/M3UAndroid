@@ -1,0 +1,16 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /Users/gaetan/Projects/M3UAndroid/data/codec/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest17775312072055039666.xml:2:13-83
+INJECTED from /Users/gaetan/Projects/M3UAndroid/data/codec/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest17775312072055039666.xml:2:13-83
+	package
+		INJECTED from /Users/gaetan/Projects/M3UAndroid/data/codec/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest17775312072055039666.xml
+	xmlns:android
+		ADDED from /Users/gaetan/Projects/M3UAndroid/data/codec/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest17775312072055039666.xml:2:23-81
+uses-sdk
+INJECTED from /Users/gaetan/Projects/M3UAndroid/data/codec/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest17775312072055039666.xml reason: use-sdk injection requested
+INJECTED from /Users/gaetan/Projects/M3UAndroid/data/codec/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest17775312072055039666.xml
+INJECTED from /Users/gaetan/Projects/M3UAndroid/data/codec/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest17775312072055039666.xml
+	android:targetSdkVersion
+		INJECTED from /Users/gaetan/Projects/M3UAndroid/data/codec/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest17775312072055039666.xml
+	android:minSdkVersion
+		INJECTED from /Users/gaetan/Projects/M3UAndroid/data/codec/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest17775312072055039666.xml

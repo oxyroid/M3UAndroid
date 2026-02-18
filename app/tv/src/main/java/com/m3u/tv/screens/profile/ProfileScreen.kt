@@ -162,7 +162,7 @@ fun ProfileScreen(
 //                    )
 //                }
                 composable(ProfileScreens.Optional()) {
-
+                    OptionalSection()
                 }
                 composable(ProfileScreens.HelpAndSupport()) {
                     AboutSection()

@@ -27,7 +27,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.LazyPagingItems
 import androidx.tv.material3.Border
 import androidx.tv.material3.CardDefaults
 import androidx.tv.material3.CompactCard
@@ -38,14 +38,17 @@ import com.m3u.business.playlist.PlaylistViewModel
 import com.m3u.data.database.model.Channel
 import com.m3u.tv.theme.JetStreamBorderWidth
 
+/** Item widths for playlist item size: Large, Medium, Small, Compact */
+private val PLAYLIST_ITEM_WIDTHS = listOf(432.dp, 340.dp, 260.dp, 200.dp)
+
 fun LazyListScope.channelGallery(
-    channels: List<PlaylistViewModel.CategoryWithChannels>,
+    channels: List<Pair<PlaylistViewModel.CategoryWithChannels, LazyPagingItems<Channel>>>,
     startPadding: Dp,
     endPadding: Dp,
+    itemWidth: Dp,
     onChannelClick: (channel: Channel) -> Unit
 ) {
-    items(channels) { (category, channels) ->
-        val pagingChannels = channels.collectAsLazyPagingItems()
+    items(channels, key = { (cwc, _) -> cwc.category }) { (_, pagingChannels) ->
         LazyRow(
             modifier = Modifier.focusRestorer(),
             contentPadding = PaddingValues(start = startPadding, end = endPadding),
@@ -54,7 +57,7 @@ fun LazyListScope.channelGallery(
                 val channel = pagingChannels[it]
                 if (channel != null) {
                     ChannelGalleryItem(
-                        itemWidth = 432.dp,
+                        itemWidth = itemWidth,
                         onChannelClick = onChannelClick,
                         channel = channel,
                     )
@@ -64,8 +67,35 @@ fun LazyListScope.channelGallery(
     }
 }
 
+fun playlistItemWidthForSize(size: Int): Dp =
+    PLAYLIST_ITEM_WIDTHS[(size).coerceIn(0, PLAYLIST_ITEM_WIDTHS.lastIndex)]
+
+/** Single row of channels (e.g. for Favourites) using the same card as playlist gallery. */
+fun LazyListScope.favouriteChannelGallery(
+    channels: List<Channel>,
+    startPadding: Dp,
+    endPadding: Dp,
+    itemWidth: Dp,
+    onChannelClick: (channel: Channel) -> Unit
+) {
+    item {
+        LazyRow(
+            modifier = Modifier.focusRestorer(),
+            contentPadding = PaddingValues(start = startPadding, end = endPadding),
+        ) {
+            items(channels, key = { it.id }) { channel ->
+                ChannelGalleryItem(
+                    itemWidth = itemWidth,
+                    onChannelClick = onChannelClick,
+                    channel = channel,
+                )
+            }
+        }
+    }
+}
+
 @Composable
-private fun ChannelGalleryItem(
+internal fun ChannelGalleryItem(
     itemWidth: Dp,
     channel: Channel,
     modifier: Modifier = Modifier,

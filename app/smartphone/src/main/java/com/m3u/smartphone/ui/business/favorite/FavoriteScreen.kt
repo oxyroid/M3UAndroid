@@ -96,7 +96,7 @@ fun FavouriteRoute(
 
     FavoriteScreen(
         contentPadding = contentPadding,
-        rowCount = preferences.rowCount,
+        rowCount = 2 + preferences.playlistItemSize,
         channels = channels,
         zapping = zapping,
         recently = sort == Sort.RECENTLY,
@@ -120,13 +120,11 @@ fun FavouriteRoute(
             .fillMaxSize()
             .thenIf(preferences.godMode) {
                 Modifier.interceptVolumeEvent { event ->
-                    preferences.rowCount = when (event) {
+                    preferences.playlistItemSize = when (event) {
                         KeyEvent.KEYCODE_VOLUME_UP ->
-                            (preferences.rowCount - 1).coerceAtLeast(1)
-
+                            (preferences.playlistItemSize - 1).coerceAtLeast(0)
                         KeyEvent.KEYCODE_VOLUME_DOWN ->
-                            (preferences.rowCount + 1).coerceAtMost(2)
-
+                            (preferences.playlistItemSize + 1).coerceAtMost(3)
                         else -> return@interceptVolumeEvent
                     }
                 }

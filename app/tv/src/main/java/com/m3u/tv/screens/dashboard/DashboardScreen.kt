@@ -40,8 +40,10 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.m3u.business.favorite.FavouriteViewModel
 import com.m3u.data.database.model.Channel
 import com.m3u.tv.screens.Screens
+import com.m3u.tv.screens.favourite.FavouriteScreen
 import com.m3u.tv.screens.home.HomeScreen
 import com.m3u.tv.screens.playlist.PlaylistScreen
 import com.m3u.tv.screens.profile.ProfileScreen
@@ -222,6 +224,13 @@ private fun Body(
                     )
                 },
                 navigateToChannel = openVideoPlayer,
+                onScroll = updateTopBarVisibility,
+                isTopBarVisible = isTopBarVisible
+            )
+        }
+        composable(Screens.Favourite()) {
+            FavouriteScreen(
+                onChannelClick = openVideoPlayer,
                 onScroll = updateTopBarVisibility,
                 isTopBarVisible = isTopBarVisible
             )

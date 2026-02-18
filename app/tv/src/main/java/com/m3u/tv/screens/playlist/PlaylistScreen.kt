@@ -13,7 +13,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.m3u.business.playlist.PlaylistViewModel
+import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.database.model.Channel
 import com.m3u.tv.screens.dashboard.rememberChildPadding
 
@@ -24,10 +27,23 @@ fun PlaylistScreen(
     isTopBarVisible: Boolean,
     viewModel: PlaylistViewModel = hiltViewModel(),
 ) {
+    val preferences = hiltPreferences()
+    val playlistUrl by viewModel.playlistUrl.collectAsStateWithLifecycle()
     val channels by viewModel.channels.collectAsStateWithLifecycle()
+
+    // Fix 2: gate auto-refresh with the 6h timestamp, same as smartphone
+    LaunchedEffect(preferences.autoRefreshChannels, playlistUrl) {
+        if (playlistUrl.isNotEmpty() && preferences.autoRefreshChannels) {
+            viewModel.refresh()
+        }
+    }
+
+    // Fix 1A: collect all paging flows here in composable scope, not inside LazyListScope
+    val pagingChannels: List<Pair<PlaylistViewModel.CategoryWithChannels, LazyPagingItems<Channel>>> =
+        channels.map { it to it.channels.collectAsLazyPagingItems() }
+
     Catalog(
-        channels = channels,
-        popularFilmsThisWeek = emptyList(),
+        channels = pagingChannels,
         onChannelClick = onChannelClick,
         onScroll = onScroll,
         isTopBarVisible = isTopBarVisible,
@@ -37,14 +53,15 @@ fun PlaylistScreen(
 
 @Composable
 private fun Catalog(
-    channels: List<PlaylistViewModel.CategoryWithChannels>,
-    popularFilmsThisWeek: List<Channel>,
+    channels: List<Pair<PlaylistViewModel.CategoryWithChannels, LazyPagingItems<Channel>>>,
     onChannelClick: (channel: Channel) -> Unit,
     onScroll: (isTopBarVisible: Boolean) -> Unit,
     isTopBarVisible: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val preferences = hiltPreferences()
     val childPadding = rememberChildPadding()
+    val itemWidth = playlistItemWidthForSize(preferences.playlistItemSize)
     val lazyListState = rememberLazyListState()
     val shouldShowTopBar by remember {
         derivedStateOf {
@@ -68,7 +85,8 @@ private fun Catalog(
             channels = channels,
             onChannelClick = onChannelClick,
             startPadding = childPadding.start,
-            endPadding = childPadding.end
+            endPadding = childPadding.end,
+            itemWidth = itemWidth,
         )
     }
 }

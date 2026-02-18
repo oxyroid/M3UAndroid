@@ -103,6 +103,7 @@ import com.m3u.smartphone.ui.material.model.LocalHazeState
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.smartphone.ui.business.playlist.components.ChannelGallery
 import com.m3u.smartphone.ui.business.playlist.components.PlaylistTabRow
+import com.m3u.smartphone.ui.business.playlist.components.SkeletonChannelGrid
 import com.m3u.smartphone.ui.business.playlist.components.rememberBackdropScaffoldState
 import com.m3u.smartphone.ui.material.components.Destination
 import com.m3u.smartphone.ui.material.components.EpisodesBottomSheet
@@ -229,7 +230,7 @@ internal fun PlaylistRoute(
         title = playlist?.title.orEmpty(),
         query = query,
         onQuery = { viewModel.query.value = it },
-        rowCount = preferences.rowCount,
+        rowCount = 2 + preferences.playlistItemSize,
         zapping = zapping,
         categoryWithChannels = channels,
         pinnedCategories = pinnedCategories,
@@ -253,7 +254,7 @@ internal fun PlaylistRoute(
         refreshing = refreshing,
         onRefresh = {
             if (postNotificationPermission == null) {
-                viewModel.refresh()
+                viewModel.refresh(force = true)
                 return@PlaylistScreen
             }
             postNotificationPermission.checkPermissionOrRationale(
@@ -268,7 +269,7 @@ internal fun PlaylistRoute(
                     helper.activityContext.startActivity(intent)
                 },
                 block = {
-                    viewModel.refresh()
+                    viewModel.refresh(force = true)
                 }
             )
         },
@@ -288,13 +289,11 @@ internal fun PlaylistRoute(
             .fillMaxSize()
             .thenIf(preferences.godMode) {
                 Modifier.interceptVolumeEvent { event ->
-                    preferences.rowCount = when (event) {
+                    preferences.playlistItemSize = when (event) {
                         KeyEvent.KEYCODE_VOLUME_UP ->
-                            (preferences.rowCount - 1).coerceAtLeast(1)
-
+                            (preferences.playlistItemSize - 1).coerceAtLeast(0)
                         KeyEvent.KEYCODE_VOLUME_DOWN ->
-                            (preferences.rowCount + 1).coerceAtMost(2)
-
+                            (preferences.playlistItemSize + 1).coerceAtMost(3)
                         else -> return@interceptVolumeEvent
                     }
                 }
@@ -493,6 +492,11 @@ private fun PlaylistScreen(
             }
             BackHandler(isExpanded) { isExpanded = false }
 
+            // Show skeleton when we're waiting for categories to load.
+            // Sort.MIXED intentionally has an empty categories list (it uses a single "all" pager),
+            // so we only show the skeleton in non-MIXED modes.
+            val showSkeleton = sort != Sort.MIXED && categoryWithChannels.isEmpty()
+
             val tabs = @Composable {
                 PlaylistTabRow(
                     selectedCategory = category,
@@ -533,7 +537,12 @@ private fun PlaylistScreen(
             Column(
                 Modifier.background(MaterialTheme.colorScheme.surfaceContainerHighest)
             ) {
-                if (!isExpanded) {
+                if (showSkeleton) {
+                    SkeletonChannelGrid(
+                        rowCount = actualRowCount,
+                        contentPadding = inner,
+                    )
+                } else if (!isExpanded) {
                     AnimatedVisibility(
                         visible = categories.size > 1,
                         enter = fadeIn(animationSpec = tween(400))

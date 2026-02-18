@@ -144,9 +144,15 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5000)
         )
 
-    fun refresh() {
+    private val minRefreshIntervalMs = 6 * 60 * 60 * 1000L // 6 hours
+
+    fun refresh(force: Boolean = false) {
         val url = playlistUrl.value
+        if (url.isEmpty()) return
         viewModelScope.launch {
+            val playlist = playlistRepository.get(url) ?: return@launch
+            val age = System.currentTimeMillis() - playlist.lastRefreshedAt
+            if (!force && age in 0 until minRefreshIntervalMs) return@launch
             playlistRepository.refresh(url)
         }
     }

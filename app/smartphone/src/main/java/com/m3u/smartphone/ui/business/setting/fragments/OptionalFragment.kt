@@ -21,6 +21,7 @@ import androidx.compose.material.icons.rounded.ScreenRotation
 import androidx.compose.material.icons.rounded.SettingsEthernet
 import androidx.compose.material.icons.rounded.SettingsRemote
 import androidx.compose.material.icons.rounded.Sync
+import androidx.compose.material.icons.rounded.ViewModule
 import androidx.compose.material.icons.rounded.Terrain
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Unarchive
@@ -55,6 +56,21 @@ internal fun OptionalFragment(
         modifier = modifier
             .fillMaxSize()
     ) {
+        item {
+            TextPreference(
+                title = stringResource(string.feat_setting_playlist_item_size).title(),
+                icon = Icons.Rounded.ViewModule,
+                trailing = when (preferences.playlistItemSize) {
+                    0 -> stringResource(string.feat_setting_playlist_item_size_large)
+                    1 -> stringResource(string.feat_setting_playlist_item_size_medium)
+                    2 -> stringResource(string.feat_setting_playlist_item_size_small)
+                    else -> stringResource(string.feat_setting_playlist_item_size_compact)
+                }.title(),
+                onClick = {
+                    preferences.playlistItemSize = (preferences.playlistItemSize + 1) % 4
+                }
+            )
+        }
         item {
             SwitchSharedPreference(
                 title = string.feat_setting_tunneling,

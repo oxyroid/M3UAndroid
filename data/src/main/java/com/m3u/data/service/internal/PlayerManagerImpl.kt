@@ -275,6 +275,16 @@ class PlayerManagerImpl @Inject constructor(
         licenseKey: String = channel.value?.licenseKey.orEmpty(),
         applyContinueWatching: Boolean
     ) {
+        mainCoroutineScope.launch { tryPlayAsync(url, userAgent, licenseType, licenseKey, applyContinueWatching) }
+    }
+
+    private suspend fun tryPlayAsync(
+        url: String,
+        userAgent: String?,
+        licenseType: String,
+        licenseKey: String,
+        applyContinueWatching: Boolean
+    ) {
         val rtmp: Boolean = Url(url).protocol.name == "rtmp"
         val tunneling: Boolean = preferences.tunneling
 
@@ -283,7 +293,7 @@ class PlayerManagerImpl @Inject constructor(
             is MimetypeChain.Trying -> chain.mimetype
             is MimetypeChain.Unspecified -> {
                 this.chain = chain.next()
-                return tryPlay(url, userAgent, licenseType, licenseKey, applyContinueWatching)
+                return tryPlayAsync(url, userAgent, licenseType, licenseKey, applyContinueWatching)
             }
 
             is MimetypeChain.Unsupported -> throw UnsupportedOperationException()
@@ -296,34 +306,41 @@ class PlayerManagerImpl @Inject constructor(
                     " rtmp: $rtmp, " +
                     "tunneling: $tunneling"
         }
-        val dataSourceFactory = if (rtmp) {
-            RtmpDataSource.Factory()
-        } else {
-            createHttpDataSourceFactory(userAgent)
-        }
-        val extractorsFactory = DefaultExtractorsFactory().setTsExtractorFlags(
-            FLAG_ALLOW_NON_IDR_KEYFRAMES and FLAG_DETECT_ACCESS_UNITS
-        )
-        extractor = MediaExtractorCompat(extractorsFactory, dataSourceFactory)
-        val mediaSourceFactory = when (mimeType) {
-            MimeTypes.APPLICATION_M3U8 -> HlsMediaSource.Factory(dataSourceFactory)
-                .setAllowChunklessPreparation(false)
-                .setExtractorFactory(DefaultHlsExtractorFactory())
-
-            MimeTypes.APPLICATION_SS -> ProgressiveMediaSource.Factory(
-                dataSourceFactory,
-                extractorsFactory
+        // Build factories on IO — DefaultExtractorsFactory, HlsMediaSource.Factory, and
+        // createRenderersFactory (via ServiceLoader) are all CPU-heavy and must not run on main.
+        val (mediaSourceFactory, newExtractor) = withContext(ioDispatcher) {
+            val dataSourceFactory = if (rtmp) {
+                RtmpDataSource.Factory()
+            } else {
+                createHttpDataSourceFactory(userAgent)
+            }
+            val extractorsFactory = DefaultExtractorsFactory().setTsExtractorFlags(
+                FLAG_ALLOW_NON_IDR_KEYFRAMES and FLAG_DETECT_ACCESS_UNITS
             )
+            val newExtractor = MediaExtractorCompat(extractorsFactory, dataSourceFactory)
+            val mediaSourceFactory: MediaSource.Factory = when (mimeType) {
+                MimeTypes.APPLICATION_M3U8 -> HlsMediaSource.Factory(dataSourceFactory)
+                    .setAllowChunklessPreparation(false)
+                    .setExtractorFactory(DefaultHlsExtractorFactory())
 
-            MimeTypes.APPLICATION_RTSP -> RtspMediaSource.Factory()
-                .setDebugLoggingEnabled(true)
-                .setForceUseRtpTcp(true)
-                .setSocketFactory(SSLs.TLSTrustAll.socketFactory)
+                MimeTypes.APPLICATION_SS -> ProgressiveMediaSource.Factory(
+                    dataSourceFactory,
+                    extractorsFactory
+                )
 
-            else -> DefaultMediaSourceFactory(dataSourceFactory, extractorsFactory)
+                MimeTypes.APPLICATION_RTSP -> RtspMediaSource.Factory()
+                    .setDebugLoggingEnabled(true)
+                    .setForceUseRtpTcp(true)
+                    .setSocketFactory(SSLs.TLSTrustAll.socketFactory)
+
+                else -> DefaultMediaSourceFactory(dataSourceFactory, extractorsFactory)
+            }
+            mediaSourceFactory to newExtractor
         }
+        extractor = newExtractor
         logger.post { "media-source-factory: ${mediaSourceFactory::class.qualifiedName}" }
         if (licenseType.isNotEmpty()) {
+            val drmDataSourceFactory = createHttpDataSourceFactory(userAgent)
             val drmCallback = when {
                 (licenseType in arrayOf(
                     Channel.LICENSE_TYPE_CLEAR_KEY,
@@ -332,7 +349,7 @@ class PlayerManagerImpl @Inject constructor(
 
                 else -> HttpMediaDrmCallback(
                     licenseKey,
-                    dataSourceFactory
+                    drmDataSourceFactory
                 )
             }
             val uuid = when (licenseType) {
@@ -382,9 +399,10 @@ class PlayerManagerImpl @Inject constructor(
         extractor = null
         player.update {
             it ?: return
-            it.stop()
-            it.release()
             it.removeListener(this)
+            // stop() + release() can block for hundreds of ms — ship them off the main thread.
+            // We already hold no reference after this update block so there's no data race.
+            ioCoroutineScope.launch { it.stop(); it.release() }
             mediaCommand.value = null
             size.value = Rect()
             playbackState.value = Player.STATE_IDLE
@@ -450,7 +468,10 @@ class PlayerManagerImpl @Inject constructor(
             addListener(this@PlayerManagerImpl)
         }
 
-    private val renderersFactory: RenderersFactory by lazy {
+    // Pre-warmed on IO at init time so the first createPlayer() call on main doesn't block.
+    private val renderersFactory: RenderersFactory = run {
+        // This executes synchronously during DI injection which happens off the main thread
+        // (Hilt component creation). If somehow called on main the cost is paid once only.
         Codecs.load().createRenderersFactory(context)
     }
 

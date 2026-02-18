@@ -105,7 +105,7 @@ fun ForyouRoute(
         subscribingPlaylistUrls = subscribingPlaylistUrls,
         refreshingEpgUrls = refreshingEpgUrls,
         specs = specs,
-        rowCount = preferences.rowCount,
+        rowCount = 2 + preferences.playlistItemSize,
         contentPadding = contentPadding,
         navigateToPlaylist = navigateToPlaylist,
         onPlayChannel = { channel ->
@@ -129,10 +129,11 @@ fun ForyouRoute(
             .fillMaxSize()
             .thenIf(preferences.godMode) {
                 Modifier.interceptVolumeEvent { event ->
-                    preferences.rowCount = when (event) {
-                        KeyEvent.KEYCODE_VOLUME_UP -> (preferences.rowCount - 1).coerceAtLeast(1)
-                        KeyEvent.KEYCODE_VOLUME_DOWN -> (preferences.rowCount + 1).coerceAtMost(2)
-
+                    preferences.playlistItemSize = when (event) {
+                        KeyEvent.KEYCODE_VOLUME_UP ->
+                            (preferences.playlistItemSize - 1).coerceAtLeast(0)
+                        KeyEvent.KEYCODE_VOLUME_DOWN ->
+                            (preferences.playlistItemSize + 1).coerceAtMost(3)
                         else -> return@interceptVolumeEvent
                     }
                 }

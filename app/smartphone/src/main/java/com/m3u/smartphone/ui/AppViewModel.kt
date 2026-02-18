@@ -19,6 +19,7 @@ import com.m3u.data.repository.tv.TvRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.data.service.Messager
+import com.m3u.data.worker.M3URefreshWorker
 import com.m3u.data.worker.SubscriptionWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -51,6 +52,7 @@ class AppViewModel @Inject constructor(
 ) : ViewModel() {
     init {
         refreshProgrammes()
+        M3URefreshWorker.schedule(workManager)
     }
 
     val broadcastCodeOnTv: StateFlow<String?> = tvRepository
@@ -156,13 +158,18 @@ class AppViewModel @Inject constructor(
 
     private fun refreshProgrammes() {
         viewModelScope.launch {
+            val now = System.currentTimeMillis()
+            val minAgeMs = M3URefreshWorker.REFRESH_INTERVAL_HOURS * 60 * 60 * 1000L
             val playlists = playlistRepository.getAllAutoRefresh()
             playlists.forEach { playlist ->
-                SubscriptionWorker.epg(
-                    workManager = workManager,
-                    playlistUrl = playlist.url,
-                    ignoreCache = true
-                )
+                val isStale = (now - playlist.lastRefreshedAt) >= minAgeMs
+                if (isStale) {
+                    SubscriptionWorker.epg(
+                        workManager = workManager,
+                        playlistUrl = playlist.url,
+                        ignoreCache = true
+                    )
+                }
             }
         }
     }

@@ -115,6 +115,9 @@ class Preferences @Inject constructor(
     var compactDimension by
     sharedPreferences.booleanAsState(DEFAULT_COMPACT_DIMENSION, COMPACT_DIMENSION)
 
+    /** 0=Large, 1=Medium, 2=Small, 3=Compact — controls playlist/channel item display size */
+    var playlistItemSize: Int by
+    sharedPreferences.intAsState(DEFAULT_PLAYLIST_ITEM_SIZE, PLAYLIST_ITEM_SIZE)
 
     companion object {
         private const val SHARED_SETTINGS = "shared_settings"
@@ -160,6 +163,9 @@ class Preferences @Inject constructor(
         const val DEFAULT_COLORFUL_BACKGROUND = false
         const val DEFAULT_COMPACT_DIMENSION = false
 
+        /** 0=Large, 1=Medium, 2=Small, 3=Compact */
+        const val DEFAULT_PLAYLIST_ITEM_SIZE = 0
+
         const val PLAYLIST_STRATEGY = "playlist-strategy"
         const val ROW_COUNT = "rowCount"
 
@@ -194,5 +200,6 @@ class Preferences @Inject constructor(
 
         const val COLORFUL_BACKGROUND = "colorful-background"
         const val COMPACT_DIMENSION = "compact-dimension"
+        const val PLAYLIST_ITEM_SIZE = "playlist-item-size"
     }
 }

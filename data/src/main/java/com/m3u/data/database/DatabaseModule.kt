@@ -43,6 +43,7 @@ internal object DatabaseModule {
         .addMigrations(DatabaseMigrations.MIGRATION_2_3)
         .addMigrations(DatabaseMigrations.MIGRATION_7_8)
         .addMigrations(DatabaseMigrations.MIGRATION_10_11)
+        .addMigrations(DatabaseMigrations.MIGRATION_20_21)
         .build()
 
     @Provides
