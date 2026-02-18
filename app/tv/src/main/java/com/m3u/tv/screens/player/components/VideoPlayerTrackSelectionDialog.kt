@@ -11,6 +11,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.C
 import androidx.media3.common.Format
+import androidx.media3.common.MimeTypes
 import androidx.tv.material3.ListItemDefaults
 import androidx.tv.material3.LocalContentColor
 import androidx.tv.material3.MaterialTheme
@@ -33,12 +34,27 @@ fun VideoPlayerTrackSelectionDialog(
     onDismiss: () -> Unit,
     onChooseTrack: (type: @C.TrackType Int, format: Format) -> Unit,
     onClearTrack: (type: @C.TrackType Int) -> Unit,
+    subtitleOnly: Boolean = false,
 ) {
     if (!visible) return
+    val sections = if (subtitleOnly) {
+        listOf(C.TRACK_TYPE_TEXT to stringResource(R.string.feat_channel_dialog_subtitles_title))
+    } else {
+        listOf(
+            C.TRACK_TYPE_VIDEO to "Video quality",
+            C.TRACK_TYPE_AUDIO to "Audio track",
+            C.TRACK_TYPE_TEXT to "Subtitles",
+        )
+    }
     StandardDialog(
         showDialog = true,
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.feat_channel_dialog_choose_tracks)) },
+        title = {
+            Text(
+                if (subtitleOnly) stringResource(R.string.feat_channel_dialog_subtitles_title)
+                else stringResource(R.string.feat_channel_dialog_choose_tracks)
+            )
+        },
         textContentColor = MaterialTheme.colorScheme.onSurface,
         text = {
             Column(
@@ -46,29 +62,35 @@ fun VideoPlayerTrackSelectionDialog(
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
             ) {
-                Text(
-                    text = stringResource(R.string.feat_channel_dialog_choose_tracks_description),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 12.dp),
-                )
-                listOf(
-                    C.TRACK_TYPE_VIDEO to "Video quality",
-                    C.TRACK_TYPE_AUDIO to "Audio track",
-                    C.TRACK_TYPE_TEXT to "Subtitles",
-                ).forEach { (type, sectionLabel) ->
-                    val formatList = tracks[type].orEmpty()
-                    if (formatList.isEmpty()) return@forEach
+                if (!subtitleOnly) {
                     Text(
-                        text = sectionLabel,
-                        style = MaterialTheme.typography.titleSmall,
+                        text = stringResource(R.string.feat_channel_dialog_choose_tracks_description),
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 12.dp, bottom = 4.dp),
+                            .padding(bottom = 12.dp),
                     )
+                }
+                sections.forEach { (type, sectionLabel) ->
+                    val formatList = tracks[type].orEmpty().let { list ->
+                        // Exclude embedded closed captions (CEA-608/708); show only selectable subtitle renditions (e.g. WebVTT).
+                        if (type == C.TRACK_TYPE_TEXT) list.filter { format ->
+                            format.sampleMimeType != MimeTypes.APPLICATION_CEA608 &&
+                                format.sampleMimeType != MimeTypes.APPLICATION_CEA708
+                        } else list
+                    }
+                    if (formatList.isEmpty()) return@forEach
+                    if (!subtitleOnly) {
+                        Text(
+                            text = sectionLabel,
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 12.dp, bottom = 4.dp),
+                        )
+                    }
                     val selectedFormat = selectedFormats[type]
                     formatList.forEach { format ->
                         val selected = format.id == selectedFormat?.id
@@ -131,10 +153,15 @@ private fun Format.displayText(type: @C.TrackType Int): String = when (type) {
         add("$sampleRate Hz")
         sampleMimeType?.takeIf { it.isNotBlank() }?.let { add(it) }
     }.joinToString(separator = " • ").ifEmpty { "$sampleRate Hz ${sampleMimeType.orEmpty()}" }
-    C.TRACK_TYPE_TEXT -> buildList {
-        label?.takeIf { it.isNotBlank() }?.let { add(it) }
-        language?.takeIf { it.isNotBlank() }?.let { add(it) }
-        sampleMimeType?.takeIf { it.isNotBlank() }?.let { add(it) }
-    }.joinToString(separator = " • ").ifEmpty { sampleMimeType.orEmpty() }
+    C.TRACK_TYPE_TEXT -> {
+        val name = label?.takeIf { it.isNotBlank() }
+        val lang = language?.takeIf { it.isNotBlank() }
+        when {
+            name != null && lang != null -> "$name - $lang"
+            name != null -> name
+            lang != null -> lang
+            else -> sampleMimeType.orEmpty()
+        }
+    }
     else -> sampleMimeType.orEmpty()
 }

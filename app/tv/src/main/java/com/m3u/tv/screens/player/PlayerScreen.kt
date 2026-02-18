@@ -97,6 +97,7 @@ fun VideoPlayerScreenContent(
 ) {
     val player = playerState.player
     var showTrackSelection by remember { mutableStateOf(false) }
+    var showSubtitlesModal by remember { mutableStateOf(false) }
     val tracks by viewModel.tracks.collectAsStateWithLifecycle(emptyMap())
     val selectedFormats by viewModel.currentTracks.collectAsStateWithLifecycle(emptyMap())
     if (player != null) {
@@ -159,19 +160,21 @@ fun VideoPlayerScreenContent(
                         onPlayPauseToggle = videoPlayerState::togglePlayPause,
                         onFavourite = onFavourite,
                         onEnterPip = onEnterPip,
-                        onSettingsClick = { showTrackSelection = true },
+                        onSettingsClick = { showSubtitlesModal = false; showTrackSelection = true },
+                        onClosedCaptionsClick = { showTrackSelection = false; showSubtitlesModal = true },
                     )
                 }
             )
         }
 
         VideoPlayerTrackSelectionDialog(
-            visible = showTrackSelection,
+            visible = showTrackSelection || showSubtitlesModal,
             tracks = tracks,
             selectedFormats = selectedFormats,
-            onDismiss = { showTrackSelection = false },
+            onDismiss = { showTrackSelection = false; showSubtitlesModal = false },
             onChooseTrack = { type, format -> viewModel.chooseTrack(type, format) },
             onClearTrack = { type -> viewModel.clearTrack(type) },
+            subtitleOnly = showSubtitlesModal,
         )
     }
 }

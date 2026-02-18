@@ -11,6 +11,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.ClickableSurfaceDefaults
@@ -26,7 +27,8 @@ fun VideoPlayerControlsIcon(
     modifier: Modifier = Modifier,
     contentDescription: String? = null,
     onShowControls: () -> Unit = {},
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    tint: Color? = null,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
@@ -53,7 +55,7 @@ fun VideoPlayerControlsIcon(
                 .fillMaxSize()
                 .padding(8.dp),
             contentDescription = contentDescription,
-            tint = LocalContentColor.current
+            tint = tint ?: LocalContentColor.current
         )
     }
 }
