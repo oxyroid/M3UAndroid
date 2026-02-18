@@ -219,7 +219,9 @@ class PlayerManagerImpl @Inject constructor(
         applyContinueWatching: Boolean
     ) {
         logger.post { "play" }
-        release()
+        // Don't destroy and recreate the player on channel switches — just stop current
+        // playback and reset state. The ExoPlayer instance is reused in tryPlayAsync.
+        stopCurrentPlayback()
         mediaCommand.value = command
         val channel = when (command) {
             is MediaCommand.Common -> channelRepository.get(command.channelId)
@@ -267,6 +269,33 @@ class PlayerManagerImpl @Inject constructor(
         }
     }
 
+    /**
+     * Stops current playback and resets observable state without destroying the player instance.
+     * The ExoPlayer is kept alive so it can be reused for the next channel — no teardown/recreate
+     * on every channel switch. Always dispatches stop() to main to satisfy ExoPlayer's thread check.
+     */
+    private suspend fun stopCurrentPlayback() {
+        observePreferencesChangingJob?.cancel()
+        observePreferencesChangingJob = null
+        extractor = null
+
+        val currentPlayer = player.value
+        if (currentPlayer != null) {
+            // stop() resets the player to IDLE without releasing codec resources.
+            // withContext ensures we're on main regardless of the caller's dispatcher.
+            withContext(mainDispatcher) {
+                currentPlayer.stop()
+            }
+        }
+
+        mediaCommand.value = null
+        size.value = Rect()
+        playbackState.value = Player.STATE_IDLE
+        playbackException.value = null
+        tracksGroups.value = emptyList()
+        chain = MimetypeChain.Unsupported(chain.url)
+    }
+
     private var extractor: MediaExtractorCompat? = null
     private fun tryPlay(
         url: String = channel.value?.url.orEmpty(),
@@ -306,8 +335,7 @@ class PlayerManagerImpl @Inject constructor(
                     " rtmp: $rtmp, " +
                     "tunneling: $tunneling"
         }
-        // Build factories on IO — DefaultExtractorsFactory, HlsMediaSource.Factory, and
-        // createRenderersFactory (via ServiceLoader) are all CPU-heavy and must not run on main.
+        // Build factories on IO — DefaultExtractorsFactory, HlsMediaSource.Factory are CPU-heavy.
         val (mediaSourceFactory, newExtractor) = withContext(ioDispatcher) {
             val dataSourceFactory = if (rtmp) {
                 RtmpDataSource.Factory()
@@ -371,12 +399,12 @@ class PlayerManagerImpl @Inject constructor(
                 mediaSourceFactory.setDrmSessionManagerProvider { drmSessionManager }
             }
         }
+        // Reuse the existing player if one exists; only create a new one on first play.
         val player = player.updateAndGet { prev ->
             logger.post { "player instance updated" }
-            prev ?: createPlayer(mediaSourceFactory, tunneling)
+            prev ?: createPlayer(tunneling)
         }!!
-        val mediaItem = MediaItem.fromUri(url)
-        val mediaSource: MediaSource = mediaSourceFactory.createMediaSource(mediaItem)
+        val mediaSource: MediaSource = mediaSourceFactory.createMediaSource(MediaItem.fromUri(url))
         player.setMediaSource(mediaSource)
         player.prepare()
         if (applyContinueWatching) {
@@ -388,21 +416,25 @@ class PlayerManagerImpl @Inject constructor(
 
     override suspend fun replay() {
         val prev = mediaCommand.value
-        release()
+        stopCurrentPlayback()
         prev?.let { play(it, applyContinueWatching = false) }
     }
 
+    /**
+     * Fully tears down the ExoPlayer instance. Called only when leaving the player screen
+     * (ChannelViewModel.destroy). Always called from the main thread via the ViewModel lifecycle,
+     * so stop()/release() are safe to call directly.
+     */
     override fun release() {
         logger.post { "release" }
         observePreferencesChangingJob?.cancel()
         observePreferencesChangingJob = null
         extractor = null
-        player.update {
-            it ?: return
-            it.removeListener(this)
-            // stop() + release() can block for hundreds of ms — ship them off the main thread.
-            // We already hold no reference after this update block so there's no data race.
-            ioCoroutineScope.launch { it.stop(); it.release() }
+        player.update { currentPlayer ->
+            currentPlayer ?: return
+            currentPlayer.removeListener(this)
+            currentPlayer.stop()
+            currentPlayer.release()
             mediaCommand.value = null
             size.value = Rect()
             playbackState.value = Player.STATE_IDLE
@@ -449,31 +481,26 @@ class PlayerManagerImpl @Inject constructor(
     }
         .flowOn(ioDispatcher)
 
-    private fun createPlayer(
-        mediaSourceFactory: MediaSource.Factory,
-        tunneling: Boolean
-    ): ExoPlayer = ExoPlayer.Builder(context)
-        .setMediaSourceFactory(mediaSourceFactory)
-        .setRenderersFactory(renderersFactory)
-        .setTrackSelector(createTrackSelector(tunneling))
-        .setHandleAudioBecomingNoisy(true)
-        .build()
-        .apply {
-            val attributes = AudioAttributes.Builder()
-                .setUsage(C.USAGE_MEDIA)
-                .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
-                .build()
-            setAudioAttributes(attributes, true)
-            playWhenReady = true
-            addListener(this@PlayerManagerImpl)
-        }
+    private fun createPlayer(tunneling: Boolean): ExoPlayer =
+        ExoPlayer.Builder(context)
+            .setRenderersFactory(renderersFactory)
+            .setTrackSelector(createTrackSelector(tunneling))
+            .setHandleAudioBecomingNoisy(true)
+            .build()
+            .apply {
+                val attributes = AudioAttributes.Builder()
+                    .setUsage(C.USAGE_MEDIA)
+                    .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                    .build()
+                setAudioAttributes(attributes, true)
+                playWhenReady = true
+                addListener(this@PlayerManagerImpl)
+            }
 
-    // Pre-warmed on IO at init time so the first createPlayer() call on main doesn't block.
-    private val renderersFactory: RenderersFactory = run {
-        // This executes synchronously during DI injection which happens off the main thread
-        // (Hilt component creation). If somehow called on main the cost is paid once only.
+    // Pre-warmed at construction time (Hilt injects off-main) so ServiceLoader never runs
+    // on the main thread.
+    private val renderersFactory: RenderersFactory =
         Codecs.load().createRenderersFactory(context)
-    }
 
     private fun createTrackSelector(tunneling: Boolean): TrackSelector {
         return DefaultTrackSelector(context).apply {
@@ -550,7 +577,6 @@ class PlayerManagerImpl @Inject constructor(
                     }
 
                     else -> {
-
                         logger.post { "onPlayerErrorChanged, parsing error! Trying another mimeType." }
                     }
                 }
@@ -643,11 +669,6 @@ class PlayerManagerImpl @Inject constructor(
                     .setEncoderFactory(
                         DefaultEncoderFactory.Builder(context.applicationContext)
                             .setEnableFallback(true)
-//                        .setRequestedVideoEncoderSettings(
-//                            VideoEncoderSettings.Builder()
-//                                .
-//                                .build()
-//                        )
                             .build()
                     )
                     .addListener(
@@ -734,7 +755,6 @@ class PlayerManagerImpl @Inject constructor(
     @OptIn(FlowPreview::class)
     private suspend fun storeContinueWatching(channelUrl: String) {
         logger.post { "storeContinueWatching" }
-        // avoid memory leaks caused by loops
         fun checkContinueWatching(): Boolean {
             val currentPlayer = player.value ?: return false
             return continueWatchingCondition.isStoringSupported(currentPlayer)
@@ -785,14 +805,6 @@ class PlayerManagerImpl @Inject constructor(
 
     private val logger = delegate.install(Profiles.SERVICE_PLAYER)
 
-    /**
-     * Get the kodi url options like this:
-     * http://host[:port]/directory/file?a=b&c=d|option1=value1&option2=value2
-     * Will get:
-     * {option1=value1, option2=value2}
-     *
-     * https://kodi.wiki/view/HTTP
-     */
     private fun String.readKodiUrlOptions(): Map<String, String?> {
         val index = this.indexOf('|')
         if (index == -1) return emptyMap()
@@ -807,10 +819,6 @@ class PlayerManagerImpl @Inject constructor(
             }
     }
 
-    /**
-     * Read user-agent appended to the channelUrl.
-     * If there is no result from url, it will use playlist user-agent instead.
-     */
     private fun getUserAgent(channelUrl: String, playlist: Playlist?): String? {
         val kodiUrlOptions = channelUrl.readKodiUrlOptions()
         val userAgent = kodiUrlOptions[KodiAdaptions.HTTP_OPTION_UA] ?: playlist?.userAgent

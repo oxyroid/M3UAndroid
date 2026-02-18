@@ -11,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.data.service.MediaCommand
 import com.m3u.tv.screens.Screens
 import com.m3u.tv.screens.dashboard.DashboardScreen
@@ -24,6 +25,7 @@ fun App(
     onBackPressed: () -> Unit
 ) {
     val helper = LocalHelper.current
+    val preferences = hiltPreferences()
     val navController = rememberNavController()
     val coroutineScope = rememberCoroutineScope()
     var isComingBackFromDifferentScreen by remember { mutableStateOf(false) }
@@ -54,14 +56,13 @@ fun App(
             composable(route = Screens.Dashboard()) {
                 DashboardScreen(
                     openChannelScreen = { channelId ->
-                        navController.navigate(
-                            Screens.Channel.withArgs(channelId)
-                        )
-                    },
-                    openVideoPlayer = {
-                        coroutineScope.launch {
-                            helper.play(MediaCommand.Common(it.id))
-                            navController.navigate(Screens.VideoPlayer())
+                        if (preferences.skipDetailsPage) {
+                            coroutineScope.launch {
+                                helper.play(MediaCommand.Common(channelId))
+                                navController.navigate(Screens.VideoPlayer())
+                            }
+                        } else {
+                            navController.navigate(Screens.Channel.withArgs(channelId))
                         }
                     },
                     onBackPressed = onBackPressed,

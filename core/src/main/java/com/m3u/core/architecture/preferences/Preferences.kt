@@ -114,6 +114,8 @@ class Preferences @Inject constructor(
     sharedPreferences.booleanAsState(DEFAULT_COLORFUL_BACKGROUND, COLORFUL_BACKGROUND)
     var compactDimension by
     sharedPreferences.booleanAsState(DEFAULT_COMPACT_DIMENSION, COMPACT_DIMENSION)
+    var skipDetailsPage: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_SKIP_DETAILS_PAGE, SKIP_DETAILS_PAGE)
 
     /** 0=Large, 1=Medium, 2=Small, 3=Compact — controls playlist/channel item display size */
     var playlistItemSize: Int by
@@ -162,6 +164,7 @@ class Preferences @Inject constructor(
         const val DEFAULT_12_H_CLOCK_MODE = false
         const val DEFAULT_COLORFUL_BACKGROUND = false
         const val DEFAULT_COMPACT_DIMENSION = false
+        const val DEFAULT_SKIP_DETAILS_PAGE = false
 
         /** 0=Large, 1=Medium, 2=Small, 3=Compact */
         const val DEFAULT_PLAYLIST_ITEM_SIZE = 0
@@ -200,6 +203,7 @@ class Preferences @Inject constructor(
 
         const val COLORFUL_BACKGROUND = "colorful-background"
         const val COMPACT_DIMENSION = "compact-dimension"
+        const val SKIP_DETAILS_PAGE = "skip-details-page"
         const val PLAYLIST_ITEM_SIZE = "playlist-item-size"
     }
 }

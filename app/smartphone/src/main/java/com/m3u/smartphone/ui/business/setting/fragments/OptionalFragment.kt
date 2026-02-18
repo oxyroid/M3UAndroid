@@ -22,6 +22,7 @@ import androidx.compose.material.icons.rounded.SettingsEthernet
 import androidx.compose.material.icons.rounded.SettingsRemote
 import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material.icons.rounded.ViewModule
+import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.Terrain
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Unarchive
@@ -249,6 +250,15 @@ internal fun OptionalFragment(
                 onChanged = { preferences.autoRefreshChannels = !preferences.autoRefreshChannels }
             )
 
+        }
+        item {
+            SwitchSharedPreference(
+                title = string.feat_setting_skip_details_page,
+                content = string.feat_setting_skip_details_page_description,
+                icon = Icons.Rounded.SkipNext,
+                checked = preferences.skipDetailsPage,
+                onChanged = { preferences.skipDetailsPage = !preferences.skipDetailsPage }
+            )
         }
         item {
             SwitchSharedPreference(

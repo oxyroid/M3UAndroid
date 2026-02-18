@@ -40,8 +40,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.m3u.business.favorite.FavouriteViewModel
-import com.m3u.data.database.model.Channel
 import com.m3u.tv.screens.Screens
 import com.m3u.tv.screens.favourite.FavouriteScreen
 import com.m3u.tv.screens.home.HomeScreen
@@ -67,7 +65,6 @@ fun rememberChildPadding(direction: LayoutDirection = LocalLayoutDirection.curre
 @Composable
 fun DashboardScreen(
     openChannelScreen: (channelId: Int) -> Unit,
-    openVideoPlayer: (Channel) -> Unit,
     isComingBackFromDifferentScreen: Boolean,
     resetIsComingBackFromDifferentScreen: () -> Unit,
     onBackPressed: () -> Unit
@@ -169,7 +166,6 @@ fun DashboardScreen(
 
         Body(
             openChannelScreen = openChannelScreen,
-            openVideoPlayer = openVideoPlayer,
             updateTopBarVisibility = { isTopBarVisible = it },
             isTopBarVisible = isTopBarVisible,
             navController = navController,
@@ -202,7 +198,6 @@ private fun BackPressHandledArea(
 @Composable
 private fun Body(
     openChannelScreen: (channelId: Int) -> Unit,
-    openVideoPlayer: (Channel) -> Unit,
     updateTopBarVisibility: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
@@ -223,14 +218,14 @@ private fun Body(
                         Screens.Playlist.withArgs(playlistUrl)
                     )
                 },
-                navigateToChannel = openVideoPlayer,
+                navigateToChannel = { channel -> openChannelScreen(channel.id) },
                 onScroll = updateTopBarVisibility,
                 isTopBarVisible = isTopBarVisible
             )
         }
         composable(Screens.Favourite()) {
             FavouriteScreen(
-                onChannelClick = openVideoPlayer,
+                onChannelClick = { channel -> openChannelScreen(channel.id) },
                 onScroll = updateTopBarVisibility,
                 isTopBarVisible = isTopBarVisible
             )

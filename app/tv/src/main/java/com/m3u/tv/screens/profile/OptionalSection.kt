@@ -33,6 +33,11 @@ fun OptionalSection() {
         else -> stringResource(R.string.feat_setting_playlist_item_size_compact)
     }.title()
 
+    val skipDetailsPage = preferences.skipDetailsPage
+    val skipDetailsLabel = stringResource(
+        if (skipDetailsPage) R.string.feat_setting_on else R.string.feat_setting_off
+    ).title()
+
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
@@ -71,6 +76,34 @@ fun OptionalSection() {
             ),
             shape = ListItemDefaults.shape(shape = MaterialTheme.shapes.extraSmall),
             modifier = Modifier.focusRequester(focusRequester).fillMaxWidth()
+        )
+        ListItem(
+            selected = false,
+            headlineContent = {
+                Text(
+                    text = stringResource(R.string.feat_setting_skip_details_page).title(),
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.Medium
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            trailingContent = {
+                Text(
+                    text = skipDetailsLabel,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            onClick = {
+                preferences.skipDetailsPage = !preferences.skipDetailsPage
+            },
+            scale = ListItemDefaults.scale(focusedScale = 1f),
+            colors = ListItemDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.inverseSurface,
+            ),
+            shape = ListItemDefaults.shape(shape = MaterialTheme.shapes.extraSmall),
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }
