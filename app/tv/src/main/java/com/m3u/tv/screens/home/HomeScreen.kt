@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -38,6 +39,8 @@ import com.m3u.i18n.R
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.CardDefaults
 import androidx.tv.material3.CompactCard
+import androidx.tv.material3.ListItemDefaults
+import androidx.tv.material3.LocalContentColor
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.m3u.business.foryou.ForyouViewModel
@@ -245,8 +248,8 @@ private fun Catalog(
     EditPlaylistDialog(
         playlist = editPlaylist,
         onDismiss = { editPlaylist = null },
-        onSave = { url, title ->
-            viewModel.onUpdatePlaylistTitle(url, title)
+        onSave = { oldUrl, newUrl, title ->
+            viewModel.onUpdatePlaylist(oldUrl, newUrl, title)
             editPlaylist = null
         },
     )
@@ -277,6 +280,7 @@ private fun PlaylistMenuDialog(
         showDialog = true,
         onDismissRequest = onDismiss,
         title = { Text(playlist.title) },
+        textContentColor = MaterialTheme.colorScheme.onSurface,
         text = {
             Box(
                 modifier = Modifier.onPreviewKeyEvent { event ->
@@ -292,30 +296,54 @@ private fun PlaylistMenuDialog(
             ) {
                 Column {
                     androidx.tv.material3.ListItem(
-                    selected = false,
-                    headlineContent = { Text(stringResource(R.string.feat_foryou_open_playlist)) },
-                    onClick = { onOpen(playlist) },
-                )
-                androidx.tv.material3.ListItem(
-                    selected = false,
-                    headlineContent = { Text(stringResource(R.string.feat_foryou_edit_playlist)) },
-                    onClick = { onEdit(playlist) },
-                )
-                androidx.tv.material3.ListItem(
-                    selected = false,
-                    headlineContent = { Text(stringResource(R.string.feat_foryou_delete_playlist)) },
-                    onClick = { onDelete(playlist) },
-                )
+                        selected = false,
+                        headlineContent = {
+                            Text(
+                                stringResource(R.string.feat_foryou_open_playlist),
+                                color = LocalContentColor.current,
+                            )
+                        },
+                        onClick = { onOpen(playlist) },
+                        colors = ListItemDefaults.colors(
+                            contentColor = MaterialTheme.colorScheme.onSurface,
+                            focusedContentColor = MaterialTheme.colorScheme.inverseOnSurface,
+                            focusedContainerColor = MaterialTheme.colorScheme.inverseSurface,
+                        ),
+                    )
+                    androidx.tv.material3.ListItem(
+                        selected = false,
+                        headlineContent = {
+                            Text(
+                                stringResource(R.string.feat_foryou_edit_playlist),
+                                color = LocalContentColor.current,
+                            )
+                        },
+                        onClick = { onEdit(playlist) },
+                        colors = ListItemDefaults.colors(
+                            contentColor = MaterialTheme.colorScheme.onSurface,
+                            focusedContentColor = MaterialTheme.colorScheme.inverseOnSurface,
+                            focusedContainerColor = MaterialTheme.colorScheme.inverseSurface,
+                        ),
+                    )
+                    androidx.tv.material3.ListItem(
+                        selected = false,
+                        headlineContent = {
+                            Text(
+                                stringResource(R.string.feat_foryou_delete_playlist),
+                                color = LocalContentColor.current,
+                            )
+                        },
+                        onClick = { onDelete(playlist) },
+                        colors = ListItemDefaults.colors(
+                            contentColor = MaterialTheme.colorScheme.onSurface,
+                            focusedContentColor = MaterialTheme.colorScheme.inverseOnSurface,
+                            focusedContainerColor = MaterialTheme.colorScheme.inverseSurface,
+                        ),
+                    )
                 }
             }
         },
-        dismissButton = {
-            AccountsSectionDialogButton(
-                text = "Cancel",
-                shouldRequestFocus = false,
-                onClick = onDismiss,
-            )
-        },
+        dismissButton = { },
         confirmButton = { },
     )
 }
@@ -324,10 +352,11 @@ private fun PlaylistMenuDialog(
 private fun EditPlaylistDialog(
     playlist: Playlist?,
     onDismiss: () -> Unit,
-    onSave: (url: String, title: String) -> Unit,
+    onSave: (oldUrl: String, newUrl: String, title: String) -> Unit,
 ) {
     if (playlist == null) return
     var title by remember(playlist) { mutableStateOf(playlist.title) }
+    var url by remember(playlist) { mutableStateOf(playlist.url) }
     StandardDialog(
         showDialog = true,
         onDismissRequest = onDismiss,
@@ -341,10 +370,10 @@ private fun EditPlaylistDialog(
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Text("URL", modifier = Modifier.padding(top = 16.dp))
-                Text(
-                    text = playlist.url,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                TextField(
+                    value = url,
+                    onValueChange = { url = it },
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         },
@@ -359,7 +388,7 @@ private fun EditPlaylistDialog(
             AccountsSectionDialogButton(
                 text = "Save",
                 shouldRequestFocus = true,
-                onClick = { onSave(playlist.url, title) },
+                onClick = { onSave(playlist.url, url, title) },
             )
         },
     )

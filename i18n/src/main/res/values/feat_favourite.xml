@@ -2,4 +2,5 @@
 <resources>
     <string name="feat_favorite_scheme_unknown">unknown</string>
     <string name="feat_favorite_play_randomly">play randomly</string>
+    <string name="feat_favourite_remove_from_favourite">Remove from favourite</string>
 </resources>

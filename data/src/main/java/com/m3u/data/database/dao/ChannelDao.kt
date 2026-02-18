@@ -53,6 +53,9 @@ internal interface ChannelDao {
     @Query("DELETE FROM streams WHERE playlist_url = :playlistUrl")
     suspend fun deleteByPlaylistUrl(playlistUrl: String)
 
+    @Query("UPDATE streams SET playlist_url = :newUrl WHERE playlist_url = :oldUrl")
+    suspend fun updatePlaylistUrl(oldUrl: String, newUrl: String)
+
     @Query("DELETE FROM streams WHERE playlist_url = :playlistUrl AND (favourite = 0 AND hidden = 0)")
     suspend fun deleteByPlaylistUrlIgnoreFavOrHidden(playlistUrl: String)
 

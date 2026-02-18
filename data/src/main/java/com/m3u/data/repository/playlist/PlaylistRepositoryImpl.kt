@@ -600,6 +600,18 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         playlistDao.updateTitle(url, title)
     }
 
+    override suspend fun onUpdatePlaylist(oldUrl: String, newUrl: String, title: String) =
+        logger.sandBox {
+            if (newUrl == oldUrl) {
+                playlistDao.updateTitle(oldUrl, title)
+                return@sandBox
+            }
+            channelDao.updatePlaylistUrl(oldUrl, newUrl)
+            playlistDao.updateUrl(oldUrl, newUrl)
+            playlistDao.updateTitle(newUrl, title)
+            get(newUrl)?.takeIf { !it.fromLocal }?.let { refresh(newUrl) }
+        }
+
     override suspend fun onUpdatePlaylistUserAgent(url: String, userAgent: String?) =
         logger.sandBox {
             playlistDao.updateUserAgent(url, userAgent)

@@ -1,19 +1,26 @@
 package com.m3u.tv.screens.favourite
 
+import android.view.KeyEvent
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -24,9 +31,13 @@ import com.m3u.core.foundation.components.CircularProgressIndicator
 import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.Channel
 import com.m3u.i18n.R
+import com.m3u.tv.StandardDialog
 import com.m3u.tv.screens.dashboard.rememberChildPadding
 import com.m3u.tv.screens.playlist.favouriteChannelGallery
 import com.m3u.tv.screens.playlist.playlistItemWidthForSize
+import com.m3u.tv.screens.profile.AccountsSectionDialogButton
+import androidx.tv.material3.ListItemDefaults
+import androidx.tv.material3.LocalContentColor
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 
@@ -43,6 +54,8 @@ fun FavouriteScreen(
     val childPadding = rememberChildPadding()
     val itemWidth = playlistItemWidthForSize(preferences.playlistItemSize)
     val lazyListState = rememberLazyListState()
+    var channelForRemoveMenu by remember { mutableStateOf<Channel?>(null) }
+    val consumeNextCenterKeyUp = remember { mutableStateOf(false) }
 
     val shouldShowTopBar by remember {
         derivedStateOf {
@@ -91,7 +104,10 @@ fun FavouriteScreen(
             ) {
                 favouriteChannelGallery(
                     channels = channels.data,
-                    onChannelLongClick = onChannelLongClick,
+                    onChannelLongClick = { channel ->
+                        channelForRemoveMenu = channel
+                        consumeNextCenterKeyUp.value = true
+                    },
                     startPadding = childPadding.start,
                     endPadding = childPadding.end,
                     itemWidth = itemWidth
@@ -111,5 +127,68 @@ fun FavouriteScreen(
             }
         }
     }
+
+    RemoveFromFavouriteDialog(
+        channel = channelForRemoveMenu,
+        consumeNextCenterKeyUp = consumeNextCenterKeyUp,
+        onDismiss = { channelForRemoveMenu = null },
+        onRemove = { channel ->
+            viewModel.favourite(channel.id)
+            channelForRemoveMenu = null
+        },
+    )
+}
+
+@Composable
+private fun RemoveFromFavouriteDialog(
+    channel: Channel?,
+    consumeNextCenterKeyUp: MutableState<Boolean>,
+    onDismiss: () -> Unit,
+    onRemove: (Channel) -> Unit,
+) {
+    if (channel == null) return
+    fun isCenterOrEnter(keyCode: Int) = keyCode == KeyEvent.KEYCODE_DPAD_CENTER ||
+        keyCode == KeyEvent.KEYCODE_ENTER ||
+        keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER
+    StandardDialog(
+        showDialog = true,
+        onDismissRequest = onDismiss,
+        title = { Text(channel.title) },
+        textContentColor = MaterialTheme.colorScheme.onSurface,
+        text = {
+            Box(
+                modifier = Modifier.onPreviewKeyEvent { event ->
+                    if (consumeNextCenterKeyUp.value &&
+                        event.nativeKeyEvent.action == KeyEvent.ACTION_UP &&
+                        isCenterOrEnter(event.nativeKeyEvent.keyCode)
+                    ) {
+                        consumeNextCenterKeyUp.value = false
+                        return@onPreviewKeyEvent true
+                    }
+                    false
+                }
+            ) {
+                Column {
+                    androidx.tv.material3.ListItem(
+                        selected = false,
+                        headlineContent = {
+                            Text(
+                                stringResource(R.string.feat_favourite_remove_from_favourite),
+                                color = LocalContentColor.current,
+                            )
+                        },
+                        onClick = { onRemove(channel) },
+                        colors = ListItemDefaults.colors(
+                            contentColor = MaterialTheme.colorScheme.onSurface,
+                            focusedContentColor = MaterialTheme.colorScheme.inverseOnSurface,
+                            focusedContainerColor = MaterialTheme.colorScheme.inverseSurface,
+                        ),
+                    )
+                }
+            }
+        },
+        dismissButton = { },
+        confirmButton = { },
+    )
 }
 
