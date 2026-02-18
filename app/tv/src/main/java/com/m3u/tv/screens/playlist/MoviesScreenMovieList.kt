@@ -72,7 +72,7 @@ fun LazyListScope.channelGallery(
 fun playlistItemWidthForSize(size: Int): Dp =
     PLAYLIST_ITEM_WIDTHS[(size).coerceIn(0, PLAYLIST_ITEM_WIDTHS.lastIndex)]
 
-/** Single row of channels (e.g. for Favourites) using the same card as playlist gallery. */
+/** Single row of channels (e.g. for Favorites) using the same card as playlist gallery. */
 fun LazyListScope.favouriteChannelGallery(
     channels: List<Channel>,
     startPadding: Dp,

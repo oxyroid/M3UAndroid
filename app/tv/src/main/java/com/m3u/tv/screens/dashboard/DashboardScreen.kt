@@ -42,7 +42,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.m3u.tv.screens.Screens
-import com.m3u.tv.screens.favourite.FavouriteScreen
+import com.m3u.tv.screens.favorite.FavoriteScreen
 import com.m3u.tv.screens.home.HomeScreen
 import com.m3u.tv.screens.playlist.PlaylistScreen
 import com.m3u.tv.screens.profile.ProfileScreen
@@ -123,7 +123,7 @@ fun DashboardScreen(
             }.toMap()
         }
         val playlistTabFocusRequester = tabRouteToFocusRequester[Screens.Playlist()]
-        val favouriteTabFocusRequester = tabRouteToFocusRequester[Screens.Favourite()]
+        val favoriteTabFocusRequester = tabRouteToFocusRequester[Screens.Favourite()]
 
         // Used to show/hide DashboardTopBar
         val topBarYOffsetPx by animateIntAsState(
@@ -202,7 +202,7 @@ fun DashboardScreen(
             modifier = Modifier.offset(y = navHostTopPaddingDp),
             onPlaylistOpened = { lastPlaylistUrl = it },
             playlistTabFocusRequester = playlistTabFocusRequester,
-            favouriteTabFocusRequester = favouriteTabFocusRequester,
+            favoriteTabFocusRequester = favoriteTabFocusRequester,
         )
     }
 }
@@ -235,7 +235,7 @@ private fun Body(
     updateTopBarVisibility: (Boolean) -> Unit,
     onPlaylistOpened: (String) -> Unit,
     playlistTabFocusRequester: FocusRequester?,
-    favouriteTabFocusRequester: FocusRequester?,
+    favoriteTabFocusRequester: FocusRequester?,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
     isTopBarVisible: Boolean = true,
@@ -262,8 +262,8 @@ private fun Body(
             )
         }
         composable(Screens.Favourite()) {
-            FavouriteScreen(
-                favouriteTabFocusRequester = favouriteTabFocusRequester,
+            FavoriteScreen(
+                favoriteTabFocusRequester = favoriteTabFocusRequester,
                 onChannelLongClick = { channel -> openChannelDetailsScreen(channel.id) },
                 onScroll = updateTopBarVisibility,
                 isTopBarVisible = isTopBarVisible

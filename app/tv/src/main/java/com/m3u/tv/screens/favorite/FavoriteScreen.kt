@@ -1,11 +1,10 @@
-package com.m3u.tv.screens.favourite
+package com.m3u.tv.screens.favorite
 
 import android.view.KeyEvent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
@@ -42,8 +41,8 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 
 @Composable
-fun FavouriteScreen(
-    favouriteTabFocusRequester: FocusRequester?,
+fun FavoriteScreen(
+    favoriteTabFocusRequester: FocusRequester?,
     onChannelLongClick: (Channel) -> Unit,
     onScroll: (isTopBarVisible: Boolean) -> Unit,
     isTopBarVisible: Boolean,
@@ -93,9 +92,9 @@ fun FavouriteScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .then(
-                        if (favouriteTabFocusRequester != null) {
+                        if (favoriteTabFocusRequester != null) {
                             Modifier.focusProperties {
-                                up = favouriteTabFocusRequester
+                                up = favoriteTabFocusRequester
                             }
                         } else {
                             Modifier
@@ -128,7 +127,7 @@ fun FavouriteScreen(
         }
     }
 
-    RemoveFromFavouriteDialog(
+    RemoveFromFavoriteDialog(
         channel = channelForRemoveMenu,
         consumeNextCenterKeyUp = consumeNextCenterKeyUp,
         onDismiss = { channelForRemoveMenu = null },
@@ -140,7 +139,7 @@ fun FavouriteScreen(
 }
 
 @Composable
-private fun RemoveFromFavouriteDialog(
+private fun RemoveFromFavoriteDialog(
     channel: Channel?,
     consumeNextCenterKeyUp: MutableState<Boolean>,
     onDismiss: () -> Unit,
@@ -191,4 +190,3 @@ private fun RemoveFromFavouriteDialog(
         confirmButton = { },
     )
 }
-
