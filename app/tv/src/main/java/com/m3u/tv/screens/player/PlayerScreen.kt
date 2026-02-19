@@ -23,6 +23,7 @@ import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import com.m3u.business.channel.ChannelViewModel
 import com.m3u.business.channel.PlayerState
 import com.m3u.core.foundation.ui.thenNoN
+import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.data.database.model.Channel
 import com.m3u.tv.screens.player.components.VideoPlayerControls
 import com.m3u.tv.screens.player.components.VideoPlayerOverlay
@@ -63,12 +64,15 @@ fun PlayerScreen(
         }
     }
 
+    val adjacentChannels by viewModel.adjacentChannels.collectAsStateWithLifecycle()
+
     when (val channel = channel) {
         null -> {}
         else -> {
             VideoPlayerScreenContent(
                 channel = channel,
                 playerState = playerState,
+                adjacentChannels = adjacentChannels,
                 viewModel = viewModel,
                 onBackPressed = onBackPressed,
                 onFavourite = viewModel::onFavourite,
@@ -82,6 +86,7 @@ fun PlayerScreen(
 fun VideoPlayerScreenContent(
     channel: Channel,
     playerState: PlayerState,
+    adjacentChannels: AdjacentChannels?,
     viewModel: ChannelViewModel,
     onBackPressed: () -> Unit,
     onFavourite: () -> Unit,
@@ -107,7 +112,7 @@ fun VideoPlayerScreenContent(
             }
         }
 
-        BackHandler(onBack = { viewModel.enterPip() })
+        BackHandler(onBack = onBackPressed)
 
         val pulseState = rememberVideoPlayerPulseState()
 
@@ -154,6 +159,10 @@ fun VideoPlayerScreenContent(
                         onEnterPip = onEnterPip,
                         onSettingsClick = { showSubtitlesModal = false; showTrackSelection = true },
                         onClosedCaptionsClick = { showTrackSelection = false; showSubtitlesModal = true },
+                        hasPreviousChannel = adjacentChannels?.prevId != null,
+                        hasNextChannel = adjacentChannels?.nextId != null,
+                        onPreviousChannel = viewModel::getPreviousChannel,
+                        onNextChannel = viewModel::getNextChannel,
                     )
                 }
             )
