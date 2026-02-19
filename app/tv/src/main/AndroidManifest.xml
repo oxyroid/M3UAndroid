@@ -34,6 +34,9 @@
             android:exported="true"
             android:supportsPictureInPicture="true"
             android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation">
+            <meta-data
+                android:name="com.google.android.tv.pip.category"
+                android:value="ticker" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

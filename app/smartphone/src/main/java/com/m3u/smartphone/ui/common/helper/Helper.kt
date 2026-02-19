@@ -4,6 +4,7 @@ import android.app.PictureInPictureParams
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Rect
+import android.util.Rational
 import android.provider.Settings
 import android.view.ViewConfiguration
 import androidx.activity.ComponentActivity
@@ -19,6 +20,7 @@ import androidx.core.app.PictureInPictureModeChangedInfo
 import androidx.core.util.Consumer
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.core.util.basic.rational
 import com.m3u.core.util.context.isDarkMode
 import com.m3u.core.util.context.isPortraitMode
@@ -101,10 +103,20 @@ class Helper(private val activity: ComponentActivity) {
     val windowSizeClass: WindowSizeClass
         @Composable get() = calculateWindowSizeClass(activity)
 
+    /**
+     * Enters PiP mode if the device supports it. Uses sourceRectHint for smoother transitions (Android 12+).
+     * See https://developer.android.com/develop/ui/views/picture-in-picture
+     */
     fun enterPipMode(size: Rect) {
-        val params = PictureInPictureParams.Builder()
-            .setAspectRatio(size.rational)
-            .build()
+        if (!activity.packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE)) {
+            return
+        }
+        val aspectRatio = if (size.isNotEmpty) size.rational else Rational(16, 9)
+        val builder = PictureInPictureParams.Builder().setAspectRatio(aspectRatio)
+        if (size.isNotEmpty) {
+            builder.setSourceRectHint(size)
+        }
+        val params = builder.build()
         if (activity.isInPictureInPictureMode) {
             activity.setPictureInPictureParams(params)
         } else {

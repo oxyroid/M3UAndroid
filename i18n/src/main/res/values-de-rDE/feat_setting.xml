@@ -132,6 +132,10 @@
     <string name="feat_setting_qr_subscribe_hint">Mit dem Handy scannen, um die URL im Browser einzugeben</string>
     <string name="feat_setting_skip_details_page">Detailseite überspringen</string>
     <string name="feat_setting_skip_details_page_description">Beim Auswählen eines Kanals direkt zum Player gehen</string>
+    <string name="feat_setting_pip_on_home">PiP beim Drücken der Startseite</string>
+    <string name="feat_setting_pip_on_home_description">Video wechselt in den Bild-in-Bild-Modus, wenn Sie während der Wiedergabe die Startseite drücken</string>
+    <string name="feat_setting_back_enters_pip">Zurück-Taste wechselt in PiP</string>
+    <string name="feat_setting_back_enters_pip_description">Drücken von Zurück im Player wechselt in PiP statt zu beenden</string>
 
     <!-- EPG -->
     <string name="feat_setting_placeholder_epg_title">EPG-Name</string>

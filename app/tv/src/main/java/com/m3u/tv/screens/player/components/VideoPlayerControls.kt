@@ -41,6 +41,7 @@ fun VideoPlayerControls(
     hasNextChannel: Boolean = false,
     onPreviousChannel: () -> Unit = {},
     onNextChannel: () -> Unit = {},
+    isPipSupported: Boolean = true,
 ) {
     VideoPlayerMainFrame(
         mediaTitle = {
@@ -95,14 +96,16 @@ fun VideoPlayerControls(
                     onShowControls = onShowControls,
                     onClick = onClosedCaptionsClick
                 )
-                VideoPlayerControlsIcon(
-                    modifier = Modifier.padding(start = 12.dp),
-                    icon = Icons.Default.PictureInPicture,
-                    isPlaying = isPlaying,
-                    contentDescription = "VideoPlayerControlPipButton",
-                    onShowControls = onShowControls,
-                    onClick = onEnterPip
-                )
+                if (isPipSupported) {
+                    VideoPlayerControlsIcon(
+                        modifier = Modifier.padding(start = 12.dp),
+                        icon = Icons.Default.PictureInPicture,
+                        isPlaying = isPlaying,
+                        contentDescription = "VideoPlayerControlPipButton",
+                        onShowControls = onShowControls,
+                        onClick = onEnterPip
+                    )
+                }
                 VideoPlayerControlsIcon(
                     modifier = Modifier.padding(start = 12.dp),
                     icon = Icons.Default.Settings,

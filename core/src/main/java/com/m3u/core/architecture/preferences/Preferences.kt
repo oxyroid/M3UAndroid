@@ -117,6 +117,14 @@ class Preferences @Inject constructor(
     var skipDetailsPage: Boolean by
     sharedPreferences.booleanAsState(DEFAULT_SKIP_DETAILS_PAGE, SKIP_DETAILS_PAGE)
 
+    /** When true, pressing Home while in the player enters PiP (SmartTube-style). */
+    var pipOnHome: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_PIP_ON_HOME, PIP_ON_HOME)
+
+    /** When true, Back button in the player enters PiP instead of exiting (SmartTube-style). */
+    var backEntersPip: Boolean by
+    sharedPreferences.booleanAsState(DEFAULT_BACK_ENTERS_PIP, BACK_ENTERS_PIP)
+
     /** 0=Large, 1=Medium, 2=Small, 3=Compact — controls playlist/channel item display size */
     var playlistItemSize: Int by
     sharedPreferences.intAsState(DEFAULT_PLAYLIST_ITEM_SIZE, PLAYLIST_ITEM_SIZE)
@@ -165,6 +173,8 @@ class Preferences @Inject constructor(
         const val DEFAULT_COLORFUL_BACKGROUND = false
         const val DEFAULT_COMPACT_DIMENSION = false
         const val DEFAULT_SKIP_DETAILS_PAGE = false
+        const val DEFAULT_PIP_ON_HOME = true
+        const val DEFAULT_BACK_ENTERS_PIP = false
 
         /** 0=Large, 1=Medium, 2=Small, 3=Compact */
         const val DEFAULT_PLAYLIST_ITEM_SIZE = 0
@@ -204,6 +214,8 @@ class Preferences @Inject constructor(
         const val COLORFUL_BACKGROUND = "colorful-background"
         const val COMPACT_DIMENSION = "compact-dimension"
         const val SKIP_DETAILS_PAGE = "skip-details-page"
+        const val PIP_ON_HOME = "pip-on-home"
+        const val BACK_ENTERS_PIP = "back-enters-pip"
         const val PLAYLIST_ITEM_SIZE = "playlist-item-size"
     }
 }

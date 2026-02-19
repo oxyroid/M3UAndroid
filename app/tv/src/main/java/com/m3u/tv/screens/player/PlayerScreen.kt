@@ -38,6 +38,8 @@ import com.m3u.tv.screens.player.components.rememberVideoPlayerState
 import com.m3u.tv.utils.LocalHelper
 import com.m3u.tv.utils.handleDPadKeyEvents
 import kotlinx.coroutines.delay
+import com.m3u.core.architecture.preferences.hiltPreferences
+import androidx.compose.runtime.DisposableEffect
 
 object VideoPlayerScreen {
     const val ChannelIdBundleKey = "channelId"
@@ -66,6 +68,8 @@ fun PlayerScreen(
 
     val adjacentChannels by viewModel.adjacentChannels.collectAsStateWithLifecycle()
 
+    val isPipSupported = helper.isPipSupported()
+
     when (val channel = channel) {
         null -> {}
         else -> {
@@ -73,6 +77,7 @@ fun PlayerScreen(
                 channel = channel,
                 playerState = playerState,
                 adjacentChannels = adjacentChannels,
+                isPipSupported = isPipSupported,
                 viewModel = viewModel,
                 onBackPressed = onBackPressed,
                 onFavourite = viewModel::onFavourite,
@@ -87,16 +92,36 @@ fun VideoPlayerScreenContent(
     channel: Channel,
     playerState: PlayerState,
     adjacentChannels: AdjacentChannels?,
+    isPipSupported: Boolean,
     viewModel: ChannelViewModel,
     onBackPressed: () -> Unit,
     onFavourite: () -> Unit,
     onEnterPip: () -> Unit,
 ) {
+    val helper = LocalHelper.current
+    val preferences = hiltPreferences()
     val player = playerState.player
     var showTrackSelection by remember { mutableStateOf(false) }
     var showSubtitlesModal by remember { mutableStateOf(false) }
     val tracks by viewModel.tracks.collectAsStateWithLifecycle(emptyMap())
     val selectedFormats by viewModel.currentTracks.collectAsStateWithLifecycle(emptyMap())
+
+    LaunchedEffect(playerState.videoSize) {
+        helper.latestVideoSize = if (!playerState.videoSize.isEmpty()) playerState.videoSize
+        else android.graphics.Rect(0, 0, 16, 9)
+    }
+    DisposableEffect(Unit) {
+        helper.onUserLeaveHint = {
+            if (preferences.pipOnHome && helper.isPipSupported()) {
+                helper.enterPipMode(helper.latestVideoSize)
+                viewModel.onPipEntered()
+            }
+        }
+        onDispose {
+            helper.onUserLeaveHint = null
+        }
+    }
+
     if (player != null) {
         val videoPlayerState = rememberVideoPlayerState(
             player = player,
@@ -112,7 +137,13 @@ fun VideoPlayerScreenContent(
             }
         }
 
-        BackHandler(onBack = onBackPressed)
+        BackHandler(onBack = {
+            if (preferences.backEntersPip && helper.isPipSupported()) {
+                viewModel.enterPip()
+            } else {
+                onBackPressed()
+            }
+        })
 
         val pulseState = rememberVideoPlayerPulseState()
 
@@ -163,6 +194,7 @@ fun VideoPlayerScreenContent(
                         hasNextChannel = adjacentChannels?.nextId != null,
                         onPreviousChannel = viewModel::getPreviousChannel,
                         onNextChannel = viewModel::getNextChannel,
+                        isPipSupported = isPipSupported,
                     )
                 }
             )

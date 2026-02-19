@@ -124,6 +124,10 @@
     <string name="feat_setting_randomly_in_favourite">redare aleatorie doar din favorite</string>
     <string name="feat_setting_skip_details_page">sari peste pagina detalii</string>
     <string name="feat_setting_skip_details_page_description">mergi direct la player la selectarea unui canal</string>
+    <string name="feat_setting_pip_on_home">PiP la apăsarea butonului Acasă</string>
+    <string name="feat_setting_pip_on_home_description">videoclipul intră în picture-in-picture când apeși Acasă în timpul redării</string>
+    <string name="feat_setting_back_enters_pip">Butonul Înapoi activează PiP</string>
+    <string name="feat_setting_back_enters_pip_description">apăsarea Înapoi în player activează PiP în loc să iasă</string>
     <string name="feat_setting_on">pornit</string>
     <string name="feat_setting_off">oprit</string>
     <string name="feat_setting_qr_subscribe_hint">Scaneaza cu telefonul pentru a introduce URL-ul in browser</string>

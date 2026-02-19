@@ -45,6 +45,16 @@ fun OptionalSection() {
         if (remoteControl) R.string.feat_setting_on else R.string.feat_setting_off
     ).title()
 
+    val pipOnHome = preferences.pipOnHome
+    val pipOnHomeLabel = stringResource(
+        if (pipOnHome) R.string.feat_setting_on else R.string.feat_setting_off
+    ).title()
+
+    val backEntersPip = preferences.backEntersPip
+    val backEntersPipLabel = stringResource(
+        if (backEntersPip) R.string.feat_setting_on else R.string.feat_setting_off
+    ).title()
+
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
@@ -89,6 +99,76 @@ fun OptionalSection() {
             ),
             shape = ListItemDefaults.shape(shape = MaterialTheme.shapes.extraSmall),
             modifier = Modifier.focusRequester(focusRequester).fillMaxWidth()
+        )
+        ListItem(
+            selected = false,
+            headlineContent = {
+                Text(
+                    text = stringResource(R.string.feat_setting_pip_on_home).title(),
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.Medium
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            supportingContent = {
+                Text(
+                    text = stringResource(R.string.feat_setting_pip_on_home_description),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            trailingContent = {
+                Text(
+                    text = pipOnHomeLabel,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            onClick = {
+                preferences.pipOnHome = !preferences.pipOnHome
+            },
+            scale = ListItemDefaults.scale(focusedScale = 1f),
+            colors = ListItemDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.inverseSurface,
+            ),
+            shape = ListItemDefaults.shape(shape = MaterialTheme.shapes.extraSmall),
+            modifier = Modifier.fillMaxWidth()
+        )
+        ListItem(
+            selected = false,
+            headlineContent = {
+                Text(
+                    text = stringResource(R.string.feat_setting_back_enters_pip).title(),
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.Medium
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            supportingContent = {
+                Text(
+                    text = stringResource(R.string.feat_setting_back_enters_pip_description),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            trailingContent = {
+                Text(
+                    text = backEntersPipLabel,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            onClick = {
+                preferences.backEntersPip = !preferences.backEntersPip
+            },
+            scale = ListItemDefaults.scale(focusedScale = 1f),
+            colors = ListItemDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.inverseSurface,
+            ),
+            shape = ListItemDefaults.shape(shape = MaterialTheme.shapes.extraSmall),
+            modifier = Modifier.fillMaxWidth()
         )
         ListItem(
             selected = false,

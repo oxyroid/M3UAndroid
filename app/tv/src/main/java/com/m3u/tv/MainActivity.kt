@@ -17,6 +17,12 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val helper = Helper(this)
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        helper.runOnUserLeaveHint()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {

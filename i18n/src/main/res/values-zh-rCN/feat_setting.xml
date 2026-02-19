@@ -133,6 +133,10 @@
     <string name="feat_setting_off">关</string>
     <string name="feat_setting_skip_details_page">跳过详情页</string>
     <string name="feat_setting_skip_details_page_description">选择频道后直接进入播放器</string>
+    <string name="feat_setting_pip_on_home">按主屏键时使用画中画</string>
+    <string name="feat_setting_pip_on_home_description">播放时按主屏键可进入画中画模式</string>
+    <string name="feat_setting_back_enters_pip">返回键进入画中画</string>
+    <string name="feat_setting_back_enters_pip_description">在播放器中按返回键进入画中画而非退出</string>
 
     <!-- EPG -->
     <string name="feat_setting_placeholder_epg_title">EPG名称</string>
