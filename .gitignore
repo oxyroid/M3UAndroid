@@ -20,3 +20,4 @@ jks.txt
 *.jks
 /sample/
 /.kotlin
+data/

@@ -73,7 +73,7 @@ fun VideoPlayerControls(
                     onShowControls = onShowControls,
                     onClick = onClosedCaptionsClick
                 )
-                    VideoPlayerControlsIcon(
+                VideoPlayerControlsIcon(
                     modifier = Modifier.padding(start = 12.dp),
                     icon = Icons.Default.PictureInPicture,
                     isPlaying = isPlaying,

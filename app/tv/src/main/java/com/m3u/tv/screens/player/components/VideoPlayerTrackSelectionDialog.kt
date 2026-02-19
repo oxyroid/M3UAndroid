@@ -22,9 +22,8 @@ import com.m3u.tv.screens.profile.AccountsSectionDialogButton
 
 /**
  * Track selection modal aligned with RFC 8216 (HTTP Live Streaming).
- * - Video: variant streams (resolution, bitrate).
- * - Audio: alternative audio renditions (NAME, LANGUAGE, CHANNELS).
- * - Subtitles: subtitle renditions (NAME, LANGUAGE).
+ * Settings modal: Video (variant streams, resolution, bitrate) and Audio (NAME, LANGUAGE, CHANNELS).
+ * Subtitle-only modal (closed captions): subtitle renditions (NAME, LANGUAGE).
  */
 @Composable
 fun VideoPlayerTrackSelectionDialog(
@@ -43,7 +42,6 @@ fun VideoPlayerTrackSelectionDialog(
         listOf(
             C.TRACK_TYPE_VIDEO to "Video quality",
             C.TRACK_TYPE_AUDIO to "Audio track",
-            C.TRACK_TYPE_TEXT to "Subtitles",
         )
     }
     StandardDialog(
