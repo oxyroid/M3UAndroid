@@ -7,7 +7,11 @@ import com.m3u.data.database.model.DataSource
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.worker.SubscriptionWorker
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.ktor.http.ContentType
+import io.ktor.server.request.contentType
+import io.ktor.server.request.receiveParameters
 import io.ktor.server.response.respond
+import io.ktor.server.application.call
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
@@ -24,7 +28,11 @@ data class Playlists @Inject constructor(
     override fun apply(route: Route) {
         route.route("/playlists") {
             post("subscribe") {
-                val dataSourceValue = call.queryParameters["data_source"]
+                val params = when {
+                    call.request.contentType().match(ContentType.Application.FormUrlEncoded) -> call.receiveParameters()
+                    else -> call.request.queryParameters
+                }
+                val dataSourceValue = params["data_source"]
                 val dataSource = dataSourceValue?.let { DataSource.ofOrNull(it) }
                 if (dataSource == null) {
                     call.respond(
@@ -36,12 +44,12 @@ data class Playlists @Inject constructor(
                     return@post
                 }
 
-                val title = call.queryParameters["title"]
-                val url = call.queryParameters["url"]
-                val epg = call.queryParameters["epg"]
-                val basicUrl = call.queryParameters["address"]
-                val username = call.queryParameters["username"]
-                val password = call.queryParameters["password"]
+                val title = params["title"]
+                val url = params["url"]
+                val epg = params["epg"]
+                val basicUrl = params["address"]
+                val username = params["username"]
+                val password = params["password"]
 
                 when (dataSource) {
                     DataSource.M3U -> {

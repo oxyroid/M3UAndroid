@@ -3,11 +3,12 @@ package com.m3u.data.tv.http
 import com.m3u.data.tv.http.endpoint.Remotes
 import com.m3u.data.tv.http.endpoint.Playlists
 import com.m3u.data.tv.http.endpoint.SayHellos
+import com.m3u.data.tv.http.endpoint.SubscribePage
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
-import io.ktor.server.engine.EmbeddedServer
+import io.ktor.server.engine.ApplicationEngine
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
@@ -23,9 +24,10 @@ import javax.inject.Inject
 internal class HttpServerImpl @Inject constructor(
     private val sayHellos: SayHellos,
     private val playlists: Playlists,
-    private val remotes: Remotes
+    private val remotes: Remotes,
+    private val subscribePage: SubscribePage
 ) : HttpServer {
-    private var server: EmbeddedServer<*, *>? = null
+    private var server: ApplicationEngine? = null
 
     override fun start(port: Int) {
         server = embeddedServer(Netty, port) {
@@ -33,6 +35,7 @@ internal class HttpServerImpl @Inject constructor(
             configureSockets()
             configureCors()
             routing {
+                subscribePage.apply(this)
                 sayHellos.apply(this)
                 playlists.apply(this)
                 remotes.apply(this)
@@ -43,7 +46,7 @@ internal class HttpServerImpl @Inject constructor(
     }
 
     override fun stop() {
-        server?.stop()
+        server?.stop(0L, 0L)
         server = null
     }
 

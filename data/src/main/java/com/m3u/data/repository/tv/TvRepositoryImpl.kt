@@ -67,6 +67,9 @@ class TvRepositoryImpl @Inject constructor(
     private val _broadcastCodeOnTv = MutableStateFlow<Int?>(null)
     override val broadcastCodeOnTv = _broadcastCodeOnTv.asStateFlow()
 
+    private val _subscribeUrlOnTv = MutableStateFlow<String?>(null)
+    override val subscribeUrlOnTv = _subscribeUrlOnTv.asStateFlow()
+
     private var broadcastOnTvJob: Job? = null
 
     override fun broadcastOnTv() {
@@ -95,11 +98,13 @@ class TvRepositoryImpl @Inject constructor(
                     }
                     .onCompletion {
                         _broadcastCodeOnTv.value = null
+                        _subscribeUrlOnTv.value = null
                         logger.log("start-server: nsd completed")
                     }
                     .onEach { registered ->
                         logger.log("start-server: registered: $registered")
                         _broadcastCodeOnTv.value = if (registered != null) pin else null
+                        _subscribeUrlOnTv.value = if (registered != null) "http://$host:$serverPort/subscribe" else null
                     }
                     .collect()
             }
@@ -107,6 +112,7 @@ class TvRepositoryImpl @Inject constructor(
     }
 
     override fun closeBroadcastOnTv() {
+        _subscribeUrlOnTv.value = null
         httpServer.stop()
         broadcastOnTvJob?.cancel()
         broadcastOnTvJob = null

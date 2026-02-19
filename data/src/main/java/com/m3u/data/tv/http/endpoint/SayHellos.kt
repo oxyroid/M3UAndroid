@@ -6,6 +6,7 @@ import com.m3u.core.architecture.logger.sandBox
 import com.m3u.core.wrapper.Message
 import com.m3u.data.repository.media.MediaRepository
 import com.m3u.data.tv.model.TvInfo
+import io.ktor.server.application.call
 import io.ktor.server.request.receiveChannel
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
@@ -44,7 +45,7 @@ data class SayHellos @Inject constructor(
 
             post("/install") {
                 messager.sandBox {
-                    val version = call.queryParameters["version"]
+                    val version = call.request.queryParameters["version"]
                     if (version == null) {
                         call.respond(
                             DefRep(

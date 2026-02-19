@@ -4,6 +4,7 @@ import com.m3u.core.architecture.logger.Logger
 import com.m3u.core.architecture.logger.sandBox
 import com.m3u.data.service.DPadReactionService
 import com.m3u.data.tv.model.RemoteDirection
+import io.ktor.server.application.call
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
@@ -22,8 +23,8 @@ data class Remotes @Inject constructor(
                 logger.sandBox {
                     val remoteDirection = call
                         .parameters["direction"]
-                        ?.toInt()
-                        ?.let { RemoteDirection.of(it) }
+                        ?.toIntOrNull()
+                        ?.let { value: Int -> RemoteDirection.of(value) }
                     if (remoteDirection == null) {
                         call.respond(
                             DefRep(

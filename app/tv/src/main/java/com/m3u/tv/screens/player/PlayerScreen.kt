@@ -1,7 +1,5 @@
 package com.m3u.tv.screens.player
 
-import android.app.Activity
-import android.app.PictureInPictureParams
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
@@ -16,7 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.Player
@@ -26,7 +23,6 @@ import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import com.m3u.business.channel.ChannelViewModel
 import com.m3u.business.channel.PlayerState
 import com.m3u.core.foundation.ui.thenNoN
-import com.m3u.core.util.basic.rational
 import com.m3u.data.database.model.Channel
 import com.m3u.tv.screens.player.components.VideoPlayerControls
 import com.m3u.tv.screens.player.components.VideoPlayerOverlay
@@ -38,6 +34,7 @@ import com.m3u.tv.screens.player.components.VideoPlayerPulseState
 import com.m3u.tv.screens.player.components.VideoPlayerState
 import com.m3u.tv.screens.player.components.rememberVideoPlayerPulseState
 import com.m3u.tv.screens.player.components.rememberVideoPlayerState
+import com.m3u.tv.utils.LocalHelper
 import com.m3u.tv.utils.handleDPadKeyEvents
 import kotlinx.coroutines.delay
 
@@ -50,23 +47,18 @@ fun PlayerScreen(
     onBackPressed: () -> Unit,
     viewModel: ChannelViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
+    val helper = LocalHelper.current
     val channel by viewModel.channel.collectAsStateWithLifecycle()
     val playerState by viewModel.playerState.collectAsStateWithLifecycle()
     val enterPipMode by viewModel.enterPipMode.collectAsStateWithLifecycle()
 
-    // Observe the one-shot signal from the ViewModel and enter PiP from the UI layer,
-    // where we have access to the Activity — the only place it can safely be called.
     LaunchedEffect(enterPipMode) {
         if (enterPipMode) {
-            val activity = context as? Activity
-            if (activity != null) {
-                val videoSize = playerState.videoSize.takeIf { !it.isEmpty }
-                val params = PictureInPictureParams.Builder()
-                    .apply { videoSize?.let { setAspectRatio(it.rational) } }
-                    .build()
-                activity.enterPictureInPictureMode(params)
-            }
+            val videoSize = playerState.videoSize
+            helper.enterPipMode(
+                if (!videoSize.isEmpty()) videoSize
+                else android.graphics.Rect(0, 0, 16, 9)
+            )
             viewModel.onPipEntered()
         }
     }
@@ -115,7 +107,7 @@ fun VideoPlayerScreenContent(
             }
         }
 
-        BackHandler(onBack = onBackPressed)
+        BackHandler(onBack = { viewModel.enterPip() })
 
         val pulseState = rememberVideoPlayerPulseState()
 

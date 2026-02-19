@@ -8,6 +8,8 @@ import kotlin.time.Duration.Companion.seconds
 
 abstract class TvRepository {
     abstract val broadcastCodeOnTv: StateFlow<Int?>
+    /** When non-null, TV HTTP server is running; use this URL for "add subscription" (e.g. QR code). */
+    abstract val subscribeUrlOnTv: StateFlow<String?>
 
     protected abstract fun broadcastOnTv()
     protected abstract fun closeBroadcastOnTv()

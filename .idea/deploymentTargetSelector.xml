@@ -10,10 +10,10 @@
       </SelectionState>
       <SelectionState runConfigName="app.tv">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-02-18T10:27:26.119806Z">
+        <DropdownSelection timestamp="2026-02-19T00:10:25.424731Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=25271HFDD68WD0" />
+              <DeviceId pluginId="Default" identifier="serial=192.168.50.72:43745;connection=ad470569" />
             </handle>
           </Target>
         </DropdownSelection>

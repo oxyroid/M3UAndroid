@@ -4,6 +4,8 @@ import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -38,6 +40,11 @@ fun OptionalSection() {
         if (skipDetailsPage) R.string.feat_setting_on else R.string.feat_setting_off
     ).title()
 
+    val remoteControl = preferences.remoteControl
+    val remoteControlLabel = stringResource(
+        if (remoteControl) R.string.feat_setting_on else R.string.feat_setting_off
+    ).title()
+
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
@@ -49,6 +56,12 @@ fun OptionalSection() {
             .focusGroup()
             .focusRestorer()
     ) {
+        Text(
+            text = stringResource(R.string.feat_setting_optional_features).title(),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.height(24.dp))
         ListItem(
             selected = false,
             headlineContent = {
@@ -76,6 +89,41 @@ fun OptionalSection() {
             ),
             shape = ListItemDefaults.shape(shape = MaterialTheme.shapes.extraSmall),
             modifier = Modifier.focusRequester(focusRequester).fillMaxWidth()
+        )
+        ListItem(
+            selected = false,
+            headlineContent = {
+                Text(
+                    text = stringResource(R.string.feat_setting_remote_control_tv_side).title(),
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.Medium
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            supportingContent = {
+                Text(
+                    text = stringResource(R.string.feat_setting_remote_control_tv_side_description),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            trailingContent = {
+                Text(
+                    text = remoteControlLabel,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            onClick = {
+                preferences.remoteControl = !preferences.remoteControl
+            },
+            scale = ListItemDefaults.scale(focusedScale = 1f),
+            colors = ListItemDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.inverseSurface,
+            ),
+            shape = ListItemDefaults.shape(shape = MaterialTheme.shapes.extraSmall),
+            modifier = Modifier.fillMaxWidth()
         )
         ListItem(
             selected = false,

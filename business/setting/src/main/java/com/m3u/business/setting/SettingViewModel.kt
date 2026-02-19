@@ -30,6 +30,7 @@ import com.m3u.data.database.model.Channel
 import com.m3u.data.parser.xtream.XtreamInput
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.channel.ChannelRepository
+import com.m3u.data.repository.tv.TvRepository
 import com.m3u.data.service.Messager
 import com.m3u.data.service.PlayerManager
 import com.m3u.data.worker.BackupWorker
@@ -57,6 +58,7 @@ class SettingViewModel @Inject constructor(
     private val preferences: Preferences,
     private val messager: Messager,
     private val tvApi: TvApiDelegate,
+    private val tvRepository: TvRepository,
     publisher: Publisher,
     // FIXME: do not use dao in viewmodel
     private val colorSchemeDao: ColorSchemeDao,
@@ -80,6 +82,9 @@ class SettingViewModel @Inject constructor(
             initialValue = emptyList(),
             started = SharingStarted.WhileSubscribed(5_000L)
         )
+
+    /** When non-null (TV + remote control on), show QR so user can type URL on phone. */
+    val subscribeUrlOnTv: StateFlow<String?> = tvRepository.subscribeUrlOnTv
 
     val hiddenCategoriesWithPlaylists: StateFlow<List<Pair<Playlist, String>>> =
         playlistRepository

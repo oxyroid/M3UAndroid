@@ -141,4 +141,6 @@
     <string name="feat_setting_skip_details_page_description">go directly to the player when selecting a channel</string>
     <string name="feat_setting_on">on</string>
     <string name="feat_setting_off">off</string>
+
+    <string name="feat_setting_qr_subscribe_hint">Scan with your phone to enter the URL in the browser</string>
 </resources>

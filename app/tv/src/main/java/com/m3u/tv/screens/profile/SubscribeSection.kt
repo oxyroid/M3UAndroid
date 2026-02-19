@@ -2,6 +2,8 @@ package com.m3u.tv.screens.profile
 
 import android.view.KeyEvent.KEYCODE_DPAD_UP
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
@@ -16,6 +19,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -38,6 +42,7 @@ import com.m3u.tv.theme.JetStreamCardShape
 import com.m3u.tv.ui.component.TextField
 import com.m3u.tv.utils.createInitialFocusRestorerModifiers
 import com.m3u.tv.utils.occupyScreenSize
+import com.m3u.tv.components.QrCodeImage
 
 @Immutable
 data class AccountsSectionData(
@@ -49,6 +54,7 @@ data class AccountsSectionData(
 @Composable
 fun SettingViewModel.SubscribeSection() {
     val childPadding = rememberChildPadding()
+    val subscribeUrl by subscribeUrlOnTv.collectAsState()
     val dataSources = listOf(
         DataSource.M3U,
         DataSource.EPG,
@@ -113,7 +119,7 @@ fun SettingViewModel.SubscribeSection() {
         }
 
         when (selectedState.value) {
-            DataSource.M3U -> m3uPageConfiguration(this)
+            DataSource.M3U -> m3uPageConfiguration(this, subscribeUrl)
             DataSource.EPG -> epgPageConfiguration(this)
             DataSource.Xtream -> xtreamPageConfiguration(this)
             else -> {}
@@ -122,7 +128,8 @@ fun SettingViewModel.SubscribeSection() {
 }
 
 private fun SettingViewModel.m3uPageConfiguration(
-    scope: LazyListScope
+    scope: LazyListScope,
+    subscribeUrl: String?
 ) {
     with(scope) {
         input(
@@ -135,6 +142,24 @@ private fun SettingViewModel.m3uPageConfiguration(
             onValueChanged = { urlState.value = it },
             placeholder = R.string.feat_setting_placeholder_url
         )
+        if (subscribeUrl != null) {
+            item {
+                Column(
+                    modifier = Modifier.padding(top = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.feat_setting_qr_subscribe_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = LocalContentColor.current.copy(alpha = 0.8f)
+                    )
+                    QrCodeImage(
+                        content = subscribeUrl,
+                        size = 200.dp
+                    )
+                }
+            }
+        }
         item {
             Button(
                 onClick = this@m3uPageConfiguration::subscribe,
