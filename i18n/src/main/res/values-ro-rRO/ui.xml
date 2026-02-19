@@ -7,6 +7,7 @@
     <string name="ui_destination_foryou">Pentru Tine</string>
     <string name="ui_destination_favourite">Favorite</string>
     <string name="ui_destination_setting">Setari</string>
+    <string name="ui_destination_playlist">Lista de redare</string>
 
     <string name="ui_error_unknown">eroare necunoscuta</string>
     <string name="ui_cd_top_bar_on_back_pressed">inapoi</string>
@@ -18,6 +19,7 @@
     <string name="ui_sort_asc">A-Z</string>
     <string name="ui_sort_desc">Z-A</string>
     <string name="ui_sort_recently">recent</string>
+    <string name="ui_sort_mixed">Mixt</string>
     <string name="ui_sort_never_played">niciodata rulat</string>
     <string name="ui_sort_unspecified">Nespecificat</string>
 

@@ -5,6 +5,7 @@
     <string name="ui_destination_foryou">主页</string>
     <string name="ui_destination_favourite">喜欢</string>
     <string name="ui_destination_setting">设置</string>
+    <string name="ui_destination_playlist">播放列表</string>
 
     <string name="ui_title_setting">设置</string>
     <string name="ui_title_favourite">喜欢</string>
@@ -22,4 +23,6 @@
     <string name="ui_sort_mixed">混合</string>
     <string name="ui_sort_never_played">从未播放过</string>
     <string name="ui_sort_unspecified">默认</string>
+
+    <string name="ui_connect">连接</string>
 </resources>

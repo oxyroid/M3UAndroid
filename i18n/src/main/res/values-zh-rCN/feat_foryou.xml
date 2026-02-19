@@ -10,4 +10,12 @@
     <string name="feat_foryou_recommend_unseen_more_than_days">超过 %d 天</string>
     <string name="feat_foryou_recommend_unseen_days">%d 天</string>
     <string name="feat_foryou_recommend_unseen_hours">%d 小时</string>
+    <string name="feat_foryou_new_release">新发布</string>
+    <string name="feat_foryou_connect_title">输入电视上的代码</string>
+    <string name="feat_foryou_connect_subtitle">请确保连接到同一 Wi-Fi</string>
+    <string name="feat_foryou_playlist_count">%d 个频道</string>
+    <string name="feat_foryou_open_playlist">打开</string>
+    <string name="feat_foryou_delete_playlist_confirm">删除此播放列表？频道将被移除。</string>
+    <string name="feat_foryou_delete_playlist">删除</string>
+    <string name="feat_foryou_edit_playlist">编辑</string>
 </resources>

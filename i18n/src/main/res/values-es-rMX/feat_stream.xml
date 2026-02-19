@@ -16,9 +16,15 @@
     <string name="feat_channel_tooltip_enter_pip_mode">modo PIP</string>
     <string name="feat_channel_tooltip_screen_rotating">rotación de pantalla</string>
     <string name="feat_channel_tooltip_choose_format">Elegir formato</string>
+    <string name="feat_channel_tooltip_previous_channel">Canal anterior</string>
+    <string name="feat_channel_tooltip_next_channel">Canal siguiente</string>
 
     <string name="feat_channel_dialog_dlna_devices">Dispositivos DLNA</string>
     <string name="feat_channel_dialog_choose_tracks">Elegir pista</string>
+    <string name="feat_channel_dialog_choose_tracks_description">Seleccione calidad de vídeo, pista de audio o subtítulos del stream.</string>
+    <string name="feat_channel_dialog_subtitles_title">Subtítulos</string>
+    <string name="feat_channel_dialog_close">Cerrar</string>
+    <string name="feat_channel_tooltip_open_panel">Abrir panel</string>
 
     <string name="feat_channel_open_in_external_app">abrir en una app externa</string>
 </resources>

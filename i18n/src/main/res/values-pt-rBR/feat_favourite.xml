@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="feat_favorite_scheme_unknown">Desconhecido</string>
+    <string name="feat_favorite_play_randomly">reproduzir aleatoriamente</string>
+    <string name="feat_favourite_remove_from_favourite">Remover dos favoritos</string>
 </resources>

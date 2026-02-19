@@ -12,5 +12,7 @@
     <string name="feat_playlist_error_channel_cover_not_found">coperta nu exista</string>
     <string name="feat_playlist_error_channel_not_found">canalul nu exista</string>
     <string name="feat_playlist_success_save_cover">salvat in (%s)</string>
-    <string name="feat_playlist_scroll_up">deruleazA sus</string>
+    <string name="feat_playlist_scroll_up">derulează sus</string>
+    <string name="feat_playlist_no_playlist_open">Deschide o listă de acasă</string>
+    <string name="feat_playlist_loading">Se încarcă lista…</string>
 </resources>

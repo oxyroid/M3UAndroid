@@ -13,4 +13,9 @@
     <string name="feat_foryou_new_release">nuevo lanzamiento</string>
     <string name="feat_foryou_connect_title">ingresar el código de la televisión</string>
     <string name="feat_foryou_connect_subtitle">Asegure de conectar en la misma red Wi-Fi</string>
+    <string name="feat_foryou_playlist_count">%d canales</string>
+    <string name="feat_foryou_open_playlist">Abrir</string>
+    <string name="feat_foryou_delete_playlist_confirm">¿Eliminar esta lista? Se quitarán los canales.</string>
+    <string name="feat_foryou_delete_playlist">Eliminar</string>
+    <string name="feat_foryou_edit_playlist">Editar</string>
 </resources>

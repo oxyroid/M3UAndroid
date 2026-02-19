@@ -12,4 +12,10 @@
     <string name="feat_foryou_recommend_unseen_hours">%d Stunden</string>
     <string name="feat_foryou_connect_title">Code vom Fernseher eingeben</string>
     <string name="feat_foryou_connect_subtitle">Stelle sicher, dass Du mit dem selben WLAN verbunden bist</string>
+    <string name="feat_foryou_playlist_count">%d Kanäle</string>
+    <string name="feat_foryou_open_playlist">Öffnen</string>
+    <string name="feat_foryou_delete_playlist_confirm">Diese Playlist löschen? Kanäle werden entfernt.</string>
+    <string name="feat_foryou_delete_playlist">Löschen</string>
+    <string name="feat_foryou_edit_playlist">Bearbeiten</string>
+    <string name="feat_foryou_new_release">Neuerscheinung</string>
 </resources>

@@ -12,4 +12,10 @@
     <string name="feat_foryou_recommend_unseen_hours">%d horas</string>
     <string name="feat_foryou_connect_title">Digite o código da TV</string>
     <string name="feat_foryou_connect_subtitle">Certifique-se de está conectado ao mesmo Wi-Fi</string>
+    <string name="feat_foryou_playlist_count">%d canais</string>
+    <string name="feat_foryou_open_playlist">Abrir</string>
+    <string name="feat_foryou_delete_playlist_confirm">Excluir esta playlist? Os canais serão removidos.</string>
+    <string name="feat_foryou_delete_playlist">Excluir</string>
+    <string name="feat_foryou_edit_playlist">Editar</string>
+    <string name="feat_foryou_new_release">novo lançamento</string>
 </resources>

@@ -88,6 +88,12 @@
     <string name="feat_setting_restoring">restaurando todos los playlists y canales</string>
     <string name="feat_setting_follow_system_theme">seguir tema del sistema</string>
 
+    <string name="feat_setting_data_source_m3u" translatable="false">M3U</string>
+    <string name="feat_setting_data_source_epg" translatable="false">EPG</string>
+    <string name="feat_setting_data_source_xtream" translatable="false">Xtream</string>
+    <string name="feat_setting_data_source_emby" translatable="false">Emby</string>
+    <string name="feat_setting_data_source_dropbox" translatable="false">Dropbox</string>
+
     <string name="feat_setting_placeholder_basic_url">dirección</string>
     <string name="feat_setting_placeholder_username">usuario</string>
     <string name="feat_setting_placeholder_password">contraseña</string>
@@ -122,4 +128,14 @@
     <string name="feat_setting_epg_added">puedes vincular la playlist con su(s) EPG</string>
 
     <string name="feat_setting_randomly_in_favourite">reproducir al azar sólo desde favoritos</string>
+    <string name="feat_setting_on">on</string>
+    <string name="feat_setting_off">off</string>
+    <string name="feat_setting_playlist_item_size">tamaño del elemento de lista</string>
+    <string name="feat_setting_playlist_item_size_large">grande</string>
+    <string name="feat_setting_playlist_item_size_medium">mediano</string>
+    <string name="feat_setting_playlist_item_size_small">pequeño</string>
+    <string name="feat_setting_playlist_item_size_compact">compacto</string>
+    <string name="feat_setting_qr_subscribe_hint">Escanee con el móvil para introducir la URL en el navegador</string>
+    <string name="feat_setting_skip_details_page">omitir página de detalles</string>
+    <string name="feat_setting_skip_details_page_description">ir directamente al reproductor al seleccionar un canal</string>
 </resources>

@@ -13,4 +13,6 @@
     <string name="feat_playlist_error_channel_not_found">la transmisión no existe</string>
     <string name="feat_playlist_success_save_cover">se ha guardado a (%s)</string>
     <string name="feat_playlist_scroll_up">subir</string>
+    <string name="feat_playlist_no_playlist_open">Abrir una lista desde Inicio</string>
+    <string name="feat_playlist_loading">Cargando lista…</string>
 </resources>

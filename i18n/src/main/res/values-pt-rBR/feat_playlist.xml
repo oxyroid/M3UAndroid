@@ -13,4 +13,6 @@
     <string name="feat_playlist_error_channel_not_found">A stream não existe</string>
     <string name="feat_playlist_success_save_cover">Salvo em (%s)</string>
     <string name="feat_playlist_scroll_up">Role para cima</string>
+    <string name="feat_playlist_no_playlist_open">Abra uma playlist na Home</string>
+    <string name="feat_playlist_loading">Carregando playlist…</string>
 </resources>

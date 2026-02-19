@@ -12,4 +12,10 @@
     <string name="feat_foryou_recommend_unseen_hours">%d ore</string>
     <string name="feat_foryou_connect_title">codul de pe TV</string>
     <string name="feat_foryou_connect_subtitle">Verificati sa fiti conectat la aceasi retea Wi-Fi</string>
+    <string name="feat_foryou_playlist_count">%d canale</string>
+    <string name="feat_foryou_open_playlist">Deschide</string>
+    <string name="feat_foryou_delete_playlist_confirm">Șterge această listă? Canalele vor fi eliminate.</string>
+    <string name="feat_foryou_delete_playlist">Șterge</string>
+    <string name="feat_foryou_edit_playlist">Editează</string>
+    <string name="feat_foryou_new_release">lansare nouă</string>
 </resources>

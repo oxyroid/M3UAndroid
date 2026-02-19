@@ -2,4 +2,12 @@
 <resources>
     <string name="data_error_file_not_found">fisier inexistent</string>
     <string name="data_error_empty_title">nume lista necompletat</string>
+    <string name="data_channel_name_stream_download_service">Serviciu descărcare flux</string>
+    <string name="data_channel_description_stream_download_service">Descriere descărcare flux</string>
+
+    <string name="data_worker_subscription_action_cancel">Anulare</string>
+    <string name="data_worker_subscription_action_retry">Reîncearcă</string>
+    <string name="data_worker_subscription_content_completed">Finalizat (+%d)</string>
+    <string name="data_worker_subscription_content_channel_progress">%d canale au fost descărcate</string>
+    <string name="data_worker_subscription_content_programme_progress">%d programe au fost descărcate</string>
 </resources>

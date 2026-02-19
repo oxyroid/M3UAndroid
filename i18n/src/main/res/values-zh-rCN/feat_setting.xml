@@ -96,6 +96,12 @@
 
     <string name="feat_setting_follow_system_theme">跟随系统主题</string>
 
+    <string name="feat_setting_data_source_m3u" translatable="false">M3U</string>
+    <string name="feat_setting_data_source_epg" translatable="false">EPG</string>
+    <string name="feat_setting_data_source_xtream" translatable="false">Xtream</string>
+    <string name="feat_setting_data_source_emby" translatable="false">Emby</string>
+    <string name="feat_setting_data_source_dropbox" translatable="false">Dropbox</string>
+
     <string name="feat_setting_placeholder_basic_url">订阅地址</string>
     <string name="feat_setting_placeholder_username">用户名</string>
     <string name="feat_setting_placeholder_password">密码</string>
@@ -117,6 +123,16 @@
         加载大量频道很有用，但是与此同时分组会被禁用
     </string>
     <string name="feat_setting_source_code">源代码</string>
+    <string name="feat_setting_compact_dimension">紧凑尺寸</string>
+    <string name="feat_setting_playlist_item_size">播放列表项大小</string>
+    <string name="feat_setting_playlist_item_size_large">大</string>
+    <string name="feat_setting_playlist_item_size_medium">中</string>
+    <string name="feat_setting_playlist_item_size_small">小</string>
+    <string name="feat_setting_playlist_item_size_compact">紧凑</string>
+    <string name="feat_setting_on">开</string>
+    <string name="feat_setting_off">关</string>
+    <string name="feat_setting_skip_details_page">跳过详情页</string>
+    <string name="feat_setting_skip_details_page_description">选择频道后直接进入播放器</string>
 
     <!-- EPG -->
     <string name="feat_setting_placeholder_epg_title">EPG名称</string>

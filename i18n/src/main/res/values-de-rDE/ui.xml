@@ -7,6 +7,7 @@
     <string name="ui_destination_foryou">Home</string>
     <string name="ui_destination_favourite">Favoriten</string>
     <string name="ui_destination_setting">Einstellungen</string>
+    <string name="ui_destination_playlist">Playlist</string>
 
     <string name="ui_error_unknown">unbekannter Fehler</string>
     <string name="ui_cd_top_bar_on_back_pressed">zurück</string>
@@ -18,6 +19,7 @@
     <string name="ui_sort_asc">A-Z</string>
     <string name="ui_sort_desc">Z-A</string>
     <string name="ui_sort_recently">Kürzlich</string>
+    <string name="ui_sort_mixed">Gemischt</string>
     <string name="ui_sort_never_played">nie gespielt</string>
     <string name="ui_sort_unspecified">Nicht spezifiziert</string>
 
