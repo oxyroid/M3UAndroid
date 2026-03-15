@@ -64,9 +64,11 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.InputStream
 import java.io.Reader
+import java.util.UUID
 import javax.inject.Inject
 
 private const val BUFFER_M3U_CAPACITY = 500
@@ -93,54 +95,38 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         url: String,
         callback: (count: Int) -> Unit
     ) {
+        val isInlineContent = url.trimStart().startsWith("#EXTM3U")
+        val actualUrl = if (isInlineContent) "file://local/${UUID.randomUUID()}" else url.actualUrl()
         var currentCount = 0
         callback(currentCount)
-        val actualUrl = url.actualUrl()
         logger.post {
             """
-                url: $url
+                url: ${if (isInlineContent) "<inline content>" else url}
                 actualUrl: $actualUrl
             """.trimIndent()
         }
         val favOrHiddenRelationIds = when (preferences.playlistStrategy) {
             PlaylistStrategy.ALL -> emptyList()
-            else -> {
-                channelDao.getFavOrHiddenRelationIdsByPlaylistUrl(url)
-            }
+            else -> channelDao.getFavOrHiddenRelationIdsByPlaylistUrl(actualUrl)
         }
         val favOrHiddenUrls = when (preferences.playlistStrategy) {
             PlaylistStrategy.ALL -> emptyList()
-            else -> {
-                channelDao.getFavOrHiddenUrlsByPlaylistUrlNotContainsRelationId(url)
-            }
+            else -> channelDao.getFavOrHiddenUrlsByPlaylistUrlNotContainsRelationId(actualUrl)
         }
-
         when (preferences.playlistStrategy) {
-            PlaylistStrategy.ALL -> {
-                channelDao.deleteByPlaylistUrl(url)
-            }
-
-            PlaylistStrategy.KEEP -> {
-                channelDao.deleteByPlaylistUrlIgnoreFavOrHidden(url)
-            }
+            PlaylistStrategy.ALL -> channelDao.deleteByPlaylistUrl(actualUrl)
+            PlaylistStrategy.KEEP -> channelDao.deleteByPlaylistUrlIgnoreFavOrHidden(actualUrl)
         }
-
         val now = System.currentTimeMillis()
         val playlist = playlistDao.get(actualUrl)?.copy(
             title = title,
-            // maybe be saved as epg or any other sources.
             source = DataSource.M3U,
             lastRefreshedAt = now
         ) ?: Playlist(title, actualUrl, source = DataSource.M3U, lastRefreshedAt = now)
         playlistDao.insertOrReplace(playlist)
-
-        // Insert channels in batches, but flush a small first batch quickly so
-        // the UI can render something almost immediately (especially on TV
-        // where ~5 items already fill the first row).
         val firstVisibleBatch = 5
         val buffer = mutableListOf<M3UData>()
         var hasFlushedOnce = false
-
         suspend fun flushBuffer() {
             if (buffer.isEmpty()) return
             channelDao.insertOrReplaceAll(
@@ -151,15 +137,16 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             buffer.clear()
             hasFlushedOnce = true
         }
-
         channelFlow {
-            when {
+            val input = when {
+                isInlineContent -> ByteArrayInputStream(url.toByteArray(Charsets.UTF_8))
                 url.isSupportedNetworkUrl() -> openNetworkInput(actualUrl)
                 url.isSupportedAndroidUrl() -> openAndroidInput(actualUrl)
                 else -> null
-            }?.use { input ->
+            }
+            input?.use { stream ->
                 m3uParser
-                    .parse(input.buffered())
+                    .parse(stream.buffered())
                     .filterNot {
                         val relationId = it.id
                         when {
@@ -175,9 +162,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                 buffer += data
                 val shouldFlushFirstBatch = !hasFlushedOnce && buffer.size >= firstVisibleBatch
                 val shouldFlushRegularBatch = buffer.size >= BUFFER_M3U_CAPACITY
-                if (shouldFlushFirstBatch || shouldFlushRegularBatch) {
-                    flushBuffer()
-                }
+                if (shouldFlushFirstBatch || shouldFlushRegularBatch) flushBuffer()
             }
             .onCompletion { flushBuffer() }
             .flowOn(ioDispatcher)

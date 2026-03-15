@@ -3,6 +3,7 @@ package com.m3u.tv.utils
 import android.app.PictureInPictureParams
 import android.graphics.Rect
 import android.util.Rational
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -33,6 +34,15 @@ class Helper(private val activity: ComponentActivity) {
 
     /** Set by the player screen; invoked when the user leaves (e.g. Home press) for SmartTube-style PiP. */
     var onUserLeaveHint: (() -> Unit)? = null
+
+    /** Keeps the screen on (prevents screensaver) while content is playing. */
+    fun setKeepScreenOn(keep: Boolean) {
+        if (keep) {
+            activity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        } else {
+            activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
 
     /** Called from Activity.onUserLeaveHint(); runs the callback registered by the player. */
     fun runOnUserLeaveHint() {

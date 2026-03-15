@@ -23,6 +23,7 @@ import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import com.m3u.business.channel.ChannelViewModel
 import com.m3u.business.channel.PlayerState
 import com.m3u.core.foundation.ui.thenNoN
+import androidx.media3.common.PlaybackException
 import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.data.database.model.Channel
 import com.m3u.tv.screens.player.components.VideoPlayerControls
@@ -122,6 +123,13 @@ fun VideoPlayerScreenContent(
         }
     }
 
+    DisposableEffect(Unit) {
+        helper.setKeepScreenOn(true)
+        onDispose {
+            helper.setKeepScreenOn(false)
+        }
+    }
+
     if (player != null) {
         val videoPlayerState = rememberVideoPlayerState(
             player = player,
@@ -195,6 +203,7 @@ fun VideoPlayerScreenContent(
                         onPreviousChannel = viewModel::getPreviousChannel,
                         onNextChannel = viewModel::getNextChannel,
                         isPipSupported = isPipSupported,
+                        streamErrorMessage = formatPlaybackError(playerState.playerError),
                     )
                 }
             )
@@ -236,3 +245,10 @@ private fun Modifier.dPadEvents(
         videoPlayerState.showControls()
     }
 )
+
+private fun formatPlaybackError(exception: PlaybackException?): String {
+    if (exception == null) return ""
+    val codeName = PlaybackException.getErrorCodeName(exception.errorCode)
+    val msg = exception.message?.takeIf { it.isNotBlank() }
+    return if (msg != null) "$codeName: $msg" else codeName
+}

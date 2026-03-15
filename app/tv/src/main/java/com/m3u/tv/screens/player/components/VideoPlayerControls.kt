@@ -42,15 +42,14 @@ fun VideoPlayerControls(
     onPreviousChannel: () -> Unit = {},
     onNextChannel: () -> Unit = {},
     isPipSupported: Boolean = true,
+    streamErrorMessage: String = "",
 ) {
     VideoPlayerMainFrame(
         mediaTitle = {
             VideoPlayerMediaTitle(
                 title = channel.title,
-                secondaryText = "",
-                // secondaryText = "channel.releaseDate",
-                tertiaryText = "",
-                // tertiaryText = "channel.director",
+                secondaryText = channel.description.orEmpty(),
+                tertiaryText = streamErrorMessage,
                 type = VideoPlayerMediaTitleType.DEFAULT
             )
         },

@@ -32,6 +32,7 @@ internal class M3UParserImpl @Inject constructor(
         const val M3U_TVG_ID_MARK = "tvg-id"
         const val M3U_TVG_NAME_MARK = "tvg-name"
         const val M3U_GROUP_TITLE_MARK = "group-title"
+        private const val M3U_DESCRIPTION_MARK = "description"
 
         const val KODI_LICENSE_TYPE = "inputstream.adaptive.license_type"
         const val KODI_LICENSE_KEY = "inputstream.adaptive.license_key"
@@ -97,6 +98,7 @@ internal class M3UParserImpl @Inject constructor(
                 duration = duration,
                 licenseType = kodiMetadata[KODI_LICENSE_TYPE],
                 licenseKey = kodiMetadata[KODI_LICENSE_KEY],
+                description = metadata[M3U_DESCRIPTION_MARK].orEmpty(),
             )
 
             infoMatch = null

@@ -1,12 +1,17 @@
 package com.m3u.tv.screens.favorite
 
 import android.view.KeyEvent
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -27,14 +32,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.business.favorite.FavouriteViewModel
 import com.m3u.core.architecture.preferences.hiltPreferences
 import com.m3u.core.foundation.components.CircularProgressIndicator
+import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Resource
 import com.m3u.data.database.model.Channel
 import com.m3u.i18n.R
 import com.m3u.tv.StandardDialog
 import com.m3u.tv.screens.dashboard.rememberChildPadding
-import com.m3u.tv.screens.playlist.favouriteChannelGallery
+import com.m3u.tv.screens.playlist.ChannelGalleryItem
 import com.m3u.tv.screens.playlist.playlistItemWidthForSize
-import com.m3u.tv.screens.profile.AccountsSectionDialogButton
+import com.m3u.tv.ui.component.TextField
 import androidx.tv.material3.ListItemDefaults
 import androidx.tv.material3.LocalContentColor
 import androidx.tv.material3.MaterialTheme
@@ -53,14 +59,15 @@ fun FavoriteScreen(
     val preferences = hiltPreferences()
     val childPadding = rememberChildPadding()
     val itemWidth = playlistItemWidthForSize(preferences.playlistItemSize)
-    val lazyListState = rememberLazyListState()
+    val gridState = rememberLazyGridState()
+    var searchQuery by remember { mutableStateOf("") }
     var channelForRemoveMenu by remember { mutableStateOf<Channel?>(null) }
     val consumeNextCenterKeyUp = remember { mutableStateOf(false) }
 
     val shouldShowTopBar by remember {
         derivedStateOf {
-            lazyListState.firstVisibleItemIndex == 0 &&
-                lazyListState.firstVisibleItemScrollOffset == 0
+            gridState.firstVisibleItemIndex == 0 &&
+                gridState.firstVisibleItemScrollOffset == 0
         }
     }
 
@@ -69,7 +76,7 @@ fun FavoriteScreen(
     }
     LaunchedEffect(isTopBarVisible) {
         if (isTopBarVisible) {
-            lazyListState.animateScrollToItem(0)
+            gridState.animateScrollToItem(0)
         }
     }
 
@@ -84,12 +91,15 @@ fun FavoriteScreen(
         }
 
         is Resource.Success -> {
-            LazyColumn(
-                state = lazyListState,
-                contentPadding = PaddingValues(
-                    top = childPadding.top,
-                    bottom = 104.dp
-                ),
+            val query = searchQuery.trim()
+            val filteredChannels = remember(channels.data, query) {
+                if (query.isBlank()) channels.data
+                else channels.data.filter { channel ->
+                    channel.title.contains(query, ignoreCase = true) ||
+                        channel.category.contains(query, ignoreCase = true)
+                }
+            }
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .then(
@@ -102,17 +112,46 @@ fun FavoriteScreen(
                         }
                     )
             ) {
-                favouriteChannelGallery(
-                    channels = channels.data,
-                    onChannelClick = onChannelClick,
-                    onChannelLongClick = { channel ->
-                        channelForRemoveMenu = channel
-                        consumeNextCenterKeyUp.value = true
-                    },
-                    startPadding = childPadding.start,
-                    endPadding = childPadding.end,
-                    itemWidth = itemWidth
+                TextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = stringResource(R.string.feat_playlist_query_placeholder).title(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            start = childPadding.start,
+                            end = childPadding.end,
+                            top = childPadding.top,
+                            bottom = 8.dp
+                        )
                 )
+                LazyVerticalGrid(
+                    state = gridState,
+                    columns = GridCells.Adaptive(itemWidth),
+                    contentPadding = PaddingValues(
+                        start = childPadding.start,
+                        end = childPadding.end,
+                        bottom = 104.dp
+                    ),
+                    horizontalArrangement = Arrangement.spacedBy(32.dp),
+                    verticalArrangement = Arrangement.spacedBy(32.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(
+                        items = filteredChannels,
+                        key = { it.id }
+                    ) { channel ->
+                        ChannelGalleryItem(
+                            channel = channel,
+                            modifier = Modifier.fillMaxWidth(),
+                            onChannelClick = onChannelClick,
+                            onChannelLongClick = { ch ->
+                                channelForRemoveMenu = ch
+                                consumeNextCenterKeyUp.value = true
+                            }
+                        )
+                    }
+                }
             }
         }
 

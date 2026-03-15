@@ -1,0 +1,20 @@
+
+Data:
+- Add Channel.description (DB migration 21→22); parse from M3U #EXTINF
+  "description", null for Xtream
+- PlaylistRepository: support inline M3U content (URL starting with #EXTM3U)
+- Playlists API: validate title/url; support large M3U via temp file and
+  m3uWithContentPath
+- SubscriptionWorker: m3uContentPath input, m3uWithContentPath(), short
+  work tags for long URLs
+
+TV app:
+- PlaylistScreen: ViewModel scoped per playlist URL; sectioned catalog
+  (headers + grid rows) or single-category grid
+- FavoriteScreen: grid layout, search filter, ChannelGalleryItem
+- SearchScreen: LazyVerticalGrid + ChannelGalleryItem
+- Player: keep screen on while playing; show stream error and description
+  in controls
+- ChannelDetails: show description (fallback to category)
+- Remove LazyPagingItems ChannelsRow overload (MoviesRow); add Proguard
+  dontwarn for Netty/Ktor/mmupnp

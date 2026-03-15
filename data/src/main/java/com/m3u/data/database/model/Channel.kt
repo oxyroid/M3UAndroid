@@ -37,6 +37,12 @@ data class Channel(
     val title: String,
     @ColumnInfo(name = "cover")
     val cover: String? = null,
+    /**
+     * Short channel description from M3U #EXTINF attribute "description"
+     * (e.g. from process_m3u.py). Null for Xtream or when not present.
+     */
+    @ColumnInfo(name = "description")
+    val description: String? = null,
     @ColumnInfo(name = "playlist_url", index = true)
     val playlistUrl: String,
     @ColumnInfo(name = "license_type", defaultValue = "NULL")

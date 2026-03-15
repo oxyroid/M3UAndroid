@@ -100,4 +100,11 @@ internal object DatabaseMigrations {
         }
     }
 
+    val MIGRATION_21_22 = object : Migration(21, 22) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "ALTER TABLE streams ADD COLUMN description TEXT DEFAULT NULL"
+            )
+        }
+    }
 }

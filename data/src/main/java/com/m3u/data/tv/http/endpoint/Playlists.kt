@@ -15,15 +15,19 @@ import io.ktor.server.application.call
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
+import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
+
+/** WorkManager InputData is limited (~10KB); larger M3U content is written to a temp file and path is passed. */
+private const val M3U_INPUT_SIZE_LIMIT = 10_000
 
 @Singleton
 data class Playlists @Inject constructor(
     private val workManager: WorkManager,
     private val preferences: Preferences,
     private val playlistRepository: PlaylistRepository,
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val appContext: Context
 ) : Endpoint {
     override fun apply(route: Route) {
         route.route("/playlists") {
@@ -62,7 +66,22 @@ data class Playlists @Inject constructor(
                             )
                             return@post
                         }
-                        SubscriptionWorker.m3u(workManager, title, url)
+                        if (title.isBlank() || url.isBlank()) {
+                            call.respond(
+                                DefRep(
+                                    result = false,
+                                    reason = "Provide a playlist URL or select an M3U file."
+                                )
+                            )
+                            return@post
+                        }
+                        if (url.length > M3U_INPUT_SIZE_LIMIT) {
+                            val tempFile = java.io.File(appContext.filesDir, "subscribe_${System.currentTimeMillis()}.m3u")
+                            tempFile.writeText(url)
+                            SubscriptionWorker.m3uWithContentPath(workManager, title, tempFile.absolutePath)
+                        } else {
+                            SubscriptionWorker.m3u(workManager, title, url)
+                        }
                     }
 
                     DataSource.Xtream -> {

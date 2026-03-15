@@ -55,6 +55,7 @@ fun App(
             }
             composable(route = Screens.Dashboard()) {
                 DashboardScreen(
+                    parentViewModelStoreOwner = navController.currentBackStackEntry,
                     openChannelScreen = { channelId ->
                         if (preferences.skipDetailsPage) {
                             coroutineScope.launch {

@@ -36,8 +36,12 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -65,6 +69,7 @@ fun rememberChildPadding(direction: LayoutDirection = LocalLayoutDirection.curre
 
 @Composable
 fun DashboardScreen(
+    parentViewModelStoreOwner: ViewModelStoreOwner? = null,
     openChannelScreen: (channelId: Int) -> Unit,
     openChannelDetailsScreen: (channelId: Int) -> Unit,
     isComingBackFromDifferentScreen: Boolean,
@@ -194,6 +199,7 @@ fun DashboardScreen(
         }
 
         Body(
+            parentViewModelStoreOwner = parentViewModelStoreOwner,
             openChannelScreen = openChannelScreen,
             openChannelDetailsScreen = openChannelDetailsScreen,
             updateTopBarVisibility = { isTopBarVisible = it },
@@ -230,6 +236,7 @@ private fun BackPressHandledArea(
 
 @Composable
 private fun Body(
+    parentViewModelStoreOwner: ViewModelStoreOwner?,
     openChannelScreen: (channelId: Int) -> Unit,
     openChannelDetailsScreen: (channelId: Int) -> Unit,
     updateTopBarVisibility: (Boolean) -> Unit,
@@ -270,13 +277,33 @@ private fun Body(
                 isTopBarVisible = isTopBarVisible
             )
         }
-        composable(Screens.Playlist()) {
+        composable(
+            route = Screens.Playlist(),
+            arguments = listOf(
+                navArgument(com.m3u.business.playlist.PlaylistNavigation.TYPE_URL) {
+                    type = NavType.StringType
+                    defaultValue = ""
+                }
+            )
+        ) {
+            val playlistUrl = navController.currentBackStackEntry
+                ?.arguments
+                ?.getString(com.m3u.business.playlist.PlaylistNavigation.TYPE_URL)
+                ?: ""
+            if (parentViewModelStoreOwner is NavBackStackEntry) {
+                parentViewModelStoreOwner.savedStateHandle.set(
+                    com.m3u.business.playlist.PlaylistNavigation.TYPE_URL,
+                    playlistUrl
+                )
+            }
             PlaylistScreen(
                 playlistTabFocusRequester = playlistTabFocusRequester,
                 onChannelClick = { channel -> openChannelScreen(channel.id) },
                 onChannelLongClick = { channel -> openChannelDetailsScreen(channel.id) },
                 onScroll = updateTopBarVisibility,
-                isTopBarVisible = isTopBarVisible
+                isTopBarVisible = isTopBarVisible,
+                viewModelStoreOwner = parentViewModelStoreOwner,
+                viewModelKey = "Playlist_$playlistUrl",
             )
         }
         composable(Screens.Search()) {

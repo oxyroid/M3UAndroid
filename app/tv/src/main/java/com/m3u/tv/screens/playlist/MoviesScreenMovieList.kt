@@ -2,12 +2,15 @@ package com.m3u.tv.screens.playlist
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -43,6 +46,7 @@ import com.m3u.tv.utils.longPressKeyHandler
 /** Item widths for playlist item size: Large, Medium, Small, Compact */
 private val PLAYLIST_ITEM_WIDTHS = listOf(432.dp, 340.dp, 260.dp, 200.dp)
 
+@Deprecated("Use sectioned grid layout (LazyVerticalGrid / LazyColumn with section headers and grid rows) instead.")
 fun LazyListScope.channelGallery(
     channels: List<Pair<PlaylistViewModel.CategoryWithChannels, LazyPagingItems<Channel>>>,
     startPadding: Dp,
@@ -60,10 +64,10 @@ fun LazyListScope.channelGallery(
                 val channel = pagingChannels[it]
                 if (channel != null) {
                     ChannelGalleryItem(
+                        channel = channel,
                         itemWidth = itemWidth,
                         onChannelClick = onChannelClick,
                         onChannelLongClick = onChannelLongClick,
-                        channel = channel,
                     )
                 }
             }
@@ -73,6 +77,63 @@ fun LazyListScope.channelGallery(
 
 fun playlistItemWidthForSize(size: Int): Dp =
     PLAYLIST_ITEM_WIDTHS[(size).coerceIn(0, PLAYLIST_ITEM_WIDTHS.lastIndex)]
+
+/** Section header for a category in the sectioned playlist grid. */
+@Composable
+fun PlaylistSectionHeader(
+    category: String,
+    modifier: Modifier = Modifier,
+    startPadding: Dp = 0.dp,
+    endPadding: Dp = 0.dp,
+) {
+    if (category.isBlank()) return
+    Text(
+        text = category,
+        style = MaterialTheme.typography.headlineSmall,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(start = startPadding, end = endPadding, top = 24.dp, bottom = 12.dp),
+        color = MaterialTheme.colorScheme.onSurface,
+    )
+}
+
+/** Single row of channel cards in the sectioned grid (no nested scroll). */
+@Composable
+fun PlaylistGridRowChunk(
+    categoryIndex: Int,
+    startIndex: Int,
+    columns: Int,
+    pagingChannels: LazyPagingItems<Channel>,
+    startPadding: Dp,
+    endPadding: Dp,
+    onChannelClick: (Channel) -> Unit,
+    onChannelLongClick: (Channel) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .focusRestorer()
+            .padding(start = startPadding, end = endPadding),
+        horizontalArrangement = Arrangement.spacedBy(32.dp),
+    ) {
+        repeat(columns) { i ->
+            val index = startIndex + i
+            val channel = if (index < pagingChannels.itemCount) pagingChannels[index] else null
+            Box(modifier = Modifier.weight(1f)) {
+                if (channel != null) {
+                    ChannelGalleryItem(
+                        channel = channel,
+                        modifier = Modifier.fillMaxWidth(),
+                        itemWidth = null,
+                        onChannelClick = onChannelClick,
+                        onChannelLongClick = onChannelLongClick,
+                    )
+                }
+            }
+        }
+    }
+}
 
 /** Single row of channels (e.g. for Favorites) using the same card as playlist gallery. */
 fun LazyListScope.favouriteChannelGallery(
@@ -90,10 +151,10 @@ fun LazyListScope.favouriteChannelGallery(
         ) {
             items(channels, key = { it.id }) { channel ->
                 ChannelGalleryItem(
+                    channel = channel,
                     itemWidth = itemWidth,
                     onChannelClick = onChannelClick,
                     onChannelLongClick = onChannelLongClick,
-                    channel = channel,
                 )
             }
         }
@@ -102,9 +163,9 @@ fun LazyListScope.favouriteChannelGallery(
 
 @Composable
 internal fun ChannelGalleryItem(
-    itemWidth: Dp,
     channel: Channel,
     modifier: Modifier = Modifier,
+    itemWidth: Dp? = null,
     onChannelClick: (channel: Channel) -> Unit,
     onChannelLongClick: (channel: Channel) -> Unit,
 ) {
@@ -116,9 +177,10 @@ internal fun ChannelGalleryItem(
         // Clickable fires its onClick via performClick() on ACTION_UP, which bypasses the key
         // event pipeline when the modifier is on the card's own node. A parent Box's
         // onPreviewKeyEvent runs before the event ever reaches the card subtree.
+        val sizeModifier = if (itemWidth != null) Modifier.width(itemWidth) else Modifier.fillMaxWidth()
         Box(
             modifier = modifier
-                .width(itemWidth)
+                .then(sizeModifier)
                 .aspectRatio(2f)
                 .padding(end = 32.dp)
                 .longPressKeyHandler(

@@ -109,6 +109,7 @@ fun XtreamLive.toChannel(
     category = category,
     title = name.orEmpty(),
     cover = streamIcon,
+    description = null,
     playlistUrl = playlistUrl,
     relationId = epgChannelId
 )
@@ -124,6 +125,7 @@ fun XtreamVod.toChannel(
     category = category,
     title = name.orEmpty(),
     cover = streamIcon,
+    description = null,
     playlistUrl = playlistUrl,
     relationId = streamId?.toString()
 )
@@ -139,6 +141,7 @@ fun XtreamSerial.asChannel(
     category = category,
     title = name.orEmpty(),
     cover = cover,
+    description = null,
     playlistUrl = playlistUrl,
     relationId = seriesId?.toString()
 )

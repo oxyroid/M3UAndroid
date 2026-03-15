@@ -13,6 +13,8 @@ internal data class M3UData(
     val duration: Double = -1.0,
     val licenseType: String? = null,
     val licenseKey: String? = null,
+    /** From #EXTINF attribute "description" (e.g. process_m3u.py). */
+    val description: String = "",
 )
 
 internal fun M3UData.toChannel(
@@ -46,6 +48,7 @@ internal fun M3UData.toChannel(
         category = group,
         title = title,
         cover = cover,
+        description = description.ifBlank { null },
         playlistUrl = playlistUrl,
         seen = seen,
         licenseType = licenseType,

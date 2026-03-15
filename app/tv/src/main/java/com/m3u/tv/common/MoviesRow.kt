@@ -37,7 +37,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.paging.compose.LazyPagingItems
 import androidx.tv.material3.Border
 import androidx.tv.material3.CardDefaults
 import androidx.tv.material3.CompactCard
@@ -106,35 +105,6 @@ fun ChannelsRow(
                         channel = channel
                     )
                 }
-            }
-        }
-    }
-}
-
-@Composable
-fun ChannelsRow(
-    channels: LazyPagingItems<Channel>,
-    modifier: Modifier = Modifier,
-    startPadding: Dp = rememberChildPadding().start,
-    endPadding: Dp = rememberChildPadding().end,
-    onChannelSelected: (channel: Channel) -> Unit = {}
-) {
-    LazyRow(
-        contentPadding = PaddingValues(
-            start = startPadding,
-            end = endPadding,
-        ),
-        horizontalArrangement = Arrangement.spacedBy(20.dp),
-        modifier = modifier
-    ) {
-        items(channels.itemCount) { index ->
-            val channel = channels[index]
-            if (channel != null) {
-                ChannelsRowItem(
-                    modifier = Modifier.fillParentMaxHeight(),
-                    onChannelSelected = onChannelSelected,
-                    channel = channel,
-                )
             }
         }
     }

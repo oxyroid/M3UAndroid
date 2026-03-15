@@ -34,6 +34,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 
 @HiltWorker
@@ -57,6 +58,7 @@ class SubscriptionWorker @AssistedInject constructor(
     private val username = inputData.getString(INPUT_STRING_USERNAME)
     private val password = inputData.getString(INPUT_STRING_PASSWORD)
     private val url = inputData.getString(INPUT_STRING_URL)
+    private val m3uContentPath = inputData.getString(INPUT_STRING_M3U_CONTENT_PATH)
     private val epgPlaylistUrl = inputData.getString(INPUT_STRING_EPG_PLAYLIST_URL)
     private val epgIgnoreCache = inputData.getBoolean(INPUT_BOOLEAN_EPG_IGNORE_CACHE, false)
     private val notificationId: Int by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
@@ -85,29 +87,66 @@ class SubscriptionWorker @AssistedInject constructor(
         when (dataSource) {
             DataSource.M3U -> {
                 val title = title ?: return@coroutineScope Result.failure()
-                val url = url ?: return@coroutineScope Result.failure()
                 if (title.isEmpty()) {
                     val message = context.getString(string.data_error_empty_title)
                     createN10nBuilder()
                         .setContentText(message)
                         .buildThenNotify()
                     Result.failure()
-                } else {
-                    var total = 0
-                    playlistRepository.m3uOrThrow(title, url) { count ->
-                        total = count
-                        val notification = createN10nBuilder()
-                            .setContentText(findChannelProgressContentText(count))
-                            .setActions(cancelAction)
-                            .setOngoing(true)
-                            .build()
-                        notificationManager.notify(notificationId, notification)
+                } else when {
+                    m3uContentPath != null -> {
+                        val file = File(m3uContentPath)
+                        if (!file.exists()) {
+                            createN10nBuilder()
+                                .setContentText("Uploaded file not found")
+                                .buildThenNotify()
+                            Result.failure()
+                        } else {
+                            try {
+                                var total = 0
+                                val content = file.readText(Charsets.UTF_8)
+                                playlistRepository.m3uOrThrow(title, content) { count ->
+                                    total = count
+                                    val notification = createN10nBuilder()
+                                        .setContentText(findChannelProgressContentText(count))
+                                        .setActions(cancelAction)
+                                        .setOngoing(true)
+                                        .build()
+                                    notificationManager.notify(notificationId, notification)
+                                }
+                                createN10nBuilder()
+                                    .setContentText(findCompleteContentText(total))
+                                    .buildThenNotify()
+                                Result.success()
+                            } catch (e: Exception) {
+                                throw e
+                            } finally {
+                                file.delete()
+                            }
+                        }
                     }
-
-                    createN10nBuilder()
-                        .setContentText(findCompleteContentText(total))
-                        .buildThenNotify()
-                    Result.success()
+                    !url.isNullOrBlank() -> {
+                        var total = 0
+                        playlistRepository.m3uOrThrow(title, url) { count ->
+                            total = count
+                            val notification = createN10nBuilder()
+                                .setContentText(findChannelProgressContentText(count))
+                                .setActions(cancelAction)
+                                .setOngoing(true)
+                                .build()
+                            notificationManager.notify(notificationId, notification)
+                        }
+                        createN10nBuilder()
+                            .setContentText(findCompleteContentText(total))
+                            .buildThenNotify()
+                        Result.success()
+                    }
+                    else -> {
+                        createN10nBuilder()
+                            .setContentText("Provide a playlist URL or select an M3U file")
+                            .buildThenNotify()
+                        Result.failure()
+                    }
                 }
             }
 
@@ -268,14 +307,20 @@ class SubscriptionWorker @AssistedInject constructor(
         private const val INPUT_STRING_USERNAME = "username"
         private const val INPUT_STRING_PASSWORD = "password"
         private const val INPUT_STRING_DATA_SOURCE_VALUE = "data-source"
+        private const val INPUT_STRING_M3U_CONTENT_PATH = "m3u_content_path"
         const val TAG = "subscription"
+
+        /** WorkManager tags are stored in DB and must be short; do not use large url/content as tag. */
+        private fun m3uWorkTag(url: String): String =
+            if (url.length <= 200) url else "m3u_inline_${url.hashCode().toString(36)}"
 
         fun m3u(
             workManager: WorkManager,
             title: String,
             url: String
         ) {
-            workManager.cancelAllWorkByTag(url)
+            val workTag = m3uWorkTag(url)
+            workManager.cancelAllWorkByTag(workTag)
             val request = OneTimeWorkRequestBuilder<SubscriptionWorker>()
                 .setInputData(
                     workDataOf(
@@ -284,13 +329,42 @@ class SubscriptionWorker @AssistedInject constructor(
                         INPUT_STRING_DATA_SOURCE_VALUE to DataSource.M3U.value
                     )
                 )
-                .addTag(url)
+                .addTag(workTag)
                 .addTag(TAG)
                 .addTag(DataSource.M3U.value)
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .setConstraints(
                     Constraints.Builder()
                         .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .build()
+                )
+                .build()
+            workManager.enqueue(request)
+        }
+
+        /** For large M3U content: only the file path is passed in WorkData; Worker reads file and deletes it. */
+        fun m3uWithContentPath(
+            workManager: WorkManager,
+            title: String,
+            contentPath: String
+        ) {
+            val workTag = "m3u_file_${contentPath.hashCode().toString(36)}"
+            workManager.cancelAllWorkByTag(workTag)
+            val request = OneTimeWorkRequestBuilder<SubscriptionWorker>()
+                .setInputData(
+                    workDataOf(
+                        INPUT_STRING_TITLE to title,
+                        INPUT_STRING_M3U_CONTENT_PATH to contentPath,
+                        INPUT_STRING_DATA_SOURCE_VALUE to DataSource.M3U.value
+                    )
+                )
+                .addTag(workTag)
+                .addTag(TAG)
+                .addTag(DataSource.M3U.value)
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
                         .build()
                 )
                 .build()

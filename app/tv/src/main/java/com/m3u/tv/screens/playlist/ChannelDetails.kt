@@ -77,7 +77,10 @@ fun ChannelDetail(
                 Column(
                     modifier = Modifier.alpha(0.75f)
                 ) {
-                    ChannelDescription(description = channel.category)
+                    ChannelDescription(
+                        description = channel.description?.takeIf { it.isNotBlank() }
+                            ?: channel.category
+                    )
                 }
                 WatchTrailerButton(
                     channel = channel,

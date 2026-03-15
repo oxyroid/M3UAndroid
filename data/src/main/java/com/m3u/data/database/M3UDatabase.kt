@@ -23,7 +23,7 @@ import com.m3u.data.database.model.Programme
         Episode::class,
         ColorScheme::class
     ],
-    version = 21,
+    version = 22,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(
