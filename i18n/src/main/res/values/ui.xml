@@ -2,6 +2,7 @@
 <resources>
     <string name="ui_title_foryou">M3U</string>
     <string name="ui_title_favourite">Favorite</string>
+    <string name="ui_title_favourite_empty">No favorite added yet!</string>
     <string name="ui_title_setting">Settings</string>
 
     <string name="ui_destination_foryou">For You</string>

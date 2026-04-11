@@ -8,12 +8,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -43,10 +45,14 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
 import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.preferenceOf
+import com.m3u.core.wrapper.eventOf
 import com.m3u.smartphone.R
+import com.m3u.i18n.R as I18nR
 import com.m3u.smartphone.ui.business.channel.PlayerActivity
 import com.m3u.smartphone.ui.common.AppNavHost
+import com.m3u.smartphone.ui.common.internal.Events
 import com.m3u.smartphone.ui.material.components.Destination
+import com.m3u.smartphone.ui.material.components.SettingDestination
 import com.m3u.smartphone.ui.material.components.SnackHost
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import kotlinx.coroutines.launch
@@ -195,6 +201,7 @@ private fun AppImpl(
             }
 
             val isOnForyouTab = currentDestination == Destination.Foryou
+            val isOnSettingTab = currentDestination == Destination.Setting
             if (isOnForyouTab) {
                 // App header banner on Foryou tab
                 Row(
@@ -216,7 +223,27 @@ private fun AppImpl(
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurface
                     )
+                    Spacer(Modifier.weight(1f))
+                    IconButton(onClick = {
+                        navigateToDestination(Destination.Setting)
+                        Events.settingDestination = eventOf(SettingDestination.Playlists)
+                    }) {
+                        Icon(
+                            Icons.Rounded.Add,
+                            contentDescription = "Add playlist"
+                        )
+                    }
                 }
+            } else if (isOnSettingTab) {
+                Text(
+                    text = stringResource(I18nR.string.ui_title_setting),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                )
             } else {
                 TopSearchBar(
                     state = searchBarState,
