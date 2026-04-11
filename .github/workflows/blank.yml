@@ -1,0 +1,62 @@
+name: Android CI
+
+on:
+  push:
+    branches: [ "feature/searchfiltersort" ]
+    paths-ignore:
+      - '**.md'
+      - '**.txt'
+      - '.github/**'
+      - '.idea/**'
+      - 'fastlane/**'
+      - '!.github/workflows/**'
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        id: setup-java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: "zulu"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-home-cache-cleanup: true
+
+      - name: Clean GMD
+        run: ./gradlew cleanManagedDevices --unused-only
+
+      - name: Build production app
+        run: ./gradlew :app:smartphone:assembleRelease
+          -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile
+          -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect"
+          -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true
+          -Pandroid.experimental.androidTest.numManagedDeviceShards=1
+          -Pandroid.experimental.testOptions.managedDevices.maxConcurrentDevices=1
+
+      - name: Build production tv app
+        run: ./gradlew :app:tv:assembleRelease
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          path: |
+            app/smartphone/build/outputs/apk/release/*.apk
+            app/tv/build/outputs/apk/release/*.apk
+
