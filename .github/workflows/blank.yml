@@ -11,7 +11,7 @@ on:
       - 'fastlane/**'
       - '!.github/workflows/**'
   pull_request:
-    branches: [ "master" ]
+    branches: [ "feature/searchfiltersort" ]
   workflow_dispatch:
 
 concurrency:
