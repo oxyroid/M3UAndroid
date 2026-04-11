@@ -15,6 +15,8 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
+    // AppViewModel init triggers refreshProgrammes
+    @Suppress("unused")
     private val viewModel: AppViewModel by viewModels()
 
     private val helper: Helper = Helper(this)
@@ -35,9 +37,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             Toolkit(helper) {
-                App(
-                    viewModel = viewModel
-                )
+                App()
             }
         }
     }

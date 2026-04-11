@@ -208,6 +208,15 @@ private fun ForyouScreen(
 
     Box(modifier) {
         HeadlineBackground()
+        if (playlists.isEmpty()) {
+            Text(
+                text = stringResource(string.feat_foryou_no_playlist_added),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.align(Alignment.Center)
+            )
+            return
+        }
         val header = @Composable {
             RecommendGallery(
                 specs = specs,

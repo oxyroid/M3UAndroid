@@ -290,4 +290,48 @@ interface ChannelDao {
         """
     )
     fun pagingAll(query: String): PagingSource<Int, Channel>
+
+    @Query(
+        """
+            SELECT DISTINCT `group`
+            FROM streams
+            WHERE `group` LIKE '%'||:query||'%'
+            AND `group` != ''
+        """
+    )
+    suspend fun searchCategories(query: String): List<String>
+
+    @Query(
+        """
+            SELECT * FROM streams
+            WHERE title LIKE :query||'%'
+            AND hidden = 0
+            LIMIT :limit
+        """
+    )
+    suspend fun searchByPrefix(query: String, limit: Int = 20): List<Channel>
+
+    @Query(
+        """
+            SELECT * FROM streams
+            WHERE title LIKE '%'||:query||'%'
+            AND hidden = 0
+            AND playlist_url IN (:playlistUrls)
+            LIMIT :limit
+        """
+    )
+    suspend fun searchByPlaylistUrls(
+        query: String,
+        playlistUrls: List<String>,
+        limit: Int = 20
+    ): List<Channel>
+
+    @Query(
+        """
+            SELECT playlist_url FROM streams
+            WHERE `group` = :category
+            LIMIT 1
+        """
+    )
+    suspend fun findPlaylistUrlByCategory(category: String): String?
 }

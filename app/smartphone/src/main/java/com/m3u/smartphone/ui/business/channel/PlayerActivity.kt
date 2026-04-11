@@ -3,13 +3,17 @@ package com.m3u.smartphone.ui.business.channel
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
+import android.view.ViewGroup
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.core.app.PictureInPictureModeChangedInfo
+import androidx.core.util.Consumer
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.m3u.business.channel.ChannelViewModel
@@ -45,37 +49,55 @@ class PlayerActivity : ComponentActivity() {
     @Inject
     lateinit var playlistRepository: PlaylistRepository
 
+    private val pipListener = Consumer<PictureInPictureModeChangedInfo> {
+        isInPipMode = it.isInPictureInPictureMode
+        if (!it.isInPictureInPictureMode && lifecycle.currentState !in arrayOf(
+                Lifecycle.State.RESUMED,
+                Lifecycle.State.STARTED
+            )
+        ) {
+            viewModel.destroy()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         handleIntent(intent)
-        setContent {
-            Toolkit(
-                helper = helper,
-                alwaysUseDarkTheme = true
-            ) {
-                val hazeState = remember { HazeState() }
-                CompositionLocalProvider(LocalHazeState provides hazeState) {
-                    Background(
-                        color = Color.Black
-                    ) {
-                        ChannelRoute(
-                            viewModel = viewModel
-                        )
+
+        // Create ComposeView manually with DisposeOnViewTreeLifecycleDestroyed
+        // set BEFORE attaching to the window. This prevents the internal
+        // AndroidComposeView from being added to the static composeViews list
+        // multiple times during PiP window re-attach cycles.
+        val composeView = ComposeView(this).apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                Toolkit(
+                    helper = helper,
+                    alwaysUseDarkTheme = true
+                ) {
+                    val hazeState = remember { HazeState() }
+                    CompositionLocalProvider(LocalHazeState provides hazeState) {
+                        Background(
+                            color = Color.Black
+                        ) {
+                            ChannelRoute(
+                                viewModel = viewModel
+                            )
+                        }
                     }
                 }
             }
         }
-        addOnPictureInPictureModeChangedListener {
-            isInPipMode = it.isInPictureInPictureMode
-            if (!it.isInPictureInPictureMode && lifecycle.currentState !in arrayOf(
-                    Lifecycle.State.RESUMED,
-                    Lifecycle.State.STARTED
-                )
-            ) {
-                viewModel.destroy()
-            }
-        }
+        setContentView(
+            composeView,
+            ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        )
+
+        addOnPictureInPictureModeChangedListener(pipListener)
     }
 
     private fun playFromShortcuts(channelId: Int) {
@@ -131,7 +153,8 @@ class PlayerActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
-        super.onDestroy()
+        removeOnPictureInPictureModeChangedListener(pipListener)
         viewModel.destroy()
+        super.onDestroy()
     }
 }

@@ -112,6 +112,7 @@ dependencies {
     implementation(project(":business:channel"))
     implementation(project(":business:playlist-configuration"))
     implementation(project(":business:extension"))
+    implementation(project(":business:search"))
     // baselineprofile
     implementation(libs.androidx.profileinstaller)
     "baselineProfile"(project(":baselineprofile:smartphone"))

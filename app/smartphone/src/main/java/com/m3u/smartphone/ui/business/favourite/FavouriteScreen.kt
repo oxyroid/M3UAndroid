@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,6 +55,7 @@ fun FavoriteRoute(
     navigateToChannel: () -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
+    searchQuery: String = "",
     viewModel: FavoriteViewModel = hiltViewModel()
 ) {
     val title = stringResource(R.string.ui_title_favourite)
@@ -62,6 +64,11 @@ fun FavoriteRoute(
     val context = LocalContext.current
 
     val coroutineScope = rememberCoroutineScope()
+
+    // Sync global search bar query into favorites filter
+    LaunchedEffect(searchQuery) {
+        viewModel.query.value = searchQuery
+    }
 
     var rowCount by mutablePreferenceOf(PreferencesKeys.ROW_COUNT)
     val godMode by preferenceOf(PreferencesKeys.GOD_MODE)

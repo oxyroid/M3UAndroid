@@ -38,4 +38,8 @@ interface ChannelRepository {
     fun pagingAllFavorite(sort: Sort): PagingSource<Int, Channel>
     fun observeAllHidden(): Flow<List<Channel>>
     fun search(query: String): PagingSource<Int, Channel>
+    suspend fun searchCategories(query: String): List<String>
+    suspend fun searchByPrefix(query: String, limit: Int = 20): List<Channel>
+    suspend fun searchByPlaylistUrls(query: String, playlistUrls: List<String>, limit: Int = 20): List<Channel>
+    suspend fun findPlaylistUrlForCategory(category: String): String?
 }

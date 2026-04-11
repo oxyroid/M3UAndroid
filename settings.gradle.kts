@@ -31,6 +31,7 @@ include(
     ":business:playlist-configuration",
     ":business:channel",
     ":business:extension",
+    ":business:search",
 )
 include(
     ":baselineprofile:smartphone",

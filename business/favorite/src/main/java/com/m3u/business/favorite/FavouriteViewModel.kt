@@ -13,6 +13,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import androidx.paging.filter
 import com.m3u.core.Contracts
 import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.Settings
@@ -85,11 +86,21 @@ class FavoriteViewModel @Inject constructor(
         sortIndex.update { sorts.indexOf(sort).coerceAtLeast(0) }
     }
 
-    val channels: Flow<PagingData<Channel>> = sort.flatMapLatest {
+    val query = MutableStateFlow("")
+
+    val channels: Flow<PagingData<Channel>> = combine(sort, query) { sort, query ->
+        sort to query
+    }.flatMapLatest { (sort, query) ->
         Pager(PagingConfig(10)) {
-            channelRepository.pagingAllFavorite(it)
+            channelRepository.pagingAllFavorite(sort)
         }
             .flow
+            .map { pagingData ->
+                if (query.isBlank()) pagingData
+                else pagingData.filter {
+                    it.title.contains(query, ignoreCase = true)
+                }
+            }
     }
         .cachedIn(viewModelScope)
 

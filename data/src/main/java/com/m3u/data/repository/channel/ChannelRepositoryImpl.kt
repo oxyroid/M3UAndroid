@@ -102,4 +102,25 @@ internal class ChannelRepositoryImpl @Inject constructor(
     override fun search(query: String): PagingSource<Int, Channel> {
         return channelDao.query(query)
     }
+
+    override suspend fun searchCategories(query: String): List<String> {
+        return channelDao.searchCategories(query)
+    }
+
+    override suspend fun searchByPrefix(query: String, limit: Int): List<Channel> {
+        return channelDao.searchByPrefix(query, limit)
+    }
+
+    override suspend fun searchByPlaylistUrls(
+        query: String,
+        playlistUrls: List<String>,
+        limit: Int
+    ): List<Channel> {
+        if (playlistUrls.isEmpty()) return emptyList()
+        return channelDao.searchByPlaylistUrls(query, playlistUrls, limit)
+    }
+
+    override suspend fun findPlaylistUrlForCategory(category: String): String? {
+        return channelDao.findPlaylistUrlByCategory(category)
+    }
 }

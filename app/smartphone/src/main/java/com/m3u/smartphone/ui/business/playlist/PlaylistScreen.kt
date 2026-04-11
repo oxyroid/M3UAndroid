@@ -25,7 +25,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -34,6 +37,7 @@ import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material.icons.rounded.KeyboardDoubleArrowUp
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -106,6 +110,8 @@ import kotlinx.coroutines.launch
 internal fun PlaylistRoute(
     navigateToChannel: () -> Unit,
     modifier: Modifier = Modifier,
+    initialCategory: String? = null,
+    searchQuery: String = "",
     viewModel: PlaylistViewModel = hiltViewModel(),
     contentPadding: PaddingValues = PaddingValues()
 ) {
@@ -113,6 +119,11 @@ internal fun PlaylistRoute(
     val helper = LocalHelper.current
     val coroutineScope = rememberCoroutineScope()
     val colorScheme = MaterialTheme.colorScheme
+
+    // Sync global search bar query into playlist filter
+    LaunchedEffect(searchQuery) {
+        viewModel.query.value = searchQuery
+    }
 
     val autoRefreshChannels by preferenceOf(PreferencesKeys.AUTO_REFRESH_CHANNELS)
     var rowCount by mutablePreferenceOf(PreferencesKeys.ROW_COUNT)
@@ -139,6 +150,9 @@ internal fun PlaylistRoute(
 
     val query by viewModel.query.collectAsStateWithLifecycle()
     val scrollUp by viewModel.scrollUp.collectAsStateWithLifecycle()
+
+    val categoryPrefixes by viewModel.categoryPrefixes.collectAsStateWithLifecycle()
+    val selectedPrefix by viewModel.prefixFilter.collectAsStateWithLifecycle()
 
     val writeExternalPermission =
         rememberPermissionState(Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -175,6 +189,7 @@ internal fun PlaylistRoute(
         rowCount = rowCount,
         zapping = zapping,
         channels = channels,
+        initialCategory = initialCategory,
         pinnedCategories = pinnedCategories,
         onPinOrUnpinCategory = { viewModel.onPinOrUnpinCategory(it) },
         onHideCategory = { viewModel.onHideCategory(it) },
@@ -193,6 +208,9 @@ internal fun PlaylistRoute(
             }
         },
         onScrollUp = { viewModel.scrollUp.value = eventOf(Unit) },
+        categoryPrefixes = categoryPrefixes,
+        selectedPrefix = selectedPrefix,
+        onPrefixSelected = { viewModel.prefixFilter.value = it },
         refreshing = refreshing,
         onRefresh = {
             if (postNotificationPermission == null) {
@@ -283,6 +301,7 @@ private fun PlaylistScreen(
     rowCount: Int,
     zapping: Channel?,
     channels: Map<String, Flow<PagingData<Channel>>>,
+    initialCategory: String?,
     pinnedCategories: List<String>,
     onPinOrUnpinCategory: (String) -> Unit,
     onHideCategory: (String) -> Unit,
@@ -290,6 +309,9 @@ private fun PlaylistScreen(
     sort: Sort,
     onSort: (Sort) -> Unit,
     scrollUp: Event<Unit>,
+    categoryPrefixes: List<String>,
+    selectedPrefix: String?,
+    onPrefixSelected: (String?) -> Unit,
     refreshing: Boolean,
     onRefresh: () -> Unit,
     onPlayChannel: (Channel) -> Unit,
@@ -358,7 +380,10 @@ private fun PlaylistScreen(
     }
 
     val categories = remember(channels) { channels.map { it.key } }
-    var category by remember(categories) { mutableStateOf(categories.firstOrNull().orEmpty()) }
+    var category by remember(categories, initialCategory) {
+        val initial = initialCategory?.takeIf { it in categories }
+        mutableStateOf(initial ?: categories.firstOrNull().orEmpty())
+    }
 
     val state = rememberLazyStaggeredGridState()
     LaunchedEffect(Unit) {
@@ -383,6 +408,14 @@ private fun PlaylistScreen(
     BackHandler(isExpanded) { isExpanded = false }
 
     var targetPageIndex: Event<Int> by remember { mutableStateOf(Event.Handled()) }
+
+    // Auto-scroll to initialCategory when categories load
+    LaunchedEffect(categories, initialCategory) {
+        if (initialCategory != null) {
+            val idx = categories.indexOf(initialCategory)
+            if (idx != -1) targetPageIndex = eventOf(idx)
+        }
+    }
 
     val tabs = @Composable {
         PlaylistTabRow(
@@ -447,6 +480,16 @@ private fun PlaylistScreen(
             .padding(contentPadding.minus(contentPadding.only(WindowInsetsSides.Bottom)))
             .then(modifier)
     ) {
+        AnimatedVisibility(
+            visible = categoryPrefixes.size > 1,
+            enter = fadeIn(animationSpec = tween(400)),
+        ) {
+            PrefixFilterRow(
+                prefixes = categoryPrefixes,
+                selectedPrefix = selectedPrefix,
+                onPrefixSelected = onPrefixSelected
+            )
+        }
         if (!isExpanded) {
             AnimatedVisibility(
                 visible = categories.size > 1,
@@ -494,6 +537,42 @@ private fun PlaylistScreen(
         },
         onDismissRequest = { mediaSheetValue = MediaSheetValue.PlaylistScreen() }
     )
+}
+
+@Composable
+private fun PrefixFilterRow(
+    prefixes: List<String>,
+    selectedPrefix: String?,
+    onPrefixSelected: (String?) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val spacing = LocalSpacing.current
+    LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall),
+        contentPadding = PaddingValues(horizontal = spacing.medium),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(vertical = spacing.extraSmall)
+    ) {
+        item {
+            FilterChip(
+                selected = selectedPrefix == null,
+                onClick = { onPrefixSelected(null) },
+                label = { Text("All") }
+            )
+        }
+        items(prefixes) { prefix ->
+            FilterChip(
+                selected = selectedPrefix == prefix,
+                onClick = {
+                    onPrefixSelected(if (selectedPrefix == prefix) null else prefix)
+                },
+                label = { Text(prefix) }
+            )
+        }
+    }
 }
 
 @Composable

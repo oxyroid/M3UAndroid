@@ -232,6 +232,8 @@ class PlaylistViewModel @Inject constructor(
     val query = MutableStateFlow("")
     val scrollUp: MutableStateFlow<Event<Unit>> = MutableStateFlow(handledEvent())
 
+    val prefixFilter = MutableStateFlow<String?>(null)
+
     @Immutable
     data class ChannelParameters(
         val playlistUrl: String,
@@ -241,7 +243,7 @@ class PlaylistViewModel @Inject constructor(
     )
 
     @OptIn(FlowPreview::class)
-    private val categories: StateFlow<List<String>> =
+    private val allCategories: StateFlow<List<String>> =
         flatmapCombined(playlistUrl, query, sort) { playlistUrl, query, sort ->
             if (sort == Sort.MIXED) flowOf(emptyList())
             else playlistRepository.observeCategoriesByPlaylistUrlIgnoreHidden(playlistUrl, query)
@@ -252,6 +254,44 @@ class PlaylistViewModel @Inject constructor(
                     flow.drop(1).debounce(1.seconds)
                 )
             }
+            .stateIn(
+                scope = viewModelScope,
+                initialValue = emptyList(),
+                started = SharingStarted.Lazily
+            )
+
+    private val prefixDelimiters = Regex("[❖*|·•►▶\\-–—]")
+
+    private fun extractPrefix(category: String): String? {
+        // Stage 1: try delimiter-based prefix
+        prefixDelimiters.find(category)?.let {
+            val prefix = category.substring(0, it.range.first).trim()
+            if (prefix.isNotEmpty()) return prefix
+        }
+        // Stage 2: fall back to first word
+        val firstWord = category.trim().split("\\s+".toRegex()).firstOrNull()?.trim()
+        return firstWord?.takeIf { it.isNotEmpty() && it != category.trim() }
+    }
+
+    val categoryPrefixes: StateFlow<List<String>> = allCategories
+        .map { cats ->
+            cats.mapNotNull { cat -> extractPrefix(cat) }
+                .filter { it.isNotEmpty() }
+                .distinct()
+                .sorted()
+        }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = emptyList(),
+            started = SharingStarted.Lazily
+        )
+
+    @OptIn(FlowPreview::class)
+    private val categories: StateFlow<List<String>> =
+        combine(allCategories, prefixFilter) { cats, prefix ->
+            if (prefix == null) cats
+            else cats.filter { cat -> extractPrefix(cat) == prefix }
+        }
             .stateIn(
                 scope = viewModelScope,
                 initialValue = emptyList(),

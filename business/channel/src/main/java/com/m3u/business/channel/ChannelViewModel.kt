@@ -300,6 +300,7 @@ class ChannelViewModel @Inject constructor(
             controlPoint?.terminate()
             controlPoint = null
 
+
             playerManager.release()
         }
     }

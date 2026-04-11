@@ -30,6 +30,8 @@ fun AppNavHost(
     navController: NavHostController,
     navigateToDestination: (Destination) -> Unit,
     navigateToChannel: () -> Unit,
+    searchQuery: String,
+    onCollapseSearch: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     startDestination: String = Destination.Foryou.name
@@ -50,7 +52,12 @@ fun AppNavHost(
             navigateToPlaylist = { playlist ->
                 navController.navigateToPlaylist(playlist.url)
             },
+            navigateToPlaylistByUrl = { url, category ->
+                navController.navigateToPlaylist(url, category)
+            },
             navigateToChannel = navigateToChannel,
+            searchQuery = searchQuery,
+            onCollapseSearch = onCollapseSearch,
             navigateToSettingPlaylistManagement = {
                 navigateToDestination(Destination.Setting)
                 Events.settingDestination = eventOf(SettingDestination.Playlists)
@@ -74,7 +81,8 @@ fun AppNavHost(
                     options.toBundle()
                 )
             },
-            contentPadding = contentPadding
+            contentPadding = contentPadding,
+            searchQuery = searchQuery
         )
         playlistConfigurationScreen(contentPadding)
     }

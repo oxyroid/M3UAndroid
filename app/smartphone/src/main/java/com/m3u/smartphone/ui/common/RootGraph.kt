@@ -14,15 +14,19 @@ import com.m3u.smartphone.ui.material.ktx.Edge
 import com.m3u.smartphone.ui.material.ktx.blurEdge
 import com.m3u.smartphone.ui.business.favourite.FavoriteRoute
 import com.m3u.smartphone.ui.business.foryou.ForyouRoute
+import com.m3u.smartphone.ui.business.search.GlobalSearchRoute
 import com.m3u.smartphone.ui.business.setting.SettingRoute
 import com.m3u.smartphone.ui.material.components.Destination
 
 fun NavGraphBuilder.rootGraph(
     contentPadding: PaddingValues,
     navigateToPlaylist: (Playlist) -> Unit,
+    navigateToPlaylistByUrl: (String, String?) -> Unit,
     navigateToChannel: () -> Unit,
     navigateToSettingPlaylistManagement: () -> Unit,
     navigateToPlaylistConfiguration: (Playlist) -> Unit,
+    searchQuery: String = "",
+    onCollapseSearch: () -> Unit = {},
 ) {
     composable(
         route = Destination.Foryou.name,
@@ -51,6 +55,7 @@ fun NavGraphBuilder.rootGraph(
         FavoriteRoute(
             navigateToChannel = navigateToChannel,
             contentPadding = contentPadding,
+            searchQuery = searchQuery,
             modifier = Modifier
                 .fillMaxSize()
                 .blurEdge(
@@ -66,6 +71,26 @@ fun NavGraphBuilder.rootGraph(
         exitTransition = { fadeOut() }
     ) {
         ExtensionRoute(
+            contentPadding = contentPadding,
+            modifier = Modifier
+                .fillMaxSize()
+                .blurEdge(
+                    edge = Edge.Bottom,
+                    color = MaterialTheme.colorScheme.background
+                )
+        )
+    }
+
+    composable(
+        route = Destination.Search.name,
+        enterTransition = { fadeIn() },
+        exitTransition = { fadeOut() }
+    ) {
+        GlobalSearchRoute(
+            navigateToChannel = navigateToChannel,
+            navigateToPlaylist = navigateToPlaylistByUrl,
+            searchQuery = searchQuery,
+            onCollapseSearch = onCollapseSearch,
             contentPadding = contentPadding,
             modifier = Modifier
                 .fillMaxSize()
