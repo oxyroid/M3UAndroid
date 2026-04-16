@@ -1,0 +1,58 @@
+// Gradle init script injected by the Jetpack Compose audit skill.
+//
+// Purpose: enable Compose Compiler reports + metrics for every module that
+// applies the Compose Compiler plugin, without modifying the user's build
+// files. Each module's output lands in <module>/build/compose_audit/.
+//
+// Usage (from the skill, not the user):
+//   ./gradlew <task> --init-script <path-to-this-file> --no-daemon
+//
+// Two code paths:
+//   A. Modern Compose Compiler Gradle plugin (Kotlin 2.0+) — configures the
+//      `composeCompiler { }` extension directly.
+//   B. Legacy compiler-plugin argument fallback — injects reportsDestination
+//      and metricsDestination via Kotlin compile task free args. Works on
+//      older toolchains that still apply the compiler plugin manually.
+//
+// The script is defensive: failures in one module must not fail the build.
+
+allprojects { project ->
+    project.afterEvaluate {
+        def reportDir = new File(project.buildDir, "compose_audit")
+
+        // Path A: modern Compose Compiler Gradle plugin.
+        def composeExt = project.extensions.findByName("composeCompiler")
+        if (composeExt != null) {
+            try {
+                reportDir.mkdirs()
+                composeExt.reportsDestination.set(reportDir)
+                composeExt.metricsDestination.set(reportDir)
+                project.logger.lifecycle("compose-audit: reports -> ${reportDir}")
+                return
+            } catch (Throwable e) {
+                project.logger.warn("compose-audit: composeCompiler extension found but could not be configured: ${e.message}")
+            }
+        }
+
+        // Path B: legacy compiler-args fallback for projects that apply the
+        // Compose compiler plugin the old way (pre-Kotlin-2.0).
+        def anyConfigured = false
+        project.tasks.matching { it.name.startsWith("compile") && it.name.contains("Kotlin") }.configureEach { task ->
+            try {
+                def opts = task.hasProperty("compilerOptions") ? task.compilerOptions : null
+                if (opts == null) return
+                opts.freeCompilerArgs.addAll([
+                    "-P", "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=${reportDir.absolutePath}",
+                    "-P", "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=${reportDir.absolutePath}",
+                ])
+                reportDir.mkdirs()
+                anyConfigured = true
+            } catch (Throwable ignored) {
+                // Silent — task may not be a Kotlin compile task.
+            }
+        }
+        if (anyConfigured) {
+            project.logger.lifecycle("compose-audit: reports -> ${reportDir} (legacy compiler-args path)")
+        }
+    }
+}
