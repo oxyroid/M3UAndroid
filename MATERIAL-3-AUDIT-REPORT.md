@@ -255,7 +255,7 @@ data class Elevation(
    - Replace `Color(0xffffcd3c)` with `MaterialTheme.colorScheme.tertiary` or appropriate semantic color
    - Fix scrim colors to use `MaterialTheme.colorScheme.scrim`
    - Impact: Proper theme consistency, better dark mode support
-   - Files: `ChannelItem.kt:96`, `ChannelMask.kt:306`, `Scrim.kt:10-11`
+   - Files: `app/smartphone/src/main/java/com/m3u/smartphone/ui/business/playlist/components/ChannelItem.kt:96`, `app/smartphone/src/main/java/com/m3u/smartphone/ui/business/channel/ChannelMask.kt:306`, `app/smartphone/src/main/java/com/m3u/smartphone/ui/material/brush/Scrim.kt:10-11`
 
 2. **Refactor SugarColors to use HCT generation**
    - Convert SugarColors enum to generate ColorSchemes using HCT from seed colors
@@ -275,12 +275,12 @@ data class Elevation(
    - Add KDoc comments explaining when to use each spacing value
    - Consider semantic aliases (e.g., `val cardPadding = medium`)
    - Impact: Better developer experience, consistent spacing
-   - File: `Spacing.kt`
+   - File: `app/smartphone/src/main/java/com/m3u/smartphone/ui/material/model/Spacing.kt`
 
 5. **Fix surfaceTint TODO**
    - Change `surfaceTint = Color(scheme.surfaceVariant)` to `surfaceTint = Color(scheme.surfaceTint)`
    - Impact: Correct tonal elevation behavior
-   - File: `Colors.kt:38`
+   - File: `app/smartphone/src/main/java/com/m3u/smartphone/ui/material/ktx/Colors.kt:38`
 
 ### Low Priority
 
