@@ -282,6 +282,8 @@
 -dontwarn com.oracle.svm.core.annotate.TargetClass
 -dontwarn io.netty.internal.tcnative.ResultCallback
 -dontwarn io.netty.internal.tcnative.SSLSession
+-dontwarn io.netty.pkitesting.**
+-dontwarn jdk.jfr.**
 -dontwarn lzma.sdk.ICodeProgress
 -dontwarn lzma.sdk.lzma.Encoder
 -dontwarn net.jpountz.lz4.LZ4Compressor
