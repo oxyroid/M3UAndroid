@@ -24,7 +24,9 @@ subprojects {
                 "-Xcontext-parameters"
             )
         }
-        kotlinExtension.sourceSets.all {
+    }
+    fun configureKotlinOptIns() {
+        kotlinExtension.sourceSets.configureEach {
             languageSettings {
                 optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
                 optIn("androidx.compose.ui.ExperimentalComposeUiApi")
@@ -36,9 +38,14 @@ subprojects {
                 optIn("androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi")
                 optIn("androidx.tv.material3.ExperimentalTvMaterial3Api")
                 optIn("com.google.accompanist.permissions.ExperimentalPermissionsApi")
-
             }
         }
+    }
+    plugins.withId("org.jetbrains.kotlin.android") {
+        configureKotlinOptIns()
+    }
+    plugins.withId("org.jetbrains.kotlin.jvm") {
+        configureKotlinOptIns()
     }
     plugins.withId("org.jetbrains.kotlin.plugin.compose") {
         configure<ComposeCompilerGradlePluginExtension> {

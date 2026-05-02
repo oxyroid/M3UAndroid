@@ -8,6 +8,8 @@ plugins {
     id("kotlin-parcelize")
 }
 
+val m3uMockServerUrl = providers.gradleProperty("m3uMockServerUrl").orElse("http://10.0.2.2:8080")
+
 android {
     namespace = "com.m3u.smartphone"
     compileSdk = 36
@@ -19,6 +21,7 @@ android {
         versionName = "1.15.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunnerArguments["m3uMockServerUrl"] = m3uMockServerUrl.get()
     }
     buildTypes {
         release {
@@ -83,6 +86,13 @@ android {
                 output.outputFileName = "${versionName}_$abi.apk"
             }
     }
+}
+
+tasks.matching { task ->
+    task.name.startsWith("connected") && task.name.endsWith("AndroidTest")
+}.configureEach {
+    dependsOn(":testing:mock-server:startMockServer")
+    finalizedBy(":testing:mock-server:stopMockServer")
 }
 
 hilt {
@@ -172,4 +182,8 @@ dependencies {
     implementation(libs.haze.materials)
     implementation(libs.acra.notification)
     implementation(libs.acra.mail)
+
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.runner)
 }

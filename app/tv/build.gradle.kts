@@ -7,6 +7,9 @@ plugins {
     alias(libs.plugins.androidx.baselineprofile)
     id("kotlin-parcelize")
 }
+
+val m3uMockServerUrl = providers.gradleProperty("m3uMockServerUrl").orElse("http://10.0.2.2:8080")
+
 android {
     namespace = "com.m3u.tv"
     compileSdk = 36
@@ -18,6 +21,7 @@ android {
         versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunnerArguments["m3uMockServerUrl"] = m3uMockServerUrl.get()
     }
     buildTypes {
         release {
@@ -52,6 +56,13 @@ android {
                 output.outputFileName = "tv-${versionName}.apk"
             }
     }
+}
+
+tasks.matching { task ->
+    task.name.startsWith("connected") && task.name.endsWith("AndroidTest")
+}.configureEach {
+    dependsOn(":testing:mock-server:startMockServer")
+    finalizedBy(":testing:mock-server:stopMockServer")
 }
 
 hilt {
@@ -108,8 +119,6 @@ dependencies {
     api(libs.androidx.tv.material)
     // accompanist
     implementation(libs.google.accompanist.permissions)
-    // performance
-    debugImplementation(libs.squareup.leakcanary)
     // other
     implementation(libs.androidx.graphics.shapes)
     implementation(libs.androidx.constraintlayout.compose)
@@ -123,4 +132,8 @@ dependencies {
     implementation(libs.net.mm2d.mmupnp.mmupnp)
     implementation(libs.haze)
     implementation(libs.haze.materials)
+
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.runner)
 }
