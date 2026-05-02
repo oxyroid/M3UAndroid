@@ -33,6 +33,7 @@ Main enabled areas:
 ## Kotlin And Compose Style
 
 - Always use Kotlin and the repository's existing Kotlin style.
+- Package-qualified references should appear only in import statements. Do not write fully qualified package names in code bodies; if names conflict, use an import alias.
 - Keep UI in Compose unless the existing code explicitly uses interop for a narrow platform surface.
 - Keep composables stable, lightweight, and mostly parameter-driven. Put long-lived work in ViewModels or business logic rather than directly in UI.
 - Use Compose state and side-effect APIs deliberately, following nearby code patterns.
@@ -45,6 +46,24 @@ Main enabled areas:
 - Route-level composables should connect ViewModels, permissions, navigation, and platform helpers; lower-level screen components should stay mostly parameter-driven.
 - Keep playback launch and permission flows consistent with the existing app patterns instead of scattering new entry points.
 - Treat TV UI as a focus-first experience. Do not directly copy phone layouts into TV code.
+
+## UI Design And Layout
+
+- When rebuilding or heavily changing TV UI, first study mature Android TV references such as official Android TV and JetStream design guidance, then implement an original layout that fits this app instead of improvising from a phone or admin-panel mindset.
+- UI controls must look deliberately aligned. Text and icons inside buttons, chips, cards, and focusable surfaces should be visually centered and balanced, not merely placed inside a container.
+- Treat container and content colors as a state pair. Check default, pressed/selected, disabled, and focused states together so text and icons keep strong contrast whenever the container color changes.
+- Align related content to a shared visual edge. If a hero, section header, row, and cards belong to the same reading flow, their text and primary content should share a consistent leading margin instead of only aligning outer containers.
+- Use alignment to communicate hierarchy and scanability. Important content should sit near the top and leading side of the viewport, while secondary controls should not crowd or visually compete with it.
+- Prefer proportional layout, aspect ratios, adaptive grids, and constraint-based sizing over scattered fixed dimensions.
+- For components that do not fill the screen width and contain text, avoid fixed widths whenever practical. Prefer weight, fractions, adaptive grid cells, or min/max constraints so localized and scaled text has room before truncating.
+- When fixed spacing or sizing is needed, use a consistent small scale such as 2dp, 4dp, 8dp, 16dp, 24dp, 32dp, and related multiples. Avoid random-looking one-off values unless there is a specific visual or platform reason.
+- On TV, verify the first viewport on a real device or emulator. Important rows, focused cards, labels, and call-to-action buttons should be visible enough to communicate the screen structure without requiring the user to guess what is below.
+- TV UI must be designed for DPad first. Every screen needs a clear initial focus, predictable up/down/left/right movement, and a focus state strong enough to read from couch distance.
+- TV remotes support long press. Use long-press behavior deliberately for secondary or advanced actions when it keeps the primary DPad path simple, and make the resulting action understandable without touch precision.
+- Do not rely on touch-style precision in TV UI. Avoid small secondary controls inside cards, such as per-item favorite buttons, unless they are reachable and understandable through DPad as a first-class action.
+- Video playback UI should not let secondary controls obscure the main video. Prefer compact edge controls, transient overlays, and minimal metadata over large button rows or panels on top of content.
+- Transparent controls over video need a controlled contrast surface, such as a local scrim, capsule, or edge gradient, so labels and icons remain readable over bright or busy frames.
+- Fix awkward visual results by adjusting layout structure, alignment, scale, or component composition before changing copy or hiding content.
 
 ## Data, Room, And Background Work
 

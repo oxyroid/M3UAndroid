@@ -1,5 +1,6 @@
 package com.m3u.tv
 
+import android.graphics.Color as AndroidColor
 import android.os.Bundle
 import androidx.activity.SystemBarStyle
 import androidx.activity.ComponentActivity
@@ -17,15 +18,15 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
-            navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+            statusBarStyle = SystemBarStyle.dark(AndroidColor.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(AndroidColor.TRANSPARENT)
         )
         setContent {
             MaterialTheme(
                 colorScheme = darkColorScheme(
                     primary = TvColors.Focus,
-                    onPrimary = TvColors.Ink,
-                    secondary = TvColors.Coral,
+                    onPrimary = TvColors.OnFocus,
+                    secondary = TvColors.Accent,
                     background = TvColors.Background,
                     onBackground = TvColors.TextPrimary,
                     surface = TvColors.Surface,
