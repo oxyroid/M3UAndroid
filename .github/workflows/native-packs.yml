@@ -43,12 +43,12 @@ jobs:
 
       - name: Generate native packs
         run: |
-          ./gradlew :app:smartphone:generateReleaseNativePacks
+          ./gradlew :app:smartphone:generateReleaseNativePacks --no-configuration-cache
 
       - name: Verify debug native packs stay disabled
         run: |
           set -euo pipefail
-          ./gradlew :app:smartphone:tasks --all > native-pack-tasks.txt
+          ./gradlew :app:smartphone:tasks --all --no-configuration-cache > native-pack-tasks.txt
           if grep -n 'generateDebugNativePacks' native-pack-tasks.txt; then
             exit 1
           fi
