@@ -257,7 +257,7 @@ private fun String.quoted(): String {
 }
 
 private fun NativeLoadConfig.snapshotPath(): String {
-    return "${distribution.snapshotDirectory}/${pack.id}/${distribution.runtimeVariant}"
+    return "${distribution.snapshotDirectory}/${pack.id}"
 }
 
 abstract class GenerateNativePacksTask : DefaultTask() {
@@ -304,6 +304,7 @@ abstract class GenerateNativePacksTask : DefaultTask() {
             deleteRecursively()
             mkdirs()
         }
+        val outputPath = outputRoot.relativeTo(project.rootProject.projectDir).invariantSeparatorsPath
         val stagingRoot = File(temporaryDir, packId).apply {
             deleteRecursively()
             mkdirs()
@@ -326,6 +327,7 @@ abstract class GenerateNativePacksTask : DefaultTask() {
             createZip(libraryFiles, zipFile)
             NativePackAsset(
                 abi = abiDirectory.name,
+                path = "$outputPath/$assetName",
                 fileName = assetName,
                 size = zipFile.length(),
                 md5 = md5(zipFile),
@@ -356,7 +358,8 @@ abstract class GenerateNativePacksTask : DefaultTask() {
     private fun createZip(files: List<File>, output: File) {
         ZipOutputStream(output.outputStream().buffered()).use { zip ->
             files.sortedBy { file -> file.name }.forEach { file ->
-                zip.putNextEntry(ZipEntry(file.name))
+                val entry = ZipEntry(file.name).apply { time = 0L }
+                zip.putNextEntry(entry)
                 file.inputStream().use { input -> input.copyTo(zip) }
                 zip.closeEntry()
             }
@@ -377,6 +380,7 @@ abstract class GenerateNativePacksTask : DefaultTask() {
                 """        { "name": "${library.name}", "size": ${library.size}, "md5": "${library.md5}" }"""
             }
             """    "${asset.abi}": {
+      "path": "${asset.path}",
       "fileName": "${asset.fileName}",
       "size": ${asset.size},
       "md5": "${asset.md5}",
@@ -415,6 +419,7 @@ $libraryJson
 
     private data class NativePackAsset(
         val abi: String,
+        val path: String,
         val fileName: String,
         val size: Long,
         val md5: String,

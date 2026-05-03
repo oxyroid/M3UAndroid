@@ -65,7 +65,7 @@ jobs:
             exit 1
           fi
           if find native-packs -name '*.json' -print0 \
-            | xargs -0 grep -n 'sourceCommit\|snapshotPath\|https://raw.githubusercontent.com'; then
+            | xargs -0 grep -n 'sourceCommit\|snapshotPath\|https://raw.githubusercontent.com\|native-packs/.*/release/'; then
             exit 1
           fi
 

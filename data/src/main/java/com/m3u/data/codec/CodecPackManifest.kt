@@ -20,6 +20,7 @@ data class CodecPackArtifact(
 
 @Serializable
 data class CodecPackAsset(
+    val path: String,
     val fileName: String,
     val size: Long,
     val md5: String,

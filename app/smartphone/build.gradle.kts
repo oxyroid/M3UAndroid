@@ -83,8 +83,12 @@ android {
         outputs
             .map { it as com.android.build.gradle.internal.api.ApkVariantOutputImpl }
             .forEach { output ->
-                val abi = output.getFilter("ABI") ?: "universal"
-                output.outputFileName = "${versionName}_$abi.apk"
+                val abi = output.getFilter("ABI")
+                output.outputFileName = if (abi == null) {
+                    "$versionName.apk"
+                } else {
+                    "${versionName}_$abi.apk"
+                }
             }
     }
 }

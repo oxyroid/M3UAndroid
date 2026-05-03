@@ -12,11 +12,11 @@ object CodecPackConfig {
 
     fun defaultManifestUrl(): String {
         check(enabled) { "Native pack is disabled for this build." }
-        return assetUrl("$manifestPrefix-$packId.json")
+        return assetUrl("$snapshotPath/$manifestPrefix-$packId.json")
     }
 
-    fun assetUrl(fileName: String): String {
+    fun assetUrl(path: String): String {
         check(enabled) { "Native pack is disabled for this build." }
-        return "https://raw.githubusercontent.com/${BuildConfig.NATIVE_PACK_REPOSITORY}/$sourceRef/$snapshotPath/$fileName"
+        return "https://raw.githubusercontent.com/${BuildConfig.NATIVE_PACK_REPOSITORY}/$sourceRef/$path"
     }
 }

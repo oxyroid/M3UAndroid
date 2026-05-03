@@ -8,9 +8,10 @@
   ],
   "assets": {
     "arm64-v8a": {
+      "path": "native-packs/nextlib-0.8.5/m3u-codec-nextlib-0.8.5-arm64-v8a.zip",
       "fileName": "m3u-codec-nextlib-0.8.5-arm64-v8a.zip",
-      "size": 3620962,
-      "md5": "cc53741b709d8253d39efbd8e2867cd4",
+      "size": 3621088,
+      "md5": "8f570dc3208e28788bb5f73a3f2b9f30",
       "libraries": [
         { "name": "libavcodec.so", "size": 4025264, "md5": "a04544fea35ff808af1a87ecb2666616" },
         { "name": "libavformat.so", "size": 2514944, "md5": "925abba5b93c41a34b3ba948980838b1" },
@@ -22,9 +23,10 @@
       ]
     },
     "armeabi-v7a": {
+      "path": "native-packs/nextlib-0.8.5/m3u-codec-nextlib-0.8.5-armeabi-v7a.zip",
       "fileName": "m3u-codec-nextlib-0.8.5-armeabi-v7a.zip",
-      "size": 3531677,
-      "md5": "3b9bfa544cdd5d382bf6c9ca07deda0a",
+      "size": 3531803,
+      "md5": "db50da7b8fe10f341721cbe44554ce13",
       "libraries": [
         { "name": "libavcodec.so", "size": 3795872, "md5": "4fb5f96faef3f6db6b0957def73d64e6" },
         { "name": "libavformat.so", "size": 2050168, "md5": "87aabffe76c083c41ac66fec56ee5f49" },
@@ -36,9 +38,10 @@
       ]
     },
     "x86": {
+      "path": "native-packs/nextlib-0.8.5/m3u-codec-nextlib-0.8.5-x86.zip",
       "fileName": "m3u-codec-nextlib-0.8.5-x86.zip",
-      "size": 3770816,
-      "md5": "2324e36135e0309832b7f441387f495e",
+      "size": 3770942,
+      "md5": "54fcdc0dad9d8a4f9ed5a95ef9f8af1c",
       "libraries": [
         { "name": "libavcodec.so", "size": 4749352, "md5": "e2972dc844339e871a9b8db140b06801" },
         { "name": "libavformat.so", "size": 2615628, "md5": "661dde19a2804b8d32a6f3c53e9b9f69" },
@@ -50,9 +53,10 @@
       ]
     },
     "x86_64": {
+      "path": "native-packs/nextlib-0.8.5/m3u-codec-nextlib-0.8.5-x86_64.zip",
       "fileName": "m3u-codec-nextlib-0.8.5-x86_64.zip",
-      "size": 3771439,
-      "md5": "d900b836c85b839b556aa2ffd39c1c88",
+      "size": 3771565,
+      "md5": "ecbb4909e9fce2573c5c0b9a28d91a89",
       "libraries": [
         { "name": "libavcodec.so", "size": 4708440, "md5": "78c621a4c073ef1d75de83cf6c7ae56e" },
         { "name": "libavformat.so", "size": 2613128, "md5": "bebd47a2d61ebf86dad17a09c7e4bf57" },

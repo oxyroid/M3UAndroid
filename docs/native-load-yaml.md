@@ -46,5 +46,5 @@ pack:
 - `pack.manifestPrefix`: manifest file prefix used by both the generator and runtime downloader.
 - `pack.loadOrder`: runtime load order written into the generated manifest.
 
-Runtime variant files are placed under `<snapshotDirectory>/<pack.id>/<runtimeVariant>/` so the app can download them from the configured repository ref.
-The generated manifest contains relative file names and checksums only; runtime code combines `distribution.ref` with those file names to build raw GitHub URLs.
+Native pack files are placed under `<snapshotDirectory>/<pack.id>/` so old pack URLs stay stable as long as generated files are only added and never removed.
+The generated manifest contains repository-relative asset paths and checksums; runtime code combines `distribution.ref` with those paths to build raw GitHub URLs.

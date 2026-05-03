@@ -70,7 +70,10 @@ class CodecPackRepository @Inject constructor(
                 mkdirs()
             }
         val zipFile = File(staging, asset.fileName)
-            download(CodecPackConfig.assetUrl(asset.fileName), zipFile)
+        download(
+            url = CodecPackConfig.assetUrl(asset.path),
+            output = zipFile
+        )
         require(zipFile.length() == asset.size) {
             "Codec pack size mismatch: expected=${asset.size}, actual=${zipFile.length()}"
         }
