@@ -102,6 +102,7 @@ jobs:
       - name: Create baseline profile update pull request
         if: steps.baseline-trigger.outputs.run == 'true'
         env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
@@ -120,7 +121,7 @@ jobs:
           git push --set-upstream origin "$update_branch"
           printf -v pr_body 'Generated baseline profile updates from workflow run %s/%s/actions/runs/%s.\n\nBaseline profiles are Android performance optimization artifacts. Review the generated changes before merging.' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
           gh pr create \
-            --base "master" \
+            --base "$DEFAULT_BRANCH" \
             --head "$update_branch" \
             --title "Update baseline profiles" \
             --body "$pr_body"
