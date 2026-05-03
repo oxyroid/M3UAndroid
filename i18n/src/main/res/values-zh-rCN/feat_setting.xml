@@ -90,6 +90,9 @@
     <string name="feat_setting_remote_control_tv_side_description">允许智能手机控制你的电视</string>
 
     <string name="feat_setting_subscribe_for_tv">为电视订阅</string>
+    <string name="feat_setting_remote_tv_not_connected">请先连接电视</string>
+    <string name="feat_setting_remote_subscribe_sent">已发送订阅到电视</string>
+    <string name="feat_setting_remote_subscribe_failed">电视订阅发送失败</string>
 
     <string name="feat_setting_backing_up">备份所有播放列表和频道中</string>
     <string name="feat_setting_restoring">恢复所有播放列表和频道中</string>

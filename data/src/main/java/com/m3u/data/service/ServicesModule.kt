@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.media.AudioManager
 import android.net.nsd.NsdManager
+import android.net.wifi.WifiManager
 import androidx.core.app.NotificationManagerCompat
 import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.DefaultDataSource
@@ -17,9 +18,14 @@ import androidx.work.WorkManager
 import com.m3u.core.architecture.FileProvider
 import com.m3u.core.architecture.preferences.Settings
 import com.m3u.core.architecture.preferences.settings
+import com.m3u.data.service.internal.DPadReactionServiceImpl
 import com.m3u.data.service.internal.FileProviderImpl
 import com.m3u.data.service.internal.MessagerImpl
 import com.m3u.data.service.internal.PlayerManagerImpl
+import com.m3u.data.tv.http.HttpServer
+import com.m3u.data.tv.http.HttpServerImpl
+import com.m3u.data.tv.nsd.NsdDeviceManager
+import com.m3u.data.tv.nsd.NsdDeviceManagerImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -44,6 +50,18 @@ internal interface BindServicesModule {
     @Binds
     @Singleton
     fun bindFileProvider(provider: FileProviderImpl): FileProvider
+
+    @Binds
+    @Singleton
+    fun bindDPadReactionService(service: DPadReactionServiceImpl): DPadReactionService
+
+    @Binds
+    @Singleton
+    fun bindNsdDeviceManager(manager: NsdDeviceManagerImpl): NsdDeviceManager
+
+    @Binds
+    @Singleton
+    fun bindHttpServer(server: HttpServerImpl): HttpServer
 }
 
 @Module
@@ -71,6 +89,12 @@ object ProvidedServicesModule {
     @Singleton
     fun provideNsdManager(@ApplicationContext context: Context): NsdManager {
         return context.getSystemService(Context.NSD_SERVICE) as NsdManager
+    }
+
+    @Provides
+    @Singleton
+    fun provideWifiManager(@ApplicationContext context: Context): WifiManager {
+        return context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
     }
 
     @Provides

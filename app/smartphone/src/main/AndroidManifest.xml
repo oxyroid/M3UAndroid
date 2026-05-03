@@ -57,17 +57,6 @@
             android:theme="@style/Theme.M3U" />
 
         <activity
-            android:name=".remote.RemoteTvSubscribeActivity"
-            android:exported="true"
-            android:theme="@style/Theme.M3U">
-            <intent-filter>
-                <action android:name="com.m3u.smartphone.REMOTE_SUBSCRIBE_M3U" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
-
-        <activity
             android:name=".ui.business.crash.CrashActivity"
             android:label="@string/app_label_crash"
             android:launchMode="singleInstance"

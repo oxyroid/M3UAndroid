@@ -11,4 +11,12 @@
     <string name="feat_foryou_recommend_unseen_days">%d 天</string>
     <string name="feat_foryou_recommend_unseen_hours">%d 小时</string>
     <string name="feat_foryou_recommend_cw_label">继续播放</string>
+    <string name="feat_foryou_connect_title">输入电视上的代码</string>
+    <string name="feat_foryou_connect_subtitle">请确认手机和电视连接到同一个 Wi-Fi</string>
+    <string name="feat_foryou_connect_timeout">未找到电视，请确认两台设备连接到同一个网络</string>
+    <string name="feat_foryou_connect">连接</string>
+    <string name="feat_foryou_connecting">连接中</string>
+    <string name="feat_foryou_disconnect">断开连接</string>
+    <string name="feat_foryou_keypad_back">退格</string>
+    <string name="feat_foryou_keypad_delete">清空</string>
 </resources>

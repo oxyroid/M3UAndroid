@@ -1,42 +1,50 @@
 # Device Benchmark
 
-Host-side benchmark for the two-device flow:
+Mobly benchmark for the phone-assisted TV subscription flow.
 
-1. Build and install the smartphone and TV debug APKs to their matching devices.
-2. Start the local M3U mock server with fixture playlist/Xtream data.
-3. Start the smartphone app and TV app at the same time.
-4. Bridge the phone's localhost request to the TV app's subscription server through ADB.
-5. Ask the smartphone app to send the test M3U subscription to the TV app.
-6. Wait until the TV UI shows the subscribed playlist title.
+The test drives the real UI path:
 
-The benchmark uses ADB from the host because Android Macrobenchmark runs on a single device and
-cannot directly coordinate a phone plus a TV at the same time.
+1. Build and install the smartphone and TV debug APKs.
+2. Start the local M3U mock server.
+3. Launch both apps.
+4. Read the pairing code from the TV UI.
+5. Enable Remote Control on the phone.
+6. Open the Remote Control FAB, enter the TV code, and connect.
+7. Use the phone settings screen to subscribe for TV through `/playlists/subscribe`.
+8. Verify the TV library shows the subscribed playlist.
+
+## Requirements
+
+- Python 3.11+ with Mobly installed from `requirements.txt`.
+- One phone device and one Android TV/Leanback device visible in `adb devices -l`.
+- Real devices must be able to discover and reach each other on the same network.
+
+The default local emulator config uses a debug-only direct endpoint override because emulator mDNS
+does not reliably deliver Android NSD services between separate emulator instances. This only skips
+NSD discovery; the benchmark still connects to the TV app's `/say_hello` server, sends the
+subscription through `/playlists/subscribe`, and verifies the TV UI.
 
 ## Run
 
-Start one phone/emulator and one TV/emulator, then run:
+The default config targets the local emulator serials used by this workspace:
 
 ```bash
-./gradlew :testing:device-benchmark:run
+./gradlew :testing:device-benchmark:run --no-configuration-cache
 ```
 
-By default the benchmark auto-detects one non-TV Android device and one TV/Leanback device from
-`adb devices -l`. It installs the latest debug APKs from the app modules, reverse-maps the mock
-server to the TV at `http://127.0.0.1:8080`, forwards the TV subscription server on host port
-`8989`, then exposes it to the phone at `http://127.0.0.1:8998`.
+For real devices, remove `direct_tv_host` and `direct_tv_port` from the Mobly config so the app uses
+normal NSD discovery.
 
-You can still override values when needed:
+To use a different testbed, copy `mobly_config.yml` and pass it with:
 
 ```bash
-./gradlew :testing:device-benchmark:run --args="\
-  --phone <phone-serial> \
-  --tv <tv-serial> \
-  --mock-url http://127.0.0.1:8080 \
-  --playlist-title BenchmarkLive"
+./gradlew :testing:device-benchmark:run \
+  -PmoblyConfig=/path/to/mobly_config.yml \
+  --no-configuration-cache
 ```
 
-The output report is written to:
+Mobly logs are written under:
 
 ```text
-testing/device-benchmark/build/reports/phone-tv-subscribe-m3u.json
+testing/device-benchmark/build/mobly-results
 ```

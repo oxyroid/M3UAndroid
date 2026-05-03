@@ -6,6 +6,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
@@ -33,6 +34,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
@@ -71,6 +74,7 @@ fun TextField(
     onValueChange: (String) -> Unit = {},
 ) {
     val focusManager = LocalFocusManager.current
+    val focusRequester = remember { FocusRequester() }
     val interactionSource = remember { MutableInteractionSource() }
     val focus by interactionSource.collectIsFocusedAsState()
 
@@ -109,7 +113,9 @@ fun TextField(
                 imeAction = imeAction ?: if (singleLine) ImeAction.Done else ImeAction.Default
             ),
             interactionSource = interactionSource,
-            modifier = modifier.fillMaxWidth(),
+            modifier = modifier
+                .fillMaxWidth()
+                .focusRequester(focusRequester),
             readOnly = readOnly,
             cursorBrush = SolidColor(contentColor),
             decorationBox = { innerTextField ->
@@ -172,6 +178,7 @@ fun PlaceholderField(
     onValueChange: (String) -> Unit = {},
 ) {
     val focusManager = LocalFocusManager.current
+    val focusRequester = remember { FocusRequester() }
     val interactionSource = remember { MutableInteractionSource() }
     val focus by interactionSource.collectIsFocusedAsState()
 
@@ -212,7 +219,9 @@ fun PlaceholderField(
                 imeAction = imeAction
             ),
             interactionSource = interactionSource,
-            modifier = modifier.fillMaxWidth(),
+            modifier = modifier
+                .fillMaxWidth()
+                .focusRequester(focusRequester),
             readOnly = readOnly,
             cursorBrush = SolidColor(contentColor.copy(.35f)),
             decorationBox = { innerTextField ->
@@ -220,6 +229,12 @@ fun PlaceholderField(
                     modifier = Modifier
                         .clip(shape)
                         .background(backgroundColor)
+                        .clickable(
+                            enabled = enabled && !readOnly,
+                            interactionSource = interactionSource,
+                            indication = null,
+                            onClick = focusRequester::requestFocus
+                        )
                         .interactionBorder(
                             type = InteractionType.PRESS,
                             source = interactionSource,

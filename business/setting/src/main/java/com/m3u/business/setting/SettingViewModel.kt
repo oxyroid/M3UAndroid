@@ -15,6 +15,7 @@ import com.m3u.core.architecture.preferences.Settings
 import com.m3u.core.architecture.preferences.flowOf
 import com.m3u.core.architecture.preferences.set
 import com.m3u.core.util.basic.startWithHttpScheme
+import com.m3u.data.api.TvApiDelegate
 import com.m3u.data.database.dao.ColorSchemeDao
 import com.m3u.data.database.example.ColorSchemeExample
 import com.m3u.data.database.model.Channel
@@ -24,6 +25,7 @@ import com.m3u.data.database.model.Playlist
 import com.m3u.data.parser.xtream.XtreamInput
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
+import com.m3u.data.repository.tv.TvRepository
 import com.m3u.data.service.Messager
 import com.m3u.data.worker.BackupWorker
 import com.m3u.data.worker.RestoreWorker
@@ -49,6 +51,8 @@ class SettingViewModel @Inject constructor(
     private val workManager: WorkManager,
     private val settings: Settings,
     private val messager: Messager,
+    private val tvRepository: TvRepository,
+    private val tvApi: TvApiDelegate,
     publisher: Publisher,
     // FIXME: do not use dao in viewmodel
     private val colorSchemeDao: ColorSchemeDao,
@@ -141,6 +145,7 @@ class SettingViewModel @Inject constructor(
         val epg = properties.epgState.value
         val selected = properties.selectedState.value
         val localStorage = properties.localStorageState.value
+        val forTv = properties.forTvState.value
         val urlOrUri = uri
             .takeIf { uri != Uri.EMPTY }?.toString().orEmpty()
             .takeIf { localStorage }
@@ -149,8 +154,20 @@ class SettingViewModel @Inject constructor(
         val basicUrl = if (inputBasicUrl.startWithHttpScheme()) inputBasicUrl
         else "http://$inputBasicUrl"
 
-        when {
-            else -> when (selected) {
+        if (forTv) {
+            subscribeForTv(
+                selected = selected,
+                title = title,
+                url = url,
+                basicUrl = basicUrl,
+                username = username,
+                password = password,
+                epg = epg
+            )
+            return
+        }
+
+        when (selected) {
                 DataSource.M3U -> {
                     if (title.isEmpty()) {
                         messager.emit(SettingMessage.EmptyTitle)
@@ -204,8 +221,75 @@ class SettingViewModel @Inject constructor(
 
                 else -> return
             }
-        }
         resetAllInputs()
+    }
+
+    private fun subscribeForTv(
+        selected: DataSource,
+        title: String,
+        url: String,
+        basicUrl: String,
+        username: String,
+        password: String,
+        epg: String
+    ) {
+        if (tvRepository.connected.value == null) {
+            messager.emit(SettingMessage.RemoteTvNotConnected)
+            return
+        }
+
+        when (selected) {
+            DataSource.M3U -> {
+                if (title.isEmpty()) {
+                    messager.emit(SettingMessage.EmptyTitle)
+                    return
+                }
+                if (url.isBlank()) {
+                    messager.emit(SettingMessage.EmptyUrl)
+                    return
+                }
+            }
+
+            DataSource.EPG -> {
+                if (title.isEmpty()) {
+                    messager.emit(SettingMessage.EmptyEpgTitle)
+                    return
+                }
+                if (epg.isEmpty()) {
+                    messager.emit(SettingMessage.EmptyEpg)
+                    return
+                }
+            }
+
+            DataSource.Xtream -> {
+                if (title.isEmpty()) {
+                    messager.emit(SettingMessage.EmptyTitle)
+                    return
+                }
+            }
+
+            else -> return
+        }
+
+        viewModelScope.launch {
+            val result = runCatching {
+                tvApi.subscribe(
+                    title = title,
+                    url = url.ifBlank { basicUrl },
+                    basicUrl = basicUrl,
+                    username = username,
+                    password = password,
+                    epg = epg.ifBlank { null },
+                    dataSource = selected
+                )
+            }.getOrNull()
+            if (result?.result == true) {
+                messager.emit(SettingMessage.RemoteTvSubscribeSent)
+                resetAllInputs()
+            } else {
+                messager.emit(SettingMessage.RemoteTvSubscribeFailed)
+            }
+        }
     }
 
     val backingUpOrRestoring: StateFlow<BackingUpAndRestoringState> = workManager

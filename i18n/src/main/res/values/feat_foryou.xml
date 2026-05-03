@@ -14,4 +14,10 @@
     <string name="feat_foryou_new_release">new release</string>
     <string name="feat_foryou_connect_title">enter code from TV</string>
     <string name="feat_foryou_connect_subtitle">Make sure to connect to the same Wi-Fi</string>
+    <string name="feat_foryou_connect_timeout">TV was not found. Make sure both devices are on the same network.</string>
+    <string name="feat_foryou_connect">Connect</string>
+    <string name="feat_foryou_connecting">Connecting</string>
+    <string name="feat_foryou_disconnect">Disconnect</string>
+    <string name="feat_foryou_keypad_back">Backspace</string>
+    <string name="feat_foryou_keypad_delete">Clear</string>
 </resources>

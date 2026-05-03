@@ -1,0 +1,15 @@
+TestBeds:
+  - Name: local_emulators
+    Controllers:
+      AndroidDevice:
+        - serial: emulator-5556
+        - serial: emulator-5554
+    TestParams:
+      phone_serial: emulator-5556
+      tv_serial: emulator-5554
+      mock_url: http://127.0.0.1:8080
+      mock_server_port: 8080
+      direct_tv_host: 10.0.2.2
+      direct_tv_port: 8989
+      playlist_title: RemoteControlLive
+      timeout_seconds: 120

@@ -38,11 +38,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.business.setting.BackingUpAndRestoringState
@@ -53,11 +56,14 @@ import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.i18n.R.string
+import com.m3u.smartphone.benchmark.DebugBenchmarkSettings
 import com.m3u.smartphone.ui.business.setting.components.DataSourceSelection
 import com.m3u.smartphone.ui.business.setting.components.EpgPlaylistItem
 import com.m3u.smartphone.ui.business.setting.components.HiddenChannelItem
 import com.m3u.smartphone.ui.business.setting.components.HiddenPlaylistGroupItem
 import com.m3u.smartphone.ui.business.setting.components.LocalStorageButton
+import com.m3u.smartphone.ui.business.setting.components.LocalStorageSwitch
+import com.m3u.smartphone.ui.business.setting.components.RemoteControlSubscribeSwitch
 import com.m3u.smartphone.ui.common.helper.LocalHelper
 import com.m3u.smartphone.ui.material.components.HorizontalPagerIndicator
 import com.m3u.smartphone.ui.material.components.PlaceholderField
@@ -160,7 +166,6 @@ private fun MainContentImpl(
     val spacing = LocalSpacing.current
     val clipboardManager = LocalClipboardManager.current
     val helper = LocalHelper.current
-
     val remoteControl by preferenceOf(PreferencesKeys.REMOTE_CONTROL)
 
     LazyColumn(
@@ -193,6 +198,22 @@ private fun MainContentImpl(
 
         item {
             Spacer(Modifier.size(spacing.medium))
+        }
+        item {
+            if (properties.selectedState.value == DataSource.M3U) {
+                LocalStorageSwitch(
+                    checked = properties.localStorageState.value,
+                    onChanged = { properties.localStorageState.value = it },
+                    enabled = !properties.forTvState.value
+                )
+            }
+            if (remoteControl) {
+                RemoteControlSubscribeSwitch(
+                    checked = properties.forTvState.value,
+                    onChanged = { properties.forTvState.value = !properties.forTvState.value },
+                    enabled = !properties.localStorageState.value
+                )
+            }
         }
         item {
             @SuppressLint("InlinedApi")
@@ -350,6 +371,10 @@ private fun M3UInputContent(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
+    val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        properties.applyBenchmarkPlaylistPrefill(DebugBenchmarkSettings.from(context))
+    }
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(spacing.small)
@@ -358,6 +383,7 @@ private fun M3UInputContent(
             text = properties.titleState.value,
             placeholder = stringResource(string.feat_setting_placeholder_title).uppercase(),
             onValueChange = { properties.titleState.value = Uri.decode(it) },
+            imeAction = ImeAction.Next,
             modifier = Modifier.fillMaxWidth()
         )
         Crossfade(
@@ -379,6 +405,13 @@ private fun M3UInputContent(
             }
         }
     }
+}
+
+private fun SettingProperties.applyBenchmarkPlaylistPrefill(settings: DebugBenchmarkSettings) {
+    settings.getString(DebugBenchmarkSettings.PLAYLIST_TITLE)
+        ?.let { titleState.value = it }
+    settings.getString(DebugBenchmarkSettings.PLAYLIST_URL)
+        ?.let { urlState.value = it }
 }
 
 @Composable

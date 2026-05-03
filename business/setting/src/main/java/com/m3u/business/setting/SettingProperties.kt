@@ -10,6 +10,7 @@ class SettingProperties(
     val urlState: MutableState<String> = mutableStateOf(""),
     val uriState: MutableState<Uri> = mutableStateOf(Uri.EMPTY),
     val localStorageState: MutableState<Boolean> = mutableStateOf(false),
+    val forTvState: MutableState<Boolean> = mutableStateOf(false),
     val basicUrlState: MutableState<String> = mutableStateOf(""),
     val usernameState: MutableState<String> = mutableStateOf(""),
     val passwordState: MutableState<String> = mutableStateOf(""),

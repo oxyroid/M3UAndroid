@@ -52,6 +52,24 @@ sealed class SettingMessage(
         resId = string.feat_setting_epg_added
     )
 
+    data object RemoteTvNotConnected : SettingMessage(
+        level = LEVEL_ERROR,
+        type = TYPE_SNACK,
+        resId = string.feat_setting_remote_tv_not_connected
+    )
+
+    data object RemoteTvSubscribeSent : SettingMessage(
+        level = LEVEL_INFO,
+        type = TYPE_SNACK,
+        resId = string.feat_setting_remote_subscribe_sent
+    )
+
+    data object RemoteTvSubscribeFailed : SettingMessage(
+        level = LEVEL_ERROR,
+        type = TYPE_SNACK,
+        resId = string.feat_setting_remote_subscribe_failed
+    )
+
     data object BackingUp : SettingMessage(
         level = LEVEL_INFO,
         type = TYPE_SNACK,

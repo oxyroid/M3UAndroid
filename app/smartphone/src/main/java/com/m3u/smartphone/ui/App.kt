@@ -3,6 +3,11 @@ package com.m3u.smartphone.ui
 import android.app.ActivityOptions
 import android.content.Intent
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,7 +22,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.rounded.SettingsRemote
 import androidx.compose.material3.ExpandedFullScreenSearchBar
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.SearchBarDefaults
@@ -45,9 +53,12 @@ import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.preferenceOf
 import com.m3u.data.database.model.Channel
 import com.m3u.data.service.MediaCommand
+import com.m3u.data.tv.model.RemoteDirection
 import com.m3u.smartphone.ui.business.channel.PlayerActivity
 import com.m3u.smartphone.ui.business.playlist.components.ChannelGallery
 import com.m3u.smartphone.ui.common.AppNavHost
+import com.m3u.smartphone.ui.common.connect.RemoteControlSheet
+import com.m3u.smartphone.ui.common.connect.RemoteControlSheetValue
 import com.m3u.smartphone.ui.common.helper.LocalHelper
 import com.m3u.smartphone.ui.material.components.Destination
 import com.m3u.smartphone.ui.material.components.SnackHost
@@ -65,6 +76,17 @@ fun App(
     AppImpl(
         navController = navController,
         channels = viewModel.channels,
+        isRemoteControlSheetVisible = viewModel.isConnectSheetVisible,
+        remoteControlSheetValue = viewModel.remoteControlSheetValue,
+        openRemoteControlSheet = { viewModel.isConnectSheetVisible = true },
+        onCode = { viewModel.code = it },
+        checkTvCodeOnSmartphone = viewModel::checkTvCodeOnSmartphone,
+        forgetTvCodeOnSmartphone = viewModel::forgetTvCodeOnSmartphone,
+        onRemoteDirection = viewModel::onRemoteDirection,
+        onDismissRequest = {
+            viewModel.code = ""
+            viewModel.isConnectSheetVisible = false
+        },
         modifier = modifier
     )
 }
@@ -73,6 +95,14 @@ fun App(
 private fun AppImpl(
     navController: NavHostController,
     channels: Flow<PagingData<Channel>>,
+    isRemoteControlSheetVisible: Boolean,
+    remoteControlSheetValue: RemoteControlSheetValue,
+    openRemoteControlSheet: () -> Unit,
+    onCode: (String) -> Unit,
+    checkTvCodeOnSmartphone: () -> Unit,
+    forgetTvCodeOnSmartphone: () -> Unit,
+    onRemoteDirection: (RemoteDirection) -> Unit,
+    onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -215,7 +245,37 @@ private fun AppImpl(
                     .padding(spacing.medium)
             ) {
                 SnackHost(Modifier.weight(1f))
+                AnimatedVisibility(
+                    visible = remoteControl,
+                    enter = scaleIn(initialScale = 0.65f) + fadeIn(),
+                    exit = scaleOut(targetScale = 0.65f) + fadeOut()
+                ) {
+                    FloatingActionButton(
+                        elevation = FloatingActionButtonDefaults.elevation(
+                            defaultElevation = spacing.none,
+                            pressedElevation = spacing.none,
+                            focusedElevation = spacing.extraSmall,
+                            hoveredElevation = spacing.extraSmall
+                        ),
+                        onClick = openRemoteControlSheet
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.SettingsRemote,
+                            contentDescription = stringResource(com.m3u.i18n.R.string.feat_setting_remote_control)
+                        )
+                    }
+                }
             }
+
+            RemoteControlSheet(
+                value = remoteControlSheetValue,
+                visible = isRemoteControlSheetVisible,
+                onCode = onCode,
+                checkTvCodeOnSmartphone = checkTvCodeOnSmartphone,
+                forgetTvCodeOnSmartphone = forgetTvCodeOnSmartphone,
+                onRemoteDirection = onRemoteDirection,
+                onDismissRequest = onDismissRequest
+            )
         }
     }
 }

@@ -9,6 +9,8 @@ import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
+import com.m3u.data.repository.tv.TvRepository
+import com.m3u.data.service.DPadReactionService
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.PlayerManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -40,7 +42,9 @@ data class TvUiState(
 class TvHomeViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val channelRepository: ChannelRepository,
-    private val playerManager: PlayerManager
+    private val playerManager: PlayerManager,
+    tvRepository: TvRepository,
+    dPadReactionService: DPadReactionService
 ) : ViewModel() {
     private val _state = MutableStateFlow(TvUiState())
     val state: StateFlow<TvUiState> = _state.asStateFlow()
@@ -49,6 +53,8 @@ class TvHomeViewModel @Inject constructor(
     val currentChannel: StateFlow<Channel?> = playerManager.channel
     val isPlaying: StateFlow<Boolean> = playerManager.isPlaying
     val playbackState: StateFlow<Int> = playerManager.playbackState
+    val remoteControlCode: StateFlow<Int?> = tvRepository.broadcastCodeOnTv
+    val remoteDirections = dPadReactionService.incoming
     private var loadChannelsJob: Job? = null
 
     init {
