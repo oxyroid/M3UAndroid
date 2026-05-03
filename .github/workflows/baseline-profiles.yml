@@ -103,7 +103,7 @@ jobs:
         if: steps.baseline-trigger.outputs.run == 'true'
         env:
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
         run: |
           set -euo pipefail
           update_branch="baseline-profile-updates-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
