@@ -16,6 +16,8 @@ import com.m3u.core.architecture.preferences.flowOf
 import com.m3u.core.architecture.preferences.set
 import com.m3u.core.util.basic.startWithHttpScheme
 import com.m3u.data.api.TvApiDelegate
+import com.m3u.data.codec.CodecPackInstallResult
+import com.m3u.data.codec.CodecPackRepository
 import com.m3u.data.database.dao.ColorSchemeDao
 import com.m3u.data.database.example.ColorSchemeExample
 import com.m3u.data.database.model.Channel
@@ -33,6 +35,7 @@ import com.m3u.data.worker.SubscriptionWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
@@ -53,10 +56,18 @@ class SettingViewModel @Inject constructor(
     private val messager: Messager,
     private val tvRepository: TvRepository,
     private val tvApi: TvApiDelegate,
+    private val codecPackRepository: CodecPackRepository,
     publisher: Publisher,
     // FIXME: do not use dao in viewmodel
     private val colorSchemeDao: ColorSchemeDao,
 ) : ViewModel() {
+    private val _codecPackState = MutableStateFlow(codecPackRepository.toPendingState())
+    val codecPackState: StateFlow<CodecPackState> = _codecPackState
+
+    init {
+        refreshCodecPack()
+    }
+
     val epgs: StateFlow<List<Playlist>> = playlistRepository
         .observeAllEpgs()
         .stateIn(
@@ -92,6 +103,59 @@ class SettingViewModel @Inject constructor(
         viewModelScope.launch {
             playlistRepository.hideOrUnhideCategory(playlistUrl, group)
         }
+    }
+
+    fun refreshCodecPack() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _codecPackState.value = codecPackRepository.toState()
+        }
+    }
+
+    fun installCodecPack() {
+        if (!_codecPackState.value.enabled) return
+        if (_codecPackState.value.installing) return
+        _codecPackState.value = _codecPackState.value.copy(installing = true, error = null)
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching {
+                codecPackRepository.installFromDefaultSnapshot()
+            }.fold(
+                onSuccess = { result ->
+                    _codecPackState.value = codecPackRepository.toState().copy(
+                        error = when (result) {
+                            is CodecPackInstallResult.UnsupportedAbi -> result.supportedAbis.joinToString()
+                            else -> null
+                        }
+                    )
+                },
+                onFailure = { error ->
+                    _codecPackState.value = codecPackRepository.toState().copy(error = error.message)
+                }
+            )
+        }
+    }
+
+    fun deleteCodecPack() {
+        viewModelScope.launch(Dispatchers.IO) {
+            codecPackRepository.deleteInstalledPack()
+            _codecPackState.value = codecPackRepository.toState()
+        }
+    }
+
+    private fun CodecPackRepository.toState(): CodecPackState {
+        return CodecPackState(
+            packId = packId,
+            enabled = enabled,
+            abi = currentAbi,
+            installed = isInstalled()
+        )
+    }
+
+    private fun CodecPackRepository.toPendingState(): CodecPackState {
+        return CodecPackState(
+            packId = packId,
+            enabled = enabled,
+            abi = currentAbi
+        )
     }
 
     val colorSchemes: StateFlow<List<ColorScheme>> = combine(

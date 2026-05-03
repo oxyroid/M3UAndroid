@@ -1,0 +1,37 @@
+schemaVersion: 1
+instrumentation:
+  packages:
+    - io.github.anilbeesetti.nextlib.
+  redirect:
+    owner: com/m3u/data/codec/CodecNativeLoader
+    method: loadLibrary
+distribution:
+  repository: oxyroid/M3UAndroid
+  ref: master
+  snapshotDirectory: native-packs
+  runtimeVariant: release
+  producerProject: :app:smartphone
+  runtimeConfigProject: :data
+pack:
+  id: nextlib-0.8.5
+  assetPrefix: m3u-codec
+  manifestPrefix: m3u-codec
+  artifacts:
+    - com.github.sintrs.nextlib:nextlib-media3ext:0.8.5
+    - com.github.sintrs.nextlib:nextlib-mediainfo:0.8.5
+  libraries:
+    - avutil
+    - swresample
+    - swscale
+    - avcodec
+    - avformat
+    - media3ext
+    - mediainfo
+  loadOrder:
+    - avutil
+    - swresample
+    - swscale
+    - avcodec
+    - avformat
+    - media3ext
+    - mediainfo

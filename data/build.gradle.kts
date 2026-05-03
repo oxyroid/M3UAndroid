@@ -5,7 +5,9 @@ plugins {
     alias(libs.plugins.org.jetbrains.kotlin.android)
     alias(libs.plugins.org.jetbrains.kotlin.serialization)
     alias(libs.plugins.compose.compiler)
+    id("dev.oxyroid.native-load")
 }
+
 android {
     namespace = "com.m3u.data"
     ksp {
@@ -15,6 +17,9 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+    defaultConfig {
+        buildConfigField("String", "NEXTLIB_CODEC_VERSION", "\"${libs.versions.nextLib.get()}\"")
     }
     packaging {
         resources.excludes += "META-INF/**"

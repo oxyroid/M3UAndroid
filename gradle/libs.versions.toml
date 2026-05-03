@@ -35,6 +35,7 @@ lottie-compose = "6.7.1"
 m3u-extension = "1.9"
 nextLib = "0.8.5"
 slf4j-api = "2.0.17"
+snakeyaml = "2.3"
 
 squareup-retrofit2 = "3.0.0"
 squareup-leakcanary = "2.14"
@@ -177,6 +178,7 @@ nextlib-media3ext = { module = "com.github.sintrs.nextlib:nextlib-media3ext", ve
 nextlib-mediainfo = { module = "com.github.sintrs.nextlib:nextlib-mediainfo", version.ref = "nextLib" }
 
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j-api" }
+snakeyaml = { module = "org.yaml:snakeyaml", version.ref = "snakeyaml" }
 
 minabox = { group = "io.github.oleksandrbalan", name = "minabox", version.ref = "minabox" }
 net-mm2d-mmupnp-mmupnp = { group = "net.mm2d.mmupnp", name = "mmupnp", version.ref = "mm2d-mmupnp" }

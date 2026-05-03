@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.com.google.devtools.ksp)
     alias(libs.plugins.androidx.baselineprofile)
     id("kotlin-parcelize")
+    id("dev.oxyroid.native-load")
 }
 
 val m3uMockServerUrl = providers.gradleProperty("m3uMockServerUrl").orElse("http://10.0.2.2:8080")

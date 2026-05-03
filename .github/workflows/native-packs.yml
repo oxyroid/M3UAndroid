@@ -1,0 +1,75 @@
+name: Native Packs
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "master" ]
+    paths:
+      - 'gradle/libs.versions.toml'
+      - 'app/smartphone/build.gradle.kts'
+      - 'data/build.gradle.kts'
+      - 'native-load.yml'
+      - 'native-packs/**'
+      - 'buildSrc/**'
+      - '.github/workflows/native-packs.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-packs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: zulu
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-home-cache-cleanup: true
+
+      - name: Generate native packs
+        run: |
+          ./gradlew :app:smartphone:generateReleaseNativePacks
+
+      - name: Verify debug native packs stay disabled
+        run: |
+          set -euo pipefail
+          ./gradlew :app:smartphone:tasks --all > native-pack-tasks.txt
+          if grep -n 'generateDebugNativePacks' native-pack-tasks.txt; then
+            exit 1
+          fi
+
+      - name: Verify native load source protocol
+        run: |
+          set -euo pipefail
+          if git grep -n 'm3u\.native-load-instrumentation\|NATIVE_PACK_COMMIT\|nativeLoadCommit' -- \
+            buildSrc/src \
+            app \
+            data/src \
+            data/build.gradle.kts \
+            docs \
+            native-load.yml \
+            .github; then
+            exit 1
+          fi
+          if find native-packs -name '*.json' -print0 \
+            | xargs -0 grep -n 'sourceCommit\|snapshotPath\|https://raw.githubusercontent.com'; then
+            exit 1
+          fi
+
+      - name: Verify committed native packs
+        run: |
+          set -euo pipefail
+          git diff --exit-code -- native-packs

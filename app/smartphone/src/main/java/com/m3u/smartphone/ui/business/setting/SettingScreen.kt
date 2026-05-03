@@ -27,6 +27,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.business.setting.BackingUpAndRestoringState
+import com.m3u.business.setting.CodecPackState
 import com.m3u.business.setting.SettingProperties
 import com.m3u.business.setting.SettingViewModel
 import com.m3u.core.architecture.preferences.PreferencesKeys
@@ -38,6 +39,7 @@ import com.m3u.data.database.model.Playlist
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.business.setting.components.CanvasBottomSheet
 import com.m3u.smartphone.ui.business.setting.fragments.AppearanceFragment
+import com.m3u.smartphone.ui.business.setting.fragments.CodecPackFragment
 import com.m3u.smartphone.ui.business.setting.fragments.OptionalFragment
 import com.m3u.smartphone.ui.business.setting.fragments.SubscriptionsFragment
 import com.m3u.smartphone.ui.business.setting.fragments.preferences.PreferencesFragment
@@ -64,6 +66,7 @@ fun SettingRoute(
     val hiddenChannels by viewModel.hiddenChannels.collectAsStateWithLifecycle()
     val hiddenCategoriesWithPlaylists by viewModel.hiddenCategoriesWithPlaylists.collectAsStateWithLifecycle()
     val backingUpOrRestoring by viewModel.backingUpOrRestoring.collectAsStateWithLifecycle()
+    val codecPackState by viewModel.codecPackState.collectAsStateWithLifecycle()
 
     val sheetState = rememberModalBottomSheetState()
     var colorScheme: ColorScheme? by remember { mutableStateOf(null) }
@@ -92,6 +95,7 @@ fun SettingRoute(
             versionName = viewModel.versionName,
             versionCode = viewModel.versionCode,
             backingUpOrRestoring = backingUpOrRestoring,
+            codecPackState = codecPackState,
             epgs = epgs,
             hiddenChannels = hiddenChannels,
             hiddenCategoriesWithPlaylists = hiddenCategoriesWithPlaylists,
@@ -110,6 +114,9 @@ fun SettingRoute(
                 viewModel.onUnhidePlaylistCategory(playlistUrl, group)
             },
             onDeleteEpgPlaylist = { viewModel.deleteEpgPlaylist(it) },
+            onInstallCodecPack = viewModel::installCodecPack,
+            onDeleteCodecPack = viewModel::deleteCodecPack,
+            onRefreshCodecPack = viewModel::refreshCodecPack,
             modifier = modifier.fillMaxSize(),
             contentPadding = contentPadding,
         )
@@ -133,6 +140,7 @@ private fun SettingScreen(
     versionName: String,
     versionCode: Int,
     backingUpOrRestoring: BackingUpAndRestoringState,
+    codecPackState: CodecPackState,
     onSubscribe: () -> Unit,
     hiddenChannels: List<Channel>,
     hiddenCategoriesWithPlaylists: List<Pair<Playlist, String>>,
@@ -146,6 +154,9 @@ private fun SettingScreen(
     restoreSchemes: () -> Unit,
     epgs: List<Playlist>,
     onDeleteEpgPlaylist: (String) -> Unit,
+    onInstallCodecPack: () -> Unit,
+    onDeleteCodecPack: () -> Unit,
+    onRefreshCodecPack: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
 ) {
@@ -155,6 +166,7 @@ private fun SettingScreen(
     val playlistTitle = stringResource(string.feat_setting_playlist_management)
     val appearanceTitle = stringResource(string.feat_setting_appearance)
     val optionalTitle = stringResource(string.feat_setting_optional_features)
+    val codecPackTitle = stringResource(string.feat_setting_codec_pack)
 
     val colorArgb by preferenceOf(PreferencesKeys.COLOR_ARGB)
 
@@ -165,12 +177,13 @@ private fun SettingScreen(
         navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, it)
     }
 
-    LifecycleResumeEffect(destination, defaultTitle, playlistTitle, appearanceTitle) {
+    LifecycleResumeEffect(destination, defaultTitle, playlistTitle, appearanceTitle, optionalTitle, codecPackTitle) {
         Metadata.title = when (destination) {
             SettingDestination.Default -> defaultTitle
             SettingDestination.Playlists -> playlistTitle
             SettingDestination.Appearance -> appearanceTitle
             SettingDestination.Optional -> optionalTitle
+            SettingDestination.CodecPack -> codecPackTitle
         }
             .title()
             .let(::AnnotatedString)
@@ -201,6 +214,7 @@ private fun SettingScreen(
                 contentPadding = contentPadding,
                 versionName = versionName,
                 versionCode = versionCode,
+                codecPackEnabled = codecPackState.enabled,
                 navigateToPlaylistManagement = {
                     coroutineScope.launch {
                         navigator.navigateTo(
@@ -222,6 +236,14 @@ private fun SettingScreen(
                         navigator.navigateTo(
                             pane = ListDetailPaneScaffoldRole.Detail,
                             contentKey = SettingDestination.Optional
+                        )
+                    }
+                },
+                navigateToCodecPack = {
+                    coroutineScope.launch {
+                        navigator.navigateTo(
+                            pane = ListDetailPaneScaffoldRole.Detail,
+                            contentKey = SettingDestination.CodecPack
                         )
                     }
                 },
@@ -261,6 +283,17 @@ private fun SettingScreen(
 
                 SettingDestination.Optional -> {
                     OptionalFragment(
+                        contentPadding = contentPadding,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+
+                SettingDestination.CodecPack -> {
+                    CodecPackFragment(
+                        state = codecPackState,
+                        onInstall = onInstallCodecPack,
+                        onDelete = onDeleteCodecPack,
+                        onRefresh = onRefreshCodecPack,
                         contentPadding = contentPadding,
                         modifier = Modifier.fillMaxSize()
                     )
