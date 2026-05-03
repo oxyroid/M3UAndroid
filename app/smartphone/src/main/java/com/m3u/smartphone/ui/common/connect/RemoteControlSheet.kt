@@ -70,8 +70,8 @@ internal fun RemoteControlSheet(
                             checkTvCodeOnSmartphone = checkTvCodeOnSmartphone,
                             onCode = onCode,
                             subtitle = when {
-                                value.timedOut -> stringResource(R.string.feat_foryou_connect_timeout)
-                                else -> value.subtitle ?: stringResource(R.string.feat_foryou_connect_subtitle)
+                                value.timedOut -> stringResource(R.string.ui_remote_control_pair_timeout)
+                                else -> value.subtitle ?: stringResource(R.string.ui_remote_control_pair_subtitle)
                             }
                         )
                     }

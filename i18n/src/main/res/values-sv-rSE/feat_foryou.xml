@@ -12,6 +12,4 @@
     <string name="feat_foryou_recommend_unseen_hours">%d timmar</string>
     <string name="feat_foryou_recommend_cw_label">fortsätt titta</string>
     <string name="feat_foryou_new_release">ny utgåva</string>
-    <string name="feat_foryou_connect_title">ange kod från TV</string>
-    <string name="feat_foryou_connect_subtitle">Se till att ansluta till samma Wi-Fi</string>
 </resources>

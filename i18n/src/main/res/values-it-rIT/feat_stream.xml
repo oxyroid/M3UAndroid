@@ -4,7 +4,6 @@
     <string name="feat_channel_playback_state_buffering">caricamento</string>
     <string name="feat_channel_playback_state_ready">pronto</string>
     <string name="feat_channel_playback_state_ended">completato</string>
-
     <string name="feat_channel_tooltip_on_back_pressed">indietro</string>
     <string name="feat_channel_tooltip_mute">disattiva audio</string>
     <string name="feat_channel_tooltip_unmute">attiva audio</string>
@@ -17,12 +16,9 @@
     <string name="feat_channel_tooltip_enter_pip_mode">modalità PIP</string>
     <string name="feat_channel_tooltip_screen_rotating">rotazione schermo</string>
     <string name="feat_channel_tooltip_choose_format">scegli formato</string>
-
     <string name="feat_channel_dialog_dlna_devices">Dispositivi DLNA</string>
     <string name="feat_channel_dialog_choose_tracks">Scegli tracce</string>
-
     <string name="feat_channel_open_in_external_app">apri in app esterna</string>
-
     <string name="feat_channel_cw_position_title">Ultima riproduzione a %s</string>
     <string name="feat_channel_cw_position_button">Riavvolgi</string>
 </resources>

@@ -4,7 +4,6 @@
     <string name="data_error_empty_title">la lista de reproducción no tiene nombre</string>
     <string name="data_channel_name_stream_download_service">Servicio de descarga de transmisión</string>
     <string name="data_channel_description_stream_download_service">Descripción de descarga de transmisión</string>
-
     <string name="data_worker_subscription_action_cancel">Cancelar</string>
     <string name="data_worker_subscription_action_retry">Reintentar</string>
     <string name="data_worker_subscription_content_completed">Completado （+%d）</string>

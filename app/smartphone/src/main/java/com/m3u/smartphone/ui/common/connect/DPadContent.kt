@@ -59,7 +59,7 @@ internal fun DPadContent(
             onClick = forgetTvCodeOnSmartphone,
             modifier = Modifier.padding(top = 4.dp)
         ) {
-            Text(stringResource(string.feat_foryou_disconnect).uppercase())
+            Text(stringResource(string.ui_remote_control_disconnect).uppercase())
         }
     }
 }

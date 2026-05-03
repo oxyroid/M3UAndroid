@@ -112,7 +112,7 @@ internal fun VirtualNumberKeyboard(
                 Icon(
                     modifier = Modifier.size(38.dp),
                     imageVector = Icons.Rounded.ArrowBackIosNew,
-                    contentDescription = stringResource(string.feat_foryou_keypad_back)
+                    contentDescription = stringResource(string.ui_remote_control_keypad_backspace)
                 )
             }
             KeyboardKey(
@@ -140,7 +140,7 @@ internal fun VirtualNumberKeyboard(
                 Icon(
                     modifier = Modifier.size(38.dp),
                     imageVector = Icons.Rounded.Delete,
-                    contentDescription = stringResource(string.feat_foryou_keypad_delete)
+                    contentDescription = stringResource(string.ui_remote_control_keypad_clear)
                 )
             }
         }

@@ -30,7 +30,6 @@
     <string name="feat_setting_clip_mode_stretched">stretched</string>
     <string name="feat_setting_auto_refresh_channels">auto refresh channels</string>
     <string name="feat_setting_auto_refresh_channels_description">automatically refreshed when enter the channel</string>
-
     <string name="feat_setting_full_info_player">full information player</string>
     <string name="feat_setting_full_info_player_description">display more information in the player</string>
     <string name="feat_setting_slider">slider</string>
@@ -62,75 +61,55 @@
     <string name="feat_setting_reconnect_mode_no">never</string>
     <string name="feat_setting_reconnect_mode_retry">only when failed</string>
     <string name="feat_setting_reconnect_mode_reconnect">always</string>
-
     <string name="feat_setting_appearance">appearance</string>
     <string name="feat_setting_appearance_hint_edit_color">long press to edit color</string>
-
     <string name="feat_setting_tunneling">tunneling mode</string>
     <string name="feat_setting_tunneling_description">improve playback of 4K/HDR content</string>
     <string name="feat_setting_label_backup">backup</string>
     <string name="feat_setting_label_restore">restore</string>
-
     <string name="feat_setting_canvas_dark">dark</string>
     <string name="feat_setting_canvas_light">light</string>
     <string name="feat_setting_canvas_apply">apply</string>
     <string name="feat_setting_canvas_reset">reset</string>
-
     <string name="feat_setting_epg_clock_mode">programme 12h clock mode</string>
-
     <string name="feat_setting_remote_control">remote control</string>
     <string name="feat_setting_remote_control_description">turn on the ability to remotely control your TV</string>
-
     <string name="feat_setting_remote_control_tv_side">remote control</string>
     <string name="feat_setting_remote_control_tv_side_description">allow smartphones to control your TV</string>
-
     <string name="feat_setting_subscribe_for_tv">for tv</string>
     <string name="feat_setting_remote_tv_not_connected">Connect to a TV first.</string>
     <string name="feat_setting_remote_subscribe_sent">Sent subscription to TV.</string>
     <string name="feat_setting_remote_subscribe_failed">Remote TV subscription failed.</string>
-
     <string name="feat_setting_backing_up">backing up all playlists and channels</string>
     <string name="feat_setting_restoring">restoring all playlists and channels</string>
-
     <string name="feat_setting_follow_system_theme">follow system theme</string>
-
     <string name="feat_setting_data_source_m3u" translatable="false">M3U</string>
     <string name="feat_setting_data_source_epg" translatable="false">EPG</string>
     <string name="feat_setting_data_source_xtream" translatable="false">Xtream</string>
     <string name="feat_setting_data_source_emby" translatable="false">Emby</string>
     <string name="feat_setting_data_source_dropbox" translatable="false">Dropbox</string>
-
     <string name="feat_setting_placeholder_basic_url">address</string>
     <string name="feat_setting_placeholder_username">username</string>
     <string name="feat_setting_placeholder_password">password</string>
-
     <string name="feat_setting_warning_xtream_takes_much_more_time">it may take much more time</string>
-
     <string name="feat_setting_back_home">back home</string>
-
     <string name="feat_setting_always_replay">always show replay button</string>
-
     <string name="feat_setting_player_panel">player panel</string>
     <string name="feat_setting_player_panel_description">swipe up the player to expand it in portrait mode</string>
-
     <string name="feat_setting_cache">cache while playing</string>
     <string name="feat_setting_cache_description">this option may prevent normal playback</string>
     <string name="feat_setting_clear_cache">clear cache</string>
-
     <string name="feat_setting_paging">paging channels</string>
     <string name="feat_setting_paging_description">
         useful for large amounts of channels,
         but grouping will be disabled at the same time
     </string>
     <string name="feat_setting_source_code">source code</string>
-
     <string name="feat_setting_compact_dimension">compact dimension</string>
-    <!-- EPG -->
     <string name="feat_setting_placeholder_epg_title">epg name</string>
     <string name="feat_setting_error_empty_epg_title">epg name is empty</string>
     <string name="feat_setting_error_empty_epg">epg link is empty</string>
     <string name="feat_setting_placeholder_epg">epg link</string>
     <string name="feat_setting_epg_added">you can then associate the playlist with the EPG</string>
-
     <string name="feat_setting_randomly_in_favourite">play randomly only from favourite</string>
 </resources>

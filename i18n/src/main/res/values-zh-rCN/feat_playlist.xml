@@ -6,10 +6,8 @@
     <string name="feat_playlist_dialog_hide_title">屏蔽</string>
     <string name="feat_playlist_dialog_save_picture_title">保存封面</string>
     <string name="feat_playlist_dialog_create_shortcut_title">创建快捷方式</string>
-
-    <string name="feat_playlist_query_placeholder">输入关键字</string>
-
     <string name="feat_playlist_error_playlist_not_found">订阅不存在（%s）</string>
+    <string name="feat_playlist_query_placeholder">输入关键字</string>
     <string name="feat_playlist_error_playlist_url_not_found">订阅不存在</string>
     <string name="feat_playlist_error_channel_cover_not_found">封面不存在</string>
     <string name="feat_playlist_error_channel_not_found">频道不存在</string>

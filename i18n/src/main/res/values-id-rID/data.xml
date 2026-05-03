@@ -4,7 +4,6 @@
     <string name="data_error_empty_title">Nama Playlist kosong</string>
     <string name="data_channel_name_stream_download_service">Layanan Unduhan Streaming</string>
     <string name="data_channel_description_stream_download_service">Deskripsi Layanan Unduhan Streaming</string>
-
     <string name="data_worker_subscription_action_cancel">Batal</string>
     <string name="data_worker_subscription_action_retry">Coba Ulang</string>
     <string name="data_worker_subscription_content_completed">Selesai (+%d)</string>

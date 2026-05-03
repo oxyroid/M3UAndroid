@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="feat_setting_placeholder_url">adresa lista</string>
     <string name="feat_setting_app_version">versiune aplicatie</string>
     <string name="feat_setting_label_subscribe">abonare</string>
     <string name="feat_setting_success_subscribe">abonare reusita</string>
     <string name="feat_setting_failed_malformed_url">link eronat (%s)</string>
     <string name="feat_setting_error_empty_title">nume lista este necompletat</string>
     <string name="feat_setting_placeholder_title">nume lista</string>
+    <string name="feat_setting_placeholder_url">adresa lista</string>
     <string name="feat_setting_label_subscribing">abonare</string>
     <string name="feat_setting_sync_mode_all">toate</string>
     <string name="feat_setting_sync_mode_keep">sari peste favorite</string>
@@ -28,7 +28,6 @@
     <string name="feat_setting_clip_mode_stretched">tot ecranul</string>
     <string name="feat_setting_auto_refresh_channels">actualizare automata</string>
     <string name="feat_setting_auto_refresh_channels_description">actualizare automata la deschidere lista</string>
-
     <string name="feat_setting_full_info_player">informatii complete</string>
     <string name="feat_setting_full_info_player_description">arata mai multe informatii in player</string>
     <string name="feat_setting_slider">bara de cautare</string>
@@ -58,30 +57,22 @@
     <string name="feat_setting_reconnect_mode_no">niciodata</string>
     <string name="feat_setting_reconnect_mode_retry">doar la eroare</string>
     <string name="feat_setting_reconnect_mode_reconnect">intotdeauna</string>
-
     <string name="feat_setting_appearance">aspect</string>
     <string name="feat_setting_appearance_hint_edit_color">apasare lunga pentru a modifica culorile</string>
-
     <string name="feat_setting_tunneling">mod tunel</string>
     <string name="feat_setting_tunneling_description">imbunatatire rulare continut 4K/HDR</string>
     <string name="feat_setting_label_backup">copie rezerva</string>
     <string name="feat_setting_label_restore">restaurare</string>
-
     <string name="feat_setting_canvas_dark">intunecat</string>
     <string name="feat_setting_canvas_light">luminat</string>
     <string name="feat_setting_canvas_apply">aplica</string>
     <string name="feat_setting_canvas_reset">anuleaza</string>
-
     <string name="feat_setting_remote_control">telecomanda</string>
     <string name="feat_setting_remote_control_description">activeaza optiunea de controlare TV</string>
-
     <string name="feat_setting_remote_control_tv_side">telecomanda</string>
     <string name="feat_setting_remote_control_tv_side_description">permite telefonului sa controleze TV-ul</string>
-
     <string name="feat_setting_subscribe_for_tv">pentru TV</string>
-
     <string name="feat_setting_backing_up">salvare toate listele si canalele</string>
     <string name="feat_setting_restoring">restaurare toate listele si canalele</string>
-
     <string name="feat_setting_follow_system_theme">la fel ca tema telefonului</string>
 </resources>

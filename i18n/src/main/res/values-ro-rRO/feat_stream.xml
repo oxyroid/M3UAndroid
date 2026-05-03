@@ -4,7 +4,6 @@
     <string name="feat_channel_playback_state_buffering">incarcare</string>
     <string name="feat_channel_playback_state_ready">pregatit</string>
     <string name="feat_channel_playback_state_ended">finalizat</string>
-
     <string name="feat_channel_tooltip_on_back_pressed">inapoi</string>
     <string name="feat_channel_tooltip_mute">fara sunet</string>
     <string name="feat_channel_tooltip_unmute">sunet</string>
@@ -16,7 +15,6 @@
     <string name="feat_channel_tooltip_enter_pip_mode">mod PIP</string>
     <string name="feat_channel_tooltip_screen_rotating">rotire ecran</string>
     <string name="feat_channel_tooltip_choose_format">alege format</string>
-
     <string name="feat_channel_dialog_dlna_devices">Dispozitive DLNA</string>
     <string name="feat_channel_dialog_choose_tracks">Alege Format</string>
 </resources>

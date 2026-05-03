@@ -38,9 +38,9 @@ internal fun PrepareContent(
     checkTvCodeOnSmartphone: () -> Unit,
     onCode: (String) -> Unit,
     modifier: Modifier = Modifier,
-    subtitle: String = stringResource(string.feat_foryou_connect_subtitle)
+    subtitle: String = stringResource(string.ui_remote_control_pair_subtitle)
 ) {
-    val title = stringResource(string.feat_foryou_connect_title).title()
+    val title = stringResource(string.ui_remote_control_pair_title).title()
     Column(modifier) {
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -88,8 +88,8 @@ internal fun PrepareContent(
             ) {
                 Text(
                     when {
-                        searchingOrConnecting -> stringResource(string.feat_foryou_connecting).uppercase()
-                        else -> stringResource(string.feat_foryou_connect).uppercase()
+                        searchingOrConnecting -> stringResource(string.ui_remote_control_connecting).uppercase()
+                        else -> stringResource(string.ui_remote_control_connect).uppercase()
                     }
                 )
             }

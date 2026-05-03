@@ -1,20 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="ui_title_foryou">M3U</string>
-
+    <string name="ui_title_favourite">喜欢</string>
+    <string name="ui_title_setting">设置</string>
     <string name="ui_destination_foryou">主页</string>
     <string name="ui_destination_favourite">喜欢</string>
     <string name="ui_destination_setting">设置</string>
-
-    <string name="ui_title_setting">设置</string>
-    <string name="ui_title_favourite">喜欢</string>
-
     <string name="ui_error_unknown">未知错误</string>
     <string name="ui_cd_top_bar_on_back_pressed">返回</string>
-
     <string name="ui_theme_card_left">你知道吗？</string>
     <string name="ui_theme_card_right">我们会记录您的**观看进度**，并在下次播放时恢复进度</string>
-
     <string name="ui_sort">排序</string>
     <string name="ui_sort_asc">A-Z</string>
     <string name="ui_sort_desc">Z-A</string>
@@ -22,4 +17,12 @@
     <string name="ui_sort_mixed">混合</string>
     <string name="ui_sort_never_played">从未播放过</string>
     <string name="ui_sort_unspecified">默认</string>
+    <string name="ui_remote_control_pair_title">输入电视上的代码</string>
+    <string name="ui_remote_control_pair_subtitle">请确认手机和电视连接到同一个 Wi-Fi</string>
+    <string name="ui_remote_control_pair_timeout">未找到电视，请确认两台设备连接到同一个网络</string>
+    <string name="ui_remote_control_connect">连接</string>
+    <string name="ui_remote_control_connecting">连接中</string>
+    <string name="ui_remote_control_disconnect">断开连接</string>
+    <string name="ui_remote_control_keypad_backspace">退格</string>
+    <string name="ui_remote_control_keypad_clear">清空</string>
 </resources>

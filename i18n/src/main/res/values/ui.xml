@@ -3,7 +3,6 @@
     <string name="ui_title_foryou">M3U</string>
     <string name="ui_title_favourite">Favorite</string>
     <string name="ui_title_setting">Settings</string>
-
     <string name="ui_destination_foryou">For You</string>
     <string name="ui_destination_favourite">Favorite</string>
     <string name="ui_destination_extension">Extension</string>
@@ -45,13 +44,10 @@
     <string name="tv_empty_library_step_sources">Add one or more playlist sources</string>
     <string name="tv_empty_library_step_sync">Refresh or restore your library</string>
     <string name="tv_empty_library_step_watch">Start watching from the sofa</string>
-
     <string name="ui_error_unknown">unknown error</string>
     <string name="ui_cd_top_bar_on_back_pressed">back</string>
-
     <string name="ui_theme_card_left">Did you know?</string>
     <string name="ui_theme_card_right">We will record your **watching progress** and resume it next time you play</string>
-
     <string name="ui_sort">Sort</string>
     <string name="ui_sort_asc">A-Z</string>
     <string name="ui_sort_desc">Z-A</string>
@@ -59,6 +55,13 @@
     <string name="ui_sort_mixed">Mixed</string>
     <string name="ui_sort_never_played">never played</string>
     <string name="ui_sort_unspecified">Unspecified</string>
-
     <string name="ui_connect">Connect</string>
+    <string name="ui_remote_control_pair_title">enter code from TV</string>
+    <string name="ui_remote_control_pair_subtitle">Make sure to connect to the same Wi-Fi</string>
+    <string name="ui_remote_control_pair_timeout">TV was not found. Make sure both devices are on the same network.</string>
+    <string name="ui_remote_control_connect">Connect</string>
+    <string name="ui_remote_control_connecting">Connecting</string>
+    <string name="ui_remote_control_disconnect">Disconnect</string>
+    <string name="ui_remote_control_keypad_backspace">Backspace</string>
+    <string name="ui_remote_control_keypad_clear">Clear</string>
 </resources>

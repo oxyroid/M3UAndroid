@@ -4,7 +4,6 @@
     <string name="data_error_empty_title">spellistans namn är tomt</string>
     <string name="data_channel_name_stream_download_service">Tjänst för nedladdning av ström</string>
     <string name="data_channel_description_stream_download_service">Beskrivning av strömnedladdning</string>
-
     <string name="data_worker_subscription_action_cancel">Avbryt</string>
     <string name="data_worker_subscription_action_retry">Försök igen</string>
     <string name="data_worker_subscription_content_completed">Slutförd (+%d)</string>
