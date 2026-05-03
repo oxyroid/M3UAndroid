@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 concurrency:
   group: baseline-profiles-${{ github.ref }}
@@ -98,10 +99,14 @@ jobs:
           set -euo pipefail
           test ! -d app/tv/src/release/generated/baselineProfiles
 
-      - name: Commit baseline profile updates
+      - name: Create baseline profile update pull request
         if: steps.baseline-trigger.outputs.run == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          update_branch="baseline-profile-updates/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          git checkout -B "$update_branch"
           git add \
             app/smartphone/src/main/generated/baselineProfiles \
             app/tv/src/main/generated/baselineProfiles
@@ -112,4 +117,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "Update baseline profiles"
-          git push
+          git push --set-upstream origin "$update_branch"
+          gh pr create \
+            --base "${GITHUB_REF_NAME}" \
+            --head "$update_branch" \
+            --title "Update baseline profiles" \
+            --body "Generated baseline profile updates from workflow run ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}."
