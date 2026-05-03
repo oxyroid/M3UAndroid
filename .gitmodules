@@ -1,0 +1,3 @@
+[submodule "native-load-gradle-plugin"]
+	path = native-load-gradle-plugin
+	url = https://github.com/oxyroid/native-load-gradle-plugin.git

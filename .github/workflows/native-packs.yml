@@ -10,7 +10,7 @@ on:
       - 'data/build.gradle.kts'
       - 'native-load.yml'
       - 'native-packs/**'
-      - 'buildSrc/**'
+      - 'native-load-gradle-plugin/**'
       - '.github/workflows/native-packs.yml'
 
 permissions:
@@ -55,7 +55,7 @@ jobs:
         run: |
           set -euo pipefail
           if git grep -n 'm3u\.native-load-instrumentation\|NATIVE_PACK_COMMIT\|nativeLoadCommit' -- \
-            buildSrc/src \
+            native-load-gradle-plugin/src \
             app \
             data/src \
             data/build.gradle.kts \

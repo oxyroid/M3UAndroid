@@ -1,4 +1,5 @@
 pluginManagement {
+    includeBuild("native-load-gradle-plugin")
     repositories {
         gradlePluginPortal()
         google()
