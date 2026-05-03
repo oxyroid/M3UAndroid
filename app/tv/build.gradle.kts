@@ -72,6 +72,7 @@ hilt {
 baselineProfile {
     dexLayoutOptimization = true
     saveInSrc = true
+    mergeIntoMain = true
 }
 
 dependencies {

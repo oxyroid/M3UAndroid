@@ -46,11 +46,6 @@ jobs:
 
       - name: Build production app
         run: ./gradlew :app:smartphone:assembleRelease
-          -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile
-          -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect"
-          -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true
-          -Pandroid.experimental.androidTest.numManagedDeviceShards=1
-          -Pandroid.experimental.testOptions.managedDevices.maxConcurrentDevices=1
 
       - name: Build production TV app
         run: ./gradlew :app:tv:assembleRelease
