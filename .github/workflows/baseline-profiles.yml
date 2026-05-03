@@ -105,7 +105,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          update_branch="baseline-profile-updates/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          update_branch="baseline-profile-updates-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           git checkout -B "$update_branch"
           git add \
             app/smartphone/src/main/generated/baselineProfiles \
@@ -119,7 +119,7 @@ jobs:
           git commit -m "Update baseline profiles"
           git push --set-upstream origin "$update_branch"
           gh pr create \
-            --base "${GITHUB_REF_NAME}" \
+            --base "master" \
             --head "$update_branch" \
             --title "Update baseline profiles" \
             --body "Generated baseline profile updates from workflow run ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}."
