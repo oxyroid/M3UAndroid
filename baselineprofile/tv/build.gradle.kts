@@ -40,7 +40,7 @@ android {
 baselineProfile {
     managedDevices += "tvApi34"
     useConnectedDevices = false
-    enableEmulatorDisplay = true
+    enableEmulatorDisplay = System.getenv("CI") != "true"
 }
 
 androidComponents {
