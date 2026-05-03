@@ -27,10 +27,6 @@ dependencies {
     ksp(libs.google.dagger.hilt.compiler)
     ksp(libs.androidx.hilt.compiler)
 
-    // auto
-    implementation(libs.auto.service.annotations)
-    ksp(libs.auto.service.ksp)
-
     // wire
     implementation(libs.wire.runtime)
 }

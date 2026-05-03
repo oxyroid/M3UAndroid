@@ -62,7 +62,4 @@ dependencies {
     // compose-material3
     implementation(libs.androidx.compose.material3)
 
-    // auto
-    ksp(libs.auto.service.ksp)
-    implementation(libs.auto.service.annotations)
 }

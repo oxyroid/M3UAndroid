@@ -1,6 +1,5 @@
 package com.m3u.core.extension
 
-import com.google.auto.service.AutoService
 import com.m3u.extension.api.IRemoteCallback
 import com.m3u.extension.api.Method
 import com.m3u.extension.api.Module
@@ -17,7 +16,6 @@ import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.hasAnnotation
 import kotlin.reflect.full.valueParameters
 
-@AutoService(OnRemoteCall::class)
 class OnRemoteCallImpl : OnRemoteCall {
     private val remoteModules: Map<String, RemoteModule> by lazy {
         Samplings.measure("modules") {

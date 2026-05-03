@@ -87,7 +87,4 @@ dependencies {
 
     implementation(libs.jakewharton.disklrucache)
 
-    // auto
-    implementation(libs.auto.service.annotations)
-    ksp(libs.auto.service.ksp)
 }
