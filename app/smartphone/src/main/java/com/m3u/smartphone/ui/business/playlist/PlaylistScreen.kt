@@ -169,69 +169,70 @@ internal fun PlaylistRoute(
     }
 
     PlaylistScreen(
-        title = playlist?.title.orEmpty(),
-        query = query,
-        onQuery = { viewModel.query.value = it },
-        rowCount = rowCount,
-        zapping = zapping,
-        channels = channels,
-        pinnedCategories = pinnedCategories,
-        onPinOrUnpinCategory = { viewModel.onPinOrUnpinCategory(it) },
-        onHideCategory = { viewModel.onHideCategory(it) },
-        scrollUp = scrollUp,
-        sorts = sorts,
-        sort = sort,
-        onSort = { viewModel.sort(it) },
-        onPlayChannel = { channel ->
-            if (!isSeriesPlaylist) {
-                coroutineScope.launch {
-                    helper.play(MediaCommand.Common(channel.id))
-                    navigateToChannel()
+        state = PlaylistScreenState(
+            rowCount = rowCount,
+            zapping = zapping,
+            channels = channels,
+            pinnedCategories = pinnedCategories,
+            scrollUp = scrollUp,
+            sorts = sorts,
+            sort = sort,
+            refreshing = refreshing,
+            contentPadding = contentPadding,
+            isVodPlaylist = isVodPlaylist,
+            isSeriesPlaylist = isSeriesPlaylist,
+        ),
+        actions = PlaylistScreenActions(
+            onPinOrUnpinCategory = { viewModel.onPinOrUnpinCategory(it) },
+            onHideCategory = { viewModel.onHideCategory(it) },
+            onSort = { viewModel.sort(it) },
+            onPlayChannel = { channel ->
+                if (!isSeriesPlaylist) {
+                    coroutineScope.launch {
+                        helper.play(MediaCommand.Common(channel.id))
+                        navigateToChannel()
+                    }
+                } else {
+                    viewModel.series.value = channel
                 }
-            } else {
-                viewModel.series.value = channel
-            }
-        },
-        onScrollUp = { viewModel.scrollUp.value = eventOf(Unit) },
-        refreshing = refreshing,
-        onRefresh = {
-            if (postNotificationPermission == null) {
-                viewModel.refresh()
-                return@PlaylistScreen
-            }
-            postNotificationPermission.checkPermissionOrRationale(
-                showRationale = {
-                    val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                        .apply {
-                            putExtra(
-                                Settings.EXTRA_APP_PACKAGE,
-                                helper.activityContext.packageName
-                            )
-                        }
-                    helper.activityContext.startActivity(intent)
-                },
-                block = {
+            },
+            onScrollUp = { viewModel.scrollUp.value = eventOf(Unit) },
+            onRefresh = {
+                if (postNotificationPermission == null) {
                     viewModel.refresh()
+                } else {
+                    postNotificationPermission.checkPermissionOrRationale(
+                        showRationale = {
+                            val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                .apply {
+                                    putExtra(
+                                        Settings.EXTRA_APP_PACKAGE,
+                                        helper.activityContext.packageName
+                                    )
+                                }
+                            helper.activityContext.startActivity(intent)
+                        },
+                        block = {
+                            viewModel.refresh()
+                        }
+                    )
                 }
-            )
-        },
-        contentPadding = contentPadding,
-        favourite = viewModel::favourite,
-        hide = viewModel::hide,
-        savePicture = { id ->
-            writeExternalPermission.checkPermissionOrRationale {
-                viewModel.savePicture(id)
-            }
-        },
-        createShortcut = { id -> viewModel.createShortcut(context, id) },
-        isVodPlaylist = isVodPlaylist,
-        isSeriesPlaylist = isSeriesPlaylist,
-        getProgrammeCurrently = { channelId -> viewModel.getProgrammeCurrently(channelId) },
-        reloadThumbnail = { channelUrl -> viewModel.reloadThumbnail(channelUrl) },
-        syncThumbnail = { channelUrl ->
-            /** disabled in smartphone because it will cost too much data*/
-            null
-        },
+            },
+            favourite = viewModel::favourite,
+            hide = viewModel::hide,
+            savePicture = { id ->
+                writeExternalPermission.checkPermissionOrRationale {
+                    viewModel.savePicture(id)
+                }
+            },
+            createShortcut = { id -> viewModel.createShortcut(context, id) },
+            getProgrammeCurrently = { channelId -> viewModel.getProgrammeCurrently(channelId) },
+            reloadThumbnail = { channelUrl -> viewModel.reloadThumbnail(channelUrl) },
+            syncThumbnail = { channelUrl ->
+                /** disabled in smartphone because it will cost too much data*/
+                null
+            },
+        ),
         modifier = Modifier
             .fillMaxSize()
             .thenIf(godMode) {
@@ -274,39 +275,45 @@ internal fun PlaylistRoute(
     }
 }
 
+private data class PlaylistScreenState(
+    val rowCount: Int,
+    val zapping: Channel?,
+    val channels: Map<String, Flow<PagingData<Channel>>>,
+    val pinnedCategories: List<String>,
+    val scrollUp: Event<Unit>,
+    val sorts: List<Sort>,
+    val sort: Sort,
+    val refreshing: Boolean,
+    val contentPadding: PaddingValues,
+    val isVodPlaylist: Boolean,
+    val isSeriesPlaylist: Boolean,
+)
+
+private data class PlaylistScreenActions(
+    val onPinOrUnpinCategory: (String) -> Unit,
+    val onHideCategory: (String) -> Unit,
+    val onSort: (Sort) -> Unit,
+    val onPlayChannel: (Channel) -> Unit,
+    val onScrollUp: () -> Unit,
+    val onRefresh: () -> Unit,
+    val favourite: (channelId: Int) -> Unit,
+    val hide: (channelId: Int) -> Unit,
+    val savePicture: (channelId: Int) -> Unit,
+    val createShortcut: (channelId: Int) -> Unit,
+    val getProgrammeCurrently: suspend (channelId: Int) -> Programme?,
+    val reloadThumbnail: suspend (channelUrl: String) -> Uri?,
+    val syncThumbnail: suspend (channelUrl: String) -> Uri?,
+)
+
 @OptIn(InternalComposeApi::class)
 @Composable
 private fun PlaylistScreen(
-    title: String,
-    query: String,
-    onQuery: (String) -> Unit,
-    rowCount: Int,
-    zapping: Channel?,
-    channels: Map<String, Flow<PagingData<Channel>>>,
-    pinnedCategories: List<String>,
-    onPinOrUnpinCategory: (String) -> Unit,
-    onHideCategory: (String) -> Unit,
-    sorts: List<Sort>,
-    sort: Sort,
-    onSort: (Sort) -> Unit,
-    scrollUp: Event<Unit>,
-    refreshing: Boolean,
-    onRefresh: () -> Unit,
-    onPlayChannel: (Channel) -> Unit,
-    onScrollUp: () -> Unit,
-    favourite: (channelId: Int) -> Unit,
-    hide: (channelId: Int) -> Unit,
-    savePicture: (channelId: Int) -> Unit,
-    createShortcut: (channelId: Int) -> Unit,
-    contentPadding: PaddingValues,
-    isVodPlaylist: Boolean,
-    isSeriesPlaylist: Boolean,
-    getProgrammeCurrently: suspend (channelId: Int) -> Programme?,
-    reloadThumbnail: suspend (channelUrl: String) -> Uri?,
-    syncThumbnail: suspend (channelUrl: String) -> Uri?,
+    state: PlaylistScreenState,
+    actions: PlaylistScreenActions,
     modifier: Modifier = Modifier
 ) {
-    val currentOnScrollUp by rememberUpdatedState(onScrollUp)
+    val currentOnScrollUp by rememberUpdatedState(actions.onScrollUp)
+    val currentOnRefresh by rememberUpdatedState(actions.onRefresh)
 
     val isAtTopState = remember { mutableStateOf(true) }
 
@@ -338,7 +345,7 @@ private fun PlaylistScreen(
     var mediaSheetValue: MediaSheetValue.PlaylistScreen by remember { mutableStateOf(MediaSheetValue.PlaylistScreen()) }
     var isSortSheetVisible by rememberSaveable { mutableStateOf(false) }
 
-    LifecycleResumeEffect(refreshing) {
+    LifecycleResumeEffect(state.refreshing) {
         Metadata.actions = buildList {
             Action(
                 icon = Icons.AutoMirrored.Rounded.Sort,
@@ -347,9 +354,9 @@ private fun PlaylistScreen(
             ).also { add(it) }
             Action(
                 icon = Icons.Rounded.Refresh,
-                enabled = !refreshing,
+                enabled = !state.refreshing,
                 contentDescription = "refresh",
-                onClick = onRefresh
+                onClick = currentOnRefresh
             ).also { add(it) }
         }
         onPauseOrDispose {
@@ -357,27 +364,27 @@ private fun PlaylistScreen(
         }
     }
 
-    val categories = remember(channels) { channels.map { it.key } }
+    val categories = remember(state.channels) { state.channels.map { it.key } }
     var category by remember(categories) { mutableStateOf(categories.firstOrNull().orEmpty()) }
 
-    val state = rememberLazyStaggeredGridState()
+    val gridState = rememberLazyStaggeredGridState()
     LaunchedEffect(Unit) {
-        snapshotFlow { state.isAtTop }
+        snapshotFlow { gridState.isAtTop }
             .onEach { isAtTopState.value = it }
             .launchIn(this)
     }
-    EventHandler(scrollUp) {
-        state.scrollToItem(0)
+    EventHandler(state.scrollUp) {
+        gridState.scrollToItem(0)
     }
     val orientation = configuration.orientation
-    val actualRowCount = remember(orientation, rowCount) {
+    val actualRowCount = remember(orientation, state.rowCount) {
         when (orientation) {
-            ORIENTATION_LANDSCAPE -> rowCount + 2
-            ORIENTATION_PORTRAIT -> rowCount
-            else -> rowCount
+            ORIENTATION_LANDSCAPE -> state.rowCount + 2
+            ORIENTATION_PORTRAIT -> state.rowCount
+            else -> state.rowCount
         }
     }
-    var isExpanded by remember(sort == Sort.MIXED) {
+    var isExpanded by remember(state.sort == Sort.MIXED) {
         mutableStateOf(false)
     }
     BackHandler(isExpanded) { isExpanded = false }
@@ -389,7 +396,7 @@ private fun PlaylistScreen(
             selectedCategory = category,
             categories = categories,
             isExpanded = isExpanded,
-            bottomContentPadding = contentPadding only WindowInsetsSides.Bottom,
+            bottomContentPadding = state.contentPadding only WindowInsetsSides.Bottom,
             onExpanded = { isExpanded = !isExpanded },
             onCategoryChanged = {
                 category = it
@@ -398,15 +405,15 @@ private fun PlaylistScreen(
                     ?.let { eventOf(it) }
                     ?: Event.Handled()
             },
-            pinnedCategories = pinnedCategories,
-            onPinOrUnpinCategory = onPinOrUnpinCategory,
-            onHideCategory = onHideCategory
+            pinnedCategories = state.pinnedCategories,
+            onPinOrUnpinCategory = actions.onPinOrUnpinCategory,
+            onHideCategory = actions.onHideCategory
         )
     }
 
     val gallery = @Composable {
-        val pagerState = rememberPagerState { channels.size }
-        val entries = channels.entries.toList()
+        val pagerState = rememberPagerState { state.channels.size }
+        val entries = state.channels.entries.toList()
         LaunchedEffect(entries) {
             snapshotFlow { pagerState.settledPage }
                 .collectLatest { index ->
@@ -425,26 +432,26 @@ private fun PlaylistScreen(
             val (_, channels) = entries[index]
 
             ChannelGallery(
-                state = state,
+                state = gridState,
                 rowCount = actualRowCount,
                 channels = channels,
-                zapping = zapping,
-                recently = sort == Sort.RECENTLY,
-                isVodOrSeriesPlaylist = isVodPlaylist || isSeriesPlaylist,
-                onClick = onPlayChannel,
-                contentPadding = contentPadding.minus(contentPadding.only(WindowInsetsSides.Top)),
+                zapping = state.zapping,
+                recently = state.sort == Sort.RECENTLY,
+                isVodOrSeriesPlaylist = state.isVodPlaylist || state.isSeriesPlaylist,
+                onClick = actions.onPlayChannel,
+                contentPadding = state.contentPadding.minus(state.contentPadding.only(WindowInsetsSides.Top)),
                 onLongClick = {
                     mediaSheetValue = MediaSheetValue.PlaylistScreen(it)
                 },
-                getProgrammeCurrently = getProgrammeCurrently,
-                reloadThumbnail = reloadThumbnail,
-                syncThumbnail = syncThumbnail,
+                getProgrammeCurrently = actions.getProgrammeCurrently,
+                reloadThumbnail = actions.reloadThumbnail,
+                syncThumbnail = actions.syncThumbnail,
             )
         }
     }
     Column(
         Modifier
-            .padding(contentPadding.minus(contentPadding.only(WindowInsetsSides.Bottom)))
+            .padding(state.contentPadding.minus(state.contentPadding.only(WindowInsetsSides.Bottom)))
             .then(modifier)
     ) {
         if (!isExpanded) {
@@ -467,29 +474,29 @@ private fun PlaylistScreen(
 
     SortBottomSheet(
         visible = isSortSheetVisible,
-        sort = sort,
-        sorts = sorts,
+        sort = state.sort,
+        sorts = state.sorts,
         sheetState = sheetState,
-        onChanged = onSort,
+        onChanged = actions.onSort,
         onDismissRequest = { isSortSheetVisible = false }
     )
 
     MediaSheet(
         value = mediaSheetValue,
         onFavoriteChannel = { channel ->
-            favourite(channel.id)
+            actions.favourite(channel.id)
             mediaSheetValue = MediaSheetValue.PlaylistScreen()
         },
         onHideChannel = { channel ->
-            hide(channel.id)
+            actions.hide(channel.id)
             mediaSheetValue = MediaSheetValue.PlaylistScreen()
         },
         onSaveChannelCover = { channel ->
-            savePicture(channel.id)
+            actions.savePicture(channel.id)
             mediaSheetValue = MediaSheetValue.PlaylistScreen()
         },
         onCreateShortcut = { channel ->
-            createShortcut(channel.id)
+            actions.createShortcut(channel.id)
             mediaSheetValue = MediaSheetValue.PlaylistScreen()
         },
         onDismissRequest = { mediaSheetValue = MediaSheetValue.PlaylistScreen() }
