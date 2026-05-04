@@ -184,7 +184,6 @@ dependencies {
     implementation(libs.net.mm2d.mmupnp.mmupnp)
     implementation(libs.haze)
     implementation(libs.haze.materials)
-    implementation(libs.kotlinx.collections.immutable)
     implementation(libs.acra.notification)
     implementation(libs.acra.mail)
 

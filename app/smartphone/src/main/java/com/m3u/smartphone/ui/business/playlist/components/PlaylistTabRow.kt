@@ -61,16 +61,15 @@ import com.m3u.smartphone.ui.material.model.LocalHazeState
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 import dev.chrisbanes.haze.hazeSource
-import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 internal fun PlaylistTabRow(
     selectedCategory: String,
-    categories: ImmutableList<String>,
+    categories: List<String>,
     isExpanded: Boolean,
     bottomContentPadding: PaddingValues,
     onCategoryChanged: (String) -> Unit,
-    pinnedCategories: ImmutableList<String>,
+    pinnedCategories: List<String>,
     onPinOrUnpinCategory: (String) -> Unit,
     onHideCategory: (String) -> Unit,
     onExpanded: () -> Unit,
