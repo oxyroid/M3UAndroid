@@ -81,14 +81,18 @@ interface ProgrammeDao {
         """
         SELECT * FROM programmes
         WHERE epg_url in (:epgUrls)
-        AND relation_id in (:relationIds)
+        AND relation_id in (
+            SELECT relation_id FROM streams
+            WHERE playlist_url = :playlistUrl
+            AND relation_id IS NOT NULL
+        )
         AND start <= :time
         AND `end` >= :time
         """
     )
-    suspend fun getCurrentByEpgUrlsAndRelationIds(
+    suspend fun getCurrentByPlaylistUrlAndEpgUrls(
+        playlistUrl: String,
         epgUrls: List<String>,
-        relationIds: List<String>,
         time: Long
     ): List<Programme>
 

@@ -29,8 +29,5 @@ interface ProgrammeRepository {
 
     suspend fun getById(id: Int): Programme?
     suspend fun getProgrammeCurrently(channelId: Int): Programme?
-    suspend fun getProgrammesCurrently(
-        playlistUrl: String,
-        relationIds: Set<String>
-    ): Map<String, Programme>
+    suspend fun getProgrammesCurrently(playlistUrl: String): Map<String, Programme>
 }
