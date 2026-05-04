@@ -40,7 +40,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.InternalComposeApi
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -275,7 +274,6 @@ internal fun PlaylistRoute(
     }
 }
 
-@Stable
 private data class PlaylistScreenState(
     val rowCount: Int,
     val zapping: Channel?,
@@ -290,7 +288,6 @@ private data class PlaylistScreenState(
     val isSeriesPlaylist: Boolean,
 )
 
-@Stable
 private data class PlaylistScreenActions(
     val onPinOrUnpinCategory: (String) -> Unit,
     val onHideCategory: (String) -> Unit,

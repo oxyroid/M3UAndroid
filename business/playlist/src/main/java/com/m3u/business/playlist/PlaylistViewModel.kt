@@ -267,7 +267,7 @@ class PlaylistViewModel @Inject constructor(
         .flatMapLatest { playlistUrl ->
             channelRepository.observeAllByPlaylistUrl(playlistUrl)
                 .map { channels ->
-                    channels.mapNotNull { it.relationId }.distinct()
+                    channels.mapNotNull { it.relationId }.toSet()
                 }
                 .distinctUntilChanged()
                 .let { relationIds ->
@@ -279,7 +279,7 @@ class PlaylistViewModel @Inject constructor(
                 .mapLatest { relationIds ->
                     programmeRepository.getProgrammesCurrently(
                         playlistUrl = playlistUrl,
-                        relationIds = relationIds
+                        relationIds = relationIds.toList()
                     )
                 }
         }
@@ -345,6 +345,7 @@ class PlaylistViewModel @Inject constructor(
         currentProgrammes: Map<String, Programme>
     ): Flow<PagingData<ChannelWithProgramme>> {
         return map { pagingData ->
+            // Recreate the paging transform when programme metadata changes.
             pagingData.pagingMap { channel ->
                 ChannelWithProgramme(
                     channel = channel,
