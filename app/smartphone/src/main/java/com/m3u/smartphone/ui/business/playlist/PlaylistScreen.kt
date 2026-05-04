@@ -60,6 +60,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.PagingData
 import com.google.accompanist.permissions.rememberPermissionState
+import com.m3u.business.playlist.ChannelWithProgramme
 import com.m3u.business.playlist.PlaylistViewModel
 import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
 import com.m3u.core.foundation.architecture.preferences.mutablePreferenceOf
@@ -70,7 +71,6 @@ import com.m3u.core.foundation.wrapper.Event
 import com.m3u.core.foundation.wrapper.Sort
 import com.m3u.core.foundation.wrapper.eventOf
 import com.m3u.data.database.model.Channel
-import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.isSeries
 import com.m3u.data.database.model.isVod
 import com.m3u.data.service.MediaCommand
@@ -122,7 +122,7 @@ internal fun PlaylistRoute(
     val playlistUrl by viewModel.playlistUrl.collectAsStateWithLifecycle()
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
 
-    val channels: Map<String, Flow<PagingData<Channel>>> by viewModel.channels.collectAsStateWithLifecycle(
+    val channels: Map<String, Flow<PagingData<ChannelWithProgramme>>> by viewModel.channels.collectAsStateWithLifecycle(
         minActiveState = Lifecycle.State.RESUMED
     )
 
@@ -226,7 +226,6 @@ internal fun PlaylistRoute(
                 }
             },
             createShortcut = { id -> viewModel.createShortcut(context, id) },
-            getProgrammeCurrently = { channelId -> viewModel.getProgrammeCurrently(channelId) },
             reloadThumbnail = { channelUrl -> viewModel.reloadThumbnail(channelUrl) },
             syncThumbnail = { channelUrl ->
                 /** disabled in smartphone because it will cost too much data*/
@@ -278,7 +277,7 @@ internal fun PlaylistRoute(
 private data class PlaylistScreenState(
     val rowCount: Int,
     val zapping: Channel?,
-    val channels: Map<String, Flow<PagingData<Channel>>>,
+    val channels: Map<String, Flow<PagingData<ChannelWithProgramme>>>,
     val pinnedCategories: List<String>,
     val scrollUp: Event<Unit>,
     val sorts: List<Sort>,
@@ -300,7 +299,6 @@ private data class PlaylistScreenActions(
     val hide: (channelId: Int) -> Unit,
     val savePicture: (channelId: Int) -> Unit,
     val createShortcut: (channelId: Int) -> Unit,
-    val getProgrammeCurrently: suspend (channelId: Int) -> Programme?,
     val reloadThumbnail: suspend (channelUrl: String) -> Uri?,
     val syncThumbnail: suspend (channelUrl: String) -> Uri?,
 )
@@ -443,7 +441,6 @@ private fun PlaylistScreen(
                 onLongClick = {
                     mediaSheetValue = MediaSheetValue.PlaylistScreen(it)
                 },
-                getProgrammeCurrently = actions.getProgrammeCurrently,
                 reloadThumbnail = actions.reloadThumbnail,
                 syncThumbnail = actions.syncThumbnail,
             )
