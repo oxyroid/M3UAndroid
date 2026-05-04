@@ -95,6 +95,10 @@ import com.m3u.smartphone.ui.material.ktx.only
 import com.m3u.smartphone.ui.material.model.LocalHazeState
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import dev.chrisbanes.haze.hazeSource
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -125,16 +129,18 @@ internal fun PlaylistRoute(
     val channels: Map<String, Flow<PagingData<Channel>>> by viewModel.channels.collectAsStateWithLifecycle(
         minActiveState = Lifecycle.State.RESUMED
     )
+    val immutableChannels = remember(channels) { channels.toImmutableMap() }
 
     val episodes by viewModel.episodes.collectAsStateWithLifecycle()
     val pinnedCategories by viewModel.pinnedCategories.collectAsStateWithLifecycle()
+    val immutablePinnedCategories = remember(pinnedCategories) { pinnedCategories.toImmutableList() }
     val refreshing by viewModel.subscribingOrRefreshing.collectAsStateWithLifecycle()
     val series by viewModel.series.collectAsStateWithLifecycle()
 
     val isSeriesPlaylist by remember { derivedStateOf { playlist?.isSeries ?: false } }
     val isVodPlaylist by remember { derivedStateOf { playlist?.isVod ?: false } }
 
-    val sorts = Sort.entries
+    val sorts = remember { Sort.entries.toImmutableList() }
     val sort by viewModel.sort.collectAsStateWithLifecycle()
 
     val query by viewModel.query.collectAsStateWithLifecycle()
@@ -174,8 +180,8 @@ internal fun PlaylistRoute(
         onQuery = { viewModel.query.value = it },
         rowCount = rowCount,
         zapping = zapping,
-        channels = channels,
-        pinnedCategories = pinnedCategories,
+        channels = immutableChannels,
+        pinnedCategories = immutablePinnedCategories,
         onPinOrUnpinCategory = { viewModel.onPinOrUnpinCategory(it) },
         onHideCategory = { viewModel.onHideCategory(it) },
         scrollUp = scrollUp,
@@ -282,11 +288,11 @@ private fun PlaylistScreen(
     onQuery: (String) -> Unit,
     rowCount: Int,
     zapping: Channel?,
-    channels: Map<String, Flow<PagingData<Channel>>>,
-    pinnedCategories: List<String>,
+    channels: ImmutableMap<String, Flow<PagingData<Channel>>>,
+    pinnedCategories: ImmutableList<String>,
     onPinOrUnpinCategory: (String) -> Unit,
     onHideCategory: (String) -> Unit,
-    sorts: List<Sort>,
+    sorts: ImmutableList<Sort>,
     sort: Sort,
     onSort: (Sort) -> Unit,
     scrollUp: Event<Unit>,
@@ -357,7 +363,7 @@ private fun PlaylistScreen(
         }
     }
 
-    val categories = remember(channels) { channels.map { it.key } }
+    val categories = remember(channels) { channels.keys.toImmutableList() }
     var category by remember(categories) { mutableStateOf(categories.firstOrNull().orEmpty()) }
 
     val state = rememberLazyStaggeredGridState()

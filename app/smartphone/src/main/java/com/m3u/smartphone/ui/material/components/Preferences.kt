@@ -40,12 +40,12 @@ import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 @Composable
 fun Preference(
     title: String,
+    modifier: Modifier = Modifier,
     enabled: Boolean = true,
     content: String? = null,
     elevation: Dp = 0.dp,
     onClick: () -> Unit = {},
     icon: ImageVector? = null,
-    modifier: Modifier = Modifier,
     trailing: @Composable (() -> Unit)? = null
 ) {
     val spacing = LocalSpacing.current

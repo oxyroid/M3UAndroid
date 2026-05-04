@@ -27,6 +27,7 @@ io-coil = "2.7.0"
 kotlinpoet = "2.2.0"
 kotlinx-serialization-json = "1.10.0"
 kotlinx-serialization-converter-retrofit = "1.0.0"
+kotlinx-collections-immutable = "0.3.8"
 kotlinx-datetime = "0.7.1"
 
 chucker = "4.3.0"
@@ -154,6 +155,8 @@ ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serializatio
 
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization-json" }
 kotlinx-serialization-coverter-retrofit = { group = "com.jakewharton.retrofit", name = "retrofit2-kotlinx-serialization-converter", version.ref = "kotlinx-serialization-converter-retrofit" }
+
+kotlinx-collections-immutable = { group = "org.jetbrains.kotlinx", name = "kotlinx-collections-immutable", version.ref = "kotlinx-collections-immutable" }
 
 kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinx-datetime" }
 
