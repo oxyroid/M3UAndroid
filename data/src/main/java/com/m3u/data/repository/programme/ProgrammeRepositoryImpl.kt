@@ -134,11 +134,20 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
         if (epgUrls.isEmpty() || actualRelationIds.isEmpty()) return emptyMap()
 
         val time = Clock.System.now().toEpochMilliseconds()
-        return programmeDao.getCurrentByEpgUrlsAndRelationIds(
-            epgUrls = epgUrls,
-            relationIds = actualRelationIds,
-            time = time
-        ).associateBy { it.channelId }
+        return actualRelationIds
+            .chunked(RELATION_ID_QUERY_BATCH_SIZE)
+            .flatMap { relationIdBatch ->
+                programmeDao.getCurrentByEpgUrlsAndRelationIds(
+                    epgUrls = epgUrls,
+                    relationIds = relationIdBatch,
+                    time = time
+                )
+            }
+            .associateBy { it.channelId }
+    }
+
+    private companion object {
+        const val RELATION_ID_QUERY_BATCH_SIZE = 500
     }
 
     private fun checkOrRefreshProgrammesOrThrowImpl(
