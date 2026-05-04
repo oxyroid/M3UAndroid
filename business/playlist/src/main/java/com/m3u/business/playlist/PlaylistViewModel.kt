@@ -279,7 +279,7 @@ class PlaylistViewModel @Inject constructor(
                 .mapLatest { relationIds ->
                     programmeRepository.getProgrammesCurrently(
                         playlistUrl = playlistUrl,
-                        relationIds = relationIds.toList()
+                        relationIds = relationIds
                     )
                 }
         }
@@ -345,7 +345,7 @@ class PlaylistViewModel @Inject constructor(
         currentProgrammes: Map<String, Programme>
     ): Flow<PagingData<ChannelWithProgramme>> {
         return map { pagingData ->
-            // Recreate the paging transform when programme metadata changes.
+            // Recreate the transform so paged channel items show refreshed programme metadata.
             pagingData.pagingMap { channel ->
                 ChannelWithProgramme(
                     channel = channel,
