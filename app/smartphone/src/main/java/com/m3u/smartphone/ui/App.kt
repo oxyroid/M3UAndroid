@@ -49,11 +49,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
 import androidx.paging.PagingData
-import androidx.paging.map as pagingMap
 import com.m3u.business.playlist.ChannelWithProgramme
 import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
 import com.m3u.core.foundation.architecture.preferences.preferenceOf
-import com.m3u.data.database.model.Channel
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.tv.model.RemoteDirection
 import com.m3u.smartphone.ui.business.channel.PlayerActivity
@@ -66,7 +64,6 @@ import com.m3u.smartphone.ui.material.components.Destination
 import com.m3u.smartphone.ui.material.components.SnackHost
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 @Composable
@@ -97,7 +94,7 @@ fun App(
 @Composable
 private fun AppImpl(
     navController: NavHostController,
-    channels: Flow<PagingData<Channel>>,
+    channels: Flow<PagingData<ChannelWithProgramme>>,
     isRemoteControlSheetVisible: Boolean,
     remoteControlSheetValue: RemoteControlSheetValue,
     openRemoteControlSheet: () -> Unit,
@@ -211,20 +208,10 @@ private fun AppImpl(
                     }
                 }
                 val state = rememberLazyStaggeredGridState()
-                val channelsWithProgramme = remember(channels) {
-                    channels.map { pagingData ->
-                        pagingData.pagingMap { channel ->
-                            ChannelWithProgramme(
-                                channel = channel,
-                                programme = null
-                            )
-                        }
-                    }
-                }
                 ChannelGallery(
                     state = state,
                     rowCount = 1,
-                    channels = channelsWithProgramme,
+                    channels = channels,
                     zapping = null,
                     recently = false,
                     isVodOrSeriesPlaylist = false,
