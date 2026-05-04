@@ -142,7 +142,7 @@ internal fun PlaylistTabRow(
         }
         val categoriesContent: LazyListScope.() -> Unit = {
             stickyHeader { header() }
-            items(categories) { category ->
+            items(categories, key = { it }) { category ->
                 PlaylistTabRowItem(
                     name = category,
                     selected = category == selectedCategory,
