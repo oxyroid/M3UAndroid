@@ -21,12 +21,13 @@ import androidx.compose.ui.text.font.FontWeight
 import com.m3u.core.foundation.wrapper.Sort
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.material.model.LocalSpacing
+import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 fun SortBottomSheet(
     visible: Boolean,
     sort: Sort,
-    sorts: List<Sort>,
+    sorts: ImmutableList<Sort>,
     sheetState: SheetState,
     onChanged: (Sort) -> Unit,
     onDismissRequest: () -> Unit,
