@@ -2,7 +2,7 @@
 
 package com.m3u.smartphone
 
-import com.m3u.core.architecture.Publisher
+import com.m3u.core.foundation.architecture.Publisher
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

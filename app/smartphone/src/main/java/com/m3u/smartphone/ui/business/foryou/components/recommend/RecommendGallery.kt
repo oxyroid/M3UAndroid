@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import com.m3u.business.foryou.Recommend
-import com.m3u.core.wrapper.eventOf
+import com.m3u.core.foundation.wrapper.eventOf
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
 import com.m3u.smartphone.ui.common.internal.Events

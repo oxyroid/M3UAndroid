@@ -6,8 +6,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkQuery
-import com.m3u.core.wrapper.Resource
-import com.m3u.core.wrapper.asResource
+import com.m3u.core.foundation.wrapper.Resource
+import com.m3u.core.foundation.wrapper.asResource
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.parser.xtream.XtreamInfo

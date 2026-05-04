@@ -45,8 +45,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.business.playlist.configuration.EpgManifest
 import com.m3u.business.playlist.configuration.PlaylistConfigurationViewModel
-import com.m3u.core.util.basic.title
-import com.m3u.core.wrapper.Resource
+import com.m3u.core.foundation.util.basic.title
+import com.m3u.core.foundation.wrapper.Resource
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.epgUrlsOrXtreamXmlUrl

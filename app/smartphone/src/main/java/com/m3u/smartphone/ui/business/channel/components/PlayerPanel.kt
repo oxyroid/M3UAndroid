@@ -64,7 +64,7 @@ import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 import com.m3u.core.foundation.components.CircularProgressIndicator
 import com.m3u.core.foundation.ui.composableOf
 import com.m3u.core.foundation.ui.thenIf
-import com.m3u.core.util.collections.indexOf
+import com.m3u.core.foundation.util.collections.indexOf
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Episode
 import com.m3u.data.database.model.Programme

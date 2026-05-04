@@ -3,7 +3,7 @@ package com.m3u.data.repository.programme
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
-import com.m3u.core.util.basic.letIf
+import com.m3u.core.foundation.util.basic.letIf
 import com.m3u.data.api.OkhttpClient
 import com.m3u.data.database.dao.ChannelDao
 import com.m3u.data.database.dao.PlaylistDao

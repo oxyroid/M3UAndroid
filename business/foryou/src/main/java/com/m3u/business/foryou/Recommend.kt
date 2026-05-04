@@ -1,7 +1,7 @@
 package com.m3u.business.foryou
 
 import androidx.compose.runtime.Immutable
-import com.m3u.core.unit.DataUnit
+import com.m3u.core.foundation.unit.DataUnit
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
 

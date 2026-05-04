@@ -83,13 +83,13 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastRoundToInt
 import androidx.media3.common.Player
 import com.m3u.business.channel.PlayerState
-import com.m3u.core.architecture.preferences.PreferencesKeys
-import com.m3u.core.architecture.preferences.preferenceOf
+import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
+import com.m3u.core.foundation.architecture.preferences.preferenceOf
 import com.m3u.core.foundation.suggest.any
 import com.m3u.core.foundation.suggest.suggestAll
 import com.m3u.core.foundation.ui.composableOf
 import com.m3u.core.foundation.ui.thenIf
-import com.m3u.core.util.basic.isNotEmpty
+import com.m3u.core.foundation.util.basic.isNotEmpty
 import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.business.channel.components.Paddings

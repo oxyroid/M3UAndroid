@@ -5,7 +5,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
-import com.m3u.core.wrapper.Event
+import com.m3u.core.foundation.wrapper.Event
 import kotlinx.coroutines.CoroutineScope
 
 @Composable

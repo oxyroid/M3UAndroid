@@ -9,7 +9,7 @@ import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.m3u.annotation.Exclude
 import com.m3u.annotation.Likable
-import com.m3u.core.util.basic.startsWithAny
+import com.m3u.core.foundation.util.basic.startsWithAny
 import com.m3u.data.parser.xtream.XtreamInput
 import com.m3u.data.parser.xtream.XtreamParser
 import com.m3u.i18n.R

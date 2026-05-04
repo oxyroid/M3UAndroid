@@ -18,8 +18,8 @@ import androidx.paging.cachedIn
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkQuery
-import com.m3u.core.util.coroutine.flatmapCombined
-import com.m3u.core.wrapper.Sort
+import com.m3u.core.foundation.util.coroutine.flatmapCombined
+import com.m3u.core.foundation.wrapper.Sort
 import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.DataSource
