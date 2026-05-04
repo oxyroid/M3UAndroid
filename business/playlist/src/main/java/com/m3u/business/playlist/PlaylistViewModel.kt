@@ -344,9 +344,9 @@ class PlaylistViewModel @Inject constructor(
     private fun Flow<PagingData<Channel>>.withProgrammes(
         currentProgrammes: Map<String, Programme>
     ): Flow<PagingData<ChannelWithProgramme>> {
-        return map { pagingData ->
+        return map { data ->
             // Recreate the transform so paged channel items show refreshed programme metadata.
-            pagingData.pagingMap { channel ->
+            data.pagingMap { channel ->
                 ChannelWithProgramme(
                     channel = channel,
                     programme = channel.relationId?.let(currentProgrammes::get)
