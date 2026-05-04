@@ -2,7 +2,7 @@ package com.m3u.data.tv.model
 
 import androidx.annotation.Keep
 import androidx.compose.runtime.Immutable
-import com.m3u.core.architecture.Abi
+import com.m3u.core.foundation.architecture.Abi
 import kotlinx.serialization.Serializable
 
 @Keep

@@ -34,7 +34,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.m3u.core.wrapper.Message
+import com.m3u.core.foundation.wrapper.Message
 import com.m3u.data.service.collectMessageAsState
 import androidx.compose.material3.Icon
 import com.m3u.smartphone.ui.material.model.LocalDuration

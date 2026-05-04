@@ -31,7 +31,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.m3u.core.wrapper.Resource
+import com.m3u.core.foundation.wrapper.Resource
 import com.m3u.data.database.model.Channel
 import com.m3u.data.parser.xtream.XtreamChannelInfo
 import androidx.compose.material3.IconButton

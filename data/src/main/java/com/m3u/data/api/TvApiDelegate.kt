@@ -1,6 +1,6 @@
 package com.m3u.data.api
 
-import com.m3u.core.architecture.Publisher
+import com.m3u.core.foundation.architecture.Publisher
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.tv.http.endpoint.DefRep
 import com.m3u.data.tv.model.TvInfo

@@ -22,7 +22,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.m3u.business.playlist.configuration.EpgManifest
-import com.m3u.core.util.basic.title
+import com.m3u.core.foundation.util.basic.title
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.i18n.R.string

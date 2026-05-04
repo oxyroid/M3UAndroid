@@ -35,11 +35,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.m3u.core.architecture.preferences.ClipMode
-import com.m3u.core.architecture.preferences.PreferencesKeys
-import com.m3u.core.architecture.preferences.mutablePreferenceOf
+import com.m3u.core.foundation.architecture.preferences.ClipMode
+import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
+import com.m3u.core.foundation.architecture.preferences.mutablePreferenceOf
 import com.m3u.core.foundation.ui.thenIf
-import com.m3u.core.util.basic.title
+import com.m3u.core.foundation.util.basic.title
 import com.m3u.data.database.model.ColorScheme
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.business.setting.components.SwitchSharedPreference

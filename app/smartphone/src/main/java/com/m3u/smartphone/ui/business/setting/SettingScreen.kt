@@ -30,9 +30,9 @@ import com.m3u.business.setting.BackingUpAndRestoringState
 import com.m3u.business.setting.CodecPackState
 import com.m3u.business.setting.SettingProperties
 import com.m3u.business.setting.SettingViewModel
-import com.m3u.core.architecture.preferences.PreferencesKeys
-import com.m3u.core.architecture.preferences.preferenceOf
-import com.m3u.core.util.basic.title
+import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
+import com.m3u.core.foundation.architecture.preferences.preferenceOf
+import com.m3u.core.foundation.util.basic.title
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.ColorScheme
 import com.m3u.data.database.model.Playlist

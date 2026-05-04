@@ -1,8 +1,8 @@
 package com.m3u.data.repository.channel
 
 import androidx.paging.PagingSource
-import com.m3u.core.architecture.preferences.Settings
-import com.m3u.core.wrapper.Sort
+import com.m3u.core.foundation.architecture.preferences.Settings
+import com.m3u.core.foundation.wrapper.Sort
 import com.m3u.data.database.dao.ChannelDao
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.model.AdjacentChannels

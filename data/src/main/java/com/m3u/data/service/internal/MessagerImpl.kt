@@ -1,6 +1,6 @@
 package com.m3u.data.service.internal
 
-import com.m3u.core.wrapper.Message
+import com.m3u.core.foundation.wrapper.Message
 import com.m3u.data.service.Messager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job

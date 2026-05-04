@@ -1,7 +1,7 @@
 package com.m3u.data.model
 
 import androidx.compose.runtime.Immutable
-import com.m3u.core.wrapper.Sort
+import com.m3u.core.foundation.wrapper.Sort
 
 @Immutable
 data class ChannelSet(

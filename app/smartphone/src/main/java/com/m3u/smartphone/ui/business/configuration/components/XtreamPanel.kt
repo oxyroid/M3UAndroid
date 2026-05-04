@@ -21,7 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.m3u.core.wrapper.Resource
+import com.m3u.core.foundation.wrapper.Resource
 import com.m3u.data.parser.xtream.XtreamInfo
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.smartphone.ui.material.components.Badge

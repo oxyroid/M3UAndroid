@@ -19,9 +19,9 @@ import androidx.core.app.PictureInPictureModeChangedInfo
 import androidx.core.util.Consumer
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import com.m3u.core.util.basic.rational
-import com.m3u.core.util.context.isDarkMode
-import com.m3u.core.util.context.isPortraitMode
+import com.m3u.core.foundation.util.basic.rational
+import com.m3u.core.foundation.util.context.isDarkMode
+import com.m3u.core.foundation.util.context.isPortraitMode
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.PlayerManager
 import dagger.hilt.EntryPoint

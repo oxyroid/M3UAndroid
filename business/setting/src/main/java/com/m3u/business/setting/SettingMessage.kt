@@ -1,6 +1,6 @@
 package com.m3u.business.setting
 
-import com.m3u.core.wrapper.Message
+import com.m3u.core.foundation.wrapper.Message
 import com.m3u.i18n.R.string
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds

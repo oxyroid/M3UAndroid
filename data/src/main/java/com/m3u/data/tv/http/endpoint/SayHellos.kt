@@ -1,6 +1,6 @@
 package com.m3u.data.tv.http.endpoint
 
-import com.m3u.core.architecture.Publisher
+import com.m3u.core.foundation.architecture.Publisher
 import com.m3u.data.tv.model.TvInfo
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route

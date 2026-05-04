@@ -2,8 +2,8 @@ package com.m3u.tv
 
 import android.app.Application
 import android.os.Build
-import com.m3u.core.architecture.Abi
-import com.m3u.core.architecture.Publisher
+import com.m3u.core.foundation.architecture.Abi
+import com.m3u.core.foundation.architecture.Publisher
 import javax.inject.Inject
 
 class AppPublisher @Inject constructor(private val application: Application) : Publisher {

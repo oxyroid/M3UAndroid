@@ -14,7 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import com.m3u.core.util.readFileName
+import com.m3u.core.foundation.util.readFileName
 import com.m3u.i18n.R.string
 import androidx.compose.material3.Icon
 import com.m3u.smartphone.ui.material.components.ToggleableSelection

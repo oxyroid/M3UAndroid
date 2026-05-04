@@ -48,11 +48,11 @@ import androidx.media3.transformer.InAppFragmentedMp4Muxer
 import androidx.media3.transformer.InAppMp4Muxer
 import androidx.media3.transformer.TransformationRequest
 import androidx.media3.transformer.Transformer
-import com.m3u.core.architecture.Publisher
-import com.m3u.core.architecture.preferences.PreferencesKeys
-import com.m3u.core.architecture.preferences.ReconnectMode
-import com.m3u.core.architecture.preferences.Settings
-import com.m3u.core.architecture.preferences.get
+import com.m3u.core.foundation.architecture.Publisher
+import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
+import com.m3u.core.foundation.architecture.preferences.ReconnectMode
+import com.m3u.core.foundation.architecture.preferences.Settings
+import com.m3u.core.foundation.architecture.preferences.get
 import com.m3u.data.SSLs
 import com.m3u.data.api.OkhttpClient
 import com.m3u.data.database.model.Channel

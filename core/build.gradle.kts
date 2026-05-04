@@ -15,6 +15,7 @@ android {
 }
 
 dependencies {
+    api(project(":core:foundation"))
     api(project(":i18n"))
 
     implementation(libs.androidx.core.ktx)

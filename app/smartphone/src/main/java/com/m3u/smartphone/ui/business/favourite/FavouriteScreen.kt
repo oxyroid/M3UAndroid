@@ -26,12 +26,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.m3u.business.favorite.FavoriteViewModel
-import com.m3u.core.architecture.preferences.PreferencesKeys
-import com.m3u.core.architecture.preferences.mutablePreferenceOf
-import com.m3u.core.architecture.preferences.preferenceOf
+import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
+import com.m3u.core.foundation.architecture.preferences.mutablePreferenceOf
+import com.m3u.core.foundation.architecture.preferences.preferenceOf
 import com.m3u.core.foundation.ui.thenIf
-import com.m3u.core.util.basic.title
-import com.m3u.core.wrapper.Sort
+import com.m3u.core.foundation.util.basic.title
+import com.m3u.core.foundation.wrapper.Sort
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.isSeries
 import com.m3u.data.service.MediaCommand

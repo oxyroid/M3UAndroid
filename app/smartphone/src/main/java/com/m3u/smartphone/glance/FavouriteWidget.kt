@@ -38,7 +38,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.m3u.smartphone.R
-import com.m3u.core.Contracts
+import com.m3u.core.foundation.Contracts
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Programme
 import com.m3u.smartphone.TimeUtils.formatEOrSh

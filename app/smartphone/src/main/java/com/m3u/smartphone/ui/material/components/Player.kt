@@ -14,7 +14,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
-import com.m3u.core.architecture.preferences.ClipMode
+import com.m3u.core.foundation.architecture.preferences.ClipMode
 
 @Immutable
 data class PlayerState(

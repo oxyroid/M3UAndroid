@@ -1,6 +1,6 @@
 package com.m3u.data.parser.xtream
 
-import com.m3u.core.util.basic.startsWithAny
+import com.m3u.core.foundation.util.basic.startsWithAny
 import io.ktor.http.Url
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable

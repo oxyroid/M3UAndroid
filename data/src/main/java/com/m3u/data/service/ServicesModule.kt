@@ -15,9 +15,9 @@ import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.offline.DownloadManager
 import androidx.work.WorkManager
-import com.m3u.core.architecture.FileProvider
-import com.m3u.core.architecture.preferences.Settings
-import com.m3u.core.architecture.preferences.settings
+import com.m3u.core.foundation.architecture.FileProvider
+import com.m3u.core.foundation.architecture.preferences.Settings
+import com.m3u.core.foundation.architecture.preferences.settings
 import com.m3u.data.service.internal.DPadReactionServiceImpl
 import com.m3u.data.service.internal.FileProviderImpl
 import com.m3u.data.service.internal.MessagerImpl
