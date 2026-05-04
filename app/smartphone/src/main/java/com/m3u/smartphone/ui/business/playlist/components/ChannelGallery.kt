@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Programme
 import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
@@ -89,7 +90,7 @@ internal fun ChannelGallery(
                 .fillMaxSize()
                 .weight(1f)
         ) {
-            items(channels.itemCount) { index ->
+            items(channels.itemCount, key = channels.itemKey { it.id }) { index ->
                 val channel = channels[index]
                 if (channel != null) {
                     val programme: Programme? by produceState<Programme?>(

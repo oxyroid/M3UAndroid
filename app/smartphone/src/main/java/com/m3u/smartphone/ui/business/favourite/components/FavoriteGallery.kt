@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.itemKey
 import com.m3u.core.foundation.components.CircularProgressIndicator
 import com.m3u.data.database.model.Channel
 import com.m3u.smartphone.ui.material.ktx.plus
@@ -52,6 +53,7 @@ internal fun FavoriteGallery(
         ) {
             items(
                 count = channels.itemCount,
+                key = channels.itemKey { it.id }
             ) {
                 val channel = channels[it]
                 if (channel == null) {

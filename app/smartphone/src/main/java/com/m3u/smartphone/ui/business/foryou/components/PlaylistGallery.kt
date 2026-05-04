@@ -93,7 +93,7 @@ internal fun PlaylistGallery(
             }
         }
         val entries = playlists.entries.toList()
-        items(entries.size) { index ->
+        items(entries.size, key = { entries[it].key.url }) { index ->
             val (playlist, count) = entries[index]
             val subscribing = playlist.url in subscribingPlaylistUrls
             val refreshing = playlist

@@ -59,6 +59,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.itemKey
 import coil.compose.SubcomposeAsyncImage
 import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 import com.m3u.core.foundation.components.CircularProgressIndicator
@@ -381,7 +382,7 @@ private fun ChannelGallery(
             is ChannelGalleryValue.PagingChannel -> {
                 val channels = value.channels
                 val channelId = value.channelId
-                items(channels.itemCount) { i ->
+                items(channels.itemCount, key = channels.itemKey { it.id }) { i ->
                     channels[i]?.let { channel ->
                         val isPlaying = channel.id == channelId
                         ChannelGalleryItem(

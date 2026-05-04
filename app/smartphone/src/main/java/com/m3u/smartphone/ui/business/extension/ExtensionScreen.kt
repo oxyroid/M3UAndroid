@@ -53,7 +53,7 @@ private fun ExtensionScreen(
         modifier = modifier,
         contentPadding = contentPadding
     ) {
-        items(apps) { app ->
+        items(apps, key = { it.packageName }) { app ->
             ListItem(
                 headlineContent = {
                     Text(
