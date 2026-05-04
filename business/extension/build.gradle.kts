@@ -17,7 +17,6 @@ android {
 }
 
 dependencies {
-    implementation(project(":core"))
     implementation(project(":core:extension"))
     implementation(project(":data"))
     implementation(libs.m3u.extension.api)

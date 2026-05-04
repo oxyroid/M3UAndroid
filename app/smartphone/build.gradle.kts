@@ -112,7 +112,6 @@ baselineProfile {
 
 dependencies {
     implementation(project(":i18n"))
-    implementation(project(":core"))
     implementation(project(":core:foundation"))
     implementation(project(":core:extension"))
     implementation(project(":data"))
