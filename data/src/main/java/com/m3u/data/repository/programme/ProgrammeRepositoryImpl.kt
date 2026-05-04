@@ -126,15 +126,14 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
 
     override suspend fun getProgrammesCurrently(
         playlistUrl: String,
-        relationIds: List<String>
+        relationIds: Set<String>
     ): Map<String, Programme> {
         val playlist = playlistDao.get(playlistUrl) ?: return emptyMap()
         val epgUrls = playlist.epgUrlsOrXtreamXmlUrl()
-        val actualRelationIds = relationIds.distinct()
-        if (epgUrls.isEmpty() || actualRelationIds.isEmpty()) return emptyMap()
+        if (epgUrls.isEmpty() || relationIds.isEmpty()) return emptyMap()
 
         val time = Clock.System.now().toEpochMilliseconds()
-        return actualRelationIds
+        return relationIds
             .chunked(RELATION_ID_QUERY_BATCH_SIZE)
             .flatMap { relationIdBatch ->
                 programmeDao.getCurrentByEpgUrlsAndRelationIds(
@@ -147,6 +146,7 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
     }
 
     private companion object {
+        // Keep the relation-id side well below SQLite's host-parameter limit.
         const val RELATION_ID_QUERY_BATCH_SIZE = 500
     }
 
