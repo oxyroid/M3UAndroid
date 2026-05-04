@@ -77,7 +77,6 @@ baselineProfile {
 
 dependencies {
     implementation(project(":core:foundation"))
-    implementation(project(":core:foundation"))
     implementation(project(":data"))
     // business
     implementation(project(":business:foryou"))
