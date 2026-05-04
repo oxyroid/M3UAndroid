@@ -64,8 +64,8 @@ interface ProgrammeDao {
 
     @Query(
         """
-        SELECT * FROM programmes 
-        WHERE epg_url in (:epgUrls) 
+        SELECT * FROM programmes
+        WHERE epg_url in (:epgUrls)
         AND relation_id = :relationId
         AND start <= :time
         AND `end` >= :time
@@ -76,6 +76,21 @@ interface ProgrammeDao {
         relationId: String,
         time: Long
     ): Programme?
+
+    @Query(
+        """
+        SELECT * FROM programmes
+        WHERE epg_url in (:epgUrls)
+        AND relation_id in (:relationIds)
+        AND start <= :time
+        AND `end` >= :time
+        """
+    )
+    suspend fun getCurrentByEpgUrlsAndRelationIds(
+        epgUrls: List<String>,
+        relationIds: List<String>,
+        time: Long
+    ): List<Programme>
 
     @Query(
         """

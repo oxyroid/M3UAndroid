@@ -241,6 +241,7 @@ class PlaylistViewModel @Inject constructor(
         val query: String,
         val sort: Sort,
         val categories: List<String>,
+        val currentProgrammes: Map<String, Programme>,
     )
 
     @OptIn(FlowPreview::class)
@@ -261,19 +262,39 @@ class PlaylistViewModel @Inject constructor(
                 started = SharingStarted.Lazily
             )
 
+    private val currentProgrammes: StateFlow<Map<String, Programme>> = playlistUrl
+        .flatMapLatest { playlistUrl ->
+            channelRepository.observeAllByPlaylistUrl(playlistUrl)
+                .mapLatest { channels ->
+                    val relationIds = channels.mapNotNull { it.relationId }
+                    programmeRepository.getProgrammesCurrently(
+                        playlistUrl = playlistUrl,
+                        relationIds = relationIds
+                    )
+                }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = emptyMap(),
+            started = SharingStarted.WhileSubscribed(5_000L)
+        )
+
     val channels: StateFlow<Map<String, Flow<PagingData<ChannelWithProgramme>>>> = combine(
         playlistUrl,
         categories,
-        query, sort
-    ) { playlistUrl, categories, query, sort ->
+        query,
+        sort,
+        currentProgrammes
+    ) { playlistUrl, categories, query, sort, currentProgrammes ->
         ChannelParameters(
             playlistUrl = playlistUrl,
             query = query,
             sort = sort,
-            categories = categories
+            categories = categories,
+            currentProgrammes = currentProgrammes
         )
     }
-        .mapLatest { (playlistUrl, query, sort, categories) ->
+        .mapLatest { (playlistUrl, query, sort, categories, currentProgrammes) ->
             if (sort == Sort.MIXED) {
                 mapOf(
                     "" to Pager(PagingConfig(15)) {
@@ -285,7 +306,7 @@ class PlaylistViewModel @Inject constructor(
                         )
                     }
                         .flow
-                        .withProgrammes()
+                        .withProgrammes(currentProgrammes)
                         .cachedIn(viewModelScope)
                 )
             } else {
@@ -299,7 +320,7 @@ class PlaylistViewModel @Inject constructor(
                         )
                     }
                         .flow
-                        .withProgrammes()
+                        .withProgrammes(currentProgrammes)
                         .cachedIn(viewModelScope)
                 }
             }
@@ -310,12 +331,14 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.Lazily
         )
 
-    private fun Flow<PagingData<Channel>>.withProgrammes(): Flow<PagingData<ChannelWithProgramme>> {
+    private fun Flow<PagingData<Channel>>.withProgrammes(
+        currentProgrammes: Map<String, Programme>
+    ): Flow<PagingData<ChannelWithProgramme>> {
         return map { pagingData ->
             pagingData.pagingMap { channel ->
                 ChannelWithProgramme(
                     channel = channel,
-                    programme = programmeRepository.getProgrammeCurrently(channel.id)
+                    programme = channel.relationId?.let(currentProgrammes::get)
                 )
             }
         }

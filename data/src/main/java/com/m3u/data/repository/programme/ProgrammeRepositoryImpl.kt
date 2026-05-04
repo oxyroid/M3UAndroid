@@ -124,6 +124,23 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
         )
     }
 
+    override suspend fun getProgrammesCurrently(
+        playlistUrl: String,
+        relationIds: List<String>
+    ): Map<String, Programme> {
+        val playlist = playlistDao.get(playlistUrl) ?: return emptyMap()
+        val epgUrls = playlist.epgUrlsOrXtreamXmlUrl()
+        val actualRelationIds = relationIds.distinct()
+        if (epgUrls.isEmpty() || actualRelationIds.isEmpty()) return emptyMap()
+
+        val time = Clock.System.now().toEpochMilliseconds()
+        return programmeDao.getCurrentByEpgUrlsAndRelationIds(
+            epgUrls = epgUrls,
+            relationIds = actualRelationIds,
+            time = time
+        ).associateBy { it.channelId }
+    }
+
     private fun checkOrRefreshProgrammesOrThrowImpl(
         epgUrls: List<String>,
         ignoreCache: Boolean
