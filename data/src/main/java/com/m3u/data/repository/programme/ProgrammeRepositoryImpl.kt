@@ -124,30 +124,17 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun getProgrammesCurrently(
-        playlistUrl: String,
-        relationIds: Set<String>
-    ): Map<String, Programme> {
+    override suspend fun getProgrammesCurrently(playlistUrl: String): Map<String, Programme> {
         val playlist = playlistDao.get(playlistUrl) ?: return emptyMap()
         val epgUrls = playlist.epgUrlsOrXtreamXmlUrl()
-        if (epgUrls.isEmpty() || relationIds.isEmpty()) return emptyMap()
+        if (epgUrls.isEmpty()) return emptyMap()
 
         val time = Clock.System.now().toEpochMilliseconds()
-        return relationIds
-            .chunked(RELATION_ID_QUERY_BATCH_SIZE)
-            .flatMap { relationIdBatch ->
-                programmeDao.getCurrentByEpgUrlsAndRelationIds(
-                    epgUrls = epgUrls,
-                    relationIds = relationIdBatch,
-                    time = time
-                )
-            }
-            .associateBy { it.channelId }
-    }
-
-    private companion object {
-        // Keep the relation-id side well below SQLite's host-parameter limit.
-        const val RELATION_ID_QUERY_BATCH_SIZE = 500
+        return programmeDao.getCurrentByPlaylistUrlAndEpgUrls(
+            playlistUrl = playlistUrl,
+            epgUrls = epgUrls,
+            time = time
+        ).associateBy { it.channelId }
     }
 
     private fun checkOrRefreshProgrammesOrThrowImpl(

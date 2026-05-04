@@ -265,10 +265,8 @@ class PlaylistViewModel @Inject constructor(
 
     private val currentProgrammes: StateFlow<Map<String, Programme>> = playlistUrl
         .flatMapLatest { playlistUrl ->
-            channelRepository.observeAllByPlaylistUrl(playlistUrl)
-                .map { channels ->
-                    channels.mapNotNull { it.relationId }.toSet()
-                }
+            channelRepository.observeRelationIdsByPlaylistUrl(playlistUrl)
+                .map { it.toSet() }
                 .distinctUntilChanged()
                 .let { relationIds ->
                     merge(
@@ -277,10 +275,8 @@ class PlaylistViewModel @Inject constructor(
                     )
                 }
                 .mapLatest { relationIds ->
-                    programmeRepository.getProgrammesCurrently(
-                        playlistUrl = playlistUrl,
-                        relationIds = relationIds
-                    )
+                    if (relationIds.isEmpty()) emptyMap()
+                    else programmeRepository.getProgrammesCurrently(playlistUrl)
                 }
         }
         .stateIn(

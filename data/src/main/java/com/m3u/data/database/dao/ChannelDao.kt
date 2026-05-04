@@ -111,6 +111,9 @@ interface ChannelDao {
     @Query("SELECT * FROM streams WHERE playlist_url = :playlistUrl")
     fun observeAllByPlaylistUrl(playlistUrl: String): Flow<List<Channel>>
 
+    @Query("SELECT DISTINCT relation_id FROM streams WHERE playlist_url = :playlistUrl AND relation_id IS NOT NULL")
+    fun observeRelationIdsByPlaylistUrl(playlistUrl: String): Flow<List<String>>
+
     @Query("SELECT * FROM streams WHERE hidden = 0")
     fun observeAllUnhidden(): Flow<List<Channel>>
 
