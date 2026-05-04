@@ -16,6 +16,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import androidx.paging.map as pagingMap
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkQuery
@@ -69,6 +70,12 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
+
+@Immutable
+data class ChannelWithProgramme(
+    val channel: Channel,
+    val programme: Programme?,
+)
 
 @HiltViewModel
 class PlaylistViewModel @Inject constructor(
@@ -211,10 +218,6 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
-    suspend fun getProgrammeCurrently(channelId: Int): Programme? {
-        return programmeRepository.getProgrammeCurrently(channelId)
-    }
-
     private val sortIndex: MutableStateFlow<Int> = MutableStateFlow(0)
 
     val sort: StateFlow<Sort> = sortIndex
@@ -258,7 +261,7 @@ class PlaylistViewModel @Inject constructor(
                 started = SharingStarted.Lazily
             )
 
-    val channels: StateFlow<Map<String, Flow<PagingData<Channel>>>> = combine(
+    val channels: StateFlow<Map<String, Flow<PagingData<ChannelWithProgramme>>>> = combine(
         playlistUrl,
         categories,
         query, sort
@@ -282,6 +285,7 @@ class PlaylistViewModel @Inject constructor(
                         )
                     }
                         .flow
+                        .withProgrammes()
                         .cachedIn(viewModelScope)
                 )
             } else {
@@ -295,6 +299,7 @@ class PlaylistViewModel @Inject constructor(
                         )
                     }
                         .flow
+                        .withProgrammes()
                         .cachedIn(viewModelScope)
                 }
             }
@@ -304,6 +309,17 @@ class PlaylistViewModel @Inject constructor(
             initialValue = emptyMap(),
             started = SharingStarted.Lazily
         )
+
+    private fun Flow<PagingData<Channel>>.withProgrammes(): Flow<PagingData<ChannelWithProgramme>> {
+        return map { pagingData ->
+            pagingData.pagingMap { channel ->
+                ChannelWithProgramme(
+                    channel = channel,
+                    programme = programmeRepository.getProgrammeCurrently(channel.id)
+                )
+            }
+        }
+    }
 
     val pinnedCategories: StateFlow<List<String>> = playlist
         .map { it?.pinnedCategories ?: emptyList() }

@@ -24,8 +24,8 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
+import com.m3u.business.playlist.ChannelWithProgramme
 import com.m3u.data.database.model.Channel
-import com.m3u.data.database.model.Programme
 import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
 import com.m3u.core.foundation.architecture.preferences.preferenceOf
 import com.m3u.core.foundation.components.CircularProgressIndicator
@@ -39,13 +39,12 @@ import kotlin.time.Duration.Companion.milliseconds
 internal fun ChannelGallery(
     state: LazyStaggeredGridState,
     rowCount: Int,
-    channels: Flow<PagingData<Channel>>,
+    channels: Flow<PagingData<ChannelWithProgramme>>,
     zapping: Channel?,
     recently: Boolean,
     isVodOrSeriesPlaylist: Boolean,
     onClick: (Channel) -> Unit,
     onLongClick: (Channel) -> Unit,
-    getProgrammeCurrently: suspend (channelId: Int) -> Programme?,
     reloadThumbnail: suspend (channelUrl: String) -> Uri?,
     syncThumbnail: suspend (channelUrl: String) -> Uri?,
     modifier: Modifier = Modifier,
@@ -67,7 +66,6 @@ internal fun ChannelGallery(
 
     val channels = channels.collectAsLazyPagingItems()
 
-    val currentGetProgrammeCurrently by rememberUpdatedState(getProgrammeCurrently)
     val currentReloadThumbnail by rememberUpdatedState(reloadThumbnail)
     val currentSyncThumbnail by rememberUpdatedState(syncThumbnail)
 
@@ -90,15 +88,10 @@ internal fun ChannelGallery(
                 .fillMaxSize()
                 .weight(1f)
         ) {
-            items(channels.itemCount, key = channels.itemKey { it.id }) { index ->
-                val channel = channels[index]
-                if (channel != null) {
-                    val programme: Programme? by produceState<Programme?>(
-                        initialValue = null,
-                        key1 = channel.id
-                    ) {
-                        value = currentGetProgrammeCurrently(channel.id)
-                    }
+            items(channels.itemCount, key = channels.itemKey { it.channel.id }) { index ->
+                val channelWithProgramme = channels[index]
+                if (channelWithProgramme != null) {
+                    val channel = channelWithProgramme.channel
                     val loadedUrl: Any? by produceState<Any?>(
                         initialValue = channel.cover,
                         key1 = channel,
@@ -117,7 +110,7 @@ internal fun ChannelGallery(
                     }
                     ChannelItem(
                         channel = channel,
-                        programme = programme,
+                        programme = channelWithProgramme.programme,
                         cover = loadedUrl,
                         recently = recently,
                         zapping = zapping == channel,
