@@ -274,9 +274,8 @@ class PlaylistViewModel @Inject constructor(
                         relationIds.drop(1).debounce(1.seconds)
                     )
                 }
-                .mapLatest { relationIds ->
-                    if (relationIds.isEmpty()) emptyMap()
-                    else programmeRepository.getProgrammesCurrently(playlistUrl)
+                .mapLatest {
+                    programmeRepository.getProgrammesCurrently(playlistUrl)
                 }
         }
         .stateIn(
