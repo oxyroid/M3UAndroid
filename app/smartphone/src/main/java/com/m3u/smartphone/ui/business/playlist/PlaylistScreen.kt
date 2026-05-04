@@ -38,9 +38,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.InternalComposeApi
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -275,7 +275,7 @@ internal fun PlaylistRoute(
     }
 }
 
-@Immutable
+@Stable
 private data class PlaylistScreenState(
     val rowCount: Int,
     val zapping: Channel?,
@@ -290,7 +290,7 @@ private data class PlaylistScreenState(
     val isSeriesPlaylist: Boolean,
 )
 
-@Immutable
+@Stable
 private data class PlaylistScreenActions(
     val onPinOrUnpinCategory: (String) -> Unit,
     val onHideCategory: (String) -> Unit,

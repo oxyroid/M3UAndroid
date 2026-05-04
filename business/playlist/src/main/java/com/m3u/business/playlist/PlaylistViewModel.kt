@@ -54,6 +54,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
@@ -265,8 +266,17 @@ class PlaylistViewModel @Inject constructor(
     private val currentProgrammes: StateFlow<Map<String, Programme>> = playlistUrl
         .flatMapLatest { playlistUrl ->
             channelRepository.observeAllByPlaylistUrl(playlistUrl)
-                .mapLatest { channels ->
-                    val relationIds = channels.mapNotNull { it.relationId }
+                .map { channels ->
+                    channels.mapNotNull { it.relationId }.distinct()
+                }
+                .distinctUntilChanged()
+                .let { relationIds ->
+                    merge(
+                        relationIds.take(1),
+                        relationIds.drop(1).debounce(1.seconds)
+                    )
+                }
+                .mapLatest { relationIds ->
                     programmeRepository.getProgrammesCurrently(
                         playlistUrl = playlistUrl,
                         relationIds = relationIds
