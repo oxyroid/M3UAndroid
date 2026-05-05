@@ -69,6 +69,8 @@ interface ProgrammeDao {
         AND relation_id = :relationId
         AND start <= :time
         AND `end` >= :time
+        ORDER BY start DESC, `end` ASC, epg_url ASC, id ASC
+        LIMIT 1
         """
     )
     suspend fun getCurrentByEpgUrlsAndRelationId(
@@ -79,15 +81,25 @@ interface ProgrammeDao {
 
     @Query(
         """
-        SELECT * FROM programmes
-        WHERE epg_url in (:epgUrls)
-        AND relation_id in (
+        SELECT p.* FROM programmes AS p
+        WHERE p.epg_url in (:epgUrls)
+        AND p.relation_id in (
             SELECT relation_id FROM streams
             WHERE playlist_url = :playlistUrl
             AND relation_id IS NOT NULL
         )
-        AND start <= :time
-        AND `end` >= :time
+        AND p.start <= :time
+        AND p.`end` >= :time
+        AND p.id = (
+            SELECT candidate.id FROM programmes AS candidate
+            WHERE candidate.epg_url in (:epgUrls)
+            AND candidate.relation_id = p.relation_id
+            AND candidate.start <= :time
+            AND candidate.`end` >= :time
+            ORDER BY candidate.start DESC, candidate.`end` ASC, candidate.epg_url ASC, candidate.id ASC
+            LIMIT 1
+        )
+        ORDER BY p.relation_id ASC
         """
     )
     suspend fun getCurrentByPlaylistUrlAndEpgUrls(

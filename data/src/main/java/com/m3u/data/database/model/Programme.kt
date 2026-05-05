@@ -3,6 +3,7 @@ package com.m3u.data.database.model
 import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import kotlin.time.Instant
 import kotlin.time.Duration
@@ -10,7 +11,14 @@ import kotlin.time.Duration.Companion.hours
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
-@Entity(tableName = "programmes")
+@Entity(
+    tableName = "programmes",
+    indices = [
+        Index(
+            value = ["epg_url", "relation_id", "start", "end"]
+        )
+    ]
+)
 @Immutable
 // epg programme
 data class Programme(
@@ -19,7 +27,7 @@ data class Programme(
     val channelId: String,
     // playlistUrl in Playlist which source is epg
     // for more details, see [DataSource.EPG].
-    @ColumnInfo(name = "epg_url", index = true)
+    @ColumnInfo(name = "epg_url")
     val epgUrl: String,
     @ColumnInfo(name = "start")
     val start: Long,
