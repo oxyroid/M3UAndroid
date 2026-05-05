@@ -48,14 +48,15 @@ import com.m3u.data.worker.SubscriptionWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -63,13 +64,12 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 @Immutable
@@ -242,7 +242,6 @@ class PlaylistViewModel @Inject constructor(
         val query: String,
         val sort: Sort,
         val categories: List<String>,
-        val currentProgrammes: Map<String, Programme>,
     )
 
     @OptIn(FlowPreview::class)
@@ -251,12 +250,7 @@ class PlaylistViewModel @Inject constructor(
             if (sort == Sort.MIXED) flowOf(emptyList())
             else playlistRepository.observeCategoriesByPlaylistUrlIgnoreHidden(playlistUrl, query)
         }
-            .let { flow ->
-                merge(
-                    flow.take(1),
-                    flow.drop(1).debounce(1.seconds)
-                )
-            }
+            .debounceAfterFirst(1.seconds)
             .stateIn(
                 scope = viewModelScope,
                 initialValue = emptyList(),
@@ -268,12 +262,7 @@ class PlaylistViewModel @Inject constructor(
             channelRepository.observeRelationIdsByPlaylistUrl(playlistUrl)
                 .map { it.toSet() }
                 .distinctUntilChanged()
-                .let { relationIds ->
-                    merge(
-                        relationIds.take(1),
-                        relationIds.drop(1).debounce(1.seconds)
-                    )
-                }
+                .debounceAfterFirst(1.seconds)
                 .mapLatest {
                     programmeRepository.getProgrammesCurrently(playlistUrl)
                 }
@@ -284,22 +273,20 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    val channels: StateFlow<Map<String, Flow<PagingData<ChannelWithProgramme>>>> = combine(
+    private val channelPages: StateFlow<Map<String, Flow<PagingData<Channel>>>> = combine(
         playlistUrl,
         categories,
         query,
-        sort,
-        currentProgrammes
-    ) { playlistUrl, categories, query, sort, currentProgrammes ->
+        sort
+    ) { playlistUrl, categories, query, sort ->
         ChannelParameters(
             playlistUrl = playlistUrl,
             query = query,
             sort = sort,
             categories = categories,
-            currentProgrammes = currentProgrammes
         )
     }
-        .mapLatest { (playlistUrl, query, sort, categories, currentProgrammes) ->
+        .mapLatest { (playlistUrl, query, sort, categories) ->
             if (sort == Sort.MIXED) {
                 mapOf(
                     "" to Pager(PagingConfig(15)) {
@@ -311,7 +298,6 @@ class PlaylistViewModel @Inject constructor(
                         )
                     }
                         .flow
-                        .withProgrammes(currentProgrammes)
                         .cachedIn(viewModelScope)
                 )
             } else {
@@ -325,11 +311,24 @@ class PlaylistViewModel @Inject constructor(
                         )
                     }
                         .flow
-                        .withProgrammes(currentProgrammes)
                         .cachedIn(viewModelScope)
                 }
             }
         }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = emptyMap(),
+            started = SharingStarted.Lazily
+        )
+
+    val channels: StateFlow<Map<String, Flow<PagingData<ChannelWithProgramme>>>> = combine(
+        channelPages,
+        currentProgrammes
+    ) { pages, currentProgrammes ->
+        pages.mapValues { (_, flow) ->
+            flow.withProgrammes(currentProgrammes)
+        }
+    }
         .stateIn(
             scope = viewModelScope,
             initialValue = emptyMap(),
@@ -347,6 +346,18 @@ class PlaylistViewModel @Inject constructor(
                     programme = channel.relationId?.let(currentProgrammes::get)
                 )
             }
+        }
+    }
+
+    private fun <T> Flow<T>.debounceAfterFirst(timeout: Duration): Flow<T> = channelFlow {
+        var isFirst = true
+        collectLatest { value ->
+            if (isFirst) {
+                isFirst = false
+            } else {
+                delay(timeout)
+            }
+            send(value)
         }
     }
 
