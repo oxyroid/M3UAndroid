@@ -1,17 +1,24 @@
 # Device Benchmark
 
-Mobly benchmark for the phone-assisted TV subscription flow.
+Mobly benchmarks for the app's primary feature paths. The default suite is
+`mobly/full_feature_benchmark_test.py`; the original phone-assisted TV subscription benchmark remains
+available as `mobly/remote_control_subscribe_test.py`.
 
-The test drives the real UI path:
+## Feature paths covered
 
-1. Build and install the smartphone and TV debug APKs.
-2. Start the local M3U mock server.
-3. Launch both apps.
-4. Read the pairing code from the TV UI.
-5. Enable Remote Control on the phone.
-6. Open the Remote Control FAB, enter the TV code, and connect.
-7. Use the phone settings screen to subscribe for TV through `/playlists/subscribe`.
-8. Verify the TV library shows the subscribed playlist.
+| Feature | App path | Benchmark coverage |
+| --- | --- | --- |
+| M3U subscription | Settings → Playlist Management → M3U | Subscribes to `testdata/playlists/live.m3u` through a GitHub raw URL. |
+| EPG subscription | Settings → Playlist Management → EPG | Subscribes to `testdata/epg/sample.xml` through a GitHub raw URL. |
+| Xtream subscription | Settings → Playlist Management → Xtream | Subscribes against `testing:mock-server` so all `player_api.php?action=...` calls are deterministic. |
+| Library / For You | Bottom navigation → For You | Verifies subscribed playlists appear after subscription. |
+| Playlist browsing | For You → playlist detail | Opens the subscribed Xtream playlist and waits for mock channels. |
+| Playback entry | Playlist detail → channel | Opens the player path for a mock channel. |
+| Favorite, Extension, Settings | Bottom navigation destinations | Measures route load for the main non-playback destinations. |
+| Remote Control / TV subscribe | Phone Settings → Optional Features → Remote Control; TV Library | Pairs phone and TV, sends `/playlists/subscribe`, and verifies TV library update when a TV device is configured. |
+
+Benchmark timings are logged as `BENCHMARK feature=... duration_ms=...` and written to
+`testing/device-benchmark/build/mobly-results/feature-benchmark-metrics.json`.
 
 ## Requirements
 
@@ -42,6 +49,21 @@ To use a different testbed, copy `mobly_config.yml` and pass it with:
   -PmoblyConfig=/path/to/mobly_config.yml \
   --no-configuration-cache
 ```
+
+To run only the original remote-control benchmark:
+
+```bash
+./gradlew :testing:device-benchmark:run \
+  -PmoblyBenchmarkScript=testing/device-benchmark/mobly/remote_control_subscribe_test.py \
+  --no-configuration-cache
+```
+
+## GitHub workflow
+
+`.github/workflows/device-benchmarks.yml` is manual-only (`workflow_dispatch`). By default it validates
+the GitHub raw testdata links, compiles the benchmark support modules, and checks Python syntax. Set
+`run_device_benchmark=true` when a runner has the required emulator/device setup and should execute the
+full Mobly suite.
 
 Mobly logs are written under:
 
