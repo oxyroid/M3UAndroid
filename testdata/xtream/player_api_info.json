@@ -1,0 +1,22 @@
+{
+  "user_info": {
+    "username": "m3u",
+    "password": "m3u",
+    "status": "Active",
+    "auth": 1,
+    "active_cons": "0",
+    "max_connections": "3",
+    "created_at": "1704067200",
+    "is_trial": "0",
+    "allowed_output_formats": ["ts", "m3u8", "mp4"]
+  },
+  "server_info": {
+    "url": "raw.githubusercontent.com",
+    "port": "443",
+    "server_protocol": "https",
+    "https_port": "443",
+    "time_now": "2026-05-11 00:00:00",
+    "timestamp_now": "1778457600",
+    "timezone": "UTC"
+  }
+}

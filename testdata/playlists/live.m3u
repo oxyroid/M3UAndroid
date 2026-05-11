@@ -1,0 +1,7 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="benchmark.news" tvg-name="Benchmark News" tvg-logo="https://raw.githubusercontent.com/oxyroid/M3UAndroid/master/testdata/images/news.png" group-title="News",Benchmark News
+https://example.com/benchmark/news/index.m3u8
+#EXTINF:-1 tvg-id="benchmark.sports" tvg-name="Benchmark Sports" tvg-logo="https://raw.githubusercontent.com/oxyroid/M3UAndroid/master/testdata/images/sports.png" group-title="Sports",Benchmark Sports
+https://example.com/benchmark/sports/index.m3u8
+#EXTINF:-1 tvg-id="benchmark.kids" tvg-name="Benchmark Kids" tvg-logo="https://raw.githubusercontent.com/oxyroid/M3UAndroid/master/testdata/images/kids.png" group-title="Kids",Benchmark Kids
+https://example.com/benchmark/kids/index.m3u8

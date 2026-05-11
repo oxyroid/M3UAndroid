@@ -165,8 +165,12 @@ private fun MainContentImpl(
 ) {
     val spacing = LocalSpacing.current
     val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
     val helper = LocalHelper.current
     val remoteControl by preferenceOf(PreferencesKeys.REMOTE_CONTROL)
+    LaunchedEffect(Unit) {
+        properties.applyBenchmarkDataSourcePrefill(DebugBenchmarkSettings.from(context))
+    }
 
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(spacing.small),
@@ -414,12 +418,22 @@ private fun SettingProperties.applyBenchmarkPlaylistPrefill(settings: DebugBench
         ?.let { urlState.value = it }
 }
 
+private fun SettingProperties.applyBenchmarkDataSourcePrefill(settings: DebugBenchmarkSettings) {
+    settings.getString(DebugBenchmarkSettings.DATA_SOURCE)
+        ?.let(DataSource::ofOrNull)
+        ?.let { selectedState.value = it }
+}
+
 @Composable
 context(properties: SettingProperties)
 private fun EPGInputContent(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
+    val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        properties.applyBenchmarkEpgPrefill(DebugBenchmarkSettings.from(context))
+    }
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(spacing.small)
@@ -439,10 +453,21 @@ private fun EPGInputContent(
     }
 }
 
+private fun SettingProperties.applyBenchmarkEpgPrefill(settings: DebugBenchmarkSettings) {
+    settings.getString(DebugBenchmarkSettings.EPG_TITLE)
+        ?.let { titleState.value = it }
+    settings.getString(DebugBenchmarkSettings.EPG_URL)
+        ?.let { epgState.value = it }
+}
+
 @Composable
 context(properties: SettingProperties)
 private fun XtreamInputContent(modifier: Modifier = Modifier) {
     val spacing = LocalSpacing.current
+    val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        properties.applyBenchmarkXtreamPrefill(DebugBenchmarkSettings.from(context))
+    }
 
     Column(
         modifier = modifier,
@@ -474,6 +499,17 @@ private fun XtreamInputContent(modifier: Modifier = Modifier) {
         )
         Warning(stringResource(string.feat_setting_warning_xtream_takes_much_more_time))
     }
+}
+
+private fun SettingProperties.applyBenchmarkXtreamPrefill(settings: DebugBenchmarkSettings) {
+    settings.getString(DebugBenchmarkSettings.XTREAM_TITLE)
+        ?.let { titleState.value = it }
+    settings.getString(DebugBenchmarkSettings.XTREAM_BASIC_URL)
+        ?.let { basicUrlState.value = it }
+    settings.getString(DebugBenchmarkSettings.XTREAM_USERNAME)
+        ?.let { usernameState.value = it }
+    settings.getString(DebugBenchmarkSettings.XTREAM_PASSWORD)
+        ?.let { passwordState.value = it }
 }
 
 @Composable

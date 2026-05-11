@@ -6,6 +6,8 @@ val pythonExecutable = providers.gradleProperty("pythonExecutable")
     .orElse("${rootDir}/.venv/bin/python")
 val moblyConfig = providers.gradleProperty("moblyConfig")
     .orElse("${projectDir}/mobly_config.yml")
+val moblyBenchmarkScript = providers.gradleProperty("moblyBenchmarkScript")
+    .orElse("${projectDir}/mobly/full_feature_benchmark_test.py")
 val moblyLogPath = layout.buildDirectory.dir("mobly-results")
 
 tasks.register<Exec>("installMoblyDependencies") {
@@ -23,7 +25,7 @@ tasks.register<Exec>("installMoblyDependencies") {
 
 tasks.register<Exec>("run") {
     group = "verification"
-    description = "Runs the Mobly remote-control phone-to-TV subscription benchmark."
+    description = "Runs the Mobly full-feature device benchmark suite."
     dependsOn(":app:smartphone:assembleDebug")
     dependsOn(":app:tv:assembleDebug")
     dependsOn(":testing:mock-server:startMockServer")
@@ -35,7 +37,7 @@ tasks.register<Exec>("run") {
         moblyLogPath.get().asFile.mkdirs()
         commandLine(
             pythonExecutable.get(),
-            "${projectDir}/mobly/remote_control_subscribe_test.py",
+            moblyBenchmarkScript.get(),
             "-c",
             moblyConfig.get(),
             "--log_path",
