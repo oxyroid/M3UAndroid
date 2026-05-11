@@ -1,0 +1,108 @@
+name: Device Benchmarks
+
+on:
+  workflow_dispatch:
+    inputs:
+      raw_ref:
+        description: Git ref used to build GitHub raw testdata URLs.
+        required: true
+        default: master
+      mobly_config:
+        description: Mobly config path for device benchmark execution.
+        required: true
+        default: testing/device-benchmark/mobly_config.yml
+      run_device_benchmark:
+        description: Build APKs and run the Mobly device benchmark suite.
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: device-benchmarks-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: zulu
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-home-cache-cleanup: true
+
+      - name: Validate raw benchmark fixtures
+        env:
+          RAW_BASE: https://raw.githubusercontent.com/${{ github.repository }}/${{ inputs.raw_ref }}/testdata
+        run: |
+          set -euo pipefail
+          curl -fsSL "$RAW_BASE/playlists/live.m3u" | grep -q '#EXTM3U'
+          curl -fsSL "$RAW_BASE/playlists/mixed.m3u" | grep -q 'Benchmark Movie'
+          curl -fsSL "$RAW_BASE/epg/sample.xml" | grep -q '<tv'
+          curl -fsSL "$RAW_BASE/xtream/player_api_info.json" | grep -q 'user_info'
+
+      - name: Validate benchmark scripts
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            testing/device-benchmark/mobly/full_feature_benchmark_test.py \
+            testing/device-benchmark/mobly/remote_control_subscribe_test.py
+
+      - name: Compile benchmark support modules
+        run: |
+          ./gradlew :testing:mock-server:classes :testing:device-benchmark:tasks --no-configuration-cache
+
+      - name: Enable KVM
+        if: inputs.run_device_benchmark
+        run: |
+          if [ ! -e /dev/kvm ]; then
+            echo "/dev/kvm is not available on this runner"
+            exit 1
+          fi
+          sudo chown root:$(id -gn) /dev/kvm
+          sudo chmod 660 /dev/kvm
+          ls -l /dev/kvm
+
+      - name: Run full-feature device benchmarks
+        if: inputs.run_device_benchmark
+        env:
+          RAW_BASE: https://raw.githubusercontent.com/${{ github.repository }}/${{ inputs.raw_ref }}/testdata
+        run: |
+          benchmark_config="$RUNNER_TEMP/mobly_config.yml"
+          cp "${{ inputs.mobly_config }}" "$benchmark_config"
+          sed -i "s#raw_testdata_base: .*#raw_testdata_base: $RAW_BASE#" "$benchmark_config"
+          ./gradlew :testing:device-benchmark:run \
+            -PmoblyConfig="$benchmark_config" \
+            -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect \
+            -Pandroid.experimental.testOptions.managedDevices.maxConcurrentDevices=1 \
+            --no-configuration-cache \
+            --info
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: device-benchmark-results
+          if-no-files-found: ignore
+          path: |
+            testing/device-benchmark/build/mobly-results/**
+            testing/mock-server/build/mock-server/mock-server.log
