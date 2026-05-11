@@ -85,13 +85,13 @@ class FullFeatureBenchmarkTest(base_test.BaseTestClass):
 
     def test_040_browse_library_playlist_and_player(self):
         self._benchmark("library.open", lambda: self._open_destination(Labels.FOR_YOU))
-        self._benchmark("playlist.open", lambda: self._open_playlist_and_wait("BenchXtream", "Mock News"))
-        self._benchmark("player.open", lambda: self._open_channel_player("Mock News"))
+        self._benchmark("playlist.open", lambda: self._open_playlist_and_wait("BenchXtream", Labels.MOCK_NEWS))
+        self._benchmark("player.open", lambda: self._open_channel_player(Labels.MOCK_NEWS))
 
     def test_050_visit_favorite_extension_and_settings_paths(self):
         self._benchmark("favorite.open", lambda: self._open_destination(Labels.FAVORITE))
         self._benchmark("extension.open", lambda: self._open_destination(Labels.EXTENSION))
-        self._benchmark("settings.open", lambda: self._open_destination(rc.Labels.SETTINGS))
+        self._benchmark("settings.open", lambda: self._open_destination(Labels.SETTINGS))
         self._benchmark("settings.playlists.open", lambda: rc.tap_button_by_text(
             self.phone_serial,
             rc.Labels.PLAYLIST_MANAGEMENT,
@@ -227,6 +227,8 @@ class Labels:
     FOR_YOU = ["For You", "for you", "推荐", "首页"]
     FAVORITE = ["Favourite", "Favorite", "favourite", "favorite", "收藏"]
     EXTENSION = ["Extension", "Extensions", "extension", "extensions", "扩展"]
+    SETTINGS = rc.Labels.SETTINGS
+    MOCK_NEWS = "Mock News"
 
 
 if __name__ == "__main__":
