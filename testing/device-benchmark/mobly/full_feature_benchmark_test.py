@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import time
 from pathlib import Path
 
@@ -23,7 +24,9 @@ SETTING_XTREAM_TITLE = "m3u_benchmark_xtream_title"
 SETTING_XTREAM_BASIC_URL = "m3u_benchmark_xtream_basic_url"
 SETTING_XTREAM_USERNAME = "m3u_benchmark_xtream_username"
 SETTING_XTREAM_PASSWORD = "m3u_benchmark_xtream_password"
-DEFAULT_RAW_BASE = "https://raw.githubusercontent.com/oxyroid/M3UAndroid/master/testdata"
+DEFAULT_RAW_REPOSITORY = os.environ.get("GITHUB_REPOSITORY", "oxyroid/M3UAndroid")
+DEFAULT_RAW_REF = os.environ.get("GITHUB_REF_NAME", "master")
+DEFAULT_RAW_BASE = f"https://raw.githubusercontent.com/{DEFAULT_RAW_REPOSITORY}/{DEFAULT_RAW_REF}/testdata"
 
 
 class FullFeatureBenchmarkTest(base_test.BaseTestClass):
@@ -198,9 +201,9 @@ class FullFeatureBenchmarkTest(base_test.BaseTestClass):
     def _subscribe_from_settings(self):
         self._open_destination(rc.Labels.SETTINGS)
         rc.tap_button_by_text(self.phone_serial, rc.Labels.PLAYLIST_MANAGEMENT, 30)
-        time.sleep(1)
+        rc.wait_for_any_text(self.phone_serial, rc.Labels.SUBSCRIBE, 30, package=PHONE_PACKAGE)
         rc.tap_button_by_text(self.phone_serial, rc.Labels.SUBSCRIBE, 30)
-        time.sleep(3)
+        rc.wait_for_foreground_package(self.phone_serial, PHONE_PACKAGE, 30)
 
     def _open_destination(self, labels):
         rc.adb(self.phone_serial, "shell", "am", "start", "-n", PHONE_MAIN_ACTIVITY, device_scoped=False)
@@ -218,8 +221,7 @@ class FullFeatureBenchmarkTest(base_test.BaseTestClass):
 
     def _open_channel_player(self, channel_title):
         rc.tap_any_text(self.phone_serial, [channel_title], 30, package=PHONE_PACKAGE)
-        time.sleep(3)
-        rc.wait_for_foreground_package(self.phone_serial, PHONE_PACKAGE, 30)
+        wait_for_activity(self.phone_serial, "PlayerActivity", 30)
         rc.shell(self.phone_serial, "input", "keyevent", "KEYCODE_BACK", check=False)
 
 
@@ -229,6 +231,16 @@ class Labels:
     EXTENSION = ["Extension", "Extensions", "extension", "extensions", "扩展"]
     SETTINGS = rc.Labels.SETTINGS
     MOCK_NEWS = "Mock News"
+
+
+def wait_for_activity(serial, activity_name, timeout_seconds):
+    deadline = time.monotonic() + timeout_seconds
+    while time.monotonic() < deadline:
+        result = rc.shell(serial, "dumpsys", "window", check=False)
+        if activity_name in result.stdout:
+            return
+        time.sleep(1)
+    raise AssertionError(f"Timed out waiting for activity {activity_name} on {serial}")
 
 
 if __name__ == "__main__":
