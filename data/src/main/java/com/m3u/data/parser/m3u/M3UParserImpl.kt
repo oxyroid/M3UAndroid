@@ -1,6 +1,6 @@
 package com.m3u.data.parser.m3u
 
-import dev.oxyroid.m3u.parser.M3UPlaylistParser
+import dev.oxyroid.parser.m3u.M3UPlaylistParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.flowOn

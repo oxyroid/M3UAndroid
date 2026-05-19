@@ -2,9 +2,9 @@ package com.m3u.data.parser.m3u
 
 import androidx.core.net.toUri
 import com.m3u.data.database.model.Channel
-import dev.oxyroid.m3u.parser.M3UData as ParserM3UData
+import dev.oxyroid.parser.protocol.ParsedChannel
 
-internal typealias M3UData = ParserM3UData
+internal typealias M3UData = ParsedChannel
 
 internal fun M3UData.toChannel(
     playlistUrl: String,
