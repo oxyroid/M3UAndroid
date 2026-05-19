@@ -10,4 +10,7 @@ data class ParsedChannel(
     val duration: Double = -1.0,
     val licenseType: String? = null,
     val licenseKey: String? = null,
+    val userAgent: String? = null,
+    val referrer: String? = null,
+    val options: Map<String, String> = emptyMap(),
 )

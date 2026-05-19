@@ -9,4 +9,5 @@ kotlin {
 
 dependencies {
     api(project(":protocol"))
+    testImplementation(kotlin("test"))
 }
