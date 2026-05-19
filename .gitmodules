@@ -1,3 +1,6 @@
 [submodule "native-load-gradle-plugin"]
 	path = native-load-gradle-plugin
 	url = https://github.com/oxyroid/native-load-gradle-plugin.git
+[submodule "m3u-parser"]
+	path = m3u-parser
+	url = https://github.com/oxyroid/m3u-parser.git
