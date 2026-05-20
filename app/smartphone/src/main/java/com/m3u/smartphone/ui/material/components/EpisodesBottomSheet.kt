@@ -33,7 +33,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.m3u.core.foundation.wrapper.Resource
 import com.m3u.data.database.model.Channel
-import com.m3u.data.parser.xtream.XtreamChannelInfo
+import com.m3u.data.parser.xtream.XtreamEpisodeInfo
 import androidx.compose.material3.IconButton
 import com.m3u.core.foundation.components.CircularProgressIndicator
 import com.m3u.smartphone.ui.material.model.LocalSpacing
@@ -42,9 +42,9 @@ import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 @Composable
 fun EpisodesBottomSheet(
     series: Channel?,
-    episodes: Resource<List<XtreamChannelInfo.Episode>>,
+    episodes: Resource<List<XtreamEpisodeInfo>>,
     onRefresh: () -> Unit,
-    onEpisodeClick: (XtreamChannelInfo.Episode) -> Unit,
+    onEpisodeClick: (XtreamEpisodeInfo) -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -146,7 +146,7 @@ fun EpisodesBottomSheet(
 
 @Composable
 private fun XtreamEpisodeItem(
-    episode: XtreamChannelInfo.Episode,
+    episode: XtreamEpisodeInfo,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
