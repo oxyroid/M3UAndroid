@@ -6,7 +6,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.m3u.annotation.Exclude
 import com.m3u.annotation.Likable
-import com.m3u.data.parser.xtream.XtreamChannelInfo
+import com.m3u.data.parser.xtream.XtreamEpisodeInfo
 import io.ktor.http.URLBuilder
 import io.ktor.http.Url
 import io.ktor.http.appendPathSegments
@@ -73,7 +73,7 @@ data class Channel(
     }
 }
 
-fun Channel.copyXtreamEpisode(episode: XtreamChannelInfo.Episode): Channel {
+fun Channel.copyXtreamEpisode(episode: XtreamEpisodeInfo): Channel {
     val url = Url(url)
     val newUrl = URLBuilder(url)
         .apply { path(*url.rawSegments.dropLast(1).toTypedArray()) }
