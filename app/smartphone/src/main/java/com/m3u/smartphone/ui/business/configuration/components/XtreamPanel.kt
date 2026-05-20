@@ -22,7 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.m3u.core.foundation.wrapper.Resource
-import com.m3u.data.parser.xtream.XtreamInfo
+import com.m3u.data.parser.xtream.XtreamUserInfo
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.smartphone.ui.material.components.Badge
 import com.m3u.smartphone.ui.material.components.FontFamilies
@@ -31,7 +31,7 @@ import kotlin.time.Instant
 
 @Composable
 internal fun XtreamPanel(
-    info: Resource<XtreamInfo.UserInfo>,
+    info: Resource<XtreamUserInfo>,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current

@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.Flow
 
 typealias XtreamInput = dev.oxyroid.parser.xtream.XtreamInput
 
-internal interface XtreamParser {
+interface XtreamParser {
 	suspend fun getSeriesInfoOrThrow(
 		input: XtreamInput,
 		seriesId: Int,
