@@ -10,7 +10,7 @@ import com.m3u.core.foundation.wrapper.Resource
 import com.m3u.core.foundation.wrapper.asResource
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
-import com.m3u.data.parser.xtream.XtreamInfo
+import com.m3u.data.parser.xtream.XtreamUserInfo
 import com.m3u.data.parser.xtream.XtreamInput
 import com.m3u.data.parser.xtream.XtreamParser
 import com.m3u.data.repository.playlist.PlaylistRepository
@@ -56,7 +56,7 @@ class PlaylistConfigurationViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
-    val xtreamUserInfo: StateFlow<Resource<XtreamInfo.UserInfo>> =
+    val xtreamUserInfo: StateFlow<Resource<XtreamUserInfo>> =
         playlist.map { playlist ->
             playlist ?: return@map null
             if (playlist.source != DataSource.Xtream) return@map null

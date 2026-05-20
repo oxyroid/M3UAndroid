@@ -50,7 +50,7 @@ import com.m3u.core.foundation.wrapper.Resource
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.epgUrlsOrXtreamXmlUrl
-import com.m3u.data.parser.xtream.XtreamInfo
+import com.m3u.data.parser.xtream.XtreamUserInfo
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.business.configuration.components.AutoSyncProgrammesButton
@@ -140,7 +140,7 @@ private fun PlaylistConfigurationScreen(
     manifest: EpgManifest,
     subscribingOrRefreshing: Boolean,
     expired: LocalDateTime?,
-    xtreamUserInfo: Resource<XtreamInfo.UserInfo>,
+    xtreamUserInfo: Resource<XtreamUserInfo>,
     onUpdatePlaylistTitle: (String) -> Unit,
     onUpdatePlaylistUserAgent: (String?) -> Unit,
     onUpdateEpgPlaylist: (PlaylistRepository.EpgPlaylistUseCase) -> Unit,
