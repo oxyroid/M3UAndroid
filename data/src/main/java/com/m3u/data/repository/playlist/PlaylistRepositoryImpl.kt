@@ -29,6 +29,7 @@ import com.m3u.data.parser.xtream.XtreamEpisodeInfo
 import com.m3u.data.parser.xtream.XtreamInput
 import com.m3u.data.parser.xtream.XtreamLive
 import com.m3u.data.parser.xtream.XtreamParser
+import com.m3u.data.parser.xtream.toXtreamEpisodeInfo
 import com.m3u.data.parser.xtream.XtreamSerial
 import com.m3u.data.parser.xtream.XtreamVod
 import com.m3u.data.parser.xtream.asChannel
@@ -541,7 +542,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             seriesId = Url(series.url).rawSegments.last().toInt()
         )
         // fixme: do not flatmap
-        return seriesInfo.episodes.flatMap { it.value }
+        return seriesInfo.episodes.flatMap { it.value }.map { it.toXtreamEpisodeInfo() }
     }
 
     override suspend fun deleteEpgPlaylistAndProgrammes(epgUrl: String) {
