@@ -12,6 +12,7 @@ android {
 }
 
 dependencies {
+    api(project(":core:common"))
     api(project(":i18n"))
 
     // compose

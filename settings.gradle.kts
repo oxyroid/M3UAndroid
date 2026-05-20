@@ -23,7 +23,7 @@ include(
     ":app:tv",
     ":app:extension"
 )
-include(":core", ":core:foundation", ":core:extension")
+include(":core", ":core:common", ":core:foundation", ":core:extension")
 include(":data")
 include(
     ":business:foryou",

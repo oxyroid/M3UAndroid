@@ -1,21 +1,16 @@
 package com.m3u.core.foundation.wrapper
 
-import androidx.compose.runtime.Immutable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 
-@Immutable
 sealed class Resource<out T> {
-    @Immutable
     data object Loading : Resource<Nothing>()
 
-    @Immutable
     data class Success<out T>(val data: T) : Resource<T>()
 
-    @Immutable
     data class Failure<out T>(val message: String?) : Resource<T>()
 }
 
