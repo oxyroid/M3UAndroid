@@ -25,29 +25,32 @@ subprojects {
             )
         }
     }
-    fun configureKotlinOptIns() {
+    fun configureKotlinOptIns(includeComposeOptIns: Boolean) {
         kotlinExtension.sourceSets.configureEach {
             languageSettings {
                 optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
-                optIn("androidx.compose.ui.ExperimentalComposeUiApi")
-                optIn("androidx.compose.foundation.ExperimentalFoundationApi")
-                optIn("androidx.compose.foundation.layout.ExperimentalLayoutApi")
-                optIn("androidx.compose.animation.ExperimentalSharedTransitionApi")
-                optIn("androidx.compose.material3.ExperimentalMaterial3Api")
-                optIn("androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi")
-                optIn("androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi")
-                optIn("androidx.tv.material3.ExperimentalTvMaterial3Api")
-                optIn("com.google.accompanist.permissions.ExperimentalPermissionsApi")
+                if (includeComposeOptIns) {
+                    optIn("androidx.compose.ui.ExperimentalComposeUiApi")
+                    optIn("androidx.compose.foundation.ExperimentalFoundationApi")
+                    optIn("androidx.compose.foundation.layout.ExperimentalLayoutApi")
+                    optIn("androidx.compose.animation.ExperimentalSharedTransitionApi")
+                    optIn("androidx.compose.material3.ExperimentalMaterial3Api")
+                    optIn("androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi")
+                    optIn("androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi")
+                    optIn("androidx.tv.material3.ExperimentalTvMaterial3Api")
+                    optIn("com.google.accompanist.permissions.ExperimentalPermissionsApi")
+                }
             }
         }
     }
     plugins.withId("org.jetbrains.kotlin.android") {
-        configureKotlinOptIns()
+        configureKotlinOptIns(includeComposeOptIns = false)
     }
     plugins.withId("org.jetbrains.kotlin.jvm") {
-        configureKotlinOptIns()
+        configureKotlinOptIns(includeComposeOptIns = false)
     }
     plugins.withId("org.jetbrains.kotlin.plugin.compose") {
+        configureKotlinOptIns(includeComposeOptIns = true)
         configure<ComposeCompilerGradlePluginExtension> {
             includeSourceInformation = true
             val file = rootProject.layout.projectDirectory.file("compose_compiler_config.conf")
