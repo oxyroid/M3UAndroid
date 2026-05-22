@@ -233,7 +233,9 @@ class ChannelViewModel @Inject constructor(
     }
 
     override fun onDiscover(device: Device) {
-        devices = devices + device
+        if (devices.none { it.udn == device.udn }) {
+            devices = devices + device
+        }
     }
 
     override fun onLost(device: Device) {
@@ -247,8 +249,17 @@ class ChannelViewModel @Inject constructor(
         device.findAction(ACTION_SET_AV_TRANSPORT_URI)?.invoke(
             argumentValues = mapOf(
                 INSTANCE_ID to "0",
-                CURRENT_URI to url
-            )
+                CURRENT_URI to url,
+                CURRENT_URI_META_DATA to ""
+            ),
+            onResult = {
+                device.findAction(ACTION_PLAY)?.invoke(
+                    argumentValues = mapOf(
+                        INSTANCE_ID to "0",
+                        SPEED to "1"
+                    )
+                )
+            }
         )
     }
 
@@ -418,5 +429,6 @@ class ChannelViewModel @Inject constructor(
         private const val INSTANCE_ID = "InstanceID"
         private const val CURRENT_URI = "CurrentURI"
         private const val CURRENT_URI_META_DATA = "CurrentURIMetaData"
+        private const val SPEED = "Speed"
     }
 }
