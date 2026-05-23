@@ -5,7 +5,6 @@ import android.media.AudioManager
 import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -38,6 +37,7 @@ import com.m3u.data.service.tracks
 import com.m3u.data.worker.ProgrammeReminder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -51,8 +51,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import net.mm2d.upnp.ControlPoint
-import net.mm2d.upnp.ControlPointFactory
 import net.mm2d.upnp.Device
 import javax.inject.Inject
 import kotlin.math.roundToInt
@@ -69,7 +67,7 @@ class ChannelViewModel @Inject constructor(
     private val audioManager: AudioManager,
     private val programmeRepository: ProgrammeRepository,
     private val workManager: WorkManager,
-) : ViewModel(), ControlPoint.DiscoveryListener {
+) : ViewModel() {
 
     /**
      * it is not real-time position but last played position.
@@ -97,9 +95,6 @@ class ChannelViewModel @Inject constructor(
         }
     }
 
-
-    // searched screencast devices
-    var devices by mutableStateOf(emptyList<Device>())
 
     private val _volume: MutableStateFlow<Float> by lazy {
         MutableStateFlow(
@@ -199,72 +194,41 @@ class ChannelViewModel @Inject constructor(
     // show searching devices dialog or not
     val isDevicesVisible = _isDevicesVisible.asStateFlow()
 
-    private val _searching: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private val dlnaController = DlnaController()
 
+    // searched screencast devices
+    val devices: StateFlow<List<Device>> = dlnaController.devices
     // searching or not
-    val searching = _searching.asStateFlow()
+    val searching: StateFlow<Boolean> = dlnaController.searching
+
+    private var dlnaSearchJob: Job? = null
 
     fun openDlnaDevices() {
-        viewModelScope.launch {
+        dlnaSearchJob?.cancel()
+        dlnaSearchJob = viewModelScope.launch {
             delay(800.milliseconds)
-            _searching.value = true
-            controlPoint = ControlPointFactory.create().apply {
-                addDiscoveryListener(this@ChannelViewModel)
-                initialize()
-                start()
-                search()
-            }
+            if (!_isDevicesVisible.value) return@launch
+            dlnaController.startSearch()
         }
         _isDevicesVisible.value = true
     }
 
     fun closeDlnaDevices() {
         runCatching {
-            _searching.value = false
+            dlnaSearchJob?.cancel()
+            dlnaSearchJob = null
             _isDevicesVisible.value = false
-
-            controlPoint?.removeDiscoveryListener(this)
-            controlPoint?.stop()
-            controlPoint?.terminate()
-            controlPoint = null
-
-            devices = emptyList()
+            dlnaController.stopSearch()
         }
     }
-
-    override fun onDiscover(device: Device) {
-        if (devices.none { it.udn == device.udn }) {
-            devices = devices + device
-        }
-    }
-
-    override fun onLost(device: Device) {
-        devices = devices - device
-    }
-
-    private var controlPoint: ControlPoint? = null
 
     fun connectDlnaDevice(device: Device) {
-        val url = channel.value?.url ?: return
-        device.findAction(ACTION_SET_AV_TRANSPORT_URI)?.invoke(
-            argumentValues = mapOf(
-                INSTANCE_ID to "0",
-                CURRENT_URI to url,
-                CURRENT_URI_META_DATA to ""
-            ),
-            onResult = {
-                device.findAction(ACTION_PLAY)?.invoke(
-                    argumentValues = mapOf(
-                        INSTANCE_ID to "0",
-                        SPEED to "1"
-                    )
-                )
-            }
-        )
+        val channel = channel.value ?: return
+        dlnaController.play(device, channel)
     }
 
     fun disconnectDlnaDevice(device: Device) {
-
+        dlnaController.stop(device)
     }
 
     fun onFavorite() {
@@ -306,10 +270,9 @@ class ChannelViewModel @Inject constructor(
 
     fun destroy() {
         runCatching {
-            controlPoint?.removeDiscoveryListener(this)
-            controlPoint?.stop()
-            controlPoint?.terminate()
-            controlPoint = null
+            dlnaSearchJob?.cancel()
+            dlnaSearchJob = null
+            dlnaController.stopSearch()
 
             playerManager.release()
         }
@@ -418,17 +381,5 @@ class ChannelViewModel @Inject constructor(
         viewModelScope.launch {
             playerManager.recordVideo(uri)
         }
-    }
-
-    companion object {
-        private const val ACTION_SET_AV_TRANSPORT_URI = "SetAVTransportURI"
-        private const val ACTION_PLAY = "Play"
-        private const val ACTION_PAUSE = "Pause"
-        private const val ACTION_STOP = "Stop"
-
-        private const val INSTANCE_ID = "InstanceID"
-        private const val CURRENT_URI = "CurrentURI"
-        private const val CURRENT_URI_META_DATA = "CurrentURIMetaData"
-        private const val SPEED = "Speed"
     }
 }
