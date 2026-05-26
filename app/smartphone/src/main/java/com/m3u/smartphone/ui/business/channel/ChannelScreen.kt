@@ -347,12 +347,12 @@ fun ChannelRoute(
 
     FormatsBottomSheet(
         visible = choosing,
-        formats = tracks,
-        selectedFormats = selectedFormats,
+        tracks = tracks,
+        selectedTracks = selectedFormats,
         maskState = maskState,
         onDismiss = { choosing = false },
-        onChooseTrack = { type, format ->
-            viewModel.chooseTrack(type, format)
+        onChooseTrack = { track ->
+            viewModel.chooseTrack(track)
         },
         onClearTrack = { type ->
             viewModel.clearTrack(type)

@@ -375,11 +375,15 @@ class PlayerManagerImpl @Inject constructor(
 
     override fun clearTrack(type: @C.TrackType Int) {
         val currentPlayer = player.value ?: return
-        currentPlayer.trackSelectionParameters = currentPlayer
-            .trackSelectionParameters
+        val builder = currentPlayer.trackSelectionParameters
             .buildUpon()
-            .setTrackTypeDisabled(type, true)
-            .build()
+            .clearOverridesOfType(type)
+        if (type == C.TRACK_TYPE_TEXT) {
+            builder.setTrackTypeDisabled(type, true)
+        } else {
+            builder.setTrackTypeDisabled(type, false)
+        }
+        currentPlayer.trackSelectionParameters = builder.build()
     }
 
     override val cacheSpace: Flow<Long> = flow {

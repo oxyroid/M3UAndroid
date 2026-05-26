@@ -16,6 +16,7 @@ import androidx.compose.material.icons.rounded.ClosedCaption
 import androidx.compose.material.icons.rounded.DeviceUnknown
 import androidx.compose.material.icons.rounded.VideoLibrary
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SegmentedButton
@@ -33,9 +34,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.C
-import androidx.media3.common.Format
+import com.m3u.data.service.PlayerTrack
 import com.m3u.i18n.R.string
-import androidx.compose.material3.Icon
 import com.m3u.smartphone.ui.material.components.mask.MaskState
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import kotlinx.coroutines.launch
@@ -43,11 +43,11 @@ import kotlinx.coroutines.launch
 @Composable
 internal fun FormatsBottomSheet(
     visible: Boolean,
-    formats: Map<Int, List<Format>>,
-    selectedFormats: Map<Int, Format?>,
+    tracks: Map<Int, List<PlayerTrack>>,
+    selectedTracks: Map<Int, PlayerTrack?>,
     maskState: MaskState,
     onDismiss: () -> Unit,
-    onChooseTrack: (@C.TrackType Int, Format) -> Unit,
+    onChooseTrack: (PlayerTrack) -> Unit,
     onClearTrack: (@C.TrackType Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -77,14 +77,14 @@ internal fun FormatsBottomSheet(
                 modifier = Modifier.padding(horizontal = spacing.medium)
             )
             Spacer(modifier = Modifier.height(spacing.medium))
-            val typesIndexed = remember(formats) {
-                formats.map { it.key }
+            val typesIndexed = remember(tracks) {
+                tracks.map { it.key }
             }
-            val formatsIndexed = remember(formats) {
-                formats.map { it.value }
+            val tracksIndexed = remember(tracks) {
+                tracks.map { it.value }
             }
-            val selectedFormatsIndexed = remember(selectedFormats) {
-                selectedFormats.map { it.value }
+            val selectedTracksIndexed = remember(typesIndexed, selectedTracks) {
+                typesIndexed.map { selectedTracks[it] }
             }
             HorizontalPager(
                 state = pagerState,
@@ -93,22 +93,24 @@ internal fun FormatsBottomSheet(
                 modifier = Modifier.height(240.dp)
             ) { page ->
                 val type = typesIndexed[page]
-                val currentFormats = formatsIndexed[page]
-                val selectedFormat = selectedFormatsIndexed[page]
+                val currentTracks = tracksIndexed[page]
+                val selectedTrack = selectedTracksIndexed[page]
                 LazyColumn(
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    items(currentFormats) { format ->
-                        val selected = format.id == selectedFormat?.id
+                    items(currentTracks) { track ->
+                        val selected = selectedTrack != null &&
+                                track.group == selectedTrack.group &&
+                                track.index == selectedTrack.index
                         FormatItem(
-                            format = format,
+                            track = track,
                             type = type,
                             selected = selected,
                             onClick = {
                                 if (selected) {
                                     onClearTrack(type)
                                 } else {
-                                    onChooseTrack(type, format)
+                                    onChooseTrack(track)
                                 }
                             }
                         )
@@ -121,7 +123,7 @@ internal fun FormatsBottomSheet(
                     .fillMaxWidth()
                     .padding(horizontal = spacing.medium, vertical = spacing.small)
             ) {
-                formats.entries.forEachIndexed { index, (type, _) ->
+                tracks.entries.forEachIndexed { index, (type, _) ->
                     val icon = when (type) {
                         C.TRACK_TYPE_AUDIO -> Icons.Rounded.Audiotrack
                         C.TRACK_TYPE_VIDEO -> Icons.Rounded.VideoLibrary
@@ -129,10 +131,10 @@ internal fun FormatsBottomSheet(
                         else -> Icons.Rounded.DeviceUnknown
                     }
                     val text = when (type) {
-                        C.TRACK_TYPE_AUDIO -> "AUDIO"
-                        C.TRACK_TYPE_VIDEO -> "VIDEO"
-                        C.TRACK_TYPE_TEXT -> "TEXT"
-                        else -> "OTHER"
+                        C.TRACK_TYPE_AUDIO -> stringResource(string.feat_channel_track_type_audio)
+                        C.TRACK_TYPE_VIDEO -> stringResource(string.feat_channel_track_type_video)
+                        C.TRACK_TYPE_TEXT -> stringResource(string.feat_channel_track_type_text)
+                        else -> stringResource(string.feat_channel_track_type_other)
                     }
                     SegmentedButton(
                         selected = index == pagerState.currentPage,
@@ -144,7 +146,7 @@ internal fun FormatsBottomSheet(
                         shape = SegmentedButtonDefaults.itemShape(
                             baseShape = RoundedCornerShape(8.dp),
                             index = index,
-                            count = formats.size
+                            count = tracks.size
                         ),
                         colors = SegmentedButtonDefaults.colors(
                             disabledInactiveContentColor = LocalContentColor.current.copy(0.38f)
