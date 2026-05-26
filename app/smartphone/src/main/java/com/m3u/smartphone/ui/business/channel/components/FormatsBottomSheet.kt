@@ -53,7 +53,7 @@ internal fun FormatsBottomSheet(
 ) {
     val spacing = LocalSpacing.current
     val state = rememberModalBottomSheetState()
-    val pagerState = rememberPagerState { formats.size }
+    val pagerState = rememberPagerState { tracks.size }
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(visible) {
