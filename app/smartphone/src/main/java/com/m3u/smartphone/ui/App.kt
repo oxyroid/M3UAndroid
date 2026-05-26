@@ -166,8 +166,10 @@ private fun AppImpl(
             }
         },
         modifier = modifier
-    ) {
-        Column {
+    ) { contentPadding ->
+        Column(
+            modifier = Modifier.padding(contentPadding)
+        ) {
             val coroutineScope = rememberCoroutineScope()
             val searchBarState = rememberSearchBarState()
             val textFieldState = rememberTextFieldState()
