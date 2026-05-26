@@ -15,6 +15,11 @@
     <string name="feat_channel_tooltip_enter_pip_mode">画中画模式</string>
     <string name="feat_channel_tooltip_screen_rotating">屏幕旋转</string>
     <string name="feat_channel_tooltip_choose_format">选择格式</string>
+    <string name="feat_channel_track_type_audio">音频</string>
+    <string name="feat_channel_track_type_video">视频</string>
+    <string name="feat_channel_track_type_text">字幕</string>
+    <string name="feat_channel_track_type_other">其他</string>
+    <string name="feat_channel_track_unknown">未知轨道</string>
     <string name="feat_channel_dialog_dlna_devices">DLNA 设备</string>
     <string name="feat_channel_dialog_choose_tracks">选择格式</string>
     <string name="feat_channel_cw_position_title">上次播放到 %s</string>

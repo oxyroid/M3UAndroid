@@ -9,7 +9,6 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.C
-import androidx.media3.common.Format
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
@@ -32,6 +31,7 @@ import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.PlayerManager
+import com.m3u.data.service.PlayerTrack
 import com.m3u.data.service.currentTracks
 import com.m3u.data.service.tracks
 import com.m3u.data.worker.ProgrammeReminder
@@ -139,28 +139,15 @@ class ChannelViewModel @Inject constructor(
         }
     }
 
-    val tracks: Flow<Map<Int, List<Format>>> = playerManager.tracks
-        .map { all ->
-            all
-                .mapValues { (_, formats) -> formats }
-                .toMap()
-        }
+    val tracks: Flow<Map<@C.TrackType Int, List<PlayerTrack>>> = playerManager.tracks
 
-    val currentTracks: Flow<Map<@C.TrackType Int, Format?>> = playerManager.currentTracks
+    val currentTracks: Flow<Map<@C.TrackType Int, PlayerTrack?>> = playerManager.currentTracks
 
-    fun chooseTrack(type: @C.TrackType Int, format: Format) {
-        val groups = playerManager.tracksGroups.value
-        val group = groups.find { it.type == type } ?: return
-        val trackGroup = group.mediaTrackGroup
-        for (index in 0 until trackGroup.length) {
-            if (trackGroup.getFormat(index).id == format.id) {
-                playerManager.chooseTrack(
-                    group = trackGroup,
-                    index = index
-                )
-                break
-            }
-        }
+    fun chooseTrack(track: PlayerTrack) {
+        playerManager.chooseTrack(
+            group = track.group,
+            index = track.index
+        )
     }
 
     fun clearTrack(type: @C.TrackType Int) {

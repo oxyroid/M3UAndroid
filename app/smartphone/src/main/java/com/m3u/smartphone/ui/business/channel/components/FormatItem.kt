@@ -6,12 +6,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.media3.common.C
 import androidx.media3.common.Format
+import com.m3u.data.service.PlayerTrack
+import com.m3u.i18n.R.string
 
 @Composable
 internal fun FormatItem(
-    format: Format,
+    track: PlayerTrack,
     type: @C.TrackType Int,
     selected: Boolean,
     onClick: () -> Unit,
@@ -28,22 +31,35 @@ internal fun FormatItem(
     ) {
         ListItem(
             headlineContent = {
-                Text(format.displayText(type))
+                Text(track.format.displayText(type, stringResource(string.feat_channel_track_unknown)))
             },
             modifier = modifier.clickable { onClick() }
         )
     }
 }
 
-private fun Format.displayText(type: @C.TrackType Int): String = when (type) {
-    C.TRACK_TYPE_AUDIO -> "$sampleRate $sampleMimeType"
-    C.TRACK_TYPE_VIDEO -> "$width×$height $sampleMimeType"
-    C.TRACK_TYPE_TEXT -> buildList {
-        label?.let { add(it) }
-        language?.let { add(it) }
-        sampleMimeType?.let { add(it) }
+private fun Format.displayText(type: @C.TrackType Int, fallback: String): String = when (type) {
+    C.TRACK_TYPE_AUDIO -> buildList {
+        label?.takeIf { it.isNotBlank() }?.let { add(it) }
+        language?.takeIf { it.isNotBlank() }?.let { add(it) }
+        sampleRate.takeIf { it > 0 }?.let { add("$it Hz") }
+        sampleMimeType?.takeIf { it.isNotBlank() }?.let { add(it) }
     }
-        .joinToString(separator = "-")
+        .joinToString(separator = " · ")
+
+    C.TRACK_TYPE_VIDEO -> buildList {
+        label?.takeIf { it.isNotBlank() }?.let { add(it) }
+        if (width > 0 && height > 0) add("$width×$height")
+        sampleMimeType?.takeIf { it.isNotBlank() }?.let { add(it) }
+    }
+        .joinToString(separator = " · ")
+
+    C.TRACK_TYPE_TEXT -> buildList {
+        label?.takeIf { it.isNotBlank() }?.let { add(it) }
+        language?.takeIf { it.isNotBlank() }?.let { add(it) }
+        sampleMimeType?.takeIf { it.isNotBlank() }?.let { add(it) }
+    }
+        .joinToString(separator = " · ")
 
     else -> sampleMimeType.orEmpty()
-}
+}.ifBlank { fallback }

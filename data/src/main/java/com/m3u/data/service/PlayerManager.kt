@@ -55,6 +55,14 @@ interface PlayerManager {
 }
 
 @Immutable
+data class PlayerTrack(
+    val type: @C.TrackType Int,
+    val group: TrackGroup,
+    val index: Int,
+    val format: Format
+)
+
+@Immutable
 sealed class MediaCommand(open val channelId: Int) {
     data class Common(override val channelId: Int) : MediaCommand(channelId)
     data class XtreamEpisode(
@@ -63,7 +71,7 @@ sealed class MediaCommand(open val channelId: Int) {
     ) : MediaCommand(channelId)
 }
 
-val PlayerManager.tracks: Flow<Map<@C.TrackType Int, List<Format>>>
+val PlayerManager.tracks: Flow<Map<@C.TrackType Int, List<PlayerTrack>>>
     get() = tracksGroups.mapLatest { all ->
         // Group all tracks by their type
         all.groupBy { it.type }
@@ -71,13 +79,20 @@ val PlayerManager.tracks: Flow<Map<@C.TrackType Int, List<Format>>>
                 // For each group, flatten the list of tracks and filter out unsupported tracks
                 innerGroups.flatMap { trackGroup ->
                     List(trackGroup.length) { index ->
-                        trackGroup.takeIf { it.isTrackSupported(index) }?.getTrackFormat(index)
+                        trackGroup.takeIf { it.isTrackSupported(index) }?.let {
+                            PlayerTrack(
+                                type = it.type,
+                                group = it.mediaTrackGroup,
+                                index = index,
+                                format = it.getTrackFormat(index)
+                            )
+                        }
                     }.filterNotNull()
                 }
             }
     }.flowOn(Dispatchers.IO)
 
-val PlayerManager.currentTracks: Flow<Map<@C.TrackType Int, Format?>>
+val PlayerManager.currentTracks: Flow<Map<@C.TrackType Int, PlayerTrack?>>
     get() = tracksGroups.mapLatest { currentTracksGroups ->
         currentTracksGroups
             .groupBy { it.type }
@@ -90,7 +105,14 @@ val PlayerManager.currentTracks: Flow<Map<@C.TrackType Int, Format?>>
                                 trackGroup.isTrackSupported(it) &&
                                         trackGroup.isTrackSelected(it)
                             }
-                            ?.let { trackGroup.getTrackFormat(it) }
+                            ?.let {
+                                PlayerTrack(
+                                    type = trackGroup.type,
+                                    group = trackGroup.mediaTrackGroup,
+                                    index = it,
+                                    format = trackGroup.getTrackFormat(it)
+                                )
+                            }
                     }
                     .firstOrNull()
             }
