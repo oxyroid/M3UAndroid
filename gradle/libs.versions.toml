@@ -23,6 +23,7 @@ google-accompanist = "0.37.3"
 google-dagger = "2.58" # 2.59 requires AGP9+
 
 haze = "1.7.1"
+backdrop = "2.0.0"
 io-coil = "2.7.0"
 kotlinpoet = "2.2.0"
 kotlinx-serialization-json = "1.10.0"
@@ -159,6 +160,7 @@ kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime",
 
 haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 haze-materials = { module = "dev.chrisbanes.haze:haze-materials", version.ref = "haze" }
+backdrop = { module = "io.github.kyant0:backdrop", version.ref = "backdrop" }
 io-coil-kt = { group = "io.coil-kt", name = "coil", version.ref = "io-coil" }
 io-coil-kt-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "io-coil" }
 

@@ -184,6 +184,7 @@ dependencies {
     implementation(libs.net.mm2d.mmupnp.mmupnp)
     implementation(libs.haze)
     implementation(libs.haze.materials)
+    implementation(libs.backdrop)
     implementation(libs.acra.notification)
     implementation(libs.acra.mail)
 
