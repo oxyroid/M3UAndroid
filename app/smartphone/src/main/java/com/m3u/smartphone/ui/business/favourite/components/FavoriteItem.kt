@@ -20,6 +20,7 @@ import com.m3u.data.database.model.Channel
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
+import com.m3u.smartphone.ui.material.components.liquidGlass
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.time.Duration.Companion.days
@@ -41,11 +42,17 @@ internal fun FavoriteItem(
     val recentlyString = stringResource(string.ui_sort_recently)
     val neverPlayedString = stringResource(string.ui_sort_never_played)
 
+    val shape = AbsoluteSmoothCornerShape(spacing.medium, 65)
     OutlinedCard(
-        modifier = Modifier.semantics(mergeDescendants = true) { },
+        modifier = Modifier
+            .liquidGlass(
+                shape = shape,
+                surfaceColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.28f)
+            )
+            .semantics(mergeDescendants = true) { },
         border = CardDefaults.outlinedCardBorder(zapping),
         colors = CardDefaults.cardColors(Color.Transparent),
-        shape = AbsoluteSmoothCornerShape(spacing.medium, 65),
+        shape = shape,
     ) {
         ListItem(
             headlineContent = {

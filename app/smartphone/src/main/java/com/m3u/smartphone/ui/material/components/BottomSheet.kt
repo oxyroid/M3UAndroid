@@ -15,6 +15,7 @@ import androidx.compose.material3.SheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import com.m3u.smartphone.ui.material.ktx.Edge
 import com.m3u.smartphone.ui.material.ktx.blurEdges
 import com.m3u.core.foundation.ui.thenIf
@@ -37,6 +38,9 @@ fun BottomSheet(
             sheetState = sheetState,
             onDismissRequest = onDismissRequest,
             modifier = modifier,
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.38f),
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            scrimColor = Color.Black.copy(alpha = 0.20f),
             properties = ModalBottomSheetProperties(
                 shouldDismissOnBackPress = shouldDismissOnBackPress
             )

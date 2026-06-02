@@ -5,7 +5,6 @@ package com.m3u.smartphone.ui.material.components
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -32,7 +31,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -121,10 +119,12 @@ fun TextField(
             decorationBox = { innerTextField ->
                 Box(
                     Modifier
-                        .clip(shape)
-                        .background(
-                            if (isError) MaterialTheme.colorScheme.error
-                            else backgroundColor
+                        .liquidGlass(
+                            shape = shape,
+                            surfaceColor = if (isError) MaterialTheme.colorScheme.error.copy(alpha = 0.62f)
+                            else backgroundColor.copy(alpha = 0.42f),
+                            tint = if (isError) MaterialTheme.colorScheme.error.copy(alpha = 0.22f)
+                            else Color.Unspecified
                         )
                         .interactionBorder(
                             type = InteractionType.PRESS,
@@ -227,8 +227,10 @@ fun PlaceholderField(
             decorationBox = { innerTextField ->
                 Row(
                     modifier = Modifier
-                        .clip(shape)
-                        .background(backgroundColor)
+                        .liquidGlass(
+                            shape = shape,
+                            surfaceColor = backgroundColor.copy(alpha = 0.42f)
+                        )
                         .clickable(
                             enabled = enabled && !readOnly,
                             interactionSource = interactionSource,

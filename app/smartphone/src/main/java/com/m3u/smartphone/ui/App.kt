@@ -28,6 +28,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.SearchBarValue
 import androidx.compose.material3.Text
@@ -61,6 +62,7 @@ import com.m3u.smartphone.ui.common.connect.RemoteControlSheet
 import com.m3u.smartphone.ui.common.connect.RemoteControlSheetValue
 import com.m3u.smartphone.ui.common.helper.LocalHelper
 import com.m3u.smartphone.ui.material.components.Destination
+import com.m3u.smartphone.ui.material.components.liquidGlass
 import com.m3u.smartphone.ui.material.components.SnackHost
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import kotlinx.coroutines.flow.Flow
@@ -256,7 +258,13 @@ private fun AppImpl(
                             focusedElevation = spacing.extraSmall,
                             hoveredElevation = spacing.extraSmall
                         ),
-                        onClick = openRemoteControlSheet
+                        onClick = openRemoteControlSheet,
+                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.56f),
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.liquidGlass(
+                            surfaceColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.30f),
+                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.26f)
+                        )
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.SettingsRemote,

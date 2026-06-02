@@ -66,9 +66,14 @@ fun Preference(
         }
     ) {
         val alpha = if (enabled) 1f else 0.38f
+        val shape = AbsoluteSmoothCornerShape(spacing.medium, 65)
         OutlinedCard(
             colors = CardDefaults.outlinedCardColors(Color.Transparent),
-            shape = AbsoluteSmoothCornerShape(spacing.medium, 65)
+            shape = shape,
+            modifier = Modifier.liquidGlass(
+                shape = shape,
+                surfaceColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.30f)
+            )
         ) {
             ListItem(
                 headlineContent = {
