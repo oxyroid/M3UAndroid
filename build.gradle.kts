@@ -60,7 +60,8 @@ subprojects {
     }
     plugins.withId("com.android.library") {
         configure<LibraryExtension> {
-            compileSdk = 36
+            compileSdk = 37
+            compileSdkMinor = 0
             defaultConfig {
                 minSdk = 26
                 testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

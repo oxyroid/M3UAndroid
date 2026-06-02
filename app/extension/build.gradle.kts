@@ -7,7 +7,8 @@ plugins {
 
 android {
     namespace = "com.m3u.extension"
-    compileSdk = 36
+    compileSdk = 37
+    compileSdkMinor = 0
 
     defaultConfig {
         applicationId = "com.m3u.extension"

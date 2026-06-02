@@ -12,7 +12,8 @@ val m3uMockServerUrl = providers.gradleProperty("m3uMockServerUrl").orElse("http
 
 android {
     namespace = "com.m3u.tv"
-    compileSdk = 36
+    compileSdk = 37
+    compileSdkMinor = 0
     defaultConfig {
         applicationId = "com.m3u.tv"
         minSdk = 26
