@@ -8,6 +8,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -28,7 +29,10 @@ inline fun Background(
     val actualContentColor = contentColor.takeOrElse { MaterialTheme.colorScheme.onBackground }
     Box(
         modifier = Modifier
-            .liquidGlass(shape = shape, surfaceColor = actualColor)
+            .clip(shape)
+            .drawBehind {
+                drawRect(actualColor)
+            }
             .then(modifier)
     ) {
         CompositionLocalProvider(
@@ -50,7 +54,7 @@ inline fun Background(
     val actualContentColor = contentColor.takeOrElse { MaterialTheme.colorScheme.onBackground }
     Box(
         modifier = Modifier
-            .liquidGlass(shape = shape, surfaceColor = Color.Transparent)
+            .clip(shape)
             .drawBehind {
                 drawRect(brush)
             }

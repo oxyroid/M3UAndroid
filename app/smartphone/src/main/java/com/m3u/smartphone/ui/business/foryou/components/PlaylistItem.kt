@@ -32,7 +32,6 @@ import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 import com.m3u.smartphone.ui.material.components.Badge
 import com.m3u.smartphone.ui.material.components.FontFamilies
-import com.m3u.smartphone.ui.material.components.liquidGlass
 
 @Composable
 internal fun PlaylistItem(
@@ -46,16 +45,10 @@ internal fun PlaylistItem(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    val shape = AbsoluteSmoothCornerShape(spacing.medium, 65)
     OutlinedCard(
-        shape = shape,
+        shape = AbsoluteSmoothCornerShape(spacing.medium, 65),
         colors = CardDefaults.cardColors(Color.Transparent),
-        modifier = modifier
-            .liquidGlass(
-                shape = shape,
-                surfaceColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.28f)
-            )
-            .semantics(mergeDescendants = true) { }
+        modifier = modifier.semantics(mergeDescendants = true) { }
     ) {
         ListItem(
             headlineContent = {

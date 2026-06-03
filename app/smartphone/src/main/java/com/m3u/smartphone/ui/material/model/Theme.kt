@@ -10,7 +10,6 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.graphics.Color
 import com.m3u.smartphone.ui.material.ktx.createScheme
 
 @Composable
@@ -32,20 +31,8 @@ fun Theme(
         }
     }
 
-    val liquidColorScheme = remember(colorScheme) {
-        colorScheme.copy(
-            background = Color.Transparent,
-            surface = colorScheme.surface.copy(alpha = 0.78f),
-            surfaceVariant = colorScheme.surfaceVariant.copy(alpha = 0.56f),
-            surfaceContainer = colorScheme.surfaceContainer.copy(alpha = 0.46f),
-            surfaceContainerLow = colorScheme.surfaceContainerLow.copy(alpha = 0.36f),
-            surfaceContainerHigh = colorScheme.surfaceContainerHigh.copy(alpha = 0.58f),
-            surfaceContainerHighest = colorScheme.surfaceContainerHighest.copy(alpha = 0.68f)
-        )
-    }
-
     MaterialTheme(
-        colorScheme = liquidColorScheme,
+        colorScheme = colorScheme,
         typography = typography
     ) {
         content()

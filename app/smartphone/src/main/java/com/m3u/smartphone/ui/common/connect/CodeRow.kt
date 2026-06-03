@@ -22,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.m3u.smartphone.ui.material.components.liquidGlass
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 
 @Composable
@@ -64,14 +63,9 @@ private fun CodeField(text: String) {
         modifier = Modifier
             .padding(start = 4.dp, end = 4.dp)
             .size(40.dp, 45.dp)
-            .liquidGlass(
-                shape = RoundedCornerShape(6.dp),
-                surfaceColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.24f),
-                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f),
-                blurRadius = 8f,
-                refractionHeight = 4f,
-                refractionAmount = 8f,
-                chromaticAberration = false
+            .background(
+                color = MaterialTheme.colorScheme.onSurface.copy(.05f),
+                shape = RoundedCornerShape(6.dp)
             )
             .border(
                 BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(.1f)),

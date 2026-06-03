@@ -11,7 +11,6 @@ import com.m3u.smartphone.ui.App
 import com.m3u.smartphone.ui.AppViewModel
 import com.m3u.smartphone.ui.common.helper.Helper
 import com.m3u.smartphone.ui.common.internal.Toolkit
-import com.m3u.smartphone.ui.material.components.LiquidGlassBackdrop
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -36,11 +35,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             Toolkit(helper) {
-                LiquidGlassBackdrop {
-                    App(
-                        viewModel = viewModel
-                    )
-                }
+                App(
+                    viewModel = viewModel
+                )
             }
         }
     }

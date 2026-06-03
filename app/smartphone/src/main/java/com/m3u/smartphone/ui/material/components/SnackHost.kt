@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.dp
 import com.m3u.core.foundation.wrapper.Message
 import com.m3u.data.service.collectMessageAsState
 import androidx.compose.material3.Icon
-import androidx.compose.foundation.shape.RoundedCornerShape
 import com.m3u.smartphone.ui.material.model.LocalDuration
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import kotlinx.coroutines.delay
@@ -113,19 +112,13 @@ fun SnackHost(
         }
         Card(
             colors = CardDefaults.cardColors(
-                containerColor = currentContainerColor.copy(alpha = 0.72f),
+                containerColor = currentContainerColor,
                 contentColor = currentContentColor
             ),
             elevation = CardDefaults.elevatedCardElevation(0.dp),
             onClick = { },
             interactionSource = interactionSource,
-            modifier = Modifier
-                .liquidGlass(
-                    shape = RoundedCornerShape(24.dp),
-                    surfaceColor = currentContainerColor.copy(alpha = 0.36f),
-                    tint = currentContainerColor.copy(alpha = 0.18f)
-                )
-                .animateContentSize()
+            modifier = Modifier.animateContentSize()
         ) {
             val text = message.formatText()
 

@@ -5,10 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Sort
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -17,11 +15,9 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.m3u.core.foundation.wrapper.Sort
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.material.model.LocalSpacing
@@ -82,14 +78,7 @@ private fun SortBottomSheetItem(
 ) {
     OutlinedCard(
         enabled = selected,
-        onClick = {},
-        colors = CardDefaults.outlinedCardColors(Color.Transparent),
-        shape = RoundedCornerShape(18.dp),
-        modifier = modifier.liquidGlass(
-            shape = RoundedCornerShape(18.dp),
-            surfaceColor = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.24f)
-            else MaterialTheme.colorScheme.surface.copy(alpha = 0.28f)
-        )
+        onClick = {}
     ) {
         ListItem(
             headlineContent = {

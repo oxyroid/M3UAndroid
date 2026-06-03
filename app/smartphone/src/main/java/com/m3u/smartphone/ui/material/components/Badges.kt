@@ -1,6 +1,7 @@
 package com.m3u.smartphone.ui.material.components
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.LocalContentColor
@@ -13,6 +14,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.style.LineHeightStyle
@@ -41,15 +43,8 @@ fun Badge(
     )
     Box(
         modifier = Modifier
-            .liquidGlass(
-                shape = shape,
-                surfaceColor = currentColor.copy(alpha = 0.42f),
-                tint = currentColor.copy(alpha = 0.24f),
-                blurRadius = 8f,
-                refractionHeight = 4f,
-                refractionAmount = 8f,
-                chromaticAberration = false
-            )
+            .clip(shape)
+            .background(currentColor)
             .padding(
                 start = spacing.small,
                 end = spacing.small,
