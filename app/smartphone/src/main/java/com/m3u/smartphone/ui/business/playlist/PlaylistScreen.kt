@@ -2,8 +2,6 @@ package com.m3u.smartphone.ui.business.playlist
 
 import android.Manifest
 import android.content.Intent
-import android.content.res.Configuration.ORIENTATION_LANDSCAPE
-import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.content.res.Configuration.UI_MODE_TYPE_APPLIANCE
 import android.content.res.Configuration.UI_MODE_TYPE_CAR
 import android.content.res.Configuration.UI_MODE_TYPE_DESK
@@ -51,7 +49,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -80,6 +77,7 @@ import com.m3u.smartphone.ui.business.playlist.components.PlaylistTabRow
 import com.m3u.smartphone.ui.common.helper.Action
 import com.m3u.smartphone.ui.common.helper.Fob
 import com.m3u.smartphone.ui.common.helper.LocalHelper
+import com.m3u.smartphone.ui.common.helper.adaptiveRowCount
 import com.m3u.smartphone.ui.common.helper.Metadata
 import com.m3u.smartphone.ui.material.components.Destination
 import com.m3u.smartphone.ui.material.components.EpisodesBottomSheet
@@ -336,7 +334,6 @@ private fun PlaylistScreen(
         onDispose { Metadata.fob = null }
     }
 
-    val configuration = LocalConfiguration.current
 
     val sheetState = rememberModalBottomSheetState()
 
@@ -374,14 +371,7 @@ private fun PlaylistScreen(
     EventHandler(state.scrollUp) {
         gridState.scrollToItem(0)
     }
-    val orientation = configuration.orientation
-    val actualRowCount = remember(orientation, state.rowCount) {
-        when (orientation) {
-            ORIENTATION_LANDSCAPE -> state.rowCount + 2
-            ORIENTATION_PORTRAIT -> state.rowCount
-            else -> state.rowCount
-        }
-    }
+    val actualRowCount = LocalHelper.current.adaptiveRowCount(state.rowCount)
     var isExpanded by remember(state.sort == Sort.MIXED) {
         mutableStateOf(false)
     }

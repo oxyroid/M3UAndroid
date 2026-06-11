@@ -2,6 +2,7 @@ package com.m3u.smartphone.ui.common.helper
 
 import android.app.PictureInPictureParams
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Rect
 import android.provider.Settings
@@ -15,6 +16,7 @@ import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.core.app.PictureInPictureModeChangedInfo
 import androidx.core.util.Consumer
 import androidx.core.view.WindowInsetsCompat
@@ -164,5 +166,18 @@ class Helper(private val activity: ComponentActivity) {
 
 val Helper.useRailNav: Boolean
     @Composable get() = windowSizeClass.widthSizeClass > WindowWidthSizeClass.Compact
+
+@Composable
+fun Helper.adaptiveRowCount(rowCount: Int): Int {
+    val landscapeExtra =
+        if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE) 2
+        else 0
+    val widthExtra = when (windowSizeClass.widthSizeClass) {
+        WindowWidthSizeClass.Expanded -> 2
+        WindowWidthSizeClass.Medium -> 1
+        else -> 0
+    }
+    return rowCount + maxOf(landscapeExtra, widthExtra)
+}
 
 val LocalHelper = staticCompositionLocalOf<Helper> { error("Please provide helper.") }

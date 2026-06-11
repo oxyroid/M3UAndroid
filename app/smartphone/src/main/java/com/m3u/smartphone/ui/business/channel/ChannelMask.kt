@@ -102,6 +102,7 @@ import com.m3u.smartphone.ui.material.components.mask.MaskCircleButton
 import com.m3u.smartphone.ui.material.components.mask.MaskPanel
 import com.m3u.smartphone.ui.material.components.mask.MaskState
 import com.m3u.smartphone.ui.material.effects.currentBackStackEntry
+import com.m3u.smartphone.ui.material.model.FavoriteColor
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -303,7 +304,7 @@ fun ChannelMask(
                     MaskButton(
                         state = maskState,
                         icon = Icons.Rounded.Star,
-                        tint = if (favourite) Color(0xffffcd3c) else Color.Unspecified,
+                        tint = if (favourite) FavoriteColor else Color.Unspecified,
                         onClick = onFavorite,
                         contentDescription = if (favourite) stringResource(string.feat_channel_tooltip_unfavourite)
                         else stringResource(string.feat_channel_tooltip_favourite)

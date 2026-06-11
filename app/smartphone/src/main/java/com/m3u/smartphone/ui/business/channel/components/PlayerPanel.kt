@@ -62,7 +62,7 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import coil.compose.SubcomposeAsyncImage
 import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
-import com.m3u.core.foundation.components.CircularProgressIndicator
+import com.m3u.smartphone.ui.material.components.CircularProgressIndicator
 import com.m3u.core.foundation.ui.composableOf
 import com.m3u.core.foundation.ui.thenIf
 import com.m3u.core.foundation.util.collections.indexOf

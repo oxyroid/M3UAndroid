@@ -1,6 +1,5 @@
 package com.m3u.smartphone.ui.business.favourite
 
-import android.content.res.Configuration
 import android.view.KeyEvent
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,7 +15,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -39,6 +37,7 @@ import com.m3u.i18n.R
 import com.m3u.smartphone.ui.business.favourite.components.FavoriteGallery
 import com.m3u.smartphone.ui.common.helper.Action
 import com.m3u.smartphone.ui.common.helper.LocalHelper
+import com.m3u.smartphone.ui.common.helper.adaptiveRowCount
 import com.m3u.smartphone.ui.common.helper.Metadata
 import com.m3u.smartphone.ui.material.components.EpisodesBottomSheet
 import com.m3u.smartphone.ui.material.components.MediaSheet
@@ -191,12 +190,7 @@ private fun FavoriteScreen(
     onLongClickChannel: (Channel) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val configuration = LocalConfiguration.current
-    val actualRowCount = when (configuration.orientation) {
-        Configuration.ORIENTATION_PORTRAIT -> rowCount
-        Configuration.ORIENTATION_LANDSCAPE -> rowCount + 2
-        else -> rowCount + 2
-    }
+    val actualRowCount = LocalHelper.current.adaptiveRowCount(rowCount)
     FavoriteGallery(
         contentPadding = contentPadding,
         channels = channels,

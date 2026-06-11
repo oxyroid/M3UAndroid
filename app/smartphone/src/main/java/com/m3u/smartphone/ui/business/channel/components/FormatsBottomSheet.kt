@@ -98,7 +98,11 @@ internal fun FormatsBottomSheet(
                 LazyColumn(
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    items(currentTracks) { track ->
+                    items(
+                        items = currentTracks,
+                        key = { "${it.group.hashCode()}-${it.index}" },
+                        contentType = { "track" }
+                    ) { track ->
                         val selected = selectedTrack != null &&
                                 track.group == selectedTrack.group &&
                                 track.index == selectedTrack.index
