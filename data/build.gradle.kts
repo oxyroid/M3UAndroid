@@ -27,6 +27,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":core:extension"))
     implementation(project(":core:foundation"))
     implementation("dev.oxyroid.parser:m3u")
     api("dev.oxyroid.parser:xtream")

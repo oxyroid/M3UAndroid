@@ -1,9 +1,5 @@
 package com.m3u.core.extension.business
 
-import com.m3u.data.database.dao.ChannelDao
-import com.m3u.data.database.dao.PlaylistDao
-import com.m3u.data.database.model.Channel
-import com.m3u.data.database.model.Playlist
 import com.m3u.core.extension.RemoteServiceDependencies
 import com.m3u.extension.api.Method
 import com.m3u.extension.api.Module
@@ -20,32 +16,28 @@ import kotlinx.coroutines.Dispatchers
 class SubscribeModule(
     dependencies: RemoteServiceDependencies
 ) : RemoteModule(Dispatchers.Default), SubscribeApi {
-    private val playlistDao: PlaylistDao = dependencies.playlistDao
-    private val channelDao: ChannelDao = dependencies.channelDao
+    private val playlistStore = dependencies.playlistStore
+    private val channelStore = dependencies.channelStore
 
     @Method("addPlaylist_v2")
     override suspend fun addPlaylist(playlist: ApiPlaylist): Result = result {
-        playlistDao.insertOrReplace(
-            Playlist(
-                url = playlist.url,
-                title = playlist.title,
-                userAgent = playlist.user_agent
-            )
+        playlistStore.insertOrReplace(
+            title = playlist.title,
+            url = playlist.url,
+            userAgent = playlist.user_agent
         )
     }
 
     @Method("addChannel_v2")
     override suspend fun addChannel(channel: ApiChannel): Result = result {
-        channelDao.insertOrReplace(
-            Channel(
-                title = channel.title,
-                url = channel.url,
-                playlistUrl = channel.playlist_url,
-                cover = channel.cover,
-                category = channel.category.orEmpty(),
-                licenseKey = channel.license_key,
-                licenseType = channel.license_type
-            )
+        channelStore.insertOrReplace(
+            title = channel.title,
+            url = channel.url,
+            playlistUrl = channel.playlist_url,
+            cover = channel.cover,
+            category = channel.category.orEmpty(),
+            licenseKey = channel.license_key,
+            licenseType = channel.license_type
         )
     }
 
@@ -63,12 +55,10 @@ class SubscribeModule(
     )
     @Method("addPlaylist")
     override suspend fun addPlaylist(req: AddPlaylistRequest): Result = result {
-        playlistDao.insertOrReplace(
-            Playlist(
-                url = req.url,
-                title = req.title,
-                userAgent = req.user_agent
-            )
+        playlistStore.insertOrReplace(
+            title = req.title,
+            url = req.url,
+            userAgent = req.user_agent
         )
     }
 
@@ -78,16 +68,14 @@ class SubscribeModule(
     )
     @Method("addChannel")
     override suspend fun addChannel(req: AddChannelRequest): Result = result {
-        channelDao.insertOrReplace(
-            Channel(
-                title = req.title,
-                url = req.url,
-                playlistUrl = req.playlist_url,
-                cover = req.cover,
-                category = req.category.orEmpty(),
-                licenseKey = req.license_key,
-                licenseType = req.license_type
-            )
+        channelStore.insertOrReplace(
+            title = req.title,
+            url = req.url,
+            playlistUrl = req.playlist_url,
+            cover = req.cover,
+            category = req.category.orEmpty(),
+            licenseKey = req.license_key,
+            licenseType = req.license_type
         )
     }
 }

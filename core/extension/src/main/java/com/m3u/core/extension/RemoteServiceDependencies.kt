@@ -1,9 +1,26 @@
 package com.m3u.core.extension
 
-import com.m3u.data.database.dao.ChannelDao
-import com.m3u.data.database.dao.PlaylistDao
-
 interface RemoteServiceDependencies {
-    val playlistDao: PlaylistDao
-    val channelDao: ChannelDao
+    val playlistStore: ExtensionPlaylistStore
+    val channelStore: ExtensionChannelStore
+}
+
+interface ExtensionPlaylistStore {
+    suspend fun insertOrReplace(
+        title: String,
+        url: String,
+        userAgent: String?
+    ): Long
+}
+
+interface ExtensionChannelStore {
+    suspend fun insertOrReplace(
+        title: String,
+        url: String,
+        playlistUrl: String,
+        cover: String?,
+        category: String,
+        licenseKey: String?,
+        licenseType: String?
+    ): Long
 }

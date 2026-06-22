@@ -1,17 +1,16 @@
 package com.m3u.core.extension
 
-import com.m3u.data.database.dao.ChannelDao
-import com.m3u.data.database.dao.PlaylistDao
+import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 
 class RemoteServiceDependenciesImpl : RemoteServiceDependencies {
-    @dagger.hilt.EntryPoint
+    @EntryPoint
     @InstallIn(SingletonComponent::class)
     interface EntryPoint {
-        val playlistDao: PlaylistDao
-        val channelDao: ChannelDao
+        val extensionPlaylistStore: ExtensionPlaylistStore
+        val extensionChannelStore: ExtensionChannelStore
     }
 
     private val entryPoint: EntryPoint by lazy {
@@ -21,6 +20,6 @@ class RemoteServiceDependenciesImpl : RemoteServiceDependencies {
         )
     }
 
-    override val playlistDao: PlaylistDao = entryPoint.playlistDao
-    override val channelDao: ChannelDao = entryPoint.channelDao
+    override val playlistStore: ExtensionPlaylistStore = entryPoint.extensionPlaylistStore
+    override val channelStore: ExtensionChannelStore = entryPoint.extensionChannelStore
 }
