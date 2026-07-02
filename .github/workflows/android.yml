@@ -94,7 +94,7 @@ jobs:
         with:
           name: artifact
           if-no-files-found: error
-          path: |
+          path: |-
             app/smartphone/build/outputs/apk/release/*.apk
             app/tv/build/outputs/apk/release/*.apk
             SHA256SUMS.txt
@@ -128,7 +128,7 @@ jobs:
           api_hash: ${{ secrets.API_HASH }}
           large_file: true
           method: sendFile
-          path: |
+          path: |-
             app/smartphone/build/outputs/apk/release/*.apk
             app/tv/build/outputs/apk/release/*.apk
             SHA256SUMS.txt
