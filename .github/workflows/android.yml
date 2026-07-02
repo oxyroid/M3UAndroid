@@ -131,6 +131,4 @@ jobs:
           path: |-
             app/smartphone/build/outputs/apk/release/*.apk
             app/tv/build/outputs/apk/release/*.apk
-            SHA256SUMS.txt
-            SHA256SUMS-smartphone.txt
-            SHA256SUMS-tv.txt
+            SHA256SUMS*.txt
