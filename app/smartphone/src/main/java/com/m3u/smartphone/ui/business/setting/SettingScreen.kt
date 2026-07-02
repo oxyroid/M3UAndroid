@@ -12,10 +12,12 @@ import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -109,6 +111,7 @@ fun SettingRoute(
                 controller?.hide()
                 viewModel.subscribe()
             },
+            onRestoreToTv = viewModel::restoreToTv,
             onUnhideChannel = { viewModel.onUnhideChannel(it) },
             onUnhidePlaylistCategory = { playlistUrl, group ->
                 viewModel.onUnhidePlaylistCategory(playlistUrl, group)
@@ -142,6 +145,7 @@ private fun SettingScreen(
     backingUpOrRestoring: BackingUpAndRestoringState,
     codecPackState: CodecPackState,
     onSubscribe: () -> Unit,
+    onRestoreToTv: () -> Unit,
     hiddenChannels: List<Channel>,
     hiddenCategoriesWithPlaylists: List<Pair<Playlist, String>>,
     onUnhideChannel: (Int) -> Unit,
@@ -171,10 +175,34 @@ private fun SettingScreen(
     val colorArgb by preferenceOf(PreferencesKeys.COLOR_ARGB)
 
     val navigator = rememberListDetailPaneScaffoldNavigator<SettingDestination>()
-    val destination = navigator.currentDestination?.contentKey ?: SettingDestination.Default
+    var destination by rememberSaveable {
+        mutableStateOf<SettingDestination>(SettingDestination.Default)
+    }
+
+    fun navigateToDetail(target: SettingDestination) {
+        destination = target
+    }
+
+    fun navigateBackToList() {
+        destination = SettingDestination.Default
+        coroutineScope.launch {
+            navigator.navigateBack()
+        }
+    }
 
     EventHandler(Events.settingDestination) {
-        navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, it)
+        navigateToDetail(it)
+    }
+
+    LaunchedEffect(destination) {
+        if (destination != SettingDestination.Default &&
+            navigator.currentDestination?.contentKey != destination
+        ) {
+            navigator.navigateTo(
+                pane = ListDetailPaneScaffoldRole.Detail,
+                contentKey = destination
+            )
+        }
     }
 
     LifecycleResumeEffect(destination, defaultTitle, playlistTitle, appearanceTitle, optionalTitle, codecPackTitle) {
@@ -195,9 +223,7 @@ private fun SettingScreen(
                 icon = Icons.Rounded.ChangeCircle,
                 iconTextId = string.feat_setting_back_home
             ) {
-                coroutineScope.launch {
-                    navigator.navigateBack()
-                }
+                navigateBackToList()
             }
         }
         onPauseOrDispose {
@@ -216,36 +242,16 @@ private fun SettingScreen(
                 versionCode = versionCode,
                 codecPackEnabled = codecPackState.enabled,
                 navigateToPlaylistManagement = {
-                    coroutineScope.launch {
-                        navigator.navigateTo(
-                            pane = ListDetailPaneScaffoldRole.Detail,
-                            contentKey = SettingDestination.Playlists
-                        )
-                    }
+                    navigateToDetail(SettingDestination.Playlists)
                 },
                 navigateToThemeSelector = {
-                    coroutineScope.launch {
-                        navigator.navigateTo(
-                            pane = ListDetailPaneScaffoldRole.Detail,
-                            contentKey = SettingDestination.Appearance
-                        )
-                    }
+                    navigateToDetail(SettingDestination.Appearance)
                 },
                 navigateToOptional = {
-                    coroutineScope.launch {
-                        navigator.navigateTo(
-                            pane = ListDetailPaneScaffoldRole.Detail,
-                            contentKey = SettingDestination.Optional
-                        )
-                    }
+                    navigateToDetail(SettingDestination.Optional)
                 },
                 navigateToCodecPack = {
-                    coroutineScope.launch {
-                        navigator.navigateTo(
-                            pane = ListDetailPaneScaffoldRole.Detail,
-                            contentKey = SettingDestination.CodecPack
-                        )
-                    }
+                    navigateToDetail(SettingDestination.CodecPack)
                 },
                 modifier = Modifier.fillMaxSize()
             )
@@ -261,6 +267,7 @@ private fun SettingScreen(
                         onUnhidePlaylistCategory = onUnhidePlaylistCategory,
                         onClipboard = onClipboard,
                         onSubscribe = onSubscribe,
+                        onRestoreToTv = onRestoreToTv,
                         backup = backup,
                         restore = restore,
                         epgs = epgs,
@@ -308,8 +315,6 @@ private fun SettingScreen(
             .testTag("feature:setting")
     )
     BackHandler(navigator.canNavigateBack()) {
-        coroutineScope.launch {
-            navigator.navigateBack()
-        }
+        navigateBackToList()
     }
 }

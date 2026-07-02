@@ -39,9 +39,12 @@ fun App(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val player by viewModel.player.collectAsStateWithLifecycle()
     val currentChannel by viewModel.currentChannel.collectAsStateWithLifecycle()
+    val currentFavorite by viewModel.currentFavorite.collectAsStateWithLifecycle()
     val isPlaying by viewModel.isPlaying.collectAsStateWithLifecycle()
     val playbackState by viewModel.playbackState.collectAsStateWithLifecycle()
     val remoteControlCode by viewModel.remoteControlCode.collectAsStateWithLifecycle()
+    val subscribingXtream by viewModel.subscribingXtream.collectAsStateWithLifecycle()
+    val xtreamSubscriptionMessage by viewModel.xtreamSubscriptionMessage.collectAsStateWithLifecycle()
     val view = LocalView.current
     var destination by remember { mutableStateOf(TvDestination.Home) }
     var surface by remember { mutableStateOf(TvSurface.Browse) }
@@ -65,6 +68,12 @@ fun App(
         }
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.startupPlaybackRequests.collect {
+            surface = TvSurface.Player
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -80,12 +89,16 @@ fun App(
             TvBrowsePane(
                 destination = destination,
                 state = state,
+                subscribingXtream = subscribingXtream,
+                xtreamSubscriptionMessage = xtreamSubscriptionMessage,
                 onOpenLibrary = { destination = TvDestination.Library },
                 onPlaylist = {
                     viewModel.selectPlaylist(it)
                     destination = TvDestination.Library
                 },
                 onRefresh = viewModel::refreshSelectedPlaylist,
+                onAddXtreamPlaylist = viewModel::addXtreamPlaylist,
+                onClearXtreamSubscriptionMessage = viewModel::clearXtreamSubscriptionMessage,
                 onPlay = {
                     viewModel.play(it)
                     surface = TvSurface.Player
@@ -105,9 +118,13 @@ fun App(
             TvPlayerScreen(
                 player = player,
                 channel = currentChannel,
+                isFavorite = currentFavorite,
                 isPlaying = isPlaying,
                 playbackState = playbackState,
                 onPlayPause = { viewModel.pauseOrContinue(!isPlaying) },
+                onFavorite = viewModel::toggleCurrentFavorite,
+                onPreviousChannel = viewModel::playPreviousChannel,
+                onNextChannel = viewModel::playNextChannel,
                 onBack = closePlayer,
                 onClose = closePlayer
             )

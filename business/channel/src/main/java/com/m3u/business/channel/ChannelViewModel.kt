@@ -10,7 +10,6 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.C
-import androidx.media3.common.Format
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
@@ -33,11 +32,12 @@ import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.PlayerManager
-import com.m3u.data.service.currentTracks
-import com.m3u.data.service.tracks
+import com.m3u.data.service.TrackOption
+import com.m3u.data.service.trackOptions
 import com.m3u.data.worker.ProgrammeReminder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,6 +46,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -144,28 +145,16 @@ class ChannelViewModel @Inject constructor(
         }
     }
 
-    val tracks: Flow<Map<Int, List<Format>>> = playerManager.tracks
+    val tracks: Flow<Map<Int, List<TrackOption>>> = playerManager.trackOptions
         .map { all ->
-            all
-                .mapValues { (_, formats) -> formats }
-                .toMap()
+            all.mapValues { (_, options) -> options }
         }
 
-    val currentTracks: Flow<Map<@C.TrackType Int, Format?>> = playerManager.currentTracks
-
-    fun chooseTrack(type: @C.TrackType Int, format: Format) {
-        val groups = playerManager.tracksGroups.value
-        val group = groups.find { it.type == type } ?: return
-        val trackGroup = group.mediaTrackGroup
-        for (index in 0 until trackGroup.length) {
-            if (trackGroup.getFormat(index).id == format.id) {
-                playerManager.chooseTrack(
-                    group = trackGroup,
-                    index = index
-                )
-                break
-            }
-        }
+    fun chooseTrack(option: TrackOption) {
+        playerManager.chooseTrack(
+            groupIndex = option.groupIndex,
+            trackIndex = option.trackIndex
+        )
     }
 
     fun clearTrack(type: @C.TrackType Int) {
@@ -173,7 +162,7 @@ class ChannelViewModel @Inject constructor(
     }
 
     // channel playing state
-    val playerState: StateFlow<PlayerState> = combine(
+    private val basePlayerState: Flow<PlayerState> = combine(
         playerManager.player,
         playerManager.playbackState,
         playerManager.size,
@@ -187,6 +176,13 @@ class ChannelViewModel @Inject constructor(
             player = player,
             isPlaying = isPlaying
         )
+    }
+
+    val playerState: StateFlow<PlayerState> = combine(
+        basePlayerState,
+        playerManager.streamMetadata
+    ) { state, streamMetadata ->
+        state.copy(streamMetadata = streamMetadata)
     }
         .stateIn(
             scope = viewModelScope,
@@ -205,7 +201,8 @@ class ChannelViewModel @Inject constructor(
     val searching = _searching.asStateFlow()
 
     fun openDlnaDevices() {
-        viewModelScope.launch {
+        stopDlnaSearch(clearDevices = false)
+        dlnaSearchJob = viewModelScope.launch {
             delay(800.milliseconds)
             _searching.value = true
             controlPoint = ControlPointFactory.create().apply {
@@ -222,34 +219,43 @@ class ChannelViewModel @Inject constructor(
         runCatching {
             _searching.value = false
             _isDevicesVisible.value = false
-
-            controlPoint?.removeDiscoveryListener(this)
-            controlPoint?.stop()
-            controlPoint?.terminate()
-            controlPoint = null
-
-            devices = emptyList()
+            stopDlnaSearch(clearDevices = true)
         }
     }
 
     override fun onDiscover(device: Device) {
-        devices = devices + device
+        devices = (devices.filterNot { it.hasSameIdentity(device) } + device)
+            .sortedWith(compareBy<Device> { it.friendlyName.lowercase() }.thenBy { it.deviceKey })
     }
 
     override fun onLost(device: Device) {
-        devices = devices - device
+        devices = devices.filterNot { it.hasSameIdentity(device) }
     }
 
     private var controlPoint: ControlPoint? = null
+    private var dlnaSearchJob: Job? = null
 
     fun connectDlnaDevice(device: Device) {
-        val url = channel.value?.url ?: return
-        device.findAction(ACTION_SET_AV_TRANSPORT_URI)?.invoke(
-            argumentValues = mapOf(
-                INSTANCE_ID to "0",
-                CURRENT_URI to url
-            )
-        )
+        val url = channel.value?.url?.substringBefore('|') ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching {
+                device.findAction(ACTION_SET_AV_TRANSPORT_URI)?.invokeSync(
+                    mapOf(
+                        INSTANCE_ID to "0",
+                        CURRENT_URI to url,
+                        CURRENT_URI_META_DATA to ""
+                    ),
+                    false
+                )
+                device.findAction(ACTION_PLAY)?.invokeSync(
+                    mapOf(
+                        INSTANCE_ID to "0",
+                        SPEED to "1"
+                    ),
+                    false
+                )
+            }
+        }
     }
 
     fun disconnectDlnaDevice(device: Device) {
@@ -364,7 +370,7 @@ class ChannelViewModel @Inject constructor(
 
     val programmes: Flow<PagingData<Programme>> = channel.flatMapLatest { channel ->
         channel ?: return@flatMapLatest flowOf(PagingData.empty())
-        val relationId = channel.relationId ?: return@flatMapLatest flowOf(PagingData.empty())
+        val relationId = channel.relationId?.takeIf { it.isNotBlank() } ?: channel.title
         val playlist = channel.playlistUrl.let { playlistRepository.get(it) }
         playlist ?: return@flatMapLatest flowOf(PagingData.empty())
         programmeRepository.pagingProgrammes(
@@ -373,6 +379,21 @@ class ChannelViewModel @Inject constructor(
         )
             .cachedIn(viewModelScope)
     }
+
+    val currentProgramme: StateFlow<Programme?> = channel.flatMapLatest { channel ->
+        channel ?: return@flatMapLatest flowOf<Programme?>(null)
+        flow<Programme?> {
+            while (true) {
+                emit(programmeRepository.getProgrammeCurrently(channel.id))
+                delay(1.minutes)
+            }
+        }
+    }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = null,
+            started = SharingStarted.WhileSubscribed(5_000L)
+        )
 
     private val defaultProgrammeRange: ProgrammeRange
         get() = with(Clock.System.now()) {
@@ -384,7 +405,7 @@ class ChannelViewModel @Inject constructor(
 
     val programmeRange: StateFlow<ProgrammeRange> = channel.flatMapLatest { channel ->
         channel ?: return@flatMapLatest flowOf(defaultProgrammeRange)
-        val relationId = channel.relationId ?: return@flatMapLatest flowOf(defaultProgrammeRange)
+        val relationId = channel.relationId?.takeIf { it.isNotBlank() } ?: channel.title
         programmeRepository
             .observeProgrammeRange(channel.playlistUrl, relationId)
             .map {
@@ -409,6 +430,31 @@ class ChannelViewModel @Inject constructor(
         }
     }
 
+    private fun stopDlnaSearch(clearDevices: Boolean) {
+        dlnaSearchJob?.cancel()
+        dlnaSearchJob = null
+        controlPoint?.removeDiscoveryListener(this)
+        controlPoint?.stop()
+        controlPoint?.terminate()
+        controlPoint = null
+        if (clearDevices) {
+            devices = emptyList()
+        }
+    }
+
+    private fun Device.hasSameIdentity(other: Device): Boolean {
+        return deviceKey == other.deviceKey
+    }
+
+    private val Device.deviceKey: String
+        get() = sequenceOf(
+            udn,
+            location,
+            "$ipAddress|$friendlyName|$deviceType"
+        )
+            .firstOrNull { it.isNotBlank() }
+            .orEmpty()
+
     companion object {
         private const val ACTION_SET_AV_TRANSPORT_URI = "SetAVTransportURI"
         private const val ACTION_PLAY = "Play"
@@ -418,5 +464,6 @@ class ChannelViewModel @Inject constructor(
         private const val INSTANCE_ID = "InstanceID"
         private const val CURRENT_URI = "CurrentURI"
         private const val CURRENT_URI_META_DATA = "CurrentURIMetaData"
+        private const val SPEED = "Speed"
     }
 }

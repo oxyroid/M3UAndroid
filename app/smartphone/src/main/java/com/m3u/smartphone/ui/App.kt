@@ -35,10 +35,12 @@ import androidx.compose.material3.TopSearchBar
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -60,10 +62,13 @@ import com.m3u.smartphone.ui.common.AppNavHost
 import com.m3u.smartphone.ui.common.connect.RemoteControlSheet
 import com.m3u.smartphone.ui.common.connect.RemoteControlSheetValue
 import com.m3u.smartphone.ui.common.helper.LocalHelper
+import com.m3u.smartphone.ui.common.internal.Events
 import com.m3u.smartphone.ui.material.components.Destination
+import com.m3u.smartphone.ui.material.components.EventHandler
 import com.m3u.smartphone.ui.material.components.SnackHost
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 @Composable
@@ -76,6 +81,8 @@ fun App(
     AppImpl(
         navController = navController,
         channels = viewModel.channels,
+        searchQuery = viewModel.searchQuery.value,
+        onSearchQueryChange = { viewModel.searchQuery.value = it },
         isRemoteControlSheetVisible = viewModel.isConnectSheetVisible,
         remoteControlSheetValue = viewModel.remoteControlSheetValue,
         openRemoteControlSheet = { viewModel.isConnectSheetVisible = true },
@@ -95,6 +102,8 @@ fun App(
 private fun AppImpl(
     navController: NavHostController,
     channels: Flow<PagingData<Channel>>,
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
     isRemoteControlSheetVisible: Boolean,
     remoteControlSheetValue: RemoteControlSheetValue,
     openRemoteControlSheet: () -> Unit,
@@ -170,13 +179,21 @@ private fun AppImpl(
         Column {
             val coroutineScope = rememberCoroutineScope()
             val searchBarState = rememberSearchBarState()
-            val textFieldState = rememberTextFieldState()
+            val textFieldState = rememberTextFieldState(searchQuery)
+            LaunchedEffect(textFieldState) {
+                snapshotFlow { textFieldState.text.toString() }
+                    .distinctUntilChanged()
+                    .collect { onSearchQueryChange(it) }
+            }
+            EventHandler(Events.openSearch) {
+                searchBarState.animateToExpanded()
+            }
             val inputField = @Composable {
                 SearchBarDefaults.InputField(
                     searchBarState = searchBarState,
                     textFieldState = textFieldState,
                     onSearch = { coroutineScope.launch { searchBarState.animateToCollapsed() } },
-                    placeholder = { Text("Search...") },
+                    placeholder = { Text(stringResource(com.m3u.i18n.R.string.feat_playlist_query_placeholder)) },
                     leadingIcon = {
                         if (searchBarState.currentValue == SearchBarValue.Expanded) {
                             IconButton(

@@ -36,7 +36,10 @@ import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material.icons.rounded.Cast
+import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.HighQuality
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.LockOpen
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -52,6 +55,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -91,7 +95,10 @@ import com.m3u.core.foundation.ui.composableOf
 import com.m3u.core.foundation.ui.thenIf
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.data.database.model.AdjacentChannels
+import com.m3u.data.database.model.Programme
 import com.m3u.i18n.R.string
+import com.m3u.smartphone.TimeUtils.formatEOrSh
+import com.m3u.smartphone.TimeUtils.toEOrSh
 import com.m3u.smartphone.ui.business.channel.components.Paddings
 import com.m3u.smartphone.ui.business.channel.components.MaskTextButton
 import com.m3u.smartphone.ui.business.channel.components.PlayerMask
@@ -103,6 +110,8 @@ import com.m3u.smartphone.ui.material.components.mask.MaskPanel
 import com.m3u.smartphone.ui.material.components.mask.MaskState
 import com.m3u.smartphone.ui.material.effects.currentBackStackEntry
 import com.m3u.smartphone.ui.material.model.LocalSpacing
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
@@ -110,6 +119,7 @@ import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.DurationUnit
+import kotlin.time.Instant
 import kotlin.time.toDuration
 
 @Composable
@@ -118,6 +128,7 @@ fun ChannelMask(
     title: String,
     gesture: MaskGesture?,
     playlistTitle: String,
+    currentProgramme: Programme?,
     playerState: PlayerState,
     volume: Float,
     brightness: Float,
@@ -125,6 +136,7 @@ fun ChannelMask(
     favourite: Boolean,
     isSeriesPlaylist: Boolean,
     isPanelExpanded: Boolean,
+    controlsLocked: Boolean,
     useVertical: Boolean,
     hasTrack: Boolean,
     cwPosition: Long,
@@ -137,6 +149,8 @@ fun ChannelMask(
     openChooseFormat: () -> Unit,
     openOrClosePanel: () -> Unit,
     onEnterPipMode: () -> Unit,
+    onControlsLockedChange: (Boolean) -> Unit,
+    onRecordVideo: () -> Unit,
     onVolume: (Float) -> Unit,
     onNextChannelClick: () -> Unit,
     onPreviousChannelClick: () -> Unit,
@@ -146,10 +160,25 @@ fun ChannelMask(
     val helper = LocalHelper.current
     val spacing = LocalSpacing.current
     val coroutineScope = rememberCoroutineScope()
+    val controlsLockKey = remember { Any() }
 
     val onBackPressedDispatcher = checkNotNull(
         LocalOnBackPressedDispatcherOwner.current
     ).onBackPressedDispatcher
+
+    LaunchedEffect(maskState, controlsLocked, controlsLockKey) {
+        if (controlsLocked) {
+            maskState.lock(controlsLockKey)
+            maskState.wake()
+        } else {
+            maskState.unlock(controlsLockKey)
+        }
+    }
+    DisposableEffect(maskState, controlsLockKey) {
+        onDispose {
+            maskState.unlock(controlsLockKey)
+        }
+    }
 
     // because they will be updated frequently,
     // they must be wrapped with rememberUpdatedState when using them.
@@ -248,7 +277,7 @@ fun ChannelMask(
     ) {
         MaskPanel(
             state = maskState,
-            isSpeedGestureEnabled = isSpeedable,
+            isSpeedGestureEnabled = isSpeedable && !controlsLocked,
             onSpeedUpdated = onSpeedUpdated,
             onSpeedStart = onSpeedStart,
             onSpeedEnd = onSpeedEnd,
@@ -260,6 +289,20 @@ fun ChannelMask(
         val playStateDisplayText = ChannelMaskUtils.playStateDisplayText(playerState.playState)
         val exceptionDisplayText =
             ChannelMaskUtils.playbackExceptionDisplayText(playerState.playerError)
+        val streamMetadata = playerState.streamMetadata
+            ?.takeIf { it.isNotBlank() }
+        val programmeDisplayText = currentProgramme?.let { programme ->
+            val start = Instant.fromEpochMilliseconds(programme.start)
+                .toLocalDateTime(TimeZone.currentSystemDefault())
+                .toEOrSh()
+            val end = Instant.fromEpochMilliseconds(programme.end)
+                .toLocalDateTime(TimeZone.currentSystemDefault())
+                .toEOrSh()
+            "${start.formatEOrSh(false)} - ${end.formatEOrSh(false)}  ${programme.title}"
+        }
+        val programmeDescription = currentProgramme
+            ?.description
+            ?.takeIf { it.isNotBlank() }
 
         val cwPositionObj = run {
             currentCwPosition.takeIf {
@@ -272,255 +315,321 @@ fun ChannelMask(
             state = maskState,
             color = color,
             header = {
-                val backStackEntry by currentBackStackEntry()
-                MaskButton(
-                    state = maskState,
-                    icon = backStackEntry?.navigationIcon ?: Icons.AutoMirrored.Rounded.ArrowBack,
-                    onClick = { onBackPressedDispatcher.onBackPressed() },
-                    contentDescription = stringResource(string.feat_channel_tooltip_on_back_pressed)
-                )
-                Spacer(modifier = Modifier.weight(1f))
+                if (!controlsLocked) {
+                    val backStackEntry by currentBackStackEntry()
+                    MaskButton(
+                        state = maskState,
+                        icon = backStackEntry?.navigationIcon ?: Icons.AutoMirrored.Rounded.ArrowBack,
+                        onClick = { onBackPressedDispatcher.onBackPressed() },
+                        contentDescription = stringResource(string.feat_channel_tooltip_on_back_pressed)
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    MaskButton(
+                        state = maskState,
+                        icon = Icons.Rounded.Lock,
+                        onClick = { onControlsLockedChange(true) },
+                        contentDescription = stringResource(string.feat_channel_tooltip_lock_controls)
+                    )
 
-                MaskTextButton(
-                    state = maskState,
-                    icon = when {
-                        volume == 0f -> Icons.AutoMirrored.Rounded.VolumeOff
-                        else -> Icons.AutoMirrored.Rounded.VolumeUp
-                    },
-                    text = brightnessOrVolumeText,
-                    tint = if (muted) MaterialTheme.colorScheme.error else Color.Unspecified,
-                    onClick = {
-                        onVolume(
-                            if (volume != 0f) {
-                                volumeBeforeMuted = volume
-                                0f
-                            } else volumeBeforeMuted
+                    MaskTextButton(
+                        state = maskState,
+                        icon = when {
+                            volume == 0f -> Icons.AutoMirrored.Rounded.VolumeOff
+                            else -> Icons.AutoMirrored.Rounded.VolumeUp
+                        },
+                        text = brightnessOrVolumeText,
+                        tint = if (muted) MaterialTheme.colorScheme.error else Color.Unspecified,
+                        onClick = {
+                            onVolume(
+                                if (volume != 0f) {
+                                    volumeBeforeMuted = volume
+                                    0f
+                                } else volumeBeforeMuted
+                            )
+                        },
+                        contentDescription = defaultBrightnessOrVolumeContentDescription
+                    )
+                    if (!isSeriesPlaylist) {
+                        MaskButton(
+                            state = maskState,
+                            icon = Icons.Rounded.Star,
+                            tint = if (favourite) Color(0xffffcd3c) else Color.Unspecified,
+                            onClick = onFavorite,
+                            contentDescription = if (favourite) stringResource(string.feat_channel_tooltip_unfavourite)
+                            else stringResource(string.feat_channel_tooltip_favourite)
                         )
-                    },
-                    contentDescription = defaultBrightnessOrVolumeContentDescription
-                )
-                if (!isSeriesPlaylist) {
-                    MaskButton(
-                        state = maskState,
-                        icon = Icons.Rounded.Star,
-                        tint = if (favourite) Color(0xffffcd3c) else Color.Unspecified,
-                        onClick = onFavorite,
-                        contentDescription = if (favourite) stringResource(string.feat_channel_tooltip_unfavourite)
-                        else stringResource(string.feat_channel_tooltip_favourite)
-                    )
-                }
+                    }
 
-                if (hasTrack) {
-                    MaskButton(
-                        state = maskState,
-                        icon = Icons.Rounded.HighQuality,
-                        onClick = openChooseFormat,
-                        contentDescription = stringResource(string.feat_channel_tooltip_choose_format)
-                    )
-                }
+                    if (hasTrack) {
+                        MaskButton(
+                            state = maskState,
+                            icon = Icons.Rounded.HighQuality,
+                            onClick = openChooseFormat,
+                            contentDescription = stringResource(string.feat_channel_tooltip_choose_format)
+                        )
+                    }
 
-                if (!currentUseVertical) {
-                    MaskButton(
-                        state = maskState,
-                        icon = if (currentIsPanelExpanded) Icons.Rounded.Archive
-                        else Icons.Rounded.Unarchive,
-                        onClick = openOrClosePanel,
-                        contentDescription = stringResource(string.feat_channel_tooltip_open_panel)
-                    )
-                }
+                    if (playerState.videoSize.isNotEmpty) {
+                        MaskButton(
+                            state = maskState,
+                            icon = Icons.Rounded.Download,
+                            onClick = onRecordVideo,
+                            contentDescription = stringResource(string.feat_channel_tooltip_download)
+                        )
+                    }
 
-                if (screencast) {
-                    MaskButton(
-                        state = maskState,
-                        icon = Icons.Rounded.Cast,
-                        onClick = openDlnaDevices,
-                        contentDescription = stringResource(string.feat_channel_tooltip_cast)
-                    )
-                }
-                if (playerState.videoSize.isNotEmpty) {
-                    MaskButton(
-                        state = maskState,
-                        icon = Icons.Rounded.PictureInPicture,
-                        onClick = onEnterPipMode,
-                        contentDescription = stringResource(string.feat_channel_tooltip_enter_pip_mode),
-                        wakeWhenClicked = false
-                    )
+                    if (!currentUseVertical) {
+                        MaskButton(
+                            state = maskState,
+                            icon = if (currentIsPanelExpanded) Icons.Rounded.Archive
+                            else Icons.Rounded.Unarchive,
+                            onClick = openOrClosePanel,
+                            contentDescription = stringResource(string.feat_channel_tooltip_open_panel)
+                        )
+                    }
+
+                    if (screencast) {
+                        MaskButton(
+                            state = maskState,
+                            icon = Icons.Rounded.Cast,
+                            onClick = openDlnaDevices,
+                            contentDescription = stringResource(string.feat_channel_tooltip_cast)
+                        )
+                    }
+                    if (playerState.videoSize.isNotEmpty) {
+                        MaskButton(
+                            state = maskState,
+                            icon = Icons.Rounded.PictureInPicture,
+                            onClick = onEnterPipMode,
+                            contentDescription = stringResource(string.feat_channel_tooltip_enter_pip_mode),
+                            wakeWhenClicked = false
+                        )
+                    }
                 }
             },
             body = {
-                val centerRole = MaskCenterRole.of(
-                    playerState.playState,
-                    playerState.isPlaying,
-                    alwaysShowReplay,
-                    playerState.playerError
-                )
-                Box(Modifier.size(36.dp)) {
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = !currentIsPanelExpanded && adjacentChannels?.prevId != null,
-                        enter = fadeIn() + slideInHorizontally(initialOffsetX = { -it / 6 }),
-                        exit = fadeOut() + slideOutHorizontally(targetOffsetX = { -it / 6 }),
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        MaskNavigateButton(
-                            state = maskState,
-                            navigateRole = MaskNavigateRole.Previous,
-                            onClick = onPreviousChannelClick,
-                        )
+                if (controlsLocked) {
+                    MaskButton(
+                        state = maskState,
+                        icon = Icons.Rounded.LockOpen,
+                        onClick = { onControlsLockedChange(false) },
+                        contentDescription = stringResource(string.feat_channel_tooltip_unlock_controls)
+                    )
+                } else {
+                    val centerRole = MaskCenterRole.of(
+                        playerState.playState,
+                        playerState.isPlaying,
+                        alwaysShowReplay,
+                        playerState.playerError
+                    )
+                    Box(Modifier.size(36.dp)) {
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = !currentIsPanelExpanded && adjacentChannels?.prevId != null,
+                            enter = fadeIn() + slideInHorizontally(initialOffsetX = { -it / 6 }),
+                            exit = fadeOut() + slideOutHorizontally(targetOffsetX = { -it / 6 }),
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            MaskNavigateButton(
+                                state = maskState,
+                                navigateRole = MaskNavigateRole.Previous,
+                                onClick = onPreviousChannelClick,
+                            )
+                        }
                     }
-                }
 
-                Box(Modifier.size(52.dp)) {
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = !currentIsPanelExpanded && centerRole != MaskCenterRole.Loading,
-                        enter = fadeIn(),
-                        exit = fadeOut(),
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        MaskCenterButton(
-                            state = maskState,
-                            centerRole = centerRole,
-                            onPlay = { playerState.player?.play() },
-                            onPause = { playerState.player?.pause() },
-                            onRetry = { coroutineScope.launch { helper.replay() } },
-                        )
+                    Box(Modifier.size(52.dp)) {
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = !currentIsPanelExpanded && centerRole != MaskCenterRole.Loading,
+                            enter = fadeIn(),
+                            exit = fadeOut(),
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            MaskCenterButton(
+                                state = maskState,
+                                centerRole = centerRole,
+                                onPlay = { playerState.player?.play() },
+                                onPause = { playerState.player?.pause() },
+                                onRetry = { coroutineScope.launch { helper.replay() } },
+                            )
+                        }
                     }
-                }
-                Box(Modifier.size(36.dp)) {
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = !currentIsPanelExpanded && adjacentChannels?.nextId != null,
-                        enter = fadeIn() + slideInHorizontally(initialOffsetX = { it / 6 }),
-                        exit = fadeOut() + slideOutHorizontally(targetOffsetX = { it / 6 }),
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        MaskNavigateButton(
-                            state = maskState,
-                            navigateRole = MaskNavigateRole.Next,
-                            onClick = onNextChannelClick,
-                        )
+
+                    Box(Modifier.size(36.dp)) {
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = !currentIsPanelExpanded && adjacentChannels?.nextId != null,
+                            enter = fadeIn() + slideInHorizontally(initialOffsetX = { it / 6 }),
+                            exit = fadeOut() + slideOutHorizontally(targetOffsetX = { it / 6 }),
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            MaskNavigateButton(
+                                state = maskState,
+                                navigateRole = MaskNavigateRole.Next,
+                                onClick = onNextChannelClick,
+                            )
+                        }
                     }
                 }
             },
             control = {
-                Crossfade(
-                    targetState = cwPositionObj,
-                    modifier = Modifier.align { size: IntSize, space: IntSize, _: LayoutDirection ->
-                        val centerX = (space.width - size.width).toFloat() / 2f
-                        val centerY = (space.height - size.height).toFloat() / 2f
-                        val x = centerX
-                        val y = centerY + playerState.videoSize.height() / 2
-                        IntOffset(x.fastRoundToInt(), y.fastRoundToInt())
-                    }
-                ) {
-                    if (it != null) {
-                        CwPositionSliderImpl(
-                            position = it.milliseconds,
-                            onResetPlayback = onResetPlayback
-                        )
-                    }
-                }
-            },
-            footer = composableOf<RowScope>(
-                any {
-                    suggest { !currentIsPanelExpanded }
-                    suggest { !currentUseVertical }
-                    suggest { playStateDisplayText.isNotEmpty() }
-                    suggest { exceptionDisplayText.isNotEmpty() }
-                    suggestAll {
-                        suggest { isStaticAndSeekable }
-                        suggest { slider }
-                    }
-                }
-            ) {
-                Column(
-                    verticalArrangement = Arrangement.Bottom,
-                    modifier = Modifier
-                        .semantics(mergeDescendants = true) { }
-                        .weight(1f)
-                        .padding(bottom = spacing.small)
-                ) {
-                    val alpha by animateFloatAsState(
-                        if (!currentIsPanelExpanded || !currentUseVertical) 1f else 0f
-                    )
-                    Column(Modifier.alpha(alpha)) {
-                        Text(
-                            text = playlistTitle.trim().uppercase(),
-                            style = MaterialTheme.typography.labelMedium,
-                            maxLines = 1,
-                            color = LocalContentColor.current.copy(0.54f),
-                            fontFamily = FontFamilies.LexendExa,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.basicMarquee()
-                        )
-                        Text(
-                            text = title.trim(),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.ExtraBold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.basicMarquee()
-                        )
-                    }
-                    if (playStateDisplayText.isNotEmpty()
-                        || exceptionDisplayText.isNotEmpty()
-                        || (isStaticAndSeekable && slider)
+                if (!controlsLocked) {
+                    Crossfade(
+                        targetState = cwPositionObj,
+                        modifier = Modifier.align { size: IntSize, space: IntSize, _: LayoutDirection ->
+                            val centerX = (space.width - size.width).toFloat() / 2f
+                            val centerY = (space.height - size.height).toFloat() / 2f
+                            val x = centerX
+                            val y = centerY + playerState.videoSize.height() / 2
+                            IntOffset(x.fastRoundToInt(), y.fastRoundToInt())
+                        }
                     ) {
-                        Spacer(
-                            modifier = Modifier.height(spacing.small)
-                        )
+                        if (it != null) {
+                            CwPositionSliderImpl(
+                                position = it.milliseconds,
+                                onResetPlayback = onResetPlayback
+                            )
+                        }
                     }
-                    if (playStateDisplayText.isNotEmpty()) {
-                        Text(
-                            text = playStateDisplayText.uppercase(),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = LocalContentColor.current.copy(alpha = 0.75f),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.basicMarquee()
-                        )
-                    }
-                    if (exceptionDisplayText.isNotBlank()) {
-                        Text(
-                            text = exceptionDisplayText,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.basicMarquee()
-                        )
-                    }
-                }
-                val autoRotating by ChannelMaskUtils.IsAutoRotatingEnabled
-                LaunchedEffect(autoRotating) {
-                    if (autoRotating) {
-                        helper.screenOrientation =
-                            ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-                    }
-                }
-                if (screenRotating && !autoRotating) {
-                    MaskButton(
-                        state = maskState,
-                        icon = Icons.Rounded.ScreenRotationAlt,
-                        onClick = {
-                            helper.screenOrientation = when (helper.screenOrientation) {
-                                ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                                else -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-                            }
-                        },
-                        contentDescription = stringResource(string.feat_channel_tooltip_screen_rotating)
-                    )
                 }
             },
-            slider = composableOf(slider && isStaticAndSeekable) {
-                SliderImpl(
-                    contentDuration = contentDuration,
-                    contentPosition = contentPosition,
-                    bufferedPosition = bufferedPosition,
-                    isPanelExpanded = currentIsPanelExpanded,
-                    onBufferedPositionChanged = {
-                        bufferedPosition = it
-                        maskState.wake()
+            footer = if (controlsLocked) {
+                null
+            } else {
+                composableOf<RowScope>(
+                    any {
+                        suggest { !currentIsPanelExpanded }
+                        suggest { !currentUseVertical }
+                        suggest { playStateDisplayText.isNotEmpty() }
+                        suggest { exceptionDisplayText.isNotEmpty() }
+                        suggestAll {
+                            suggest { isStaticAndSeekable }
+                            suggest { slider }
+                        }
                     }
-                )
+                ) {
+                    Column(
+                        verticalArrangement = Arrangement.Bottom,
+                        modifier = Modifier
+                            .semantics(mergeDescendants = true) { }
+                            .weight(1f)
+                            .padding(bottom = spacing.small)
+                    ) {
+                        val alpha by animateFloatAsState(
+                            if (!currentIsPanelExpanded || !currentUseVertical) 1f else 0f
+                        )
+                        Column(Modifier.alpha(alpha)) {
+                            Text(
+                                text = playlistTitle.trim().uppercase(),
+                                style = MaterialTheme.typography.labelMedium,
+                                maxLines = 1,
+                                color = LocalContentColor.current.copy(0.54f),
+                                fontFamily = FontFamilies.LexendExa,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.basicMarquee()
+                            )
+                            Text(
+                                text = title.trim(),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.ExtraBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.basicMarquee()
+                            )
+                            if (streamMetadata != null) {
+                                Text(
+                                    text = streamMetadata,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = LocalContentColor.current.copy(alpha = 0.85f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.basicMarquee()
+                                )
+                            }
+                            if (programmeDisplayText != null) {
+                                Text(
+                                    text = programmeDisplayText,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = LocalContentColor.current.copy(alpha = 0.85f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.basicMarquee()
+                                )
+                            }
+                            if (programmeDescription != null) {
+                                Text(
+                                    text = programmeDescription,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = LocalContentColor.current.copy(alpha = 0.65f),
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                        if (playStateDisplayText.isNotEmpty()
+                            || exceptionDisplayText.isNotEmpty()
+                            || (isStaticAndSeekable && slider)
+                        ) {
+                            Spacer(
+                                modifier = Modifier.height(spacing.small)
+                            )
+                        }
+                        if (playStateDisplayText.isNotEmpty()) {
+                            Text(
+                                text = playStateDisplayText.uppercase(),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = LocalContentColor.current.copy(alpha = 0.75f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.basicMarquee()
+                            )
+                        }
+                        if (exceptionDisplayText.isNotBlank()) {
+                            Text(
+                                text = exceptionDisplayText,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.error,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.basicMarquee()
+                            )
+                        }
+                    }
+                    val autoRotating by ChannelMaskUtils.IsAutoRotatingEnabled
+                    LaunchedEffect(autoRotating) {
+                        if (autoRotating) {
+                            helper.screenOrientation =
+                                ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                        }
+                    }
+                    if (screenRotating && !autoRotating) {
+                        MaskButton(
+                            state = maskState,
+                            icon = Icons.Rounded.ScreenRotationAlt,
+                            onClick = {
+                                helper.screenOrientation = when (helper.screenOrientation) {
+                                    ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                                    else -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                                }
+                            },
+                            contentDescription = stringResource(string.feat_channel_tooltip_screen_rotating)
+                        )
+                    }
+                }
+            },
+            slider = if (controlsLocked) {
+                null
+            } else {
+                composableOf(slider && isStaticAndSeekable) {
+                    SliderImpl(
+                        contentDuration = contentDuration,
+                        contentPosition = contentPosition,
+                        bufferedPosition = bufferedPosition,
+                        isPanelExpanded = currentIsPanelExpanded,
+                        onBufferedPositionChanged = {
+                            bufferedPosition = it
+                            maskState.wake()
+                        }
+                    )
+                }
             },
             onPaddingsChanged = onPaddingsChanged,
             modifier = Modifier.fillMaxSize()

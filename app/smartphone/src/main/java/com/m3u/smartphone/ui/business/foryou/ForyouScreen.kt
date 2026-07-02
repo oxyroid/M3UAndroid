@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -40,6 +41,7 @@ import com.m3u.core.foundation.ui.composableOf
 import com.m3u.core.foundation.ui.thenIf
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Resource
+import com.m3u.core.wrapper.eventOf
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
@@ -52,6 +54,7 @@ import com.m3u.smartphone.ui.business.foryou.components.recommend.RecommendGalle
 import com.m3u.smartphone.ui.common.helper.Action
 import com.m3u.smartphone.ui.common.helper.LocalHelper
 import com.m3u.smartphone.ui.common.helper.Metadata
+import com.m3u.smartphone.ui.common.internal.Events
 import com.m3u.smartphone.ui.material.components.EpisodesBottomSheet
 import com.m3u.smartphone.ui.material.components.MediaSheet
 import com.m3u.smartphone.ui.material.components.MediaSheetValue
@@ -92,6 +95,11 @@ fun ForyouRoute(
         Metadata.color = Color.Unspecified
         Metadata.contentColor = Color.Unspecified
         Metadata.actions = listOf(
+            Action(
+                icon = Icons.Rounded.Search,
+                contentDescription = "search",
+                onClick = { Events.openSearch = eventOf(Unit) }
+            ),
             Action(
                 icon = Icons.Rounded.Add,
                 contentDescription = "add",

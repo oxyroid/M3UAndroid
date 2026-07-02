@@ -9,7 +9,6 @@ import com.m3u.core.architecture.preferences.PlaylistStrategy
 import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.Settings
 import com.m3u.core.architecture.preferences.get
-import com.m3u.core.util.basic.startsWithAny
 import com.m3u.core.util.copyToFile
 import com.m3u.core.util.readFileName
 import com.m3u.data.api.OkhttpClient
@@ -61,6 +60,9 @@ import timber.log.Timber
 import java.io.File
 import java.io.InputStream
 import java.io.Reader
+import java.io.StringReader
+import java.io.StringWriter
+import java.io.Writer
 import javax.inject.Inject
 
 private const val BUFFER_M3U_CAPACITY = 500
@@ -87,29 +89,30 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     ) {
         var currentCount = 0
         callback(currentCount)
-        val internalUrl = url.copyToInternalDirPath()
+        val normalizedUrl = PlaylistNetworkUrl.normalizeM3uInput(url)
+        val internalUrl = normalizedUrl.copyToInternalDirPath()
         timber.d("m3uOrThrow: url=$url, internalUrl=$internalUrl")
         val playlistStrategy = settings[PreferencesKeys.PLAYLIST_STRATEGY]
         val favOrHiddenRelationIds = when (playlistStrategy) {
             PlaylistStrategy.ALL -> emptyList()
             else -> {
-                channelDao.getFavOrHiddenRelationIdsByPlaylistUrl(url)
+                channelDao.getFavOrHiddenRelationIdsByPlaylistUrl(internalUrl)
             }
         }
         val favOrHiddenUrls = when (playlistStrategy) {
             PlaylistStrategy.ALL -> emptyList()
             else -> {
-                channelDao.getFavOrHiddenUrlsByPlaylistUrlNotContainsRelationId(url)
+                channelDao.getFavOrHiddenUrlsByPlaylistUrlNotContainsRelationId(internalUrl)
             }
         }
 
         when (playlistStrategy) {
             PlaylistStrategy.ALL -> {
-                channelDao.deleteByPlaylistUrl(url)
+                channelDao.deleteByPlaylistUrl(internalUrl)
             }
 
             PlaylistStrategy.KEEP -> {
-                channelDao.deleteByPlaylistUrlIgnoreFavOrHidden(url)
+                channelDao.deleteByPlaylistUrlIgnoreFavOrHidden(internalUrl)
             }
         }
 
@@ -128,8 +131,8 @@ internal class PlaylistRepositoryImpl @Inject constructor(
 
         channelFlow {
             when {
-                url.isSupportedNetworkUrl() -> openNetworkInput(internalUrl)
-                url.isSupportedAndroidUrl() -> openAndroidInput(internalUrl)
+                PlaylistNetworkUrl.isSupportedNetworkUrl(normalizedUrl) -> openNetworkInput(internalUrl)
+                PlaylistNetworkUrl.isSupportedAndroidUrl(normalizedUrl) -> openAndroidInput(internalUrl)
                 else -> null
             }?.use { input ->
                 m3uParser
@@ -386,12 +389,36 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     }
 
     override suspend fun backupOrThrow(uri: Uri): Unit = withContext(Dispatchers.IO) {
+        context.contentResolver.openOutputStream(uri)?.use {
+            backupToWriter(it.bufferedWriter())
+        }
+    }
+
+    override suspend fun backupAsTextOrThrow(): String = withContext(Dispatchers.IO) {
+        StringWriter().use { writer ->
+            backupToWriter(writer)
+            writer.toString()
+        }
+    }
+
+    override suspend fun restoreOrThrow(uri: Uri): Unit = withContext(Dispatchers.IO) {
+        context.contentResolver.openInputStream(uri)?.use {
+            restoreFromReader(it.bufferedReader())
+        }
+    }
+
+    override suspend fun restoreOrThrow(text: String): Unit = withContext(Dispatchers.IO) {
+        StringReader(text).use { reader ->
+            restoreFromReader(reader)
+        }
+    }
+
+    private suspend fun backupToWriter(writer: Writer) {
         val json = Json {
             prettyPrint = false
         }
         val all = playlistDao.getAllWithChannels()
-        context.contentResolver.openOutputStream(uri)?.use {
-            val writer = it.bufferedWriter()
+        writer.use {
             all.forEach { (playlist, channels) ->
                 val encodedPlaylist = json.encodeToString(playlist)
                 val wrappedPlaylist = BackupOrRestoreContracts.wrapPlaylist(encodedPlaylist)
@@ -407,14 +434,12 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun restoreOrThrow(uri: Uri): Unit = withContext(Dispatchers.IO) {
+    private suspend fun restoreFromReader(reader: Reader) {
         val json = Json {
             ignoreUnknownKeys = true
         }
         val mutex = Mutex()
-        context.contentResolver.openInputStream(uri)?.use {
-            val reader = it.bufferedReader()
-
+        reader.use {
             val channels = mutableListOf<Channel>()
             reader.forEachLine { line ->
                 if (line.isBlank()) return@forEachLine
@@ -453,6 +478,10 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             if (category in prev) prev - category
             else prev + category
         }
+    }
+
+    override suspend fun reorderCategories(url: String, categories: List<String>) {
+        playlistDao.updateOrderedCategories(url, categories)
     }
 
     override suspend fun hideOrUnhideCategory(url: String, category: String) {
@@ -495,10 +524,14 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     ): List<String> = playlistDao.get(url).let { playlist ->
         val pinnedCategories = playlist?.pinnedCategories ?: emptyList()
         val hiddenCategories = playlist?.hiddenCategories ?: emptyList()
+        val orderedCategories = playlist?.orderedCategories ?: emptyList()
         channelDao
             .getCategoriesByPlaylistUrl(url, query)
-            .filterNot { it in hiddenCategories }
-            .sortedByDescending { it in pinnedCategories }
+            .orderPlaylistCategories(
+                orderedCategories = orderedCategories,
+                pinnedCategories = pinnedCategories,
+                hiddenCategories = hiddenCategories
+            )
     }
 
     override fun observeCategoriesByPlaylistUrlIgnoreHidden(
@@ -508,12 +541,16 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         playlist ?: return@flatMapLatest flowOf()
         val pinnedCategories = playlist.pinnedCategories
         val hiddenCategories = playlist.hiddenCategories
+        val orderedCategories = playlist.orderedCategories
         channelDao
             .observeCategoriesByPlaylistUrl(playlist.url, query)
             .map { categories ->
                 categories
-                    .filterNot { it in hiddenCategories }
-                    .sortedByDescending { it in pinnedCategories }
+                    .orderPlaylistCategories(
+                        orderedCategories = orderedCategories,
+                        pinnedCategories = pinnedCategories,
+                        hiddenCategories = hiddenCategories
+                    )
             }
     }
         .flowOn(Dispatchers.Default)
@@ -586,22 +623,12 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     private inline fun Reader.forEachLine(action: (String) -> Unit): Unit =
         useLines { it.forEach(action) }
 
-    private fun String.isSupportedNetworkUrl(): Boolean = startsWithAny(
-        "http://",
-        "https://",
-        ignoreCase = true
-    )
-
-    private fun String.isSupportedAndroidUrl(): Boolean = startsWithAny(
-        ContentResolver.SCHEME_FILE,
-        ContentResolver.SCHEME_CONTENT,
-        ignoreCase = true
-    )
-
     private suspend fun String.copyToInternalDirPath(): String {
-        if (!isSupportedAndroidUrl()) return this
+        if (!PlaylistNetworkUrl.isSupportedAndroidUrl(this)) return this
         val uri = this.toUri()
-        if (uri.scheme == ContentResolver.SCHEME_FILE) return uri.toString()
+        if (uri.scheme == ContentResolver.SCHEME_FILE) {
+            return PlaylistNetworkUrl.normalizeAndroidFileUrl(uri.toString())
+        }
         return withContext(Dispatchers.IO) {
             val contentResolver = context.contentResolver
             val filename = uri.readFileName(contentResolver) ?: filenameWithTimezone
@@ -612,19 +639,36 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                 return@withContext this@copyToInternalDirPath
             }
 
-            val newUrl = Uri.decode(destinationFile.toUri().toString())
+            val newUrl = PlaylistNetworkUrl.normalizeAndroidFileUrl(destinationFile.toUri().toString())
             playlistDao.updateUrl(this@copyToInternalDirPath, newUrl)
             newUrl
         }
     }
 
 
-    private fun openNetworkInput(url: String): InputStream? {
+    private fun openNetworkInput(url: String): InputStream {
         val request = Request.Builder()
             .url(url)
             .build()
         val response = okHttpClient.newCall(request).execute()
-        return response.body?.byteStream()
+        if (response.isSuccessful) {
+            return response.body.byteStream()
+        }
+
+        val responseBody = response.body.string()
+        val fallbackUrl = PlaylistNetworkUrl.httpFallbackForPlainHttpTlsFailure(
+            url = url,
+            responseMessage = response.message,
+            responseBody = responseBody
+        )
+        response.close()
+        if (fallbackUrl != null) {
+            timber.w("Retrying M3U playlist over HTTP after TLS failure: $fallbackUrl")
+            return openNetworkInput(fallbackUrl)
+        }
+
+        val message = response.message.takeIf { it.isNotBlank() } ?: responseBody
+        error("Failed to fetch playlist: HTTP ${response.code} $message")
     }
 
     private fun openAndroidInput(url: String): InputStream? {

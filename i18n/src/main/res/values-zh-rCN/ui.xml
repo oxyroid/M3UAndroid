@@ -25,4 +25,19 @@
     <string name="ui_remote_control_disconnect">断开连接</string>
     <string name="ui_remote_control_keypad_backspace">退格</string>
     <string name="ui_remote_control_keypad_clear">清空</string>
+    <string name="tv_empty_library_xtream_hint">在电视上添加 Xtream 源</string>
+    <string name="tv_xtream_panel_title">添加 Xtream 播放列表</string>
+    <string name="tv_xtream_panel_subtitle">用遥控器输入服务商信息。</string>
+    <string name="tv_xtream_title_placeholder">播放列表名称</string>
+    <string name="tv_xtream_address_placeholder">服务器地址</string>
+    <string name="tv_xtream_username_placeholder">用户名</string>
+    <string name="tv_xtream_password_placeholder">密码</string>
+    <string name="tv_xtream_type_all">全部</string>
+    <string name="tv_xtream_type_live">直播</string>
+    <string name="tv_xtream_type_series">剧集</string>
+    <string name="tv_xtream_subscribe">订阅</string>
+    <string name="tv_xtream_subscribing">订阅中</string>
+    <string name="tv_xtream_message_missing_fields">请填写播放列表名称、地址、用户名和密码。</string>
+    <string name="tv_xtream_message_invalid_url">请检查服务器地址后重试。</string>
+    <string name="tv_xtream_message_enqueued">订阅任务已添加。</string>
 </resources>

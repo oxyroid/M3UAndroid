@@ -7,9 +7,9 @@ import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
+import io.ktor.server.cio.CIO
 import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.embeddedServer
-import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.routing.routing
@@ -29,7 +29,7 @@ internal class HttpServerImpl @Inject constructor(
 
     override fun start(port: Int) {
         if (server != null) return
-        server = embeddedServer(Netty, port = port) {
+        server = embeddedServer(CIO, port = port) {
             configureSerialization()
             configureSockets()
             configureCors()

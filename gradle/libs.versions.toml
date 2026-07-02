@@ -28,6 +28,7 @@ kotlinpoet = "2.2.0"
 kotlinx-serialization-json = "1.10.0"
 kotlinx-serialization-converter-retrofit = "1.0.0"
 kotlinx-datetime = "0.7.1"
+junit = "4.13.2"
 
 chucker = "4.3.0"
 logback = "3.0.0"
@@ -53,6 +54,7 @@ com-google-android-material = "1.13.0"
 androidx-test-uiautomator = "2.3.0"
 androidx-benchmark = "1.4.1"
 androidx-graphics-shapes = "1.1.0"
+desugar-jdk-libs = "2.1.5"
 
 minabox = "1.10.0"
 ktor-server = "3.4.0"
@@ -137,6 +139,7 @@ google-dagger-hilt = { group = "com.google.dagger", name = "hilt-android", versi
 google-dagger-hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "google-dagger" }
 
 google-material = { group = "com.google.android.material", name = "material", version.ref = "com-google-android-material" }
+desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugar-jdk-libs" }
 
 kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoet" }
 kotlinpoet-ksp = { module = "com.squareup:kotlinpoet-ksp", version.ref = "kotlinpoet" }
@@ -147,6 +150,7 @@ squareup-retrofit2 = { group = "com.squareup.retrofit2", name = "retrofit", vers
 squareup-leakcanary = { group = "com.squareup.leakcanary", name = "leakcanary-android", version.ref = "squareup-leakcanary" }
 
 ktor-server-netty = { group = "io.ktor", name = "ktor-server-netty", version.ref = "ktor-server" }
+ktor-server-cio = { group = "io.ktor", name = "ktor-server-cio-jvm", version.ref = "ktor-server" }
 ktor-server-websockets = { group = "io.ktor", name = "ktor-server-websockets-jvm", version.ref = "ktor-server" }
 ktor-server-cors = { group = "io.ktor", name = "ktor-server-cors", version.ref = "ktor-server" }
 ktor-server-content-negotiation = { group = "io.ktor", name = "ktor-server-content-negotiation", version.ref = "ktor-server" }
@@ -170,6 +174,7 @@ androidx-test-runner = { group = "androidx.test", name = "runner", version.ref =
 androidx-test-espresso-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso-core" }
 androidx-test-uiautomator-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "androidx-test-uiautomator" }
 androidx-benchmark-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "androidx-benchmark" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
 
 chucker = { module = "com.github.chuckerteam.chucker:library", version.ref = "chucker" }
 chucker-no-op = { module = "com.github.chuckerteam.chucker:library-no-op", version.ref = "chucker" }

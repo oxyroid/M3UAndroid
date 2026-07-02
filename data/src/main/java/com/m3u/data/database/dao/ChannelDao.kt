@@ -23,6 +23,7 @@ interface ChannelDao {
             SELECT DISTINCT `group`
             FROM streams
             WHERE playlist_url = :playlistUrl
+            AND hidden = 0
             AND title LIKE '%'||:query||'%'
         """
     )
@@ -36,6 +37,7 @@ interface ChannelDao {
             SELECT DISTINCT `group`
             FROM streams
             WHERE playlist_url = :playlistUrl
+            AND hidden = 0
             AND title LIKE '%'||:query||'%'
         """
     )
@@ -124,6 +126,7 @@ interface ChannelDao {
         """
             SELECT * FROM streams 
             WHERE playlist_url = :url
+            AND hidden = 0
             AND title LIKE '%'||:query||'%'
             AND `group` = :category
         """
@@ -138,6 +141,7 @@ interface ChannelDao {
         """
             SELECT * FROM streams 
             WHERE playlist_url = :url
+            AND hidden = 0
             AND title LIKE '%'||:query||'%'
             AND `group` = :category
             ORDER BY title ASC
@@ -153,6 +157,7 @@ interface ChannelDao {
         """
             SELECT * FROM streams 
             WHERE playlist_url = :url
+            AND hidden = 0
             AND title LIKE '%'||:query||'%'
             AND `group` = :category
             ORDER BY title DESC
@@ -168,6 +173,7 @@ interface ChannelDao {
         """
             SELECT * FROM streams 
             WHERE playlist_url = :url
+            AND hidden = 0
             AND title LIKE '%'||:query||'%'
             AND `group` = :category
             ORDER BY seen DESC
@@ -183,6 +189,7 @@ interface ChannelDao {
         """
             SELECT * FROM streams 
             WHERE playlist_url = :url
+            AND hidden = 0
             AND title LIKE '%'||:query||'%'
         """
     )
@@ -244,7 +251,12 @@ interface ChannelDao {
     @Query(
         """
             SELECT * FROM streams WHERE 1
-            AND title LIKE '%'||:query||'%'
+            AND hidden = 0
+            AND (
+                title LIKE '%'||:query||'%'
+                OR `group` LIKE '%'||:query||'%'
+                OR relation_id LIKE '%'||:query||'%'
+            )
         """
     )
     fun query(
@@ -255,38 +267,47 @@ interface ChannelDao {
         """
             SELECT * FROM streams WHERE 1
             AND favourite = 1
+            AND title LIKE '%'||:query||'%'
         """
     )
-    fun pagingAllFavorite(): PagingSource<Int, Channel>
+    fun pagingAllFavorite(query: String): PagingSource<Int, Channel>
     @Query(
         """
             SELECT * FROM streams WHERE 1
             AND favourite = 1
+            AND title LIKE '%'||:query||'%'
             ORDER BY title ASC
             
         """
     )
-    fun pagingAllFavoriteAsc(): PagingSource<Int, Channel>
+    fun pagingAllFavoriteAsc(query: String): PagingSource<Int, Channel>
     @Query(
         """
             SELECT * FROM streams WHERE 1
             AND favourite = 1
+            AND title LIKE '%'||:query||'%'
             ORDER BY title DESC
         """
     )
-    fun pagingAllFavoriteDesc(): PagingSource<Int, Channel>
+    fun pagingAllFavoriteDesc(query: String): PagingSource<Int, Channel>
     @Query(
         """
             SELECT * FROM streams WHERE 1
             AND favourite = 1
+            AND title LIKE '%'||:query||'%'
             ORDER BY seen DESC
         """
     )
-    fun pagingAllFavoriteRecently(): PagingSource<Int, Channel>
+    fun pagingAllFavoriteRecently(query: String): PagingSource<Int, Channel>
     @Query(
         """
             SELECT * FROM streams WHERE 1
-            AND title LIKE '%'||:query||'%'
+            AND hidden = 0
+            AND (
+                title LIKE '%'||:query||'%'
+                OR `group` LIKE '%'||:query||'%'
+                OR relation_id LIKE '%'||:query||'%'
+            )
         """
     )
     fun pagingAll(query: String): PagingSource<Int, Channel>

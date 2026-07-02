@@ -29,11 +29,13 @@ interface PlayerManager {
     val playbackState: StateFlow<@Player.State Int>
     val playbackException: StateFlow<PlaybackException?>
     val isPlaying: StateFlow<Boolean>
+    val streamMetadata: StateFlow<String?>
 
     val tracksGroups: StateFlow<List<Tracks.Group>>
     val cacheSpace: Flow<Long>
 
     fun chooseTrack(group: TrackGroup, index: Int)
+    fun chooseTrack(groupIndex: Int, trackIndex: Int)
     fun clearTrack(type: @C.TrackType Int)
     suspend fun play(
         command: MediaCommand,
@@ -62,6 +64,34 @@ sealed class MediaCommand(open val channelId: Int) {
         val episode: XtreamChannelInfo.Episode
     ) : MediaCommand(channelId)
 }
+
+@Immutable
+data class TrackOption(
+    val type: @C.TrackType Int,
+    val groupIndex: Int,
+    val trackIndex: Int,
+    val format: Format,
+    val selected: Boolean
+)
+
+val PlayerManager.trackOptions: Flow<Map<@C.TrackType Int, List<TrackOption>>>
+    get() = tracksGroups.mapLatest { groups ->
+        groups
+            .flatMapIndexed { groupIndex, group ->
+                List(group.length) { trackIndex ->
+                    if (!group.isTrackSupported(trackIndex)) return@List null
+                    TrackOption(
+                        type = group.type,
+                        groupIndex = groupIndex,
+                        trackIndex = trackIndex,
+                        format = group.getTrackFormat(trackIndex),
+                        selected = group.isTrackSelected(trackIndex)
+                    )
+                }
+                    .filterNotNull()
+            }
+            .groupBy { it.type }
+    }.flowOn(Dispatchers.IO)
 
 val PlayerManager.tracks: Flow<Map<@C.TrackType Int, List<Format>>>
     get() = tracksGroups.mapLatest { all ->

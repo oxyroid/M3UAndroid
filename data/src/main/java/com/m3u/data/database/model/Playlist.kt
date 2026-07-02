@@ -45,6 +45,9 @@ data class Playlist(
     @ColumnInfo(name = "hidden_groups", defaultValue = "[]")
     @Exclude
     val hiddenCategories: List<String> = emptyList(),
+    @ColumnInfo(name = "ordered_groups", defaultValue = "[]")
+    @Exclude
+    val orderedCategories: List<String> = emptyList(),
     @ColumnInfo(name = "source", defaultValue = "0")
     @Serializable(with = DataSourceSerializer::class)
     val source: DataSource = DataSource.M3U,

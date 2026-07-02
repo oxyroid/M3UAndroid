@@ -15,8 +15,8 @@ android {
     namespace = "com.m3u.smartphone"
     compileSdk = 36
     defaultConfig {
-        applicationId = "com.m3u.smartphone"
-        minSdk = 26
+        applicationId = "com.m3u.androidApp"
+        minSdk = 25
         targetSdk = 33
         versionCode = 145
         versionName = "1.15.1"
@@ -60,8 +60,12 @@ android {
                 .startParameter
                 .taskNames
                 .find { it.contains("richCodec", ignoreCase = true) } != null
+            val releaseAbiSplits = providers
+                .gradleProperty("m3uReleaseAbiSplits")
+                .map(String::toBoolean)
+                .getOrElse(false)
 
-            isEnable = !benchmark && !snapshotChannel && richCodec
+            isEnable = !benchmark && !snapshotChannel && (richCodec || releaseAbiSplits)
 
             reset()
             include("x86", "x86_64", "arm64-v8a", "armeabi-v7a")
@@ -85,9 +89,9 @@ android {
             .forEach { output ->
                 val abi = output.getFilter("ABI")
                 output.outputFileName = if (abi == null) {
-                    "$versionName.apk"
+                    "mobile-${versionName}.apk"
                 } else {
-                    "${versionName}_$abi.apk"
+                    "mobile-${versionName}_$abi.apk"
                 }
             }
     }
@@ -179,6 +183,7 @@ dependencies {
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.ui.compose)
     implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.session)
     implementation(libs.androidx.media3.common.ktx)
     implementation(libs.airbnb.lottie.compose)
     implementation(libs.minabox)

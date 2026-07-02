@@ -123,6 +123,13 @@ private val PREFERENCES: Map<Preferences.Key<*>, *> = listOf(
     PreferencesKeys.REMOTE_CONTROL to false,
     PreferencesKeys.SLIDER to true,
     PreferencesKeys.ALWAYS_SHOW_REPLAY to false,
+    PreferencesKeys.AUTO_PIP_ON_HOME to false,
+    PreferencesKeys.BACKGROUND_PLAYBACK to true,
+    PreferencesKeys.NIGHT_AUDIO_MODE to false,
+    PreferencesKeys.RESUME_LAST_CHANNEL_ON_STARTUP to false,
+    PreferencesKeys.LAUNCH_ON_BOOT to false,
+    PreferencesKeys.STARTUP_DELAY to StartupDelay.NONE,
+    PreferencesKeys.EPG_TIME_OFFSET to EpgOffset.NONE,
     PreferencesKeys.PLAYER_PANEL to true,
     PreferencesKeys.COMPACT_DIMENSION to false
 )
@@ -171,6 +178,13 @@ object PreferencesKeys {
 
     val SLIDER = booleanPreferencesKey("slider")
     val ALWAYS_SHOW_REPLAY = booleanPreferencesKey("always-show-replay")
+    val AUTO_PIP_ON_HOME = booleanPreferencesKey("auto-pip-on-home")
+    val BACKGROUND_PLAYBACK = booleanPreferencesKey("background-playback")
+    val NIGHT_AUDIO_MODE = booleanPreferencesKey("night-audio-mode")
+    val RESUME_LAST_CHANNEL_ON_STARTUP = booleanPreferencesKey("resume-last-channel-on-startup")
+    val LAUNCH_ON_BOOT = booleanPreferencesKey("launch-on-boot")
+    val STARTUP_DELAY = longPreferencesKey("startup-delay")
+    val EPG_TIME_OFFSET = longPreferencesKey("epg-time-offset")
     val PLAYER_PANEL = booleanPreferencesKey("player_panel")
 
     val COMPACT_DIMENSION = booleanPreferencesKey("compact-dimension")

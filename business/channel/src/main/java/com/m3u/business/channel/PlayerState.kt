@@ -11,5 +11,6 @@ data class PlayerState(
     val videoSize: Rect = Rect(),
     val playerError: PlaybackException? = null,
     val player: Player? = null,
-    val isPlaying: Boolean = false
+    val isPlaying: Boolean = false,
+    val streamMetadata: String? = null
 )

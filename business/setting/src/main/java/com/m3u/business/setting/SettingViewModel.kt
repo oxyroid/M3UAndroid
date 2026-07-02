@@ -29,6 +29,7 @@ import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.tv.TvRepository
 import com.m3u.data.service.Messager
+import com.m3u.data.tv.model.RestorePlaylistPayload
 import com.m3u.data.worker.BackupWorker
 import com.m3u.data.worker.RestoreWorker
 import com.m3u.data.worker.SubscriptionWorker
@@ -44,6 +45,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.io.File
 import javax.inject.Inject
 import kotlin.time.Clock
 
@@ -210,10 +212,14 @@ class SettingViewModel @Inject constructor(
         val selected = properties.selectedState.value
         val localStorage = properties.localStorageState.value
         val forTv = properties.forTvState.value
-        val urlOrUri = uri
-            .takeIf { uri != Uri.EMPTY }?.toString().orEmpty()
-            .takeIf { localStorage }
-            ?: url
+        val urlOrUri = if (localStorage) {
+            uri
+                .takeIf { it != Uri.EMPTY }
+                ?.toString()
+                ?: url.toLocalPlaylistUrl()
+        } else {
+            url
+        }
 
         val basicUrl = if (inputBasicUrl.startWithHttpScheme()) inputBasicUrl
         else "http://$inputBasicUrl"
@@ -238,7 +244,7 @@ class SettingViewModel @Inject constructor(
                         return
                     }
                     if (localStorage) {
-                        if (uri == Uri.EMPTY) {
+                        if (urlOrUri.isBlank()) {
                             messager.emit(SettingMessage.EmptyFile)
                             return
                         }
@@ -286,6 +292,25 @@ class SettingViewModel @Inject constructor(
                 else -> return
             }
         resetAllInputs()
+    }
+
+    fun restoreToTv() {
+        if (tvRepository.connected.value == null) {
+            messager.emit(SettingMessage.RemoteTvNotConnected)
+            return
+        }
+
+        viewModelScope.launch {
+            val result = runCatching {
+                val backup = playlistRepository.backupAsTextOrThrow()
+                tvApi.restore(RestorePlaylistPayload(backup))
+            }.getOrNull()
+            if (result?.result == true) {
+                messager.emit(SettingMessage.RemoteTvRestoreSent)
+            } else {
+                messager.emit(SettingMessage.RemoteTvRestoreFailed)
+            }
+        }
     }
 
     private fun subscribeForTv(
@@ -465,4 +490,13 @@ class SettingViewModel @Inject constructor(
     val versionCode: Int = publisher.versionCode
 
     val properties = SettingProperties()
+
+    private fun String.toLocalPlaylistUrl(): String {
+        val input = trim()
+        return if (input.startsWith("/")) {
+            Uri.fromFile(File(input)).toString()
+        } else {
+            input
+        }
+    }
 }

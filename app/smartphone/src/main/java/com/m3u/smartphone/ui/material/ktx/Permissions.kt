@@ -14,10 +14,8 @@ inline fun PermissionState.checkPermissionOrRationale(
     val skip = when (permission) {
         Manifest.permission.POST_NOTIFICATIONS -> sdk < Build.VERSION_CODES.TIRAMISU
 
-        // If you try to check or request the WRITE_EXTERNAL_STORAGE on Android 13+,
-        // it will always return false.
-        // So you'll have to skip the permission check/request completely on Android 13+.
-        Manifest.permission.WRITE_EXTERNAL_STORAGE -> sdk >= Build.VERSION_CODES.TIRAMISU
+        // Android 10+ writes shared images through MediaStore without this legacy permission.
+        Manifest.permission.WRITE_EXTERNAL_STORAGE -> sdk >= Build.VERSION_CODES.Q
         else -> false
     }
     when {

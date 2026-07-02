@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <uses-sdk tools:overrideLibrary="com.m3u.extension.api" />
     <uses-feature android:name="m3uandroid.extension" />
     <application
         android:allowBackup="true"
@@ -22,6 +24,6 @@
         <meta-data android:name="m3uandroid.extension.version" android:value="${version}" />
     </application>
     <queries>
-        <package android:name="com.m3u.smartphone"/>
+        <package android:name="com.m3u.androidApp"/>
     </queries>
 </manifest>

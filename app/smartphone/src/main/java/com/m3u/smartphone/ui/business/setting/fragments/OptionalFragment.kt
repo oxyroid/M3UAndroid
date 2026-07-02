@@ -11,11 +11,14 @@ import androidx.compose.material.icons.rounded.BrightnessMedium
 import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.Details
 import androidx.compose.material.icons.rounded.FlashOn
+import androidx.compose.material.icons.rounded.Headphones
 import androidx.compose.material.icons.rounded.Loop
 import androidx.compose.material.icons.rounded.PictureInPicture
+import androidx.compose.material.icons.rounded.PowerSettingsNew
 import androidx.compose.material.icons.rounded.Recommend
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.ReplayCircleFilled
+import androidx.compose.material.icons.rounded.SurroundSound
 import androidx.compose.material.icons.rounded.ScreenRotation
 import androidx.compose.material.icons.rounded.SettingsEthernet
 import androidx.compose.material.icons.rounded.SettingsRemote
@@ -30,9 +33,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.m3u.core.architecture.preferences.ConnectTimeout
+import com.m3u.core.architecture.preferences.EpgOffset
 import com.m3u.core.architecture.preferences.PlaylistStrategy
 import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.ReconnectMode
+import com.m3u.core.architecture.preferences.StartupDelay
 import com.m3u.core.architecture.preferences.UnseensMilliseconds
 import com.m3u.core.architecture.preferences.mutablePreferenceOf
 import com.m3u.core.util.basic.title
@@ -41,6 +46,7 @@ import com.m3u.smartphone.ui.business.setting.components.SwitchSharedPreference
 import com.m3u.smartphone.ui.material.components.TextPreference
 import com.m3u.smartphone.ui.material.ktx.plus
 import com.m3u.smartphone.ui.material.model.LocalSpacing
+import kotlin.math.absoluteValue
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -96,6 +102,65 @@ internal fun OptionalFragment(
             )
         }
         item {
+            var backgroundPlayback by mutablePreferenceOf(PreferencesKeys.BACKGROUND_PLAYBACK)
+            SwitchSharedPreference(
+                title = string.feat_setting_background_playback,
+                content = string.feat_setting_background_playback_description,
+                icon = Icons.Rounded.Headphones,
+                checked = backgroundPlayback,
+                onChanged = { backgroundPlayback = !backgroundPlayback }
+            )
+        }
+        item {
+            var autoPipOnHome by mutablePreferenceOf(PreferencesKeys.AUTO_PIP_ON_HOME)
+            SwitchSharedPreference(
+                title = string.feat_setting_auto_pip_on_home,
+                content = string.feat_setting_auto_pip_on_home_description,
+                icon = Icons.Rounded.PictureInPicture,
+                checked = autoPipOnHome,
+                onChanged = { autoPipOnHome = !autoPipOnHome }
+            )
+        }
+        item {
+            var resumeLastChannel by mutablePreferenceOf(PreferencesKeys.RESUME_LAST_CHANNEL_ON_STARTUP)
+            SwitchSharedPreference(
+                title = string.feat_setting_resume_last_channel_on_startup,
+                content = string.feat_setting_resume_last_channel_on_startup_description,
+                icon = Icons.Rounded.ReplayCircleFilled,
+                checked = resumeLastChannel,
+                onChanged = { resumeLastChannel = !resumeLastChannel }
+            )
+        }
+        item {
+            var launchOnBoot by mutablePreferenceOf(PreferencesKeys.LAUNCH_ON_BOOT)
+            SwitchSharedPreference(
+                title = string.feat_setting_launch_on_boot,
+                content = string.feat_setting_launch_on_boot_description,
+                icon = Icons.Rounded.PowerSettingsNew,
+                checked = launchOnBoot,
+                onChanged = { launchOnBoot = !launchOnBoot }
+            )
+        }
+        item {
+            var startupDelay by mutablePreferenceOf(PreferencesKeys.STARTUP_DELAY)
+            TextPreference(
+                title = stringResource(string.feat_setting_startup_delay).title(),
+                icon = Icons.Rounded.Timer,
+                trailing = when (startupDelay) {
+                    StartupDelay.SECONDS_2 -> stringResource(string.feat_setting_startup_delay_2s)
+                    StartupDelay.SECONDS_5 -> stringResource(string.feat_setting_startup_delay_5s)
+                    else -> stringResource(string.feat_setting_startup_delay_none)
+                },
+                onClick = {
+                    startupDelay = when (startupDelay) {
+                        StartupDelay.NONE -> StartupDelay.SECONDS_2
+                        StartupDelay.SECONDS_2 -> StartupDelay.SECONDS_5
+                        else -> StartupDelay.NONE
+                    }
+                }
+            )
+        }
+        item {
             var brightnessGesture by mutablePreferenceOf(PreferencesKeys.BRIGHTNESS_GESTURE)
             SwitchSharedPreference(
                 title = string.feat_setting_gesture_brightness,
@@ -111,6 +176,16 @@ internal fun OptionalFragment(
                 icon = Icons.AutoMirrored.Rounded.VolumeUp,
                 checked = volumeGesture,
                 onChanged = { volumeGesture = !volumeGesture }
+            )
+        }
+        item {
+            var nightAudioMode by mutablePreferenceOf(PreferencesKeys.NIGHT_AUDIO_MODE)
+            SwitchSharedPreference(
+                title = string.feat_setting_night_audio_mode,
+                content = string.feat_setting_night_audio_mode_description,
+                icon = Icons.Rounded.SurroundSound,
+                checked = nightAudioMode,
+                onChanged = { nightAudioMode = !nightAudioMode }
             )
         }
         item {
@@ -241,6 +316,18 @@ internal fun OptionalFragment(
 
         }
         item {
+            var epgOffset by mutablePreferenceOf(PreferencesKeys.EPG_TIME_OFFSET)
+            TextPreference(
+                title = stringResource(string.feat_setting_epg_time_offset).title(),
+                content = stringResource(string.feat_setting_epg_time_offset_description),
+                icon = Icons.Rounded.AccessTime,
+                trailing = epgOffset.formatEpgOffset(
+                    none = stringResource(string.feat_setting_epg_time_offset_none)
+                ),
+                onClick = { epgOffset = epgOffset.nextEpgOffset() }
+            )
+        }
+        item {
             var twelveHourClock by mutablePreferenceOf(PreferencesKeys.CLOCK_MODE)
             SwitchSharedPreference(
                 title = string.feat_setting_epg_clock_mode,
@@ -260,4 +347,19 @@ internal fun OptionalFragment(
             )
         }
     }
+}
+
+private fun Long.nextEpgOffset(): Long {
+    val currentIndex = EpgOffset.VALUES.indexOf(this)
+    val nextIndex = if (currentIndex == -1) 0 else (currentIndex + 1) % EpgOffset.VALUES.size
+    return EpgOffset.VALUES[nextIndex]
+}
+
+private fun Long.formatEpgOffset(none: String): String {
+    if (this == EpgOffset.NONE) return none
+    val duration = absoluteValue
+        .toDuration(DurationUnit.MILLISECONDS)
+        .toString()
+        .title()
+    return if (this > 0) "+$duration" else "-$duration"
 }

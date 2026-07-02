@@ -2,7 +2,9 @@ package com.m3u.smartphone.ui.business.channel
 
 import android.content.Intent
 import android.content.res.Configuration
+import android.graphics.Rect
 import android.os.Bundle
+import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -14,6 +16,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.m3u.business.channel.ChannelViewModel
 import com.m3u.core.Contracts
+import com.m3u.core.architecture.preferences.PreferencesKeys
+import com.m3u.core.architecture.preferences.Settings
+import com.m3u.core.architecture.preferences.flowOf
 import com.m3u.data.database.model.isSeries
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
@@ -32,6 +37,8 @@ class PlayerActivity : ComponentActivity() {
     private val viewModel: ChannelViewModel by viewModels()
 
     private val helper: Helper = Helper(this)
+    private var backgroundPlayback = true
+    private var autoPipOnHome = false
 
     companion object {
         // FIXME: the property is worked only when activity has one instance at most.
@@ -45,9 +52,22 @@ class PlayerActivity : ComponentActivity() {
     @Inject
     lateinit var playlistRepository: PlaylistRepository
 
+    @Inject
+    lateinit var settings: Settings
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        lifecycleScope.launch {
+            settings.flowOf(PreferencesKeys.BACKGROUND_PLAYBACK).collect { enabled ->
+                backgroundPlayback = enabled
+            }
+        }
+        lifecycleScope.launch {
+            settings.flowOf(PreferencesKeys.AUTO_PIP_ON_HOME).collect { enabled ->
+                autoPipOnHome = enabled
+            }
+        }
         handleIntent(intent)
         setContent {
             Toolkit(
@@ -118,20 +138,67 @@ class PlayerActivity : ComponentActivity() {
         helper.applyConfiguration()
     }
 
-    override fun onResume() {
-        super.onResume()
-        viewModel.pauseOrContinue(true)
-    }
-
     override fun onPause() {
         super.onPause()
-        if (!isInPictureInPictureMode) {
+        if (isInPictureInPictureMode || viewModel.playerState.value.player == null) {
+            return
+        }
+        if (backgroundPlayback) {
+            startService(Intent(this, PlaybackService::class.java))
+        } else {
             viewModel.pauseOrContinue(false)
+        }
+    }
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (!autoPipOnHome || isInPictureInPictureMode) return
+
+        val playerState = viewModel.playerState.value
+        if (playerState.player == null) return
+
+        val videoSize = playerState.videoSize
+        val pipSize = if (videoSize.width() > 0 && videoSize.height() > 0) {
+            videoSize
+        } else {
+            Rect(0, 0, 1920, 1080)
+        }
+        runCatching {
+            helper.enterPipMode(pipSize)
+        }
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        return when (event.keyCode) {
+            KeyEvent.KEYCODE_CHANNEL_UP -> {
+                if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+                    viewModel.getNextChannel()
+                }
+                true
+            }
+
+            KeyEvent.KEYCODE_CHANNEL_DOWN -> {
+                if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+                    viewModel.getPreviousChannel()
+                }
+                true
+            }
+
+            else -> super.dispatchKeyEvent(event)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (!backgroundPlayback) {
+            viewModel.pauseOrContinue(true)
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        viewModel.destroy()
+        if (isFinishing && !isChangingConfigurations) {
+            viewModel.destroy()
+        }
     }
 }

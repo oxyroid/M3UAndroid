@@ -1,7 +1,9 @@
 package com.m3u.smartphone.ui.common.helper
 
 import android.app.PictureInPictureParams
+import android.app.UiModeManager
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Rect
 import android.provider.Settings
@@ -101,6 +103,12 @@ class Helper(private val activity: ComponentActivity) {
             activity.requestedOrientation = value
         }
     val activityContext: Context get() = activity
+    val isDesktopMode: Boolean
+        get() {
+            val uiModeManager = activity.getSystemService(UiModeManager::class.java)
+            return uiModeManager?.currentModeType == Configuration.UI_MODE_TYPE_DESK ||
+                    activity.resources.configuration.isSamsungDesktopMode
+        }
 
     val windowSizeClass: WindowSizeClass
         @Composable get() = calculateWindowSizeClass(activity)
@@ -146,7 +154,7 @@ class Helper(private val activity: ComponentActivity) {
                 val atBottom = ViewConfiguration
                     .get(activity)
                     .hasPermanentMenuKey()
-                if (configuration.isPortraitMode || !atBottom) {
+                if (isDesktopMode || configuration.isPortraitMode || !atBottom) {
                     show(WindowInsetsCompat.Type.navigationBars())
                 } else {
                     hide(WindowInsetsCompat.Type.navigationBars())
@@ -163,6 +171,18 @@ class Helper(private val activity: ComponentActivity) {
 }
 
 val Helper.useRailNav: Boolean
-    @Composable get() = windowSizeClass.widthSizeClass > WindowWidthSizeClass.Compact
+    @Composable get() = isDesktopMode || windowSizeClass.widthSizeClass > WindowWidthSizeClass.Compact
 
 val LocalHelper = staticCompositionLocalOf<Helper> { error("Please provide helper.") }
+
+private val Configuration.isSamsungDesktopMode: Boolean
+    get() = runCatching {
+        val configurationClass = javaClass
+        val enabledValue = configurationClass
+            .getField("SEM_DESKTOP_MODE_ENABLED")
+            .getInt(configurationClass)
+        val currentValue = configurationClass
+            .getField("semDesktopModeEnabled")
+            .getInt(this)
+        enabledValue == currentValue
+    }.getOrDefault(false)

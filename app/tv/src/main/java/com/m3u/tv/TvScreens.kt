@@ -1,6 +1,8 @@
 package com.m3u.tv
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusGroup
@@ -27,6 +29,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Refresh
@@ -38,26 +41,34 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.i18n.R.string
 import kotlinx.coroutines.yield
@@ -66,9 +77,13 @@ import kotlinx.coroutines.yield
 fun TvBrowsePane(
     destination: TvDestination,
     state: TvUiState,
+    subscribingXtream: Boolean,
+    xtreamSubscriptionMessage: TvXtreamSubscriptionMessage?,
     onOpenLibrary: () -> Unit,
     onPlaylist: (Playlist) -> Unit,
     onRefresh: () -> Unit,
+    onAddXtreamPlaylist: (String, String, String, String, String?) -> Unit,
+    onClearXtreamSubscriptionMessage: () -> Unit,
     onPlay: (Channel) -> Unit,
     onPlayRecent: () -> Unit
 ) {
@@ -78,7 +93,12 @@ fun TvBrowsePane(
         contentAlignment = Alignment.Center
     ) {
         if (state.playlists.isEmpty()) {
-            EmptyLibraryScreen()
+            EmptyLibraryScreen(
+                subscribingXtream = subscribingXtream,
+                xtreamSubscriptionMessage = xtreamSubscriptionMessage,
+                onAddXtreamPlaylist = onAddXtreamPlaylist,
+                onClearXtreamSubscriptionMessage = onClearXtreamSubscriptionMessage
+            )
         } else {
             when (destination) {
                 TvDestination.Home -> HomeScreen(
@@ -103,7 +123,13 @@ fun TvBrowsePane(
                     onPlay = onPlay
                 )
 
-                TvDestination.Status -> StatusScreen(state)
+                TvDestination.Status -> StatusScreen(
+                    state = state,
+                    subscribingXtream = subscribingXtream,
+                    xtreamSubscriptionMessage = xtreamSubscriptionMessage,
+                    onAddXtreamPlaylist = onAddXtreamPlaylist,
+                    onClearXtreamSubscriptionMessage = onClearXtreamSubscriptionMessage
+                )
             }
         }
     }
@@ -400,6 +426,7 @@ private fun LibraryScreen(
     onPlay: (Channel) -> Unit
 ) {
     val playlistFocusRequester = remember { FocusRequester() }
+    val firstChannelFocusRequester = remember { FocusRequester() }
     val focusTarget = state.selectedPlaylist ?: state.playlists.firstOrNull()
     var initialFocusRequested by remember { mutableStateOf(false) }
 
@@ -408,6 +435,12 @@ private fun LibraryScreen(
             yield()
             playlistFocusRequester.requestFocus()
             initialFocusRequested = true
+        }
+    }
+    LaunchedEffect(state.selectedPlaylist?.url, state.loadingChannels, state.channels.size) {
+        if (!state.loadingChannels && state.channels.isNotEmpty()) {
+            yield()
+            firstChannelFocusRequester.requestFocus()
         }
     }
 
@@ -438,6 +471,7 @@ private fun LibraryScreen(
                         modifier = Modifier
                             .widthIn(min = 256.dp, max = 336.dp)
                             .height(144.dp)
+                            .focusProperties { down = firstChannelFocusRequester }
                     )
                 }
             }
@@ -469,7 +503,8 @@ private fun LibraryScreen(
                 TvActionButton(
                     text = stringResource(string.feat_setting_label_subscribe),
                     icon = Icons.Rounded.Refresh,
-                    onClick = onRefresh
+                    onClick = onRefresh,
+                    modifier = Modifier.focusProperties { down = firstChannelFocusRequester }
                 )
             }
         }
@@ -478,6 +513,7 @@ private fun LibraryScreen(
             ChannelGrid(
                 channels = state.channels,
                 onPlay = onPlay,
+                firstItemFocusRequester = firstChannelFocusRequester,
                 modifier = Modifier.height(620.dp)
             )
         }
@@ -517,7 +553,13 @@ private fun ChannelGridScreen(
 }
 
 @Composable
-private fun StatusScreen(state: TvUiState) {
+private fun StatusScreen(
+    state: TvUiState,
+    subscribingXtream: Boolean,
+    xtreamSubscriptionMessage: TvXtreamSubscriptionMessage?,
+    onAddXtreamPlaylist: (String, String, String, String, String?) -> Unit,
+    onClearXtreamSubscriptionMessage: () -> Unit
+) {
     Column(
         verticalArrangement = Arrangement.spacedBy(24.dp),
         modifier = Modifier
@@ -557,6 +599,15 @@ private fun StatusScreen(state: TvUiState) {
                     .height(136.dp)
             )
         }
+        XtreamSubscribePanel(
+            subscribing = subscribingXtream,
+            message = xtreamSubscriptionMessage,
+            onSubmit = onAddXtreamPlaylist,
+            onInputChange = onClearXtreamSubscriptionMessage,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(460.dp)
+        )
     }
 }
 
@@ -612,13 +663,18 @@ private fun ChannelGrid(
 }
 
 @Composable
-private fun EmptyLibraryScreen() {
+private fun EmptyLibraryScreen(
+    subscribingXtream: Boolean,
+    xtreamSubscriptionMessage: TvXtreamSubscriptionMessage?,
+    onAddXtreamPlaylist: (String, String, String, String, String?) -> Unit,
+    onClearXtreamSubscriptionMessage: () -> Unit
+) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(48.dp),
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .height(360.dp)
+            .height(460.dp)
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -658,17 +714,252 @@ private fun EmptyLibraryScreen() {
                     .fillMaxWidth(0.72f)
                     .widthIn(max = 420.dp)
             ) {
-                InfoPill(text = stringResource(string.tv_empty_library_phone_hint), modifier = Modifier.fillMaxWidth())
+                InfoPill(text = stringResource(string.tv_empty_library_xtream_hint), modifier = Modifier.fillMaxWidth())
                 InfoPill(text = stringResource(string.tv_empty_library_restore_hint), modifier = Modifier.fillMaxWidth())
             }
         }
-        SetupPanel(
+        XtreamSubscribePanel(
+            subscribing = subscribingXtream,
+            message = xtreamSubscriptionMessage,
+            onSubmit = onAddXtreamPlaylist,
+            onInputChange = onClearXtreamSubscriptionMessage,
             modifier = Modifier
                 .weight(0.88f)
                 .widthIn(max = 420.dp)
         )
     }
 }
+
+private enum class TvXtreamContentType(val type: String?) {
+    All(null),
+    Live(DataSource.Xtream.TYPE_LIVE),
+    Vod(DataSource.Xtream.TYPE_VOD),
+    Series(DataSource.Xtream.TYPE_SERIES)
+}
+
+@Composable
+private fun XtreamSubscribePanel(
+    subscribing: Boolean,
+    message: TvXtreamSubscriptionMessage?,
+    onSubmit: (String, String, String, String, String?) -> Unit,
+    onInputChange: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var title by rememberSaveable { mutableStateOf("") }
+    var basicUrl by rememberSaveable { mutableStateOf("") }
+    var username by rememberSaveable { mutableStateOf("") }
+    var password by rememberSaveable { mutableStateOf("") }
+    var selectedType by rememberSaveable { mutableStateOf(TvXtreamContentType.All) }
+    val canSubmit = title.isNotBlank() &&
+        basicUrl.isNotBlank() &&
+        username.isNotBlank() &&
+        password.isNotBlank()
+
+    FocusFrame(
+        onClick = {},
+        enabled = false,
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.linearGradient(
+                        0f to TvColors.SurfaceRaised,
+                        1f to TvColors.BackgroundSoft
+                    )
+                )
+                .padding(24.dp)
+        ) {
+            SectionTitle(
+                title = stringResource(string.tv_xtream_panel_title),
+                subtitle = stringResource(string.tv_xtream_panel_subtitle)
+            )
+            TvInputField(
+                value = title,
+                onValueChange = {
+                    title = it
+                    onInputChange()
+                },
+                placeholder = stringResource(string.tv_xtream_title_placeholder)
+            )
+            TvInputField(
+                value = basicUrl,
+                onValueChange = {
+                    basicUrl = it
+                    onInputChange()
+                },
+                placeholder = stringResource(string.tv_xtream_address_placeholder),
+                keyboardType = KeyboardType.Uri
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                TvInputField(
+                    value = username,
+                    onValueChange = {
+                        username = it
+                        onInputChange()
+                    },
+                    placeholder = stringResource(string.tv_xtream_username_placeholder),
+                    modifier = Modifier.weight(1f)
+                )
+                TvInputField(
+                    value = password,
+                    onValueChange = {
+                        password = it
+                        onInputChange()
+                    },
+                    placeholder = stringResource(string.tv_xtream_password_placeholder),
+                    keyboardType = KeyboardType.Password,
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TvXtreamContentType.entries.forEach { type ->
+                    XtreamTypeChip(
+                        type = type,
+                        selected = type == selectedType,
+                        onSelect = {
+                            selectedType = type
+                            onInputChange()
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp)
+                    )
+                }
+            }
+            val messageText = message?.let { xtreamSubscriptionMessageText(it) }
+            Text(
+                text = messageText.orEmpty(),
+                color = when (message) {
+                    TvXtreamSubscriptionMessage.Enqueued -> TvColors.Focus
+                    TvXtreamSubscriptionMessage.InvalidUrl,
+                    TvXtreamSubscriptionMessage.MissingFields -> TvColors.Accent
+                    null -> Color.Transparent
+                },
+                fontSize = 13.sp,
+                lineHeight = 18.sp,
+                fontFamily = TvFonts.Body,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.height(30.dp)
+            )
+            TvActionButton(
+                text = if (subscribing) {
+                    stringResource(string.tv_xtream_subscribing)
+                } else {
+                    stringResource(string.tv_xtream_subscribe)
+                },
+                icon = Icons.Rounded.Add,
+                onClick = {
+                    onSubmit(title, basicUrl, username, password, selectedType.type)
+                },
+                enabled = canSubmit && !subscribing,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+@Composable
+private fun TvInputField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    visualTransformation: VisualTransformation = VisualTransformation.None
+) {
+    var focused by remember { mutableStateOf(false) }
+    BasicTextField(
+        value = value,
+        onValueChange = onValueChange,
+        singleLine = true,
+        textStyle = TextStyle(
+            color = TvColors.TextPrimary,
+            fontSize = 15.sp,
+            fontFamily = TvFonts.Body
+        ),
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        visualTransformation = visualTransformation,
+        cursorBrush = SolidColor(TvColors.Focus),
+        decorationBox = { innerTextField ->
+            Box(contentAlignment = Alignment.CenterStart) {
+                if (value.isEmpty()) {
+                    Text(
+                        text = placeholder,
+                        color = TvColors.TextMuted,
+                        fontSize = 15.sp,
+                        fontFamily = TvFonts.Body,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                innerTextField()
+            }
+        },
+        modifier = modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(TvColors.Surface.copy(alpha = 0.92f))
+            .border(
+                BorderStroke(
+                    width = if (focused) 3.dp else 1.dp,
+                    color = if (focused) TvColors.Focus else Color.White.copy(alpha = 0.12f)
+                ),
+                RoundedCornerShape(8.dp)
+            )
+            .onFocusChanged { focused = it.isFocused }
+            .padding(horizontal = 14.dp, vertical = 13.dp)
+    )
+}
+
+@Composable
+private fun XtreamTypeChip(
+    type: TvXtreamContentType,
+    selected: Boolean,
+    onSelect: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    FocusFrame(
+        onClick = onSelect,
+        selected = selected,
+        focusedScale = 1f,
+        shape = RoundedCornerShape(22.dp),
+        modifier = modifier
+    ) { focused ->
+        Text(
+            text = when (type) {
+                TvXtreamContentType.All -> stringResource(string.tv_xtream_type_all)
+                TvXtreamContentType.Live -> stringResource(string.tv_xtream_type_live)
+                TvXtreamContentType.Vod -> stringResource(string.tv_xtream_type_vod)
+                TvXtreamContentType.Series -> stringResource(string.tv_xtream_type_series)
+            },
+            color = if (focused || selected) TvColors.OnFocus else TvColors.TextPrimary,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+            fontFamily = TvFonts.Body,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.align(Alignment.Center)
+        )
+    }
+}
+
+@Composable
+private fun xtreamSubscriptionMessageText(message: TvXtreamSubscriptionMessage): String =
+    when (message) {
+        TvXtreamSubscriptionMessage.MissingFields ->
+            stringResource(string.tv_xtream_message_missing_fields)
+        TvXtreamSubscriptionMessage.InvalidUrl ->
+            stringResource(string.tv_xtream_message_invalid_url)
+        TvXtreamSubscriptionMessage.Enqueued ->
+            stringResource(string.tv_xtream_message_enqueued)
+    }
 
 @Composable
 private fun SetupPanel(modifier: Modifier = Modifier) {

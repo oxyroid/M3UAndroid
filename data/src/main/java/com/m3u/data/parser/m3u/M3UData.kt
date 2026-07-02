@@ -2,6 +2,7 @@ package com.m3u.data.parser.m3u
 
 import androidx.core.net.toUri
 import com.m3u.data.database.model.Channel
+import com.m3u.data.util.StreamUrlOptions
 
 internal data class M3UData(
     val id: String = "",
@@ -10,28 +11,21 @@ internal data class M3UData(
     val group: String = "",
     val title: String = "",
     val url: String = "",
+    val videoUrl: String? = null,
     val duration: Double = -1.0,
     val licenseType: String? = null,
     val licenseKey: String? = null,
+    val httpOptions: Map<String, String> = emptyMap(),
 )
 
 internal fun M3UData.toChannel(
     playlistUrl: String,
     seen: Long = 0L
 ): Channel {
-    val fileScheme = "file:///"
-    val absoluteUrl = if (!url.startsWith(fileScheme)) url
-    else {
-        with(playlistUrl.toUri()) {
-            val paths = pathSegments.dropLast(1) + url.drop(fileScheme.length)
-            buildUpon()
-                .path(
-                    paths.joinToString("/", "", "")
-                )
-                .build()
-                .toString()
-        }
-    }
+    val absoluteUrl = url.toAbsoluteUrl(playlistUrl)
+    val absoluteVideoUrl = videoUrl
+        ?.takeIf { it.isNotBlank() }
+        ?.toAbsoluteUrl(playlistUrl)
 
     /**
      * kodi adaptive: 'tvg-id' corresponds to 'channel-id' field in the EPG xml file.
@@ -39,10 +33,15 @@ internal fun M3UData.toChannel(
      *
      * https://kodi.wiki/view/Add-on:PVR_IPTV_Simple_Client#Usage
      */
-    val relationId = id.ifEmpty { name }
+    val relationId = id.ifEmpty { name.ifEmpty { title } }
 
     return Channel(
-        url = absoluteUrl,
+        url = StreamUrlOptions.appendToUrl(
+            absoluteUrl,
+            httpOptions + buildMap {
+                absoluteVideoUrl?.let { put(StreamUrlOptions.VIDEO_URL, it) }
+            }
+        ),
         category = group,
         title = title,
         cover = cover,
@@ -52,4 +51,18 @@ internal fun M3UData.toChannel(
         licenseKey = licenseKey,
         relationId = relationId
     )
+}
+
+private fun String.toAbsoluteUrl(playlistUrl: String): String {
+    val fileScheme = "file:///"
+    if (!startsWith(fileScheme)) return this
+
+    val relativePath = drop(fileScheme.length)
+    return with(playlistUrl.toUri()) {
+        val paths = pathSegments.dropLast(1) + relativePath
+        buildUpon()
+            .path(paths.joinToString("/", "", ""))
+            .build()
+            .toString()
+    }
 }

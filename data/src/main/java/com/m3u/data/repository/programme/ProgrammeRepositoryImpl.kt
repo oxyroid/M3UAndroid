@@ -3,11 +3,17 @@ package com.m3u.data.repository.programme
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
+import androidx.paging.map
+import com.m3u.core.architecture.preferences.PreferencesKeys
+import com.m3u.core.architecture.preferences.Settings
+import com.m3u.core.architecture.preferences.flowOf
+import com.m3u.core.architecture.preferences.get
 import com.m3u.core.util.basic.letIf
 import com.m3u.data.api.OkhttpClient
 import com.m3u.data.database.dao.ChannelDao
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.ProgrammeDao
+import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.ProgrammeRange
 import com.m3u.data.database.model.epgUrlsOrXtreamXmlUrl
@@ -20,6 +26,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -33,6 +40,8 @@ import java.util.zip.GZIPInputStream
 import javax.inject.Inject
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Instant
 
 internal class ProgrammeRepositoryImpl @Inject constructor(
     private val playlistDao: PlaylistDao,
@@ -40,6 +49,7 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
     private val programmeDao: ProgrammeDao,
     private val epgParser: EpgParser,
     @OkhttpClient(true) private val okHttpClient: OkHttpClient,
+    private val settings: Settings
 ) : ProgrammeRepository {
     private val timber = Timber.tag("ProgrammeRepositoryImpl")
     override val refreshingEpgUrls = MutableStateFlow<List<String>>(emptyList())
@@ -49,23 +59,37 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
         relationId: String
     ): Flow<PagingData<Programme>> = playlistDao
         .observeByUrl(playlistUrl)
-        .map { playlist -> playlist?.epgUrlsOrXtreamXmlUrl() ?: emptyList() }
-        .map { epgUrls -> findValidEpgUrl(epgUrls, relationId, defaultProgrammeRange) }
+        .map { playlist ->
+            val relationIds = findChannelRelationIds(playlistUrl, relationId)
+            val epgUrls = playlist?.epgUrlsOrXtreamXmlUrl() ?: emptyList()
+            findValidEpgUrl(epgUrls, relationIds, defaultProgrammeRange) to relationIds
+        }
         .flatMapLatest { epgUrl ->
-            Pager(PagingConfig(15)) { programmeDao.pagingProgrammes(epgUrl, relationId) }.flow
+            val (validEpgUrl, relationIds) = epgUrl
+            if (validEpgUrl == null || relationIds.isEmpty()) return@flatMapLatest flowOf(PagingData.empty())
+            Pager(PagingConfig(15)) { programmeDao.pagingProgrammes(validEpgUrl, relationIds) }.flow
+        }
+        .combine(settings.flowOf(PreferencesKeys.EPG_TIME_OFFSET)) { pagingData, offset ->
+            pagingData.map { programme -> programme.withOffset(offset) }
         }
 
     override fun observeProgrammeRange(
         playlistUrl: String,
         relationId: String
     ): Flow<ProgrammeRange> = playlistDao.observeByUrl(playlistUrl)
-        .map { playlist -> playlist?.epgUrlsOrXtreamXmlUrl() ?: emptyList() }
-        .map { epgUrls -> findValidEpgUrl(epgUrls, relationId, defaultProgrammeRange) }
-        .flatMapLatest { epgUrl ->
-            epgUrl ?: return@flatMapLatest flowOf()
+        .map { playlist ->
+            val relationIds = findChannelRelationIds(playlistUrl, relationId)
+            val epgUrls = playlist?.epgUrlsOrXtreamXmlUrl() ?: emptyList()
+            findValidEpgUrl(epgUrls, relationIds, defaultProgrammeRange) to relationIds
+        }
+        .flatMapLatest { (epgUrl, relationIds) ->
+            if (epgUrl == null || relationIds.isEmpty()) return@flatMapLatest flowOf()
             programmeDao
-                .observeProgrammeRange(epgUrl, relationId)
+                .observeProgrammeRange(epgUrl, relationIds)
                 .filterNot { (start, end) -> start == 0L || end == 0L }
+        }
+        .combine(settings.flowOf(PreferencesKeys.EPG_TIME_OFFSET)) { range, offset ->
+            range.withOffset(offset)
         }
 
     override fun observeProgrammeRange(playlistUrl: String): Flow<ProgrammeRange> =
@@ -75,6 +99,9 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
             }
             .flatMapLatest { epgUrls ->
                 programmeDao.observeProgrammeRange(epgUrls)
+            }
+            .combine(settings.flowOf(PreferencesKeys.EPG_TIME_OFFSET)) { range, offset ->
+                range.withOffset(offset)
             }
 
     private val defaultProgrammeRange: ProgrammeRange
@@ -106,22 +133,26 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getById(id: Int): Programme? = programmeDao.getById(id)
+    override suspend fun getById(id: Int): Programme? {
+        val offset = settings[PreferencesKeys.EPG_TIME_OFFSET]
+        return programmeDao.getById(id)?.withOffset(offset)
+    }
 
     override suspend fun getProgrammeCurrently(channelId: Int): Programme? {
         val channel = channelDao.get(channelId) ?: return null
-        val relationId = channel.relationId ?: return null
+        val relationIds = channel.programmeRelationIds()
         val playlist = playlistDao.get(channel.playlistUrl) ?: return null
 
         val epgUrls = playlist.epgUrlsOrXtreamXmlUrl()
-        if (epgUrls.isEmpty()) return null
+        if (epgUrls.isEmpty() || relationIds.isEmpty()) return null
 
-        val time = Clock.System.now().toEpochMilliseconds()
+        val offset = settings[PreferencesKeys.EPG_TIME_OFFSET]
+        val time = Clock.System.now().toEpochMilliseconds() - offset
         return programmeDao.getCurrentByEpgUrlsAndRelationId(
             epgUrls = epgUrls,
-            relationId = relationId,
+            relationIds = relationIds,
             time = time
-        )
+        )?.withOffset(offset)
     }
 
     private fun checkOrRefreshProgrammesOrThrowImpl(
@@ -188,20 +219,52 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
      *
      * This function iterates over the provided list of EPG URLs and checks
      * if each URL is valid by querying from the database. The validity check
-     * uses the `relationId` and the start and end times from the `ProgrammeRange`.
+     * uses candidate relation IDs and the start and end times from the `ProgrammeRange`.
      * The first valid EPG URL found is returned. If no valid URLs are found,
      * the function returns null.
      *
      * @param epgUrls A list of EPG URLs to check.
-     * @param relationId A unique identifier representing the relation for the EPG.
+     * @param relationIds Unique identifiers representing possible EPG relations.
      * @param range A `ProgrammeRange` object containing the start and end times to validate against.
      * @return The first valid EPG URL, or null if none are valid.
      */
     private suspend fun findValidEpgUrl(
         epgUrls: List<String>,
-        relationId: String,
+        relationIds: List<String>,
         range: ProgrammeRange
-    ): String? = epgUrls.firstOrNull { epgUrl ->
-        programmeDao.checkEpgUrlIsValid(epgUrl, relationId, range.start, range.end)
+    ): String? {
+        if (relationIds.isEmpty()) return null
+        return epgUrls.firstOrNull { epgUrl ->
+            programmeDao.checkEpgUrlIsValid(epgUrl, relationIds, range.start, range.end)
+        }
+    }
+
+    private suspend fun findChannelRelationIds(
+        playlistUrl: String,
+        relationId: String
+    ): List<String> {
+        val channel = channelDao.getByPlaylistUrlAndRelationId(playlistUrl, relationId)
+        return channel?.programmeRelationIds(relationId) ?: listOf(relationId)
+    }
+
+    private fun Channel.programmeRelationIds(relationId: String? = this.relationId): List<String> {
+        return listOfNotNull(
+            relationId?.takeIf { it.isNotBlank() },
+            title.takeIf { it.isNotBlank() }
+        ).distinct()
+    }
+
+    private fun Programme.withOffset(offset: Long): Programme {
+        if (offset == 0L) return this
+        val duration = offset.milliseconds
+        return copy(
+            start = Instant.fromEpochMilliseconds(start).plus(duration).toEpochMilliseconds(),
+            end = Instant.fromEpochMilliseconds(end).plus(duration).toEpochMilliseconds()
+        )
+    }
+
+    private fun ProgrammeRange.withOffset(offset: Long): ProgrammeRange {
+        if (offset == 0L) return this
+        return this + offset.milliseconds
     }
 }

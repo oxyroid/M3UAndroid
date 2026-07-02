@@ -15,7 +15,7 @@ android {
     compileSdk = 36
     defaultConfig {
         applicationId = "com.m3u.tv"
-        minSdk = 26
+        minSdk = 25
         targetSdk = 33
         versionCode = 2
         versionName = "1.0.1"

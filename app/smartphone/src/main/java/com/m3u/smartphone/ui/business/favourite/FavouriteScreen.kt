@@ -2,10 +2,17 @@ package com.m3u.smartphone.ui.business.favourite
 
 import android.content.res.Configuration
 import android.view.KeyEvent
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Sort
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -20,6 +27,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.input.ImeAction
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -44,8 +52,12 @@ import com.m3u.smartphone.ui.material.components.EpisodesBottomSheet
 import com.m3u.smartphone.ui.material.components.MediaSheet
 import com.m3u.smartphone.ui.material.components.MediaSheetValue
 import com.m3u.smartphone.ui.material.components.SortBottomSheet
+import com.m3u.smartphone.ui.material.components.TextField
 import com.m3u.smartphone.ui.material.ktx.interceptVolumeEvent
+import com.m3u.smartphone.ui.material.ktx.minus
+import com.m3u.smartphone.ui.material.ktx.only
 import com.m3u.smartphone.ui.material.model.LocalHazeState
+import com.m3u.smartphone.ui.material.model.LocalSpacing
 import dev.chrisbanes.haze.hazeSource
 import kotlinx.coroutines.launch
 
@@ -71,17 +83,26 @@ fun FavoriteRoute(
     val zapping by viewModel.zapping.collectAsStateWithLifecycle()
     val sorts = viewModel.sorts
     val sort by viewModel.sort.collectAsStateWithLifecycle()
+    val query by viewModel.query.collectAsStateWithLifecycle()
 
     val sheetState = rememberModalBottomSheetState()
 
     var isSortSheetVisible by rememberSaveable { mutableStateOf(false) }
+    var isSearchVisible by rememberSaveable { mutableStateOf(false) }
     var mediaSheetValue: MediaSheetValue.FavoriteScreen by remember {
         mutableStateOf(MediaSheetValue.FavoriteScreen())
     }
 
     val series: Channel? by viewModel.series.collectAsStateWithLifecycle()
 
-    LifecycleResumeEffect(title) {
+    BackHandler(query.isNotEmpty() || isSearchVisible) {
+        when {
+            query.isNotEmpty() -> viewModel.query.value = ""
+            else -> isSearchVisible = false
+        }
+    }
+
+    LifecycleResumeEffect(title, isSearchVisible) {
         Metadata.title = AnnotatedString(title.title())
         Metadata.color = Color.Unspecified
         Metadata.contentColor = Color.Unspecified
@@ -90,6 +111,14 @@ fun FavoriteRoute(
                 icon = Icons.AutoMirrored.Rounded.Sort,
                 contentDescription = "sort",
                 onClick = { isSortSheetVisible = true }
+            ),
+            Action(
+                icon = if (isSearchVisible) Icons.Rounded.Close else Icons.Rounded.Search,
+                contentDescription = if (isSearchVisible) "close search" else "search",
+                onClick = {
+                    isSearchVisible = !isSearchVisible
+                    if (!isSearchVisible) viewModel.query.value = ""
+                }
             )
         )
         onPauseOrDispose {
@@ -99,10 +128,13 @@ fun FavoriteRoute(
 
     FavoriteScreen(
         contentPadding = contentPadding,
+        query = query,
+        searchVisible = isSearchVisible,
         rowCount = rowCount,
         channels = channels,
         zapping = zapping,
         recently = sort == Sort.RECENTLY,
+        onQuery = { viewModel.query.value = it },
         onClickChannel = { channel ->
             coroutineScope.launch {
                 val playlist = viewModel.getPlaylist(channel.playlistUrl)
@@ -183,28 +215,55 @@ fun FavoriteRoute(
 @Composable
 private fun FavoriteScreen(
     contentPadding: PaddingValues,
+    query: String,
+    searchVisible: Boolean,
     rowCount: Int,
     channels: LazyPagingItems<Channel>,
     zapping: Channel?,
     recently: Boolean,
+    onQuery: (String) -> Unit,
     onClickChannel: (Channel) -> Unit,
     onLongClickChannel: (Channel) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
+    val spacing = LocalSpacing.current
     val actualRowCount = when (configuration.orientation) {
         Configuration.ORIENTATION_PORTRAIT -> rowCount
         Configuration.ORIENTATION_LANDSCAPE -> rowCount + 2
         else -> rowCount + 2
     }
-    FavoriteGallery(
-        contentPadding = contentPadding,
-        channels = channels,
-        zapping = zapping,
-        recently = recently,
-        rowCount = actualRowCount,
-        onClick = onClickChannel,
-        onLongClick = onLongClickChannel,
-        modifier = modifier.hazeSource(LocalHazeState.current)
-    )
+    val showSearch = searchVisible || query.isNotEmpty()
+    Column(modifier = modifier) {
+        AnimatedVisibility(visible = showSearch) {
+            TextField(
+                text = query,
+                placeholder = stringResource(R.string.feat_favorite_query_placeholder),
+                imeAction = ImeAction.Search,
+                onValueChange = onQuery,
+                modifier = Modifier
+                    .padding(contentPadding only WindowInsetsSides.Top)
+                    .padding(
+                        horizontal = spacing.medium,
+                        vertical = spacing.small
+                    )
+            )
+        }
+        FavoriteGallery(
+            contentPadding = if (showSearch) {
+                contentPadding - (contentPadding only WindowInsetsSides.Top)
+            } else {
+                contentPadding
+            },
+            channels = channels,
+            zapping = zapping,
+            recently = recently,
+            rowCount = actualRowCount,
+            onClick = onClickChannel,
+            onLongClick = onLongClickChannel,
+            modifier = Modifier
+                .weight(1f)
+                .hazeSource(LocalHazeState.current)
+        )
+    }
 }

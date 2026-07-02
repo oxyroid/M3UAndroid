@@ -3,6 +3,7 @@ package com.m3u.data.api
 import com.m3u.core.architecture.Publisher
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.tv.http.endpoint.DefRep
+import com.m3u.data.tv.model.RestorePlaylistPayload
 import com.m3u.data.tv.model.TvInfo
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -15,6 +16,7 @@ import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import retrofit2.Retrofit
+import retrofit2.http.Body
 import retrofit2.create
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -37,6 +39,11 @@ interface TvApi {
         @Query("password") password: String,
         @Query("epg") epg: String?,
         @Query("data_source") dataSource: DataSource
+    ): DefRep?
+
+    @POST("/playlists/restore")
+    suspend fun restore(
+        @Body payload: RestorePlaylistPayload
     ): DefRep?
 
     @POST("/remotes/{direction}")
@@ -122,6 +129,8 @@ class TvApiDelegate @Inject constructor(
         epg: String?,
         dataSource: DataSource
     ): DefRep? = requireApi().subscribe(title, url, basicUrl, username, password, epg, dataSource)
+
+    override suspend fun restore(payload: RestorePlaylistPayload): DefRep? = requireApi().restore(payload)
 
     override suspend fun remoteDirection(remoteDirectionValue: Int): DefRep? =
         requireApi().remoteDirection(remoteDirectionValue)

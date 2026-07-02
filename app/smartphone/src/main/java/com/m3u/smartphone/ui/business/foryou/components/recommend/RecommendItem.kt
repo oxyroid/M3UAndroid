@@ -225,20 +225,23 @@ private fun DiscoverContent(spec: Recommend.DiscoverSpec) {
     val playlist = spec.playlist
     val category = spec.category
     Text(
-        text = stringResource(string.feat_foryou_recommend_unseen_label).uppercase(),
+        text = stringResource(string.feat_foryou_recommend_discover_label).uppercase(),
         style = MaterialTheme.typography.labelLarge,
         maxLines = 1
     )
     Text(
-        text = "",
+        text = stringResource(string.feat_foryou_recommend_discover_from, playlist.title),
         style = MaterialTheme.typography.labelMedium,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis
     )
     Spacer(modifier = Modifier.height(spacing.extraSmall))
     Text(
-        text = "",
+        text = category,
         style = MaterialTheme.typography.displaySmall,
         fontWeight = FontWeight.Black,
-        maxLines = 1
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis
     )
 }
 

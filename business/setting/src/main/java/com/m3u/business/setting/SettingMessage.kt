@@ -70,6 +70,18 @@ sealed class SettingMessage(
         resId = string.feat_setting_remote_subscribe_failed
     )
 
+    data object RemoteTvRestoreSent : SettingMessage(
+        level = LEVEL_INFO,
+        type = TYPE_SNACK,
+        resId = string.feat_setting_remote_restore_sent
+    )
+
+    data object RemoteTvRestoreFailed : SettingMessage(
+        level = LEVEL_ERROR,
+        type = TYPE_SNACK,
+        resId = string.feat_setting_remote_restore_failed
+    )
+
     data object BackingUp : SettingMessage(
         level = LEVEL_INFO,
         type = TYPE_SNACK,

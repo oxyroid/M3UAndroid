@@ -104,6 +104,16 @@ interface PlaylistDao {
     }
 
     @Transaction
+    suspend fun updateOrderedCategories(url: String, categories: List<String>) {
+        val playlist = get(url) ?: return
+        insertOrReplace(
+            playlist.copy(
+                orderedCategories = categories.distinct()
+            )
+        )
+    }
+
+    @Transaction
     suspend fun updateEpgUrls(url: String, updater: (List<String>) -> List<String>) {
         val playlist = get(url) ?: return
         insertOrReplace(

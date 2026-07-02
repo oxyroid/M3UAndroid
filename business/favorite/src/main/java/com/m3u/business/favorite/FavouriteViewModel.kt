@@ -85,9 +85,13 @@ class FavoriteViewModel @Inject constructor(
         sortIndex.update { sorts.indexOf(sort).coerceAtLeast(0) }
     }
 
-    val channels: Flow<PagingData<Channel>> = sort.flatMapLatest {
+    val query = MutableStateFlow("")
+
+    val channels: Flow<PagingData<Channel>> = combine(sort, query) { sort, query ->
+        sort to query.trim()
+    }.flatMapLatest { (sort, query) ->
         Pager(PagingConfig(10)) {
-            channelRepository.pagingAllFavorite(it)
+            channelRepository.pagingAllFavorite(sort, query)
         }
             .flow
     }

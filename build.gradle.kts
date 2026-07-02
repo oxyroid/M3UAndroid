@@ -1,3 +1,4 @@
+import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.gradle.LibraryExtension
 import org.jetbrains.kotlin.compose.compiler.gradle.ComposeCompilerGradlePluginExtension
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
@@ -58,11 +59,25 @@ subprojects {
             reportsDestination = layout.buildDirectory.dir("compose_metrics")
         }
     }
+    plugins.withId("com.android.application") {
+        configure<ApplicationExtension> {
+            dependenciesInfo {
+                includeInApk = false
+                includeInBundle = false
+            }
+            compileOptions {
+                isCoreLibraryDesugaringEnabled = true
+                sourceCompatibility = JavaVersion.VERSION_17
+                targetCompatibility = JavaVersion.VERSION_17
+            }
+        }
+        dependencies.add("coreLibraryDesugaring", libs.desugar.jdk.libs)
+    }
     plugins.withId("com.android.library") {
         configure<LibraryExtension> {
             compileSdk = 36
             defaultConfig {
-                minSdk = 26
+                minSdk = 25
                 testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
                 consumerProguardFiles("consumer-rules.pro")
             }
@@ -76,9 +91,11 @@ subprojects {
                 }
             }
             compileOptions {
+                isCoreLibraryDesugaringEnabled = true
                 sourceCompatibility = JavaVersion.VERSION_17
                 targetCompatibility = JavaVersion.VERSION_17
             }
         }
+        dependencies.add("coreLibraryDesugaring", libs.desugar.jdk.libs)
     }
 }

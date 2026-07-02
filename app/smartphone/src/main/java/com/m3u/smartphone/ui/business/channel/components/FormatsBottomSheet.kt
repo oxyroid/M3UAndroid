@@ -33,7 +33,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.C
-import androidx.media3.common.Format
+import com.m3u.data.service.TrackOption
 import com.m3u.i18n.R.string
 import androidx.compose.material3.Icon
 import com.m3u.smartphone.ui.material.components.mask.MaskState
@@ -43,11 +43,10 @@ import kotlinx.coroutines.launch
 @Composable
 internal fun FormatsBottomSheet(
     visible: Boolean,
-    formats: Map<Int, List<Format>>,
-    selectedFormats: Map<Int, Format?>,
+    formats: Map<Int, List<TrackOption>>,
     maskState: MaskState,
     onDismiss: () -> Unit,
-    onChooseTrack: (@C.TrackType Int, Format) -> Unit,
+    onChooseTrack: (TrackOption) -> Unit,
     onClearTrack: (@C.TrackType Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -83,9 +82,6 @@ internal fun FormatsBottomSheet(
             val formatsIndexed = remember(formats) {
                 formats.map { it.value }
             }
-            val selectedFormatsIndexed = remember(selectedFormats) {
-                selectedFormats.map { it.value }
-            }
             HorizontalPager(
                 state = pagerState,
                 userScrollEnabled = false,
@@ -94,21 +90,19 @@ internal fun FormatsBottomSheet(
             ) { page ->
                 val type = typesIndexed[page]
                 val currentFormats = formatsIndexed[page]
-                val selectedFormat = selectedFormatsIndexed[page]
                 LazyColumn(
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    items(currentFormats) { format ->
-                        val selected = format.id == selectedFormat?.id
+                    items(currentFormats) { option ->
                         FormatItem(
-                            format = format,
+                            format = option.format,
                             type = type,
-                            selected = selected,
+                            selected = option.selected,
                             onClick = {
-                                if (selected) {
+                                if (option.selected) {
                                     onClearTrack(type)
                                 } else {
-                                    onChooseTrack(type, format)
+                                    onChooseTrack(option)
                                 }
                             }
                         )

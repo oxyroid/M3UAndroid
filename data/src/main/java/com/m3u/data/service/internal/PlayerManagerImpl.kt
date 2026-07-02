@@ -4,10 +4,13 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Rect
 import android.net.Uri
+import android.net.wifi.WifiManager
 import androidx.core.net.toUri
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Metadata
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -16,6 +19,7 @@ import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
 import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.cache.Cache
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.datasource.rtmp.RtmpDataSource
@@ -31,10 +35,12 @@ import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.rtsp.RtspMediaSource
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
+import androidx.media3.exoplayer.source.MergingMediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.exoplayer.trackselection.TrackSelector
 import androidx.media3.extractor.DefaultExtractorsFactory
+import androidx.media3.extractor.metadata.icy.IcyInfo
 import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES
 import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
 import androidx.media3.muxer.FragmentedMp4Muxer
@@ -52,6 +58,7 @@ import com.m3u.core.architecture.Publisher
 import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.ReconnectMode
 import com.m3u.core.architecture.preferences.Settings
+import com.m3u.core.architecture.preferences.flowOf
 import com.m3u.core.architecture.preferences.get
 import com.m3u.data.SSLs
 import com.m3u.data.api.OkhttpClient
@@ -63,6 +70,7 @@ import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.PlayerManager
+import com.m3u.data.util.StreamUrlOptions
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineScope
@@ -87,13 +95,17 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
+import java.net.InetAddress
 import java.util.UUID
 import javax.inject.Inject
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlin.time.Duration.Companion.seconds
 
 class PlayerManagerImpl @Inject constructor(
@@ -103,6 +115,7 @@ class PlayerManagerImpl @Inject constructor(
     private val channelRepository: ChannelRepository,
     private val cache: Cache,
     private val settings: Settings,
+    private val wifiManager: WifiManager,
     publisher: Publisher,
 ) : PlayerManager, Player.Listener, MediaSession.Callback {
     private val timber = Timber.tag("PlayerManagerImpl")
@@ -115,6 +128,7 @@ class PlayerManagerImpl @Inject constructor(
     )
 
     private val continueWatchingCondition = ContinueWatchingCondition.getInstance<Player>()
+    private val nightAudioEffect = NightAudioEffect()
 
     override val player = MutableStateFlow<ExoPlayer?>(null)
     override val size = MutableStateFlow(Rect())
@@ -167,6 +181,7 @@ class PlayerManagerImpl @Inject constructor(
     override val playbackState = MutableStateFlow<@Player.State Int>(Player.STATE_IDLE)
     override val playbackException = MutableStateFlow<PlaybackException?>(null)
     override val isPlaying = MutableStateFlow(false)
+    override val streamMetadata = MutableStateFlow<String?>(null)
     override val tracksGroups = MutableStateFlow<List<Tracks.Group>>(emptyList())
 
     private val playbackPosition = MutableStateFlow(-1L)
@@ -190,6 +205,11 @@ class PlayerManagerImpl @Inject constructor(
                 delay(1.seconds)
             }
         }
+        mainCoroutineScope.launch {
+            settings.flowOf(PreferencesKeys.NIGHT_AUDIO_MODE).collectLatest { enabled ->
+                nightAudioEffect.setEnabled(enabled)
+            }
+        }
     }
 
     override suspend fun play(
@@ -207,6 +227,7 @@ class PlayerManagerImpl @Inject constructor(
         }
         if (channel != null) {
             val channelUrl = channel.url
+            updateMulticastLock(channelUrl)
             val channelPreference = getChannelPreference(channelUrl)
             val licenseType = channel.licenseType.orEmpty()
             val licenseKey = channel.licenseKey.orEmpty()
@@ -215,16 +236,23 @@ class PlayerManagerImpl @Inject constructor(
 
             val playlist = playlistRepository.get(channel.playlistUrl)
             val userAgent = getUserAgent(channelUrl, playlist)
+            val requestHeaders = getRequestHeaders(channelUrl)
+            val playbackProtocol = StreamUrlOptions.stripFromUrl(channelUrl).protocolName()
 
-            this.chain = channelPreference?.mineType
-                ?.let { MimetypeChain.Remembered(channelUrl, it) }
-                ?: MimetypeChain.Unspecified(channelUrl)
+            this.chain = if (playbackProtocol == "udp" || playbackProtocol == "rtp") {
+                MimetypeChain.Remembered(channelUrl, UDP_MPEG_TS_MIME_TYPE)
+            } else {
+                channelPreference?.mineType
+                    ?.let { MimetypeChain.Remembered(channelUrl, it) }
+                    ?: MimetypeChain.Unspecified(channelUrl)
+            }
 
             timber.d("init mimetype: $chain")
 
             tryPlay(
                 url = channelUrl,
                 userAgent = userAgent,
+                requestHeaders = requestHeaders,
                 licenseType = licenseType,
                 licenseKey = licenseKey,
                 applyContinueWatching = applyContinueWatching
@@ -233,14 +261,23 @@ class PlayerManagerImpl @Inject constructor(
     }
 
     private var extractor: MediaExtractorCompat? = null
+    private var multicastLock: WifiManager.MulticastLock? = null
     private suspend fun tryPlay(
         url: String = channel.value?.url.orEmpty(),
         userAgent: String? = getUserAgent(channel.value?.url.orEmpty(), playlist.value),
+        requestHeaders: Map<String, String> = getRequestHeaders(channel.value?.url.orEmpty()),
         licenseType: String = channel.value?.licenseType.orEmpty(),
         licenseKey: String = channel.value?.licenseKey.orEmpty(),
         applyContinueWatching: Boolean
     ) {
-        val rtmp: Boolean = Url(url).protocol.name == "rtmp"
+        val playbackUrl = StreamUrlOptions.stripFromUrl(url)
+        val streamOptions = StreamUrlOptions.readFromUrl(url)
+        val separateVideoUrl = streamOptions[StreamUrlOptions.VIDEO_URL]
+            ?.takeIf { it.isNotBlank() }
+        val playbackProtocol = playbackUrl.protocolName()
+        val rtmp = playbackProtocol == "rtmp"
+        val udpLike = playbackProtocol == "udp" || playbackProtocol == "rtp"
+        val transportUrl = playbackUrl.toUdpTransportUrlIfRtp()
         val tunneling = settings[PreferencesKeys.TUNNELING]
 
         val mimeType = when (val chain = chain) {
@@ -248,46 +285,36 @@ class PlayerManagerImpl @Inject constructor(
             is MimetypeChain.Trying -> chain.mimetype
             is MimetypeChain.Unspecified -> {
                 this.chain = chain.next()
-                return tryPlay(url, userAgent, licenseType, licenseKey, applyContinueWatching)
+                return tryPlay(url, userAgent, requestHeaders, licenseType, licenseKey, applyContinueWatching)
             }
 
             is MimetypeChain.Unsupported -> throw UnsupportedOperationException()
         }
 
-        timber.d("tryPlay, mimetype: $mimeType, url: $url, user-agent: $userAgent, rtmp: $rtmp")
-        val dataSourceFactory = if (rtmp) {
-            RtmpDataSource.Factory()
-        } else {
-            createHttpDataSourceFactory(userAgent)
+        timber.d("tryPlay, mimetype: $mimeType, url: $playbackUrl, user-agent: $userAgent, protocol: $playbackProtocol")
+        val dataSourceFactory = when {
+            rtmp -> RtmpDataSource.Factory()
+            udpLike -> DefaultDataSource.Factory(context)
+            else -> createHttpDataSourceFactory(userAgent, requestHeaders)
         }
         val extractorsFactory = DefaultExtractorsFactory().setTsExtractorFlags(
-            FLAG_ALLOW_NON_IDR_KEYFRAMES and FLAG_DETECT_ACCESS_UNITS
+            FLAG_ALLOW_NON_IDR_KEYFRAMES or FLAG_DETECT_ACCESS_UNITS
         )
         extractor = MediaExtractorCompat(extractorsFactory, dataSourceFactory)
-        val mediaSourceFactory = when (mimeType) {
-            MimeTypes.APPLICATION_M3U8 -> HlsMediaSource.Factory(dataSourceFactory)
-                .setAllowChunklessPreparation(false)
-                .setExtractorFactory(DefaultHlsExtractorFactory())
-
-            MimeTypes.APPLICATION_SS -> ProgressiveMediaSource.Factory(
-                dataSourceFactory,
-                extractorsFactory
-            )
-
-            MimeTypes.APPLICATION_RTSP -> RtspMediaSource.Factory()
-                .setDebugLoggingEnabled(true)
-                .setForceUseRtpTcp(true)
-                .setSocketFactory(SSLs.TLSTrustAll.socketFactory)
-
-            else -> DefaultMediaSourceFactory(dataSourceFactory, extractorsFactory)
-        }
+        val mediaSourceFactory = createMediaSourceFactory(
+            mimeType = mimeType,
+            dataSourceFactory = dataSourceFactory,
+            extractorsFactory = extractorsFactory,
+            udpLike = udpLike
+        )
         timber.d("media-source-factory: ${mediaSourceFactory::class.qualifiedName}")
         if (licenseType.isNotEmpty()) {
             val drmCallback = when {
                 (licenseType in arrayOf(
                     Channel.LICENSE_TYPE_CLEAR_KEY,
                     Channel.LICENSE_TYPE_CLEAR_KEY_2
-                )) && !licenseKey.startsWith("http") -> LocalMediaDrmCallback(licenseKey.toByteArray())
+                )) && !licenseKey.startsWith("http") ->
+                    LocalMediaDrmCallback(ClearKeyLicense.normalize(licenseKey).toByteArray())
 
                 else -> HttpMediaDrmCallback(
                     licenseKey,
@@ -317,8 +344,19 @@ class PlayerManagerImpl @Inject constructor(
             timber.d("player instance updated")
             prev ?: createPlayer(mediaSourceFactory, tunneling)
         }!!
-        val mediaItem = MediaItem.fromUri(url)
-        val mediaSource: MediaSource = mediaSourceFactory.createMediaSource(mediaItem)
+        val mediaItem = buildMediaItem(transportUrl)
+        val audioSource: MediaSource = mediaSourceFactory.createMediaSource(mediaItem)
+        val mediaSource: MediaSource = separateVideoUrl
+            ?.let {
+                createSeparateVideoMediaSource(
+                    url = it,
+                    userAgent = userAgent,
+                    requestHeaders = requestHeaders,
+                    extractorsFactory = extractorsFactory
+                )
+            }
+            ?.let { videoSource -> MergingMediaSource(true, audioSource, videoSource) }
+            ?: audioSource
         player.setMediaSource(mediaSource)
         player.prepare()
         mainCoroutineScope.launch {
@@ -336,18 +374,95 @@ class PlayerManagerImpl @Inject constructor(
         prev?.let { play(it, applyContinueWatching = false) }
     }
 
+    private fun buildMediaItem(playbackUrl: String): MediaItem {
+        val currentChannel = channel.value
+        val metadata = MediaMetadata.Builder()
+            .setTitle(currentChannel?.title)
+            .setDisplayTitle(currentChannel?.title)
+            .setArtist(currentChannel?.category)
+            .setArtworkUri(currentChannel?.cover?.toUri())
+            .build()
+        return MediaItem.Builder()
+            .setUri(playbackUrl)
+            .setMediaMetadata(metadata)
+            .build()
+    }
+
+    private fun createSeparateVideoMediaSource(
+        url: String,
+        userAgent: String?,
+        requestHeaders: Map<String, String>,
+        extractorsFactory: DefaultExtractorsFactory
+    ): MediaSource {
+        val playbackUrl = StreamUrlOptions.stripFromUrl(url)
+        val playbackProtocol = playbackUrl.protocolName()
+        val rtmp = playbackProtocol == "rtmp"
+        val udpLike = playbackProtocol == "udp" || playbackProtocol == "rtp"
+        val dataSourceFactory = when {
+            rtmp -> RtmpDataSource.Factory()
+            udpLike -> DefaultDataSource.Factory(context)
+            else -> createHttpDataSourceFactory(userAgent, requestHeaders)
+        }
+        val mimeType = when (playbackProtocol) {
+            "rtsp" -> MimeTypes.APPLICATION_RTSP
+            else -> null
+        }
+        val mediaSourceFactory = createMediaSourceFactory(
+            mimeType = mimeType,
+            dataSourceFactory = dataSourceFactory,
+            extractorsFactory = extractorsFactory,
+            udpLike = udpLike
+        )
+        return mediaSourceFactory.createMediaSource(MediaItem.fromUri(playbackUrl.toUdpTransportUrlIfRtp()))
+    }
+
+    private fun createMediaSourceFactory(
+        mimeType: String?,
+        dataSourceFactory: DataSource.Factory,
+        extractorsFactory: DefaultExtractorsFactory,
+        udpLike: Boolean
+    ): MediaSource.Factory {
+        return if (udpLike) {
+            ProgressiveMediaSource.Factory(
+                dataSourceFactory,
+                extractorsFactory
+            )
+        } else {
+            when (mimeType) {
+                MimeTypes.APPLICATION_M3U8 -> HlsMediaSource.Factory(dataSourceFactory)
+                    .setAllowChunklessPreparation(false)
+                    .setExtractorFactory(DefaultHlsExtractorFactory())
+
+                MimeTypes.APPLICATION_SS -> ProgressiveMediaSource.Factory(
+                    dataSourceFactory,
+                    extractorsFactory
+                )
+
+                MimeTypes.APPLICATION_RTSP -> RtspMediaSource.Factory()
+                    .setDebugLoggingEnabled(true)
+                    .setForceUseRtpTcp(true)
+                    .setSocketFactory(SSLs.TLSTrustAll.socketFactory)
+
+                else -> DefaultMediaSourceFactory(dataSourceFactory, extractorsFactory)
+            }
+        }
+    }
+
     override fun release() {
         timber.d("release")
         extractor = null
+        releaseMulticastLock()
         player.update {
             it ?: return
             it.stop()
-            it.release()
+            nightAudioEffect.release()
             it.removeListener(this)
+            it.release()
             mediaCommand.value = null
             size.value = Rect()
             playbackState.value = Player.STATE_IDLE
             playbackException.value = null
+            streamMetadata.value = null
             tracksGroups.value = emptyList()
             chain = MimetypeChain.Unsupported(chain.url)
             null
@@ -363,9 +478,18 @@ class PlayerManagerImpl @Inject constructor(
     }
 
     override fun chooseTrack(group: TrackGroup, index: Int) {
+        chooseTrack(group, listOf(index))
+    }
+
+    override fun chooseTrack(groupIndex: Int, trackIndex: Int) {
+        val group = tracksGroups.value.getOrNull(groupIndex)?.mediaTrackGroup ?: return
+        chooseTrack(group, listOf(trackIndex))
+    }
+
+    private fun chooseTrack(group: TrackGroup, indices: List<Int>) {
         val currentPlayer = player.value ?: return
         val type = group.type
-        val override = TrackSelectionOverride(group, index)
+        val override = TrackSelectionOverride(group, indices)
         currentPlayer.trackSelectionParameters = currentPlayer.trackSelectionParameters
             .buildUpon()
             .setOverrideForType(override)
@@ -457,9 +581,43 @@ class PlayerManagerImpl @Inject constructor(
         }
     }
 
-    private fun createHttpDataSourceFactory(userAgent: String?): DataSource.Factory {
+    private fun updateMulticastLock(url: String) {
+        if (!StreamUrlOptions.stripFromUrl(url).isMulticastTransportUrl()) {
+            releaseMulticastLock()
+            return
+        }
+        if (multicastLock?.isHeld == true) return
+        multicastLock = runCatching {
+            wifiManager.createMulticastLock("m3u-player-multicast").apply {
+                setReferenceCounted(false)
+                acquire()
+            }
+        }.onSuccess {
+            timber.d("player multicast lock acquired")
+        }.onFailure { error ->
+            timber.w(error, "failed to acquire player multicast lock")
+        }.getOrNull()
+    }
+
+    private fun releaseMulticastLock() {
+        val lock = multicastLock ?: return
+        multicastLock = null
+        runCatching {
+            if (lock.isHeld) lock.release()
+        }.onSuccess {
+            timber.d("player multicast lock released")
+        }.onFailure { error ->
+            timber.w(error, "failed to release player multicast lock")
+        }
+    }
+
+    private fun createHttpDataSourceFactory(
+        userAgent: String?,
+        requestHeaders: Map<String, String>
+    ): DataSource.Factory {
         val upstream = OkHttpDataSource.Factory(okHttpClient)
             .setUserAgent(userAgent)
+            .setDefaultRequestProperties(requestHeaders)
 //        return if (cache) {
 //            CacheDataSource.Factory()
 //                .setUpstreamDataSourceFactory(upstream)
@@ -541,6 +699,31 @@ class PlayerManagerImpl @Inject constructor(
         tracksGroups.value = tracks.groups
     }
 
+    override fun onAudioSessionIdChanged(audioSessionId: Int) {
+        super.onAudioSessionIdChanged(audioSessionId)
+        nightAudioEffect.onAudioSessionIdChanged(audioSessionId)
+    }
+
+    override fun onMetadata(metadata: Metadata) {
+        super.onMetadata(metadata)
+        val currentStreamMetadata = (0 until metadata.length())
+            .asSequence()
+            .map { index -> metadata[index] }
+            .mapNotNull { entry ->
+                when (entry) {
+                    is IcyInfo -> entry.title
+                        ?.takeIf { it.isNotBlank() }
+                        ?: entry.url?.takeIf { it.isNotBlank() }
+
+                    else -> null
+                }
+            }
+            .firstOrNull()
+        if (currentStreamMetadata != null) {
+            streamMetadata.value = currentStreamMetadata
+        }
+    }
+
     override fun onIsPlayingChanged(isPlaying: Boolean) {
         this.isPlaying.value = isPlaying
     }
@@ -561,12 +744,22 @@ class PlayerManagerImpl @Inject constructor(
     }
 
     override suspend fun recordVideo(uri: Uri) {
-        withContext(Dispatchers.Main) {
-            try {
-                val currentPlayer = player.value ?: return@withContext
-                val tracksGroup = currentPlayer.currentTracks.groups.first {
+        val outputFile = withContext(Dispatchers.IO) {
+            context.cacheDir
+                .resolve("records")
+                .apply { mkdirs() }
+                .let { directory -> File.createTempFile("record-", ".mp4", directory) }
+        }
+        try {
+            val recorded = withContext(Dispatchers.Main) {
+                val currentPlayer = player.value ?: return@withContext false
+                val sourceUrl = channel.value?.url
+                    ?.substringBefore('|')
+                    ?.takeIf { it.isNotBlank() }
+                    ?: return@withContext false
+                val tracksGroup = currentPlayer.currentTracks.groups.firstOrNull {
                     it.type == C.TRACK_TYPE_VIDEO
-                } ?: return@withContext
+                } ?: return@withContext false
                 val formats = (0 until tracksGroup.length).mapNotNull {
                     if (!tracksGroup.isTrackSupported(it)) null
                     else tracksGroup.getTrackFormat(it)
@@ -589,65 +782,86 @@ class PlayerManagerImpl @Inject constructor(
 
                     else -> {
                         timber.e("Failed to record frame, Unsupported video formats: $formats")
-                        return@withContext
+                        return@withContext false
                     }
                 }
-                val transformer = Transformer.Builder(context)
-                    .setMuxerFactory(muxerFactory)
-                    .setVideoMimeType(mimeType)
-                    .setEncoderFactory(
-                        DefaultEncoderFactory.Builder(context.applicationContext)
-                            .setEnableFallback(true)
+                suspendCancellableCoroutine { continuation ->
+                    val transformer = Transformer.Builder(context)
+                        .setMuxerFactory(muxerFactory)
+                        .setVideoMimeType(mimeType)
+                        .setEncoderFactory(
+                            DefaultEncoderFactory.Builder(context.applicationContext)
+                                .setEnableFallback(true)
 //                        .setRequestedVideoEncoderSettings(
 //                            VideoEncoderSettings.Builder()
 //                                .
 //                                .build()
 //                        )
-                            .build()
-                    )
-                    .addListener(
-                        object : Transformer.Listener {
-                            override fun onCompleted(
-                                composition: Composition,
-                                exportResult: ExportResult
-                            ) {
-                                super.onCompleted(composition, exportResult)
-                                timber.d("transformer, onCompleted")
-                            }
+                                .build()
+                        )
+                        .addListener(
+                            object : Transformer.Listener {
+                                override fun onCompleted(
+                                    composition: Composition,
+                                    exportResult: ExportResult
+                                ) {
+                                    super.onCompleted(composition, exportResult)
+                                    timber.d("transformer, onCompleted")
+                                    if (continuation.isActive) {
+                                        continuation.resume(Unit)
+                                    }
+                                }
 
-                            override fun onError(
-                                composition: Composition,
-                                exportResult: ExportResult,
-                                exportException: ExportException
-                            ) {
-                                super.onError(composition, exportResult, exportException)
-                                timber.e(exportException, "transformer, onError")
-                            }
+                                override fun onError(
+                                    composition: Composition,
+                                    exportResult: ExportResult,
+                                    exportException: ExportException
+                                ) {
+                                    super.onError(composition, exportResult, exportException)
+                                    timber.e(exportException, "transformer, onError")
+                                    if (continuation.isActive) {
+                                        continuation.resumeWithException(exportException)
+                                    }
+                                }
 
-                            override fun onFallbackApplied(
-                                composition: Composition,
-                                originalTransformationRequest: TransformationRequest,
-                                fallbackTransformationRequest: TransformationRequest
-                            ) {
-                                super.onFallbackApplied(
-                                    composition,
-                                    originalTransformationRequest,
-                                    fallbackTransformationRequest
-                                )
+                                override fun onFallbackApplied(
+                                    composition: Composition,
+                                    originalTransformationRequest: TransformationRequest,
+                                    fallbackTransformationRequest: TransformationRequest
+                                ) {
+                                    super.onFallbackApplied(
+                                        composition,
+                                        originalTransformationRequest,
+                                        fallbackTransformationRequest
+                                    )
+                                }
                             }
-                        }
-                    )
-                    .build()
+                        )
+                        .build()
 
-                withContext(Dispatchers.Main) {
+                    continuation.invokeOnCancellation {
+                        transformer.cancel()
+                    }
                     transformer.start(
-                        MediaItem.fromUri(channel.value?.url.orEmpty()),
-                        uri.path.orEmpty()
+                        MediaItem.fromUri(sourceUrl),
+                        outputFile.absolutePath
                     )
                 }
-            } finally {
-                timber.d("Record frame completed")
+                true
             }
+            if (!recorded) return
+            withContext(Dispatchers.IO) {
+                context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                    outputFile.inputStream().use { inputStream ->
+                        inputStream.copyTo(outputStream)
+                    }
+                } ?: error("Failed to open record output stream: $uri")
+            }
+        } finally {
+            withContext(Dispatchers.IO) {
+                outputFile.delete()
+            }
+            timber.d("Record frame completed")
         }
     }
 
@@ -773,28 +987,28 @@ class PlayerManagerImpl @Inject constructor(
      *
      * https://kodi.wiki/view/HTTP
      */
-    private fun String.readKodiUrlOptions(): Map<String, String?> {
-        val index = this.indexOf('|')
-        if (index == -1) return emptyMap()
-        val options = this.drop(index + 1).split("&")
-        return options
-            .filter { it.isNotBlank() }
-            .associate {
-                val pair = it.split("=")
-                val key = pair.getOrNull(0).orEmpty()
-                val value = pair.getOrNull(1)
-                key to value
-            }
-    }
-
     /**
      * Read user-agent appended to the channelUrl.
      * If there is no result from url, it will use playlist user-agent instead.
      */
     private fun getUserAgent(channelUrl: String, playlist: Playlist?): String? {
-        val kodiUrlOptions = channelUrl.readKodiUrlOptions()
-        val userAgent = kodiUrlOptions[KodiAdaptions.HTTP_OPTION_UA] ?: playlist?.userAgent
-        return userAgent
+        val kodiUrlOptions = StreamUrlOptions.readFromUrl(channelUrl)
+        return kodiUrlOptions[StreamUrlOptions.USER_AGENT] ?: playlist?.userAgent
+    }
+
+    private fun getRequestHeaders(channelUrl: String): Map<String, String> {
+        val kodiUrlOptions = StreamUrlOptions.readFromUrl(channelUrl)
+        return buildMap {
+            kodiUrlOptions[StreamUrlOptions.REFERER]
+                ?.takeIf { it.isNotBlank() }
+                ?.let { put("Referer", it) }
+            kodiUrlOptions[StreamUrlOptions.ORIGIN]
+                ?.takeIf { it.isNotBlank() }
+                ?.let { put("Origin", it) }
+            kodiUrlOptions[StreamUrlOptions.COOKIE]
+                ?.takeIf { it.isNotBlank() }
+                ?.let { put("Cookie", it) }
+        }
     }
 
     private suspend fun getChannelPreference(channelUrl: String): ChannelPreference? {
@@ -813,6 +1027,28 @@ class PlayerManagerImpl @Inject constructor(
 
 fun VideoSize.toRect(): Rect {
     return Rect(0, 0, width, height)
+}
+
+private const val UDP_MPEG_TS_MIME_TYPE = "video/mp2t"
+
+private fun String.protocolName(): String =
+    runCatching { Url(this).protocol.name.lowercase() }.getOrDefault("")
+
+private fun String.toUdpTransportUrlIfRtp(): String =
+    if (startsWith("rtp://", ignoreCase = true)) {
+        "udp://${substringAfter("://")}"
+    } else {
+        this
+    }
+
+private fun String.isMulticastTransportUrl(): Boolean {
+    val protocol = protocolName()
+    if (protocol != "udp" && protocol != "rtp") return false
+    val host = Uri.parse(toUdpTransportUrlIfRtp()).host
+        ?.trimStart('@')
+        ?.takeIf { it.isNotBlank() }
+        ?: return false
+    return runCatching { InetAddress.getByName(host).isMulticastAddress }.getOrDefault(false)
 }
 
 private sealed class MimetypeChain(val url: String) {

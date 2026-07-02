@@ -1,5 +1,6 @@
 package com.m3u.tv
 
+import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -15,6 +16,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.tv.material3.Text
@@ -26,6 +29,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -43,9 +49,13 @@ import kotlinx.coroutines.yield
 fun TvPlayerScreen(
     player: Player?,
     channel: Channel?,
+    isFavorite: Boolean,
     isPlaying: Boolean,
     playbackState: Int,
     onPlayPause: () -> Unit,
+    onFavorite: () -> Unit,
+    onPreviousChannel: () -> Unit,
+    onNextChannel: () -> Unit,
     onBack: () -> Unit,
     onClose: () -> Unit
 ) {
@@ -60,6 +70,24 @@ fun TvPlayerScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .onPreviewKeyEvent { event ->
+                if (event.type != KeyEventType.KeyDown || event.nativeKeyEvent.repeatCount != 0) {
+                    return@onPreviewKeyEvent false
+                }
+                when (event.nativeKeyEvent.keyCode) {
+                    KeyEvent.KEYCODE_DPAD_UP -> {
+                        onPreviousChannel()
+                        true
+                    }
+
+                    KeyEvent.KEYCODE_DPAD_DOWN -> {
+                        onNextChannel()
+                        true
+                    }
+
+                    else -> false
+                }
+            }
             .background(Color.Black)
     ) {
         if (player != null) {
@@ -93,6 +121,15 @@ fun TvPlayerScreen(
                 },
                 onClick = onPlayPause,
                 focusRequester = playPauseFocusRequester
+            )
+            TvIconActionButton(
+                icon = if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                contentDescription = if (isFavorite) {
+                    stringResource(string.feat_channel_tooltip_unfavourite)
+                } else {
+                    stringResource(string.feat_channel_tooltip_favourite)
+                },
+                onClick = onFavorite
             )
             TvIconActionButton(
                 icon = Icons.Rounded.Close,

@@ -87,12 +87,12 @@ internal class ChannelRepositoryImpl @Inject constructor(
     override fun observeAllFavorite(): Flow<List<Channel>> = channelDao.observeAllFavorite()
         .catch { emit(emptyList()) }
 
-    override fun pagingAllFavorite(sort: Sort): PagingSource<Int, Channel> {
+    override fun pagingAllFavorite(sort: Sort, query: String): PagingSource<Int, Channel> {
         return when (sort) {
-            Sort.ASC -> channelDao.pagingAllFavoriteAsc()
-            Sort.DESC -> channelDao.pagingAllFavoriteDesc()
-            Sort.RECENTLY -> channelDao.pagingAllFavoriteRecently()
-            else -> channelDao.pagingAllFavorite()
+            Sort.ASC -> channelDao.pagingAllFavoriteAsc(query)
+            Sort.DESC -> channelDao.pagingAllFavoriteDesc(query)
+            Sort.RECENTLY -> channelDao.pagingAllFavoriteRecently(query)
+            else -> channelDao.pagingAllFavorite(query)
         }
     }
 

@@ -6,9 +6,14 @@ import android.graphics.Rect
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.VolumeDown
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
@@ -16,6 +21,7 @@ import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Speed
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -24,11 +30,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -46,13 +56,16 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.business.channel.ChannelViewModel
 import com.m3u.business.channel.PlayerState
+import com.m3u.core.architecture.preferences.ClipMode
 import com.m3u.core.architecture.preferences.PreferencesKeys
+import com.m3u.core.architecture.preferences.mutablePreferenceOf
 import com.m3u.core.architecture.preferences.preferenceOf
 import com.m3u.core.util.basic.isNotEmpty
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
+import com.m3u.data.database.model.Programme
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.business.channel.components.DlnaDevicesBottomSheet
 import com.m3u.smartphone.ui.business.channel.components.FormatsBottomSheet
@@ -73,6 +86,7 @@ import com.m3u.smartphone.ui.material.components.mask.toggle
 import com.m3u.smartphone.ui.material.components.rememberPlayerState
 import com.m3u.smartphone.ui.material.components.rememberPullPanelLayoutState
 import com.m3u.smartphone.ui.material.ktx.checkPermissionOrRationale
+import coil.compose.AsyncImage
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -105,7 +119,6 @@ fun ChannelRoute(
     val searching by viewModel.searching.collectAsStateWithLifecycle()
 
     val tracks by viewModel.tracks.collectAsStateWithLifecycle(emptyMap())
-    val selectedFormats by viewModel.currentTracks.collectAsStateWithLifecycle(emptyMap())
 
     val volume by viewModel.volume.collectAsStateWithLifecycle()
     val isSeriesPlaylist by viewModel.isSeriesPlaylist.collectAsStateWithLifecycle(false)
@@ -116,6 +129,7 @@ fun ChannelRoute(
     val channels = viewModel.pagingChannels.collectAsLazyPagingItems()
     val programmes = viewModel.programmes.collectAsLazyPagingItems()
     val programmeRange by viewModel.programmeRange.collectAsStateWithLifecycle()
+    val currentProgramme by viewModel.currentProgramme.collectAsStateWithLifecycle()
 
     val programmeReminderIds by viewModel.programmeReminderIds.collectAsStateWithLifecycle()
 
@@ -125,6 +139,7 @@ fun ChannelRoute(
     var isPipMode by remember { mutableStateOf(false) }
     var isAutoZappingMode by remember { mutableStateOf(true) }
     var choosing by remember { mutableStateOf(false) }
+    var controlsLocked by rememberSaveable { mutableStateOf(false) }
 
     val brightnessGesture by preferenceOf(PreferencesKeys.BRIGHTNESS_GESTURE)
     val volumeGesture by preferenceOf(PreferencesKeys.VOLUME_GESTURE)
@@ -250,7 +265,7 @@ fun ChannelRoute(
 
     PullPanelLayout(
         state = pullPanelLayoutState,
-        enabled = isPanelEnabled,
+        enabled = isPanelEnabled && !controlsLocked,
         aspectRatio = aspectRatio,
         useVertical = useVertical,
         panel = {
@@ -287,10 +302,12 @@ fun ChannelRoute(
                     pullPanelLayoutState.collapse()
                 },
                 openOrClosePanel = {
-                    if (isPanelExpanded) {
-                        pullPanelLayoutState.collapse()
-                    } else {
-                        pullPanelLayoutState.expand()
+                    if (!controlsLocked) {
+                        if (isPanelExpanded) {
+                            pullPanelLayoutState.collapse()
+                        } else {
+                            pullPanelLayoutState.expand()
+                        }
                     }
                 },
                 onFavorite = viewModel::onFavorite,
@@ -299,8 +316,10 @@ fun ChannelRoute(
                 playlist = playlist,
                 adjacentChannels = adjacentChannels,
                 channel = channel,
+                currentProgramme = currentProgramme,
                 hasTrack = tracks.isNotEmpty(),
                 isPanelExpanded = isPanelExpanded,
+                controlsLocked = controlsLocked,
                 brightness = brightness,
                 onBrightness = { brightness = it },
                 volume = volume,
@@ -318,8 +337,18 @@ fun ChannelRoute(
                 onNextChannelClick = viewModel::getNextChannel,
                 onEnterPipMode = {
                     helper.enterPipMode(playerState.videoSize)
+                    controlsLocked = false
                     maskState.unlockAll()
                     pullPanelLayoutState.collapse()
+                },
+                onRecordVideo = {
+                    createRecordFileLauncher.launch(channel?.title.orEmpty().toRecordFileName())
+                },
+                onControlsLockedChange = {
+                    controlsLocked = it
+                    if (it) {
+                        pullPanelLayoutState.collapse()
+                    }
                 },
                 onPaddingsChanged = onPaddingsChanged,
                 onAlignment = onAlignment
@@ -348,11 +377,10 @@ fun ChannelRoute(
     FormatsBottomSheet(
         visible = choosing,
         formats = tracks,
-        selectedFormats = selectedFormats,
         maskState = maskState,
         onDismiss = { choosing = false },
-        onChooseTrack = { type, format ->
-            viewModel.chooseTrack(type, format)
+        onChooseTrack = { option ->
+            viewModel.chooseTrack(option)
         },
         onClearTrack = { type ->
             viewModel.clearTrack(type)
@@ -366,10 +394,12 @@ private fun ChannelPlayer(
     playerState: PlayerState,
     playlist: Playlist?,
     channel: Channel?,
+    currentProgramme: Programme?,
     adjacentChannels: AdjacentChannels?,
     isSeriesPlaylist: Boolean,
     hasTrack: Boolean,
     isPanelExpanded: Boolean,
+    controlsLocked: Boolean,
     brightness: Float,
     volume: Float,
     brightnessGestureEnabled: Boolean,
@@ -386,6 +416,8 @@ private fun ChannelPlayer(
     onPreviousChannelClick: () -> Unit,
     onNextChannelClick: () -> Unit,
     onEnterPipMode: () -> Unit,
+    onRecordVideo: () -> Unit,
+    onControlsLockedChange: (Boolean) -> Unit,
     onSpeedUpdated: (Float) -> Unit,
     onPaddingsChanged: (Paddings) -> Unit,
     onAlignment: (size: IntSize, space: IntSize) -> IntOffset,
@@ -403,13 +435,18 @@ private fun ChannelPlayer(
     val currentVolume by rememberUpdatedState(volume)
     val currentSpeed by rememberUpdatedState(speed)
 
-    val clipMode by preferenceOf(PreferencesKeys.CLIP_MODE)
+    var clipMode by mutablePreferenceOf(PreferencesKeys.CLIP_MODE)
 
     val useVertical = with(windowInfo.containerSize) { width < height }
 
     LaunchedEffect(cwPosition) {
         if (cwPosition != -1L) {
             maskState.wake(6.seconds)
+        }
+    }
+    LaunchedEffect(controlsLocked) {
+        if (controlsLocked) {
+            gesture = null
         }
     }
     Box(modifier) {
@@ -421,10 +458,39 @@ private fun ChannelPlayer(
             state = state,
             modifier = Modifier
                 .fillMaxWidth()
+                .pointerInput(controlsLocked) {
+                    if (!controlsLocked) {
+                        detectTransformGestures { _, _, zoom, _ ->
+                            clipMode = when {
+                                zoom > 1.08f -> ClipMode.CLIP
+                                zoom < 0.92f -> ClipMode.ADAPTIVE
+                                else -> clipMode
+                            }
+                        }
+                    }
+                }
                 .align { size: IntSize, space: IntSize, _ ->
                     onAlignment(size, space)
                 }
         )
+        if (cover.isNotBlank() && !playerState.videoSize.isNotEmpty) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.35f))
+            ) {
+                AsyncImage(
+                    model = cover,
+                    contentDescription = title,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxWidth(0.42f)
+                        .sizeIn(maxHeight = 220.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                )
+            }
+        }
         VerticalGestureArea(
             percent = currentBrightness,
             time = 0.65f,
@@ -439,7 +505,7 @@ private fun ChannelPlayer(
                 .fillMaxHeight(0.7f)
                 .fillMaxWidth(0.18f)
                 .align(Alignment.CenterStart),
-            enabled = brightnessGestureEnabled
+            enabled = brightnessGestureEnabled && !controlsLocked
         )
 
         VerticalGestureArea(
@@ -456,13 +522,14 @@ private fun ChannelPlayer(
                 .align(Alignment.CenterEnd)
                 .fillMaxHeight(0.7f)
                 .fillMaxWidth(0.18f),
-            enabled = volumeGestureEnabled
+            enabled = volumeGestureEnabled && !controlsLocked
         )
 
         ChannelMask(
             adjacentChannels = adjacentChannels,
             title = title,
             playlistTitle = playlistTitle,
+            currentProgramme = currentProgramme,
             playerState = playerState,
             volume = volume,
             brightness = brightness,
@@ -474,17 +541,20 @@ private fun ChannelPlayer(
             cwPosition = cwPosition,
             onResetPlayback = onResetPlayback,
             isPanelExpanded = isPanelExpanded,
+            controlsLocked = controlsLocked,
             onFavorite = onFavorite,
             openDlnaDevices = openDlnaDevices,
             openChooseFormat = openChooseFormat,
             openOrClosePanel = openOrClosePanel,
             onVolume = onVolume,
             onEnterPipMode = onEnterPipMode,
+            onRecordVideo = onRecordVideo,
             onPreviousChannelClick = onPreviousChannelClick,
             onNextChannelClick = onNextChannelClick,
             onSpeedUpdated = onSpeedUpdated,
             onSpeedStart = { gesture = MaskGesture.SPEED },
             onSpeedEnd = { gesture = null },
+            onControlsLockedChange = onControlsLockedChange,
             gesture = gesture,
             onPaddingsChanged = onPaddingsChanged
         )
@@ -521,4 +591,11 @@ private fun ChannelPlayer(
             }
         }
     }
+}
+
+private fun String.toRecordFileName(): String {
+    val name = replace(Regex("""[\\/:*?"<>|]"""), "_")
+        .trim()
+        .ifEmpty { "record" }
+    return "$name.mp4"
 }

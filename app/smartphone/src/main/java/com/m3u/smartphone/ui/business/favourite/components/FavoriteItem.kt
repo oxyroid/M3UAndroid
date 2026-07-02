@@ -1,6 +1,7 @@
 package com.m3u.smartphone.ui.business.favourite.components
 
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -9,23 +10,30 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import com.m3u.core.architecture.preferences.PreferencesKeys
+import com.m3u.core.architecture.preferences.preferenceOf
+import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
+import com.m3u.core.foundation.ui.composableOf
 import com.m3u.data.database.model.Channel
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.material.model.LocalSpacing
-import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
-import kotlin.time.Clock
-import kotlin.time.Instant
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 @Composable
 internal fun FavoriteItem(
@@ -41,6 +49,8 @@ internal fun FavoriteItem(
     val recentlyString = stringResource(string.ui_sort_recently)
     val neverPlayedString = stringResource(string.ui_sort_never_played)
 
+    val noPictureMode by preferenceOf(PreferencesKeys.NO_PICTURE_MODE)
+
     OutlinedCard(
         modifier = Modifier.semantics(mergeDescendants = true) { },
         border = CardDefaults.outlinedCardBorder(zapping),
@@ -55,6 +65,14 @@ internal fun FavoriteItem(
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 1,
                     fontWeight = FontWeight.Bold,
+                )
+            },
+            leadingContent = composableOf(!noPictureMode) {
+                AsyncImage(
+                    model = channel.cover,
+                    contentDescription = null,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.size(56.dp)
                 )
             },
             supportingContent = {

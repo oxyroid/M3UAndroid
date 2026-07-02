@@ -3,6 +3,7 @@ package com.m3u.smartphone.ui.business.playlist.components
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,13 +46,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 import com.m3u.core.foundation.ui.thenIf
 import com.m3u.smartphone.ui.material.effects.BackStackEntry
 import com.m3u.smartphone.ui.material.effects.BackStackHandler
@@ -59,7 +64,6 @@ import com.m3u.smartphone.ui.material.ktx.Edge
 import com.m3u.smartphone.ui.material.ktx.blurEdge
 import com.m3u.smartphone.ui.material.model.LocalHazeState
 import com.m3u.smartphone.ui.material.model.LocalSpacing
-import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 import dev.chrisbanes.haze.hazeSource
 
 @Composable
@@ -71,6 +75,7 @@ internal fun PlaylistTabRow(
     onCategoryChanged: (String) -> Unit,
     pinnedCategories: List<String>,
     onPinOrUnpinCategory: (String) -> Unit,
+    onReorderCategories: (List<String>) -> Unit,
     onHideCategory: (String) -> Unit,
     onExpanded: () -> Unit,
     modifier: Modifier = Modifier
@@ -78,6 +83,32 @@ internal fun PlaylistTabRow(
     val spacing = LocalSpacing.current
     val hapticFeedback = LocalHapticFeedback.current
     val state = rememberLazyListState()
+    var orderedCategories by remember(categories) { mutableStateOf(categories) }
+    var draggedCategory: String? by remember { mutableStateOf(null) }
+    var dragOffset by remember { mutableStateOf(Offset.Zero) }
+    var pendingOrder: List<String>? by remember { mutableStateOf(null) }
+
+    fun moveCategory(category: String, targetCategory: String) {
+        val fromIndex = orderedCategories.indexOf(category)
+        val toIndex = orderedCategories.indexOf(targetCategory)
+        if (fromIndex == -1 || toIndex == -1 || fromIndex == toIndex) return
+        orderedCategories = orderedCategories.toMutableList().apply {
+            val moved = removeAt(fromIndex)
+            add(toIndex, moved)
+        }
+        pendingOrder = orderedCategories
+    }
+
+    fun cancelDragging() {
+        pendingOrder = null
+        draggedCategory = null
+        dragOffset = Offset.Zero
+    }
+
+    fun finishDragging() {
+        pendingOrder?.let(onReorderCategories)
+        cancelDragging()
+    }
 
     Box(modifier) {
         var focusCategory: String? by rememberSaveable { mutableStateOf(null) }
@@ -135,14 +166,18 @@ internal fun PlaylistTabRow(
             }
         }
         LaunchedEffect(selectedCategory) {
-            val index = categories.indexOf(selectedCategory)
+            val index = orderedCategories.indexOf(selectedCategory)
             if (index != -1) {
                 state.animateScrollToItem(index)
             }
         }
         val categoriesContent: LazyListScope.() -> Unit = {
             stickyHeader { header() }
-            items(categories) { category ->
+            items(
+                items = orderedCategories,
+                key = { it }
+            ) { category ->
+                val dragging = draggedCategory == category
                 PlaylistTabRowItem(
                     name = category,
                     selected = category == selectedCategory,
@@ -159,7 +194,50 @@ internal fun PlaylistTabRow(
                         focusCategory = category
                         onCategoryChanged(category)
                         hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                    }
+                    },
+                    modifier = Modifier
+                        .thenIf(dragging) {
+                            Modifier.graphicsLayer {
+                                translationX = dragOffset.x
+                                translationY = dragOffset.y
+                            }
+                        }
+                        .pointerInput(category, isExpanded, orderedCategories) {
+                            detectDragGesturesAfterLongPress(
+                                onDragStart = {
+                                    focusCategory = category
+                                    draggedCategory = category
+                                    dragOffset = Offset.Zero
+                                    onCategoryChanged(category)
+                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                },
+                                onDragCancel = ::cancelDragging,
+                                onDragEnd = ::finishDragging,
+                                onDrag = { change, amount ->
+                                    change.consume()
+                                    dragOffset += amount
+                                    val draggedItem = state.layoutInfo.visibleItemsInfo
+                                        .firstOrNull { it.key == category }
+                                        ?: return@detectDragGesturesAfterLongPress
+                                    val targetCenter = if (isExpanded) {
+                                        draggedItem.offset + draggedItem.size / 2 + dragOffset.y
+                                    } else {
+                                        draggedItem.offset + draggedItem.size / 2 + dragOffset.x
+                                    }
+                                    val target = state.layoutInfo.visibleItemsInfo
+                                        .firstOrNull { item ->
+                                            item.key is String &&
+                                                item.key != category &&
+                                                targetCenter >= item.offset &&
+                                                targetCenter <= item.offset + item.size
+                                        }
+                                        ?.key as? String
+                                        ?: return@detectDragGesturesAfterLongPress
+                                    moveCategory(category, target)
+                                    dragOffset = Offset.Zero
+                                }
+                            )
+                        }
                 )
             }
         }

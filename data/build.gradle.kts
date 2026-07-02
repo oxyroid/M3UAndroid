@@ -74,7 +74,7 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.hilt.work)
 
-    implementation(libs.ktor.server.netty)
+    implementation(libs.ktor.server.cio)
     implementation(libs.ktor.server.websockets)
     implementation(libs.ktor.server.cors)
     implementation(libs.ktor.server.content.negotiation)
@@ -86,5 +86,7 @@ dependencies {
     debugImplementation(libs.logback.android)
 
     implementation(libs.jakewharton.disklrucache)
+
+    testImplementation(libs.junit)
 
 }

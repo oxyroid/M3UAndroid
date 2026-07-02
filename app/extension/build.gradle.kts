@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.m3u.extension"
-        minSdk = 26
+        minSdk = 25
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"

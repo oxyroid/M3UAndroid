@@ -86,6 +86,7 @@ internal fun SubscriptionsFragment(
     onUnhidePlaylistCategory: (playlistUrl: String, category: String) -> Unit,
     onClipboard: (String) -> Unit,
     onSubscribe: () -> Unit,
+    onRestoreToTv: () -> Unit,
     backup: () -> Unit,
     restore: () -> Unit,
     epgs: List<Playlist>,
@@ -112,6 +113,7 @@ internal fun SubscriptionsFragment(
                         backingUpOrRestoring = backingUpOrRestoring,
                         onClipboard = onClipboard,
                         onSubscribe = onSubscribe,
+                        onRestoreToTv = onRestoreToTv,
                         backup = backup,
                         restore = restore,
                         modifier = Modifier.fillMaxSize()
@@ -159,6 +161,7 @@ private fun MainContentImpl(
     backingUpOrRestoring: BackingUpAndRestoringState,
     onClipboard: (String) -> Unit,
     onSubscribe: () -> Unit,
+    onRestoreToTv: () -> Unit,
     backup: () -> Unit,
     restore: () -> Unit,
     modifier: Modifier = Modifier
@@ -283,6 +286,17 @@ private fun MainContentImpl(
                         text = restoreText
                     )
                 }
+                if (remoteControl) {
+                    TextButton(
+                        onClick = onRestoreToTv,
+                        enabled = backingUpOrRestoring == BackingUpAndRestoringState.NONE,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    ) {
+                        Text(
+                            text = stringResource(string.feat_setting_restore_to_tv).uppercase()
+                        )
+                    }
+                }
             }
 
         }
@@ -398,10 +412,20 @@ private fun M3UInputContent(
                     modifier = Modifier.fillMaxWidth()
                 )
             } else {
-                LocalStorageButton(
-                    titleState = properties.titleState,
-                    uriState = properties.uriState,
-                )
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(spacing.small)
+                ) {
+                    LocalStorageButton(
+                        titleState = properties.titleState,
+                        uriState = properties.uriState,
+                    )
+                    PlaceholderField(
+                        text = properties.urlState.value,
+                        placeholder = stringResource(string.feat_setting_placeholder_local_path).uppercase(),
+                        onValueChange = { properties.urlState.value = Uri.decode(it) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
     }

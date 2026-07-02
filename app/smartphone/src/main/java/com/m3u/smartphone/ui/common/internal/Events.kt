@@ -10,4 +10,5 @@ import com.m3u.smartphone.ui.material.components.SettingDestination
 object Events {
     var settingDestination: Event<SettingDestination> by mutableStateOf(handledEvent())
     var discoverCategory: Event<String> by mutableStateOf(handledEvent())
+    var openSearch: Event<Unit> by mutableStateOf(handledEvent())
 }

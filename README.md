@@ -48,7 +48,9 @@ A modern IPTV streaming player built with Jetpack Compose for Android phones, ta
 [![F-Droid](https://img.shields.io/badge/F--Droid-Repository-1976D2?style=for-the-badge&logo=fdroid&logoColor=white)](https://f-droid.org/packages/com.m3u.androidApp)
 [![IzzyOnDroid](https://img.shields.io/badge/IzzyOnDroid-Repository-8A4182?style=for-the-badge)](https://apt.izzysoft.de/fdroid/index/apk/com.m3u.androidApp)
 
-**Nightly builds** available via [GitHub Actions artifacts](https://nightly.link/oxyroid/M3UAndroid/workflows/android/master/artifact.zip).
+**Nightly builds** are available for [mobile](https://nightly.link/oxyroid/M3UAndroid/workflows/android/master/smartphone-apks.zip), [Android TV](https://nightly.link/oxyroid/M3UAndroid/workflows/android/master/tv-apk.zip), and [all APKs](https://nightly.link/oxyroid/M3UAndroid/workflows/android/master/artifact.zip).
+
+When using Obtainium or another automatic updater, prefer the mobile or Android TV nightly artifact instead of the combined archive so only the intended APK is selected. For GitHub releases, use an APK filter such as `^mobile-.*\.apk$` for phones/tablets or `^tv-.*\.apk$` for Android TV.
 
 ## Tech Stack
 

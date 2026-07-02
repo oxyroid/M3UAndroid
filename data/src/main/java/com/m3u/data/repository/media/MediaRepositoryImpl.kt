@@ -1,11 +1,14 @@
 package com.m3u.data.repository.media
 
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.net.Uri
+import android.os.Build
 import android.os.Environment
+import android.provider.MediaStore
 import androidx.core.graphics.drawable.toBitmap
 import androidx.media3.common.MimeTypes
 import coil.Coil
@@ -40,17 +43,50 @@ internal class MediaRepositoryImpl @Inject constructor(
         applicationName
     )
 
-    override suspend fun savePicture(url: String): File = withContext(Dispatchers.IO) {
+    override suspend fun savePicture(url: String): String = withContext(Dispatchers.IO) {
         val drawable = checkNotNull(loadDrawable(url))
         val bitmap = drawable.toBitmap()
         val name = "Picture_${System.currentTimeMillis()}.png"
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            return@withContext savePictureToMediaStore(bitmap, name)
+        }
+
         pictureDirectory.mkdirs()
         val file = File(pictureDirectory, name)
         file.outputStream().buffered().use {
             bitmap.compress(Bitmap.CompressFormat.PNG, BITMAP_QUALITY, it)
             it.flush()
         }
-        file
+        file.absolutePath
+    }
+
+    private fun savePictureToMediaStore(bitmap: Bitmap, name: String): String {
+        val resolver = context.contentResolver
+        val values = ContentValues().apply {
+            put(MediaStore.Images.Media.DISPLAY_NAME, name)
+            put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+            put(
+                MediaStore.Images.Media.RELATIVE_PATH,
+                "${Environment.DIRECTORY_PICTURES}/$applicationName"
+            )
+            put(MediaStore.Images.Media.IS_PENDING, 1)
+        }
+        val uri = checkNotNull(
+            resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+        )
+        try {
+            resolver.openOutputStream(uri)?.buffered()?.use {
+                bitmap.compress(Bitmap.CompressFormat.PNG, BITMAP_QUALITY, it)
+                it.flush()
+            } ?: error("Cannot open output stream for $uri")
+            values.clear()
+            values.put(MediaStore.Images.Media.IS_PENDING, 0)
+            resolver.update(uri, values, null, null)
+            return uri.toString()
+        } catch (error: Throwable) {
+            resolver.delete(uri, null, null)
+            throw error
+        }
     }
 
     override suspend fun installApk(channel: ByteReadChannel) = withContext(Dispatchers.IO) {

@@ -48,9 +48,15 @@ interface PlaylistRepository {
 
     suspend fun backupOrThrow(uri: Uri)
 
+    suspend fun backupAsTextOrThrow(): String
+
     suspend fun restoreOrThrow(uri: Uri)
 
+    suspend fun restoreOrThrow(text: String)
+
     suspend fun pinOrUnpinCategory(url: String, category: String)
+
+    suspend fun reorderCategories(url: String, categories: List<String>)
 
     suspend fun hideOrUnhideCategory(url: String, category: String)
 

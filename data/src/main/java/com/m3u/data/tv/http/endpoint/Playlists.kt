@@ -3,7 +3,9 @@ package com.m3u.data.tv.http.endpoint
 import androidx.work.WorkManager
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.repository.playlist.PlaylistRepository
+import com.m3u.data.tv.model.RestorePlaylistPayload
 import com.m3u.data.worker.SubscriptionWorker
+import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
@@ -76,6 +78,24 @@ data class Playlists @Inject constructor(
                     }
                 }
                 call.respond(DefRep(result = true))
+            }
+
+            post("restore") {
+                val payload = call.receive<RestorePlaylistPayload>()
+                if (payload.backup.isBlank()) {
+                    call.respond(DefRep(false, "Backup payload is empty."))
+                    return@post
+                }
+                runCatching {
+                    playlistRepository.restoreOrThrow(payload.backup)
+                }.fold(
+                    onSuccess = {
+                        call.respond(DefRep(result = true))
+                    },
+                    onFailure = { error ->
+                        call.respond(DefRep(false, error.localizedMessage.orEmpty()))
+                    }
+                )
             }
         }
     }

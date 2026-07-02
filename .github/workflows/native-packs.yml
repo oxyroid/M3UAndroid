@@ -63,8 +63,7 @@ jobs:
             data/build.gradle.kts \
             docs \
             native-load.yml \
-            .github \
-            ':!.github/workflows/native-packs.yml'; then
+            .github; then
             exit 1
           fi
           if find native-packs -name '*.json' -print0 \

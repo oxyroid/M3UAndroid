@@ -16,6 +16,8 @@
     <string name="feat_channel_tooltip_enter_pip_mode">PIP mode</string>
     <string name="feat_channel_tooltip_screen_rotating">screen rotating</string>
     <string name="feat_channel_tooltip_choose_format">choose format</string>
+    <string name="feat_channel_tooltip_lock_controls">lock controls</string>
+    <string name="feat_channel_tooltip_unlock_controls">unlock controls</string>
     <string name="feat_channel_dialog_dlna_devices">DLNA Devices</string>
     <string name="feat_channel_dialog_choose_tracks">Choose Tracks</string>
     <string name="feat_channel_open_in_external_app">open in external app</string>

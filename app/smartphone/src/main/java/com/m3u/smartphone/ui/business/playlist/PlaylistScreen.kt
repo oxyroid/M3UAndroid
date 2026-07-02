@@ -31,8 +31,10 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Sort
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.KeyboardDoubleArrowUp
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -53,7 +55,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.input.ImeAction
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -81,12 +85,14 @@ import com.m3u.smartphone.ui.common.helper.Action
 import com.m3u.smartphone.ui.common.helper.Fob
 import com.m3u.smartphone.ui.common.helper.LocalHelper
 import com.m3u.smartphone.ui.common.helper.Metadata
+import com.m3u.smartphone.ui.common.internal.Events
 import com.m3u.smartphone.ui.material.components.Destination
 import com.m3u.smartphone.ui.material.components.EpisodesBottomSheet
 import com.m3u.smartphone.ui.material.components.EventHandler
 import com.m3u.smartphone.ui.material.components.MediaSheet
 import com.m3u.smartphone.ui.material.components.MediaSheetValue
 import com.m3u.smartphone.ui.material.components.SortBottomSheet
+import com.m3u.smartphone.ui.material.components.TextField
 import com.m3u.smartphone.ui.material.ktx.checkPermissionOrRationale
 import com.m3u.smartphone.ui.material.ktx.interceptVolumeEvent
 import com.m3u.smartphone.ui.material.ktx.isAtTop
@@ -164,10 +170,6 @@ internal fun PlaylistRoute(
         }
     }
 
-    BackHandler(query.isNotEmpty()) {
-        viewModel.query.value = ""
-    }
-
     PlaylistScreen(
         title = playlist?.title.orEmpty(),
         query = query,
@@ -177,6 +179,7 @@ internal fun PlaylistRoute(
         channels = channels,
         pinnedCategories = pinnedCategories,
         onPinOrUnpinCategory = { viewModel.onPinOrUnpinCategory(it) },
+        onReorderCategories = { viewModel.onReorderCategories(it) },
         onHideCategory = { viewModel.onHideCategory(it) },
         scrollUp = scrollUp,
         sorts = sorts,
@@ -285,6 +288,7 @@ private fun PlaylistScreen(
     channels: Map<String, Flow<PagingData<Channel>>>,
     pinnedCategories: List<String>,
     onPinOrUnpinCategory: (String) -> Unit,
+    onReorderCategories: (List<String>) -> Unit,
     onHideCategory: (String) -> Unit,
     sorts: List<Sort>,
     sort: Sort,
@@ -337,13 +341,22 @@ private fun PlaylistScreen(
 
     var mediaSheetValue: MediaSheetValue.PlaylistScreen by remember { mutableStateOf(MediaSheetValue.PlaylistScreen()) }
     var isSortSheetVisible by rememberSaveable { mutableStateOf(false) }
+    var isSearchVisible by rememberSaveable { mutableStateOf(false) }
 
-    LifecycleResumeEffect(refreshing) {
+    LifecycleResumeEffect(refreshing, isSearchVisible) {
         Metadata.actions = buildList {
             Action(
                 icon = Icons.AutoMirrored.Rounded.Sort,
                 contentDescription = "sort",
                 onClick = { isSortSheetVisible = true }
+            ).also { add(it) }
+            Action(
+                icon = if (isSearchVisible) Icons.Rounded.Close else Icons.Rounded.Search,
+                contentDescription = if (isSearchVisible) "close search" else "search",
+                onClick = {
+                    isSearchVisible = !isSearchVisible
+                    if (!isSearchVisible) onQuery("")
+                }
             ).also { add(it) }
             Action(
                 icon = Icons.Rounded.Refresh,
@@ -381,8 +394,33 @@ private fun PlaylistScreen(
         mutableStateOf(false)
     }
     BackHandler(isExpanded) { isExpanded = false }
+    BackHandler(query.isNotEmpty() || isSearchVisible) {
+        when {
+            query.isNotEmpty() -> onQuery("")
+            else -> isSearchVisible = false
+        }
+    }
 
     var targetPageIndex: Event<Int> by remember { mutableStateOf(Event.Handled()) }
+    var pendingDiscoverCategory by remember { mutableStateOf<String?>(null) }
+    fun selectCategory(target: String) {
+        category = target
+        targetPageIndex = categories.indexOf(target)
+            .takeIf { it != -1 }
+            ?.let { eventOf(it) }
+            ?: Event.Handled()
+    }
+
+    EventHandler(Events.discoverCategory) { target ->
+        pendingDiscoverCategory = target
+    }
+    LaunchedEffect(categories, pendingDiscoverCategory) {
+        val target = pendingDiscoverCategory ?: return@LaunchedEffect
+        if (target in categories) {
+            selectCategory(target)
+            pendingDiscoverCategory = null
+        }
+    }
 
     val tabs = @Composable {
         PlaylistTabRow(
@@ -391,33 +429,44 @@ private fun PlaylistScreen(
             isExpanded = isExpanded,
             bottomContentPadding = contentPadding only WindowInsetsSides.Bottom,
             onExpanded = { isExpanded = !isExpanded },
-            onCategoryChanged = {
-                category = it
-                targetPageIndex = categories.indexOf(it)
-                    .takeIf { it != -1 }
-                    ?.let { eventOf(it) }
-                    ?: Event.Handled()
-            },
+            onCategoryChanged = ::selectCategory,
             pinnedCategories = pinnedCategories,
             onPinOrUnpinCategory = onPinOrUnpinCategory,
+            onReorderCategories = onReorderCategories,
             onHideCategory = onHideCategory
         )
     }
 
     val gallery = @Composable {
-        val pagerState = rememberPagerState { channels.size }
         val entries = channels.entries.toList()
+        val pagerState = rememberPagerState { entries.size }
         LaunchedEffect(entries) {
+            if (entries.isEmpty()) return@LaunchedEffect
+            val selectedIndex = entries
+                .indexOfFirst { it.key == category }
+                .takeIf { it != -1 }
+                ?: 0
+            val selectedCategory = entries[selectedIndex].key
+            if (category != selectedCategory) {
+                category = selectedCategory
+            }
+            if (pagerState.currentPage != selectedIndex) {
+                pagerState.scrollToPage(selectedIndex)
+            }
+        }
+        LaunchedEffect(entries, pagerState) {
             snapshotFlow { pagerState.settledPage }
+                .distinctUntilChanged()
                 .collectLatest { index ->
                     category = entries.getOrNull(index)?.key.orEmpty()
                 }
         }
         EventHandler(targetPageIndex) {
-            pagerState.scrollToPage(it)
+            pagerState.animateScrollToPage(it)
         }
         HorizontalPager(
             state = pagerState,
+            key = { index -> entries[index].key },
             modifier = Modifier
                 .hazeSource(LocalHazeState.current)
                 .background(MaterialTheme.colorScheme.surfaceContainerHighest)
@@ -447,6 +496,19 @@ private fun PlaylistScreen(
             .padding(contentPadding.minus(contentPadding.only(WindowInsetsSides.Bottom)))
             .then(modifier)
     ) {
+        val spacing = LocalSpacing.current
+        AnimatedVisibility(visible = isSearchVisible || query.isNotEmpty()) {
+            TextField(
+                text = query,
+                placeholder = stringResource(string.feat_playlist_query_placeholder),
+                imeAction = ImeAction.Search,
+                onValueChange = onQuery,
+                modifier = Modifier.padding(
+                    horizontal = spacing.medium,
+                    vertical = spacing.small
+                )
+            )
+        }
         if (!isExpanded) {
             AnimatedVisibility(
                 visible = categories.size > 1,

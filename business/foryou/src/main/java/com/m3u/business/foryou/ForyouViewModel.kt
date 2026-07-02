@@ -82,12 +82,25 @@ class ForyouViewModel @Inject constructor(
             initialValue = Duration.INFINITE
         )
 
+    private val discoverSpecs: StateFlow<List<Recommend.DiscoverSpec>> = playlists
+        .map { playlists ->
+            Recommend.discoverSpecs(playlists, DISCOVER_LIMIT)
+        }
+        .flowOn(Dispatchers.Default)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(1_000L),
+            initialValue = emptyList()
+        )
+
     val specs = combine(
         unseensDuration.flatMapLatest { channelRepository.observeAllUnseenFavorites(it) },
         channelRepository.observePlayedRecently(),
-    ) { channels, playedRecently ->
+        discoverSpecs
+    ) { channels, playedRecently, discoverSpecs ->
         listOfNotNull<Recommend.Spec>(
             playedRecently?.let { Recommend.CwSpec(it, playerManager.getCwPosition(it.url)) },
+            *discoverSpecs.toTypedArray(),
             *(channels.map { channel -> Recommend.UnseenSpec(channel) }.take(8).toTypedArray())
         )
     }
@@ -124,4 +137,8 @@ class ForyouViewModel @Inject constructor(
 
     suspend fun getPlaylist(playlistUrl: String): Playlist? =
         playlistRepository.get(playlistUrl)
+
+    private companion object {
+        const val DISCOVER_LIMIT = 8
+    }
 }

@@ -41,4 +41,30 @@ class Recommend(
         val size: ClosedRange<DataUnit>,
         val url: String,
     ): Spec
+
+    companion object {
+        fun discoverSpecs(
+            playlists: Map<Playlist, Int>,
+            limit: Int
+        ): List<DiscoverSpec> {
+            return playlists
+                .entries
+                .asSequence()
+                .filter { (playlist, count) ->
+                    count > 0 && playlist.pinnedCategories.isNotEmpty()
+                }
+                .flatMap { (playlist, _) ->
+                    playlist.pinnedCategories
+                        .filterNot { it in playlist.hiddenCategories }
+                        .map { category ->
+                            DiscoverSpec(
+                                playlist = playlist,
+                                category = category
+                            )
+                        }
+                }
+                .take(limit)
+                .toList()
+        }
+    }
 }

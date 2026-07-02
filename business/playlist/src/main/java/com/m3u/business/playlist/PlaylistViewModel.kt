@@ -161,7 +161,7 @@ class PlaylistViewModel @Inject constructor(
                     when (resource) {
                         Resource.Loading -> {}
                         is Resource.Success -> {
-                            messager.emit(ChannelCoverSaved(resource.data.absolutePath))
+                            messager.emit(ChannelCoverSaved(resource.data))
                         }
 
                         is Resource.Failure -> {
@@ -317,6 +317,13 @@ class PlaylistViewModel @Inject constructor(
         val currentPlaylistUrl = playlistUrl.value
         viewModelScope.launch {
             playlistRepository.pinOrUnpinCategory(currentPlaylistUrl, category)
+        }
+    }
+
+    fun onReorderCategories(categories: List<String>) {
+        val currentPlaylistUrl = playlistUrl.value
+        viewModelScope.launch {
+            playlistRepository.reorderCategories(currentPlaylistUrl, categories)
         }
     }
 
