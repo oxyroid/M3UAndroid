@@ -47,6 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
@@ -78,12 +79,18 @@ fun TvBrowsePane(
     destination: TvDestination,
     state: TvUiState,
     subscribingXtream: Boolean,
+    subscribingM3u: Boolean,
     xtreamSubscriptionMessage: TvXtreamSubscriptionMessage?,
+    m3uSubscriptionMessage: TvM3uSubscriptionMessage?,
+    focusChannelsOnLibraryOpen: Boolean,
     onOpenLibrary: () -> Unit,
     onPlaylist: (Playlist) -> Unit,
+    onLibraryChannelFocusHandled: () -> Unit,
     onRefresh: () -> Unit,
     onAddXtreamPlaylist: (String, String, String, String, String?) -> Unit,
     onClearXtreamSubscriptionMessage: () -> Unit,
+    onAddM3uPlaylist: (String, String) -> Unit,
+    onClearM3uSubscriptionMessage: () -> Unit,
     onPlay: (Channel) -> Unit,
     onPlayRecent: () -> Unit
 ) {
@@ -95,9 +102,13 @@ fun TvBrowsePane(
         if (state.playlists.isEmpty()) {
             EmptyLibraryScreen(
                 subscribingXtream = subscribingXtream,
+                subscribingM3u = subscribingM3u,
                 xtreamSubscriptionMessage = xtreamSubscriptionMessage,
+                m3uSubscriptionMessage = m3uSubscriptionMessage,
                 onAddXtreamPlaylist = onAddXtreamPlaylist,
-                onClearXtreamSubscriptionMessage = onClearXtreamSubscriptionMessage
+                onClearXtreamSubscriptionMessage = onClearXtreamSubscriptionMessage,
+                onAddM3uPlaylist = onAddM3uPlaylist,
+                onClearM3uSubscriptionMessage = onClearM3uSubscriptionMessage
             )
         } else {
             when (destination) {
@@ -111,7 +122,9 @@ fun TvBrowsePane(
 
                 TvDestination.Library -> LibraryScreen(
                     state = state,
+                    focusChannelsOnOpen = focusChannelsOnLibraryOpen,
                     onPlaylist = onPlaylist,
+                    onChannelFocusRequestHandled = onLibraryChannelFocusHandled,
                     onRefresh = onRefresh,
                     onPlay = onPlay
                 )
@@ -126,9 +139,13 @@ fun TvBrowsePane(
                 TvDestination.Status -> StatusScreen(
                     state = state,
                     subscribingXtream = subscribingXtream,
+                    subscribingM3u = subscribingM3u,
                     xtreamSubscriptionMessage = xtreamSubscriptionMessage,
+                    m3uSubscriptionMessage = m3uSubscriptionMessage,
                     onAddXtreamPlaylist = onAddXtreamPlaylist,
-                    onClearXtreamSubscriptionMessage = onClearXtreamSubscriptionMessage
+                    onClearXtreamSubscriptionMessage = onClearXtreamSubscriptionMessage,
+                    onAddM3uPlaylist = onAddM3uPlaylist,
+                    onClearM3uSubscriptionMessage = onClearM3uSubscriptionMessage
                 )
             }
         }
@@ -192,7 +209,9 @@ private fun HomeScreen(
                         channels = featuredChannels,
                         onPlay = onPlay,
                         onFocused = { highlightedChannel = it },
-                        firstItemFocusRequester = firstFeaturedFocusRequester
+                        firstItemFocusRequester = firstFeaturedFocusRequester,
+                        recentChannelId = state.recent?.id,
+                        recentBadgeText = stringResource(string.tv_action_resume)
                     )
                 }
             }
@@ -421,29 +440,30 @@ private fun HeroActionChip(
 @Composable
 private fun LibraryScreen(
     state: TvUiState,
+    focusChannelsOnOpen: Boolean,
     onPlaylist: (Playlist) -> Unit,
+    onChannelFocusRequestHandled: () -> Unit,
     onRefresh: () -> Unit,
     onPlay: (Channel) -> Unit
 ) {
     val playlistFocusRequester = remember { FocusRequester() }
-    val firstChannelFocusRequester = remember { FocusRequester() }
+    val channelGridFocusRequester = remember { FocusRequester() }
     val focusTarget = state.selectedPlaylist ?: state.playlists.firstOrNull()
     var initialFocusRequested by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(focusTarget?.url) {
         if (focusTarget != null && !initialFocusRequested) {
             yield()
             playlistFocusRequester.requestFocus()
             initialFocusRequested = true
         }
     }
-    LaunchedEffect(state.selectedPlaylist?.url, state.loadingChannels, state.channels.size) {
-        if (!state.loadingChannels && state.channels.isNotEmpty()) {
-            yield()
-            firstChannelFocusRequester.requestFocus()
-        }
+    LaunchedEffect(focusChannelsOnOpen, state.loadingChannels, state.channels.size) {
+        if (!focusChannelsOnOpen || state.loadingChannels) return@LaunchedEffect
+        yield()
+        channelGridFocusRequester.requestFocus()
+        onChannelFocusRequestHandled()
     }
-
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(24.dp),
         contentPadding = PaddingValues(start = 48.dp, top = 48.dp, end = 64.dp, bottom = 48.dp),
@@ -471,7 +491,7 @@ private fun LibraryScreen(
                         modifier = Modifier
                             .widthIn(min = 256.dp, max = 336.dp)
                             .height(144.dp)
-                            .focusProperties { down = firstChannelFocusRequester }
+                            .focusProperties { down = channelGridFocusRequester }
                     )
                 }
             }
@@ -504,18 +524,33 @@ private fun LibraryScreen(
                     text = stringResource(string.feat_setting_label_subscribe),
                     icon = Icons.Rounded.Refresh,
                     onClick = onRefresh,
-                    modifier = Modifier.focusProperties { down = firstChannelFocusRequester }
+                    modifier = Modifier.focusProperties {
+                        up = playlistFocusRequester
+                        down = channelGridFocusRequester
+                    }
                 )
             }
         }
 
         item {
-            ChannelGrid(
-                channels = state.channels,
-                onPlay = onPlay,
-                firstItemFocusRequester = firstChannelFocusRequester,
-                modifier = Modifier.height(620.dp)
-            )
+            if (state.channels.isEmpty()) {
+                EmptyChannelGrid(
+                    title = stringResource(string.tv_empty_channels_title),
+                    subtitle = stringResource(string.tv_empty_channels_subtitle),
+                    icon = Icons.Rounded.VideoLibrary,
+                    focusRequester = channelGridFocusRequester,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(220.dp)
+                )
+            } else {
+                ChannelGrid(
+                    channels = state.channels,
+                    onPlay = onPlay,
+                    firstItemFocusRequester = channelGridFocusRequester,
+                    modifier = Modifier.height(620.dp)
+                )
+            }
         }
     }
 }
@@ -528,11 +563,14 @@ private fun ChannelGridScreen(
     onPlay: (Channel) -> Unit
 ) {
     val firstChannelFocusRequester = remember { FocusRequester() }
+    val emptyStateFocusRequester = remember { FocusRequester() }
 
     LaunchedEffect(channels.size) {
+        yield()
         if (channels.isNotEmpty()) {
-            yield()
             firstChannelFocusRequester.requestFocus()
+        } else {
+            emptyStateFocusRequester.requestFocus()
         }
     }
 
@@ -544,11 +582,73 @@ private fun ChannelGridScreen(
             .focusGroup()
     ) {
         SectionTitle(title = title, subtitle = subtitle)
-        ChannelGrid(
-            channels = channels,
-            onPlay = onPlay,
-            firstItemFocusRequester = firstChannelFocusRequester
-        )
+        if (channels.isEmpty()) {
+            EmptyChannelGrid(
+                title = title,
+                subtitle = subtitle,
+                focusRequester = emptyStateFocusRequester
+            )
+        } else {
+            ChannelGrid(
+                channels = channels,
+                onPlay = onPlay,
+                firstItemFocusRequester = firstChannelFocusRequester
+            )
+        }
+    }
+}
+
+@Composable
+private fun EmptyChannelGrid(
+    title: String,
+    subtitle: String,
+    focusRequester: FocusRequester,
+    modifier: Modifier = Modifier
+        .fillMaxWidth()
+        .height(220.dp),
+    icon: ImageVector = Icons.Rounded.Favorite
+) {
+    FocusFrame(
+        onClick = {},
+        focusRequester = focusRequester,
+        focusedScale = 1f,
+        shape = RoundedCornerShape(16.dp),
+        modifier = modifier
+    ) { focused ->
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(24.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 28.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (focused) TvColors.OnFocus else TvColors.TextPrimary,
+                modifier = Modifier.size(48.dp)
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = title,
+                    color = if (focused) TvColors.OnFocus else TvColors.TextPrimary,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    fontFamily = TvFonts.Body,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = subtitle,
+                    color = if (focused) TvColors.OnFocus.copy(alpha = 0.78f) else TvColors.TextSecondary,
+                    fontSize = 16.sp,
+                    lineHeight = 22.sp,
+                    fontFamily = TvFonts.Body,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
     }
 }
 
@@ -556,58 +656,83 @@ private fun ChannelGridScreen(
 private fun StatusScreen(
     state: TvUiState,
     subscribingXtream: Boolean,
+    subscribingM3u: Boolean,
     xtreamSubscriptionMessage: TvXtreamSubscriptionMessage?,
+    m3uSubscriptionMessage: TvM3uSubscriptionMessage?,
     onAddXtreamPlaylist: (String, String, String, String, String?) -> Unit,
-    onClearXtreamSubscriptionMessage: () -> Unit
+    onClearXtreamSubscriptionMessage: () -> Unit,
+    onAddM3uPlaylist: (String, String) -> Unit,
+    onClearM3uSubscriptionMessage: () -> Unit
 ) {
-    Column(
+    LazyColumn(
         verticalArrangement = Arrangement.spacedBy(24.dp),
+        contentPadding = PaddingValues(start = 48.dp, top = 48.dp, end = 64.dp, bottom = 48.dp),
         modifier = Modifier
             .fillMaxSize()
-            .padding(start = 48.dp, top = 48.dp, end = 64.dp, bottom = 48.dp)
+            .focusGroup()
     ) {
-        SectionTitle(
-            title = stringResource(string.tv_settings_title),
-            subtitle = stringResource(string.tv_settings_subtitle)
-        )
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            MetricTile(
-                title = stringResource(string.tv_metric_playlists),
-                value = state.playlists.size.toString(),
-                icon = Icons.Rounded.VideoLibrary,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(136.dp)
-            )
-            MetricTile(
-                title = stringResource(string.tv_metric_channels),
-                value = state.channelCount.toString(),
-                icon = Icons.AutoMirrored.Rounded.PlaylistPlay,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(136.dp)
-            )
-            MetricTile(
-                title = stringResource(string.tv_metric_favorites),
-                value = state.favorites.size.toString(),
-                icon = Icons.Rounded.Favorite,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(136.dp)
+        item {
+            SectionTitle(
+                title = stringResource(string.tv_settings_title),
+                subtitle = stringResource(string.tv_settings_subtitle)
             )
         }
-        XtreamSubscribePanel(
-            subscribing = subscribingXtream,
-            message = xtreamSubscriptionMessage,
-            onSubmit = onAddXtreamPlaylist,
-            onInputChange = onClearXtreamSubscriptionMessage,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(460.dp)
-        )
+        item {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                MetricTile(
+                    title = stringResource(string.tv_metric_playlists),
+                    value = state.playlists.size.toString(),
+                    icon = Icons.Rounded.VideoLibrary,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(136.dp)
+                )
+                MetricTile(
+                    title = stringResource(string.tv_metric_channels),
+                    value = state.channelCount.toString(),
+                    icon = Icons.AutoMirrored.Rounded.PlaylistPlay,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(136.dp)
+                )
+                MetricTile(
+                    title = stringResource(string.tv_metric_favorites),
+                    value = state.favorites.size.toString(),
+                    icon = Icons.Rounded.Favorite,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(136.dp)
+                )
+            }
+        }
+        item {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                M3uSubscribePanel(
+                    subscribing = subscribingM3u,
+                    message = m3uSubscriptionMessage,
+                    onSubmit = onAddM3uPlaylist,
+                    onInputChange = onClearM3uSubscriptionMessage,
+                    modifier = Modifier
+                        .weight(0.92f)
+                        .height(360.dp)
+                )
+                XtreamSubscribePanel(
+                    subscribing = subscribingXtream,
+                    message = xtreamSubscriptionMessage,
+                    onSubmit = onAddXtreamPlaylist,
+                    onInputChange = onClearXtreamSubscriptionMessage,
+                    modifier = Modifier
+                        .weight(1.08f)
+                        .height(460.dp)
+                )
+            }
+        }
     }
 }
 
@@ -616,7 +741,9 @@ private fun ContentRow(
     channels: List<Channel>,
     onPlay: (Channel) -> Unit,
     onFocused: (Channel) -> Unit = {},
-    firstItemFocusRequester: FocusRequester? = null
+    firstItemFocusRequester: FocusRequester? = null,
+    recentChannelId: Int? = null,
+    recentBadgeText: String? = null
 ) {
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -630,6 +757,7 @@ private fun ContentRow(
                 onFocused = { onFocused(channel) },
                 focusRequester = firstItemFocusRequester.takeIf { index == 0 },
                 compact = true,
+                badgeText = recentBadgeText.takeIf { channel.id == recentChannelId },
                 modifier = Modifier
                     .widthIn(min = 104.dp, max = 120.dp)
                     .aspectRatio(2f / 3f)
@@ -665,12 +793,16 @@ private fun ChannelGrid(
 @Composable
 private fun EmptyLibraryScreen(
     subscribingXtream: Boolean,
+    subscribingM3u: Boolean,
     xtreamSubscriptionMessage: TvXtreamSubscriptionMessage?,
+    m3uSubscriptionMessage: TvM3uSubscriptionMessage?,
     onAddXtreamPlaylist: (String, String, String, String, String?) -> Unit,
-    onClearXtreamSubscriptionMessage: () -> Unit
+    onClearXtreamSubscriptionMessage: () -> Unit,
+    onAddM3uPlaylist: (String, String) -> Unit,
+    onClearM3uSubscriptionMessage: () -> Unit
 ) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(48.dp),
+        horizontalArrangement = Arrangement.spacedBy(32.dp),
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
@@ -718,6 +850,16 @@ private fun EmptyLibraryScreen(
                 InfoPill(text = stringResource(string.tv_empty_library_restore_hint), modifier = Modifier.fillMaxWidth())
             }
         }
+        M3uSubscribePanel(
+            subscribing = subscribingM3u,
+            message = m3uSubscriptionMessage,
+            onSubmit = onAddM3uPlaylist,
+            onInputChange = onClearM3uSubscriptionMessage,
+            modifier = Modifier
+                .weight(0.72f)
+                .widthIn(max = 360.dp)
+                .height(320.dp)
+        )
         XtreamSubscribePanel(
             subscribing = subscribingXtream,
             message = xtreamSubscriptionMessage,
@@ -726,6 +868,7 @@ private fun EmptyLibraryScreen(
             modifier = Modifier
                 .weight(0.88f)
                 .widthIn(max = 420.dp)
+                .fillMaxHeight()
         )
     }
 }
@@ -735,6 +878,88 @@ private enum class TvXtreamContentType(val type: String?) {
     Live(DataSource.Xtream.TYPE_LIVE),
     Vod(DataSource.Xtream.TYPE_VOD),
     Series(DataSource.Xtream.TYPE_SERIES)
+}
+
+@Composable
+private fun M3uSubscribePanel(
+    subscribing: Boolean,
+    message: TvM3uSubscriptionMessage?,
+    onSubmit: (String, String) -> Unit,
+    onInputChange: () -> Unit,
+    firstInputFocusRequester: FocusRequester? = null,
+    modifier: Modifier = Modifier
+) {
+    var title by rememberSaveable { mutableStateOf("") }
+    var urlOrPath by rememberSaveable { mutableStateOf("") }
+    val canSubmit = title.isNotBlank() && urlOrPath.isNotBlank()
+
+    FocusFrame(
+        onClick = {},
+        enabled = false,
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.linearGradient(
+                        0f to TvColors.SurfaceRaised,
+                        1f to TvColors.BackgroundSoft
+                    )
+                )
+                .padding(20.dp)
+        ) {
+            SectionTitle(
+                title = stringResource(string.tv_m3u_panel_title),
+                subtitle = stringResource(string.tv_m3u_panel_subtitle)
+            )
+            TvInputField(
+                value = title,
+                onValueChange = {
+                    title = it
+                    onInputChange()
+                },
+                placeholder = stringResource(string.tv_m3u_title_placeholder),
+                focusRequester = firstInputFocusRequester
+            )
+            TvInputField(
+                value = urlOrPath,
+                onValueChange = {
+                    urlOrPath = it
+                    onInputChange()
+                },
+                placeholder = stringResource(string.tv_m3u_url_placeholder),
+                keyboardType = KeyboardType.Uri
+            )
+            Text(
+                text = message?.let { m3uSubscriptionMessageText(it) }.orEmpty(),
+                color = when (message) {
+                    TvM3uSubscriptionMessage.Enqueued -> TvColors.Focus
+                    TvM3uSubscriptionMessage.MissingFields -> TvColors.Accent
+                    null -> Color.Transparent
+                },
+                fontSize = 13.sp,
+                lineHeight = 18.sp,
+                fontFamily = TvFonts.Body,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.height(22.dp)
+            )
+            TvActionButton(
+                text = if (subscribing) {
+                    stringResource(string.tv_xtream_subscribing)
+                } else {
+                    stringResource(string.feat_setting_label_subscribe)
+                },
+                icon = Icons.Rounded.Add,
+                onClick = { onSubmit(title, urlOrPath) },
+                enabled = canSubmit && !subscribing,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
 }
 
 @Composable
@@ -870,6 +1095,7 @@ private fun TvInputField(
     onValueChange: (String) -> Unit,
     placeholder: String,
     modifier: Modifier = Modifier,
+    focusRequester: FocusRequester? = null,
     keyboardType: KeyboardType = KeyboardType.Text,
     visualTransformation: VisualTransformation = VisualTransformation.None
 ) {
@@ -913,6 +1139,7 @@ private fun TvInputField(
                 ),
                 RoundedCornerShape(8.dp)
             )
+            .then(focusRequester?.let { Modifier.focusRequester(it) } ?: Modifier)
             .onFocusChanged { focused = it.isFocused }
             .padding(horizontal = 14.dp, vertical = 13.dp)
     )
@@ -958,6 +1185,15 @@ private fun xtreamSubscriptionMessageText(message: TvXtreamSubscriptionMessage):
         TvXtreamSubscriptionMessage.InvalidUrl ->
             stringResource(string.tv_xtream_message_invalid_url)
         TvXtreamSubscriptionMessage.Enqueued ->
+            stringResource(string.tv_xtream_message_enqueued)
+    }
+
+@Composable
+private fun m3uSubscriptionMessageText(message: TvM3uSubscriptionMessage): String =
+    when (message) {
+        TvM3uSubscriptionMessage.MissingFields ->
+            stringResource(string.tv_xtream_message_missing_fields)
+        TvM3uSubscriptionMessage.Enqueued ->
             stringResource(string.tv_xtream_message_enqueued)
     }
 

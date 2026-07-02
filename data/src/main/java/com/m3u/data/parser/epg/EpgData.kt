@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatterBuilder
 
 data class EpgProgramme(
     val channel: String,
+    val channelAliases: List<String> = emptyList(),
     // use [readEpochMilliseconds]
     val start: String? = null,
     // use [readEpochMilliseconds]
@@ -46,3 +47,14 @@ fun EpgProgramme.toProgramme(
     categories = categories,
     channelId = channel
 )
+
+fun EpgProgramme.toProgrammes(
+    epgUrl: String
+): List<Programme> {
+    val programme = toProgramme(epgUrl)
+    return listOf(channel)
+        .plus(channelAliases)
+        .filter { it.isNotBlank() }
+        .distinct()
+        .map { channelId -> programme.copy(channelId = channelId) }
+}

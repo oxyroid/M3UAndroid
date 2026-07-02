@@ -1,5 +1,6 @@
 package com.m3u.smartphone.ui.material.components
 
+import android.graphics.Color
 import android.view.Surface
 import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
@@ -59,6 +60,8 @@ fun Player(
         factory = { context ->
             PlayerView(context).apply {
                 useController = false
+                setBackgroundColor(Color.TRANSPARENT)
+                setShutterBackgroundColor(Color.TRANSPARENT)
                 videoSurfaceView
             }
         },

@@ -23,9 +23,11 @@ import com.m3u.smartphone.ui.common.connect.RemoteControlSheetValue
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -40,6 +42,8 @@ class AppViewModel @Inject constructor(
     private val tvApi: TvApiDelegate,
 ) : ViewModel() {
     val channels: Flow<PagingData<Channel>> = snapshotFlow { searchQuery.value }
+        .map { it.trim() }
+        .distinctUntilChanged()
         .flatMapLatest { query ->
             if (query.isBlank()) {
                 emptyFlow()

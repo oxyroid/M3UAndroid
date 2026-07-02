@@ -139,7 +139,7 @@ internal class M3UParserImpl @Inject constructor() : M3UParser {
                 url = urls.audioUrl,
                 videoUrl = urls.videoUrl,
                 duration = duration,
-                licenseType = kodiMetadata[KODI_LICENSE_TYPE],
+                licenseType = kodiMetadata[KODI_LICENSE_TYPE]?.normalizeKodiLicenseType(),
                 licenseKey = kodiMetadata[KODI_LICENSE_KEY],
                 httpOptions = httpOptions.filterValues { it.isNotBlank() },
             )
@@ -158,6 +158,14 @@ internal class M3UParserImpl @Inject constructor() : M3UParser {
         VLC_REFERER, VLC_REFERER_ALT -> StreamUrlOptions.REFERER
         VLC_ORIGIN -> StreamUrlOptions.ORIGIN
         else -> removePrefix("http-")
+    }
+
+    private fun String.normalizeKodiLicenseType(): String = when (lowercase()) {
+        "clearkey" -> "clearkey"
+        "org.w3.clearkey" -> "org.w3.clearkey"
+        "widevine", "com.widevine.alpha" -> "com.widevine.alpha"
+        "playready", "com.microsoft.playready" -> "com.microsoft.playready"
+        else -> this
     }
 
     private fun String.parseTxtData(currentGroup: String): M3UData? {

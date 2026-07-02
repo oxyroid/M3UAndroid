@@ -50,7 +50,10 @@ subprojects {
     }
     plugins.withId("org.jetbrains.kotlin.plugin.compose") {
         configure<ComposeCompilerGradlePluginExtension> {
-            includeSourceInformation = true
+            includeSourceInformation = providers
+                .gradleProperty("m3uComposeSourceInformation")
+                .map(String::toBoolean)
+                .getOrElse(false)
             val file = rootProject.layout.projectDirectory.file("compose_compiler_config.conf")
             if (file.asFile.exists()) {
                 stabilityConfigurationFiles.add(file)

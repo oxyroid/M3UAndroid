@@ -44,10 +44,13 @@ fun App(
     val playbackState by viewModel.playbackState.collectAsStateWithLifecycle()
     val remoteControlCode by viewModel.remoteControlCode.collectAsStateWithLifecycle()
     val subscribingXtream by viewModel.subscribingXtream.collectAsStateWithLifecycle()
+    val subscribingM3u by viewModel.subscribingM3u.collectAsStateWithLifecycle()
     val xtreamSubscriptionMessage by viewModel.xtreamSubscriptionMessage.collectAsStateWithLifecycle()
+    val m3uSubscriptionMessage by viewModel.m3uSubscriptionMessage.collectAsStateWithLifecycle()
     val view = LocalView.current
     var destination by remember { mutableStateOf(TvDestination.Home) }
     var surface by remember { mutableStateOf(TvSurface.Browse) }
+    var focusChannelsOnLibraryOpen by remember { mutableStateOf(false) }
     val closePlayer = {
         viewModel.releasePlayer()
         surface = TvSurface.Browse
@@ -90,15 +93,25 @@ fun App(
                 destination = destination,
                 state = state,
                 subscribingXtream = subscribingXtream,
+                subscribingM3u = subscribingM3u,
                 xtreamSubscriptionMessage = xtreamSubscriptionMessage,
-                onOpenLibrary = { destination = TvDestination.Library },
-                onPlaylist = {
-                    viewModel.selectPlaylist(it)
+                m3uSubscriptionMessage = m3uSubscriptionMessage,
+                focusChannelsOnLibraryOpen = focusChannelsOnLibraryOpen,
+                onOpenLibrary = {
+                    focusChannelsOnLibraryOpen = false
                     destination = TvDestination.Library
                 },
+                onPlaylist = {
+                    viewModel.selectPlaylist(it)
+                    focusChannelsOnLibraryOpen = true
+                    destination = TvDestination.Library
+                },
+                onLibraryChannelFocusHandled = { focusChannelsOnLibraryOpen = false },
                 onRefresh = viewModel::refreshSelectedPlaylist,
                 onAddXtreamPlaylist = viewModel::addXtreamPlaylist,
                 onClearXtreamSubscriptionMessage = viewModel::clearXtreamSubscriptionMessage,
+                onAddM3uPlaylist = viewModel::addM3uPlaylist,
+                onClearM3uSubscriptionMessage = viewModel::clearM3uSubscriptionMessage,
                 onPlay = {
                     viewModel.play(it)
                     surface = TvSurface.Player

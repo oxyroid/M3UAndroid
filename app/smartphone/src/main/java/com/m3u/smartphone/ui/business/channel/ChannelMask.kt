@@ -303,6 +303,7 @@ fun ChannelMask(
         val programmeDescription = currentProgramme
             ?.description
             ?.takeIf { it.isNotBlank() }
+        val hasProgrammeInfo = programmeDisplayText != null || programmeDescription != null
 
         val cwPositionObj = run {
             currentCwPosition.takeIf {
@@ -500,6 +501,7 @@ fun ChannelMask(
                         suggest { !currentUseVertical }
                         suggest { playStateDisplayText.isNotEmpty() }
                         suggest { exceptionDisplayText.isNotEmpty() }
+                        suggest { hasProgrammeInfo }
                         suggestAll {
                             suggest { isStaticAndSeekable }
                             suggest { slider }
@@ -564,7 +566,8 @@ fun ChannelMask(
                                 )
                             }
                         }
-                        if (playStateDisplayText.isNotEmpty()
+                        if (hasProgrammeInfo
+                            || playStateDisplayText.isNotEmpty()
                             || exceptionDisplayText.isNotEmpty()
                             || (isStaticAndSeekable && slider)
                         ) {

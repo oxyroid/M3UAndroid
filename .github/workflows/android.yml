@@ -52,19 +52,42 @@ jobs:
       - name: Build production TV app
         run: ./gradlew :app:tv:assembleRelease
 
+      - name: Generate APK checksums
+        run: |
+          set -euo pipefail
+          find app/smartphone/build/outputs/apk/release \
+            -maxdepth 1 \
+            -type f \
+            -name '*.apk' \
+            -print0 \
+            | sort -z \
+            | xargs -0 sha256sum > SHA256SUMS-smartphone.txt
+          find app/tv/build/outputs/apk/release \
+            -maxdepth 1 \
+            -type f \
+            -name '*.apk' \
+            -print0 \
+            | sort -z \
+            | xargs -0 sha256sum > SHA256SUMS-tv.txt
+          cat SHA256SUMS-smartphone.txt SHA256SUMS-tv.txt > SHA256SUMS.txt
+
       - name: Upload smartphone APKs
         uses: actions/upload-artifact@v4
         with:
           name: smartphone-apks
           if-no-files-found: error
-          path: app/smartphone/build/outputs/apk/release/*.apk
+          path: |
+            app/smartphone/build/outputs/apk/release/*.apk
+            SHA256SUMS-smartphone.txt
 
       - name: Upload TV APK
         uses: actions/upload-artifact@v4
         with:
           name: tv-apk
           if-no-files-found: error
-          path: app/tv/build/outputs/apk/release/*.apk
+          path: |
+            app/tv/build/outputs/apk/release/*.apk
+            SHA256SUMS-tv.txt
 
       - name: Upload all APKs
         uses: actions/upload-artifact@v4
@@ -74,9 +97,29 @@ jobs:
           path: |
             app/smartphone/build/outputs/apk/release/*.apk
             app/tv/build/outputs/apk/release/*.apk
+            SHA256SUMS.txt
+            SHA256SUMS-smartphone.txt
+            SHA256SUMS-tv.txt
+
+      - name: Check Telegram upload configuration
+        if: github.event_name != 'pull_request'
+        id: telegram-config
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+          API_ID: ${{ secrets.API_ID }}
+          API_HASH: ${{ secrets.API_HASH }}
+        run: |
+          set -euo pipefail
+          if [ -n "$BOT_TOKEN" ] && [ -n "$CHAT_ID" ] && [ -n "$API_ID" ] && [ -n "$API_HASH" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "Telegram upload skipped because one or more Telegram secrets are not configured."
+          fi
 
       - name: Upload To Telegram
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && steps.telegram-config.outputs.enabled == 'true'
         uses: xireiki/channel-post@v1.0.10
         with:
           bot_token: ${{ secrets.BOT_TOKEN }}
@@ -88,3 +131,6 @@ jobs:
           path: |
             app/smartphone/build/outputs/apk/release/*.apk
             app/tv/build/outputs/apk/release/*.apk
+            SHA256SUMS.txt
+            SHA256SUMS-smartphone.txt
+            SHA256SUMS-tv.txt

@@ -396,7 +396,7 @@ private fun M3UInputContent(
         PlaceholderField(
             text = properties.titleState.value,
             placeholder = stringResource(string.feat_setting_placeholder_title).uppercase(),
-            onValueChange = { properties.titleState.value = Uri.decode(it) },
+            onValueChange = { properties.titleState.value = it },
             imeAction = ImeAction.Next,
             modifier = Modifier.fillMaxWidth()
         )
@@ -408,7 +408,7 @@ private fun M3UInputContent(
                 PlaceholderField(
                     text = properties.urlState.value,
                     placeholder = stringResource(string.feat_setting_placeholder_url).uppercase(),
-                    onValueChange = { properties.urlState.value = Uri.decode(it) },
+                    onValueChange = { properties.urlState.value = it },
                     modifier = Modifier.fillMaxWidth()
                 )
             } else {
@@ -422,7 +422,7 @@ private fun M3UInputContent(
                     PlaceholderField(
                         text = properties.urlState.value,
                         placeholder = stringResource(string.feat_setting_placeholder_local_path).uppercase(),
-                        onValueChange = { properties.urlState.value = Uri.decode(it) },
+                        onValueChange = { properties.urlState.value = it },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -451,13 +451,13 @@ private fun EPGInputContent(
         PlaceholderField(
             text = properties.titleState.value,
             placeholder = stringResource(string.feat_setting_placeholder_epg_title).uppercase(),
-            onValueChange = { properties.titleState.value = Uri.decode(it) },
+            onValueChange = { properties.titleState.value = it },
             modifier = Modifier.fillMaxWidth()
         )
         PlaceholderField(
             text = properties.epgState.value,
             placeholder = stringResource(string.feat_setting_placeholder_epg).uppercase(),
-            onValueChange = { properties.epgState.value = Uri.decode(it) },
+            onValueChange = { properties.epgState.value = it },
             modifier = Modifier.fillMaxWidth()
         )
     }
@@ -475,7 +475,7 @@ private fun XtreamInputContent(modifier: Modifier = Modifier) {
         PlaceholderField(
             text = properties.titleState.value,
             placeholder = stringResource(string.feat_setting_placeholder_title).uppercase(),
-            onValueChange = { properties.titleState.value = Uri.decode(it) },
+            onValueChange = { properties.titleState.value = it },
             modifier = Modifier.fillMaxWidth()
         )
         PlaceholderField(

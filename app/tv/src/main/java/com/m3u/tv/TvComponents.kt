@@ -338,7 +338,8 @@ fun ChannelCard(
     modifier: Modifier = Modifier,
     focusRequester: FocusRequester? = null,
     onFocused: () -> Unit = {},
-    compact: Boolean = false
+    compact: Boolean = false,
+    badgeText: String? = null
 ) {
     FocusFrame(
         onClick = onPlay,
@@ -365,6 +366,29 @@ fun ChannelCard(
                             .fillMaxSize()
                             .clip(RoundedCornerShape(8.dp))
                     )
+                    if (!badgeText.isNullOrBlank()) {
+                        Text(
+                            text = badgeText,
+                            color = if (focused) TvColors.OnFocus else TvColors.TextPrimary,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            fontFamily = TvFonts.Body,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .padding(6.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(
+                                    if (focused) {
+                                        TvColors.Focus.copy(alpha = 0.92f)
+                                    } else {
+                                        Color.Black.copy(alpha = 0.76f)
+                                    }
+                                )
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
+                    }
                 }
                 Box(
                     contentAlignment = Alignment.CenterStart,

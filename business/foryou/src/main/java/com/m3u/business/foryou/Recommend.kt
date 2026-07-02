@@ -53,9 +53,10 @@ class Recommend(
                 .filter { (playlist, count) ->
                     count > 0 && playlist.pinnedCategories.isNotEmpty()
                 }
+                .sortedByDescending { (_, count) -> count }
                 .flatMap { (playlist, _) ->
                     playlist.pinnedCategories
-                        .filterNot { it in playlist.hiddenCategories }
+                        .filter { it.isNotBlank() && it !in playlist.hiddenCategories }
                         .map { category ->
                             DiscoverSpec(
                                 playlist = playlist,

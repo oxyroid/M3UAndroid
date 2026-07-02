@@ -1,6 +1,7 @@
 package com.m3u.data.repository.playlist
 
 import android.content.ContentResolver
+import android.net.Uri
 import com.m3u.core.util.basic.startWithHttpScheme
 import com.m3u.core.util.basic.startsWithAny
 
@@ -28,6 +29,28 @@ internal object PlaylistNetworkUrl {
         if (!url.startsWith(fileScheme, ignoreCase = true)) return url
         return decodePercentEncoded(url)
     }
+
+    fun resolveInternalFileName(
+        uri: Uri,
+        displayName: String?,
+        fallbackName: String
+    ): String = resolveInternalFileName(
+        displayName = displayName,
+        lastPathSegment = uri.lastPathSegment,
+        fallbackName = fallbackName
+    )
+
+    internal fun resolveInternalFileName(
+        displayName: String?,
+        lastPathSegment: String?,
+        fallbackName: String
+    ): String = displayName
+        ?.takeIf { it.isNotBlank() }
+        ?: lastPathSegment
+            ?.substringAfterLast('/')
+            ?.substringAfterLast(':')
+            ?.takeIf { it.isNotBlank() }
+        ?: fallbackName
 
     fun httpFallbackForPlainHttpTlsFailure(
         url: String,

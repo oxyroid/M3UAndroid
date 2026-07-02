@@ -15,13 +15,19 @@ internal class EpgParserImpl @Inject constructor(
         val parser = Xml.newPullParser()
         parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false)
         parser.setInput(input, null)
+        val channelAliases = mutableMapOf<String, List<String>>()
         with(parser) {
             while (name != "tv") next()
             while (next() != XmlPullParser.END_TAG) {
                 if (eventType != XmlPullParser.START_TAG) continue
                 when (name) {
+                    "channel" -> {
+                        val channel = readChannel()
+                        channelAliases[channel.id] = channel.aliases
+                    }
+
                     "programme" -> {
-                        val programme = readProgramme()
+                        val programme = readProgramme(channelAliases)
                         send(programme)
                     }
 
@@ -33,7 +39,33 @@ internal class EpgParserImpl @Inject constructor(
         .flowOn(Dispatchers.Default)
 
     private val ns: String? = null
-    private fun XmlPullParser.readProgramme(): EpgProgramme {
+
+    private data class EpgChannel(
+        val id: String,
+        val aliases: List<String>
+    )
+
+    private fun XmlPullParser.readChannel(): EpgChannel {
+        require(XmlPullParser.START_TAG, ns, "channel")
+        val id = getAttributeValue(null, "id").orEmpty()
+        val aliases = mutableListOf<String>()
+        while (next() != XmlPullParser.END_TAG) {
+            if (eventType != XmlPullParser.START_TAG) continue
+            when (name) {
+                "display-name" -> aliases += readDisplayName()
+                else -> skip()
+            }
+        }
+        require(XmlPullParser.END_TAG, ns, "channel")
+        return EpgChannel(
+            id = id,
+            aliases = aliases.filter { it.isNotBlank() }.distinct()
+        )
+    }
+
+    private fun XmlPullParser.readProgramme(
+        channelAliases: Map<String, List<String>>
+    ): EpgProgramme {
         require(XmlPullParser.START_TAG, ns, "programme")
         val start = getAttributeValue(null, "start")
         val stop = getAttributeValue(null, "stop")
@@ -57,6 +89,7 @@ internal class EpgParserImpl @Inject constructor(
             start = start,
             stop = stop,
             channel = channel,
+            channelAliases = channelAliases[channel].orEmpty(),
             title = title,
             desc = desc,
             icon = icon,
@@ -88,6 +121,13 @@ internal class EpgParserImpl @Inject constructor(
         val title = readText()
         require(XmlPullParser.END_TAG, ns, "title")
         return title
+    }
+
+    private fun XmlPullParser.readDisplayName(): String {
+        require(XmlPullParser.START_TAG, ns, "display-name")
+        val displayName = readText()
+        require(XmlPullParser.END_TAG, ns, "display-name")
+        return displayName
     }
 
     private fun XmlPullParser.readDesc(): String? = optional {

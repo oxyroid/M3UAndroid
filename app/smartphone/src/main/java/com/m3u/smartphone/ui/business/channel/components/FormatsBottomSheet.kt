@@ -15,6 +15,7 @@ import androidx.compose.material.icons.rounded.Audiotrack
 import androidx.compose.material.icons.rounded.ClosedCaption
 import androidx.compose.material.icons.rounded.DeviceUnknown
 import androidx.compose.material.icons.rounded.VideoLibrary
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -35,7 +36,6 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.C
 import com.m3u.data.service.TrackOption
 import com.m3u.i18n.R.string
-import androidx.compose.material3.Icon
 import com.m3u.smartphone.ui.material.components.mask.MaskState
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import kotlinx.coroutines.launch
@@ -123,10 +123,10 @@ internal fun FormatsBottomSheet(
                         else -> Icons.Rounded.DeviceUnknown
                     }
                     val text = when (type) {
-                        C.TRACK_TYPE_AUDIO -> "AUDIO"
-                        C.TRACK_TYPE_VIDEO -> "VIDEO"
-                        C.TRACK_TYPE_TEXT -> "TEXT"
-                        else -> "OTHER"
+                        C.TRACK_TYPE_AUDIO -> stringResource(string.feat_channel_track_type_audio)
+                        C.TRACK_TYPE_VIDEO -> stringResource(string.feat_channel_track_type_video)
+                        C.TRACK_TYPE_TEXT -> stringResource(string.feat_channel_track_type_subtitle)
+                        else -> stringResource(string.feat_channel_track_type_other)
                     }
                     SegmentedButton(
                         selected = index == pagerState.currentPage,

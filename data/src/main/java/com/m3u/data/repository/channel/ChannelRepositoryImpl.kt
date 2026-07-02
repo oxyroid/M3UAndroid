@@ -43,6 +43,18 @@ internal class ChannelRepositoryImpl @Inject constructor(
         Sort.MIXED -> channelDao.pagingAllByPlaylistUrlMixed(url, query)
     }
 
+    override fun pagingAllByPlaylistUrlAcrossCategories(
+        url: String,
+        query: String,
+        sort: Sort
+    ): PagingSource<Int, Channel> = when (sort) {
+        Sort.ASC -> channelDao.pagingAllByPlaylistUrlAcrossCategoriesAsc(url, query)
+        Sort.DESC -> channelDao.pagingAllByPlaylistUrlAcrossCategoriesDesc(url, query)
+        Sort.RECENTLY -> channelDao.pagingAllByPlaylistUrlAcrossCategoriesRecently(url, query)
+        Sort.UNSPECIFIED,
+        Sort.MIXED -> channelDao.pagingAllByPlaylistUrlAcrossCategories(url, query)
+    }
+
     override suspend fun get(id: Int): Channel? = channelDao.get(id)
 
     override fun observeAdjacentChannels(

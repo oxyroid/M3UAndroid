@@ -45,7 +45,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
 
                 <data android:scheme="content" />
-                <data android:scheme="file" />
                 <data android:mimeType="audio/x-mpegurl" />
                 <data android:mimeType="audio/mpegurl" />
                 <data android:mimeType="application/vnd.apple.mpegurl" />
@@ -58,11 +57,80 @@
                 <action android:name="android.intent.action.VIEW" />
 
                 <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
 
-                <data android:scheme="file" />
-                <data android:pathPattern=".*\\.m3u" />
-                <data android:pathPattern=".*\\.m3u8" />
-                <data android:pathPattern=".*\\.txt" />
+                <data
+                    android:host="*"
+                    android:pathPattern=".*\\.m3u"
+                    android:scheme="http" />
+                <data
+                    android:host="*"
+                    android:pathPattern=".*\\.m3u8"
+                    android:scheme="http" />
+                <data
+                    android:host="*"
+                    android:pathPattern=".*\\.txt"
+                    android:scheme="http" />
+                <data
+                    android:host="*"
+                    android:pathPattern=".*\\.M3U"
+                    android:scheme="http" />
+                <data
+                    android:host="*"
+                    android:pathPattern=".*\\.M3U8"
+                    android:scheme="http" />
+                <data
+                    android:host="*"
+                    android:pathPattern=".*\\.TXT"
+                    android:scheme="http" />
+                <data
+                    android:host="*"
+                    android:pathPattern=".*\\.m3u"
+                    android:scheme="https" />
+                <data
+                    android:host="*"
+                    android:pathPattern=".*\\.m3u8"
+                    android:scheme="https" />
+                <data
+                    android:host="*"
+                    android:pathPattern=".*\\.txt"
+                    android:scheme="https" />
+                <data
+                    android:host="*"
+                    android:pathPattern=".*\\.M3U"
+                    android:scheme="https" />
+                <data
+                    android:host="*"
+                    android:pathPattern=".*\\.M3U8"
+                    android:scheme="https" />
+                <data
+                    android:host="*"
+                    android:pathPattern=".*\\.TXT"
+                    android:scheme="https" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data
+                    android:sspPattern=".*\\.m3u"
+                    android:scheme="file" />
+                <data
+                    android:sspPattern=".*\\.m3u8"
+                    android:scheme="file" />
+                <data
+                    android:sspPattern=".*\\.txt"
+                    android:scheme="file" />
+                <data
+                    android:sspPattern=".*\\.M3U"
+                    android:scheme="file" />
+                <data
+                    android:sspPattern=".*\\.M3U8"
+                    android:scheme="file" />
+                <data
+                    android:sspPattern=".*\\.TXT"
+                    android:scheme="file" />
             </intent-filter>
         </activity>
 

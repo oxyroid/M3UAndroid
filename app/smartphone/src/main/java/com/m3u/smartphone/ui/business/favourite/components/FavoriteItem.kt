@@ -1,8 +1,12 @@
 package com.m3u.smartphone.ui.business.favourite.components
 
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.BrokenImage
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalContentColor
@@ -12,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -20,10 +25,11 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.preferenceOf
 import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
+import com.m3u.core.foundation.components.CircularProgressIndicator
 import com.m3u.core.foundation.ui.composableOf
 import com.m3u.data.database.model.Channel
 import com.m3u.i18n.R.string
@@ -68,10 +74,30 @@ internal fun FavoriteItem(
                 )
             },
             leadingContent = composableOf(!noPictureMode) {
-                AsyncImage(
+                SubcomposeAsyncImage(
                     model = channel.cover,
-                    contentDescription = null,
+                    contentDescription = channel.title,
                     contentScale = ContentScale.Fit,
+                    loading = {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.size(56.dp)
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    },
+                    error = {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.size(56.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.BrokenImage,
+                                contentDescription = null,
+                                tint = LocalContentColor.current.copy(0.56f)
+                            )
+                        }
+                    },
                     modifier = Modifier.size(56.dp)
                 )
             },

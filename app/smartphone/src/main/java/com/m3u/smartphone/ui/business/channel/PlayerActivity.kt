@@ -12,6 +12,7 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.m3u.business.channel.ChannelViewModel
@@ -140,11 +141,17 @@ class PlayerActivity : ComponentActivity() {
 
     override fun onPause() {
         super.onPause()
-        if (isInPictureInPictureMode || viewModel.playerState.value.player == null) {
+        val player = viewModel.playerState.value.player
+        if (isInPictureInPictureMode || player == null) {
             return
         }
         if (backgroundPlayback) {
-            startService(Intent(this, PlaybackService::class.java))
+            val intent = Intent(this, PlaybackService::class.java)
+            if (player.playWhenReady) {
+                ContextCompat.startForegroundService(this, intent)
+            } else {
+                startService(intent)
+            }
         } else {
             viewModel.pauseOrContinue(false)
         }
@@ -190,6 +197,7 @@ class PlayerActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        stopService(Intent(this, PlaybackService::class.java))
         if (!backgroundPlayback) {
             viewModel.pauseOrContinue(true)
         }

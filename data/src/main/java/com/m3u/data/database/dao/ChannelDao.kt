@@ -124,7 +124,7 @@ interface ChannelDao {
 
     @Query(
         """
-            SELECT * FROM streams 
+            SELECT * FROM streams
             WHERE playlist_url = :url
             AND hidden = 0
             AND title LIKE '%'||:query||'%'
@@ -139,7 +139,7 @@ interface ChannelDao {
 
     @Query(
         """
-            SELECT * FROM streams 
+            SELECT * FROM streams
             WHERE playlist_url = :url
             AND hidden = 0
             AND title LIKE '%'||:query||'%'
@@ -155,7 +155,7 @@ interface ChannelDao {
 
     @Query(
         """
-            SELECT * FROM streams 
+            SELECT * FROM streams
             WHERE playlist_url = :url
             AND hidden = 0
             AND title LIKE '%'||:query||'%'
@@ -171,7 +171,7 @@ interface ChannelDao {
 
     @Query(
         """
-            SELECT * FROM streams 
+            SELECT * FROM streams
             WHERE playlist_url = :url
             AND hidden = 0
             AND title LIKE '%'||:query||'%'
@@ -182,6 +182,61 @@ interface ChannelDao {
     fun pagingAllByPlaylistUrlRecently(
         url: String,
         category: String,
+        query: String
+    ): PagingSource<Int, Channel>
+
+    @Query(
+        """
+            SELECT * FROM streams
+            WHERE playlist_url = :url
+            AND hidden = 0
+            AND title LIKE '%'||:query||'%'
+        """
+    )
+    fun pagingAllByPlaylistUrlAcrossCategories(
+        url: String,
+        query: String
+    ): PagingSource<Int, Channel>
+
+    @Query(
+        """
+            SELECT * FROM streams
+            WHERE playlist_url = :url
+            AND hidden = 0
+            AND title LIKE '%'||:query||'%'
+            ORDER BY title ASC
+        """
+    )
+    fun pagingAllByPlaylistUrlAcrossCategoriesAsc(
+        url: String,
+        query: String
+    ): PagingSource<Int, Channel>
+
+    @Query(
+        """
+            SELECT * FROM streams
+            WHERE playlist_url = :url
+            AND hidden = 0
+            AND title LIKE '%'||:query||'%'
+            ORDER BY title DESC
+        """
+    )
+    fun pagingAllByPlaylistUrlAcrossCategoriesDesc(
+        url: String,
+        query: String
+    ): PagingSource<Int, Channel>
+
+    @Query(
+        """
+            SELECT * FROM streams
+            WHERE playlist_url = :url
+            AND hidden = 0
+            AND title LIKE '%'||:query||'%'
+            ORDER BY seen DESC
+        """
+    )
+    fun pagingAllByPlaylistUrlAcrossCategoriesRecently(
+        url: String,
         query: String
     ): PagingSource<Int, Channel>
 
@@ -257,6 +312,7 @@ interface ChannelDao {
                 OR `group` LIKE '%'||:query||'%'
                 OR relation_id LIKE '%'||:query||'%'
             )
+            ORDER BY favourite DESC, seen DESC, title ASC
         """
     )
     fun query(
@@ -267,7 +323,11 @@ interface ChannelDao {
         """
             SELECT * FROM streams WHERE 1
             AND favourite = 1
-            AND title LIKE '%'||:query||'%'
+            AND (
+                title LIKE '%'||:query||'%'
+                OR `group` LIKE '%'||:query||'%'
+                OR relation_id LIKE '%'||:query||'%'
+            )
         """
     )
     fun pagingAllFavorite(query: String): PagingSource<Int, Channel>
@@ -275,7 +335,11 @@ interface ChannelDao {
         """
             SELECT * FROM streams WHERE 1
             AND favourite = 1
-            AND title LIKE '%'||:query||'%'
+            AND (
+                title LIKE '%'||:query||'%'
+                OR `group` LIKE '%'||:query||'%'
+                OR relation_id LIKE '%'||:query||'%'
+            )
             ORDER BY title ASC
             
         """
@@ -285,7 +349,11 @@ interface ChannelDao {
         """
             SELECT * FROM streams WHERE 1
             AND favourite = 1
-            AND title LIKE '%'||:query||'%'
+            AND (
+                title LIKE '%'||:query||'%'
+                OR `group` LIKE '%'||:query||'%'
+                OR relation_id LIKE '%'||:query||'%'
+            )
             ORDER BY title DESC
         """
     )
@@ -294,7 +362,11 @@ interface ChannelDao {
         """
             SELECT * FROM streams WHERE 1
             AND favourite = 1
-            AND title LIKE '%'||:query||'%'
+            AND (
+                title LIKE '%'||:query||'%'
+                OR `group` LIKE '%'||:query||'%'
+                OR relation_id LIKE '%'||:query||'%'
+            )
             ORDER BY seen DESC
         """
     )
@@ -308,6 +380,7 @@ interface ChannelDao {
                 OR `group` LIKE '%'||:query||'%'
                 OR relation_id LIKE '%'||:query||'%'
             )
+            ORDER BY favourite DESC, seen DESC, title ASC
         """
     )
     fun pagingAll(query: String): PagingSource<Int, Channel>

@@ -7,7 +7,9 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.graphics.drawable.Icon
+import android.os.Build
+import androidx.core.app.NotificationCompat
+import androidx.core.graphics.drawable.IconCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
@@ -70,7 +72,7 @@ class SubscriptionWorker @AssistedInject constructor(
                 else -> {
                     createN10nBuilder()
                         .setContentText(cause.localizedMessage.orEmpty())
-                        .setActions(retryAction)
+                        .addAction(retryAction)
                         .setColor(Color.RED)
                         .buildThenNotify()
                 }
@@ -92,7 +94,7 @@ class SubscriptionWorker @AssistedInject constructor(
                         total = count
                         val notification = createN10nBuilder()
                             .setContentText(findChannelProgressContentText(count))
-                            .setActions(cancelAction)
+                            .addAction(cancelAction)
                             .setOngoing(true)
                             .build()
                         notificationManager.notify(notificationId, notification)
@@ -116,7 +118,7 @@ class SubscriptionWorker @AssistedInject constructor(
                         .onEach { count ->
                             val notification = createN10nBuilder()
                                 .setContentText(findProgrammeProgressContentText(count))
-                                .setActions(cancelAction)
+                                .addAction(cancelAction)
                                 .build()
                             notificationManager.notify(notificationId, notification)
                         }
@@ -125,7 +127,7 @@ class SubscriptionWorker @AssistedInject constructor(
                 } catch (e: Exception) {
                     createN10nBuilder()
                         .setContentText(e.localizedMessage.orEmpty())
-                        .setActions(retryAction)
+                        .addAction(retryAction)
                         .setColor(Color.RED)
                         .buildThenNotify()
                     e.printStackTrace()
@@ -155,7 +157,7 @@ class SubscriptionWorker @AssistedInject constructor(
                             total = count
                             val notification = createN10nBuilder()
                                 .setContentText(findChannelProgressContentText(count))
-                                .setActions(cancelAction)
+                                .addAction(cancelAction)
                                 .build()
                             notificationManager.notify(notificationId, notification)
                         }
@@ -166,7 +168,7 @@ class SubscriptionWorker @AssistedInject constructor(
                     } catch (e: Exception) {
                         createN10nBuilder()
                             .setContentText(e.localizedMessage.orEmpty())
-                            .setActions(retryAction)
+                            .addAction(retryAction)
                             .setColor(Color.RED)
                             .buildThenNotify()
                         Result.failure()
@@ -182,6 +184,7 @@ class SubscriptionWorker @AssistedInject constructor(
     }
 
     private fun createChannel() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val channel = NotificationChannel(
             CHANNEL_ID, NOTIFICATION_NAME, NotificationManager.IMPORTANCE_LOW
         )
@@ -189,7 +192,7 @@ class SubscriptionWorker @AssistedInject constructor(
         notificationManager.createNotificationChannel(channel)
     }
 
-    private fun Notification.Builder.buildThenNotify() {
+    private fun NotificationCompat.Builder.buildThenNotify() {
         if (isStopped) return
         notificationManager.notify(notificationId, build())
     }
@@ -198,8 +201,8 @@ class SubscriptionWorker @AssistedInject constructor(
         return ForegroundInfo(notificationId, createN10nBuilder().build())
     }
 
-    private fun createN10nBuilder(): Notification.Builder =
-        Notification.Builder(context, CHANNEL_ID)
+    private fun createN10nBuilder(): NotificationCompat.Builder =
+        NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.round_file_download_24)
             .setContentTitle(
                 when (dataSource) {
@@ -223,9 +226,9 @@ class SubscriptionWorker @AssistedInject constructor(
     private fun findProgrammeProgressContentText(count: Int) =
         context.getString(string.data_worker_subscription_content_programme_progress, count)
 
-    private val cancelAction: Notification.Action by lazy {
-        Notification.Action.Builder(
-            Icon.createWithResource(
+    private val cancelAction: NotificationCompat.Action by lazy {
+        NotificationCompat.Action.Builder(
+            IconCompat.createWithResource(
                 context,
                 R.drawable.round_cancel_24
             ),
@@ -234,21 +237,26 @@ class SubscriptionWorker @AssistedInject constructor(
         )
             .build()
     }
-    private val retryAction: Notification.Action by lazy {
-        Notification.Action.Builder(
-            Icon.createWithResource(
+    private val retryAction: NotificationCompat.Action by lazy {
+        NotificationCompat.Action.Builder(
+            IconCompat.createWithResource(
                 context,
                 R.drawable.round_refresh_24
             ),
             findRetryActionTitle(),
-            PendingIntent.getForegroundService(
-                context,
-                1234,
-                Intent(),
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            )
+            retryPendingIntent()
         )
             .build()
+    }
+
+    private fun retryPendingIntent(): PendingIntent {
+        val flags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        val intent = Intent()
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            PendingIntent.getForegroundService(context, 1234, intent, flags)
+        } else {
+            PendingIntent.getService(context, 1234, intent, flags)
+        }
     }
 
     companion object {
@@ -282,11 +290,7 @@ class SubscriptionWorker @AssistedInject constructor(
                 .addTag(TAG)
                 .addTag(DataSource.M3U.value)
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-                .setConstraints(
-                    Constraints.Builder()
-                        .setRequiredNetworkType(NetworkType.CONNECTED)
-                        .build()
-                )
+                .setConstraints(M3U_CONSTRAINTS)
                 .build()
             workManager.enqueue(request)
         }
@@ -391,6 +395,8 @@ class SubscriptionWorker @AssistedInject constructor(
                 .build()
             workManager.enqueue(request)
         }
+
+        internal val M3U_CONSTRAINTS: Constraints = Constraints.NONE
 
         private val ATOMIC_NOTIFICATION_ID = AtomicInteger()
     }

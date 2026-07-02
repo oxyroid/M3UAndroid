@@ -58,7 +58,7 @@
     <string name="feat_setting_resume_last_channel_on_startup">resume last channel on startup</string>
     <string name="feat_setting_resume_last_channel_on_startup_description">open the player and play the most recently watched channel when the app starts</string>
     <string name="feat_setting_launch_on_boot">launch on boot</string>
-    <string name="feat_setting_launch_on_boot_description">start the TV app after device boot when startup resume is enabled</string>
+    <string name="feat_setting_launch_on_boot_description">start the app after device boot when startup resume is enabled</string>
     <string name="feat_setting_startup_delay">startup delay</string>
     <string name="feat_setting_startup_delay_none">none</string>
     <string name="feat_setting_startup_delay_2s">2s</string>

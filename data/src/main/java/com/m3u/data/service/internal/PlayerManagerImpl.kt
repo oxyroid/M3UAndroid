@@ -313,13 +313,17 @@ class PlayerManagerImpl @Inject constructor(
                 (licenseType in arrayOf(
                     Channel.LICENSE_TYPE_CLEAR_KEY,
                     Channel.LICENSE_TYPE_CLEAR_KEY_2
-                )) && !licenseKey.startsWith("http") ->
+                )) && !licenseKey.startsWith("http", ignoreCase = true) ->
                     LocalMediaDrmCallback(ClearKeyLicense.normalize(licenseKey).toByteArray())
 
                 else -> HttpMediaDrmCallback(
                     licenseKey,
                     dataSourceFactory
-                )
+                ).apply {
+                    for ((name, value) in requestHeaders) {
+                        setKeyRequestProperty(name, value)
+                    }
+                }
             }
             val uuid = when (licenseType) {
                 Channel.LICENSE_TYPE_CLEAR_KEY, Channel.LICENSE_TYPE_CLEAR_KEY_2 -> C.CLEARKEY_UUID
@@ -997,18 +1001,7 @@ class PlayerManagerImpl @Inject constructor(
     }
 
     private fun getRequestHeaders(channelUrl: String): Map<String, String> {
-        val kodiUrlOptions = StreamUrlOptions.readFromUrl(channelUrl)
-        return buildMap {
-            kodiUrlOptions[StreamUrlOptions.REFERER]
-                ?.takeIf { it.isNotBlank() }
-                ?.let { put("Referer", it) }
-            kodiUrlOptions[StreamUrlOptions.ORIGIN]
-                ?.takeIf { it.isNotBlank() }
-                ?.let { put("Origin", it) }
-            kodiUrlOptions[StreamUrlOptions.COOKIE]
-                ?.takeIf { it.isNotBlank() }
-                ?.let { put("Cookie", it) }
-        }
+        return StreamUrlOptions.readRequestHeadersFromUrl(channelUrl)
     }
 
     private suspend fun getChannelPreference(channelUrl: String): ChannelPreference? {

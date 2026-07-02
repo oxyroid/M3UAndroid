@@ -11,19 +11,24 @@ import com.m3u.data.repository.channel.ChannelRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 @HiltViewModel
 class SmartphoneViewModel @Inject constructor(
     private val channelRepository: ChannelRepository
-): ViewModel() {
+) : ViewModel() {
     val query = MutableStateFlow("")
-    val channels: Flow<PagingData<Channel>> = query.flatMapLatest {
-        Pager(PagingConfig(15)) {
-            channelRepository.pagingAll(it)
+    val channels: Flow<PagingData<Channel>> = query
+        .map { it.trim() }
+        .distinctUntilChanged()
+        .flatMapLatest {
+            Pager(PagingConfig(15)) {
+                channelRepository.pagingAll(it)
+            }
+                .flow
+                .cachedIn(viewModelScope)
         }
-            .flow
-            .cachedIn(viewModelScope)
-    }
 }

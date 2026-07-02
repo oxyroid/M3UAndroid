@@ -22,6 +22,16 @@ class PlaylistNetworkUrlTest {
     }
 
     @Test
+    fun normalizeM3uInputKeepsTxtPlaylistUrls() {
+        assertEquals(
+            "https://raw.githubusercontent.com/xzhhbx/IPTV-3/master/IPTV.txt",
+            PlaylistNetworkUrl.normalizeM3uInput(
+                " https://raw.githubusercontent.com/xzhhbx/IPTV-3/master/IPTV.txt "
+            )
+        )
+    }
+
+    @Test
     fun normalizeM3uInputKeepsAndroidUris() {
         assertEquals(
             "content://playlist/live.m3u",
@@ -56,11 +66,67 @@ class PlaylistNetworkUrlTest {
     }
 
     @Test
+    fun resolveInternalFileNamePrefersDisplayName() {
+        assertEquals(
+            "Live.m3u",
+            PlaylistNetworkUrl.resolveInternalFileName(
+                displayName = "Live.m3u",
+                lastPathSegment = "primary:Other.m3u",
+                fallbackName = "File_1"
+            )
+        )
+    }
+
+    @Test
+    fun resolveInternalFileNameUsesUriPathWhenDisplayNameIsMissing() {
+        assertEquals(
+            "Live.m3u",
+            PlaylistNetworkUrl.resolveInternalFileName(
+                displayName = null,
+                lastPathSegment = "primary:Download/Live.m3u",
+                fallbackName = "File_1"
+            )
+        )
+        assertEquals(
+            "Live.m3u",
+            PlaylistNetworkUrl.resolveInternalFileName(
+                displayName = "",
+                lastPathSegment = "primary:Live.m3u",
+                fallbackName = "File_1"
+            )
+        )
+    }
+
+    @Test
+    fun resolveInternalFileNameUsesFallbackWhenNoStableNameExists() {
+        assertEquals(
+            "File_1",
+            PlaylistNetworkUrl.resolveInternalFileName(
+                displayName = null,
+                lastPathSegment = null,
+                fallbackName = "File_1"
+            )
+        )
+    }
+
+    @Test
     fun httpFallbackForPlainHttpTlsFailureDowngradesHttpsOnly() {
         assertEquals(
             "http://example.com:8080/list.m3u",
             PlaylistNetworkUrl.httpFallbackForPlainHttpTlsFailure(
                 url = "https://example.com:8080/list.m3u",
+                responseMessage = "Unable to parse TLS packet header",
+                responseBody = ""
+            )
+        )
+    }
+
+    @Test
+    fun httpFallbackForPlainHttpTlsFailureDowngradesExceptionMessages() {
+        assertEquals(
+            "http://servizi-ita.com:8080/get.php?username=user&type=m3u_plus",
+            PlaylistNetworkUrl.httpFallbackForPlainHttpTlsFailure(
+                url = "https://servizi-ita.com:8080/get.php?username=user&type=m3u_plus",
                 responseMessage = "Unable to parse TLS packet header",
                 responseBody = ""
             )

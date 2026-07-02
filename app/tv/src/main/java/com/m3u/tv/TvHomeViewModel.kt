@@ -3,6 +3,7 @@ package com.m3u.tv
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.net.Uri
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -43,6 +44,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.File
 
 @Immutable
 data class TvUiState(
@@ -64,6 +66,11 @@ enum class TvXtreamSubscriptionMessage {
     Enqueued
 }
 
+enum class TvM3uSubscriptionMessage {
+    MissingFields,
+    Enqueued
+}
+
 @HiltViewModel
 class TvHomeViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -80,6 +87,9 @@ class TvHomeViewModel @Inject constructor(
     private val _xtreamSubscriptionMessage = MutableStateFlow<TvXtreamSubscriptionMessage?>(null)
     val xtreamSubscriptionMessage: StateFlow<TvXtreamSubscriptionMessage?> =
         _xtreamSubscriptionMessage.asStateFlow()
+    private val _m3uSubscriptionMessage = MutableStateFlow<TvM3uSubscriptionMessage?>(null)
+    val m3uSubscriptionMessage: StateFlow<TvM3uSubscriptionMessage?> =
+        _m3uSubscriptionMessage.asStateFlow()
 
     val player: StateFlow<Player?> = playerManager.player
     val currentChannel: StateFlow<Channel?> = playerManager.channel
@@ -104,6 +114,22 @@ class TvHomeViewModel @Inject constructor(
         )
         .mapLatest { infos ->
             infos.any { info -> DataSource.Xtream.value in info.tags }
+        }
+        .flowOn(Dispatchers.Default)
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = false,
+            started = SharingStarted.WhileSubscribed(5_000)
+        )
+    val subscribingM3u: StateFlow<Boolean> = workManager
+        .getWorkInfosFlow(
+            WorkQuery.fromStates(
+                WorkInfo.State.RUNNING,
+                WorkInfo.State.ENQUEUED
+            )
+        )
+        .mapLatest { infos ->
+            infos.any { info -> DataSource.M3U.value in info.tags }
         }
         .flowOn(Dispatchers.Default)
         .stateIn(
@@ -200,6 +226,25 @@ class TvHomeViewModel @Inject constructor(
         _xtreamSubscriptionMessage.value = null
     }
 
+    fun addM3uPlaylist(title: String, urlOrPath: String) {
+        val normalizedTitle = title.trim()
+        val normalizedUrlOrPath = urlOrPath.toM3uUrlOrPath()
+        if (normalizedTitle.isBlank() || normalizedUrlOrPath.isBlank()) {
+            _m3uSubscriptionMessage.value = TvM3uSubscriptionMessage.MissingFields
+            return
+        }
+        SubscriptionWorker.m3u(
+            workManager = workManager,
+            title = normalizedTitle,
+            url = normalizedUrlOrPath
+        )
+        _m3uSubscriptionMessage.value = TvM3uSubscriptionMessage.Enqueued
+    }
+
+    fun clearM3uSubscriptionMessage() {
+        _m3uSubscriptionMessage.value = null
+    }
+
     fun play(channel: Channel) {
         viewModelScope.launch {
             playerManager.play(MediaCommand.Common(channel.id))
@@ -242,7 +287,15 @@ class TvHomeViewModel @Inject constructor(
             val current = currentChannel.value ?: return@launch
             val channels = channelsForPlayback(current.playlistUrl)
             val currentIndex = channels.indexOfFirst { it.id == current.id }
-            val target = channels.getOrNull(currentIndex + step) ?: return@launch
+            if (currentIndex == -1 || channels.size < 2) {
+                return@launch
+            }
+            val targetIndex = when (val adjacentIndex = currentIndex + step) {
+                -1 -> channels.lastIndex
+                channels.size -> 0
+                else -> adjacentIndex
+            }
+            val target = channels[targetIndex]
             play(target)
         }
     }
@@ -353,4 +406,12 @@ class TvHomeViewModel @Inject constructor(
 
     private fun Map<Playlist, Int>.countFor(url: String): Int? =
         entries.firstOrNull { it.key.url == url }?.value
+}
+
+private fun String.toM3uUrlOrPath(): String {
+    val input = trim()
+    return when {
+        input.startsWith("/") -> Uri.fromFile(File(input)).toString()
+        else -> input
+    }
 }

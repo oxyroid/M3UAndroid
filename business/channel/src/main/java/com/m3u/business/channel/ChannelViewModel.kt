@@ -3,6 +3,7 @@ package com.m3u.business.channel
 import android.annotation.SuppressLint
 import android.media.AudioManager
 import android.net.Uri
+import android.net.wifi.WifiManager
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -68,6 +69,7 @@ class ChannelViewModel @Inject constructor(
     private val channelRepository: ChannelRepository,
     private val playerManager: PlayerManager,
     private val audioManager: AudioManager,
+    private val wifiManager: WifiManager,
     private val programmeRepository: ProgrammeRepository,
     private val workManager: WorkManager,
 ) : ViewModel(), ControlPoint.DiscoveryListener {
@@ -205,11 +207,17 @@ class ChannelViewModel @Inject constructor(
         dlnaSearchJob = viewModelScope.launch {
             delay(800.milliseconds)
             _searching.value = true
-            controlPoint = ControlPointFactory.create().apply {
-                addDiscoveryListener(this@ChannelViewModel)
-                initialize()
-                start()
-                search()
+            acquireDlnaMulticastLock()
+            runCatching {
+                controlPoint = ControlPointFactory.create().apply {
+                    addDiscoveryListener(this@ChannelViewModel)
+                    initialize()
+                    start()
+                    search()
+                }
+            }.onFailure {
+                _searching.value = false
+                releaseDlnaMulticastLock()
             }
         }
         _isDevicesVisible.value = true
@@ -224,7 +232,8 @@ class ChannelViewModel @Inject constructor(
     }
 
     override fun onDiscover(device: Device) {
-        devices = (devices.filterNot { it.hasSameIdentity(device) } + device)
+        val renderer = device.findDlnaRendererDevice() ?: return
+        devices = (devices.filterNot { it.hasSameIdentity(renderer) } + renderer)
             .sortedWith(compareBy<Device> { it.friendlyName.lowercase() }.thenBy { it.deviceKey })
     }
 
@@ -234,20 +243,22 @@ class ChannelViewModel @Inject constructor(
 
     private var controlPoint: ControlPoint? = null
     private var dlnaSearchJob: Job? = null
+    private var dlnaMulticastLock: WifiManager.MulticastLock? = null
 
     fun connectDlnaDevice(device: Device) {
-        val url = channel.value?.url?.substringBefore('|') ?: return
+        val channel = channel.value ?: return
+        val url = channel.url.substringBefore('|')
         viewModelScope.launch(Dispatchers.IO) {
             runCatching {
-                device.findAction(ACTION_SET_AV_TRANSPORT_URI)?.invokeSync(
+                device.findAvTransportAction(ACTION_SET_AV_TRANSPORT_URI)?.invokeSync(
                     mapOf(
                         INSTANCE_ID to "0",
                         CURRENT_URI to url,
-                        CURRENT_URI_META_DATA to ""
+                        CURRENT_URI_META_DATA to channel.toDlnaMetadata(url)
                     ),
                     false
                 )
-                device.findAction(ACTION_PLAY)?.invokeSync(
+                device.findAvTransportAction(ACTION_PLAY)?.invokeSync(
                     mapOf(
                         INSTANCE_ID to "0",
                         SPEED to "1"
@@ -430,6 +441,11 @@ class ChannelViewModel @Inject constructor(
         }
     }
 
+    override fun onCleared() {
+        stopDlnaSearch(clearDevices = true)
+        super.onCleared()
+    }
+
     private fun stopDlnaSearch(clearDevices: Boolean) {
         dlnaSearchJob?.cancel()
         dlnaSearchJob = null
@@ -437,8 +453,76 @@ class ChannelViewModel @Inject constructor(
         controlPoint?.stop()
         controlPoint?.terminate()
         controlPoint = null
+        releaseDlnaMulticastLock()
         if (clearDevices) {
             devices = emptyList()
+        }
+    }
+
+    private fun acquireDlnaMulticastLock() {
+        if (dlnaMulticastLock?.isHeld == true) return
+        dlnaMulticastLock = runCatching {
+            wifiManager.createMulticastLock("m3u-dlna-search").apply {
+                setReferenceCounted(false)
+                acquire()
+            }
+        }.getOrNull()
+    }
+
+    private fun releaseDlnaMulticastLock() {
+        val lock = dlnaMulticastLock ?: return
+        dlnaMulticastLock = null
+        runCatching {
+            if (lock.isHeld) lock.release()
+        }
+    }
+
+    private fun Device.findDlnaRendererDevice(): Device? {
+        if (supportsDlnaPlayback()) return this
+        return deviceList.firstNotNullOfOrNull { it.findDlnaRendererDevice() }
+    }
+
+    private fun Device.supportsDlnaPlayback(): Boolean {
+        return findAvTransportAction(ACTION_SET_AV_TRANSPORT_URI) != null &&
+                findAvTransportAction(ACTION_PLAY) != null
+    }
+
+    private fun Device.findAvTransportAction(name: String) = serviceList
+        .asSequence()
+        .filter { SERVICE_AV_TRANSPORT in it.serviceType }
+        .mapNotNull { it.findAction(name) }
+        .firstOrNull()
+
+    private fun Channel.toDlnaMetadata(url: String): String {
+        val title = title.escapeXml()
+        val cover = cover?.takeIf { it.isNotBlank() }?.escapeXml()
+            ?.let { "<upnp:albumArtURI>$it</upnp:albumArtURI>" }
+            .orEmpty()
+        val resource = url.escapeXml()
+        return """
+            |<DIDL-Lite xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/" xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/">
+            |<item id="0" parentID="0" restricted="1">
+            |<dc:title>$title</dc:title>
+            |<upnp:class>object.item.videoItem</upnp:class>
+            |$cover
+            |<res>$resource</res>
+            |</item>
+            |</DIDL-Lite>
+        """.trimMargin().replace("\n", "")
+    }
+
+    private fun String.escapeXml(): String = buildString(length) {
+        this@escapeXml.forEach { char ->
+            append(
+                when (char) {
+                    '&' -> "&amp;"
+                    '<' -> "&lt;"
+                    '>' -> "&gt;"
+                    '"' -> "&quot;"
+                    '\'' -> "&apos;"
+                    else -> char
+                }
+            )
         }
     }
 
@@ -460,6 +544,7 @@ class ChannelViewModel @Inject constructor(
         private const val ACTION_PLAY = "Play"
         private const val ACTION_PAUSE = "Pause"
         private const val ACTION_STOP = "Stop"
+        private const val SERVICE_AV_TRANSPORT = ":service:AVTransport:"
 
         private const val INSTANCE_ID = "InstanceID"
         private const val CURRENT_URI = "CurrentURI"

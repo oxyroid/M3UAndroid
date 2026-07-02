@@ -58,7 +58,7 @@
     <string name="feat_setting_resume_last_channel_on_startup">启动时恢复上次频道</string>
     <string name="feat_setting_resume_last_channel_on_startup_description">应用启动时打开播放器并播放最近观看的频道</string>
     <string name="feat_setting_launch_on_boot">开机启动</string>
-    <string name="feat_setting_launch_on_boot_description">启用启动恢复时，在设备开机后启动电视端应用</string>
+    <string name="feat_setting_launch_on_boot_description">启用启动恢复时，在设备开机后启动应用</string>
     <string name="feat_setting_startup_delay">启动延迟</string>
     <string name="feat_setting_startup_delay_none">无</string>
     <string name="feat_setting_startup_delay_2s">2秒</string>

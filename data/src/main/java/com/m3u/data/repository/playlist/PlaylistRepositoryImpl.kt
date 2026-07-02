@@ -58,6 +58,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import timber.log.Timber
 import java.io.File
+import java.io.IOException
 import java.io.InputStream
 import java.io.Reader
 import java.io.StringReader
@@ -92,6 +93,16 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         val normalizedUrl = PlaylistNetworkUrl.normalizeM3uInput(url)
         val internalUrl = normalizedUrl.copyToInternalDirPath()
         timber.d("m3uOrThrow: url=$url, internalUrl=$internalUrl")
+        val input = withContext(Dispatchers.IO) {
+            when {
+                PlaylistNetworkUrl.isSupportedNetworkUrl(normalizedUrl) -> openNetworkInput(internalUrl)
+                PlaylistNetworkUrl.isSupportedAndroidUrl(normalizedUrl) -> {
+                    openAndroidInput(internalUrl) ?: error("Failed to open playlist: $internalUrl")
+                }
+
+                else -> error("Unsupported playlist url: $normalizedUrl")
+            }
+        }
         val playlistStrategy = settings[PreferencesKeys.PLAYLIST_STRATEGY]
         val favOrHiddenRelationIds = when (playlistStrategy) {
             PlaylistStrategy.ALL -> emptyList()
@@ -129,14 +140,10 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             callback(currentCount)
         }
 
-        channelFlow {
-            when {
-                PlaylistNetworkUrl.isSupportedNetworkUrl(normalizedUrl) -> openNetworkInput(internalUrl)
-                PlaylistNetworkUrl.isSupportedAndroidUrl(normalizedUrl) -> openAndroidInput(internalUrl)
-                else -> null
-            }?.use { input ->
+        input.use { openedInput ->
+            channelFlow {
                 m3uParser
-                    .parse(input.buffered())
+                    .parse(openedInput.buffered())
                     .filterNot {
                         val relationId = it.id
                         when {
@@ -145,13 +152,13 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                         }
                     }
                     .collect { send(it) }
+                close()
             }
-            close()
+                .onEach(cache::push)
+                .onCompletion { cache.flush() }
+                .flowOn(Dispatchers.IO)
+                .collect()
         }
-            .onEach(cache::push)
-            .onCompletion { cache.flush() }
-            .flowOn(Dispatchers.IO)
-            .collect()
     }
 
     override suspend fun xtreamOrThrow(
@@ -631,7 +638,11 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         }
         return withContext(Dispatchers.IO) {
             val contentResolver = context.contentResolver
-            val filename = uri.readFileName(contentResolver) ?: filenameWithTimezone
+            val filename = PlaylistNetworkUrl.resolveInternalFileName(
+                uri = uri,
+                displayName = uri.readFileName(contentResolver),
+                fallbackName = filenameWithTimezone
+            )
             val destinationFile = File(context.filesDir, filename)
 
             val success = uri.copyToFile(contentResolver, destinationFile)
@@ -650,7 +661,20 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         val request = Request.Builder()
             .url(url)
             .build()
-        val response = okHttpClient.newCall(request).execute()
+        val response = try {
+            okHttpClient.newCall(request).execute()
+        } catch (error: IOException) {
+            val fallbackUrl = PlaylistNetworkUrl.httpFallbackForPlainHttpTlsFailure(
+                url = url,
+                responseMessage = error.message.orEmpty(),
+                responseBody = error.cause?.message.orEmpty()
+            )
+            if (fallbackUrl != null) {
+                timber.w(error, "Retrying M3U playlist over HTTP after TLS exception: $fallbackUrl")
+                return openNetworkInput(fallbackUrl)
+            }
+            throw error
+        }
         if (response.isSuccessful) {
             return response.body.byteStream()
         }

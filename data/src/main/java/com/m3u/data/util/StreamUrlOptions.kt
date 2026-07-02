@@ -34,8 +34,18 @@ internal object StreamUrlOptions {
                 val pair = it.split("=", limit = 2)
                 val key = pair.getOrNull(0).orEmpty()
                 val value = pair.getOrNull(1)
-                decode(key) to value?.let(::decode)
+                normalizeKey(decode(key)) to value?.let(::decode)
             }
+    }
+
+    fun readRequestHeadersFromUrl(url: String): Map<String, String> {
+        return readFromUrl(url)
+            .mapNotNull { (key, value) ->
+                val header = key.toRequestHeaderNameOrNull() ?: return@mapNotNull null
+                val headerValue = value?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+                header to headerValue
+            }
+            .toMap()
     }
 
     fun stripFromUrl(url: String): String {
@@ -48,4 +58,21 @@ internal object StreamUrlOptions {
     private fun decode(value: String): String = runCatching {
         URLDecoder.decode(value, Charsets.UTF_8.name())
     }.getOrDefault(value)
+
+    private fun normalizeKey(value: String): String = when (value.lowercase()) {
+        "http-user-agent", USER_AGENT -> USER_AGENT
+        "http-referrer", "http-referer", "referrer", REFERER -> REFERER
+        "http-origin", ORIGIN -> ORIGIN
+        "http-cookie", COOKIE -> COOKIE
+        VIDEO_URL -> VIDEO_URL
+        else -> value
+    }
+
+    private fun String.toRequestHeaderNameOrNull(): String? = when (this) {
+        USER_AGENT, VIDEO_URL -> null
+        REFERER -> "Referer"
+        ORIGIN -> "Origin"
+        COOKIE -> "Cookie"
+        else -> takeIf { it.isNotBlank() }
+    }
 }

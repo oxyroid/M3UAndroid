@@ -25,7 +25,14 @@
     <string name="ui_remote_control_disconnect">断开连接</string>
     <string name="ui_remote_control_keypad_backspace">退格</string>
     <string name="ui_remote_control_keypad_clear">清空</string>
-    <string name="tv_empty_library_xtream_hint">在电视上添加 Xtream 源</string>
+    <string name="tv_empty_channels_title">这里没有频道</string>
+    <string name="tv_empty_channels_subtitle">刷新此播放列表，或选择其他来源。</string>
+    <string name="tv_empty_library_subtitle">在这里添加 M3U 链接、本地播放列表路径或 Xtream 源，也可以从手机端添加播放列表或恢复备份。</string>
+    <string name="tv_empty_library_xtream_hint">在电视上添加 M3U 或 Xtream 源</string>
+    <string name="tv_m3u_panel_title">添加 M3U 播放列表</string>
+    <string name="tv_m3u_panel_subtitle">输入播放列表链接或本地文件路径。</string>
+    <string name="tv_m3u_title_placeholder">播放列表名称</string>
+    <string name="tv_m3u_url_placeholder">M3U 链接或本地路径</string>
     <string name="tv_xtream_panel_title">添加 Xtream 播放列表</string>
     <string name="tv_xtream_panel_subtitle">用遥控器输入服务商信息。</string>
     <string name="tv_xtream_title_placeholder">播放列表名称</string>

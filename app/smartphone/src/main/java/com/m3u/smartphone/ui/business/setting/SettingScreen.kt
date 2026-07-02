@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChangeCircle
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
+import androidx.compose.material3.adaptive.layout.ThreePaneScaffoldDestinationItem
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -174,10 +175,25 @@ private fun SettingScreen(
 
     val colorArgb by preferenceOf(PreferencesKeys.COLOR_ARGB)
 
-    val navigator = rememberListDetailPaneScaffoldNavigator<SettingDestination>()
     var destination by rememberSaveable {
         mutableStateOf<SettingDestination>(SettingDestination.Default)
     }
+    val initialDestinationHistory = remember {
+        listOfNotNull(
+            ThreePaneScaffoldDestinationItem<SettingDestination>(
+                pane = ListDetailPaneScaffoldRole.List
+            ),
+            destination.takeIf { it != SettingDestination.Default }?.let {
+                ThreePaneScaffoldDestinationItem(
+                    pane = ListDetailPaneScaffoldRole.Detail,
+                    contentKey = it
+                )
+            }
+        )
+    }
+    val navigator = rememberListDetailPaneScaffoldNavigator<SettingDestination>(
+        initialDestinationHistory = initialDestinationHistory
+    )
 
     fun navigateToDetail(target: SettingDestination) {
         destination = target

@@ -3,7 +3,7 @@
 <div align="center">
 
 [![GitHub release](https://img.shields.io/github/v/release/oxyroid/M3UAndroid)](https://github.com/oxyroid/M3UAndroid/releases)
-[![Android](https://img.shields.io/badge/Android-8.0%2B-brightgreen?logo=android)](https://developer.android.com)
+[![Android](https://img.shields.io/badge/Android-7.1%2B-brightgreen?logo=android)](https://developer.android.com)
 [![Telegram](https://img.shields.io/badge/Telegram-Channel-2CA5E0?logo=telegram)](https://t.me/m3u_android)
 [![License](https://img.shields.io/badge/License-GPL%203.0-blue)](LICENSE)
 
@@ -45,12 +45,17 @@ A modern IPTV streaming player built with Jetpack Compose for Android phones, ta
 ## Download
 
 [![GitHub Release](https://img.shields.io/badge/GitHub-Latest_Release-181717?style=for-the-badge&logo=github)](https://github.com/oxyroid/M3UAndroid/releases/latest)
-[![F-Droid](https://img.shields.io/badge/F--Droid-Repository-1976D2?style=for-the-badge&logo=fdroid&logoColor=white)](https://f-droid.org/packages/com.m3u.androidApp)
-[![IzzyOnDroid](https://img.shields.io/badge/IzzyOnDroid-Repository-8A4182?style=for-the-badge)](https://apt.izzysoft.de/fdroid/index/apk/com.m3u.androidApp)
 
 **Nightly builds** are available for [mobile](https://nightly.link/oxyroid/M3UAndroid/workflows/android/master/smartphone-apks.zip), [Android TV](https://nightly.link/oxyroid/M3UAndroid/workflows/android/master/tv-apk.zip), and [all APKs](https://nightly.link/oxyroid/M3UAndroid/workflows/android/master/artifact.zip).
 
-When using Obtainium or another automatic updater, prefer the mobile or Android TV nightly artifact instead of the combined archive so only the intended APK is selected. For GitHub releases, use an APK filter such as `^mobile-.*\.apk$` for phones/tablets or `^tv-.*\.apk$` for Android TV.
+M3UAndroid is not currently listed on F-Droid or IzzyOnDroid. Use the GitHub release or nightly artifacts until those repositories are available again.
+
+For Obtainium or another automatic updater, avoid the combined archive unless the updater also has an APK filter. Use:
+
+- Phones and tablets: the mobile nightly artifact, or GitHub release APK filter `^mobile-.*\.apk$`.
+- Android TV: the Android TV nightly artifact, or GitHub release APK filter `^tv-.*\.apk$`.
+
+Each nightly artifact includes a matching SHA-256 checksum file for verifying downloaded APKs.
 
 ## Tech Stack
 

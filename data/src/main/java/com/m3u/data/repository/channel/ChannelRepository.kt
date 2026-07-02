@@ -19,6 +19,11 @@ interface ChannelRepository {
         query: String,
         sort: Sort
     ): PagingSource<Int, Channel>
+    fun pagingAllByPlaylistUrlAcrossCategories(
+        url: String,
+        query: String,
+        sort: Sort
+    ): PagingSource<Int, Channel>
 
     suspend fun get(id: Int): Channel?
     fun observeAdjacentChannels(

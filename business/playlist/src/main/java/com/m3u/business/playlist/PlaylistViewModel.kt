@@ -180,6 +180,7 @@ class PlaylistViewModel @Inject constructor(
                 messager.emit(PlaylistMessage.ChannelNotFound)
             } else {
                 channelRepository.hide(channel.id, true)
+                channelListRevision.value += 1
             }
         }
     }
@@ -231,6 +232,7 @@ class PlaylistViewModel @Inject constructor(
 
     val query = MutableStateFlow("")
     val scrollUp: MutableStateFlow<Event<Unit>> = MutableStateFlow(handledEvent())
+    private val channelListRevision = MutableStateFlow(0)
 
     @Immutable
     data class ChannelParameters(
@@ -238,12 +240,13 @@ class PlaylistViewModel @Inject constructor(
         val query: String,
         val sort: Sort,
         val categories: List<String>,
+        val revision: Int,
     )
 
     @OptIn(FlowPreview::class)
     private val categories: StateFlow<List<String>> =
         flatmapCombined(playlistUrl, query, sort) { playlistUrl, query, sort ->
-            if (sort == Sort.MIXED) flowOf(emptyList())
+            if (sort == Sort.MIXED || query.isNotBlank()) flowOf(emptyList())
             else playlistRepository.observeCategoriesByPlaylistUrlIgnoreHidden(playlistUrl, query)
         }
             .let { flow ->
@@ -261,22 +264,24 @@ class PlaylistViewModel @Inject constructor(
     val channels: StateFlow<Map<String, Flow<PagingData<Channel>>>> = combine(
         playlistUrl,
         categories,
-        query, sort
-    ) { playlistUrl, categories, query, sort ->
+        query,
+        sort,
+        channelListRevision
+    ) { playlistUrl, categories, query, sort, revision ->
         ChannelParameters(
             playlistUrl = playlistUrl,
-            query = query,
+            query = query.trim(),
             sort = sort,
-            categories = categories
+            categories = categories,
+            revision = revision
         )
     }
         .mapLatest { (playlistUrl, query, sort, categories) ->
-            if (sort == Sort.MIXED) {
+            if (sort == Sort.MIXED || query.isNotBlank()) {
                 mapOf(
                     "" to Pager(PagingConfig(15)) {
-                        channelRepository.pagingAllByPlaylistUrl(
+                        channelRepository.pagingAllByPlaylistUrlAcrossCategories(
                             playlistUrl,
-                            "",
                             query,
                             sort
                         )

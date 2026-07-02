@@ -19,7 +19,7 @@ import com.m3u.data.database.model.ProgrammeRange
 import com.m3u.data.database.model.epgUrlsOrXtreamXmlUrl
 import com.m3u.data.parser.epg.EpgParser
 import com.m3u.data.parser.epg.EpgProgramme
-import com.m3u.data.parser.epg.toProgramme
+import com.m3u.data.parser.epg.toProgrammes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -70,7 +70,7 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
             Pager(PagingConfig(15)) { programmeDao.pagingProgrammes(validEpgUrl, relationIds) }.flow
         }
         .combine(settings.flowOf(PreferencesKeys.EPG_TIME_OFFSET)) { pagingData, offset ->
-            pagingData.map { programme -> programme.withOffset(offset) }
+            pagingData.map { programme -> programme.withTimeOffset(offset) }
         }
 
     override fun observeProgrammeRange(
@@ -89,7 +89,7 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
                 .filterNot { (start, end) -> start == 0L || end == 0L }
         }
         .combine(settings.flowOf(PreferencesKeys.EPG_TIME_OFFSET)) { range, offset ->
-            range.withOffset(offset)
+            range.withTimeOffset(offset)
         }
 
     override fun observeProgrammeRange(playlistUrl: String): Flow<ProgrammeRange> =
@@ -101,7 +101,7 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
                 programmeDao.observeProgrammeRange(epgUrls)
             }
             .combine(settings.flowOf(PreferencesKeys.EPG_TIME_OFFSET)) { range, offset ->
-                range.withOffset(offset)
+                range.withTimeOffset(offset)
             }
 
     private val defaultProgrammeRange: ProgrammeRange
@@ -135,7 +135,7 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
 
     override suspend fun getById(id: Int): Programme? {
         val offset = settings[PreferencesKeys.EPG_TIME_OFFSET]
-        return programmeDao.getById(id)?.withOffset(offset)
+        return programmeDao.getById(id)?.withTimeOffset(offset)
     }
 
     override suspend fun getProgrammeCurrently(channelId: Int): Programme? {
@@ -152,7 +152,7 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
             epgUrls = epgUrls,
             relationIds = relationIds,
             time = time
-        )?.withOffset(offset)
+        )?.withTimeOffset(offset)
     }
 
     private fun checkOrRefreshProgrammesOrThrowImpl(
@@ -178,8 +178,11 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
 
                         programmeDao.cleanByEpgUrl(epgUrl)
                         downloadProgrammes(epgUrl)
-                            .map { it.toProgramme(epgUrl) }
-                            .collect { send(it) }
+                            .collect { epgProgramme ->
+                                epgProgramme.toProgrammes(epgUrl).forEach { programme ->
+                                    send(programme)
+                                }
+                            }
                     } finally {
                         refreshingEpgUrls.value -= epgUrl
                     }
@@ -254,17 +257,18 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
         ).distinct()
     }
 
-    private fun Programme.withOffset(offset: Long): Programme {
-        if (offset == 0L) return this
-        val duration = offset.milliseconds
-        return copy(
-            start = Instant.fromEpochMilliseconds(start).plus(duration).toEpochMilliseconds(),
-            end = Instant.fromEpochMilliseconds(end).plus(duration).toEpochMilliseconds()
-        )
-    }
+}
 
-    private fun ProgrammeRange.withOffset(offset: Long): ProgrammeRange {
-        if (offset == 0L) return this
-        return this + offset.milliseconds
-    }
+internal fun Programme.withTimeOffset(offset: Long): Programme {
+    if (offset == 0L) return this
+    val duration = offset.milliseconds
+    return copy(
+        start = Instant.fromEpochMilliseconds(start).plus(duration).toEpochMilliseconds(),
+        end = Instant.fromEpochMilliseconds(end).plus(duration).toEpochMilliseconds()
+    )
+}
+
+internal fun ProgrammeRange.withTimeOffset(offset: Long): ProgrammeRange {
+    if (offset == 0L) return this
+    return this + offset.milliseconds
 }

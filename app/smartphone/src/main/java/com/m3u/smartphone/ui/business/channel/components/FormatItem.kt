@@ -36,14 +36,26 @@ internal fun FormatItem(
 }
 
 private fun Format.displayText(type: @C.TrackType Int): String = when (type) {
-    C.TRACK_TYPE_AUDIO -> "$sampleRate $sampleMimeType"
-    C.TRACK_TYPE_VIDEO -> "$width×$height $sampleMimeType"
+    C.TRACK_TYPE_AUDIO -> buildList {
+        label?.takeIf { it.isNotBlank() }?.let { add(it) }
+        language?.takeIf { it.isNotBlank() }?.let { add(it) }
+        if (channelCount > 0) add("${channelCount}ch")
+        if (sampleRate > 0) add("${sampleRate}Hz")
+        sampleMimeType?.takeIf { it.isNotBlank() }?.let { add(it) }
+    }.joinToDisplayText()
+
+    C.TRACK_TYPE_VIDEO -> buildList {
+        if (width > 0 && height > 0) add("${width}x$height")
+        sampleMimeType?.takeIf { it.isNotBlank() }?.let { add(it) }
+    }.joinToDisplayText()
+
     C.TRACK_TYPE_TEXT -> buildList {
-        label?.let { add(it) }
-        language?.let { add(it) }
-        sampleMimeType?.let { add(it) }
-    }
-        .joinToString(separator = "-")
+        label?.takeIf { it.isNotBlank() }?.let { add(it) }
+        language?.takeIf { it.isNotBlank() }?.let { add(it) }
+        sampleMimeType?.takeIf { it.isNotBlank() }?.let { add(it) }
+    }.joinToDisplayText()
 
     else -> sampleMimeType.orEmpty()
 }
+
+private fun List<String>.joinToDisplayText(): String = joinToString(separator = " / ")

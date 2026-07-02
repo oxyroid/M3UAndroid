@@ -3,6 +3,7 @@ package com.m3u.smartphone.ui.business.channel
 import android.Manifest
 import android.content.Intent
 import android.graphics.Rect
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateDpAsState
@@ -36,6 +37,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -90,6 +93,9 @@ import coil.compose.AsyncImage
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlin.time.Duration.Companion.seconds
 
 @Composable
@@ -151,6 +157,11 @@ fun ChannelRoute(
 
     val maskState = rememberMaskState()
     val pullPanelLayoutState = rememberPullPanelLayoutState()
+
+    BackHandler(enabled = controlsLocked) {
+        controlsLocked = false
+        maskState.unlockAll()
+    }
 
     val isPanelExpanded = pullPanelLayoutState.isExpanded
     val fraction = pullPanelLayoutState.fraction
@@ -450,6 +461,18 @@ private fun ChannelPlayer(
         }
     }
     Box(modifier) {
+        if (cover.isNotBlank() && playerState.videoSize.isNotEmpty && clipMode == ClipMode.ADAPTIVE) {
+            AsyncImage(
+                model = cover,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .blur(36.dp)
+                    .alpha(0.42f)
+                    .background(MaterialTheme.colorScheme.scrim)
+            )
+        }
         val state = rememberPlayerState(
             player = playerState.player,
             clipMode = clipMode
@@ -597,5 +620,6 @@ private fun String.toRecordFileName(): String {
     val name = replace(Regex("""[\\/:*?"<>|]"""), "_")
         .trim()
         .ifEmpty { "record" }
-    return "$name.mp4"
+    val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+    return "${name}_$timestamp.mp4"
 }

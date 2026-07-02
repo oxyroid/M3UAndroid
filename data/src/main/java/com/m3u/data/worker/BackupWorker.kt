@@ -4,6 +4,9 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.os.Build
+import androidx.core.app.NotificationCompat
+import androidx.core.net.toUri
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
@@ -12,7 +15,6 @@ import com.m3u.data.R
 import com.m3u.data.repository.playlist.PlaylistRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import androidx.core.net.toUri
 
 @HiltWorker
 class BackupWorker @AssistedInject constructor(
@@ -38,13 +40,14 @@ class BackupWorker @AssistedInject constructor(
     }
 
     private fun createNotification(): Notification {
-        return Notification.Builder(context, CHANNEL_ID)
+        return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.round_file_download_24)
             .setContentTitle("Backing up")
             .build()
     }
 
     private fun createChannel() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val channel = NotificationChannel(
             CHANNEL_ID, NOTIFICATION_NAME, NotificationManager.IMPORTANCE_LOW
         )
