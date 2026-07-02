@@ -801,12 +801,24 @@ private fun EmptyLibraryScreen(
     onAddM3uPlaylist: (String, String) -> Unit,
     onClearM3uSubscriptionMessage: () -> Unit
 ) {
+    val initialFocusRequester = remember { FocusRequester() }
+    var initialFocusRequested by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        yield()
+        if (!initialFocusRequested) {
+            initialFocusRequester.requestFocus()
+            initialFocusRequested = true
+        }
+    }
+
     Row(
         horizontalArrangement = Arrangement.spacedBy(32.dp),
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
             .height(460.dp)
+            .focusGroup()
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -865,6 +877,7 @@ private fun EmptyLibraryScreen(
             message = xtreamSubscriptionMessage,
             onSubmit = onAddXtreamPlaylist,
             onInputChange = onClearXtreamSubscriptionMessage,
+            initialTypeFocusRequester = initialFocusRequester,
             modifier = Modifier
                 .weight(0.88f)
                 .widthIn(max = 420.dp)
@@ -968,6 +981,7 @@ private fun XtreamSubscribePanel(
     message: TvXtreamSubscriptionMessage?,
     onSubmit: (String, String, String, String, String?) -> Unit,
     onInputChange: () -> Unit,
+    initialTypeFocusRequester: FocusRequester? = null,
     modifier: Modifier = Modifier
 ) {
     var title by rememberSaveable { mutableStateOf("") }
@@ -1049,6 +1063,9 @@ private fun XtreamSubscribePanel(
                         onSelect = {
                             selectedType = type
                             onInputChange()
+                        },
+                        focusRequester = initialTypeFocusRequester.takeIf {
+                            type == TvXtreamContentType.All
                         },
                         modifier = Modifier
                             .weight(1f)
@@ -1150,6 +1167,7 @@ private fun XtreamTypeChip(
     type: TvXtreamContentType,
     selected: Boolean,
     onSelect: () -> Unit,
+    focusRequester: FocusRequester? = null,
     modifier: Modifier = Modifier
 ) {
     FocusFrame(
@@ -1157,6 +1175,7 @@ private fun XtreamTypeChip(
         selected = selected,
         focusedScale = 1f,
         shape = RoundedCornerShape(22.dp),
+        focusRequester = focusRequester,
         modifier = modifier
     ) { focused ->
         Text(
