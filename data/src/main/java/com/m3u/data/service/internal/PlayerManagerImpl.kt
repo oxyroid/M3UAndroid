@@ -40,7 +40,10 @@ import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.exoplayer.trackselection.TrackSelector
 import androidx.media3.extractor.DefaultExtractorsFactory
+import androidx.media3.extractor.metadata.flac.VorbisComment
 import androidx.media3.extractor.metadata.icy.IcyInfo
+import androidx.media3.extractor.metadata.id3.CommentFrame
+import androidx.media3.extractor.metadata.id3.TextInformationFrame
 import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES
 import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
 import androidx.media3.muxer.FragmentedMp4Muxer
@@ -399,13 +402,16 @@ class PlayerManagerImpl @Inject constructor(
         extractorsFactory: DefaultExtractorsFactory
     ): MediaSource {
         val playbackUrl = StreamUrlOptions.stripFromUrl(url)
+        val videoOptions = StreamUrlOptions.readFromUrl(url)
+        val videoUserAgent = videoOptions[StreamUrlOptions.USER_AGENT] ?: userAgent
+        val videoRequestHeaders = requestHeaders + StreamUrlOptions.readRequestHeadersFromUrl(url)
         val playbackProtocol = playbackUrl.protocolName()
         val rtmp = playbackProtocol == "rtmp"
         val udpLike = playbackProtocol == "udp" || playbackProtocol == "rtp"
         val dataSourceFactory = when {
             rtmp -> RtmpDataSource.Factory()
             udpLike -> DefaultDataSource.Factory(context)
-            else -> createHttpDataSourceFactory(userAgent, requestHeaders)
+            else -> createHttpDataSourceFactory(videoUserAgent, videoRequestHeaders)
         }
         val mimeType = when (playbackProtocol) {
             "rtsp" -> MimeTypes.APPLICATION_RTSP
@@ -710,19 +716,7 @@ class PlayerManagerImpl @Inject constructor(
 
     override fun onMetadata(metadata: Metadata) {
         super.onMetadata(metadata)
-        val currentStreamMetadata = (0 until metadata.length())
-            .asSequence()
-            .map { index -> metadata[index] }
-            .mapNotNull { entry ->
-                when (entry) {
-                    is IcyInfo -> entry.title
-                        ?.takeIf { it.isNotBlank() }
-                        ?: entry.url?.takeIf { it.isNotBlank() }
-
-                    else -> null
-                }
-            }
-            .firstOrNull()
+        val currentStreamMetadata = metadata.toStreamMetadataText()
         if (currentStreamMetadata != null) {
             streamMetadata.value = currentStreamMetadata
         }
@@ -758,7 +752,7 @@ class PlayerManagerImpl @Inject constructor(
             val recorded = withContext(Dispatchers.Main) {
                 val currentPlayer = player.value ?: return@withContext false
                 val sourceUrl = channel.value?.url
-                    ?.substringBefore('|')
+                    ?.let(StreamUrlOptions::stripFromUrl)
                     ?.takeIf { it.isNotBlank() }
                     ?: return@withContext false
                 val tracksGroup = currentPlayer.currentTracks.groups.firstOrNull {
@@ -1043,6 +1037,57 @@ private fun String.isMulticastTransportUrl(): Boolean {
         ?: return false
     return runCatching { InetAddress.getByName(host).isMulticastAddress }.getOrDefault(false)
 }
+
+private fun Metadata.toStreamMetadataText(): String? {
+    var title: String? = null
+    var artist: String? = null
+    var album: String? = null
+    var comment: String? = null
+    var url: String? = null
+
+    for (index in 0 until length()) {
+        when (val entry = this[index]) {
+            is IcyInfo -> {
+                title = title ?: entry.title.normalizedStreamMetadata()
+                url = url ?: entry.url.normalizedStreamMetadata()
+            }
+
+            is TextInformationFrame -> when (entry.id.uppercase()) {
+                "TIT1", "TIT2", "TIT3", "TT1", "TT2", "TT3" -> {
+                    title = title ?: entry.value.normalizedStreamMetadata()
+                }
+
+                "TPE1", "TPE2", "TPE3", "TPE4", "TP1", "TP2", "TP3", "TP4" -> {
+                    artist = artist ?: entry.value.normalizedStreamMetadata()
+                }
+
+                "TALB", "TAL" -> {
+                    album = album ?: entry.value.normalizedStreamMetadata()
+                }
+            }
+
+            is VorbisComment -> when (entry.key.uppercase()) {
+                "TITLE" -> title = title ?: entry.value.normalizedStreamMetadata()
+                "ARTIST", "ALBUMARTIST" -> artist = artist ?: entry.value.normalizedStreamMetadata()
+                "ALBUM" -> album = album ?: entry.value.normalizedStreamMetadata()
+                "COMMENT", "DESCRIPTION" -> comment = comment ?: entry.value.normalizedStreamMetadata()
+            }
+
+            is CommentFrame -> {
+                comment = comment ?: entry.text.normalizedStreamMetadata()
+            }
+        }
+    }
+
+    val artistAndTitle = listOfNotNull(artist, title)
+        .distinctBy { it.lowercase() }
+        .takeIf { it.size >= 2 }
+        ?.joinToString(" - ")
+    return artistAndTitle ?: title ?: artist ?: album ?: comment ?: url
+}
+
+private fun String?.normalizedStreamMetadata(): String? =
+    this?.trim()?.takeIf { it.isNotBlank() }
 
 private sealed class MimetypeChain(val url: String) {
     class Remembered(

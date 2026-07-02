@@ -32,7 +32,9 @@ import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 import com.m3u.core.foundation.components.CircularProgressIndicator
 import com.m3u.core.foundation.ui.composableOf
 import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.Programme
 import com.m3u.i18n.R.string
+import com.m3u.smartphone.ui.business.playlist.components.readText
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
@@ -44,6 +46,7 @@ import kotlin.time.Instant
 @Composable
 internal fun FavoriteItem(
     channel: Channel,
+    programme: Programme?,
     recently: Boolean,
     zapping: Boolean,
     onClick: () -> Unit,
@@ -102,26 +105,38 @@ internal fun FavoriteItem(
                 )
             },
             supportingContent = {
-                if (recently) {
-                    Text(
-                        text = remember(channel.seen) {
-                            val now = Clock.System.now()
-                            val instant = Instant.fromEpochMilliseconds(channel.seen)
-                            val duration = now - instant
-                            duration.toComponents { days, hours, minutes, seconds, _ ->
-                                when {
-                                    channel.seen == 0L -> neverPlayedString
-                                    days > 0 -> days.days.toString()
-                                    hours > 0 -> hours.hours.toString()
-                                    minutes > 0 -> minutes.minutes.toString()
-                                    seconds > 0 -> seconds.seconds.toString()
-                                    else -> recentlyString
+                when {
+                    recently -> {
+                        Text(
+                            text = remember(channel.seen) {
+                                val now = Clock.System.now()
+                                val instant = Instant.fromEpochMilliseconds(channel.seen)
+                                val duration = now - instant
+                                duration.toComponents { days, hours, minutes, seconds, _ ->
+                                    when {
+                                        channel.seen == 0L -> neverPlayedString
+                                        days > 0 -> days.days.toString()
+                                        hours > 0 -> hours.hours.toString()
+                                        minutes > 0 -> minutes.minutes.toString()
+                                        seconds > 0 -> seconds.seconds.toString()
+                                        else -> recentlyString
+                                    }
                                 }
-                            }
-                        },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = LocalContentColor.current.copy(0.56f)
-                    )
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = LocalContentColor.current.copy(0.56f)
+                        )
+                    }
+
+                    programme != null -> {
+                        Text(
+                            text = programme.readText(),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = LocalContentColor.current.copy(0.56f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             },
             colors = ListItemDefaults.colors(Color.Transparent),

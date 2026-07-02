@@ -41,6 +41,7 @@ import com.m3u.core.foundation.ui.thenIf
 import com.m3u.core.util.basic.title
 import com.m3u.core.wrapper.Sort
 import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.isSeries
 import com.m3u.data.service.MediaCommand
 import com.m3u.i18n.R
@@ -134,6 +135,7 @@ fun FavoriteRoute(
         channels = channels,
         zapping = zapping,
         recently = sort == Sort.RECENTLY,
+        getProgrammeCurrently = { channelId -> viewModel.getProgrammeCurrently(channelId) },
         onQuery = { viewModel.query.value = it },
         onClickChannel = { channel ->
             coroutineScope.launch {
@@ -221,6 +223,7 @@ private fun FavoriteScreen(
     channels: LazyPagingItems<Channel>,
     zapping: Channel?,
     recently: Boolean,
+    getProgrammeCurrently: suspend (channelId: Int) -> Programme?,
     onQuery: (String) -> Unit,
     onClickChannel: (Channel) -> Unit,
     onLongClickChannel: (Channel) -> Unit,
@@ -258,6 +261,7 @@ private fun FavoriteScreen(
             channels = channels,
             zapping = zapping,
             recently = recently,
+            getProgrammeCurrently = getProgrammeCurrently,
             rowCount = actualRowCount,
             onClick = onClickChannel,
             onLongClick = onLongClickChannel,

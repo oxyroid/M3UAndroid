@@ -1,5 +1,6 @@
 package com.m3u.smartphone
 
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
@@ -89,11 +90,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun maybeEnqueueViewedPlaylist(intent: Intent?): Boolean {
-        if (intent?.action != Intent.ACTION_VIEW) return false
-        val uri = intent.data ?: intent.streamUri()
+        val importIntent = intent?.takeIf { it.action in PLAYLIST_IMPORT_ACTIONS } ?: return false
+        val uri = importIntent.data ?: importIntent.streamUri()
         uri ?: return false
 
-        takeReadPermission(uri, intent.flags)
+        takeReadPermission(uri, importIntent.flags)
         val title = resolveViewedPlaylistTitle(uri)
 
         SubscriptionWorker.m3u(workManager, title, uri.toString())
@@ -139,10 +140,10 @@ class MainActivity : AppCompatActivity() {
             if (startupDelay > 0) {
                 delay(startupDelay)
             }
-            if (!isNetworkConnected()) {
+            val channel = channelRepository.getPlayedRecently() ?: return@launch
+            if (channel.url.requiresNetwork() && !isNetworkConnected()) {
                 return@launch
             }
-            val channel = channelRepository.getPlayedRecently() ?: return@launch
             val playlist = playlistRepository.get(channel.playlistUrl)
             if (playlist?.isSeries == true) {
                 return@launch
@@ -159,5 +160,15 @@ class MainActivity : AppCompatActivity() {
         val network = manager.activeNetwork ?: return false
         val capabilities = manager.getNetworkCapabilities(network) ?: return false
         return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
+    private fun String.requiresNetwork(): Boolean {
+        val scheme = substringBefore('|').substringBefore(':', missingDelimiterValue = "")
+        return scheme.equals(ContentResolver.SCHEME_CONTENT, ignoreCase = true).not() &&
+                scheme.equals(ContentResolver.SCHEME_FILE, ignoreCase = true).not()
+    }
+
+    private companion object {
+        val PLAYLIST_IMPORT_ACTIONS = setOf(Intent.ACTION_VIEW, Intent.ACTION_SEND)
     }
 }

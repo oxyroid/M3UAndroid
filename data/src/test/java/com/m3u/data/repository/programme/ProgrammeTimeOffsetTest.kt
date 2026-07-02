@@ -3,7 +3,9 @@ package com.m3u.data.repository.programme
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.ProgrammeRange
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ProgrammeTimeOffsetTest {
@@ -42,6 +44,68 @@ class ProgrammeTimeOffsetTest {
 
         assertEquals(3_601_000L, shifted.start)
         assertEquals(3_602_000L, shifted.end)
+    }
+
+    @Test
+    fun buildProgrammeRelationIdsIncludesTrimmedCaseVariants() {
+        val relationIds = buildProgrammeRelationIds(
+            relationId = " cctv1 ",
+            title = "CCTV 1"
+        )
+
+        assertEquals(
+            listOf(
+                "cctv1",
+                "CCTV1",
+                "CCTV 1",
+                "cctv 1"
+            ),
+            relationIds
+        )
+    }
+
+    @Test
+    fun gzipEpgResponseDetectedFromContentEncoding() {
+        assertTrue(
+            isGzipEpgResponse(
+                contentType = "application/xml",
+                contentEncoding = "gzip",
+                lastPathSegment = "epg.xml"
+            )
+        )
+    }
+
+    @Test
+    fun gzipEpgResponseDetectedFromContentTypeIgnoringCase() {
+        assertTrue(
+            isGzipEpgResponse(
+                contentType = "Application/GZip",
+                contentEncoding = "",
+                lastPathSegment = "epg.xml"
+            )
+        )
+    }
+
+    @Test
+    fun gzipEpgResponseDetectedFromPathWhenMimeTypeIsWrong() {
+        assertTrue(
+            isGzipEpgResponse(
+                contentType = "text/plain",
+                contentEncoding = "",
+                lastPathSegment = "epg.xml.gz"
+            )
+        )
+    }
+
+    @Test
+    fun plainEpgResponseIsNotGzip() {
+        assertFalse(
+            isGzipEpgResponse(
+                contentType = "application/xml",
+                contentEncoding = "",
+                lastPathSegment = "epg.xml"
+            )
+        )
     }
 
     private fun programme(

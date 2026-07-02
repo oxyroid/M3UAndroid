@@ -193,6 +193,8 @@ dependencies {
     implementation(libs.acra.notification)
     implementation(libs.acra.mail)
 
+    testImplementation(libs.junit)
+
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.core)
     androidTestImplementation(libs.androidx.test.runner)

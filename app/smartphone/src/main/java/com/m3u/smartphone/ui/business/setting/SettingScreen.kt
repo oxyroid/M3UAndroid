@@ -210,7 +210,7 @@ private fun SettingScreen(
         navigateToDetail(it)
     }
 
-    LaunchedEffect(destination) {
+    LaunchedEffect(destination, navigator.currentDestination?.contentKey) {
         if (destination != SettingDestination.Default &&
             navigator.currentDestination?.contentKey != destination
         ) {

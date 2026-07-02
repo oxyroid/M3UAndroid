@@ -35,6 +35,24 @@ class M3UParserImplTest {
     }
 
     @Test
+    fun parseTxtPlaylistWithContentUris() = runBlocking {
+        val input = """
+            Local,#genre#
+            Local audio,content://com.example.provider/audio.m3u8
+            Separate local video,http://example.com/audio.mp3;content://com.example.provider/video.m3u8
+        """.trimIndent()
+
+        val data = parser.parse(input.byteInputStream()).toList()
+
+        assertEquals(2, data.size)
+        assertEquals("Local audio", data[0].title)
+        assertEquals("content://com.example.provider/audio.m3u8", data[0].url)
+        assertEquals("Separate local video", data[1].title)
+        assertEquals("http://example.com/audio.mp3", data[1].url)
+        assertEquals("content://com.example.provider/video.m3u8", data[1].videoUrl)
+    }
+
+    @Test
     fun parseIssue326TxtPlaylistExample() = runBlocking {
         val input = """
             中国央视,#genre#
@@ -85,6 +103,108 @@ class M3UParserImplTest {
     }
 
     @Test
+    fun parseM3UPlaylistWithDecimalDuration() = runBlocking {
+        val input = """
+            #EXTM3U
+            #EXTINF:-1.0 tvg-id="decimal" group-title="Live",Decimal Duration
+            https://example.com/decimal.m3u8
+        """.trimIndent()
+
+        val data = parser.parse(input.byteInputStream()).toList()
+
+        assertEquals(1, data.size)
+        assertEquals("decimal", data.single().id)
+        assertEquals("Decimal Duration", data.single().title)
+        assertEquals(-1.0, data.single().duration, 0.0)
+        assertEquals("https://example.com/decimal.m3u8", data.single().url)
+    }
+
+    @Test
+    fun parseM3UPlaylistWithEmptyTitleFallsBackToTvgName() = runBlocking {
+        val input = """
+            #EXTM3U
+            #EXTINF:-1 tvg-id="fallback" tvg-name="Fallback Channel" group-title="Live",
+            https://example.com/fallback.m3u8
+        """.trimIndent()
+
+        val data = parser.parse(input.byteInputStream()).toList()
+
+        assertEquals(1, data.size)
+        assertEquals("fallback", data.single().id)
+        assertEquals("Fallback Channel", data.single().name)
+        assertEquals("Fallback Channel", data.single().title)
+        assertEquals("Live", data.single().group)
+        assertEquals("https://example.com/fallback.m3u8", data.single().url)
+    }
+
+    @Test
+    fun parseM3UPlaylistWithBomAndIndentedProtocolLines() = runBlocking {
+        val input = "\uFEFF  #EXTM3U x-tvg-url=\"https://example.com/epg.xml\"\n" +
+            "  #EXTINF:-1 tvg-id=\"radio\" group-title=\"Radio\",Radio One\n" +
+            "  #EXTVLCOPT:http-user-agent=MockAgent/7.0\n" +
+            "  https://example.com/radio.m3u8\n"
+
+        val data = parser.parse(input.byteInputStream()).toList()
+        val channel = data.single().toChannel("https://playlist.example.com/list.m3u")
+        val options = StreamUrlOptions.readFromUrl(channel.url)
+
+        assertEquals("radio", data.single().id)
+        assertEquals("Radio", data.single().group)
+        assertEquals("Radio One", data.single().title)
+        assertEquals(listOf("https://example.com/epg.xml"), data.single().playlistEpgUrls)
+        assertEquals("https://example.com/radio.m3u8", StreamUrlOptions.stripFromUrl(channel.url))
+        assertEquals("MockAgent/7.0", options[StreamUrlOptions.USER_AGENT])
+    }
+
+    @Test
+    fun parseM3UPlaylistWithCaseInsensitiveProtocolAndMetadataKeys() = runBlocking {
+        val input = """
+            #extm3u TVG-URL="https://example.com/epg.xml"
+            #extinf:-1 TVG-ID="case-id" TVG-NAME="Case Name" GROUP-TITLE="Live",Case Channel
+            #extvlcopt:HTTP-USER-AGENT=CaseAgent/1.0
+            #kodiprop:INPUTSTREAM.ADAPTIVE.LICENSE_TYPE=ClearKey
+            #kodiprop:INPUTSTREAM.ADAPTIVE.LICENSE_KEY=abc:def
+            #exthttp:{"Cookie":"session=case"}
+            https://example.com/case.mpd
+        """.trimIndent()
+
+        val data = parser.parse(input.byteInputStream()).toList()
+        val channel = data.single().toChannel("https://playlist.example.com/list.m3u")
+        val options = StreamUrlOptions.readFromUrl(channel.url)
+
+        assertEquals("case-id", data.single().id)
+        assertEquals("Case Name", data.single().name)
+        assertEquals("Live", data.single().group)
+        assertEquals("Case Channel", data.single().title)
+        assertEquals(listOf("https://example.com/epg.xml"), data.single().playlistEpgUrls)
+        assertEquals(Channel.LICENSE_TYPE_CLEAR_KEY, data.single().licenseType)
+        assertEquals("abc:def", data.single().licenseKey)
+        assertEquals("CaseAgent/1.0", options[StreamUrlOptions.USER_AGENT])
+        assertEquals("session=case", options[StreamUrlOptions.COOKIE])
+    }
+
+    @Test
+    fun parseM3UPlaylistWithExtGrpFallbackGroup() = runBlocking {
+        val input = """
+            #EXTM3U
+            #EXTINF:-1 tvg-id="extgrp",ExtGrp Channel
+            #EXTGRP:Fallback Group
+            https://example.com/extgrp.m3u8
+            #EXTINF:-1 group-title="Metadata Group",Metadata Group Channel
+            #EXTGRP:Ignored Group
+            https://example.com/metadata-group.m3u8
+        """.trimIndent()
+
+        val data = parser.parse(input.byteInputStream()).toList()
+
+        assertEquals(2, data.size)
+        assertEquals("Fallback Group", data[0].group)
+        assertEquals("ExtGrp Channel", data[0].title)
+        assertEquals("Metadata Group", data[1].group)
+        assertEquals("Metadata Group Channel", data[1].title)
+    }
+
+    @Test
     fun parseRealWorldGatherPlaylistSnippet() = runBlocking {
         val input = """
             #EXTM3U x-tvg-url="https://epg.yang-1989.eu.org/epg.xml.gz"
@@ -108,6 +228,70 @@ class M3UParserImplTest {
     }
 
     @Test
+    fun parsePlaylistHeaderEpgUrlsFromRealWorldFreeTvSnippet() = runBlocking {
+        val input = """
+            #EXTM3U x-tvg-url="https://epgshare01.online/epgshare01/epg_ripper_AL1.xml.gz, https://epgshare01.online/epgshare01/epg_ripper_US1.xml.gz"
+            #EXTINF:-1 tvg-name="Kanali 7 Ⓢ" tvg-logo="https://i.imgur.com/rL2v9pM.png" tvg-id="Kanali7.al" tvg-country="AL" group-title="Albania",Kanali 7 Ⓢ
+            https://fe.tring.al/delta/105/out/u/1200_1.m3u8
+            #EXTINF:-1 tvg-name="A2 CNN Albania" tvg-logo="https://i.imgur.com/TgO3Lzi.png" tvg-id="A2CNN.al" tvg-country="AL" group-title="Albania",A2 CNN Albania
+            https://tv.a2news.com/live/smil:a2cnnweb.stream.smil/playlist.m3u8
+        """.trimIndent()
+
+        val data = parser.parse(input.byteInputStream()).toList()
+
+        assertEquals(2, data.size)
+        assertEquals(
+            listOf(
+                "https://epgshare01.online/epgshare01/epg_ripper_AL1.xml.gz",
+                "https://epgshare01.online/epgshare01/epg_ripper_US1.xml.gz"
+            ),
+            data.first().playlistEpgUrls
+        )
+        assertEquals(data.first().playlistEpgUrls, data[1].playlistEpgUrls)
+        assertEquals("Kanali7.al", data[0].id)
+        assertEquals("Kanali 7 Ⓢ", data[0].title)
+        assertEquals("Albania", data[0].group)
+    }
+
+    @Test
+    fun parsePlaylistHeaderEpgUrlsFromCommonAliases() = runBlocking {
+        val input = """
+            #EXTM3U tvg-url="https://example.com/tvg.xml" url-tvg="https://example.com/url-tvg.xml"
+            #EXTINF:-1 tvg-id="news",News
+            https://example.com/news.m3u8
+        """.trimIndent()
+
+        val data = parser.parse(input.byteInputStream()).toList()
+
+        assertEquals(
+            listOf(
+                "https://example.com/url-tvg.xml",
+                "https://example.com/tvg.xml"
+            ),
+            data.single().playlistEpgUrls
+        )
+    }
+
+    @Test
+    fun parseM3UPlaylistWithSingleQuotedMetadata() = runBlocking {
+        val input = """
+            #EXTM3U x-tvg-url = 'https://example.com/epg.xml'
+            #EXTINF:-1 tvg-id = 'single-id' tvg-name='Single Name' tvg-logo='https://example.com/logo one.png' group-title='News Live',Single Quote Channel
+            https://example.com/single-quote.m3u8
+        """.trimIndent()
+
+        val data = parser.parse(input.byteInputStream()).toList()
+
+        assertEquals(1, data.size)
+        assertEquals("single-id", data.single().id)
+        assertEquals("Single Name", data.single().name)
+        assertEquals("https://example.com/logo one.png", data.single().cover)
+        assertEquals("News Live", data.single().group)
+        assertEquals("Single Quote Channel", data.single().title)
+        assertEquals(listOf("https://example.com/epg.xml"), data.single().playlistEpgUrls)
+    }
+
+    @Test
     fun parseSeparateAudioAndVideoStreams() = runBlocking {
         val input = """
             #EXTM3U
@@ -126,6 +310,58 @@ class M3UParserImplTest {
             "https://example.com/weather-cam.m3u8",
             StreamUrlOptions.readFromUrl(channel.url)[StreamUrlOptions.VIDEO_URL]
         )
+    }
+
+    @Test
+    fun parseRelativeStreamUrlsAgainstPlaylistUrl() = runBlocking {
+        val input = """
+            #EXTM3U
+            #EXTINF:-1 group-title="Live",Relative Channel
+            streams/news.m3u8
+            #EXTINF:-1 group-title="Live",Root Channel
+            /live/root.m3u8
+            #EXTINF:-1 group-title="Radio",Relative Camera
+            audio/radio.mp3;video/weather.m3u8
+        """.trimIndent()
+
+        val data = parser.parse(input.byteInputStream()).toList()
+
+        assertEquals(3, data.size)
+        assertEquals(
+            "https://example.com/lists/streams/news.m3u8",
+            data[0].toChannel("https://example.com/lists/main.m3u").url
+        )
+        assertEquals(
+            "https://example.com/live/root.m3u8",
+            data[1].toChannel("https://example.com/lists/main.m3u").url
+        )
+        val channel = data[2].toChannel("https://example.com/lists/main.m3u")
+        assertEquals(
+            "https://example.com/lists/audio/radio.mp3",
+            StreamUrlOptions.stripFromUrl(channel.url)
+        )
+        assertEquals(
+            "https://example.com/lists/video/weather.m3u8",
+            StreamUrlOptions.readFromUrl(channel.url)[StreamUrlOptions.VIDEO_URL]
+        )
+    }
+
+    @Test
+    fun parseSeparateAudioAndVideoStreamsDoesNotSplitSemicolonParameters() = runBlocking {
+        val input = """
+            #EXTM3U
+            #EXTINF:-1 group-title="Live",Token Channel
+            streams/news.m3u8;token=abc123
+        """.trimIndent()
+
+        val data = parser.parse(input.byteInputStream()).toList()
+        val channel = data.single().toChannel("https://example.com/lists/main.m3u")
+
+        assertEquals(
+            "https://example.com/lists/streams/news.m3u8;token=abc123",
+            channel.url
+        )
+        assertEquals(null, StreamUrlOptions.readFromUrl(channel.url)[StreamUrlOptions.VIDEO_URL])
     }
 
     @Test
@@ -267,5 +503,39 @@ class M3UParserImplTest {
         assertEquals("https://origin.example.com", headers["Origin"])
         assertEquals("session=abc", headers["Cookie"])
         assertEquals("secret", headers["x-api-key"])
+    }
+
+    @Test
+    fun readEncodedPipeHttpOptionsFromUrl() {
+        val url =
+            "https://example.com/index.mpd?id=SONY-PIX%7Ccookie%3DEdge-Cache-Cookie%3Dabc&User-Agent=MockAgent/5.0"
+
+        val options = StreamUrlOptions.readFromUrl(url)
+        val headers = StreamUrlOptions.readRequestHeadersFromUrl(url)
+
+        assertEquals("SONY-PIX", StreamUrlOptions.stripFromUrl(url).substringAfter("id="))
+        assertEquals("MockAgent/5.0", options[StreamUrlOptions.USER_AGENT])
+        assertEquals("Edge-Cache-Cookie=abc", options[StreamUrlOptions.COOKIE])
+        assertEquals("Edge-Cache-Cookie=abc", headers["Cookie"])
+    }
+
+    @Test
+    fun appendVlcOptionsAfterEncodedPipeHttpOptions() = runBlocking {
+        val input = """
+            #EXTM3U
+            #EXTINF:-1 group-title="Live",Encoded Cookie Channel
+            #EXTVLCOPT:http-user-agent=MockAgent/6.0
+            https://example.com/index.mpd?id=SONY-PIX%7Ccookie%3DEdge-Cache-Cookie%3Dabc
+        """.trimIndent()
+
+        val data = parser.parse(input.byteInputStream()).toList()
+        val channel = data.single().toChannel("https://playlist.example.com/list.m3u")
+        val options = StreamUrlOptions.readFromUrl(channel.url)
+        val headers = StreamUrlOptions.readRequestHeadersFromUrl(channel.url)
+
+        assertEquals("https://example.com/index.mpd?id=SONY-PIX", StreamUrlOptions.stripFromUrl(channel.url))
+        assertEquals("MockAgent/6.0", options[StreamUrlOptions.USER_AGENT])
+        assertEquals("Edge-Cache-Cookie=abc", options[StreamUrlOptions.COOKIE])
+        assertEquals("Edge-Cache-Cookie=abc", headers["Cookie"])
     }
 }

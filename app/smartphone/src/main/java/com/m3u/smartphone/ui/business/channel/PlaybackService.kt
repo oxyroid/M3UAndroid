@@ -5,6 +5,7 @@ import android.content.Intent
 import androidx.media3.common.Player
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import com.m3u.core.Contracts
 import com.m3u.data.service.PlayerManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -66,6 +67,7 @@ class PlaybackService : MediaSessionService() {
     private fun createSessionActivity(): PendingIntent {
         val intent = Intent(this, PlayerActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            .putExtra(Contracts.PLAYER_SHORTCUT_CHANNEL_RECENTLY, true)
         return PendingIntent.getActivity(
             this,
             0,

@@ -9,4 +9,10 @@
     <string name="data_worker_subscription_content_completed">Completed (+%d)</string>
     <string name="data_worker_subscription_content_channel_progress">%d channels have been downloaded</string>
     <string name="data_worker_subscription_content_programme_progress">%d programmes have been downloaded</string>
+    <string name="data_worker_backup_channel_name">Backup task</string>
+    <string name="data_worker_backup_channel_description">Display backup task progress</string>
+    <string name="data_worker_backup_content_title">Backing up</string>
+    <string name="data_worker_restore_channel_name">Restore task</string>
+    <string name="data_worker_restore_channel_description">Display restore task progress</string>
+    <string name="data_worker_restore_content_title">Restoring</string>
 </resources>

@@ -4,11 +4,13 @@ import android.content.ContentResolver
 import android.net.Uri
 import com.m3u.core.util.basic.startWithHttpScheme
 import com.m3u.core.util.basic.startsWithAny
+import java.net.URI
 
 internal object PlaylistNetworkUrl {
     fun normalizeM3uInput(url: String): String {
         val trimmed = url.trim()
         if (trimmed.isEmpty() || isSupportedAndroidUrl(trimmed)) return trimmed
+        if (trimmed.startsWith("/")) return URI("file", "", trimmed, null).toASCIIString()
         return if (trimmed.startWithHttpScheme()) trimmed else "http://$trimmed"
     }
 
@@ -19,8 +21,8 @@ internal object PlaylistNetworkUrl {
     )
 
     fun isSupportedAndroidUrl(url: String): Boolean = url.startsWithAny(
-        ContentResolver.SCHEME_FILE,
-        ContentResolver.SCHEME_CONTENT,
+        "${ContentResolver.SCHEME_FILE}:",
+        "${ContentResolver.SCHEME_CONTENT}:",
         ignoreCase = true
     )
 
@@ -44,12 +46,8 @@ internal object PlaylistNetworkUrl {
         displayName: String?,
         lastPathSegment: String?,
         fallbackName: String
-    ): String = displayName
-        ?.takeIf { it.isNotBlank() }
-        ?: lastPathSegment
-            ?.substringAfterLast('/')
-            ?.substringAfterLast(':')
-            ?.takeIf { it.isNotBlank() }
+    ): String = displayName?.stableFileName()
+        ?: lastPathSegment?.stableFileName()
         ?: fallbackName
 
     internal fun resolveOwnFilesProviderRelativePath(
@@ -115,6 +113,12 @@ internal object PlaylistNetworkUrl {
         }
         return decoded.toString()
     }
+
+    private fun String.stableFileName(): String? = trim()
+        .substringAfterLast('/')
+        .substringAfterLast('\\')
+        .substringAfterLast(':')
+        .takeIf { it.isNotBlank() }
 
     private fun hexValue(char: Char): Int? = when (char) {
         in '0'..'9' -> char - '0'

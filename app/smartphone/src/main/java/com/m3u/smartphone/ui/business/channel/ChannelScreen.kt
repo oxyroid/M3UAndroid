@@ -69,6 +69,7 @@ import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Programme
+import com.m3u.data.util.StreamUrlOptions
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.business.channel.components.DlnaDevicesBottomSheet
 import com.m3u.smartphone.ui.business.channel.components.FormatsBottomSheet
@@ -375,10 +376,12 @@ fun ChannelRoute(
         devices = devices,
         connectDlnaDevice = { viewModel.connectDlnaDevice(it) },
         openInExternalPlayer = {
-            val channelUrl = channel?.url ?: return@DlnaDevicesBottomSheet
+            val channelUrl = channel?.url
+                ?.let(StreamUrlOptions::stripFromUrl)
+                ?: return@DlnaDevicesBottomSheet
             context.startActivity(
                 Intent(Intent.ACTION_VIEW).apply {
-                    setDataAndType(channelUrl.toUri(), "video/*")
+                    setDataAndType(channelUrl.toUri(), externalPlayerMimeType(channelUrl))
                 }.let { Intent.createChooser(it, openInExternalPlayerString.title()) }
             )
         },

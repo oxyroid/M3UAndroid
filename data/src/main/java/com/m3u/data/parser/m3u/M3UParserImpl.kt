@@ -18,19 +18,26 @@ internal class M3UParserImpl @Inject constructor() : M3UParser {
     companion object {
         private const val M3U_HEADER_MARK = "#EXTM3U"
         private const val M3U_INFO_MARK = "#EXTINF:"
+        private const val M3U_GROUP_MARK = "#EXTGRP:"
         private const val KODI_MARK = "#KODIPROP:"
         private const val VLC_OPT_MARK = "#EXTVLCOPT:"
         private const val EXT_HTTP_MARK = "#EXTHTTP:"
         private const val TXT_GROUP_MARK = "#genre#"
 
-        private val infoRegex = """(-?\d+)(.*),(.+)""".toRegex()
+        private val infoRegex = """(-?\d+(?:\.\d+)?)(.*),(.*)""".toRegex()
         private val propertyRegex = """([^=]+)=(.*)""".toRegex()
-        private val metadataRegex = """([\w-_.]+)=\s*(?:"([^"]*)"|(\S+))""".toRegex()
+        private val metadataRegex = """([\w-_.]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|(\S+))""".toRegex()
+        private val mediaExtensionRegex =
+            """\.(m3u8?|mpd|mp3|aac|flac|ogg|opus|wav|mp4|m4v|ts|mkv|webm)(?:$|[?#])"""
+                .toRegex(RegexOption.IGNORE_CASE)
 
         private const val M3U_TVG_LOGO_MARK = "tvg-logo"
         const val M3U_TVG_ID_MARK = "tvg-id"
         const val M3U_TVG_NAME_MARK = "tvg-name"
         const val M3U_GROUP_TITLE_MARK = "group-title"
+        private const val M3U_X_TVG_URL_MARK = "x-tvg-url"
+        private const val M3U_URL_TVG_MARK = "url-tvg"
+        private const val M3U_TVG_URL_MARK = "tvg-url"
 
         const val KODI_LICENSE_TYPE = "inputstream.adaptive.license_type"
         const val KODI_LICENSE_KEY = "inputstream.adaptive.license_key"
@@ -40,6 +47,7 @@ internal class M3UParserImpl @Inject constructor() : M3UParser {
         private const val VLC_REFERER_ALT = "http-referer"
         private const val VLC_ORIGIN = "http-origin"
         private const val EXT_HTTP_COOKIE = "cookie"
+        private const val UTF8_BOM = "\uFEFF"
 
         private val supportedTxtUrlSchemes = listOf(
             "http://",
@@ -48,7 +56,8 @@ internal class M3UParserImpl @Inject constructor() : M3UParser {
             "rtsp://",
             "rtp://",
             "udp://",
-            "file:///"
+            "file:///",
+            "content://"
         )
     }
 
@@ -56,14 +65,15 @@ internal class M3UParserImpl @Inject constructor() : M3UParser {
         val lines = input
             .bufferedReader()
             .lineSequence()
+            .map { it.trim().removePrefix(UTF8_BOM).trim() }
             .filter { it.isNotEmpty() }
-            .map { it.trimEnd() }
-            .dropWhile { it.startsWith(M3U_HEADER_MARK) }
             .iterator()
 
         var currentLine: String
         var txtGroup = ""
+        var playlistEpgUrls = emptyList<String>()
         var infoMatch: MatchResult? = null
+        var extGroup = ""
         val kodiMatches = mutableListOf<MatchResult>()
         val httpOptions = mutableMapOf<String, String>()
 
@@ -71,16 +81,26 @@ internal class M3UParserImpl @Inject constructor() : M3UParser {
             currentLine = lines.next()
             while (currentLine.startsWith("#")) {
                 timber.d("Parsing protocol line: $currentLine")
-                if (currentLine.startsWith(M3U_INFO_MARK)) {
+                if (currentLine.startsWith(M3U_HEADER_MARK, ignoreCase = true)) {
+                    playlistEpgUrls = currentLine
+                        .drop(M3U_HEADER_MARK.length)
+                        .parsePlaylistEpgUrls()
+                }
+                if (currentLine.startsWith(M3U_INFO_MARK, ignoreCase = true)) {
                     infoMatch = infoRegex
                         .matchEntire(currentLine.drop(M3U_INFO_MARK.length).trim())
                 }
-                if (currentLine.startsWith(KODI_MARK)) {
+                if (currentLine.startsWith(M3U_GROUP_MARK, ignoreCase = true)) {
+                    extGroup = currentLine
+                        .drop(M3U_GROUP_MARK.length)
+                        .trim()
+                }
+                if (currentLine.startsWith(KODI_MARK, ignoreCase = true)) {
                     propertyRegex
                         .matchEntire(currentLine.drop(KODI_MARK.length).trim())
                         ?.also { kodiMatches += it }
                 }
-                if (currentLine.startsWith(VLC_OPT_MARK)) {
+                if (currentLine.startsWith(VLC_OPT_MARK, ignoreCase = true)) {
                     propertyRegex
                         .matchEntire(currentLine.drop(VLC_OPT_MARK.length).trim())
                         ?.let { match ->
@@ -89,7 +109,7 @@ internal class M3UParserImpl @Inject constructor() : M3UParser {
                             httpOptions += key.toHttpOptionKey() to value
                         }
                 }
-                if (currentLine.startsWith(EXT_HTTP_MARK)) {
+                if (currentLine.startsWith(EXT_HTTP_MARK, ignoreCase = true)) {
                     httpOptions += currentLine
                         .drop(EXT_HTTP_MARK.length)
                         .trim()
@@ -109,7 +129,7 @@ internal class M3UParserImpl @Inject constructor() : M3UParser {
                 continue
             }
 
-            val title = infoMatch?.groups?.get(3)?.value.orEmpty().trim()
+            val rawTitle = infoMatch?.groups?.get(3)?.value.orEmpty().trim()
             val duration = infoMatch?.groups?.get(1)?.value?.toDouble() ?: -1.0
             val metadata = buildMap {
                 val text = infoMatch?.groups?.get(2)?.value.orEmpty().trim()
@@ -118,23 +138,25 @@ internal class M3UParserImpl @Inject constructor() : M3UParser {
                     val key = match.groups[1]!!.value
                     val value = match.groups[2]?.value?.ifBlank { null }
                         ?: match.groups[3]?.value?.ifBlank { null }
+                        ?: match.groups[4]?.value?.ifBlank { null }
                         ?: continue
-                    put(key.trim(), value.trim())
+                    put(key.trim().lowercase(), value.trim())
                 }
             }
             val kodiMetadata = buildMap {
                 for (match in kodiMatches) {
                     val key = match.groups[1]!!.value
                     val value = match.groups[2]?.value?.ifBlank { null } ?: continue
-                    put(key.trim(), value.trim())
+                    put(key.trim().lowercase(), value.trim())
                 }
             }
+            val title = rawTitle.ifEmpty { metadata[M3U_TVG_NAME_MARK].orEmpty() }
             val urls = currentLine.splitSeparateStreamUrls()
             val entry = M3UData(
                 id = metadata[M3U_TVG_ID_MARK].orEmpty(),
                 name = metadata[M3U_TVG_NAME_MARK].orEmpty(),
                 cover = metadata[M3U_TVG_LOGO_MARK].orEmpty(),
-                group = metadata[M3U_GROUP_TITLE_MARK].orEmpty(),
+                group = metadata[M3U_GROUP_TITLE_MARK].orEmpty().ifEmpty { extGroup },
                 title = title,
                 url = urls.audioUrl,
                 videoUrl = urls.videoUrl,
@@ -142,9 +164,11 @@ internal class M3UParserImpl @Inject constructor() : M3UParser {
                 licenseType = kodiMetadata[KODI_LICENSE_TYPE]?.normalizeKodiLicenseType(),
                 licenseKey = kodiMetadata[KODI_LICENSE_KEY],
                 httpOptions = httpOptions.filterValues { it.isNotBlank() },
+                playlistEpgUrls = playlistEpgUrls,
             )
 
             infoMatch = null
+            extGroup = ""
             kodiMatches.clear()
             httpOptions.clear()
 
@@ -153,11 +177,11 @@ internal class M3UParserImpl @Inject constructor() : M3UParser {
     }
         .flowOn(Dispatchers.Default)
 
-    private fun String.toHttpOptionKey(): String = when (lowercase()) {
+    private fun String.toHttpOptionKey(): String = when (val key = lowercase()) {
         VLC_USER_AGENT -> StreamUrlOptions.USER_AGENT
         VLC_REFERER, VLC_REFERER_ALT -> StreamUrlOptions.REFERER
         VLC_ORIGIN -> StreamUrlOptions.ORIGIN
-        else -> removePrefix("http-")
+        else -> key.removePrefix("http-")
     }
 
     private fun String.normalizeKodiLicenseType(): String = when (lowercase()) {
@@ -219,7 +243,7 @@ internal class M3UParserImpl @Inject constructor() : M3UParser {
         for (index in text.indices) {
             if (text[index] != ';') continue
             val candidate = text.drop(index + 1).trim()
-            if (candidate.startsWithSupportedTxtUrlScheme()) {
+            if (candidate.startsWithSupportedStreamReference()) {
                 return SeparateStreamUrls(
                     audioUrl = text.take(index).trim(),
                     videoUrl = candidate
@@ -233,11 +257,44 @@ internal class M3UParserImpl @Inject constructor() : M3UParser {
         return supportedTxtUrlSchemes.any { scheme -> startsWith(scheme, ignoreCase = true) }
     }
 
+    private fun String.startsWithSupportedStreamReference(): Boolean =
+        startsWithSupportedTxtUrlScheme() || isRelativeStreamReference()
+
+    private fun String.isRelativeStreamReference(): Boolean {
+        val value = trim()
+        if (value.isBlank()) return false
+        if (value.first() in charArrayOf('#', '?', '&')) return false
+        if (value.substringBefore(":", missingDelimiterValue = "").isNotBlank()) return false
+        val path = value.substringBefore('?').substringBefore('#')
+        return '/' in path || mediaExtensionRegex.containsMatchIn(value)
+    }
+
     private fun String.parseExtHttpOptions(): Map<String, String> = runCatching {
         Json.parseToJsonElement(this)
             .jsonObject
             .toHttpOptions()
     }.getOrDefault(emptyMap())
+
+    private fun String.parsePlaylistEpgUrls(): List<String> {
+        val metadata = metadataRegex
+            .findAll(this)
+            .associate { match ->
+                val key = match.groups[1]!!.value
+                val value = match.groups[2]?.value?.ifBlank { null }
+                    ?: match.groups[3]?.value?.ifBlank { null }
+                    ?: match.groups[4]?.value?.ifBlank { null }
+                    ?: ""
+                key.trim().lowercase() to value.trim()
+            }
+        return listOf(M3U_X_TVG_URL_MARK, M3U_URL_TVG_MARK, M3U_TVG_URL_MARK)
+            .asSequence()
+            .mapNotNull(metadata::get)
+            .flatMap { urls -> urls.splitToSequence(',') }
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .distinct()
+            .toList()
+    }
 
     private fun JsonObject.toHttpOptions(): Map<String, String> = buildMap {
         for ((key, element) in this@toHttpOptions) {

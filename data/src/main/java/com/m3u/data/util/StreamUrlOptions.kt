@@ -3,7 +3,7 @@ package com.m3u.data.util
 import java.net.URLDecoder
 import java.net.URLEncoder
 
-internal object StreamUrlOptions {
+object StreamUrlOptions {
     const val USER_AGENT = "user-agent"
     const val REFERER = "referer"
     const val ORIGIN = "origin"
@@ -19,21 +19,24 @@ internal object StreamUrlOptions {
             }
         if (encodedOptions.isBlank()) return url
 
-        val separator = if ('|' in url) "&" else "|"
+        val separator = if (url.findOptionDelimiter() != null) "&" else "|"
         return "$url$separator$encodedOptions"
     }
 
     fun readFromUrl(url: String): Map<String, String?> {
-        val index = url.indexOf('|')
-        if (index == -1) return emptyMap()
-        return url
-            .drop(index + 1)
+        val delimiter = url.findOptionDelimiter() ?: return emptyMap()
+        val optionsText = url.drop(delimiter.index + delimiter.length)
+        return parseOptionParameters(optionsText)
+    }
+
+    private fun parseOptionParameters(text: String): Map<String, String?> {
+        return text
             .split("&")
             .filter { it.isNotBlank() }
             .associate {
-                val pair = it.split("=", limit = 2)
-                val key = pair.getOrNull(0).orEmpty()
-                val value = pair.getOrNull(1)
+                val pair = it.splitOptionPair()
+                val key = pair.first
+                val value = pair.second
                 normalizeKey(decode(key)) to value?.let(::decode)
             }
     }
@@ -49,8 +52,8 @@ internal object StreamUrlOptions {
     }
 
     fun stripFromUrl(url: String): String {
-        val index = url.indexOf('|')
-        return if (index == -1) url else url.take(index)
+        val delimiter = url.findOptionDelimiter()
+        return if (delimiter == null) url else url.take(delimiter.index)
     }
 
     private fun encode(value: String): String = URLEncoder.encode(value, Charsets.UTF_8.name())
@@ -58,6 +61,37 @@ internal object StreamUrlOptions {
     private fun decode(value: String): String = runCatching {
         URLDecoder.decode(value, Charsets.UTF_8.name())
     }.getOrDefault(value)
+
+    private fun String.splitOptionPair(): Pair<String, String?> {
+        val literalPair = split("=", limit = 2)
+        if (literalPair.size > 1) {
+            return literalPair[0] to literalPair[1]
+        }
+        val decodedPair = decode(this).split("=", limit = 2)
+        return decodedPair[0] to decodedPair.getOrNull(1)
+    }
+
+    private fun String.findOptionDelimiter(): OptionDelimiter? {
+        val literalDelimiter = indexOf('|')
+            .takeIf { it != -1 }
+            ?.let { OptionDelimiter(index = it, length = 1) }
+
+        val encodedPipeRegex = "%7c".toRegex(RegexOption.IGNORE_CASE)
+        val encodedDelimiter = encodedPipeRegex
+            .find(this)
+            ?.takeIf { match ->
+                val key = substring(match.range.last + 1)
+                    .substringBefore("&")
+                    .splitOptionPair()
+                    .first
+                    .let(::decode)
+                normalizeKey(key).isKnownOptionKey() || key.lowercase().startsWith("http-")
+            }
+            ?.let { OptionDelimiter(index = it.range.first, length = it.value.length) }
+
+        return listOfNotNull(literalDelimiter, encodedDelimiter)
+            .minByOrNull { it.index }
+    }
 
     private fun normalizeKey(value: String): String = when (value.lowercase()) {
         "http-user-agent", USER_AGENT -> USER_AGENT
@@ -75,4 +109,14 @@ internal object StreamUrlOptions {
         COOKIE -> "Cookie"
         else -> takeIf { it.isNotBlank() }
     }
+
+    private fun String.isKnownOptionKey(): Boolean = when (this) {
+        USER_AGENT, REFERER, ORIGIN, COOKIE, VIDEO_URL -> true
+        else -> false
+    }
+
+    private data class OptionDelimiter(
+        val index: Int,
+        val length: Int
+    )
 }

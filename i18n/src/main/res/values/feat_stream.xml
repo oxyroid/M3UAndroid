@@ -9,6 +9,7 @@
     <string name="feat_channel_tooltip_unmute">unmute</string>
     <string name="feat_channel_tooltip_favourite">favourite</string>
     <string name="feat_channel_tooltip_unfavourite">unfavourite</string>
+    <string name="feat_channel_tooltip_record">record</string>
     <string name="feat_channel_tooltip_download">download</string>
     <string name="feat_channel_tooltip_stop_download">stop download</string>
     <string name="feat_channel_tooltip_cast">cast screen</string>

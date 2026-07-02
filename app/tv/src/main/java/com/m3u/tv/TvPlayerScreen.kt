@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,6 +21,8 @@ import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.tv.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
@@ -42,7 +45,10 @@ import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_TEXTURE_VIEW
 import com.m3u.core.util.basic.title
 import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.Programme
 import com.m3u.i18n.R.string
+import java.text.DateFormat
+import java.util.Date
 import kotlinx.coroutines.yield
 
 @Composable
@@ -52,6 +58,7 @@ fun TvPlayerScreen(
     isFavorite: Boolean,
     isPlaying: Boolean,
     playbackState: Int,
+    programme: Programme?,
     onPlayPause: () -> Unit,
     onFavorite: () -> Unit,
     onPreviousChannel: () -> Unit,
@@ -75,23 +82,19 @@ fun TvPlayerScreen(
                     return@onPreviewKeyEvent false
                 }
                 when (event.nativeKeyEvent.keyCode) {
-                    KeyEvent.KEYCODE_DPAD_UP -> {
+                    KeyEvent.KEYCODE_DPAD_UP,
+                    KeyEvent.KEYCODE_CHANNEL_DOWN,
+                    KeyEvent.KEYCODE_PAGE_DOWN,
+                    KeyEvent.KEYCODE_MEDIA_PREVIOUS -> {
                         onPreviousChannel()
                         true
                     }
 
-                    KeyEvent.KEYCODE_DPAD_DOWN -> {
+                    KeyEvent.KEYCODE_DPAD_DOWN,
+                    KeyEvent.KEYCODE_CHANNEL_UP,
+                    KeyEvent.KEYCODE_PAGE_UP,
+                    KeyEvent.KEYCODE_MEDIA_NEXT -> {
                         onNextChannel()
-                        true
-                    }
-
-                    KeyEvent.KEYCODE_CHANNEL_UP -> {
-                        onNextChannel()
-                        true
-                    }
-
-                    KeyEvent.KEYCODE_CHANNEL_DOWN -> {
-                        onPreviousChannel()
                         true
                     }
 
@@ -133,6 +136,16 @@ fun TvPlayerScreen(
                 focusRequester = playPauseFocusRequester
             )
             TvIconActionButton(
+                icon = Icons.Rounded.SkipPrevious,
+                contentDescription = stringResource(string.tv_action_previous_channel),
+                onClick = onPreviousChannel
+            )
+            TvIconActionButton(
+                icon = Icons.Rounded.SkipNext,
+                contentDescription = stringResource(string.tv_action_next_channel),
+                onClick = onNextChannel
+            )
+            TvIconActionButton(
                 icon = if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
                 contentDescription = if (isFavorite) {
                     stringResource(string.feat_channel_tooltip_unfavourite)
@@ -150,7 +163,7 @@ fun TvPlayerScreen(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
                 modifier = Modifier
                     .padding(start = 8.dp, end = 16.dp)
-                    .widthIn(max = 420.dp)
+                    .widthIn(max = 520.dp)
             ) {
                 Text(
                     text = channel?.title?.title().orEmpty(),
@@ -161,6 +174,29 @@ fun TvPlayerScreen(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
+                programme?.let {
+                    Text(
+                        text = it.programmeLine(),
+                        color = TvColors.TextPrimary.copy(alpha = 0.9f),
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
+                        fontFamily = TvFonts.Body,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    if (it.description.isNotBlank()) {
+                        Text(
+                            text = it.description,
+                            color = TvColors.TextSecondary,
+                            fontSize = 13.sp,
+                            lineHeight = 18.sp,
+                            fontFamily = TvFonts.Body,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
                 Text(
                     text = playerStateText(playbackState),
                     color = TvColors.TextSecondary,
@@ -179,4 +215,11 @@ private fun playerStateText(playbackState: Int): String = when (playbackState) {
     Player.STATE_READY -> stringResource(string.feat_channel_playback_state_ready)
     Player.STATE_ENDED -> stringResource(string.feat_channel_playback_state_ended)
     else -> stringResource(string.feat_channel_playback_state_idle)
+}
+
+private fun Programme.programmeLine(): String {
+    val formatter = DateFormat.getTimeInstance(DateFormat.SHORT)
+    val startText = formatter.format(Date(start))
+    val endText = formatter.format(Date(end))
+    return "$startText-$endText  ${title.title()}"
 }

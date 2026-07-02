@@ -23,10 +23,12 @@ import com.m3u.core.wrapper.mapResource
 import com.m3u.core.wrapper.resource
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
+import com.m3u.data.database.model.Programme
 import com.m3u.data.parser.xtream.XtreamChannelInfo
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.media.MediaRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
+import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.data.service.PlayerManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
@@ -48,6 +50,7 @@ class FavoriteViewModel @Inject constructor(
     private val channelRepository: ChannelRepository,
     private val mediaRepository: MediaRepository,
     private val playerManager: PlayerManager,
+    private val programmeRepository: ProgrammeRepository,
     settings: Settings,
 ) : ViewModel() {
     val zapping: StateFlow<Channel?> = combine(
@@ -148,4 +151,7 @@ class FavoriteViewModel @Inject constructor(
 
     suspend fun getPlaylist(playlistUrl: String): Playlist? =
         playlistRepository.get(playlistUrl)
+
+    suspend fun getProgrammeCurrently(channelId: Int): Programme? =
+        programmeRepository.getProgrammeCurrently(channelId)
 }

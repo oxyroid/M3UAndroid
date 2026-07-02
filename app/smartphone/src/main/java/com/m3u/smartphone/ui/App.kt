@@ -33,6 +33,7 @@ import androidx.compose.material3.SearchBarValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopSearchBar
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -54,6 +55,7 @@ import androidx.paging.PagingData
 import com.m3u.core.architecture.preferences.PreferencesKeys
 import com.m3u.core.architecture.preferences.preferenceOf
 import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.Programme
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.tv.model.RemoteDirection
 import com.m3u.smartphone.ui.business.channel.PlayerActivity
@@ -62,6 +64,7 @@ import com.m3u.smartphone.ui.common.AppNavHost
 import com.m3u.smartphone.ui.common.connect.RemoteControlSheet
 import com.m3u.smartphone.ui.common.connect.RemoteControlSheetValue
 import com.m3u.smartphone.ui.common.helper.LocalHelper
+import com.m3u.smartphone.ui.common.helper.useRailNav
 import com.m3u.smartphone.ui.common.internal.Events
 import com.m3u.smartphone.ui.material.components.Destination
 import com.m3u.smartphone.ui.material.components.EventHandler
@@ -90,6 +93,7 @@ fun App(
         checkTvCodeOnSmartphone = viewModel::checkTvCodeOnSmartphone,
         forgetTvCodeOnSmartphone = viewModel::forgetTvCodeOnSmartphone,
         onRemoteDirection = viewModel::onRemoteDirection,
+        getProgrammeCurrently = viewModel::getProgrammeCurrently,
         onDismissRequest = {
             viewModel.code = ""
             viewModel.isConnectSheetVisible = false
@@ -111,6 +115,7 @@ private fun AppImpl(
     checkTvCodeOnSmartphone: () -> Unit,
     forgetTvCodeOnSmartphone: () -> Unit,
     onRemoteDirection: (RemoteDirection) -> Unit,
+    getProgrammeCurrently: suspend (channelId: Int) -> Programme?,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -173,6 +178,11 @@ private fun AppImpl(
                     alwaysShowLabel = false
                 )
             }
+        },
+        layoutType = if (helper.useRailNav) {
+            NavigationSuiteType.NavigationRail
+        } else {
+            NavigationSuiteType.NavigationBar
         },
         modifier = modifier
     ) {
@@ -239,7 +249,7 @@ private fun AppImpl(
                         }
                     },
                     onLongClick = {},
-                    getProgrammeCurrently = { null },
+                    getProgrammeCurrently = getProgrammeCurrently,
                     reloadThumbnail = { null },
                     syncThumbnail = { null },
                     contentPadding = WindowInsets.ime.asPaddingValues()
@@ -247,7 +257,7 @@ private fun AppImpl(
             }
             AppNavHost(
                 navController = navController,
-                navigateToDestination = { navController.navigate(it.name) },
+                navigateToDestination = navigateToDestination,
                 navigateToChannel = navigateToChannel,
                 modifier = Modifier
                     .fillMaxWidth()

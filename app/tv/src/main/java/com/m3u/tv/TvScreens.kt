@@ -867,6 +867,7 @@ private fun EmptyLibraryScreen(
             message = m3uSubscriptionMessage,
             onSubmit = onAddM3uPlaylist,
             onInputChange = onClearM3uSubscriptionMessage,
+            firstInputFocusRequester = initialFocusRequester,
             modifier = Modifier
                 .weight(0.72f)
                 .widthIn(max = 360.dp)
@@ -877,7 +878,6 @@ private fun EmptyLibraryScreen(
             message = xtreamSubscriptionMessage,
             onSubmit = onAddXtreamPlaylist,
             onInputChange = onClearXtreamSubscriptionMessage,
-            initialTypeFocusRequester = initialFocusRequester,
             modifier = Modifier
                 .weight(0.88f)
                 .widthIn(max = 420.dp)
@@ -950,6 +950,7 @@ private fun M3uSubscribePanel(
                 text = message?.let { m3uSubscriptionMessageText(it) }.orEmpty(),
                 color = when (message) {
                     TvM3uSubscriptionMessage.Enqueued -> TvColors.Focus
+                    TvM3uSubscriptionMessage.InvalidInput,
                     TvM3uSubscriptionMessage.MissingFields -> TvColors.Accent
                     null -> Color.Transparent
                 },
@@ -1211,9 +1212,11 @@ private fun xtreamSubscriptionMessageText(message: TvXtreamSubscriptionMessage):
 private fun m3uSubscriptionMessageText(message: TvM3uSubscriptionMessage): String =
     when (message) {
         TvM3uSubscriptionMessage.MissingFields ->
-            stringResource(string.tv_xtream_message_missing_fields)
+            stringResource(string.tv_m3u_message_missing_fields)
+        TvM3uSubscriptionMessage.InvalidInput ->
+            stringResource(string.tv_m3u_message_invalid_input)
         TvM3uSubscriptionMessage.Enqueued ->
-            stringResource(string.tv_xtream_message_enqueued)
+            stringResource(string.tv_m3u_message_enqueued)
     }
 
 @Composable

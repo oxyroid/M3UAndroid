@@ -56,6 +56,7 @@ import kotlinx.coroutines.launch
 import net.mm2d.upnp.ControlPoint
 import net.mm2d.upnp.ControlPointFactory
 import net.mm2d.upnp.Device
+import java.net.URLDecoder
 import javax.inject.Inject
 import kotlin.math.roundToInt
 import kotlin.time.Clock
@@ -238,7 +239,8 @@ class ChannelViewModel @Inject constructor(
     }
 
     override fun onLost(device: Device) {
-        devices = devices.filterNot { it.hasSameIdentity(device) }
+        val renderer = device.findDlnaRendererDevice() ?: device
+        devices = devices.filterNot { it.hasSameIdentity(renderer) }
     }
 
     private var controlPoint: ControlPoint? = null
@@ -247,7 +249,7 @@ class ChannelViewModel @Inject constructor(
 
     fun connectDlnaDevice(device: Device) {
         val channel = channel.value ?: return
-        val url = channel.url.substringBefore('|')
+        val url = channel.url.stripDlnaUrlOptions()
         viewModelScope.launch(Dispatchers.IO) {
             runCatching {
                 device.findAvTransportAction(ACTION_SET_AV_TRANSPORT_URI)?.invokeSync(
@@ -265,12 +267,23 @@ class ChannelViewModel @Inject constructor(
                     ),
                     false
                 )
+            }.onSuccess {
+                _searching.value = false
+                _isDevicesVisible.value = false
+                stopDlnaSearch(clearDevices = false)
             }
         }
     }
 
     fun disconnectDlnaDevice(device: Device) {
-
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching {
+                device.findAvTransportAction(ACTION_STOP)?.invokeSync(
+                    mapOf(INSTANCE_ID to "0"),
+                    false
+                )
+            }
+        }
     }
 
     fun onFavorite() {
@@ -511,6 +524,29 @@ class ChannelViewModel @Inject constructor(
         """.trimMargin().replace("\n", "")
     }
 
+    private fun String.stripDlnaUrlOptions(): String {
+        val literalOptionIndex = indexOf('|').takeIf { it >= 0 }
+        val encodedOptionIndex = ENCODED_PIPE_REGEX
+            .findAll(this)
+            .firstOrNull { match -> hasDlnaUrlOptionAfter(match.range.last + 1) }
+            ?.range
+            ?.first
+        val optionIndex = listOfNotNull(literalOptionIndex, encodedOptionIndex).minOrNull()
+        return optionIndex?.let(::take) ?: this
+    }
+
+    private fun String.hasDlnaUrlOptionAfter(startIndex: Int): Boolean {
+        val option = substring(startIndex)
+            .substringBefore('&')
+        val key = runCatching {
+            URLDecoder.decode(option, Charsets.UTF_8.name())
+        }
+            .getOrDefault(option)
+            .substringBefore('=')
+            .lowercase()
+        return key in DLNA_STRIPPED_OPTION_KEYS || key.startsWith("http-")
+    }
+
     private fun String.escapeXml(): String = buildString(length) {
         this@escapeXml.forEach { char ->
             append(
@@ -550,5 +586,15 @@ class ChannelViewModel @Inject constructor(
         private const val CURRENT_URI = "CurrentURI"
         private const val CURRENT_URI_META_DATA = "CurrentURIMetaData"
         private const val SPEED = "Speed"
+
+        private val ENCODED_PIPE_REGEX = "%7c".toRegex(RegexOption.IGNORE_CASE)
+        private val DLNA_STRIPPED_OPTION_KEYS = setOf(
+            "cookie",
+            "origin",
+            "referer",
+            "referrer",
+            "user-agent",
+            "video-url"
+        )
     }
 }

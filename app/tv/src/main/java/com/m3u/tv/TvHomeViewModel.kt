@@ -1,5 +1,6 @@
 package com.m3u.tv
 
+import android.content.ContentResolver
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
@@ -17,9 +18,11 @@ import com.m3u.core.architecture.preferences.get
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
+import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.isSeries
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
+import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.data.repository.tv.TvRepository
 import com.m3u.data.service.DPadReactionService
 import com.m3u.data.service.MediaCommand
@@ -39,12 +42,16 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.File
+import kotlin.time.Duration.Companion.minutes
 
 @Immutable
 data class TvUiState(
@@ -68,6 +75,7 @@ enum class TvXtreamSubscriptionMessage {
 
 enum class TvM3uSubscriptionMessage {
     MissingFields,
+    InvalidInput,
     Enqueued
 }
 
@@ -76,6 +84,7 @@ class TvHomeViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val playlistRepository: PlaylistRepository,
     private val channelRepository: ChannelRepository,
+    private val programmeRepository: ProgrammeRepository,
     private val playerManager: PlayerManager,
     private val settings: Settings,
     private val workManager: WorkManager,
@@ -103,6 +112,20 @@ class TvHomeViewModel @Inject constructor(
         )
     val isPlaying: StateFlow<Boolean> = playerManager.isPlaying
     val playbackState: StateFlow<Int> = playerManager.playbackState
+    val currentProgramme: StateFlow<Programme?> = currentChannel.flatMapLatest { channel ->
+        channel ?: return@flatMapLatest flowOf<Programme?>(null)
+        flow {
+            while (true) {
+                emit(programmeRepository.getProgrammeCurrently(channel.id))
+                delay(1.minutes)
+            }
+        }
+    }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = null,
+            started = SharingStarted.WhileSubscribed(5_000)
+        )
     val remoteControlCode: StateFlow<Int?> = tvRepository.broadcastCodeOnTv
     val remoteDirections = dPadReactionService.incoming
     val subscribingXtream: StateFlow<Boolean> = workManager
@@ -228,9 +251,13 @@ class TvHomeViewModel @Inject constructor(
 
     fun addM3uPlaylist(title: String, urlOrPath: String) {
         val normalizedTitle = title.trim()
-        val normalizedUrlOrPath = urlOrPath.toM3uUrlOrPath()
-        if (normalizedTitle.isBlank() || normalizedUrlOrPath.isBlank()) {
+        val input = urlOrPath.trim()
+        if (normalizedTitle.isBlank() || input.isBlank()) {
             _m3uSubscriptionMessage.value = TvM3uSubscriptionMessage.MissingFields
+            return
+        }
+        val normalizedUrlOrPath = input.toM3uUrlOrPath() ?: run {
+            _m3uSubscriptionMessage.value = TvM3uSubscriptionMessage.InvalidInput
             return
         }
         SubscriptionWorker.m3u(
@@ -357,10 +384,10 @@ class TvHomeViewModel @Inject constructor(
             if (startupDelay > 0) {
                 delay(startupDelay)
             }
-            if (!isNetworkConnected()) {
+            val channel = channelRepository.getPlayedRecently() ?: return@launch
+            if (channel.url.requiresNetwork() && !isNetworkConnected()) {
                 return@launch
             }
-            val channel = channelRepository.getPlayedRecently() ?: return@launch
             val playlist = playlistRepository.get(channel.playlistUrl)
             if (playlist?.isSeries == true) {
                 return@launch
@@ -375,6 +402,12 @@ class TvHomeViewModel @Inject constructor(
         val network = manager.activeNetwork ?: return false
         val capabilities = manager.getNetworkCapabilities(network) ?: return false
         return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
+    private fun String.requiresNetwork(): Boolean {
+        val scheme = substringBefore('|').substringBefore(':', missingDelimiterValue = "")
+        return scheme.equals(ContentResolver.SCHEME_CONTENT, ignoreCase = true).not() &&
+                scheme.equals(ContentResolver.SCHEME_FILE, ignoreCase = true).not()
     }
 
     private fun loadChannels(url: String) {
@@ -408,10 +441,15 @@ class TvHomeViewModel @Inject constructor(
         entries.firstOrNull { it.key.url == url }?.value
 }
 
-private fun String.toM3uUrlOrPath(): String {
+private fun String.toM3uUrlOrPath(): String? {
     val input = trim()
     return when {
         input.startsWith("/") -> Uri.fromFile(File(input)).toString()
+        input.startsWith("http://", ignoreCase = true) ||
+            input.startsWith("https://", ignoreCase = true) ||
+            input.startsWith("${ContentResolver.SCHEME_FILE}:", ignoreCase = true) ||
+            input.startsWith("${ContentResolver.SCHEME_CONTENT}:", ignoreCase = true) -> input
+        input.substringBefore(":", missingDelimiterValue = "").isNotBlank() -> null
         else -> input
     }
 }

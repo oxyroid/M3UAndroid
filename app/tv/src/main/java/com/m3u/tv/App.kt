@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -30,6 +32,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.Text
 import com.m3u.data.tv.model.keyCode
+import com.m3u.i18n.R.string
 
 @Composable
 fun App(
@@ -42,6 +45,7 @@ fun App(
     val currentFavorite by viewModel.currentFavorite.collectAsStateWithLifecycle()
     val isPlaying by viewModel.isPlaying.collectAsStateWithLifecycle()
     val playbackState by viewModel.playbackState.collectAsStateWithLifecycle()
+    val currentProgramme by viewModel.currentProgramme.collectAsStateWithLifecycle()
     val remoteControlCode by viewModel.remoteControlCode.collectAsStateWithLifecycle()
     val subscribingXtream by viewModel.subscribingXtream.collectAsStateWithLifecycle()
     val subscribingM3u by viewModel.subscribingM3u.collectAsStateWithLifecycle()
@@ -87,7 +91,10 @@ fun App(
         Row(Modifier.fillMaxSize()) {
             TvNavigationRail(
                 selected = destination,
-                onSelect = { destination = it }
+                onSelect = {
+                    focusChannelsOnLibraryOpen = it == TvDestination.Library
+                    destination = it
+                }
             )
             TvBrowsePane(
                 destination = destination,
@@ -134,6 +141,7 @@ fun App(
                 isFavorite = currentFavorite,
                 isPlaying = isPlaying,
                 playbackState = playbackState,
+                programme = currentProgramme,
                 onPlayPause = { viewModel.pauseOrContinue(!isPlaying) },
                 onFavorite = viewModel::toggleCurrentFavorite,
                 onPreviousChannel = viewModel::playPreviousChannel,
@@ -144,18 +152,28 @@ fun App(
         }
 
         remoteControlCode?.let { code ->
-            Text(
-                text = code.toString().padStart(6, '0'),
-                color = TvColors.TextPrimary,
-                fontFamily = TvFonts.Body,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
+            Column(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(24.dp)
                     .background(TvColors.Surface.copy(alpha = 0.86f), RoundedCornerShape(8.dp))
                     .padding(horizontal = 18.dp, vertical = 10.dp)
-            )
+            ) {
+                Text(
+                    text = stringResource(string.tv_remote_pairing_code),
+                    color = TvColors.TextSecondary,
+                    fontFamily = TvFonts.Body,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = code.toString().padStart(6, '0'),
+                    color = TvColors.TextPrimary,
+                    fontFamily = TvFonts.Body,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }

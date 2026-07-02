@@ -126,8 +126,12 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
             epgUrls = epgUrls,
             ignoreCache = ignoreCache
         )
+        val cleanedEpgUrls = mutableSetOf<String>()
         var count = 0
         producer.collect { programme ->
+            if (cleanedEpgUrls.add(programme.epgUrl)) {
+                programmeDao.cleanByEpgUrl(programme.epgUrl)
+            }
             programmeDao.insertOrReplace(programme)
             send(++count)
         }
@@ -176,7 +180,6 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
                             return@supervisorScope
                         }
 
-                        programmeDao.cleanByEpgUrl(epgUrl)
                         downloadProgrammes(epgUrl)
                             .collect { epgProgramme ->
                                 epgProgramme.toProgrammes(epgUrl).forEach { programme ->
@@ -200,10 +203,13 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
         val response = okHttpClient.newCall(request).execute()
         val url = response.request.url
         val contentType = response.header("Content-Type").orEmpty()
+        val contentEncoding = response.header("Content-Encoding").orEmpty()
 
-        val isGzip = "gzip" in contentType ||
-                // soft rule, cover the situation which with wrong MIME_TYPE(text, octect etc.)
-                url.pathSegments.lastOrNull()?.endsWith(".gz") == true
+        val isGzip = isGzipEpgResponse(
+            contentType = contentType,
+            contentEncoding = contentEncoding,
+            lastPathSegment = url.pathSegments.lastOrNull()
+        )
 
         response
             .body
@@ -250,13 +256,29 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
         return channel?.programmeRelationIds(relationId) ?: listOf(relationId)
     }
 
-    private fun Channel.programmeRelationIds(relationId: String? = this.relationId): List<String> {
-        return listOfNotNull(
-            relationId?.takeIf { it.isNotBlank() },
-            title.takeIf { it.isNotBlank() }
-        ).distinct()
-    }
+    private fun Channel.programmeRelationIds(relationId: String? = this.relationId): List<String> =
+        buildProgrammeRelationIds(
+            relationId = relationId,
+            title = title
+        )
 
+}
+
+internal fun buildProgrammeRelationIds(
+    relationId: String?,
+    title: String
+): List<String> {
+    return listOfNotNull(relationId, title)
+        .flatMap { value ->
+            val trimmed = value.trim()
+            listOf(
+                trimmed,
+                trimmed.lowercase(),
+                trimmed.uppercase()
+            )
+        }
+        .filter { it.isNotBlank() }
+        .distinct()
 }
 
 internal fun Programme.withTimeOffset(offset: Long): Programme {
@@ -272,3 +294,13 @@ internal fun ProgrammeRange.withTimeOffset(offset: Long): ProgrammeRange {
     if (offset == 0L) return this
     return this + offset.milliseconds
 }
+
+internal fun isGzipEpgResponse(
+    contentType: String,
+    contentEncoding: String,
+    lastPathSegment: String?
+): Boolean =
+    "gzip" in contentType.lowercase() ||
+            "gzip" in contentEncoding.lowercase() ||
+            // soft rule, cover the situation which with wrong MIME_TYPE(text, octect etc.)
+            lastPathSegment?.lowercase()?.endsWith(".gz") == true

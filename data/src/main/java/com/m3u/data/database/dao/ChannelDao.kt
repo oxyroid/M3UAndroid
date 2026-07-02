@@ -24,7 +24,11 @@ interface ChannelDao {
             FROM streams
             WHERE playlist_url = :playlistUrl
             AND hidden = 0
-            AND title LIKE '%'||:query||'%'
+            AND (
+                title LIKE '%'||:query||'%'
+                OR `group` LIKE '%'||:query||'%'
+                OR relation_id LIKE '%'||:query||'%'
+            )
         """
     )
     suspend fun getCategoriesByPlaylistUrl(
@@ -38,7 +42,11 @@ interface ChannelDao {
             FROM streams
             WHERE playlist_url = :playlistUrl
             AND hidden = 0
-            AND title LIKE '%'||:query||'%'
+            AND (
+                title LIKE '%'||:query||'%'
+                OR `group` LIKE '%'||:query||'%'
+                OR relation_id LIKE '%'||:query||'%'
+            )
         """
     )
     fun observeCategoriesByPlaylistUrl(
@@ -116,7 +124,7 @@ interface ChannelDao {
     @Query("SELECT * FROM streams WHERE hidden = 0")
     fun observeAllUnhidden(): Flow<List<Channel>>
 
-    @Query("SELECT * FROM streams WHERE favourite = 1")
+    @Query("SELECT * FROM streams WHERE favourite = 1 AND hidden = 0")
     fun observeAllFavorite(): Flow<List<Channel>>
 
     @Query("SELECT * FROM streams WHERE hidden = 1")
@@ -127,7 +135,11 @@ interface ChannelDao {
             SELECT * FROM streams
             WHERE playlist_url = :url
             AND hidden = 0
-            AND title LIKE '%'||:query||'%'
+            AND (
+                title LIKE '%'||:query||'%'
+                OR `group` LIKE '%'||:query||'%'
+                OR relation_id LIKE '%'||:query||'%'
+            )
             AND `group` = :category
         """
     )
@@ -142,7 +154,11 @@ interface ChannelDao {
             SELECT * FROM streams
             WHERE playlist_url = :url
             AND hidden = 0
-            AND title LIKE '%'||:query||'%'
+            AND (
+                title LIKE '%'||:query||'%'
+                OR `group` LIKE '%'||:query||'%'
+                OR relation_id LIKE '%'||:query||'%'
+            )
             AND `group` = :category
             ORDER BY title ASC
         """
@@ -158,7 +174,11 @@ interface ChannelDao {
             SELECT * FROM streams
             WHERE playlist_url = :url
             AND hidden = 0
-            AND title LIKE '%'||:query||'%'
+            AND (
+                title LIKE '%'||:query||'%'
+                OR `group` LIKE '%'||:query||'%'
+                OR relation_id LIKE '%'||:query||'%'
+            )
             AND `group` = :category
             ORDER BY title DESC
         """
@@ -174,7 +194,11 @@ interface ChannelDao {
             SELECT * FROM streams
             WHERE playlist_url = :url
             AND hidden = 0
-            AND title LIKE '%'||:query||'%'
+            AND (
+                title LIKE '%'||:query||'%'
+                OR `group` LIKE '%'||:query||'%'
+                OR relation_id LIKE '%'||:query||'%'
+            )
             AND `group` = :category
             ORDER BY seen DESC
         """
@@ -190,7 +214,11 @@ interface ChannelDao {
             SELECT * FROM streams
             WHERE playlist_url = :url
             AND hidden = 0
-            AND title LIKE '%'||:query||'%'
+            AND (
+                title LIKE '%'||:query||'%'
+                OR `group` LIKE '%'||:query||'%'
+                OR relation_id LIKE '%'||:query||'%'
+            )
         """
     )
     fun pagingAllByPlaylistUrlAcrossCategories(
@@ -203,7 +231,11 @@ interface ChannelDao {
             SELECT * FROM streams
             WHERE playlist_url = :url
             AND hidden = 0
-            AND title LIKE '%'||:query||'%'
+            AND (
+                title LIKE '%'||:query||'%'
+                OR `group` LIKE '%'||:query||'%'
+                OR relation_id LIKE '%'||:query||'%'
+            )
             ORDER BY title ASC
         """
     )
@@ -217,7 +249,11 @@ interface ChannelDao {
             SELECT * FROM streams
             WHERE playlist_url = :url
             AND hidden = 0
-            AND title LIKE '%'||:query||'%'
+            AND (
+                title LIKE '%'||:query||'%'
+                OR `group` LIKE '%'||:query||'%'
+                OR relation_id LIKE '%'||:query||'%'
+            )
             ORDER BY title DESC
         """
     )
@@ -231,7 +267,11 @@ interface ChannelDao {
             SELECT * FROM streams
             WHERE playlist_url = :url
             AND hidden = 0
-            AND title LIKE '%'||:query||'%'
+            AND (
+                title LIKE '%'||:query||'%'
+                OR `group` LIKE '%'||:query||'%'
+                OR relation_id LIKE '%'||:query||'%'
+            )
             ORDER BY seen DESC
         """
     )
@@ -245,7 +285,11 @@ interface ChannelDao {
             SELECT * FROM streams 
             WHERE playlist_url = :url
             AND hidden = 0
-            AND title LIKE '%'||:query||'%'
+            AND (
+                title LIKE '%'||:query||'%'
+                OR `group` LIKE '%'||:query||'%'
+                OR relation_id LIKE '%'||:query||'%'
+            )
         """
     )
     fun pagingAllByPlaylistUrlMixed(
@@ -286,11 +330,13 @@ interface ChannelDao {
             SELECT
                 (SELECT id FROM streams
                  WHERE playlist_url = :playlistUrl
+                   AND hidden = 0
                    AND `group` = :category
                    AND title < (SELECT title FROM TargetChannel)
                    ORDER BY title DESC LIMIT 1) AS next_id,
                 (SELECT id FROM streams
                  WHERE playlist_url = :playlistUrl
+                   AND hidden = 0
                    AND `group` = :category
                    AND title > (SELECT title FROM TargetChannel)
                    ORDER BY title ASC LIMIT 1) AS prev_id
@@ -323,6 +369,7 @@ interface ChannelDao {
         """
             SELECT * FROM streams WHERE 1
             AND favourite = 1
+            AND hidden = 0
             AND (
                 title LIKE '%'||:query||'%'
                 OR `group` LIKE '%'||:query||'%'
@@ -335,6 +382,7 @@ interface ChannelDao {
         """
             SELECT * FROM streams WHERE 1
             AND favourite = 1
+            AND hidden = 0
             AND (
                 title LIKE '%'||:query||'%'
                 OR `group` LIKE '%'||:query||'%'
@@ -349,6 +397,7 @@ interface ChannelDao {
         """
             SELECT * FROM streams WHERE 1
             AND favourite = 1
+            AND hidden = 0
             AND (
                 title LIKE '%'||:query||'%'
                 OR `group` LIKE '%'||:query||'%'
@@ -362,6 +411,7 @@ interface ChannelDao {
         """
             SELECT * FROM streams WHERE 1
             AND favourite = 1
+            AND hidden = 0
             AND (
                 title LIKE '%'||:query||'%'
                 OR `group` LIKE '%'||:query||'%'

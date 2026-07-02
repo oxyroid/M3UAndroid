@@ -26,6 +26,7 @@ import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Unarchive
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -56,6 +57,13 @@ internal fun OptionalFragment(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
+    var resumeLastChannel by mutablePreferenceOf(PreferencesKeys.RESUME_LAST_CHANNEL_ON_STARTUP)
+    var launchOnBoot by mutablePreferenceOf(PreferencesKeys.LAUNCH_ON_BOOT)
+    LaunchedEffect(resumeLastChannel, launchOnBoot) {
+        if (!resumeLastChannel && launchOnBoot) {
+            launchOnBoot = false
+        }
+    }
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(spacing.small),
         contentPadding = contentPadding + PaddingValues(spacing.medium),
@@ -122,22 +130,26 @@ internal fun OptionalFragment(
             )
         }
         item {
-            var resumeLastChannel by mutablePreferenceOf(PreferencesKeys.RESUME_LAST_CHANNEL_ON_STARTUP)
             SwitchSharedPreference(
                 title = string.feat_setting_resume_last_channel_on_startup,
                 content = string.feat_setting_resume_last_channel_on_startup_description,
                 icon = Icons.Rounded.ReplayCircleFilled,
                 checked = resumeLastChannel,
-                onChanged = { resumeLastChannel = !resumeLastChannel }
+                onChanged = {
+                    resumeLastChannel = !resumeLastChannel
+                    if (!resumeLastChannel) {
+                        launchOnBoot = false
+                    }
+                }
             )
         }
         item {
-            var launchOnBoot by mutablePreferenceOf(PreferencesKeys.LAUNCH_ON_BOOT)
             SwitchSharedPreference(
                 title = string.feat_setting_launch_on_boot,
                 content = string.feat_setting_launch_on_boot_description,
                 icon = Icons.Rounded.PowerSettingsNew,
-                checked = launchOnBoot,
+                enabled = resumeLastChannel,
+                checked = launchOnBoot && resumeLastChannel,
                 onChanged = { launchOnBoot = !launchOnBoot }
             )
         }

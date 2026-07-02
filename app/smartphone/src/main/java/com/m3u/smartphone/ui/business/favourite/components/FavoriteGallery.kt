@@ -11,11 +11,15 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import com.m3u.core.foundation.components.CircularProgressIndicator
 import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.Programme
 import com.m3u.smartphone.ui.material.ktx.plus
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 
@@ -26,11 +30,13 @@ internal fun FavoriteGallery(
     zapping: Channel?,
     recently: Boolean,
     rowCount: Int,
+    getProgrammeCurrently: suspend (channelId: Int) -> Programme?,
     onClick: (Channel) -> Unit,
     onLongClick: (Channel) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
+    val currentGetProgrammeCurrently by rememberUpdatedState(getProgrammeCurrently)
     Row(
         modifier = modifier
             .fillMaxSize()
@@ -57,8 +63,17 @@ internal fun FavoriteGallery(
                 if (channel == null) {
                     CircularProgressIndicator()
                 } else {
+                    val programme: Programme? by produceState<Programme?>(
+                        initialValue = null,
+                        key1 = channel.id,
+                        key2 = recently
+                    ) {
+                        if (recently) return@produceState
+                        value = currentGetProgrammeCurrently(channel.id)
+                    }
                     FavoriteItem(
                         channel = channel,
+                        programme = programme,
                         zapping = zapping == channel,
                         onClick = { onClick(channel) },
                         onLongClick = { onLongClick(channel) },

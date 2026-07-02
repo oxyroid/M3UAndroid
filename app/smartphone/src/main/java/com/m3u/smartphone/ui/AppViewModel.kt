@@ -12,8 +12,10 @@ import androidx.paging.PagingData
 import androidx.work.WorkManager
 import com.m3u.data.api.TvApiDelegate
 import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.Programme
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
+import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.data.repository.tv.ConnectionToTvValue
 import com.m3u.data.repository.tv.TvRepository
 import com.m3u.data.tv.model.RemoteDirection
@@ -40,6 +42,7 @@ class AppViewModel @Inject constructor(
     private val workManager: WorkManager,
     private val tvRepository: TvRepository,
     private val tvApi: TvApiDelegate,
+    private val programmeRepository: ProgrammeRepository,
 ) : ViewModel() {
     val channels: Flow<PagingData<Channel>> = snapshotFlow { searchQuery.value }
         .map { it.trim() }
@@ -61,6 +64,11 @@ class AppViewModel @Inject constructor(
         }
 
     var searchQuery = mutableStateOf("")
+
+    suspend fun getProgrammeCurrently(channelId: Int): Programme? {
+        return programmeRepository.getProgrammeCurrently(channelId)
+    }
+
     private fun refreshProgrammes() {
         viewModelScope.launch {
             val playlists = playlistRepository.getAllAutoRefresh()

@@ -3,6 +3,7 @@ package com.m3u.data.parser.m3u
 import androidx.core.net.toUri
 import com.m3u.data.database.model.Channel
 import com.m3u.data.util.StreamUrlOptions
+import java.net.URI
 
 internal data class M3UData(
     val id: String = "",
@@ -16,6 +17,7 @@ internal data class M3UData(
     val licenseType: String? = null,
     val licenseKey: String? = null,
     val httpOptions: Map<String, String> = emptyMap(),
+    val playlistEpgUrls: List<String> = emptyList(),
 )
 
 internal fun M3UData.toChannel(
@@ -55,7 +57,9 @@ internal fun M3UData.toChannel(
 
 private fun String.toAbsoluteUrl(playlistUrl: String): String {
     val fileScheme = "file:///"
-    if (!startsWith(fileScheme)) return this
+    if (!startsWith(fileScheme)) {
+        return resolveRelativeUrl(playlistUrl)
+    }
 
     val relativePath = drop(fileScheme.length)
     return with(playlistUrl.toUri()) {
@@ -65,4 +69,13 @@ private fun String.toAbsoluteUrl(playlistUrl: String): String {
             .build()
             .toString()
     }
+}
+
+private fun String.resolveRelativeUrl(playlistUrl: String): String {
+    val value = trim()
+    if (value.isBlank()) return this
+    if (value.substringBefore(":", missingDelimiterValue = "").isNotBlank()) return this
+    return runCatching {
+        URI(playlistUrl).resolve(value).toASCIIString()
+    }.getOrDefault(this)
 }

@@ -63,19 +63,12 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun maybeEnqueueViewedPlaylist(intent: Intent?): Boolean {
-        if (intent?.action != Intent.ACTION_VIEW) return false
-        val uri = intent.data ?: intent.streamUri()
+        val importIntent = intent?.takeIf { it.action in PLAYLIST_IMPORT_ACTIONS } ?: return false
+        val uri = importIntent.data ?: importIntent.streamUri()
         uri ?: return false
 
-        takeReadPermission(uri, intent.flags)
-        val title = uri.readFileName(contentResolver)
-            ?.substringBeforeLast('.')
-            ?.takeIf { it.isNotBlank() }
-            ?: uri.lastPathSegment
-                ?.substringAfterLast('/')
-                ?.substringBeforeLast('.')
-                ?.takeIf { it.isNotBlank() }
-            ?: getString(R.string.app_name)
+        takeReadPermission(uri, importIntent.flags)
+        val title = resolveViewedPlaylistTitle(uri)
 
         SubscriptionWorker.m3u(workManager, title, uri.toString())
         Toast.makeText(
@@ -84,6 +77,18 @@ class MainActivity : ComponentActivity() {
             Toast.LENGTH_SHORT
         ).show()
         return true
+    }
+
+    private fun resolveViewedPlaylistTitle(uri: Uri): String {
+        return runCatching { uri.readFileName(contentResolver) }
+            .getOrNull()
+            ?.substringBeforeLast('.')
+            ?.takeIf { it.isNotBlank() }
+            ?: uri.lastPathSegment
+                ?.substringAfterLast('/')
+                ?.substringBeforeLast('.')
+                ?.takeIf { it.isNotBlank() }
+            ?: getString(R.string.app_name)
     }
 
     @Suppress("DEPRECATION")
@@ -97,5 +102,9 @@ class MainActivity : ComponentActivity() {
         runCatching {
             contentResolver.takePersistableUriPermission(uri, modeFlags)
         }
+    }
+
+    companion object {
+        private val PLAYLIST_IMPORT_ACTIONS = setOf(Intent.ACTION_VIEW, Intent.ACTION_SEND)
     }
 }

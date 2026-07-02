@@ -3,6 +3,7 @@ package com.m3u.data.repository.playlist
 import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
+import androidx.core.net.toFile
 import androidx.core.net.toUri
 import androidx.work.WorkManager
 import com.m3u.core.architecture.preferences.PlaylistStrategy
@@ -139,11 +140,20 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             currentCount += all.size
             callback(currentCount)
         }
+        var playlistHeaderEpgUrlsApplied = false
 
         input.use { openedInput ->
             channelFlow {
                 m3uParser
                     .parse(openedInput.buffered())
+                    .onEach { data ->
+                        if (!playlistHeaderEpgUrlsApplied && data.playlistEpgUrls.isNotEmpty()) {
+                            playlistHeaderEpgUrlsApplied = true
+                            playlistDao.updateEpgUrls(internalUrl) { epgUrls ->
+                                (epgUrls + data.playlistEpgUrls).distinct()
+                            }
+                        }
+                    }
                     .filterNot {
                         val relationId = it.id
                         when {
@@ -151,7 +161,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                             else -> relationId in favOrHiddenRelationIds
                         }
                     }
-                    .collect { send(it) }
+                    .collect { data -> send(data) }
                 close()
             }
                 .onEach(cache::push)
@@ -712,6 +722,10 @@ internal class PlaylistRepositoryImpl @Inject constructor(
 
     private fun openAndroidInput(url: String): InputStream? {
         val uri = url.toUri()
+        if (uri.scheme == ContentResolver.SCHEME_FILE) {
+            runCatching { return uri.toFile().inputStream() }
+                .onFailure { timber.w(it, "Failed to open file playlist directly: $url") }
+        }
         return context.contentResolver.openInputStream(uri)
     }
 }

@@ -40,6 +40,26 @@ class PlaylistNetworkUrlTest {
     }
 
     @Test
+    fun normalizeM3uInputConvertsAbsoluteFilePathToFileUri() {
+        assertEquals(
+            "file:///sdcard/Download/My%20Playlist.m3u",
+            PlaylistNetworkUrl.normalizeM3uInput(" /sdcard/Download/My Playlist.m3u ")
+        )
+    }
+
+    @Test
+    fun normalizeM3uInputDoesNotTreatContentOrFileHostnamesAsAndroidUris() {
+        assertEquals(
+            "http://content.example.com/live.m3u",
+            PlaylistNetworkUrl.normalizeM3uInput("content.example.com/live.m3u")
+        )
+        assertEquals(
+            "http://file.example.com/live.m3u",
+            PlaylistNetworkUrl.normalizeM3uInput("file.example.com/live.m3u")
+        )
+    }
+
+    @Test
     fun normalizeAndroidFileUrlDecodesFileUrls() {
         assertEquals(
             "file:///data/user/0/com.m3u/files/My List 中文.m3u",
@@ -71,6 +91,26 @@ class PlaylistNetworkUrlTest {
             "Live.m3u",
             PlaylistNetworkUrl.resolveInternalFileName(
                 displayName = "Live.m3u",
+                lastPathSegment = "primary:Other.m3u",
+                fallbackName = "File_1"
+            )
+        )
+    }
+
+    @Test
+    fun resolveInternalFileNameUsesStableDisplayNameBasename() {
+        assertEquals(
+            "Live.m3u",
+            PlaylistNetworkUrl.resolveInternalFileName(
+                displayName = "Download/Live.m3u",
+                lastPathSegment = "primary:Other.m3u",
+                fallbackName = "File_1"
+            )
+        )
+        assertEquals(
+            "Live.m3u",
+            PlaylistNetworkUrl.resolveInternalFileName(
+                displayName = "Download\\Live.m3u",
                 lastPathSegment = "primary:Other.m3u",
                 fallbackName = "File_1"
             )

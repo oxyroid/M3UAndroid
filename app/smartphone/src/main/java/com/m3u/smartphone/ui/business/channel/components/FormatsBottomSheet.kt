@@ -99,9 +99,9 @@ internal fun FormatsBottomSheet(
                             type = type,
                             selected = option.selected,
                             onClick = {
-                                if (option.selected) {
+                                if (option.selected && type == C.TRACK_TYPE_TEXT) {
                                     onClearTrack(type)
-                                } else {
+                                } else if (!option.selected) {
                                     onChooseTrack(option)
                                 }
                             }

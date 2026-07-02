@@ -33,6 +33,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import java.io.FileNotFoundException
+import java.io.IOException
 import java.util.concurrent.atomic.AtomicInteger
 
 @HiltWorker
@@ -89,21 +91,34 @@ class SubscriptionWorker @AssistedInject constructor(
                         .buildThenNotify()
                     Result.failure()
                 } else {
-                    var total = 0
-                    playlistRepository.m3uOrThrow(title, url) { count ->
-                        total = count
-                        val notification = createN10nBuilder()
-                            .setContentText(findChannelProgressContentText(count))
-                            .addAction(cancelAction)
-                            .setOngoing(true)
-                            .build()
-                        notificationManager.notify(notificationId, notification)
-                    }
+                    try {
+                        var total = 0
+                        playlistRepository.m3uOrThrow(title, url) { count ->
+                            total = count
+                            val notification = createN10nBuilder()
+                                .setContentText(findChannelProgressContentText(count))
+                                .addAction(cancelAction)
+                                .setOngoing(true)
+                                .build()
+                            notificationManager.notify(notificationId, notification)
+                        }
 
-                    createN10nBuilder()
-                        .setContentText(findCompleteContentText(total))
-                        .buildThenNotify()
-                    Result.success()
+                        createN10nBuilder()
+                            .setContentText(findCompleteContentText(total))
+                            .buildThenNotify()
+                        Result.success()
+                    } catch (error: Exception) {
+                        if (shouldRetryM3uFailure(error, runAttemptCount)) {
+                            Result.retry()
+                        } else {
+                            createN10nBuilder()
+                                .setContentText(error.localizedMessage.orEmpty())
+                                .addAction(retryAction)
+                                .setColor(Color.RED)
+                                .buildThenNotify()
+                            Result.failure()
+                        }
+                    }
                 }
             }
 
@@ -290,7 +305,7 @@ class SubscriptionWorker @AssistedInject constructor(
                 .addTag(TAG)
                 .addTag(DataSource.M3U.value)
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-                .setConstraints(M3U_CONSTRAINTS)
+                .setConstraints(m3uConstraints())
                 .build()
             workManager.enqueue(request)
         }
@@ -396,8 +411,18 @@ class SubscriptionWorker @AssistedInject constructor(
             workManager.enqueue(request)
         }
 
-        internal val M3U_CONSTRAINTS: Constraints = Constraints.NONE
+        internal fun m3uConstraints(): Constraints = Constraints.NONE
+
+        internal fun shouldRetryM3uFailure(error: Throwable, runAttemptCount: Int): Boolean {
+            if (runAttemptCount >= MAX_M3U_RETRY_ATTEMPTS) return false
+            if (error is FileNotFoundException || error is SecurityException) return false
+            if (error is IOException) return true
+            return error.message
+                .orEmpty()
+                .contains("timeout", ignoreCase = true)
+        }
 
         private val ATOMIC_NOTIFICATION_ID = AtomicInteger()
+        private const val MAX_M3U_RETRY_ATTEMPTS = 2
     }
 }

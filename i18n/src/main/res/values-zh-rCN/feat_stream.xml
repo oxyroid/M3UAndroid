@@ -9,6 +9,7 @@
     <string name="feat_channel_tooltip_unmute">取消静音</string>
     <string name="feat_channel_tooltip_favourite">收藏</string>
     <string name="feat_channel_tooltip_unfavourite">取消收藏</string>
+    <string name="feat_channel_tooltip_record">录制</string>
     <string name="feat_channel_tooltip_download">下载</string>
     <string name="feat_channel_tooltip_stop_download">停止下载</string>
     <string name="feat_channel_tooltip_cast">投屏</string>

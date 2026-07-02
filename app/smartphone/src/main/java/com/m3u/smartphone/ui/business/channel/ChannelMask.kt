@@ -375,7 +375,7 @@ fun ChannelMask(
                             state = maskState,
                             icon = Icons.Rounded.Download,
                             onClick = onRecordVideo,
-                            contentDescription = stringResource(string.feat_channel_tooltip_download)
+                            contentDescription = stringResource(string.feat_channel_tooltip_record)
                         )
                     }
 

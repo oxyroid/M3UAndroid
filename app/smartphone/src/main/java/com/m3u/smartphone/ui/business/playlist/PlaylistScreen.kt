@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -373,15 +374,6 @@ private fun PlaylistScreen(
     val categories = remember(channels) { channels.map { it.key } }
     var category by remember(categories) { mutableStateOf(categories.firstOrNull().orEmpty()) }
 
-    val state = rememberLazyStaggeredGridState()
-    LaunchedEffect(Unit) {
-        snapshotFlow { state.isAtTop }
-            .onEach { isAtTopState.value = it }
-            .launchIn(this)
-    }
-    EventHandler(scrollUp) {
-        state.scrollToItem(0)
-    }
     val orientation = configuration.orientation
     val actualRowCount = remember(orientation, rowCount) {
         when (orientation) {
@@ -393,12 +385,16 @@ private fun PlaylistScreen(
     var isExpanded by remember(sort == Sort.MIXED) {
         mutableStateOf(false)
     }
+    var currentGridState: LazyStaggeredGridState? by remember { mutableStateOf(null) }
     BackHandler(isExpanded) { isExpanded = false }
     BackHandler(query.isNotEmpty() || isSearchVisible) {
         when {
             query.isNotEmpty() -> onQuery("")
             else -> isSearchVisible = false
         }
+    }
+    EventHandler(scrollUp) {
+        currentGridState?.scrollToItem(0)
     }
 
     var targetPageIndex: Event<Int> by remember { mutableStateOf(Event.Handled()) }
@@ -472,6 +468,18 @@ private fun PlaylistScreen(
                 .background(MaterialTheme.colorScheme.surfaceContainerHighest)
         ) { index ->
             val (_, channels) = entries[index]
+            val state = rememberLazyStaggeredGridState()
+
+            LaunchedEffect(index, pagerState, state) {
+                snapshotFlow { (pagerState.currentPage == index) to state.isAtTop }
+                    .distinctUntilChanged()
+                    .collectLatest { (isCurrentPage, isAtTop) ->
+                        if (isCurrentPage) {
+                            currentGridState = state
+                            isAtTopState.value = isAtTop
+                        }
+                    }
+            }
 
             ChannelGallery(
                 state = state,
@@ -587,7 +595,7 @@ private fun UnsupportedUIModeContent(
         ),
         modifier = modifier.fillMaxSize()
     ) {
-        Text("Unsupported UI Mode: $device")
+        Text(stringResource(string.feat_playlist_unsupported_ui_mode, device))
         if (description != null) {
             Text(description)
         }

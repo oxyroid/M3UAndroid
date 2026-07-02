@@ -7,4 +7,10 @@
     <string name="data_worker_subscription_content_completed">完成（+%d）</string>
     <string name="data_worker_subscription_content_channel_progress">已下载 %d 个频道</string>
     <string name="data_worker_subscription_content_programme_progress">已下载 %d 个节目</string>
+    <string name="data_worker_backup_channel_name">备份任务</string>
+    <string name="data_worker_backup_channel_description">显示备份任务进度</string>
+    <string name="data_worker_backup_content_title">正在备份</string>
+    <string name="data_worker_restore_channel_name">恢复任务</string>
+    <string name="data_worker_restore_channel_description">显示恢复任务进度</string>
+    <string name="data_worker_restore_content_title">正在恢复</string>
 </resources>
