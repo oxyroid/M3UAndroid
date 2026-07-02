@@ -85,6 +85,16 @@ fun TvPlayerScreen(
                         true
                     }
 
+                    KeyEvent.KEYCODE_CHANNEL_UP -> {
+                        onNextChannel()
+                        true
+                    }
+
+                    KeyEvent.KEYCODE_CHANNEL_DOWN -> {
+                        onPreviousChannel()
+                        true
+                    }
+
                     else -> false
                 }
             }
