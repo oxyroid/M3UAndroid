@@ -52,6 +52,19 @@ internal object PlaylistNetworkUrl {
             ?.takeIf { it.isNotBlank() }
         ?: fallbackName
 
+    internal fun resolveOwnFilesProviderRelativePath(
+        authority: String?,
+        pathSegments: List<String>,
+        packageName: String
+    ): String? {
+        if (authority != "$packageName.provider") return null
+        if (pathSegments.firstOrNull() != "files") return null
+        return pathSegments
+            .drop(1)
+            .joinToString("/")
+            .takeIf { it.isNotBlank() }
+    }
+
     fun httpFallbackForPlainHttpTlsFailure(
         url: String,
         responseMessage: String,

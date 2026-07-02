@@ -636,6 +636,11 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         if (uri.scheme == ContentResolver.SCHEME_FILE) {
             return PlaylistNetworkUrl.normalizeAndroidFileUrl(uri.toString())
         }
+        uri.asOwnFilesProviderFile()
+            ?.takeIf { it.isFile }
+            ?.let { file ->
+                return PlaylistNetworkUrl.normalizeAndroidFileUrl(file.toUri().toString())
+            }
         return withContext(Dispatchers.IO) {
             val contentResolver = context.contentResolver
             val filename = PlaylistNetworkUrl.resolveInternalFileName(
@@ -654,6 +659,16 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             playlistDao.updateUrl(this@copyToInternalDirPath, newUrl)
             newUrl
         }
+    }
+
+    private fun Uri.asOwnFilesProviderFile(): File? {
+        if (scheme != ContentResolver.SCHEME_CONTENT) return null
+        val relativePath = PlaylistNetworkUrl.resolveOwnFilesProviderRelativePath(
+            authority = authority,
+            pathSegments = pathSegments,
+            packageName = context.packageName
+        ) ?: return null
+        return File(context.filesDir, relativePath)
     }
 
 

@@ -94,14 +94,7 @@ class MainActivity : AppCompatActivity() {
         uri ?: return false
 
         takeReadPermission(uri, intent.flags)
-        val title = uri.readFileName(contentResolver)
-            ?.substringBeforeLast('.')
-            ?.takeIf { it.isNotBlank() }
-            ?: uri.lastPathSegment
-                ?.substringAfterLast('/')
-                ?.substringBeforeLast('.')
-                ?.takeIf { it.isNotBlank() }
-            ?: getString(R.string.app_name)
+        val title = resolveViewedPlaylistTitle(uri)
 
         SubscriptionWorker.m3u(workManager, title, uri.toString())
         Toast.makeText(
@@ -110,6 +103,18 @@ class MainActivity : AppCompatActivity() {
             Toast.LENGTH_SHORT
         ).show()
         return true
+    }
+
+    private fun resolveViewedPlaylistTitle(uri: Uri): String {
+        return runCatching { uri.readFileName(contentResolver) }
+            .getOrNull()
+            ?.substringBeforeLast('.')
+            ?.takeIf { it.isNotBlank() }
+            ?: uri.lastPathSegment
+                ?.substringAfterLast('/')
+                ?.substringBeforeLast('.')
+                ?.takeIf { it.isNotBlank() }
+            ?: getString(R.string.app_name)
     }
 
     @Suppress("DEPRECATION")

@@ -110,6 +110,48 @@ class PlaylistNetworkUrlTest {
     }
 
     @Test
+    fun resolveOwnFilesProviderRelativePathKeepsAppPrivateFile() {
+        assertEquals(
+            "YanG-Gather.m3u",
+            PlaylistNetworkUrl.resolveOwnFilesProviderRelativePath(
+                authority = "com.m3u.androidApp.provider",
+                pathSegments = listOf("files", "YanG-Gather.m3u"),
+                packageName = "com.m3u.androidApp"
+            )
+        )
+    }
+
+    @Test
+    fun resolveOwnFilesProviderRelativePathSupportsNestedFiles() {
+        assertEquals(
+            "imports/YanG-Gather.m3u",
+            PlaylistNetworkUrl.resolveOwnFilesProviderRelativePath(
+                authority = "com.m3u.androidApp.provider",
+                pathSegments = listOf("files", "imports", "YanG-Gather.m3u"),
+                packageName = "com.m3u.androidApp"
+            )
+        )
+    }
+
+    @Test
+    fun resolveOwnFilesProviderRelativePathRejectsOtherProvidersAndRoots() {
+        assertNull(
+            PlaylistNetworkUrl.resolveOwnFilesProviderRelativePath(
+                authority = "com.android.externalstorage.documents",
+                pathSegments = listOf("files", "YanG-Gather.m3u"),
+                packageName = "com.m3u.androidApp"
+            )
+        )
+        assertNull(
+            PlaylistNetworkUrl.resolveOwnFilesProviderRelativePath(
+                authority = "com.m3u.androidApp.provider",
+                pathSegments = listOf("external", "Download", "YanG-Gather.m3u"),
+                packageName = "com.m3u.androidApp"
+            )
+        )
+    }
+
+    @Test
     fun httpFallbackForPlainHttpTlsFailureDowngradesHttpsOnly() {
         assertEquals(
             "http://example.com:8080/list.m3u",
