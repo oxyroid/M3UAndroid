@@ -13,11 +13,10 @@ import androidx.compose.material3.adaptive.layout.ThreePaneScaffoldDestinationIt
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -54,7 +53,6 @@ import com.m3u.smartphone.ui.material.components.EventHandler
 import com.m3u.smartphone.ui.material.components.SettingDestination
 import com.m3u.smartphone.ui.material.model.LocalHazeState
 import dev.chrisbanes.haze.hazeSource
-import kotlinx.coroutines.launch
 
 @Composable
 fun SettingRoute(
@@ -165,8 +163,6 @@ private fun SettingScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
 ) {
-    val coroutineScope = rememberCoroutineScope()
-
     val defaultTitle = stringResource(string.ui_title_setting)
     val playlistTitle = stringResource(string.feat_setting_playlist_management)
     val appearanceTitle = stringResource(string.feat_setting_appearance)
@@ -178,7 +174,7 @@ private fun SettingScreen(
     var destination by rememberSaveable {
         mutableStateOf<SettingDestination>(SettingDestination.Default)
     }
-    val initialDestinationHistory = remember {
+    val initialDestinationHistory = remember(destination) {
         listOfNotNull(
             ThreePaneScaffoldDestinationItem<SettingDestination>(
                 pane = ListDetailPaneScaffoldRole.List
@@ -191,9 +187,11 @@ private fun SettingScreen(
             }
         )
     }
-    val navigator = rememberListDetailPaneScaffoldNavigator<SettingDestination>(
-        initialDestinationHistory = initialDestinationHistory
-    )
+    val navigator = key(destination) {
+        rememberListDetailPaneScaffoldNavigator<SettingDestination>(
+            initialDestinationHistory = initialDestinationHistory
+        )
+    }
 
     fun navigateToDetail(target: SettingDestination) {
         destination = target
@@ -201,24 +199,10 @@ private fun SettingScreen(
 
     fun navigateBackToList() {
         destination = SettingDestination.Default
-        coroutineScope.launch {
-            navigator.navigateBack()
-        }
     }
 
     EventHandler(Events.settingDestination) {
         navigateToDetail(it)
-    }
-
-    LaunchedEffect(destination, navigator.currentDestination?.contentKey) {
-        if (destination != SettingDestination.Default &&
-            navigator.currentDestination?.contentKey != destination
-        ) {
-            navigator.navigateTo(
-                pane = ListDetailPaneScaffoldRole.Detail,
-                contentKey = destination
-            )
-        }
     }
 
     LifecycleResumeEffect(destination, defaultTitle, playlistTitle, appearanceTitle, optionalTitle, codecPackTitle) {
@@ -330,7 +314,7 @@ private fun SettingScreen(
             .hazeSource(LocalHazeState.current)
             .testTag("feature:setting")
     )
-    BackHandler(navigator.canNavigateBack()) {
+    BackHandler(destination != SettingDestination.Default) {
         navigateBackToList()
     }
 }

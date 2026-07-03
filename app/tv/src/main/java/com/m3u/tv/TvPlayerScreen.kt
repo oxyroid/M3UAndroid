@@ -78,27 +78,24 @@ fun TvPlayerScreen(
         modifier = Modifier
             .fillMaxSize()
             .onPreviewKeyEvent { event ->
-                if (event.type != KeyEventType.KeyDown || event.nativeKeyEvent.repeatCount != 0) {
-                    return@onPreviewKeyEvent false
-                }
-                when (event.nativeKeyEvent.keyCode) {
-                    KeyEvent.KEYCODE_DPAD_UP,
-                    KeyEvent.KEYCODE_CHANNEL_DOWN,
-                    KeyEvent.KEYCODE_PAGE_DOWN,
-                    KeyEvent.KEYCODE_MEDIA_PREVIOUS -> {
+                when (
+                    tvPlayerChannelNavigationAction(
+                        keyCode = event.nativeKeyEvent.keyCode,
+                        isKeyDown = event.type == KeyEventType.KeyDown,
+                        repeatCount = event.nativeKeyEvent.repeatCount
+                    )
+                ) {
+                    TvPlayerChannelNavigationAction.Previous -> {
                         onPreviousChannel()
                         true
                     }
 
-                    KeyEvent.KEYCODE_DPAD_DOWN,
-                    KeyEvent.KEYCODE_CHANNEL_UP,
-                    KeyEvent.KEYCODE_PAGE_UP,
-                    KeyEvent.KEYCODE_MEDIA_NEXT -> {
+                    TvPlayerChannelNavigationAction.Next -> {
                         onNextChannel()
                         true
                     }
 
-                    else -> false
+                    null -> false
                 }
             }
             .background(Color.Black)
@@ -222,4 +219,32 @@ private fun Programme.programmeLine(): String {
     val startText = formatter.format(Date(start))
     val endText = formatter.format(Date(end))
     return "$startText-$endText  ${title.title()}"
+}
+
+internal enum class TvPlayerChannelNavigationAction {
+    Previous,
+    Next
+}
+
+internal fun tvPlayerChannelNavigationAction(
+    keyCode: Int,
+    isKeyDown: Boolean,
+    repeatCount: Int
+): TvPlayerChannelNavigationAction? {
+    if (!isKeyDown || repeatCount != 0) {
+        return null
+    }
+    return when (keyCode) {
+        KeyEvent.KEYCODE_DPAD_UP,
+        KeyEvent.KEYCODE_CHANNEL_DOWN,
+        KeyEvent.KEYCODE_PAGE_DOWN,
+        KeyEvent.KEYCODE_MEDIA_PREVIOUS -> TvPlayerChannelNavigationAction.Previous
+
+        KeyEvent.KEYCODE_DPAD_DOWN,
+        KeyEvent.KEYCODE_CHANNEL_UP,
+        KeyEvent.KEYCODE_PAGE_UP,
+        KeyEvent.KEYCODE_MEDIA_NEXT -> TvPlayerChannelNavigationAction.Next
+
+        else -> null
+    }
 }

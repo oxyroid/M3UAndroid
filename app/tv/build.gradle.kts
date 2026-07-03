@@ -134,6 +134,8 @@ dependencies {
     implementation(libs.haze)
     implementation(libs.haze.materials)
 
+    testImplementation(libs.junit)
+
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.core)
     androidTestImplementation(libs.androidx.test.runner)

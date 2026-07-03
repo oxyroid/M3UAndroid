@@ -667,6 +667,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
 
             val newUrl = PlaylistNetworkUrl.normalizeAndroidFileUrl(destinationFile.toUri().toString())
             playlistDao.updateUrl(this@copyToInternalDirPath, newUrl)
+            channelDao.updatePlaylistUrl(this@copyToInternalDirPath, newUrl)
             newUrl
         }
     }
