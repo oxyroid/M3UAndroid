@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tv generator-info-name="M3UAndroid benchmark">
+  <channel id="benchmark.news">
+    <display-name>Benchmark News</display-name>
+  </channel>
+  <programme channel="benchmark.news" start="20260511000000 +0000" stop="20260511003000 +0000">
+    <title>Benchmark Morning News</title>
+  </programme>
+</tv>

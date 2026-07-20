@@ -1,0 +1,7 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="benchmark.live" tvg-name="Benchmark Live" group-title="Live",Benchmark Live
+https://example.com/benchmark/live/index.m3u8
+#EXTINF:600 tvg-id="benchmark.movie" tvg-name="Benchmark Movie" group-title="VOD",Benchmark Movie
+https://example.com/benchmark/movie.mp4
+#EXTINF:1200 tvg-id="benchmark.series.s01e01" tvg-name="Benchmark Series S01E01" group-title="Series",Benchmark Series S01E01
+https://example.com/benchmark/series-s01e01.mp4

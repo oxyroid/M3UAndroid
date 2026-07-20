@@ -9,6 +9,7 @@ TestBeds:
       tv_serial: emulator-5554
       mock_url: http://127.0.0.1:8080
       mock_server_port: 8080
+      raw_testdata_base: https://raw.githubusercontent.com/oxyroid/M3UAndroid/master/testdata
       direct_tv_host: 10.0.2.2
       direct_tv_port: 8989
       playlist_title: RemoteControlLive
