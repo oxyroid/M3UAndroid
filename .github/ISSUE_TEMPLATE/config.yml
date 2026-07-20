@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Telegram Channel
+    url: https://t.me/m3u_android
+    about: Follow project updates and community announcements.
+  - name: README / Getting started
+    url: https://github.com/oxyroid/M3UAndroid#readme
+    about: Read setup notes, download links, and common project information before opening an issue.
+  - name: Latest GitHub Release
+    url: https://github.com/oxyroid/M3UAndroid/releases/latest
+    about: Download the latest stable release and check release notes before reporting a bug.
