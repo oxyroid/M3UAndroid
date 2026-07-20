@@ -37,7 +37,7 @@ infix fun PaddingValues.only(side: WindowInsetsSides): PaddingValues {
             PaddingValues(start = calculateStartPadding(layoutDirection))
 
         WindowInsetsSides.End ->
-            PaddingValues(end = calculateStartPadding(layoutDirection))
+            PaddingValues(end = calculateEndPadding(layoutDirection))
 
         WindowInsetsSides.Top -> PaddingValues(top = calculateTopPadding())
         WindowInsetsSides.Bottom -> PaddingValues(bottom = calculateBottomPadding())

@@ -9,10 +9,12 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
@@ -166,8 +168,10 @@ private fun AppImpl(
             }
         },
         modifier = modifier
-    ) {
-        Column {
+    ) { contentPadding ->
+        Column(
+            modifier = Modifier.padding(contentPadding)
+        ) {
             val coroutineScope = rememberCoroutineScope()
             val searchBarState = rememberSearchBarState()
             val textFieldState = rememberTextFieldState()
@@ -227,41 +231,46 @@ private fun AppImpl(
                     contentPadding = WindowInsets.ime.asPaddingValues()
                 )
             }
-            AppNavHost(
-                navController = navController,
-                navigateToDestination = { navController.navigate(it.name) },
-                navigateToChannel = navigateToChannel,
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-            )
-            // snack-host area
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(spacing.small, Alignment.End),
-                verticalAlignment = Alignment.Bottom,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(spacing.medium)
             ) {
-                SnackHost(Modifier.weight(1f))
-                AnimatedVisibility(
-                    visible = remoteControl,
-                    enter = scaleIn(initialScale = 0.65f) + fadeIn(),
-                    exit = scaleOut(targetScale = 0.65f) + fadeOut()
+                AppNavHost(
+                    navController = navController,
+                    navigateToDestination = { navController.navigate(it.name) },
+                    navigateToChannel = navigateToChannel,
+                    modifier = Modifier.fillMaxSize()
+                )
+                // snack-host area
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(spacing.small, Alignment.End),
+                    verticalAlignment = Alignment.Bottom,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .padding(spacing.medium)
                 ) {
-                    FloatingActionButton(
-                        elevation = FloatingActionButtonDefaults.elevation(
-                            defaultElevation = spacing.none,
-                            pressedElevation = spacing.none,
-                            focusedElevation = spacing.extraSmall,
-                            hoveredElevation = spacing.extraSmall
-                        ),
-                        onClick = openRemoteControlSheet
+                    SnackHost(Modifier.weight(1f))
+                    AnimatedVisibility(
+                        visible = remoteControl,
+                        enter = scaleIn(initialScale = 0.65f) + fadeIn(),
+                        exit = scaleOut(targetScale = 0.65f) + fadeOut()
                     ) {
-                        Icon(
-                            imageVector = Icons.Rounded.SettingsRemote,
-                            contentDescription = stringResource(com.m3u.i18n.R.string.feat_setting_remote_control)
-                        )
+                        FloatingActionButton(
+                            elevation = FloatingActionButtonDefaults.elevation(
+                                defaultElevation = spacing.none,
+                                pressedElevation = spacing.none,
+                                focusedElevation = spacing.extraSmall,
+                                hoveredElevation = spacing.extraSmall
+                            ),
+                            onClick = openRemoteControlSheet
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.SettingsRemote,
+                                contentDescription = stringResource(com.m3u.i18n.R.string.feat_setting_remote_control)
+                            )
+                        }
                     }
                 }
             }
