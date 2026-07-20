@@ -27,7 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.m3u.core.foundation.util.basic.title
 import com.m3u.i18n.R.string
-import com.m3u.core.foundation.components.CircularProgressIndicator
+import com.m3u.smartphone.ui.material.components.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import com.m3u.smartphone.ui.material.components.mask.MaskState
 import com.m3u.smartphone.ui.material.model.LocalSpacing
@@ -115,7 +115,11 @@ internal fun DlnaDevicesBottomSheet(
                             }
                         )
                     }
-                    items(devices) { device ->
+                    items(
+                        items = devices,
+                        key = { it.udn },
+                        contentType = { "device" }
+                    ) { device ->
                         DlnaDeviceItem(
                             device = device,
                             onClick = { connectDlnaDevice(device) },

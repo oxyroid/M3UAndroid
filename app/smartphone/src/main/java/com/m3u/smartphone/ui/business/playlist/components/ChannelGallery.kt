@@ -28,7 +28,7 @@ import com.m3u.business.playlist.ChannelWithProgramme
 import com.m3u.data.database.model.Channel
 import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
 import com.m3u.core.foundation.architecture.preferences.preferenceOf
-import com.m3u.core.foundation.components.CircularProgressIndicator
+import com.m3u.smartphone.ui.material.components.CircularProgressIndicator
 import com.m3u.smartphone.ui.material.ktx.plus
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import kotlinx.coroutines.delay

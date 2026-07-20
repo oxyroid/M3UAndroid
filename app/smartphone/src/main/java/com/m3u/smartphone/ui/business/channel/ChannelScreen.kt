@@ -179,14 +179,16 @@ fun ChannelRoute(
         }
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(isSupportBrightnessGesture) {
         if (isSupportBrightnessGesture) {
             snapshotFlow { brightness }
                 .drop(1)
                 .onEach { helper.brightness = it }
                 .launchIn(this)
         }
+    }
 
+    LaunchedEffect(Unit) {
         snapshotFlow { isBarVisible }
             .onEach { isBarVisible ->
                 helper.statusBarVisibility = isBarVisible
@@ -205,7 +207,7 @@ fun ChannelRoute(
     }
 
     if (brightnessGestureEnabled) {
-        DisposableEffect(Unit) {
+        DisposableEffect(brightnessGestureEnabled) {
             val prev = helper.brightness
             onDispose {
                 helper.brightness = prev

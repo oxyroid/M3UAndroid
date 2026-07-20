@@ -44,12 +44,13 @@ import coil.request.ImageRequest
 import coil.size.Size
 import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
 import com.m3u.core.foundation.architecture.preferences.preferenceOf
-import com.m3u.core.foundation.components.CircularProgressIndicator
+import com.m3u.smartphone.ui.material.components.CircularProgressIndicator
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Programme
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.TimeUtils.formatEOrSh
 import com.m3u.core.foundation.ui.composableOf
+import com.m3u.smartphone.ui.material.model.FavoriteColor
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 import kotlin.time.Clock
@@ -92,8 +93,8 @@ internal fun ChannelItem(
                 if (favourite) {
                     Icon(
                         imageVector = Icons.Rounded.Star,
-                        contentDescription = null,
-                        tint = Color(0xffffcd3c)
+                        contentDescription = stringResource(string.feat_channel_tooltip_favourite),
+                        tint = FavoriteColor
                     )
                 }
             }

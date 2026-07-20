@@ -35,7 +35,6 @@ import com.m3u.core.foundation.wrapper.Resource
 import com.m3u.data.database.model.Channel
 import com.m3u.data.parser.xtream.XtreamEpisodeInfo
 import androidx.compose.material3.IconButton
-import com.m3u.core.foundation.components.CircularProgressIndicator
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 
