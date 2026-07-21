@@ -29,7 +29,7 @@ kotlinx-serialization-json = "1.10.0"
 kotlinx-serialization-converter-retrofit = "1.0.0"
 kotlinx-datetime = "0.7.1"
 
-chucker = "4.3.0"
+chucker = "4.3.1"
 logback = "3.0.0"
 lottie-compose = "6.7.1"
 m3u-extension = "1.9"
