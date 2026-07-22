@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.Context
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
-import com.m3u.core.extension.Utils
 import com.m3u.i18n.R.string
 import dagger.hilt.android.HiltAndroidApp
 import org.acra.config.mailSender
@@ -25,7 +24,6 @@ class M3UApplication : Application(), Configuration.Provider {
         if (BuildConfig.DEBUG) {
             Timber.plant(DebugTree())
         }
-        Utils.init(this)
     }
 
     override fun attachBaseContext(base: Context?) {

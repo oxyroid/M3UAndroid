@@ -46,6 +46,25 @@ sealed class SettingMessage(
         resId = string.feat_setting_enqueue_subscribe
     )
 
+    data object ProviderCredentialsRequired : SettingMessage(
+        level = LEVEL_ERROR,
+        type = TYPE_SNACK,
+        resId = string.feat_setting_provider_credentials_required
+    )
+
+    data class ProviderAdded(val channelCount: Int) : SettingMessage(
+        level = LEVEL_INFO,
+        type = TYPE_SNACK,
+        resId = string.feat_setting_provider_added,
+        formatArgs = arrayOf(channelCount),
+    )
+
+    data object ProviderSubscriptionFailed : SettingMessage(
+        level = LEVEL_ERROR,
+        type = TYPE_SNACK,
+        resId = string.feat_setting_provider_subscription_failed
+    )
+
     data object EpgAdded : SettingMessage(
         level = LEVEL_INFO,
         type = TYPE_SNACK,

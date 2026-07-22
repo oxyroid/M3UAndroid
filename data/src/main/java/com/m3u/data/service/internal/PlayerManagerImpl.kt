@@ -55,12 +55,17 @@ import com.m3u.core.foundation.architecture.preferences.Settings
 import com.m3u.core.foundation.architecture.preferences.get
 import com.m3u.data.SSLs
 import com.m3u.data.api.OkhttpClient
+import com.m3u.data.api.ProviderOkhttpClient
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.copyXtreamEpisode
 import com.m3u.data.database.model.copyXtreamSeries
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
+import com.m3u.data.repository.provider.ProviderOperationException
+import com.m3u.data.repository.provider.ProviderPlaybackCloseReason
+import com.m3u.data.repository.provider.ProviderPlaybackSession
+import com.m3u.data.repository.provider.SubscriptionProviderRepository
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.PlayerManager
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -87,6 +92,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import timber.log.Timber
@@ -99,8 +106,10 @@ import kotlin.time.Duration.Companion.seconds
 class PlayerManagerImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     @OkhttpClient(false) private val okHttpClient: OkHttpClient,
+    @param:ProviderOkhttpClient private val providerOkHttpClient: OkHttpClient,
     private val playlistRepository: PlaylistRepository,
     private val channelRepository: ChannelRepository,
+    private val subscriptionProviderRepository: SubscriptionProviderRepository,
     private val cache: Cache,
     private val settings: Settings,
     publisher: Publisher,
@@ -120,6 +129,10 @@ class PlayerManagerImpl @Inject constructor(
     override val size = MutableStateFlow(Rect())
 
     private val mediaCommand = MutableStateFlow<MediaCommand?>(null)
+    private val providerSessionMutex = Mutex()
+    private var activeProviderSession: ProviderPlaybackSession? = null
+    private var activeRequestHeaders: Map<String, String> = emptyMap()
+    private var activeProviderPlayback = false
 
     override val playlist: StateFlow<Playlist?> = mediaCommand.flatMapLatest { command ->
         when (command) {
@@ -197,7 +210,8 @@ class PlayerManagerImpl @Inject constructor(
         applyContinueWatching: Boolean
     ) {
         timber.d("play")
-        release()
+        closeActiveProviderSession(ProviderPlaybackCloseReason.CHANNEL_CHANGED)
+        releasePlayer()
         mediaCommand.value = command
         val channel = when (command) {
             is MediaCommand.Common -> channelRepository.get(command.channelId)
@@ -206,36 +220,53 @@ class PlayerManagerImpl @Inject constructor(
                 ?.copyXtreamEpisode(command.episode)
         }
         if (channel != null) {
-            val channelUrl = channel.url
-            val channelPreference = getChannelPreference(channelUrl)
-            val licenseType = channel.licenseType.orEmpty()
-            val licenseKey = channel.licenseKey.orEmpty()
+            val providerSource = subscriptionProviderRepository.resolvePlayback(channel.id)
+            val channelUrl = providerSource?.url
+                ?: channel.url.takeUnless { url -> url == Channel.URL_DYNAMIC }
+                ?: throw ProviderOperationException("Dynamic playback reference was not found")
+            activeRequestHeaders = providerSource?.headers.orEmpty()
+            activeProviderPlayback = providerSource != null
+            providerSessionMutex.withLock {
+                activeProviderSession = providerSource?.session
+            }
+            try {
+                val channelPreference = getChannelPreference(channelUrl)
+                val licenseType = channel.licenseType.orEmpty()
+                val licenseKey = channel.licenseKey.orEmpty()
 
-            channelRepository.reportPlayed(channel.id)
+                channelRepository.reportPlayed(channel.id)
 
-            val playlist = playlistRepository.get(channel.playlistUrl)
-            val userAgent = getUserAgent(channelUrl, playlist)
+                val playlist = playlistRepository.get(channel.playlistUrl)
+                val userAgent = getUserAgent(channelUrl, playlist)
 
-            this.chain = channelPreference?.mineType
-                ?.let { MimetypeChain.Remembered(channelUrl, it) }
-                ?: MimetypeChain.Unspecified(channelUrl)
+                this.chain = channelPreference?.mineType
+                    ?.let { MimetypeChain.Remembered(channelUrl, it) }
+                    ?: MimetypeChain.Unspecified(channelUrl)
 
-            timber.d("init mimetype: $chain")
+                timber.d("init mimetype chain: ${chain::class.simpleName}")
 
-            tryPlay(
-                url = channelUrl,
-                userAgent = userAgent,
-                licenseType = licenseType,
-                licenseKey = licenseKey,
-                applyContinueWatching = applyContinueWatching
-            )
+                tryPlay(
+                    url = channelUrl,
+                    userAgent = userAgent,
+                    requestHeaders = activeRequestHeaders,
+                    licenseType = licenseType,
+                    licenseKey = licenseKey,
+                    applyContinueWatching = applyContinueWatching
+                )
+            } catch (exception: Exception) {
+                closeActiveProviderSession(ProviderPlaybackCloseReason.PLAYBACK_FAILED)
+                releasePlayer()
+                throw exception
+            }
         }
     }
 
     private var extractor: MediaExtractorCompat? = null
     private suspend fun tryPlay(
-        url: String = channel.value?.url.orEmpty(),
-        userAgent: String? = getUserAgent(channel.value?.url.orEmpty(), playlist.value),
+        url: String = chain.url,
+        userAgent: String? = getUserAgent(chain.url, playlist.value),
+        requestHeaders: Map<String, String> = activeRequestHeaders,
+        providerPlayback: Boolean = activeProviderPlayback,
         licenseType: String = channel.value?.licenseType.orEmpty(),
         licenseKey: String = channel.value?.licenseKey.orEmpty(),
         applyContinueWatching: Boolean
@@ -248,17 +279,25 @@ class PlayerManagerImpl @Inject constructor(
             is MimetypeChain.Trying -> chain.mimetype
             is MimetypeChain.Unspecified -> {
                 this.chain = chain.next()
-                return tryPlay(url, userAgent, licenseType, licenseKey, applyContinueWatching)
+                return tryPlay(
+                    url = url,
+                    userAgent = userAgent,
+                    requestHeaders = requestHeaders,
+                    providerPlayback = providerPlayback,
+                    licenseType = licenseType,
+                    licenseKey = licenseKey,
+                    applyContinueWatching = applyContinueWatching,
+                )
             }
 
             is MimetypeChain.Unsupported -> throw UnsupportedOperationException()
         }
 
-        timber.d("tryPlay, mimetype: $mimeType, url: $url, user-agent: $userAgent, rtmp: $rtmp")
+        timber.d("tryPlay, mimetype: $mimeType, rtmp: $rtmp")
         val dataSourceFactory = if (rtmp) {
             RtmpDataSource.Factory()
         } else {
-            createHttpDataSourceFactory(userAgent)
+            createHttpDataSourceFactory(userAgent, requestHeaders, providerPlayback)
         }
         val extractorsFactory = DefaultExtractorsFactory().setTsExtractorFlags(
             FLAG_ALLOW_NON_IDR_KEYFRAMES and FLAG_DETECT_ACCESS_UNITS
@@ -332,24 +371,34 @@ class PlayerManagerImpl @Inject constructor(
 
     override suspend fun replay() {
         val prev = mediaCommand.value
-        release()
+        closeActiveProviderSession(ProviderPlaybackCloseReason.STOPPED)
+        releasePlayer()
         prev?.let { play(it, applyContinueWatching = false) }
     }
 
     override fun release() {
         timber.d("release")
+        ioCoroutineScope.launch {
+            closeActiveProviderSession(ProviderPlaybackCloseReason.STOPPED)
+        }
+        releasePlayer()
+    }
+
+    private fun releasePlayer() {
         extractor = null
+        activeRequestHeaders = emptyMap()
+        activeProviderPlayback = false
+        mediaCommand.value = null
+        size.value = Rect()
+        playbackState.value = Player.STATE_IDLE
+        playbackException.value = null
+        tracksGroups.value = emptyList()
+        chain = MimetypeChain.Unsupported("")
         player.update {
-            it ?: return
+            it ?: return@update null
             it.stop()
             it.release()
             it.removeListener(this)
-            mediaCommand.value = null
-            size.value = Rect()
-            playbackState.value = Player.STATE_IDLE
-            playbackException.value = null
-            tracksGroups.value = emptyList()
-            chain = MimetypeChain.Unsupported(chain.url)
             null
         }
     }
@@ -461,9 +510,15 @@ class PlayerManagerImpl @Inject constructor(
         }
     }
 
-    private fun createHttpDataSourceFactory(userAgent: String?): DataSource.Factory {
-        val upstream = OkHttpDataSource.Factory(okHttpClient)
+    private fun createHttpDataSourceFactory(
+        userAgent: String?,
+        requestHeaders: Map<String, String>,
+        providerPlayback: Boolean,
+    ): DataSource.Factory {
+        val client = if (providerPlayback) providerOkHttpClient else okHttpClient
+        val upstream = OkHttpDataSource.Factory(client)
             .setUserAgent(userAgent)
+            .setDefaultRequestProperties(requestHeaders)
 //        return if (cache) {
 //            CacheDataSource.Factory()
 //                .setUpstreamDataSourceFactory(upstream)
@@ -521,6 +576,7 @@ class PlayerManagerImpl @Inject constructor(
                     when (next) {
                         is MimetypeChain.Unsupported -> {
                             playbackException.value = exception
+                            closeActiveProviderSessionAsync(ProviderPlaybackCloseReason.PLAYBACK_FAILED)
                         }
 
                         else -> mainCoroutineScope.launch { tryPlay(applyContinueWatching = false) }
@@ -528,11 +584,15 @@ class PlayerManagerImpl @Inject constructor(
                 }
             }
 
-            PlaybackException.ERROR_CODE_IO_UNSPECIFIED -> {}
+            PlaybackException.ERROR_CODE_IO_UNSPECIFIED -> {
+                playbackException.value = exception
+                closeActiveProviderSessionAsync(ProviderPlaybackCloseReason.PLAYBACK_FAILED)
+            }
 
             else -> {
                 if (exception != null) {
                     timber.e(exception, PlaybackException.getErrorCodeName(exception.errorCode))
+                    closeActiveProviderSessionAsync(ProviderPlaybackCloseReason.PLAYBACK_FAILED)
                 }
                 playbackException.value = exception
             }
@@ -645,7 +705,7 @@ class PlayerManagerImpl @Inject constructor(
 
                 withContext(Dispatchers.Main) {
                     transformer.start(
-                        MediaItem.fromUri(channel.value?.url.orEmpty()),
+                        MediaItem.fromUri(chain.url),
                         uri.path.orEmpty()
                     )
                 }
@@ -696,12 +756,30 @@ class PlayerManagerImpl @Inject constructor(
     }
 
     private suspend fun onPlaybackEnded() {
+        closeActiveProviderSession(ProviderPlaybackCloseReason.STOPPED)
         if (settings[PreferencesKeys.RECONNECT_MODE] == ReconnectMode.RECONNECT) {
             mainCoroutineScope.launch { replay() }
         }
         val channelUrl = chain.url
         if (channelUrl.isNotEmpty()) {
             resetContinueWatching(channelUrl)
+        }
+    }
+
+    private fun closeActiveProviderSessionAsync(reason: ProviderPlaybackCloseReason) {
+        ioCoroutineScope.launch {
+            closeActiveProviderSession(reason)
+        }
+    }
+
+    private suspend fun closeActiveProviderSession(reason: ProviderPlaybackCloseReason) {
+        val session = providerSessionMutex.withLock {
+            activeProviderSession.also { activeProviderSession = null }
+        } ?: return
+        runCatching {
+            subscriptionProviderRepository.closePlayback(session, reason)
+        }.onFailure { exception ->
+            timber.w(exception, "Failed to close provider playback session")
         }
     }
 

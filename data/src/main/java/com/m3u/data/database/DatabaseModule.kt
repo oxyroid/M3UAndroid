@@ -11,6 +11,7 @@ import com.m3u.data.database.dao.ColorSchemeDao
 import com.m3u.data.database.dao.EpisodeDao
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.ProgrammeDao
+import com.m3u.data.database.dao.ProviderDao
 import com.m3u.data.database.example.ColorSchemeExample
 import dagger.Module
 import dagger.Provides
@@ -75,4 +76,10 @@ internal object DatabaseModule {
     fun provideColorSchemeDao(
         database: M3UDatabase
     ): ColorSchemeDao = database.colorSchemeDao()
+
+    @Provides
+    @Singleton
+    fun provideProviderDao(
+        database: M3UDatabase
+    ): ProviderDao = database.providerDao()
 }

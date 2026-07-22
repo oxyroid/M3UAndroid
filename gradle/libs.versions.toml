@@ -32,7 +32,6 @@ kotlinx-datetime = "0.7.1"
 chucker = "4.3.0"
 logback = "3.0.0"
 lottie-compose = "6.7.1"
-m3u-extension = "1.9"
 nextLib = "0.8.5"
 slf4j-api = "2.0.17"
 snakeyaml = "2.3"
@@ -127,6 +126,7 @@ androidx-room-runtime = { group = "androidx.room", name = "room-runtime", versio
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "androidx-room" }
 androidx-room-paging = { group = "androidx.room", name = "room-paging", version.ref = "androidx-room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "androidx-room" }
+androidx-room-testing = { group = "androidx.room", name = "room-testing", version.ref = "androidx-room" }
 
 auto-service-annotations = { module = "com.google.auto.service:auto-service-annotations", version.ref = "auto-annotations" }
 auto-service-ksp = { module = "dev.zacsweers.autoservice:auto-service-ksp", version.ref = "auto-ksp" }
@@ -140,9 +140,6 @@ google-material = { group = "com.google.android.material", name = "material", ve
 
 kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoet" }
 kotlinpoet-ksp = { module = "com.squareup:kotlinpoet-ksp", version.ref = "kotlinpoet" }
-m3u-extension-api = { module = "com.github.oxyroid.m3u-extension:api", version.ref = "m3u-extension" }
-m3u-extension-annotation = { module = "com.github.oxyroid.m3u-extension:annotation", version.ref = "m3u-extension" }
-m3u-extension-processor = { module = "com.github.oxyroid.m3u-extension:processor", version.ref = "m3u-extension" }
 squareup-retrofit2 = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "squareup-retrofit2" }
 squareup-leakcanary = { group = "com.squareup.leakcanary", name = "leakcanary-android", version.ref = "squareup-leakcanary" }
 

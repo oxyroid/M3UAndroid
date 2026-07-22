@@ -66,6 +66,7 @@ data class Channel(
     val relationId: String? = null
 ) {
     companion object {
+        const val URL_DYNAMIC = "dynamic"
         const val LICENSE_TYPE_WIDEVINE = "com.widevine.alpha"
         const val LICENSE_TYPE_CLEAR_KEY = "clearkey"
         const val LICENSE_TYPE_CLEAR_KEY_2 = "org.w3.clearkey"

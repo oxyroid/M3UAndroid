@@ -27,6 +27,10 @@ import javax.inject.Singleton
 @Retention(AnnotationRetention.RUNTIME)
 annotation class OkhttpClient(val chucker: Boolean)
 
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
+annotation class ProviderOkhttpClient
+
 @Module
 @InstallIn(SingletonComponent::class)
 internal object ApiModule {
@@ -73,6 +77,11 @@ internal object ApiModule {
             .hostnameVerifier { _, _ -> true }
             .build()
     }
+
+    @Provides
+    @Singleton
+    @ProviderOkhttpClient
+    fun provideProviderOkhttpClient(): OkHttpClient = OkHttpClient.Builder().build()
 
     @Provides
     @Singleton

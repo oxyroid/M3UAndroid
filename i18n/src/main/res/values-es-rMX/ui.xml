@@ -5,7 +5,6 @@
     <string name="ui_title_setting">Ajustes</string>
     <string name="ui_destination_foryou">Para Ti</string>
     <string name="ui_destination_favourite">Favoritos</string>
-    <string name="ui_destination_extension">Extensión</string>
     <string name="ui_destination_setting">Ajustes</string>
     <string name="ui_destination_playlist">Playlist</string>
     <string name="ui_error_unknown">error desconocido</string>

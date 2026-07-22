@@ -46,6 +46,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
@@ -63,6 +64,7 @@ fun TextField(
     shape: Shape = TextFieldDefaults.shape(),
     placeholder: String = "",
     keyboardType: KeyboardType = KeyboardType.Text,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
     readOnly: Boolean = false,
     singleLine: Boolean = true,
     imeAction: ImeAction? = null,
@@ -112,6 +114,7 @@ fun TextField(
                 autoCorrectEnabled = false,
                 imeAction = imeAction ?: if (singleLine) ImeAction.Done else ImeAction.Default
             ),
+            visualTransformation = visualTransformation,
             interactionSource = interactionSource,
             modifier = modifier
                 .fillMaxWidth()
@@ -168,6 +171,7 @@ fun PlaceholderField(
     shape: Shape = TextFieldDefaults.shape(),
     placeholder: String = "",
     keyboardType: KeyboardType = KeyboardType.Text,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
     fontWeight: FontWeight? = null,
     readOnly: Boolean = false,
     singleLine: Boolean = true,
@@ -218,6 +222,7 @@ fun PlaceholderField(
                 autoCorrectEnabled = false,
                 imeAction = imeAction
             ),
+            visualTransformation = visualTransformation,
             interactionSource = interactionSource,
             modifier = modifier
                 .fillMaxWidth()

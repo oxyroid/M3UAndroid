@@ -8,6 +8,8 @@ plugins {
     id("dev.oxyroid.native-load")
 }
 
+val m3uMockServerUrl = providers.gradleProperty("m3uMockServerUrl").orElse("http://10.0.2.2:8080")
+
 android {
     namespace = "com.m3u.data"
     ksp {
@@ -20,7 +22,9 @@ android {
     }
     defaultConfig {
         buildConfigField("String", "NEXTLIB_CODEC_VERSION", "\"${libs.versions.nextLib.get()}\"")
+        testInstrumentationRunnerArguments["m3uMockServerUrl"] = m3uMockServerUrl.get()
     }
+    sourceSets.getByName("androidTest").assets.srcDir("$projectDir/schemas")
     packaging {
         resources.excludes += "META-INF/**"
     }
@@ -28,11 +32,9 @@ android {
 
 dependencies {
     implementation(project(":core:foundation"))
+    implementation(project(":extension:runtime"))
     implementation("dev.oxyroid.parser:m3u")
     api("dev.oxyroid.parser:xtream")
-    implementation(libs.m3u.extension.api)
-    implementation(libs.m3u.extension.annotation)
-    ksp(libs.m3u.extension.processor)
     implementation(project(":lint:annotation"))
     ksp(project(":lint:processor"))
 
@@ -89,4 +91,15 @@ dependencies {
 
     implementation(libs.jakewharton.disklrucache)
 
+    androidTestImplementation(libs.androidx.room.testing)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.runner)
+}
+
+tasks.matching { task ->
+    task.name.startsWith("connected") && task.name.endsWith("AndroidTest")
+}.configureEach {
+    dependsOn(":testing:mock-server:startMockServer")
+    finalizedBy(":testing:mock-server:stopMockServer")
 }

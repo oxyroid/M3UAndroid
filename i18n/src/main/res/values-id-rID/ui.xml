@@ -5,7 +5,6 @@
     <string name="ui_title_setting">pengaturan</string>
     <string name="ui_destination_foryou">Untuk Anda</string>
     <string name="ui_destination_favourite">Favorit</string>
-    <string name="ui_destination_extension">Ekstensi</string>
     <string name="ui_destination_setting">pengaturan</string>
     <string name="ui_destination_playlist">Playlist</string>
     <string name="ui_error_unknown">kesalahan yang tidak diketahui</string>

@@ -113,11 +113,7 @@ baselineProfile {
 dependencies {
     implementation(project(":i18n"))
     implementation(project(":core:foundation"))
-    implementation(project(":core:extension"))
     implementation(project(":data"))
-    implementation(libs.m3u.extension.api)
-    implementation(libs.m3u.extension.annotation)
-    ksp(libs.m3u.extension.processor)
     // business
     implementation(project(":business:foryou"))
     implementation(project(":business:favorite"))
@@ -125,7 +121,6 @@ dependencies {
     implementation(project(":business:playlist"))
     implementation(project(":business:channel"))
     implementation(project(":business:playlist-configuration"))
-    implementation(project(":business:extension"))
     // baselineprofile
     implementation(libs.androidx.profileinstaller)
     "baselineProfile"(project(":baselineprofile:smartphone"))
@@ -190,4 +185,5 @@ dependencies {
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.core)
     androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.uiautomator.uiautomator)
 }

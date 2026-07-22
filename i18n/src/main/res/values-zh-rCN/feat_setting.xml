@@ -117,4 +117,7 @@
     <string name="feat_setting_codec_pack_verify">重新校验</string>
     <string name="feat_setting_codec_pack_refresh">刷新</string>
     <string name="feat_setting_codec_pack_delete">删除已下载组件</string>
+    <string name="feat_setting_provider_credentials_required">请输入用户名以连接此服务器</string>
+    <string name="feat_setting_provider_added">已连接并导入 %1$d 个直播频道</string>
+    <string name="feat_setting_provider_subscription_failed">无法连接或刷新此服务器</string>
 </resources>

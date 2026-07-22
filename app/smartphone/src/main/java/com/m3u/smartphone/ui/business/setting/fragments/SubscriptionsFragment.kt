@@ -46,6 +46,8 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.business.setting.BackingUpAndRestoringState
@@ -181,7 +183,7 @@ private fun MainContentImpl(
                     DataSource.EPG,
                     DataSource.Xtream,
                     DataSource.Emby,
-                    DataSource.Dropbox
+                    DataSource.Jellyfin,
                 )
             )
         }
@@ -191,7 +193,7 @@ private fun MainContentImpl(
                 DataSource.M3U -> M3UInputContent()
                 DataSource.EPG -> EPGInputContent()
                 DataSource.Xtream -> XtreamInputContent()
-                DataSource.Emby -> {}
+                DataSource.Emby, DataSource.Jellyfin -> EmbyCompatibleInputContent()
                 DataSource.Dropbox -> {}
             }
         }
@@ -470,9 +472,52 @@ private fun XtreamInputContent(modifier: Modifier = Modifier) {
             text = properties.passwordState.value,
             placeholder = stringResource(string.feat_setting_placeholder_password).uppercase(),
             onValueChange = { properties.passwordState.value = it },
+            keyboardType = KeyboardType.Password,
+            visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth()
         )
         Warning(stringResource(string.feat_setting_warning_xtream_takes_much_more_time))
+    }
+}
+
+@Composable
+context(properties: SettingProperties)
+private fun EmbyCompatibleInputContent(modifier: Modifier = Modifier) {
+    val spacing = LocalSpacing.current
+
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(spacing.small)
+    ) {
+        PlaceholderField(
+            text = properties.titleState.value,
+            placeholder = stringResource(string.feat_setting_placeholder_title).uppercase(),
+            onValueChange = { properties.titleState.value = Uri.decode(it) },
+            imeAction = ImeAction.Next,
+            modifier = Modifier.fillMaxWidth()
+        )
+        PlaceholderField(
+            text = properties.basicUrlState.value,
+            placeholder = stringResource(string.feat_setting_placeholder_basic_url).uppercase(),
+            onValueChange = { properties.basicUrlState.value = it },
+            imeAction = ImeAction.Next,
+            modifier = Modifier.fillMaxWidth()
+        )
+        PlaceholderField(
+            text = properties.usernameState.value,
+            placeholder = stringResource(string.feat_setting_placeholder_username).uppercase(),
+            onValueChange = { properties.usernameState.value = it },
+            imeAction = ImeAction.Next,
+            modifier = Modifier.fillMaxWidth()
+        )
+        PlaceholderField(
+            text = properties.passwordState.value,
+            placeholder = stringResource(string.feat_setting_placeholder_password).uppercase(),
+            onValueChange = { properties.passwordState.value = it },
+            keyboardType = KeyboardType.Password,
+            visualTransformation = PasswordVisualTransformation(),
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 

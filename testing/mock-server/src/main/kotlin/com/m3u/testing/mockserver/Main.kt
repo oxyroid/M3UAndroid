@@ -8,10 +8,12 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.request.host
 import io.ktor.server.request.port
+import io.ktor.server.request.receiveText
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondBytes
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
+import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -22,11 +24,14 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
 import kotlinx.serialization.json.put
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 private const val DEFAULT_HOST = "0.0.0.0"
 private const val DEFAULT_PORT = 8080
 private const val DEFAULT_USERNAME = "m3u"
 private const val DEFAULT_PASSWORD = "m3u"
+private const val EMBY_ACCESS_TOKEN = "mock-emby-access-token"
 
 private val json = Json {
     prettyPrint = true
@@ -86,6 +91,158 @@ private fun Application.mockServerModule() {
                 bytes = transportStreamPlaceholder(channel, number),
                 contentType = ContentType.parse("video/mp2t")
             )
+        }
+
+        get("/System/Info/Public") {
+            call.respondText(
+                text = json.encodeToString(embySystemInfo()),
+                contentType = ContentType.Application.Json
+            )
+        }
+
+        post("/Users/AuthenticateByName") {
+            if (!call.embyIdentityAuthenticated()) {
+                call.respond(HttpStatusCode.Unauthorized, "invalid Emby authorization")
+                return@post
+            }
+            val body = Json.parseToJsonElement(call.receiveText()).jsonObject
+            val username = body["Username"]?.jsonPrimitive?.content
+            val password = body["Pw"]?.jsonPrimitive?.content
+            if (username != DEFAULT_USERNAME || password != DEFAULT_PASSWORD) {
+                call.respond(HttpStatusCode.Unauthorized, "invalid media server credentials")
+                return@post
+            }
+            call.respondText(
+                text = json.encodeToString(embyAuthentication()),
+                contentType = ContentType.Application.Json
+            )
+        }
+
+        get("/LiveTv/Channels") {
+            if (!call.embyAuthenticated()) {
+                call.respond(HttpStatusCode.Unauthorized, "missing media server token")
+                return@get
+            }
+            call.respondText(
+                text = json.encodeToString(embyLiveTvChannels()),
+                contentType = ContentType.Application.Json
+            )
+        }
+
+        get("/Items/{item}/PlaybackInfo") {
+            if (!call.embyAuthenticated()) {
+                call.respond(HttpStatusCode.Unauthorized, "missing media server token")
+                return@get
+            }
+            val itemId = call.parameters["item"].orEmpty()
+            call.respondText(
+                text = json.encodeToString(embyPlaybackInfo(call.baseUrl(), itemId)),
+                contentType = ContentType.Application.Json
+            )
+        }
+
+        get("/emby-stream/{item}/index.m3u8") {
+            if (!call.embyAuthenticated() || call.request.headers["X-Mock-Playback"] != "allowed") {
+                call.respond(HttpStatusCode.Unauthorized, "missing playback headers")
+                return@get
+            }
+            call.respondText(
+                text = hlsPlaylist(call.parameters["item"].orEmpty()),
+                contentType = ContentType.parse("application/vnd.apple.mpegurl")
+            )
+        }
+
+        post("/Sessions/Playing/Stopped") {
+            if (!call.embyAuthenticated()) {
+                call.respond(HttpStatusCode.Unauthorized, "missing media server token")
+                return@post
+            }
+            call.respond(HttpStatusCode.NoContent)
+        }
+
+        post("/LiveStreams/Close") {
+            if (!call.embyAuthenticated()) {
+                call.respond(HttpStatusCode.Unauthorized, "missing media server token")
+                return@post
+            }
+            call.respond(HttpStatusCode.NoContent)
+        }
+
+        get("/jellyfin/System/Info/Public") {
+            call.respondText(
+                text = json.encodeToString(jellyfinSystemInfo()),
+                contentType = ContentType.Application.Json
+            )
+        }
+
+        post("/jellyfin/Users/AuthenticateByName") {
+            if (!call.jellyfinIdentityAuthenticated()) {
+                call.respond(HttpStatusCode.Unauthorized, "deprecated media server authorization")
+                return@post
+            }
+            val body = Json.parseToJsonElement(call.receiveText()).jsonObject
+            val username = body["Username"]?.jsonPrimitive?.content
+            val password = body["Pw"]?.jsonPrimitive?.content
+            if (username != DEFAULT_USERNAME || password != DEFAULT_PASSWORD) {
+                call.respond(HttpStatusCode.Unauthorized, "invalid media server credentials")
+                return@post
+            }
+            call.respondText(
+                text = json.encodeToString(embyAuthentication()),
+                contentType = ContentType.Application.Json
+            )
+        }
+
+        get("/jellyfin/LiveTv/Channels") {
+            if (!call.jellyfinAuthenticated()) {
+                call.respond(HttpStatusCode.Unauthorized, "missing media server token")
+                return@get
+            }
+            call.respondText(
+                text = json.encodeToString(embyLiveTvChannels()),
+                contentType = ContentType.Application.Json
+            )
+        }
+
+        get("/jellyfin/Items/{item}/PlaybackInfo") {
+            if (!call.jellyfinAuthenticated()) {
+                call.respond(HttpStatusCode.Unauthorized, "missing media server token")
+                return@get
+            }
+            val itemId = call.parameters["item"].orEmpty()
+            call.respondText(
+                text = json.encodeToString(
+                    embyPlaybackInfo("${call.baseUrl()}/jellyfin", itemId)
+                ),
+                contentType = ContentType.Application.Json
+            )
+        }
+
+        get("/jellyfin/emby-stream/{item}/index.m3u8") {
+            if (!call.jellyfinAuthenticated() || call.request.headers["X-Mock-Playback"] != "allowed") {
+                call.respond(HttpStatusCode.Unauthorized, "missing playback headers")
+                return@get
+            }
+            call.respondText(
+                text = hlsPlaylist(call.parameters["item"].orEmpty()),
+                contentType = ContentType.parse("application/vnd.apple.mpegurl")
+            )
+        }
+
+        post("/jellyfin/Sessions/Playing/Stopped") {
+            if (!call.jellyfinAuthenticated()) {
+                call.respond(HttpStatusCode.Unauthorized, "missing media server token")
+                return@post
+            }
+            call.respond(HttpStatusCode.NoContent)
+        }
+
+        post("/jellyfin/LiveStreams/Close") {
+            if (!call.jellyfinAuthenticated()) {
+                call.respond(HttpStatusCode.Unauthorized, "missing media server token")
+                return@post
+            }
+            call.respond(HttpStatusCode.NoContent)
         }
 
         get("/live/{username}/{password}/{stream}.ts") {
@@ -195,6 +352,22 @@ private fun io.ktor.server.application.ApplicationCall.baseUrl(): String {
     return if (includePort) "$scheme://$host:$port" else "$scheme://$host"
 }
 
+private fun io.ktor.server.application.ApplicationCall.embyIdentityAuthenticated(): Boolean =
+    request.headers["Authorization"]?.startsWith("Emby ") == true &&
+        request.headers["X-Emby-Authorization"] == null
+
+private fun io.ktor.server.application.ApplicationCall.embyAuthenticated(): Boolean =
+    embyIdentityAuthenticated() && request.headers["X-Emby-Token"] == EMBY_ACCESS_TOKEN
+
+private fun io.ktor.server.application.ApplicationCall.jellyfinIdentityAuthenticated(): Boolean =
+    request.headers["Authorization"]?.startsWith("MediaBrowser ") == true &&
+        request.headers["X-Emby-Authorization"] == null &&
+        request.headers["X-Emby-Token"] == null
+
+private fun io.ktor.server.application.ApplicationCall.jellyfinAuthenticated(): Boolean =
+    jellyfinIdentityAuthenticated() &&
+        "Token=\"$EMBY_ACCESS_TOKEN\"" in request.headers["Authorization"].orEmpty()
+
 private fun endpointIndex(baseUrl: String): String = json.encodeToString(
     buildJsonObject {
         put("name", "M3U mock server")
@@ -202,8 +375,75 @@ private fun endpointIndex(baseUrl: String): String = json.encodeToString(
         put("m3u_mixed", "$baseUrl/playlist/mixed.m3u")
         put("hls_sample", "$baseUrl/hls/news/index.m3u8")
         put("xtream", "$baseUrl/player_api.php?username=$DEFAULT_USERNAME&password=$DEFAULT_PASSWORD")
+        put("emby", baseUrl)
+        put("jellyfin", "$baseUrl/jellyfin")
     }
 )
+
+private fun embySystemInfo(): JsonObject = buildJsonObject {
+    put("Id", "mock-server-id")
+    put("ServerName", "M3U Mock Emby")
+    put("Version", "4.9.0.0")
+    put("ProductName", "Emby Server")
+}
+
+private fun jellyfinSystemInfo(): JsonObject = buildJsonObject {
+    put("Id", "mock-server-id")
+    put("ServerName", "M3U Mock Jellyfin")
+    put("Version", "10.11.0")
+    put("ProductName", "Jellyfin Server")
+}
+
+private fun embyAuthentication(): JsonObject = buildJsonObject {
+    put("AccessToken", EMBY_ACCESS_TOKEN)
+    put("ServerId", "mock-server-id")
+    putJsonObject("User") {
+        put("Id", "mock-user-id")
+        put("Name", DEFAULT_USERNAME)
+    }
+}
+
+private fun embyLiveTvChannels(): JsonObject = buildJsonObject {
+    putJsonArray("Items") {
+        add(
+            buildJsonObject {
+                put("Id", "mock.news")
+                put("Name", "Mock News")
+                put("ChannelNumber", "1")
+                put("ChannelType", "TV")
+                put("MediaType", "Video")
+                put("PrimaryImageTag", "news-image")
+            }
+        )
+        add(
+            buildJsonObject {
+                put("Id", "mock.sports")
+                put("Name", "Mock Sports")
+                put("ChannelNumber", "2")
+                put("ChannelType", "TV")
+                put("MediaType", "Video")
+                put("PrimaryImageTag", "sports-image")
+            }
+        )
+    }
+    put("TotalRecordCount", 2)
+}
+
+private fun embyPlaybackInfo(baseUrl: String, itemId: String): JsonObject = buildJsonObject {
+    put("PlaySessionId", "mock-play-session-$itemId")
+    putJsonArray("MediaSources") {
+        add(
+            buildJsonObject {
+                put("Id", "mock-media-source-$itemId")
+                put("Path", "$baseUrl/emby-stream/$itemId/index.m3u8")
+                put("LiveStreamId", "mock-live-stream-$itemId")
+                putJsonObject("RequiredHttpHeaders") {
+                    put("X-Mock-Playback", "allowed")
+                }
+            }
+        )
+    }
+}
 
 private fun livePlaylist(baseUrl: String): String = """
     #EXTM3U

@@ -38,6 +38,9 @@
     <string name="feat_setting_system_setting">system setting</string>
     <string name="feat_setting_script_management_import_js">import Javascript</string>
     <string name="feat_setting_enqueue_subscribe">a subscription task has been added to the queue</string>
+    <string name="feat_setting_provider_credentials_required">enter a username to connect to this server</string>
+    <string name="feat_setting_provider_added">connected and imported %1$d live TV channels</string>
+    <string name="feat_setting_provider_subscription_failed">could not connect to or refresh this server</string>
     <string name="feat_setting_dropbox">dropbox</string>
     <string name="feat_setting_project_about">about project</string>
     <string name="feat_setting_local_storage">local storage</string>
@@ -87,6 +90,7 @@
     <string name="feat_setting_data_source_epg" translatable="false">EPG</string>
     <string name="feat_setting_data_source_xtream" translatable="false">Xtream</string>
     <string name="feat_setting_data_source_emby" translatable="false">Emby</string>
+    <string name="feat_setting_data_source_jellyfin" translatable="false">Jellyfin</string>
     <string name="feat_setting_data_source_dropbox" translatable="false">Dropbox</string>
     <string name="feat_setting_placeholder_basic_url">address</string>
     <string name="feat_setting_placeholder_username">username</string>

@@ -27,13 +27,17 @@ import com.m3u.data.database.model.Playlist
 import com.m3u.data.parser.xtream.XtreamInput
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
+import com.m3u.data.repository.provider.ProviderSubscriptionRequest
+import com.m3u.data.repository.provider.SubscriptionProviderRepository
 import com.m3u.data.repository.tv.TvRepository
 import com.m3u.data.service.Messager
 import com.m3u.data.worker.BackupWorker
 import com.m3u.data.worker.RestoreWorker
 import com.m3u.data.worker.SubscriptionWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -44,6 +48,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.time.Clock
 
@@ -51,6 +56,7 @@ import kotlin.time.Clock
 class SettingViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val channelRepository: ChannelRepository,
+    private val subscriptionProviderRepository: SubscriptionProviderRepository,
     private val workManager: WorkManager,
     private val settings: Settings,
     private val messager: Messager,
@@ -63,6 +69,7 @@ class SettingViewModel @Inject constructor(
 ) : ViewModel() {
     private val _codecPackState = MutableStateFlow(codecPackRepository.toPendingState())
     val codecPackState: StateFlow<CodecPackState> = _codecPackState
+    private var providerSubscriptionJob: Job? = null
 
     init {
         refreshCodecPack()
@@ -283,9 +290,56 @@ class SettingViewModel @Inject constructor(
                     messager.emit(SettingMessage.Enqueued)
                 }
 
+                DataSource.Emby, DataSource.Jellyfin -> {
+                    if (title.isEmpty()) {
+                        messager.emit(SettingMessage.EmptyTitle)
+                        return
+                    }
+                    if (inputBasicUrl.isBlank()) {
+                        messager.emit(SettingMessage.EmptyUrl)
+                        return
+                    }
+                    if (username.isBlank()) {
+                        messager.emit(SettingMessage.ProviderCredentialsRequired)
+                        return
+                    }
+                    subscribeProvider(
+                        request = ProviderSubscriptionRequest(
+                            title = title,
+                            baseUrl = basicUrl,
+                            username = username,
+                            password = password,
+                            source = selected,
+                        )
+                    )
+                    return
+                }
+
                 else -> return
             }
         resetAllInputs()
+    }
+
+    private fun subscribeProvider(request: ProviderSubscriptionRequest) {
+        if (providerSubscriptionJob?.isActive == true) return
+        providerSubscriptionJob = viewModelScope.launch {
+            val result = runCatching {
+                withContext(Dispatchers.IO) {
+                    subscriptionProviderRepository.subscribe(request)
+                }
+            }.onFailure { error ->
+                if (error is CancellationException) throw error
+            }
+            result.fold(
+                onSuccess = { subscription ->
+                    messager.emit(SettingMessage.ProviderAdded(subscription.channelCount))
+                    resetAllInputs()
+                },
+                onFailure = {
+                    messager.emit(SettingMessage.ProviderSubscriptionFailed)
+                },
+            )
+        }
     }
 
     private fun subscribeForTv(

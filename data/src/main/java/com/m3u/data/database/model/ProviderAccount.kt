@@ -1,0 +1,47 @@
+package com.m3u.data.database.model
+
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
+import androidx.room.PrimaryKey
+
+@Entity(
+    tableName = "provider_accounts",
+    foreignKeys = [
+        ForeignKey(
+            entity = Playlist::class,
+            parentColumns = ["url"],
+            childColumns = ["playlist_url"],
+            onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE,
+        )
+    ],
+    indices = [
+        Index(value = ["playlist_url"], unique = true),
+        Index(value = ["provider_id", "server_id", "user_id"], unique = true),
+    ],
+)
+data class ProviderAccount(
+    @PrimaryKey
+    @ColumnInfo(name = "id")
+    val id: String,
+    @ColumnInfo(name = "provider_id")
+    val providerId: String,
+    @ColumnInfo(name = "provider_kind")
+    val providerKind: String,
+    @ColumnInfo(name = "base_url")
+    val baseUrl: String,
+    @ColumnInfo(name = "server_id")
+    val serverId: String,
+    @ColumnInfo(name = "server_name")
+    val serverName: String,
+    @ColumnInfo(name = "server_version")
+    val serverVersion: String,
+    @ColumnInfo(name = "user_id")
+    val userId: String,
+    @ColumnInfo(name = "username")
+    val username: String,
+    @ColumnInfo(name = "playlist_url")
+    val playlistUrl: String,
+)

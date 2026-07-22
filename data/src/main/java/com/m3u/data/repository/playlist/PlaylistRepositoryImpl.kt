@@ -36,6 +36,7 @@ import com.m3u.data.parser.xtream.asChannel
 import com.m3u.data.parser.xtream.toChannel
 import com.m3u.data.repository.BackupOrRestoreContracts
 import com.m3u.data.repository.createCoroutineCache
+import com.m3u.data.repository.provider.SubscriptionProviderRepository
 import com.m3u.data.worker.SubscriptionWorker
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.ktor.http.Url
@@ -77,7 +78,8 @@ internal class PlaylistRepositoryImpl @Inject constructor(
     private val xtreamParser: XtreamParser,
     private val workManager: WorkManager,
     @ApplicationContext private val context: Context,
-    private val settings: Settings
+    private val settings: Settings,
+    private val subscriptionProviderRepository: SubscriptionProviderRepository,
 ) : PlaylistRepository {
     private val timber = Timber.tag("PlaylistRepositoryImpl")
 
@@ -382,6 +384,10 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                 )
             }
 
+            DataSource.Emby, DataSource.Jellyfin -> {
+                subscriptionProviderRepository.refresh(url)
+            }
+
             else -> throw IllegalStateException("Refresh data source ${playlist.source} is unsupported currently.")
         }
     }
@@ -521,6 +527,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
 
     override suspend fun unsubscribe(url: String): Playlist? {
         val playlist = playlistDao.get(url)
+        subscriptionProviderRepository.removeAccount(url)
         channelDao.deleteByPlaylistUrl(url)
         return playlist?.also {
             playlistDao.delete(it)

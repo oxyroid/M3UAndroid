@@ -1,6 +1,6 @@
 # M3U Mock Server
 
-Local HTTP fixtures for manual testing M3U, HLS, and Xtream flows.
+Local HTTP fixtures for manual testing M3U, HLS, Xtream, and Emby-compatible flows.
 
 ## Run
 
@@ -19,6 +19,8 @@ Android emulator URLs use `10.0.2.2`:
 - M3U playlist: `http://10.0.2.2:8080/playlist/live.m3u`
 - HLS manifest: `http://10.0.2.2:8080/hls/news/index.m3u8`
 - Xtream server: `http://10.0.2.2:8080/player_api.php?username=m3u&password=m3u`
+- Emby-compatible server: `http://10.0.2.2:8080`
+- Jellyfin server with strict modern authorization: `http://10.0.2.2:8080/jellyfin`
 
 For a physical phone or TV, replace `10.0.2.2` with the host machine's LAN IP.
 
@@ -57,5 +59,12 @@ physical device:
 - `/player_api.php?username=m3u&password=m3u&action=get_series_categories`
 - `/player_api.php?username=m3u&password=m3u&action=get_series`
 - `/player_api.php?username=m3u&password=m3u&action=get_series_info&series_id=3001`
+- `/System/Info/Public` returns Emby-compatible server identity.
+- `/Users/AuthenticateByName` accepts the default credentials.
+- `/LiveTv/Channels` returns two live channels with token authentication.
+- `/Items/{item}/PlaybackInfo` opens a deterministic playback session.
+- `/emby-stream/{item}/index.m3u8` requires the token and playback headers.
+- `/Sessions/Playing/Stopped` and `/LiveStreams/Close` accept session cleanup.
+- `/jellyfin/*` mirrors the same lifecycle while rejecting deprecated Jellyfin authorization headers.
 
-The default Xtream credentials are `m3u` / `m3u`.
+The default Xtream and Emby-compatible credentials are `m3u` / `m3u`.
