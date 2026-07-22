@@ -111,6 +111,12 @@
     <string name="feat_setting_extension_secret_configured">Configured; enter a new value to replace it</string>
     <string name="feat_setting_extension_setting_save">Save</string>
     <string name="feat_setting_extension_setting_clear">Clear</string>
+    <string name="feat_setting_extension_clear_data">Clear data</string>
+    <string name="feat_setting_extension_clear_data_title">Clear extension data?</string>
+    <string name="feat_setting_extension_clear_data_body">Settings, encrypted secrets, and extension EPG cache will be removed. Subscriptions and your channel state will be kept.</string>
+    <string name="feat_setting_extension_data_cleared">Extension data cleared</string>
+    <string name="feat_setting_extension_export_diagnostics">Export diagnostics</string>
+    <string name="feat_setting_extension_diagnostics_share_title">Share extension diagnostics</string>
     <string name="feat_setting_data_source_dropbox" translatable="false">Dropbox</string>
     <string name="feat_setting_placeholder_basic_url">address</string>
     <string name="feat_setting_placeholder_username">username</string>

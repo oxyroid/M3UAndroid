@@ -140,4 +140,10 @@
     <string name="feat_setting_extension_secret_configured">已配置；输入新值可替换</string>
     <string name="feat_setting_extension_setting_save">保存</string>
     <string name="feat_setting_extension_setting_clear">清除</string>
+    <string name="feat_setting_extension_clear_data">清除数据</string>
+    <string name="feat_setting_extension_clear_data_title">清除插件数据？</string>
+    <string name="feat_setting_extension_clear_data_body">将删除设置、加密凭据和插件 EPG 缓存；订阅与频道状态会保留。</string>
+    <string name="feat_setting_extension_data_cleared">插件数据已清除</string>
+    <string name="feat_setting_extension_export_diagnostics">导出诊断</string>
+    <string name="feat_setting_extension_diagnostics_share_title">分享插件诊断</string>
 </resources>

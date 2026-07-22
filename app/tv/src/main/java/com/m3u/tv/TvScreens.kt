@@ -8,6 +8,7 @@ import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -95,6 +96,8 @@ fun TvBrowsePane(
     onEnableExtension: (String, String) -> Unit,
     onDisableExtension: (String) -> Unit,
     onRevokeExtension: (String, String) -> Unit,
+    onClearExtensionData: (String) -> Unit,
+    onExportExtensionDiagnostics: (String) -> Unit,
     onOpenExtensionSettings: (String) -> Unit,
     onCloseExtensionSettings: () -> Unit,
     onUpdateExtensionSetting: (String, String, String?) -> Unit,
@@ -136,6 +139,8 @@ fun TvBrowsePane(
                     onEnableExtension = onEnableExtension,
                     onDisableExtension = onDisableExtension,
                     onRevokeExtension = onRevokeExtension,
+                    onClearExtensionData = onClearExtensionData,
+                    onExportExtensionDiagnostics = onExportExtensionDiagnostics,
                     onOpenExtensionSettings = onOpenExtensionSettings,
                     onCloseExtensionSettings = onCloseExtensionSettings,
                     onUpdateExtensionSetting = onUpdateExtensionSetting,
@@ -559,11 +564,14 @@ private fun StatusScreen(
     onEnableExtension: (String, String) -> Unit,
     onDisableExtension: (String) -> Unit,
     onRevokeExtension: (String, String) -> Unit,
+    onClearExtensionData: (String) -> Unit,
+    onExportExtensionDiagnostics: (String) -> Unit,
     onOpenExtensionSettings: (String) -> Unit,
     onCloseExtensionSettings: () -> Unit,
     onUpdateExtensionSetting: (String, String, String?) -> Unit,
 ) {
     var pendingTrust by remember { mutableStateOf<InstalledPlugin?>(null) }
+    var pendingClear by remember { mutableStateOf<InstalledPlugin?>(null) }
     val trustConfirmationFocusRequester = remember { FocusRequester() }
 
     LaunchedEffect(pendingTrust) {
@@ -575,8 +583,21 @@ private fun StatusScreen(
     LaunchedEffect(state.externalExtensionsEnabled) {
         if (!state.externalExtensionsEnabled) {
             pendingTrust = null
+            pendingClear = null
             onCloseExtensionSettings()
         }
+    }
+
+    pendingClear?.let { plugin ->
+        ExtensionClearConfirmation(
+            plugin = plugin,
+            onConfirm = {
+                pendingClear = null
+                plugin.extensionId?.let(onClearExtensionData)
+            },
+            onCancel = { pendingClear = null },
+        )
+        return
     }
 
     state.extensionSettings?.let { configuration ->
@@ -671,6 +692,10 @@ private fun StatusScreen(
                     onDisable = { plugin.extensionId?.let(onDisableExtension) },
                     onRevoke = { onRevokeExtension(plugin.packageName, plugin.serviceName) },
                     onOpenSettings = { plugin.extensionId?.let(onOpenExtensionSettings) },
+                    onClearData = { pendingClear = plugin },
+                    onExportDiagnostics = {
+                        plugin.extensionId?.let(onExportExtensionDiagnostics)
+                    },
                 )
             }
         }
@@ -727,6 +752,8 @@ private fun ExtensionPluginCard(
     onDisable: () -> Unit,
     onRevoke: () -> Unit,
     onOpenSettings: () -> Unit,
+    onClearData: () -> Unit,
+    onExportDiagnostics: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
         Text(
@@ -742,7 +769,10 @@ private fun ExtensionPluginCard(
         )
         Text(plugin.certificateSha256, color = TvColors.TextMuted, fontSize = 12.sp)
         plugin.inspectionError?.let { Text(it, color = TvColors.Danger, fontSize = 14.sp) }
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             if (plugin.enabled && plugin.state == ExtensionState.ENABLED && plugin.extensionId != null) {
                 TvActionButton(
                     text = stringResource(string.feat_setting_extension_settings),
@@ -768,6 +798,65 @@ private fun ExtensionPluginCard(
                     onClick = onRevoke,
                 )
             }
+            if (plugin.extensionId != null) {
+                TvActionButton(
+                    text = stringResource(string.feat_setting_extension_export_diagnostics),
+                    icon = Icons.Rounded.Refresh,
+                    onClick = onExportDiagnostics,
+                )
+                TvActionButton(
+                    text = stringResource(string.feat_setting_extension_clear_data),
+                    icon = Icons.Rounded.Block,
+                    onClick = onClearData,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ExtensionClearConfirmation(
+    plugin: InstalledPlugin,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    val confirmFocusRequester = remember { FocusRequester() }
+    LaunchedEffect(plugin.extensionId) {
+        repeat(2) { withFrameNanos { } }
+        confirmFocusRequester.requestFocus()
+    }
+    Column(
+        modifier = Modifier.fillMaxSize().padding(48.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
+    ) {
+        Text(
+            text = stringResource(string.feat_setting_extension_clear_data_title),
+            color = TvColors.TextPrimary,
+            fontSize = 28.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Text(
+            text = plugin.displayName ?: plugin.packageName,
+            color = TvColors.TextPrimary,
+            fontSize = 20.sp,
+        )
+        Text(
+            text = stringResource(string.feat_setting_extension_clear_data_body),
+            color = TvColors.TextSecondary,
+            fontSize = 16.sp,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            TvActionButton(
+                text = stringResource(string.feat_setting_extension_clear_data),
+                icon = Icons.Rounded.Block,
+                focusRequester = confirmFocusRequester,
+                onClick = onConfirm,
+            )
+            TvActionButton(
+                text = stringResource(android.R.string.cancel),
+                icon = Icons.Rounded.CheckCircle,
+                onClick = onCancel,
+            )
         }
     }
 }

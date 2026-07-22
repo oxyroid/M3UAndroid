@@ -100,4 +100,10 @@ sealed class SettingMessage(
         type = TYPE_SNACK,
         resId = string.feat_setting_restoring
     )
+
+    data object ExtensionDataCleared : SettingMessage(
+        level = LEVEL_INFO,
+        type = TYPE_SNACK,
+        resId = string.feat_setting_extension_data_cleared,
+    )
 }

@@ -52,7 +52,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
@@ -91,6 +93,9 @@ class SettingViewModel @Inject constructor(
 
     private val _extensionSettings = MutableStateFlow<ExtensionSettingsConfiguration?>(null)
     val extensionSettings: StateFlow<ExtensionSettingsConfiguration?> = _extensionSettings
+
+    private val _extensionDiagnostics = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val extensionDiagnostics = _extensionDiagnostics.asSharedFlow()
 
     private val _subscriptionProviders = MutableStateFlow<List<SubscriptionProviderDescriptor>>(emptyList())
     val subscriptionProviders: StateFlow<List<SubscriptionProviderDescriptor>> = _subscriptionProviders
@@ -161,6 +166,22 @@ class SettingViewModel @Inject constructor(
 
     fun closeExtensionSettings() {
         _extensionSettings.value = null
+    }
+
+    fun clearExtensionData(extensionId: String) {
+        if (_extensionSettings.value?.extensionId?.value == extensionId) closeExtensionSettings()
+        viewModelScope.launch(Dispatchers.IO) {
+            extensionPluginRepository.clearData(extensionId)
+            messager.emit(SettingMessage.ExtensionDataCleared)
+        }
+    }
+
+    fun exportExtensionDiagnostics(extensionId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            extensionPluginRepository.diagnostics(extensionId)?.let { payload ->
+                _extensionDiagnostics.emit(payload)
+            }
+        }
     }
 
     fun updateExtensionSetting(

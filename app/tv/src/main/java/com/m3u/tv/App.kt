@@ -1,5 +1,6 @@
 package com.m3u.tv
 
+import android.content.Intent
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -24,6 +25,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,6 +34,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.Text
 import com.m3u.data.tv.model.keyCode
+import com.m3u.i18n.R.string
 
 @Composable
 fun App(
@@ -45,6 +49,8 @@ fun App(
     val remoteControlCode by viewModel.remoteControlCode.collectAsStateWithLifecycle()
     val view = LocalView.current
     val localeTag = LocalConfiguration.current.locales[0].toLanguageTag()
+    val context = LocalContext.current
+    val diagnosticsShareTitle = stringResource(string.feat_setting_extension_diagnostics_share_title)
     var destination by remember { mutableStateOf(TvDestination.Home) }
     var surface by remember { mutableStateOf(TvSurface.Browse) }
     val closePlayer = {
@@ -64,6 +70,19 @@ fun App(
         viewModel.remoteDirections.collect { direction ->
             view.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, direction.keyCode))
             view.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, direction.keyCode))
+        }
+    }
+    LaunchedEffect(viewModel, context) {
+        viewModel.extensionDiagnostics.collect { payload ->
+            context.startActivity(
+                Intent.createChooser(
+                    Intent(Intent.ACTION_SEND).apply {
+                        type = "application/json"
+                        putExtra(Intent.EXTRA_TEXT, payload)
+                    },
+                    diagnosticsShareTitle,
+                )
+            )
         }
     }
 
@@ -100,6 +119,8 @@ fun App(
                 onEnableExtension = viewModel::enableExtensionPlugin,
                 onDisableExtension = viewModel::disableExtensionPlugin,
                 onRevokeExtension = viewModel::revokeExtensionPlugin,
+                onClearExtensionData = viewModel::clearExtensionData,
+                onExportExtensionDiagnostics = viewModel::exportExtensionDiagnostics,
                 onOpenExtensionSettings = { extensionId ->
                     viewModel.openExtensionSettings(extensionId, localeTag)
                 },

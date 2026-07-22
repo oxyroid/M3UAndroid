@@ -27,8 +27,10 @@ import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
@@ -64,6 +66,8 @@ class TvHomeViewModel @Inject constructor(
 ) : ViewModel() {
     private val _state = MutableStateFlow(TvUiState())
     val state: StateFlow<TvUiState> = _state.asStateFlow()
+    private val _extensionDiagnostics = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val extensionDiagnostics = _extensionDiagnostics.asSharedFlow()
 
     val player: StateFlow<Player?> = playerManager.player
     val currentChannel: StateFlow<Channel?> = playerManager.channel
@@ -162,6 +166,23 @@ class TvHomeViewModel @Inject constructor(
 
     fun closeExtensionSettings() {
         _state.update { it.copy(extensionSettings = null) }
+    }
+
+    fun clearExtensionData(extensionId: String) {
+        if (state.value.extensionSettings?.extensionId?.value == extensionId) {
+            closeExtensionSettings()
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            extensionPluginRepository.clearData(extensionId)
+        }
+    }
+
+    fun exportExtensionDiagnostics(extensionId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            extensionPluginRepository.diagnostics(extensionId)?.let { payload ->
+                _extensionDiagnostics.emit(payload)
+            }
+        }
     }
 
     fun updateExtensionSetting(

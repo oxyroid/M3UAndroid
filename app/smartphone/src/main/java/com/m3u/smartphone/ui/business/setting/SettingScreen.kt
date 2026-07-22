@@ -1,5 +1,6 @@
 package com.m3u.smartphone.ui.business.setting
 
+import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -12,6 +13,7 @@ import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -75,6 +78,22 @@ fun SettingRoute(
     val extensionSettings by viewModel.extensionSettings.collectAsStateWithLifecycle()
     val subscriptionProviders by viewModel.subscriptionProviders.collectAsStateWithLifecycle()
     val localeTag = LocalConfiguration.current.locales[0].toLanguageTag()
+    val context = LocalContext.current
+    val diagnosticsShareTitle = stringResource(string.feat_setting_extension_diagnostics_share_title)
+
+    LaunchedEffect(viewModel, context) {
+        viewModel.extensionDiagnostics.collect { payload ->
+            context.startActivity(
+                Intent.createChooser(
+                    Intent(Intent.ACTION_SEND).apply {
+                        type = "application/json"
+                        putExtra(Intent.EXTRA_TEXT, payload)
+                    },
+                    diagnosticsShareTitle,
+                )
+            )
+        }
+    }
 
     val sheetState = rememberModalBottomSheetState()
     var colorScheme: ColorScheme? by remember { mutableStateOf(null) }
@@ -132,6 +151,8 @@ fun SettingRoute(
             onEnableExtensionPlugin = viewModel::enableExtensionPlugin,
             onDisableExtensionPlugin = viewModel::disableExtensionPlugin,
             onRevokeExtensionPlugin = viewModel::revokeExtensionPlugin,
+            onClearExtensionData = viewModel::clearExtensionData,
+            onExportExtensionDiagnostics = viewModel::exportExtensionDiagnostics,
             onOpenExtensionSettings = { extensionId ->
                 viewModel.openExtensionSettings(extensionId, localeTag)
             },
@@ -186,6 +207,8 @@ private fun SettingScreen(
     onEnableExtensionPlugin: (String, String) -> Unit,
     onDisableExtensionPlugin: (String) -> Unit,
     onRevokeExtensionPlugin: (String, String) -> Unit,
+    onClearExtensionData: (String) -> Unit,
+    onExportExtensionDiagnostics: (String) -> Unit,
     onOpenExtensionSettings: (String) -> Unit,
     onCloseExtensionSettings: () -> Unit,
     onUpdateExtensionSetting: (String, String, String?) -> Unit,
@@ -304,6 +327,8 @@ private fun SettingScreen(
                         onEnableExtensionPlugin = onEnableExtensionPlugin,
                         onDisableExtensionPlugin = onDisableExtensionPlugin,
                         onRevokeExtensionPlugin = onRevokeExtensionPlugin,
+                        onClearExtensionData = onClearExtensionData,
+                        onExportExtensionDiagnostics = onExportExtensionDiagnostics,
                         onOpenExtensionSettings = onOpenExtensionSettings,
                         onCloseExtensionSettings = onCloseExtensionSettings,
                         onUpdateExtensionSetting = onUpdateExtensionSetting,

@@ -108,6 +108,8 @@ internal fun SubscriptionsFragment(
     onEnableExtensionPlugin: (String, String) -> Unit,
     onDisableExtensionPlugin: (String) -> Unit,
     onRevokeExtensionPlugin: (String, String) -> Unit,
+    onClearExtensionData: (String) -> Unit,
+    onExportExtensionDiagnostics: (String) -> Unit,
     onOpenExtensionSettings: (String) -> Unit,
     onCloseExtensionSettings: () -> Unit,
     onUpdateExtensionSetting: (String, String, String?) -> Unit,
@@ -172,6 +174,8 @@ internal fun SubscriptionsFragment(
                         onEnable = onEnableExtensionPlugin,
                         onDisable = onDisableExtensionPlugin,
                         onRevoke = onRevokeExtensionPlugin,
+                        onClearData = onClearExtensionData,
+                        onExportDiagnostics = onExportExtensionDiagnostics,
                         onOpenSettings = onOpenExtensionSettings,
                         onCloseSettings = onCloseExtensionSettings,
                         onUpdateSetting = onUpdateExtensionSetting,
@@ -198,12 +202,15 @@ private fun ExtensionPluginsContent(
     onEnable: (String, String) -> Unit,
     onDisable: (String) -> Unit,
     onRevoke: (String, String) -> Unit,
+    onClearData: (String) -> Unit,
+    onExportDiagnostics: (String) -> Unit,
     onOpenSettings: (String) -> Unit,
     onCloseSettings: () -> Unit,
     onUpdateSetting: (String, String, String?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var pendingTrust by remember { mutableStateOf<InstalledPlugin?>(null) }
+    var pendingClear by remember { mutableStateOf<InstalledPlugin?>(null) }
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(LocalSpacing.current.medium),
@@ -270,6 +277,14 @@ private fun ExtensionPluginsContent(
                             Text(stringResource(string.feat_setting_extension_revoke))
                         }
                     }
+                    if (extensionId != null) {
+                        TextButton(onClick = { onExportDiagnostics(extensionId) }) {
+                            Text(stringResource(string.feat_setting_extension_export_diagnostics))
+                        }
+                        TextButton(onClick = { pendingClear = plugin }) {
+                            Text(stringResource(string.feat_setting_extension_clear_data))
+                        }
+                    }
                 }
             }
         }
@@ -311,6 +326,24 @@ private fun ExtensionPluginsContent(
             configuration = configuration,
             onDismiss = onCloseSettings,
             onUpdate = onUpdateSetting,
+        )
+    }
+    pendingClear?.let { plugin ->
+        AlertDialog(
+            onDismissRequest = { pendingClear = null },
+            title = { Text(stringResource(string.feat_setting_extension_clear_data_title)) },
+            text = { Text(stringResource(string.feat_setting_extension_clear_data_body)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    pendingClear = null
+                    plugin.extensionId?.let(onClearData)
+                }) { Text(stringResource(string.feat_setting_extension_clear_data)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingClear = null }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
         )
     }
 }

@@ -81,7 +81,7 @@ provider refresh 必须进入 WorkManager，具备联网约束、取消、重试
 
 目前已有生产宿主链路：内置 Emby/Jellyfin 发现、校验、刷新、播放解析、close、provider 持久化、后台刷新与播放 session 恢复。外部 APK 的发现、信任、启禁用、签名固定、handshake、invoke、cancel、health、broker 代理、进程恢复和后台任务已在开发者开关下实现。手机端搜索贡献使用宿主持有的 stable-reference 映射。通用 provider 刷新以受限分批方式调用 metadata 与 EPG 贡献者；metadata 只能通过窄 DAO 更新标题/分类，EPG 经引用、时间和大小校验后替换到插件专属的宿主数据源。
 
-metadata 与 EPG importer 尚未覆盖所有旧 M3U/Xtream 导入路径。类型化设置的持久化与调用上下文已经接通：值按 section 隔离，schema version 对账会删除过期数据，secret 字段加密保存且调用 envelope 中只有不透明 handle。手机与 TV 的声明式设置 renderer 已接通布尔、单选、文本、数字和 secret 字段。只有 runtime 确实处于 `ENABLED` 状态时才能打开设置；禁用、撤销信任或关闭外部扩展会清理陈旧设置状态。secret 字段只暴露已配置/替换/清除操作；TV 首次焦点和保存后焦点保持已在模拟器上使用遥控器输入验证。
+metadata 与 EPG importer 尚未覆盖所有旧 M3U/Xtream 导入路径。类型化设置的持久化与调用上下文已经接通：值按 section 隔离，schema version 对账会删除过期数据，secret 字段加密保存且调用 envelope 中只有不透明 handle。手机与 TV 的声明式设置 renderer 已接通布尔、单选、文本、数字和 secret 字段。只有 runtime 确实处于 `ENABLED` 状态时才能打开设置；禁用、撤销信任或关闭外部扩展会清理陈旧设置状态。secret 字段只暴露已配置/替换/清除操作；TV 首次焦点和保存后焦点保持已在模拟器上使用遥控器输入验证。手机与 TV 插件卡均提供二次确认的数据清理和宿主分享面板诊断导出；TV 操作行可换行且每个操作保持独立遥控器焦点。
 
 ## 发布门槛
 
