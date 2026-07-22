@@ -1,5 +1,6 @@
 package com.m3u.data.extension
 
+import android.content.Context
 import com.m3u.data.extension.emby.EmbyCompatibleClient
 import com.m3u.data.extension.emby.EmbyCompatibleProvider
 import com.m3u.data.extension.emby.OkHttpEmbyCompatibleClient
@@ -14,8 +15,12 @@ import com.m3u.data.repository.extension.ExtensionSettingStore
 import com.m3u.data.repository.extension.ExtensionSettingsRepository
 import com.m3u.data.repository.extension.ExtensionSettingsRepositoryImpl
 import com.m3u.data.repository.extension.WorkManagerExtensionContributionScheduler
+import com.m3u.data.repository.plugin.AndroidExtensionPluginDiscovery
+import com.m3u.data.repository.plugin.AndroidExtensionPluginTransportConnector
+import com.m3u.data.repository.plugin.ExtensionPluginDiscovery
 import com.m3u.data.repository.plugin.ExtensionPluginRepository
 import com.m3u.data.repository.plugin.ExtensionPluginRepositoryImpl
+import com.m3u.data.repository.plugin.ExtensionPluginTransportConnector
 import com.m3u.data.repository.provider.SubscriptionProviderRepository
 import com.m3u.data.repository.provider.SubscriptionProviderRepositoryImpl
 import com.m3u.extension.api.ExtensionApiVersions
@@ -24,9 +29,12 @@ import com.m3u.extension.runtime.CapabilityPolicy
 import com.m3u.extension.runtime.ExtensionRegistrationResult
 import com.m3u.extension.runtime.ExtensionRuntime
 import com.m3u.extension.runtime.ExtensionSettingsProvider
+import com.m3u.extension.transport.android.AndroidExtensionDiscovery
+import com.m3u.extension.transport.android.ExtensionTrustStore
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
@@ -66,6 +74,18 @@ internal abstract class ExtensionBindingsModule {
 
     @Binds
     @Singleton
+    abstract fun bindExtensionPluginDiscovery(
+        discovery: AndroidExtensionPluginDiscovery,
+    ): ExtensionPluginDiscovery
+
+    @Binds
+    @Singleton
+    abstract fun bindExtensionPluginTransportConnector(
+        connector: AndroidExtensionPluginTransportConnector,
+    ): ExtensionPluginTransportConnector
+
+    @Binds
+    @Singleton
     abstract fun bindCredentialVault(
         vault: AndroidKeystoreCredentialVault,
     ): CredentialVault
@@ -101,20 +121,20 @@ internal object ExtensionRuntimeModule {
     @Provides
     @Singleton
     fun provideAndroidExtensionDiscovery(
-        @dagger.hilt.android.qualifiers.ApplicationContext context: android.content.Context,
-    ) = com.m3u.extension.transport.android.AndroidExtensionDiscovery(context)
+        @ApplicationContext context: Context,
+    ) = AndroidExtensionDiscovery(context)
 
     @Provides
     @Singleton
     fun provideExtensionTrustStore(
-        @dagger.hilt.android.qualifiers.ApplicationContext context: android.content.Context,
-    ) = com.m3u.extension.transport.android.ExtensionTrustStore(context)
+        @ApplicationContext context: Context,
+    ) = ExtensionTrustStore(context)
 
     @Provides
     @Singleton
     fun provideExtensionRuntime(
         provider: EmbyCompatibleProvider,
-        trustStore: com.m3u.extension.transport.android.ExtensionTrustStore,
+        trustStore: ExtensionTrustStore,
         settingsProvider: ExtensionSettingsProvider,
     ): ExtensionRuntime = ExtensionRuntime(
         hostApiVersion = ExtensionApiVersions.Current,

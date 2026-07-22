@@ -16,7 +16,7 @@ class ExtensionTrustStoreTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         context.getSharedPreferences("extension-trust", Context.MODE_PRIVATE).edit().clear().commit()
         val store = ExtensionTrustStore(context)
-        val original = InstalledExtensionService(PACKAGE, SERVICE, "certificate-a")
+        val original = InstalledExtensionService(PACKAGE, SERVICE, "certificate-a", uid = 10_001)
         val replaced = original.copy(certificateSha256 = "certificate-b")
 
         store.trust(
@@ -38,7 +38,7 @@ class ExtensionTrustStoreTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         context.getSharedPreferences("extension-trust", Context.MODE_PRIVATE).edit().clear().commit()
         val store = ExtensionTrustStore(context)
-        val service = InstalledExtensionService(PACKAGE, SERVICE, "certificate-a")
+        val service = InstalledExtensionService(PACKAGE, SERVICE, "certificate-a", uid = 10_001)
         store.trust(
             service = service,
             extensionId = "com.example.extension",
@@ -67,8 +67,79 @@ class ExtensionTrustStoreTest {
         )
     }
 
+    @Test
+    fun duplicateExtensionIdsNeverShareCapabilities() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        context.getSharedPreferences("extension-trust", Context.MODE_PRIVATE).edit().clear().commit()
+        val store = ExtensionTrustStore(context)
+        val first = InstalledExtensionService(PACKAGE, SERVICE, "certificate-a", uid = 10_001)
+        val second = InstalledExtensionService(
+            packageName = "com.example.other",
+            serviceName = "com.example.other.ExtensionService",
+            certificateSha256 = "certificate-b",
+            uid = 10_002,
+        )
+        store.trust(
+            service = first,
+            extensionId = EXTENSION_ID,
+            capabilities = setOf("network"),
+            displayName = "First",
+            version = "1.0.0",
+            developer = null,
+        )
+        store.trust(
+            service = second,
+            extensionId = EXTENSION_ID,
+            capabilities = setOf("settings.contribute"),
+            displayName = "Second",
+            version = "1.0.0",
+            developer = null,
+        )
+
+        assertEquals(setOf("network"), store.grantedCapabilities(first))
+        assertEquals(setOf("settings.contribute"), store.grantedCapabilities(second))
+        assertTrue(store.grantedCapabilities(EXTENSION_ID).isEmpty())
+        assertTrue(store.isExtensionIdClaimedByAnotherService(first, EXTENSION_ID))
+        assertTrue(store.isExtensionIdClaimedByAnotherService(second, EXTENSION_ID))
+        assertFalse(store.isSoleStoredOwner(first.packageName, first.serviceName, EXTENSION_ID))
+        assertFalse(store.isSoleStoredOwner(second.packageName, second.serviceName, EXTENSION_ID))
+
+        store.revoke(first.packageName, first.serviceName)
+
+        assertTrue(store.isSoleStoredOwner(second.packageName, second.serviceName, EXTENSION_ID))
+    }
+
+    @Test
+    fun trustedServicesExposeAndForgetAServiceThatIsNoLongerInstalled() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        context.getSharedPreferences("extension-trust", Context.MODE_PRIVATE).edit().clear().commit()
+        val store = ExtensionTrustStore(context)
+        val service = InstalledExtensionService(PACKAGE, SERVICE, "certificate-a", uid = 10_001)
+        store.trust(
+            service = service,
+            extensionId = EXTENSION_ID,
+            capabilities = setOf("network"),
+            displayName = "Example",
+            version = "1.0.0",
+            developer = "Example Developer",
+        )
+
+        val record = store.trustedServices().single()
+        assertEquals(service.packageName, record.packageName)
+        assertEquals(service.serviceName, record.serviceName)
+        assertEquals(service.certificateSha256, record.certificateSha256)
+        assertEquals(EXTENSION_ID, record.extensionId)
+        assertEquals(setOf("network"), record.capabilities)
+
+        store.revoke(service.packageName, service.serviceName)
+
+        assertTrue(store.trustedServices().isEmpty())
+        assertFalse(store.isExtensionIdClaimedByAnotherService(service, EXTENSION_ID))
+    }
+
     private companion object {
         const val PACKAGE = "com.example.extension"
         const val SERVICE = "com.example.extension.ExtensionService"
+        const val EXTENSION_ID = "com.example.extension"
     }
 }

@@ -209,7 +209,7 @@ private fun SettingScreen(
     onReauthorizeExtensionPlugin: (String, String) -> Unit,
     onDisableExtensionPlugin: (String) -> Unit,
     onRevokeExtensionPlugin: (String, String) -> Unit,
-    onClearExtensionData: (String) -> Unit,
+    onClearExtensionData: (String, String) -> Unit,
     onExportExtensionDiagnostics: (String) -> Unit,
     onOpenExtensionSettings: (String) -> Unit,
     onCloseExtensionSettings: () -> Unit,

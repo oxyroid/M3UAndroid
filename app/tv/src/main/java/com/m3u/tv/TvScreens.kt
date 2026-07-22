@@ -97,7 +97,7 @@ fun TvBrowsePane(
     onReauthorizeExtension: (String, String) -> Unit,
     onDisableExtension: (String) -> Unit,
     onRevokeExtension: (String, String) -> Unit,
-    onClearExtensionData: (String) -> Unit,
+    onClearExtensionData: (String, String) -> Unit,
     onExportExtensionDiagnostics: (String) -> Unit,
     onOpenExtensionSettings: (String) -> Unit,
     onCloseExtensionSettings: () -> Unit,
@@ -567,7 +567,7 @@ private fun StatusScreen(
     onReauthorizeExtension: (String, String) -> Unit,
     onDisableExtension: (String) -> Unit,
     onRevokeExtension: (String, String) -> Unit,
-    onClearExtensionData: (String) -> Unit,
+    onClearExtensionData: (String, String) -> Unit,
     onExportExtensionDiagnostics: (String) -> Unit,
     onOpenExtensionSettings: (String) -> Unit,
     onCloseExtensionSettings: () -> Unit,
@@ -575,6 +575,7 @@ private fun StatusScreen(
 ) {
     var pendingTrust by remember { mutableStateOf<InstalledPlugin?>(null) }
     var pendingReauthorization by remember { mutableStateOf(false) }
+    var pendingRevoke by remember { mutableStateOf<InstalledPlugin?>(null) }
     var pendingClear by remember { mutableStateOf<InstalledPlugin?>(null) }
     val trustConfirmationFocusRequester = remember { FocusRequester() }
 
@@ -588,9 +589,22 @@ private fun StatusScreen(
         if (!state.externalExtensionsEnabled) {
             pendingTrust = null
             pendingReauthorization = false
+            pendingRevoke = null
             pendingClear = null
             onCloseExtensionSettings()
         }
+    }
+
+    pendingRevoke?.let { plugin ->
+        ExtensionForgetConfirmation(
+            plugin = plugin,
+            onConfirm = {
+                pendingRevoke = null
+                onRevokeExtension(plugin.packageName, plugin.serviceName)
+            },
+            onCancel = { pendingRevoke = null },
+        )
+        return
     }
 
     pendingClear?.let { plugin ->
@@ -598,7 +612,7 @@ private fun StatusScreen(
             plugin = plugin,
             onConfirm = {
                 pendingClear = null
-                plugin.extensionId?.let(onClearExtensionData)
+                onClearExtensionData(plugin.packageName, plugin.serviceName)
             },
             onCancel = { pendingClear = null },
         )
@@ -725,7 +739,7 @@ private fun StatusScreen(
                         pendingTrust = plugin
                     },
                     onDisable = { plugin.extensionId?.let(onDisableExtension) },
-                    onRevoke = { onRevokeExtension(plugin.packageName, plugin.serviceName) },
+                    onRevoke = { pendingRevoke = plugin },
                     onOpenSettings = { plugin.extensionId?.let(onOpenExtensionSettings) },
                     onClearData = { pendingClear = plugin },
                     onExportDiagnostics = {
@@ -815,16 +829,9 @@ private fun ExtensionAuthorizationConfirmation(
                         string.feat_setting_extension_capability_optional
                     }
                 )
-                val grant = stringResource(
-                    if (permission.granted) {
-                        string.feat_setting_extension_capability_granted
-                    } else {
-                        string.feat_setting_extension_capability_not_granted
-                    }
-                )
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = "${permission.id} ($requirement, $grant)",
+                        text = "${permission.id} ($requirement)",
                         color = TvColors.TextPrimary,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -861,6 +868,13 @@ private fun ExtensionPluginCard(
         )
         Text(plugin.certificateSha256, color = TvColors.TextMuted, fontSize = 12.sp)
         plugin.inspectionError?.let { Text(it, color = TvColors.Danger, fontSize = 14.sp) }
+        if (!plugin.installed) {
+            Text(
+                stringResource(string.feat_setting_extension_not_installed),
+                color = TvColors.Danger,
+                fontSize = 14.sp,
+            )
+        }
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -876,7 +890,11 @@ private fun ExtensionPluginCard(
                     icon = Icons.Rounded.Block,
                     onClick = onDisable,
                 )
-            } else if (!plugin.signatureChanged && plugin.inspectionError == null) {
+            } else if (
+                plugin.installed &&
+                !plugin.signatureChanged &&
+                plugin.inspectionError == null
+            ) {
                 TvActionButton(
                     text = stringResource(string.feat_setting_extension_enable),
                     icon = Icons.Rounded.CheckCircle,
@@ -890,19 +908,21 @@ private fun ExtensionPluginCard(
                     onClick = onRevoke,
                 )
             }
-            if (plugin.trusted && !plugin.signatureChanged) {
+            if (plugin.installed && plugin.trusted && !plugin.signatureChanged) {
                 TvActionButton(
                     text = stringResource(string.feat_setting_extension_reauthorize),
                     icon = Icons.Rounded.CheckCircle,
                     onClick = onReauthorize,
                 )
             }
-            if (plugin.extensionId != null) {
+            if (plugin.installed && plugin.extensionId != null) {
                 TvActionButton(
                     text = stringResource(string.feat_setting_extension_export_diagnostics),
                     icon = Icons.Rounded.Refresh,
                     onClick = onExportDiagnostics,
                 )
+            }
+            if (plugin.canClearData) {
                 TvActionButton(
                     text = stringResource(string.feat_setting_extension_clear_data),
                     icon = Icons.Rounded.Block,
@@ -919,8 +939,43 @@ private fun ExtensionClearConfirmation(
     onConfirm: () -> Unit,
     onCancel: () -> Unit,
 ) {
+    ExtensionDataRemovalConfirmation(
+        plugin = plugin,
+        title = stringResource(string.feat_setting_extension_clear_data_title),
+        body = stringResource(string.feat_setting_extension_clear_data_body),
+        confirmLabel = stringResource(string.feat_setting_extension_clear_data),
+        onConfirm = onConfirm,
+        onCancel = onCancel,
+    )
+}
+
+@Composable
+private fun ExtensionForgetConfirmation(
+    plugin: InstalledPlugin,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    ExtensionDataRemovalConfirmation(
+        plugin = plugin,
+        title = stringResource(string.feat_setting_extension_forget_title),
+        body = stringResource(string.feat_setting_extension_forget_body),
+        confirmLabel = stringResource(string.feat_setting_extension_revoke),
+        onConfirm = onConfirm,
+        onCancel = onCancel,
+    )
+}
+
+@Composable
+private fun ExtensionDataRemovalConfirmation(
+    plugin: InstalledPlugin,
+    title: String,
+    body: String,
+    confirmLabel: String,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit,
+) {
     val confirmFocusRequester = remember { FocusRequester() }
-    LaunchedEffect(plugin.extensionId) {
+    LaunchedEffect(plugin.packageName, plugin.serviceName) {
         repeat(2) { withFrameNanos { } }
         confirmFocusRequester.requestFocus()
     }
@@ -929,7 +984,7 @@ private fun ExtensionClearConfirmation(
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Text(
-            text = stringResource(string.feat_setting_extension_clear_data_title),
+            text = title,
             color = TvColors.TextPrimary,
             fontSize = 28.sp,
             fontWeight = FontWeight.SemiBold,
@@ -940,13 +995,13 @@ private fun ExtensionClearConfirmation(
             fontSize = 20.sp,
         )
         Text(
-            text = stringResource(string.feat_setting_extension_clear_data_body),
+            text = body,
             color = TvColors.TextSecondary,
             fontSize = 16.sp,
         )
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             TvActionButton(
-                text = stringResource(string.feat_setting_extension_clear_data),
+                text = confirmLabel,
                 icon = Icons.Rounded.Block,
                 focusRequester = confirmFocusRequester,
                 onClick = onConfirm,

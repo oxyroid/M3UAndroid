@@ -1,29 +1,24 @@
 package com.m3u.data.repository.plugin
 
-import android.content.Context
 import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
 import com.m3u.core.foundation.architecture.preferences.Settings
 import com.m3u.core.foundation.architecture.preferences.get
-import com.m3u.data.extension.security.ExtensionHostBridge
 import com.m3u.data.extension.SubscriptionProviderImporter
 import com.m3u.data.repository.extension.ExtensionSettingStore
 import com.m3u.data.repository.extension.ExtensionSettingsRepository
-import com.m3u.extension.api.security.HostNetworkBroker
+import com.m3u.extension.api.ExtensionApiVersions
 import com.m3u.extension.api.ExtensionContractCatalog
 import com.m3u.extension.api.ExtensionManifest
 import com.m3u.extension.api.ExtensionState
 import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.runtime.ExtensionRegistrationResult
 import com.m3u.extension.runtime.ExtensionRuntime
-import com.m3u.extension.runtime.ExtensionTransportHealth
+import com.m3u.extension.runtime.RegisteredExtension
 import com.m3u.extension.runtime.reconcileCapabilitiesForRestore
-import com.m3u.extension.transport.android.AndroidBoundExtensionTransport
-import com.m3u.extension.transport.android.AndroidExtensionDiscovery
 import com.m3u.extension.transport.android.ExtensionTrustStore
 import com.m3u.extension.transport.android.InstalledExtensionService
-import dagger.hilt.android.qualifiers.ApplicationContext
-import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -32,71 +27,102 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-internal class ExtensionPluginRepositoryImpl @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val discovery: AndroidExtensionDiscovery,
+internal class ExtensionPluginRepositoryImpl private constructor(
+    private val discovery: ExtensionPluginDiscovery,
     private val trustStore: ExtensionTrustStore,
-    private val hostNetworkBroker: HostNetworkBroker,
+    private val transportConnector: ExtensionPluginTransportConnector,
     private val runtime: ExtensionRuntime,
     private val extensionSettingsRepository: ExtensionSettingsRepository,
     private val extensionSettingStore: ExtensionSettingStore,
     private val subscriptionProviderImporter: SubscriptionProviderImporter,
     private val settings: Settings,
+    observeSettingsChanges: Boolean,
 ) : ExtensionPluginRepository {
-    private val transports = ConcurrentHashMap<String, AndroidBoundExtensionTransport>()
+    private val transports = ActiveExtensionTransports<ExtensionPluginTransport>()
     private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val lifecycleMutex = Mutex()
 
+    @Inject
+    constructor(
+        discovery: ExtensionPluginDiscovery,
+        trustStore: ExtensionTrustStore,
+        transportConnector: ExtensionPluginTransportConnector,
+        runtime: ExtensionRuntime,
+        extensionSettingsRepository: ExtensionSettingsRepository,
+        extensionSettingStore: ExtensionSettingStore,
+        subscriptionProviderImporter: SubscriptionProviderImporter,
+        settings: Settings,
+    ) : this(
+        discovery = discovery,
+        trustStore = trustStore,
+        transportConnector = transportConnector,
+        runtime = runtime,
+        extensionSettingsRepository = extensionSettingsRepository,
+        extensionSettingStore = extensionSettingStore,
+        subscriptionProviderImporter = subscriptionProviderImporter,
+        settings = settings,
+        observeSettingsChanges = true,
+    )
+
     init {
-        repositoryScope.launch {
-            settings.data
-                .map { preferences -> preferences[PreferencesKeys.EXTERNAL_EXTENSIONS] ?: false }
-                .distinctUntilChanged()
-                .collect { enabled ->
-                    if (enabled) {
-                        restoreEnabled()
-                    } else {
-                        lifecycleMutex.withLock { suspendExternalTransports() }
+        if (observeSettingsChanges) {
+            repositoryScope.launch {
+                settings.data
+                    .map { preferences -> preferences[PreferencesKeys.EXTERNAL_EXTENSIONS] ?: false }
+                    .distinctUntilChanged()
+                    .collect { enabled ->
+                        if (enabled) {
+                            restoreEnabled()
+                        } else {
+                            lifecycleMutex.withLock { suspendExternalTransports() }
+                        }
                     }
-                }
+            }
         }
     }
 
     override suspend fun installedPlugins(): List<InstalledPlugin> {
         if (!settings[PreferencesKeys.EXTERNAL_EXTENSIONS]) return emptyList()
-        return discovery.discover().map { service ->
+        val services = discovery.discover()
+        pruneMissingServices(services)
+        val installedPlugins = services.map { service ->
+            val incompatibilityReason = service.incompatibilityReason
             val trusted = trustStore.isTrusted(service)
             val signatureChanged = trustStore.hasPinnedCertificate(service) && !trusted
-            if (signatureChanged) {
-                trustStore.setEnabled(service, false)
-                trustStore.extensionId(service)?.let { extensionId ->
-                    runtime.unregister(ExtensionId(extensionId))
-                    transports.remove(extensionId)?.close()
+            if (incompatibilityReason != null) {
+                lifecycleMutex.withLock {
+                    if (trustStore.hasPinnedCertificate(service)) {
+                        trustStore.setEnabled(service, false)
+                    }
+                    deactivateService(service.key)
                 }
+            } else if (signatureChanged) {
+                lifecycleMutex.withLock {
+                    trustStore.setEnabled(service, false)
+                    deactivateService(service.key)
+                }
+            } else if (trusted && trustStore.isEnabled(service)) {
+                ensureConnected(service)
             }
-            val registeredManifest = trustStore.extensionId(service)?.let { extensionId ->
-                runtime.registeredExtensions()
-                    .firstOrNull { extension -> extension.manifest.id.value == extensionId }
-                    ?.manifest
-            }
+            val registeredExtension = registeredExtension(service)
+            val registeredManifest = registeredExtension?.manifest
             val inspection = when {
+                incompatibilityReason != null -> Result.failure(
+                    IllegalArgumentException(incompatibilityReason)
+                )
                 signatureChanged -> null
                 registeredManifest != null -> Result.success(registeredManifest)
                 else -> inspect(service)
             }
             val manifest = inspection?.getOrNull()
             val extensionId = manifest?.id?.value ?: trustStore.extensionId(service)
-            val runtimeState = extensionId?.let { id ->
-                runtime.registeredExtensions().firstOrNull { it.manifest.id.value == id }?.state
-            }
-            val grantedCapabilities = trustStore.extensionId(service)
-                ?.let(trustStore::grantedCapabilities)
-                .orEmpty()
+            val runtimeState = registeredExtension?.state
+            val grantedCapabilities = trustStore.grantedCapabilities(service)
             InstalledPlugin(
                 packageName = service.packageName,
                 serviceName = service.serviceName,
@@ -106,6 +132,7 @@ internal class ExtensionPluginRepositoryImpl @Inject constructor(
                 extensionId = extensionId,
                 enabled = trusted && trustStore.isEnabled(service),
                 state = when {
+                    incompatibilityReason != null -> ExtensionState.INCOMPATIBLE
                     inspection?.isFailure == true -> ExtensionState.INCOMPATIBLE
                     trusted && trustStore.isEnabled(service) -> runtimeState ?: ExtensionState.DISABLED
                     else -> ExtensionState.DISABLED
@@ -115,7 +142,7 @@ internal class ExtensionPluginRepositoryImpl @Inject constructor(
                 developer = manifest?.metadata?.get("developer") ?: trustStore.developer(service),
                 requestedCapabilities = manifest?.capabilities
                     ?.mapTo(mutableSetOf()) { request -> request.capability.id }
-                    ?: trustStore.extensionId(service)?.let(trustStore::grantedCapabilities).orEmpty(),
+                    ?: trustStore.grantedCapabilities(service),
                 grantedCapabilities = grantedCapabilities,
                 capabilityPermissions = manifest?.capabilities
                     ?.sortedBy { request -> request.capability.id }
@@ -128,11 +155,44 @@ internal class ExtensionPluginRepositoryImpl @Inject constructor(
                         )
                     }
                     .orEmpty(),
-                inspectionError = inspection?.exceptionOrNull()?.let {
+                inspectionError = incompatibilityReason ?: inspection?.exceptionOrNull()?.let {
                     "Extension manifest is incompatible or unavailable"
                 },
+                installed = true,
+                canClearData = extensionId?.let { id ->
+                    trustStore.isSoleTrustedOwner(service, id)
+                } == true,
             )
         }
+        val installedServiceKeys = services.mapTo(mutableSetOf(), InstalledExtensionService::key)
+        val missingPlugins = trustStore.trustedServices()
+            .filter { record ->
+                ExtensionServiceKey(record.packageName, record.serviceName) !in installedServiceKeys
+            }
+            .map { record ->
+                InstalledPlugin(
+                    packageName = record.packageName,
+                    serviceName = record.serviceName,
+                    certificateSha256 = record.certificateSha256,
+                    trusted = true,
+                    signatureChanged = false,
+                    extensionId = record.extensionId,
+                    enabled = false,
+                    state = ExtensionState.DISABLED,
+                    displayName = record.displayName,
+                    version = record.version,
+                    developer = record.developer,
+                    requestedCapabilities = record.capabilities,
+                    grantedCapabilities = record.capabilities,
+                    capabilityPermissions = emptyList(),
+                    inspectionError = null,
+                    installed = false,
+                    canClearData = false,
+                )
+            }
+        return (installedPlugins + missingPlugins).sortedWith(
+            compareBy(InstalledPlugin::packageName, InstalledPlugin::serviceName)
+        )
     }
 
     override suspend fun enable(packageName: String, serviceName: String): PluginEnableResult =
@@ -150,14 +210,15 @@ internal class ExtensionPluginRepositoryImpl @Inject constructor(
         val service = discovery.discover().singleOrNull {
             it.packageName == packageName && it.serviceName == serviceName
         } ?: return@withLock PluginEnableResult.Rejected("Extension service is not installed")
+        service.incompatibilityReason?.let { reason ->
+            return@withLock quarantine(service, reason)
+        }
         if (!trustStore.isTrusted(service)) {
             return@withLock PluginEnableResult.Rejected("Extension identity is not trusted")
         }
         val previousExtensionId = trustStore.extensionId(service)
             ?: return@withLock PluginEnableResult.Rejected("Extension identity is unavailable")
-        val manifest = runtime.registeredExtensions()
-            .singleOrNull { extension -> extension.manifest.id.value == previousExtensionId }
-            ?.manifest
+        val manifest = registeredExtension(service)?.manifest
             ?: inspect(service).getOrElse { error ->
                 return@withLock PluginEnableResult.Rejected(
                     "Extension inspection failed (${error.javaClass.simpleName})"
@@ -166,6 +227,13 @@ internal class ExtensionPluginRepositoryImpl @Inject constructor(
         if (manifest.id.value != previousExtensionId) {
             return@withLock PluginEnableResult.Rejected(
                 "Extension identity changed and requires trust reset"
+            )
+        }
+        if (trustStore.isExtensionIdClaimedByAnotherService(service, manifest.id.value)) {
+            trustStore.setEnabled(service, false)
+            deactivateService(service.key)
+            return@withLock PluginEnableResult.Rejected(
+                "Extension ID is already trusted for another service"
             )
         }
         val wasEnabled = trustStore.isEnabled(service)
@@ -197,34 +265,51 @@ internal class ExtensionPluginRepositoryImpl @Inject constructor(
         val service = discovery.discover().singleOrNull {
             it.packageName == packageName && it.serviceName == serviceName
         } ?: return PluginEnableResult.Rejected("Extension service is not installed")
+        service.incompatibilityReason?.let { reason ->
+            return quarantine(service, reason)
+        }
+        return enableServiceLocked(service, reauthorizeCapabilities)
+    }
+
+    private suspend fun enableServiceLocked(
+        service: InstalledExtensionService,
+        reauthorizeCapabilities: Boolean,
+    ): PluginEnableResult {
+        service.incompatibilityReason?.let { reason ->
+            return quarantine(service, reason)
+        }
         if (trustStore.hasPinnedCertificate(service) && !trustStore.isTrusted(service)) {
             return PluginEnableResult.Rejected("Extension signing certificate changed")
         }
+        if (!reauthorizeCapabilities && !isAutomaticConnectionAllowed(service)) {
+            deactivateService(service.key)
+            return PluginEnableResult.Rejected("Extension is no longer trusted and enabled")
+        }
         return runCatching {
-            val transport = withTimeout(CONNECT_TIMEOUT_MILLIS) {
-                AndroidBoundExtensionTransport.connect(
-                    context = context,
-                    installed = service,
-                    hostBridgeFactory = { manifest ->
-                        ExtensionHostBridge(context, hostNetworkBroker, manifest.id.value)
-                    },
-                )
-            }
-            val health = runCatching {
-                withTimeout(CONNECT_TIMEOUT_MILLIS) { transport.health() }
-            }.getOrElse { error ->
-                transport.close()
-                throw error
-            }
-            if (health == ExtensionTransportHealth.UNAVAILABLE) {
-                transport.close()
-                return@runCatching PluginEnableResult.Rejected("Extension reported unavailable health")
-            }
+            val transport = withTimeoutOrNull(CONNECT_TIMEOUT_MILLIS) {
+                transportConnector.connect(service)
+            } ?: return@runCatching PluginEnableResult.Rejected(
+                "Extension connection failed (Timeout)"
+            )
             val manifest = transport.manifest
             val previousExtensionId = trustStore.extensionId(service)
-            val previousGrants = previousExtensionId
-                ?.let(trustStore::grantedCapabilities)
-                .orEmpty()
+            if (previousExtensionId != null && previousExtensionId != manifest.id.value) {
+                trustStore.setEnabled(service, false)
+                deactivateService(service.key)
+                transport.close()
+                return@runCatching PluginEnableResult.Rejected(
+                    "Extension identity changed and requires trust reset"
+                )
+            }
+            if (trustStore.isExtensionIdClaimedByAnotherService(service, manifest.id.value)) {
+                if (trustStore.isTrusted(service)) trustStore.setEnabled(service, false)
+                deactivateService(service.key)
+                transport.close()
+                return@runCatching PluginEnableResult.Rejected(
+                    "Extension ID is already trusted for another service"
+                )
+            }
+            val previousGrants = trustStore.grantedCapabilities(service)
             val requestedCapabilities = manifest.capabilities
                 .mapNotNullTo(mutableSetOf()) { request ->
                     request.capability.id.takeIf {
@@ -232,24 +317,26 @@ internal class ExtensionPluginRepositoryImpl @Inject constructor(
                     }
                 }
             if (!reauthorizeCapabilities) {
-                if (previousExtensionId != manifest.id.value) {
-                    trustStore.setEnabled(service, false)
-                    transport.close()
-                    return@runCatching PluginEnableResult.Rejected(
-                        "Extension identity changed and requires reauthorization"
-                    )
-                }
                 if (
                     reconcileCapabilitiesForRestore(manifest, previousGrants)
                         .requiresReauthorization
                 ) {
                     trustStore.setEnabled(service, false)
+                    deactivateService(service.key)
                     transport.close()
                     return@runCatching PluginEnableResult.Rejected(
                         "New required capabilities need user approval"
                     )
                 }
+                if (!isAutomaticConnectionAllowed(service)) {
+                    deactivateService(service.key)
+                    transport.close()
+                    return@runCatching PluginEnableResult.Rejected(
+                        "Extension was disabled or revoked while reconnecting"
+                    )
+                }
             }
+            deactivateService(service.key)
             when (val registration = runtime.register(transport)) {
                 is ExtensionRegistrationResult.Registered -> {
                     val capabilities = if (reauthorizeCapabilities) {
@@ -257,16 +344,39 @@ internal class ExtensionPluginRepositoryImpl @Inject constructor(
                     } else {
                         reconcileCapabilitiesForRestore(manifest, previousGrants).granted
                     }
-                    trustStore.trust(
-                        service = service,
+                    if (reauthorizeCapabilities) {
+                        trustStore.trust(
+                            service = service,
+                            extensionId = registration.extension.manifest.id.value,
+                            capabilities = capabilities,
+                            displayName = registration.extension.manifest.displayName,
+                            version = registration.extension.manifest.extensionVersion.toString(),
+                            developer = registration.extension.manifest.metadata["developer"],
+                        )
+                    } else {
+                        trustStore.updateTrustedManifest(
+                            service = service,
+                            extensionId = registration.extension.manifest.id.value,
+                            capabilities = capabilities,
+                            displayName = registration.extension.manifest.displayName,
+                            version = registration.extension.manifest.extensionVersion.toString(),
+                            developer = registration.extension.manifest.metadata["developer"],
+                        )
+                    }
+                    val replaced = transports.put(
+                        key = service.key,
                         extensionId = registration.extension.manifest.id.value,
-                        capabilities = capabilities,
-                        displayName = registration.extension.manifest.displayName,
-                        version = registration.extension.manifest.extensionVersion.toString(),
-                        developer = registration.extension.manifest.metadata["developer"],
+                        transport = transport,
                     )
-                    transports[registration.extension.manifest.id.value] = transport
-                    PluginEnableResult.Enabled(registration.extension.manifest)
+                    replaced?.transport?.close()
+                    if (!reauthorizeCapabilities && !isAutomaticConnectionAllowed(service)) {
+                        deactivateService(service.key)
+                        PluginEnableResult.Rejected(
+                            "Extension was disabled or revoked while reconnecting"
+                        )
+                    } else {
+                        PluginEnableResult.Enabled(registration.extension.manifest)
+                    }
                 }
                 is ExtensionRegistrationResult.Rejected -> {
                     transport.close()
@@ -274,33 +384,59 @@ internal class ExtensionPluginRepositoryImpl @Inject constructor(
                 }
             }
         }.getOrElse { error ->
+            if (error is CancellationException) throw error
             PluginEnableResult.Rejected("Extension connection failed (${error.javaClass.simpleName})")
         }
     }
 
-    override fun disable(extensionId: String): Boolean {
-        val transport = transports.remove(extensionId)
-        transport?.close()
-        val removed = runtime.unregister(ExtensionId(extensionId)) != null
-        val service = discovery.discover().firstOrNull { trustStore.extensionId(it) == extensionId }
-        service?.let { trustStore.setEnabled(it, false) }
-        return removed || transport != null || service != null
+    override suspend fun disable(extensionId: String): Boolean = lifecycleMutex.withLock {
+        val services = discovery.discover().filter { trustStore.extensionId(it) == extensionId }
+        services.forEach { service -> trustStore.setEnabled(service, false) }
+        val removed = deactivateExtension(extensionId)
+        removed || services.isNotEmpty()
     }
 
-    override fun revoke(packageName: String, serviceName: String) {
-        discovery.discover().firstOrNull {
-            it.packageName == packageName && it.serviceName == serviceName
-        }?.let { service ->
-            trustStore.extensionId(service)?.let(::disable)
-            trustStore.revoke(service)
+    override suspend fun revoke(packageName: String, serviceName: String) {
+        lifecycleMutex.withLock {
+            val trustedService = trustStore.trustedServices().firstOrNull { record ->
+                record.packageName == packageName && record.serviceName == serviceName
+            }
+            deactivateService(ExtensionServiceKey(packageName, serviceName))
+            trustedService?.extensionId?.takeIf { extensionId ->
+                trustStore.isSoleStoredOwner(packageName, serviceName, extensionId)
+            }?.let { extensionId ->
+                clearExtensionData(extensionId)
+            }
+            trustStore.revoke(packageName, serviceName)
         }
     }
 
-    override suspend fun clearData(extensionId: String): PluginDataClearResult {
+    override suspend fun clearData(
+        packageName: String,
+        serviceName: String,
+    ): PluginDataClearResult = lifecycleMutex.withLock {
+        val service = discovery.discover().singleOrNull { installed ->
+            installed.packageName == packageName && installed.serviceName == serviceName
+        } ?: return@withLock PluginDataClearResult.Rejected(
+            "Extension service is not installed"
+        )
+        val extensionId = trustStore.extensionId(service)
+            ?: return@withLock PluginDataClearResult.Rejected(
+                "Extension identity is unavailable"
+            )
+        if (!trustStore.isSoleTrustedOwner(service, extensionId)) {
+            return@withLock PluginDataClearResult.Rejected(
+                "Extension is not the unique trusted owner of this data"
+            )
+        }
+        clearExtensionData(extensionId)
+    }
+
+    private suspend fun clearExtensionData(extensionId: String): PluginDataClearResult.Cleared {
         val id = ExtensionId(extensionId)
         val snapshot = extensionSettingStore.snapshot(extensionId)
         extensionSettingsRepository.clear(id)
-        return PluginDataClearResult(
+        return PluginDataClearResult.Cleared(
             clearedSettingValues = snapshot.values.size,
             clearedCredentialHandles = snapshot.credentialHandles.size,
             clearedEpgSources = subscriptionProviderImporter.clearExtensionEpg(id),
@@ -311,14 +447,20 @@ internal class ExtensionPluginRepositoryImpl @Inject constructor(
         val plugin = installedPlugins().singleOrNull { candidate ->
             candidate.extensionId == extensionId
         } ?: return null
-        val registration = runtime.registeredExtensions().singleOrNull { extension ->
-            extension.manifest.id.value == extensionId
-        }
+        val registration = transports[
+            ExtensionServiceKey(plugin.packageName, plugin.serviceName)
+        ]
+            ?.takeIf { active -> active.extensionId == extensionId }
+            ?.let { active ->
+                runtime.registeredExtensions().singleOrNull { extension ->
+                    extension.manifest.id.value == active.extensionId
+                }
+            }
         val snapshot = extensionSettingStore.snapshot(extensionId)
         return DIAGNOSTICS_JSON.encodeToString(
             PluginDiagnostics(
                 generatedAtEpochMillis = System.currentTimeMillis(),
-                hostApiVersion = com.m3u.extension.api.ExtensionApiVersions.Current.toString(),
+                hostApiVersion = ExtensionApiVersions.Current.toString(),
                 packageName = plugin.packageName,
                 serviceName = plugin.serviceName,
                 certificateSha256 = plugin.certificateSha256,
@@ -347,25 +489,21 @@ internal class ExtensionPluginRepositoryImpl @Inject constructor(
     override suspend fun restoreEnabled(): Int {
         if (!settings[PreferencesKeys.EXTERNAL_EXTENSIONS]) return 0
         var restored = 0
-        discovery.discover()
+        val services = discovery.discover()
+        pruneMissingServices(services)
+        services
             .filter { service -> trustStore.isTrusted(service) && trustStore.isEnabled(service) }
             .forEach { service ->
-                val extensionId = trustStore.extensionId(service)
-                val alreadyRegistered = extensionId != null &&
-                    transports.containsKey(extensionId) &&
-                    runtime.registeredExtensions().any { extension ->
-                        extension.manifest.id.value == extensionId &&
-                            extension.state == ExtensionState.ENABLED
-                    }
-                if (alreadyRegistered) {
+                if (hasAvailableRegistration(service)) {
                     restored++
                 } else {
                     val result = lifecycleMutex.withLock {
-                        enableLocked(
-                            service.packageName,
-                            service.serviceName,
-                            reauthorizeCapabilities = false,
-                        )
+                        val registered = registeredExtension(service)
+                        if (registered != null && hasAvailableRegistration(service)) {
+                            PluginEnableResult.Enabled(registered.manifest)
+                        } else {
+                            enableServiceLocked(service, reauthorizeCapabilities = false)
+                        }
                     }
                     if (result is PluginEnableResult.Enabled) restored++
                 }
@@ -374,35 +512,138 @@ internal class ExtensionPluginRepositoryImpl @Inject constructor(
     }
 
     private fun suspendExternalTransports() {
-        transports.keys.toList().forEach { extensionId ->
-            runtime.unregister(ExtensionId(extensionId))
-            transports.remove(extensionId)?.close()
-        }
+        transports.removeAll().forEach(::deactivateTransport)
     }
 
-    private suspend fun inspect(service: InstalledExtensionService): Result<ExtensionManifest> = runCatching {
-        val transport = withTimeout(CONNECT_TIMEOUT_MILLIS) {
-            AndroidBoundExtensionTransport.connect(
-                context = context,
-                installed = service,
-                hostBridgeFactory = { manifest ->
-                    ExtensionHostBridge(context, hostNetworkBroker, manifest.id.value)
-                },
-            )
+    private suspend fun pruneMissingServices(discovered: List<InstalledExtensionService>) =
+        lifecycleMutex.withLock {
+            val installedKeys = discovered.mapTo(mutableSetOf(), InstalledExtensionService::key)
+            transports.removeMissing(installedKeys).forEach(::deactivateTransport)
         }
-        try {
-            runtime.validateExternalManifest(transport.manifest)?.let { error ->
-                throw IllegalArgumentException(error.message)
+
+    private suspend fun ensureConnected(service: InstalledExtensionService) {
+        if (hasAvailableRegistration(service)) return
+        lifecycleMutex.withLock {
+            if (!hasAvailableRegistration(service)) {
+                enableServiceLocked(service, reauthorizeCapabilities = false)
             }
-            transport.manifest
-        } finally {
-            transport.close()
         }
     }
 
-    private companion object {
-        const val CONNECT_TIMEOUT_MILLIS = 5_000L
-        val DIAGNOSTICS_JSON = Json {
+    private fun hasAvailableRegistration(service: InstalledExtensionService): Boolean {
+        val active = transports[service.key] ?: return false
+        val trustedExtensionId = trustStore.extensionId(service) ?: return false
+        if (active.extensionId != trustedExtensionId || !active.transport.isConnectionAvailable) {
+            return false
+        }
+        val registration = runtime.registeredExtensions().firstOrNull { extension ->
+            extension.manifest.id.value == active.extensionId
+        } ?: return false
+        if (registration.state == ExtensionState.DISABLED) return false
+        return true
+    }
+
+    private fun registeredExtension(
+        service: InstalledExtensionService,
+    ): RegisteredExtension? {
+        val active = transports[service.key] ?: return null
+        if (
+            active.extensionId != trustStore.extensionId(service) ||
+            !active.transport.isConnectionAvailable
+        ) {
+            return null
+        }
+        return runtime.registeredExtensions().firstOrNull { extension ->
+            extension.manifest.id.value == active.extensionId
+        }
+    }
+
+    private fun deactivateService(key: ExtensionServiceKey): Boolean {
+        val active = transports.remove(key) ?: return false
+        deactivateTransport(active)
+        return true
+    }
+
+    private fun deactivateTransport(
+        active: ActiveExtensionTransport<ExtensionPluginTransport>,
+    ) {
+        runtime.unregister(ExtensionId(active.extensionId))
+        active.transport.close()
+    }
+
+    private fun deactivateExtension(extensionId: String): Boolean {
+        val removed = transports.removeByExtensionId(extensionId)
+        removed.forEach { active -> active.transport.close() }
+        if (removed.isNotEmpty()) runtime.unregister(ExtensionId(extensionId))
+        return removed.isNotEmpty()
+    }
+
+    private suspend fun isAutomaticConnectionAllowed(service: InstalledExtensionService): Boolean =
+        settings[PreferencesKeys.EXTERNAL_EXTENSIONS] &&
+            trustStore.isTrusted(service) &&
+            trustStore.isEnabled(service)
+
+    private fun quarantine(
+        service: InstalledExtensionService,
+        reason: String,
+    ): PluginEnableResult.Rejected {
+        if (trustStore.hasPinnedCertificate(service)) {
+            trustStore.setEnabled(service, false)
+        }
+        deactivateService(service.key)
+        return PluginEnableResult.Rejected(reason)
+    }
+
+    private suspend fun inspect(service: InstalledExtensionService): Result<ExtensionManifest> {
+        service.incompatibilityReason?.let { reason ->
+            return Result.failure(IllegalArgumentException(reason))
+        }
+        val transport = runCatching {
+            withTimeoutOrNull(CONNECT_TIMEOUT_MILLIS) {
+                transportConnector.connect(service)
+            }
+        }.getOrElse { error ->
+            if (error is CancellationException) throw error
+            return Result.failure(error)
+        } ?: return Result.failure(IllegalStateException("Extension connection timed out"))
+        return runCatching {
+            try {
+                runtime.validateExternalManifest(transport.manifest)?.let { error ->
+                    throw IllegalArgumentException(error.message)
+                }
+                transport.manifest
+            } finally {
+                transport.close()
+            }
+        }.onFailure { error ->
+            if (error is CancellationException) throw error
+        }
+    }
+
+    companion object {
+        internal fun createForTest(
+            discovery: ExtensionPluginDiscovery,
+            trustStore: ExtensionTrustStore,
+            transportConnector: ExtensionPluginTransportConnector,
+            runtime: ExtensionRuntime,
+            extensionSettingsRepository: ExtensionSettingsRepository,
+            extensionSettingStore: ExtensionSettingStore,
+            subscriptionProviderImporter: SubscriptionProviderImporter,
+            settings: Settings,
+        ): ExtensionPluginRepositoryImpl = ExtensionPluginRepositoryImpl(
+            discovery = discovery,
+            trustStore = trustStore,
+            transportConnector = transportConnector,
+            runtime = runtime,
+            extensionSettingsRepository = extensionSettingsRepository,
+            extensionSettingStore = extensionSettingStore,
+            subscriptionProviderImporter = subscriptionProviderImporter,
+            settings = settings,
+            observeSettingsChanges = false,
+        )
+
+        private const val CONNECT_TIMEOUT_MILLIS = 5_000L
+        private val DIAGNOSTICS_JSON = Json {
             prettyPrint = true
             explicitNulls = false
         }

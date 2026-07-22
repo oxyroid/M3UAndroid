@@ -111,7 +111,7 @@ internal fun SubscriptionsFragment(
     onReauthorizeExtensionPlugin: (String, String) -> Unit,
     onDisableExtensionPlugin: (String) -> Unit,
     onRevokeExtensionPlugin: (String, String) -> Unit,
-    onClearExtensionData: (String) -> Unit,
+    onClearExtensionData: (String, String) -> Unit,
     onExportExtensionDiagnostics: (String) -> Unit,
     onOpenExtensionSettings: (String) -> Unit,
     onCloseExtensionSettings: () -> Unit,
@@ -207,7 +207,7 @@ private fun ExtensionPluginsContent(
     onReauthorize: (String, String) -> Unit,
     onDisable: (String) -> Unit,
     onRevoke: (String, String) -> Unit,
-    onClearData: (String) -> Unit,
+    onClearData: (String, String) -> Unit,
     onExportDiagnostics: (String) -> Unit,
     onOpenSettings: (String) -> Unit,
     onCloseSettings: () -> Unit,
@@ -216,6 +216,7 @@ private fun ExtensionPluginsContent(
 ) {
     var pendingTrust by remember { mutableStateOf<InstalledPlugin?>(null) }
     var pendingReauthorization by remember { mutableStateOf(false) }
+    var pendingRevoke by remember { mutableStateOf<InstalledPlugin?>(null) }
     var pendingClear by remember { mutableStateOf<InstalledPlugin?>(null) }
     LazyColumn(
         modifier = modifier,
@@ -259,6 +260,12 @@ private fun ExtensionPluginsContent(
                 plugin.inspectionError?.let { error ->
                     Text(error, color = MaterialTheme.colorScheme.error)
                 }
+                if (!plugin.installed) {
+                    Text(
+                        stringResource(string.feat_setting_extension_not_installed),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
                 if (plugin.signatureChanged) {
                     Text(
                         stringResource(string.feat_setting_extension_signature_changed),
@@ -273,17 +280,21 @@ private fun ExtensionPluginsContent(
                         FilledTonalButton(onClick = { onDisable(extensionId) }) {
                             Text(stringResource(string.feat_setting_extension_disable))
                         }
-                    } else if (!plugin.signatureChanged && plugin.inspectionError == null) {
+                    } else if (
+                        plugin.installed &&
+                        !plugin.signatureChanged &&
+                        plugin.inspectionError == null
+                    ) {
                         Button(onClick = { pendingTrust = plugin }) {
                             Text(stringResource(string.feat_setting_extension_enable))
                         }
                     }
                     if (plugin.trusted || plugin.signatureChanged) {
-                        TextButton(onClick = { onRevoke(plugin.packageName, plugin.serviceName) }) {
+                        TextButton(onClick = { pendingRevoke = plugin }) {
                             Text(stringResource(string.feat_setting_extension_revoke))
                         }
                     }
-                    if (plugin.trusted && !plugin.signatureChanged) {
+                    if (plugin.installed && plugin.trusted && !plugin.signatureChanged) {
                         TextButton(onClick = {
                             pendingReauthorization = true
                             pendingTrust = plugin
@@ -291,10 +302,12 @@ private fun ExtensionPluginsContent(
                             Text(stringResource(string.feat_setting_extension_reauthorize))
                         }
                     }
-                    if (extensionId != null) {
+                    if (plugin.installed && extensionId != null) {
                         TextButton(onClick = { onExportDiagnostics(extensionId) }) {
                             Text(stringResource(string.feat_setting_extension_export_diagnostics))
                         }
+                    }
+                    if (plugin.canClearData) {
                         TextButton(onClick = { pendingClear = plugin }) {
                             Text(stringResource(string.feat_setting_extension_clear_data))
                         }
@@ -366,6 +379,26 @@ private fun ExtensionPluginsContent(
             },
         )
     }
+    pendingRevoke?.let { plugin ->
+        AlertDialog(
+            onDismissRequest = { pendingRevoke = null },
+            title = { Text(stringResource(string.feat_setting_extension_forget_title)) },
+            text = { Text(stringResource(string.feat_setting_extension_forget_body)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    pendingRevoke = null
+                    onRevoke(plugin.packageName, plugin.serviceName)
+                }) {
+                    Text(stringResource(string.feat_setting_extension_revoke))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingRevoke = null }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+        )
+    }
     settings?.let { configuration ->
         ExtensionSettingsDialog(
             configuration = configuration,
@@ -381,7 +414,7 @@ private fun ExtensionPluginsContent(
             confirmButton = {
                 TextButton(onClick = {
                     pendingClear = null
-                    plugin.extensionId?.let(onClearData)
+                    onClearData(plugin.packageName, plugin.serviceName)
                 }) { Text(stringResource(string.feat_setting_extension_clear_data)) }
             },
             dismissButton = {
@@ -397,12 +430,9 @@ private fun ExtensionPluginsContent(
 private fun extensionCapabilitySummary(plugin: InstalledPlugin): String {
     val required = stringResource(string.feat_setting_extension_capability_required)
     val optional = stringResource(string.feat_setting_extension_capability_optional)
-    val granted = stringResource(string.feat_setting_extension_capability_granted)
-    val notGranted = stringResource(string.feat_setting_extension_capability_not_granted)
     return plugin.capabilityPermissions.joinToString("\n") { permission ->
         val requirement = if (permission.required) required else optional
-        val grant = if (permission.granted) granted else notGranted
-        "${permission.id} ($requirement, $grant) — ${permission.reason}"
+        "${permission.id} ($requirement) — ${permission.reason}"
     }.ifEmpty { "—" }
 }
 

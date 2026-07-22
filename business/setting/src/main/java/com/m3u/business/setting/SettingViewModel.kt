@@ -34,6 +34,7 @@ import com.m3u.data.repository.provider.ProviderSubscriptionRequest
 import com.m3u.data.repository.provider.SubscriptionProviderRepository
 import com.m3u.data.repository.plugin.ExtensionPluginRepository
 import com.m3u.data.repository.plugin.InstalledPlugin
+import com.m3u.data.repository.plugin.PluginDataClearResult
 import com.m3u.data.repository.plugin.PluginEnableResult
 import com.m3u.data.repository.tv.TvRepository
 import com.m3u.data.service.Messager
@@ -149,8 +150,10 @@ class SettingViewModel @Inject constructor(
         if (_extensionSettings.value?.extensionId?.value == extensionId) {
             closeExtensionSettings()
         }
-        extensionPluginRepository.disable(extensionId)
-        refreshExtensionPlugins()
+        viewModelScope.launch {
+            extensionPluginRepository.disable(extensionId)
+            refreshExtensionPlugins()
+        }
     }
 
     fun revokeExtensionPlugin(packageName: String, serviceName: String) {
@@ -160,8 +163,10 @@ class SettingViewModel @Inject constructor(
         if (_extensionSettings.value?.extensionId?.value == revokedExtensionId) {
             closeExtensionSettings()
         }
-        extensionPluginRepository.revoke(packageName, serviceName)
-        refreshExtensionPlugins()
+        viewModelScope.launch {
+            extensionPluginRepository.revoke(packageName, serviceName)
+            refreshExtensionPlugins()
+        }
     }
 
     fun openExtensionSettings(extensionId: String, localeTag: String?) {
@@ -178,11 +183,20 @@ class SettingViewModel @Inject constructor(
         _extensionSettings.value = null
     }
 
-    fun clearExtensionData(extensionId: String) {
+    fun clearExtensionData(packageName: String, serviceName: String) {
+        val extensionId = _extensionPlugins.value
+            .firstOrNull { plugin ->
+                plugin.packageName == packageName && plugin.serviceName == serviceName
+            }
+            ?.extensionId
         if (_extensionSettings.value?.extensionId?.value == extensionId) closeExtensionSettings()
         viewModelScope.launch(Dispatchers.IO) {
-            extensionPluginRepository.clearData(extensionId)
-            messager.emit(SettingMessage.ExtensionDataCleared)
+            when (val result = extensionPluginRepository.clearData(packageName, serviceName)) {
+                is PluginDataClearResult.Cleared -> {
+                    messager.emit(SettingMessage.ExtensionDataCleared)
+                }
+                is PluginDataClearResult.Rejected -> messager.emit(result.reason)
+            }
         }
     }
 

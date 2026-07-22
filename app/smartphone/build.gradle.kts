@@ -100,6 +100,11 @@ tasks.matching { task ->
     finalizedBy(":testing:mock-server:stopMockServer")
 }
 
+tasks.matching { task -> task.name == "connectedDebugAndroidTest" }.configureEach {
+    dependsOn(":testing:extension-reference:installDebug")
+    finalizedBy(":testing:extension-reference:uninstallDebug")
+}
+
 hilt {
     enableAggregatingTask = true
 }

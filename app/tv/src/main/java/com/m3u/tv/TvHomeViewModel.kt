@@ -17,6 +17,7 @@ import com.m3u.data.repository.extension.ExtensionSettingsRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.plugin.ExtensionPluginRepository
 import com.m3u.data.repository.plugin.InstalledPlugin
+import com.m3u.data.repository.plugin.PluginDataClearResult
 import com.m3u.data.repository.plugin.PluginEnableResult
 import com.m3u.data.repository.tv.TvRepository
 import com.m3u.data.service.DPadReactionService
@@ -147,8 +148,10 @@ class TvHomeViewModel @Inject constructor(
         if (state.value.extensionSettings?.extensionId?.value == extensionId) {
             closeExtensionSettings()
         }
-        extensionPluginRepository.disable(extensionId)
-        refreshExtensionPlugins()
+        viewModelScope.launch {
+            extensionPluginRepository.disable(extensionId)
+            refreshExtensionPlugins()
+        }
     }
 
     fun revokeExtensionPlugin(packageName: String, serviceName: String) {
@@ -158,8 +161,10 @@ class TvHomeViewModel @Inject constructor(
         if (state.value.extensionSettings?.extensionId?.value == revokedExtensionId) {
             closeExtensionSettings()
         }
-        extensionPluginRepository.revoke(packageName, serviceName)
-        refreshExtensionPlugins()
+        viewModelScope.launch {
+            extensionPluginRepository.revoke(packageName, serviceName)
+            refreshExtensionPlugins()
+        }
     }
 
     fun openExtensionSettings(extensionId: String, localeTag: String?) {
@@ -177,12 +182,22 @@ class TvHomeViewModel @Inject constructor(
         _state.update { it.copy(extensionSettings = null) }
     }
 
-    fun clearExtensionData(extensionId: String) {
+    fun clearExtensionData(packageName: String, serviceName: String) {
+        val extensionId = state.value.extensionPlugins
+            .firstOrNull { plugin ->
+                plugin.packageName == packageName && plugin.serviceName == serviceName
+            }
+            ?.extensionId
         if (state.value.extensionSettings?.extensionId?.value == extensionId) {
             closeExtensionSettings()
         }
         viewModelScope.launch(Dispatchers.IO) {
-            extensionPluginRepository.clearData(extensionId)
+            when (val result = extensionPluginRepository.clearData(packageName, serviceName)) {
+                is PluginDataClearResult.Cleared -> Unit
+                is PluginDataClearResult.Rejected -> {
+                    _state.update { it.copy(extensionPluginError = result.reason) }
+                }
+            }
         }
     }
 

@@ -27,12 +27,14 @@ import com.m3u.extension.api.SerializedExtensionResult
 import com.m3u.extension.api.HostHookSpecs
 import com.m3u.extension.api.SearchProviderItem
 import com.m3u.extension.api.SearchProviderResult
+import com.m3u.extension.api.security.BrokeredHttpRequest
 import com.m3u.extension.api.subscription.ProviderKind
 import com.m3u.extension.api.subscription.SubscriptionHookSpecs
 import com.m3u.extension.api.subscription.SubscriptionProviderDescriptor
 import com.m3u.extension.api.subscription.SubscriptionProviderDiscoverResult
 import com.m3u.extension.runtime.ExtensionTransport
 import com.m3u.extension.runtime.ExtensionTransportHealth
+import com.m3u.extension.sdk.android.ExtensionHostNetworkBroker
 import com.m3u.extension.sdk.android.ExtensionService
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
@@ -46,6 +48,47 @@ import java.util.concurrent.atomic.AtomicReference
 
 class ReferenceExtensionService : ExtensionService() {
     override val transport: ExtensionTransport = ReferenceTransport
+
+    override suspend fun invoke(
+        envelope: SerializedExtensionEnvelope,
+        hostNetworkBroker: ExtensionHostNetworkBroker,
+    ): SerializedExtensionResult {
+        if (envelope.hook == HostHookSpecs.BackgroundTask.hook) {
+            val request = json.decodeFromJsonElement(
+                HostHookSpecs.BackgroundTask.requestSerializer,
+                envelope.payload,
+            )
+            if (request.taskId == BROKER_PROBE_REASON) {
+                val response = hostNetworkBroker.execute(
+                    accountId = "reference-account",
+                    request = BrokeredHttpRequest(
+                        method = "GET",
+                        url = "https://reference.invalid/probe",
+                    ),
+                )
+                return SerializedExtensionResult(
+                    invocationId = envelope.invocationId,
+                    extensionId = envelope.extensionId,
+                    hook = envelope.hook,
+                    schemaVersion = envelope.schemaVersion,
+                    payload = json.encodeToJsonElement(
+                        HostHookSpecs.BackgroundTask.responseSerializer,
+                        BackgroundTaskResult(
+                            output = mapOf(
+                                "status" to response.statusCode.toString(),
+                                "body" to response.body,
+                            )
+                        ),
+                    ),
+                )
+            }
+        }
+        return super.invoke(envelope, hostNetworkBroker)
+    }
+
+    private companion object {
+        const val BROKER_PROBE_REASON = "broker-probe"
+    }
 }
 
 private object ReferenceTransport : ExtensionTransport {
@@ -91,6 +134,10 @@ private object ReferenceTransport : ExtensionTransport {
             ),
         ),
         capabilities = setOf(
+            ExtensionCapabilityRequest(
+                ExtensionCapabilityIds.Network,
+                "Exercise the invocation-scoped host bridge",
+            ),
             ExtensionCapabilityRequest(
                 ExtensionCapabilityIds.SearchRead,
                 "Return reference search results",

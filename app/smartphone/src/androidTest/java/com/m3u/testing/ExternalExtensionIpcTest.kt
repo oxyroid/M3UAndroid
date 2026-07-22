@@ -2,39 +2,45 @@ package com.m3u.testing
 
 import android.os.ParcelFileDescriptor
 import androidx.test.platform.app.InstrumentationRegistry
-import com.m3u.extension.api.ExtensionApiVersions
-import com.m3u.extension.api.HookResult
 import com.m3u.extension.api.BackgroundTaskRequest
 import com.m3u.extension.api.BackgroundTaskResult
-import com.m3u.extension.api.HostHookSpecs
 import com.m3u.extension.api.ChannelMetadataSnapshot
-import com.m3u.extension.api.MetadataEnrichmentRequest
-import com.m3u.extension.api.MetadataEnrichmentResult
 import com.m3u.extension.api.EpgRefreshRequest
 import com.m3u.extension.api.EpgRefreshResult
+import com.m3u.extension.api.ExtensionApiVersions
 import com.m3u.extension.api.ExtensionSettingsSnapshot
-import com.m3u.extension.api.SettingsSchemaRequest
-import com.m3u.extension.api.SettingsSchemaResult
-import com.m3u.extension.api.security.CredentialHandle
+import com.m3u.extension.api.HookResult
+import com.m3u.extension.api.HostHookSpecs
+import com.m3u.extension.api.MetadataEnrichmentRequest
+import com.m3u.extension.api.MetadataEnrichmentResult
 import com.m3u.extension.api.SearchProviderRequest
 import com.m3u.extension.api.SearchProviderResult
+import com.m3u.extension.api.SettingsSchemaRequest
+import com.m3u.extension.api.SettingsSchemaResult
+import com.m3u.extension.api.security.BrokerInvocation
+import com.m3u.extension.api.security.BrokeredHttpResponse
+import com.m3u.extension.api.security.CredentialHandle
 import com.m3u.extension.api.subscription.SubscriptionHookSpecs
 import com.m3u.extension.api.subscription.SubscriptionProviderDiscoverRequest
+import com.m3u.extension.api.subscription.SubscriptionProviderDiscoverResult
 import com.m3u.extension.runtime.ExtensionRegistrationResult
 import com.m3u.extension.runtime.ExtensionRuntime
-import com.m3u.extension.runtime.InvocationPolicy
 import com.m3u.extension.runtime.ExtensionSettingsProvider
+import com.m3u.extension.runtime.InvocationPolicy
 import com.m3u.extension.transport.android.AndroidBoundExtensionTransport
 import com.m3u.extension.transport.android.AndroidExtensionDiscovery
+import com.m3u.extension.transport.android.ParcelFileCodec
 import com.m3u.extension.transport.android.ipc.IExtensionHostBridge
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.Assume.assumeTrue
 import org.junit.Test
-import kotlinx.serialization.json.JsonPrimitive
 
 class ExternalExtensionIpcTest {
     @Test
@@ -42,12 +48,11 @@ class ExternalExtensionIpcTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val installed = AndroidExtensionDiscovery(context).discover().firstOrNull {
             it.packageName == REFERENCE_PACKAGE
-        }
-        assumeTrue("Reference extension APK is not installed", installed != null)
+        } ?: error("Reference extension APK was not installed by the conformance task")
         val transport = AndroidBoundExtensionTransport.connect(
             context = context,
-            installed = requireNotNull(installed),
-            hostBridgeFactory = { RejectingHostBridge },
+            installed = installed,
+            hostBridgeFactory = { _, _ -> ConformanceHostBridge },
         )
         try {
             val runtime = ExtensionRuntime(
@@ -71,7 +76,7 @@ class ExternalExtensionIpcTest {
                 request = SubscriptionProviderDiscoverRequest(),
             )
             val payload = (result.outcome as HookResult.Success<*>).payload as
-                com.m3u.extension.api.subscription.SubscriptionProviderDiscoverResult
+                SubscriptionProviderDiscoverResult
 
             assertEquals("Reference Provider", payload.providers.single().displayName)
             assertEquals("reference", payload.providers.single().supportedKinds.single().value)
@@ -134,6 +139,16 @@ class ExternalExtensionIpcTest {
             assertEquals("false", settingsOutput.output["enabled"])
             assertEquals("true", settingsOutput.output["hasApiKey"])
 
+            val brokerProbe = runtime.invoke(
+                extensionId = transport.manifest.id,
+                spec = HostHookSpecs.BackgroundTask,
+                request = BackgroundTaskRequest("broker-probe"),
+            )
+            val brokerOutput = (brokerProbe.outcome as HookResult.Success<*>).payload as
+                BackgroundTaskResult
+            assertEquals("204", brokerOutput.output["status"])
+            assertEquals("caller-bound", brokerOutput.output["body"])
+
             val slowInvocation = async {
                 runtime.invoke(
                     extensionId = transport.manifest.id,
@@ -158,9 +173,26 @@ class ExternalExtensionIpcTest {
         }
     }
 
-    private object RejectingHostBridge : IExtensionHostBridge.Stub() {
-        override fun executeHttp(request: ParcelFileDescriptor): ParcelFileDescriptor =
-            error("Reference discovery must not request network access")
+    private object ConformanceHostBridge : IExtensionHostBridge.Stub() {
+        private val json = Json { ignoreUnknownKeys = true }
+
+        override fun executeHttp(request: ParcelFileDescriptor): ParcelFileDescriptor {
+            val invocation = json.decodeFromString<BrokerInvocation>(
+                ParcelFileCodec.read(request, 64 * 1024)
+            )
+            assertEquals("reference-account", invocation.accountId)
+            assertEquals("https://reference.invalid/probe", invocation.request.url)
+            return ParcelFileCodec.write(
+                InstrumentationRegistry.getInstrumentation().targetContext,
+                json.encodeToString(
+                    BrokeredHttpResponse(
+                        statusCode = 204,
+                        headers = emptyMap(),
+                        body = "caller-bound",
+                    )
+                ),
+            )
+        }
     }
 
     private companion object {
