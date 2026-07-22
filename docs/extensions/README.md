@@ -16,4 +16,4 @@ Use these guides when building an independently installed Android extension APK.
 
 Use these guides when changing contracts, runtime policy, Android transport, security boundaries, host call sites, or conformance tests.
 
-The external APK platform is currently guarded by the **External Extensions** developer feature. A contract existing in `extension/api` does not by itself mean that every host UI or importer is connected; each guide records the currently connected hooks explicitly.
+The external APK platform is currently guarded by the **External Extensions** developer feature. The guides contain a current-support table showing which hooks have production host UI and importer coverage.

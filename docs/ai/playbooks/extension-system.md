@@ -1,149 +1,43 @@
-# Playbook: Formal Extension System
+# Playbook: Extension system changes
 
 ## When to use this playbook
 
-Use this playbook for extension contracts, host runtime hooks, built-in providers,
-external plugin transports, provider imports, dynamic playback resolution, or
-extension-contributed metadata, EPG, settings, search, and background work.
+Use it for extension contracts, runtime policy, built-in providers, Android plugin transport, host importers, plugin management, or extension conformance tests.
 
-The removed RPC and package-scanning code was an experimental implementation.
-The formal extension system is a separate runtime-hook platform, not a versioned
-migration of that experiment.
+## Canonical documentation
 
-## Required context
+Read the audience-specific documentation before editing:
 
-Read these before making changes:
+- Project maintainers: [`docs/extensions/maintainers/README.md`](../../extensions/maintainers/README.md)
+- 项目维护者：[`docs/extensions/maintainers/README.zh-CN.md`](../../extensions/maintainers/README.zh-CN.md)
+- Extension developers: [`docs/extensions/developers/README.md`](../../extensions/developers/README.md)
+- 插件开发者：[`docs/extensions/developers/README.zh-CN.md`](../../extensions/developers/README.zh-CN.md)
 
-- `AGENTS.md`
-- The nearest module-specific `AGENTS.md`
-- `docs/ai/architecture/extension-runtime.md`
-- `settings.gradle.kts`
-- The hook contract and its host call site
+The maintainer guide is the architecture source of truth. Keep module ownership, lifecycle, current integration status, and release gates there instead of duplicating them in this playbook.
 
-Initialize repository submodules before validation:
+Also read the root `AGENTS.md` and the nearest module-specific `AGENTS.md` for every changed file.
 
-```bash
-git submodule update --init --recursive
-```
+## Change workflow
 
-## Module boundaries
+1. Identify the typed hook and its real host call site.
+2. Confirm which module owns the change using the maintainer guide's module table.
+3. Keep built-in and Android transports on the same runtime contract and policy path.
+4. Add the host renderer/importer whenever a contract returns declarative data.
+5. Test the smallest affected module, then the cross-process or app path when relevant.
+6. Update the current-integration table and both language versions of the affected developer/maintainer guide.
 
-- `extension/api` owns platform-neutral identity, manifest, hook, capability,
-  invocation, payload, outcome, and error contracts.
-- `extension/runtime` owns host-side registration, lookup, API-range checks,
-  capability enforcement, invocation identifiers, and structured failures.
-- `data` owns network clients, credentials, persistence, provider imports,
-  transactions, migrations, and playback adapters.
-- `business` owns feature state and provider workflows.
-- `app` owns provider screens, navigation, permission prompts, and playback UI.
+For contract changes, include golden serialization, schema negotiation, and both transport paths. For Room changes, update migrations, schema artifacts, and migration tests together. For phone or TV changes, verify interaction on the appropriate device surface when practical.
 
-`extension/api` must not depend on app, business, data, Room, DAO, Compose,
-Android activities or services, player implementations, parsers, or repositories.
+## Useful validation commands
 
-Providers return declarative results. They do not write databases or call
-arbitrary host APIs. Data-layer importers decide how to preserve favorites,
-hidden state, ordering, recent playback, and other local state.
-
-## Built-in versus external extensions
-
-`EmbyCompatibleProvider` is a **built-in extension**. It is compiled with the
-host, but it uses the same typed manifest, hook specifications, capability
-policy, invocation limits, and conformance behavior as an external extension.
-Being built-in only changes discovery and transport: the host registers its
-entrypoint directly instead of binding an installed APK.
-
-External extensions live in a separate Android application process and are
-discovered through the explicit extension service action. The host never loads
-plugin dex code. AIDL is only the control plane; manifests and invocation JSON
-use `ParcelFileDescriptor` streams. External extension support remains behind
-the developer feature switch until the reference APK and security suite pass.
-Binding starts with a versioned handshake before the manifest is accepted. The
-host validates API major, each hook schema, and every required capability before
-the user can enable the plugin. First enable shows the package, declared
-developer and version, requested capabilities, and pinned signing-certificate
-SHA-256. A changed certificate never inherits trust.
-
-Plugins receive opaque credential handles, never plaintext provider tokens.
-Network access goes through the host broker. The broker derives the extension
-identity and account origin on the host side, rejects cross-account and
-cross-origin access, injects referenced secrets, limits redirects and payloads,
-binds every secret handle to the selected account, strips sensitive response
-headers, and redacts captured or recognizable JSON credentials from responses.
-Background hooks run through WorkManager with retry, backoff, constraints, and
-bounded output rather than directly from an ordinary repository call.
-
-## Adding a hook
-
-1. Define a stable hook identifier in `ExtensionHookIds`.
-2. Define platform-neutral request and result payloads.
-3. Declare the hook and every required capability in the provider manifest.
-4. Bind exactly one implementation in the provider entrypoint.
-5. Invoke it through `ExtensionRuntime` at an explicit host lifecycle point.
-6. Consume the result in the owning host layer.
-7. Cover success, denied capability, malformed input, and provider failure.
-
-Keep request-response hooks as `suspend` calls. Introduce streaming or callbacks
-only when a concrete hook cannot be represented as a bounded request and result.
-
-## Emby-compatible providers
-
-Emby and Jellyfin are separate user-facing server kinds backed by one shared
-`EmbyCompatibleProvider`. The provider should implement discovery, account
-validation, Live TV refresh, playback source resolution, and playback session
-close hooks.
-
-Persist stable provider, account, item, and media-source references. Resolve the
-actual URL and headers immediately before playback. If resolution opens a server
-session, close it on stop, channel change, or playback failure. Do not persist a
-short-lived URL as the channel's permanent URL.
-
-The built-in data adapter stores accounts, encrypted credentials, channel playback
-references in `provider_accounts`, `provider_credentials`, and
-`channel_playback_references`. Schema 23 uses Android Keystore AES-GCM and a
-credential handle/ciphertext/nonce/key-version record; plaintext tokens are
-removed by the manual 22-to-23 migration. Provider channels use the non-network
-`Channel.URL_DYNAMIC` marker; only the stable reference is durable. Schema 22 and
-the 21-to-22 migration introduce the original provider tables, while schema 23
-adds encrypted credentials and persistent playback-session recovery.
-
-Provider backup records include accounts and stable playback references but no
-credentials. Restored accounts are marked as requiring reauthentication.
-
-Use the Emby authorization headers for Emby servers. Jellyfin requests use the
-current `Authorization: MediaBrowser …` scheme and do not send deprecated token
-headers. Access tokens belong in authenticated request headers, never persisted
-playback URLs, logs, or diagnostics. Provider authentication and resolved
-playback use the platform TLS trust store independently from ordinary playlist
-transport compatibility settings.
-
-## Validation
-
-Use JDK 17 and run the smallest relevant checks first:
+Use JDK 17 and select the commands that match the change:
 
 ```bash
-./gradlew --configure-on-demand :extension:api:test :extension:runtime:test
+./gradlew :extension:api:test :extension:runtime:test
 ./gradlew :extension:transport-android:connectedDebugAndroidTest
 ./gradlew :data:connectedDebugAndroidTest
 ./gradlew :app:smartphone:assembleDebug :app:tv:assembleDebug
 ./gradlew :app:smartphone:connectedDebugAndroidTest :app:tv:connectedDebugAndroidTest
 ```
 
-Also compile the TV app when a shared playback or provider flow affects it. When
-Room changes, update the database version, migrations, schema artifacts, and
-migration tests together.
-
-Search the repository for removed module coordinates, package names, RPC/service
-types, package-scanning permissions, sample feature metadata, and old dependency
-aliases. The expected result is no source, build, manifest, or documentation
-match. Generated baseline profiles are excluded unless they are being rebuilt.
-
-## PR notes
-
-Document:
-
-- Removed experimental modules, UI, service, permission, and dependencies.
-- Added standalone extension API and runtime modules.
-- Hook, capability, manifest, invocation, result, and error boundaries.
-- Confirmation that providers cannot access host persistence directly.
-- Emby-compatible playback URL and session lifecycle behavior, when affected.
-- Exact test, compile, migration, and mock-server validation results.
+Before committing, run `git diff --check` and confirm generated parser outputs and unrelated IDE files are not staged.

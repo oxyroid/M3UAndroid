@@ -16,7 +16,7 @@
 使用 handle -- broker 请求 --->  保管凭据 / 执行网络访问
 ```
 
-插件代码不会进入 M3UAndroid 进程，也拿不到 Room 实体、播放器对象、密码或 token。插件只返回契约数据，是否导入以及怎样保存由宿主决定。
+插件 APK 在自己的进程中运行，与 M3UAndroid 交换契约数据。宿主负责校验结果、保存允许的数据并构造播放对象；凭据使用 handle 表示。
 
 ## 从参考插件开始
 
@@ -51,8 +51,6 @@ SDK 目前还没有作为稳定 Maven artifact 发布。现阶段请在本仓库
 4. 为 transport 提供 `ExtensionManifest`，只实现 manifest 声明的 hook。
 5. 用 Android 系统安装器安装 APK，在 M3UAndroid 中开启“外部扩展”，核对证书和申请的权限，再启用插件。
 
-宿主只按 service action 发现插件。不要申请 `QUERY_ALL_PACKAGES`，也不要期待宿主通过 `DexClassLoader` 加载你的类。
-
 ## Manifest 要写什么
 
 可以把 `ExtensionManifest` 理解为插件的身份证和权限申请表：
@@ -70,7 +68,7 @@ SDK 目前还没有作为稳定 Maven artifact 发布。现阶段请在本仓库
 
 当前 API 是 `1.0`，hook schema 均为版本 `1`。API major 不同会被拒绝；存在宿主不支持的必要 hook 或未知必要 capability 时，插件会被判定为不兼容。
 
-请使用已发布的 `HookSpec<Request, Result>` serializer。它就是 wire 契约；不要另造 JSON 结构，也不要强转任意 payload。
+请使用每个 `HookSpec<Request, Result>` 提供的 serializer；它定义了与宿主交换的 JSON。
 
 ## 选择 Hook
 
@@ -120,7 +118,7 @@ SDK 目前还没有作为稳定 Maven artifact 发布。现阶段请在本仓库
 
 ## 设置
 
-使用 `ExtensionSettingSchema` 描述设置，不要为宿主配置另做 Activity。手机和 TV 支持布尔、单选、文本、数字和 secret 字段。
+使用 `ExtensionSettingSchema` 描述宿主中的插件设置。手机和 TV 会渲染布尔、单选、文本、数字和 secret 字段。
 
 设置 key 按 `section/field` 隔离。`SECRET` 字段不能有明文默认值。宿主使用 Android Keystore 支持的加密存储，hook 调用中只出现 handle。UI 只提供“已配置”、替换和清除，不会把已保存 secret 回填到输入框。
 
@@ -145,5 +143,3 @@ SDK 目前还没有作为稳定 Maven artifact 发布。现阶段请在本仓库
 - 日志和诊断中没有密码、token、认证 header 或捕获的 secret；
 - 同签名升级和不同签名升级；
 - 手机与 TV 的授权、设置、禁用、重新授权、清除数据和诊断。
-
-外部插件仍受开发者开关保护期间，不要把 APK 描述为面向所有用户的正式支持插件。

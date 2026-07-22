@@ -19,7 +19,7 @@ This shape enforces two rules:
 1. transport changes how a request reaches an extension, not what the request means;
 2. an extension returns a proposal; host code validates and applies it.
 
-Never add an app-to-plugin shortcut or let a plugin call a DAO. If a feature cannot fit this flow, change the typed contract and host importer deliberately.
+New extension features enter through a typed contract and a host importer. Persistence remains behind host-owned data APIs.
 
 ## Where code belongs
 
@@ -64,7 +64,7 @@ For every contract change:
 5. state clearly whether the hook is only defined or actually connected;
 6. update both developer guides and both maintainer guides.
 
-Reject an API major mismatch, unknown required capability, or unsupported required hook schema. Ignore unknown optional JSON fields. Do not restore arbitrary runtime payload casts.
+Reject an API major mismatch, unknown required capability, or unsupported required hook schema. Ignore unknown optional JSON fields. Runtime dispatch remains typed from request through result.
 
 ## External plugin lifecycle
 
@@ -78,7 +78,7 @@ enabled -> repeated failures -> unhealthy
 signer or stable ID changes -> disabled -> new trust decision
 ```
 
-Discovery queries only `com.m3u.extension.action.BIND_EXTENSION`. It explicitly binds the resolved component, which must require `com.m3u.permission.BIND_EXTENSION_HOST`. Never add `QUERY_ALL_PACKAGES`, `DexClassLoader`, or in-process APK loading.
+Discovery queries `com.m3u.extension.action.BIND_EXTENSION` and explicitly binds the resolved component, which requires `com.m3u.permission.BIND_EXTENSION_HOST`. External code remains in its APK process and communicates through the Android transport.
 
 External plugins remain behind `PreferencesKeys.EXTERNAL_EXTENSIONS`. Turning the switch off closes and unregisters external transports but preserves trust. Lifecycle changes are serialized in the repository so UI, restoration, refresh, and workers cannot register the same plugin concurrently.
 
@@ -109,13 +109,13 @@ Every external network request goes through `HostNetworkBroker`. Preserve all of
 - timeout, response size, and concurrency are bounded;
 - login capture writes a header/JSON-pointer value to the vault and returns redacted data plus a handle.
 
-Do not add a raw-secret escape hatch.
+Credential access remains handle-only across the plugin boundary.
 
 ## Host-owned importers
 
 The importer is the security boundary after decoding. It checks stable references, result counts/sizes, allowed fields, and ownership before writing anything.
 
-- Provider subscriptions store generic provider/account identity and credential handles. Never hard-code Emby IDs in UI/repositories.
+- Provider subscriptions store generic provider/account identity and credential handles; UI and repositories resolve the provider from that identity.
 - Search maps opaque references to existing, non-hidden channels. Unknown references are dropped.
 - Metadata can update only host-approved fields such as title/category through narrow data methods.
 - EPG validates references and time/size bounds, then writes an extension-isolated source.

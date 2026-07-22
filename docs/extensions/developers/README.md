@@ -18,7 +18,7 @@ return data    <-- request ----  save data / build playback
 use handles    -- broker call -> hold credentials / perform network I/O
 ```
 
-Your APK never runs inside the M3UAndroid process. It does not receive Room entities, player objects, passwords, or tokens. It returns plain contract data; the host decides what is safe to import.
+Your APK runs in its own process and exchanges contract data with M3UAndroid. The host validates the result, stores approved data, and builds playback objects. Credentials are represented by handles.
 
 ## Start from the reference extension
 
@@ -53,8 +53,6 @@ To create a minimal extension:
 4. Give the transport an `ExtensionManifest` and implement only the hooks declared there.
 5. Install the APK with Android's package installer, enable **External Extensions** in M3UAndroid, inspect the certificate and requested permissions, then enable it.
 
-The host uses the service action for discovery. Do not request `QUERY_ALL_PACKAGES`, and do not expect the host to load your classes with `DexClassLoader`.
-
 ## What goes in the manifest
 
 Think of `ExtensionManifest` as the extension's ID card and permission request:
@@ -72,7 +70,7 @@ Think of `ExtensionManifest` as the extension's ID card and permission request:
 
 The current API is `1.0`; current hook schemas are version `1`. A different API major is rejected. An unsupported required hook or unknown required capability makes the extension incompatible.
 
-Use the published `HookSpec<Request, Result>` serializers. They are the wire contract. Do not invent another JSON shape or cast arbitrary payload objects.
+Use the serializer on each published `HookSpec<Request, Result>`; it defines the JSON exchanged with the host.
 
 ## Choose a hook
 
@@ -122,7 +120,7 @@ A plugin that must read a raw password/token, encrypt credentials itself, or byp
 
 ## Settings
 
-Describe settings with `ExtensionSettingSchema`; do not build your own settings Activity for host configuration. Phone and TV support boolean, single-choice, text, number, and secret fields.
+Describe host-facing settings with `ExtensionSettingSchema`. Phone and TV render boolean, single-choice, text, number, and secret fields.
 
 Keys are scoped as `section/field`. A `SECRET` field cannot have a plaintext default. The host stores it with Android Keystore-backed encryption and gives hook calls only its handle. The UI shows “configured,” replace, and clear actions; it never fills an input with the saved secret.
 
@@ -147,5 +145,3 @@ Use the reference extension and conformance tests to verify discovery, handshake
 - logs and diagnostics containing no password, token, auth header, or captured secret;
 - same-signer and different-signer upgrades;
 - phone and TV authorization, settings, disable, reauthorize, clear data, and diagnostics.
-
-Do not describe an APK as generally supported while external extensions remain behind the developer switch.
