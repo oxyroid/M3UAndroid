@@ -1,147 +1,24 @@
-# Build an Android extension
+# Build an M3UAndroid extension
 
 [简体中文](README.zh-CN.md)
 
-This guide is for people building an extension APK for M3UAndroid. External extensions are still a developer feature, so the contract may change before the feature is opened to all users.
+An M3UAndroid extension is a separate Android APK that contributes typed data or behavior to the app. Start with the reference extension, get it running on a device, and then replace one hook at a time with your own implementation.
 
-## The short version
+## Start here
 
-An extension is a separate Android app with one bound service. M3UAndroid finds that service, asks for a manifest, and invokes the hooks declared in the manifest.
+1. [Run the reference extension](quickstart.md) — build, install, enable, and inspect a working APK.
+2. [Understand the extension model](concepts.md) — service, manifest, hooks, settings, and credentials.
+3. [Choose a hook](hooks.md) — see what each hook does and how much host support exists today.
+4. [Test an extension](testing.md) — local checks, device checks, upgrade checks, and release expectations.
 
-The important boundary is simple:
+## What is ready today
 
-```text
-your APK                         M3UAndroid
---------                         ----------
-declare hooks  -- typed JSON --> validate result
-return data    <-- request ----  save data / build playback
-use handles    -- broker call -> hold credentials / perform network I/O
-```
+The external APK platform is a developer preview. The reference extension can be discovered, authorized, invoked, disabled, reauthorized, configured, and diagnosed on phone and TV.
 
-Your APK runs in its own process and exchanges contract data with M3UAndroid. The host validates the result, stores approved data, and builds playback objects. Credentials are represented by handles.
+Not every public hook is ready for a third-party product. Declarative settings have the most complete external path. Search, metadata, EPG, provider, and background hooks still have limitations listed in the [hook status](hooks.md). The SDK is also not published as a stable Maven artifact yet.
 
-## Start from the reference extension
+Preview builds should target the same M3UAndroid source revision. Cross-version compatibility starts when the SDK artifact and version policy are published.
 
-The fastest working example is [`:testing:extension-reference`](../../../testing/extension-reference). It already contains a valid service, manifest, typed hook dispatch, cancellation handling, settings, search, metadata, EPG, and a background task.
+## Reference implementation
 
-The SDK is not published as a stable Maven artifact yet. For now, build the reference extension inside this checkout or include the extension modules from the same source revision. A public artifact and compatibility policy are required before third-party distribution is considered stable.
-
-To create a minimal extension:
-
-1. Depend on `:extension:sdk-android` while developing in this repository. It exposes the API and transport types used by the service.
-2. Add an exported service to `AndroidManifest.xml`:
-
-   ```xml
-   <service
-       android:name=".MyExtensionService"
-       android:exported="true"
-       android:permission="com.m3u.permission.BIND_EXTENSION_HOST">
-       <intent-filter>
-           <action android:name="com.m3u.extension.action.BIND_EXTENSION" />
-       </intent-filter>
-   </service>
-   ```
-
-3. Extend `ExtensionService` and provide an `ExtensionTransport`:
-
-   ```kotlin
-   class MyExtensionService : ExtensionService() {
-       override val transport: ExtensionTransport = MyExtensionTransport
-   }
-   ```
-
-4. Give the transport an `ExtensionManifest` and implement only the hooks declared there.
-5. Install the APK with Android's package installer, enable **External Extensions** in M3UAndroid, inspect the certificate and requested permissions, then enable it.
-
-## What goes in the manifest
-
-Think of `ExtensionManifest` as the extension's ID card and permission request:
-
-| Field | What to provide |
-| --- | --- |
-| `id` | A lowercase ID that never changes for this extension |
-| `displayName` | The name shown to users |
-| `extensionVersion` | Your semantic version |
-| `apiRange` | Host extension API versions you support |
-| `hooks` | Every hook you implement and its schema version |
-| `capabilities` | Required/optional permissions, each with a clear reason |
-| `settingsSchema` | Optional declarative settings |
-| `metadata["developer"]` | Developer name shown during authorization |
-
-The current API is `1.0`; current hook schemas are version `1`. A different API major is rejected. An unsupported required hook or unknown required capability makes the extension incompatible.
-
-Use the serializer on each published `HookSpec<Request, Result>`; it defines the JSON exchanged with the host.
-
-## Choose a hook
-
-| Goal | Hook family | Current host support |
-| --- | --- | --- |
-| Add a subscription provider | discover, validate, refresh | Built-in Emby/Jellyfin use the full path; external provider work is still being completed |
-| Resolve playback and close a server session | playback resolve/close | Production path exists for built-in providers |
-| Add settings | settings schema | Rendered on phone and TV |
-| Add search results | search provider | Connected on phone; results must point to an existing host channel |
-| Improve channel title/category | metadata enrichment | Connected during generic provider refresh |
-| Add programmes | EPG refresh | Connected during generic provider refresh |
-| Run scheduled work | background task | Connected with host quotas and cancellation |
-
-“Contract exists” does not always mean “every old M3U/Xtream path calls it.” Check the last column before depending on a hook.
-
-Search, metadata, and EPG results use a `stableReference`. This is an opaque bridge back to data the host already owns. An unknown reference is ignored; it is never turned directly into a database row or playable item.
-
-## Permissions, upgrades, and reauthorization
-
-Declaring a capability only asks for it. The hook can use it only after host policy and the user grant it.
-
-On first enable, M3UAndroid shows the package, developer, version, signing-certificate SHA-256, and every requested capability with its reason. The accepted certificate is pinned.
-
-For later upgrades:
-
-- same signer, no new capabilities: existing trust can be restored;
-- new optional capability: it stays ungranted until the user reauthorizes;
-- new required capability: automatic restore stops until the user reauthorizes;
-- different signer or changed extension ID: the extension is disabled and requires a new trust decision.
-
-Write permission reasons for users, not for the runtime. “Read programme data from your configured server” is useful; “needs `epg.read`” is not.
-
-## Credentials and network requests
-
-The host owns all secrets. Your extension receives an opaque `CredentialHandle`, never the underlying password or token.
-
-Network calls go through `HostNetworkBroker`. The broker:
-
-- allows only the account origin and separately approved origins;
-- removes authentication headers supplied by the extension;
-- injects a host-held secret by reference;
-- checks every redirect again;
-- limits time, response size, and concurrency;
-- can capture a login value from a header or JSON pointer and return only its handle.
-
-A plugin that must read a raw password/token, encrypt credentials itself, or bypass the broker is not compatible with this platform.
-
-## Settings
-
-Describe host-facing settings with `ExtensionSettingSchema`. Phone and TV render boolean, single-choice, text, number, and secret fields.
-
-Keys are scoped as `section/field`. A `SECRET` field cannot have a plaintext default. The host stores it with Android Keystore-backed encryption and gives hook calls only its handle. The UI shows “configured,” replace, and clear actions; it never fills an input with the saved secret.
-
-Changing a section's schema version clears that section's old values and secrets. Treat missing values as normal.
-
-## Write hooks that survive real failures
-
-- Treat invocation IDs as unique and stop work promptly on cancellation.
-- Make refresh, retry, close, and cleanup idempotent.
-- Expect concurrent calls; do not rely on global mutable request state.
-- Keep requests and results inside the declared schema and size limits.
-- Treat refresh/close reasons as open strings, not exhaustive enums.
-- Return the standard error envelope; never put credentials or response bodies in errors or logs.
-
-## Before sharing an APK
-
-Use the reference extension and conformance tests to verify discovery, handshake, manifest decoding, invocation, cancellation, and health. Also test:
-
-- incompatible API and hook versions;
-- process/Binder death, timeout, oversized output, and repeated failure;
-- denied origins and cross-origin redirects;
-- logs and diagnostics containing no password, token, auth header, or captured secret;
-- same-signer and different-signer upgrades;
-- phone and TV authorization, settings, disable, reauthorize, clear data, and diagnostics.
+The executable example lives in [`:testing:extension-reference`](../../../testing/extension-reference). It is the canonical in-repository example for APK wiring and typed request dispatch. Public contract types live in [`:extension:api`](../../../extension/api), and the Android service base lives in [`:extension:sdk-android`](../../../extension/sdk-android).

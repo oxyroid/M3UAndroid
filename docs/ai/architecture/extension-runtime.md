@@ -1,8 +1,10 @@
 # Extension runtime architecture
 
-The extension architecture is maintained in the audience-specific extension documentation:
+The canonical architecture and current release assessment live in the audience-specific extension documentation:
 
-- [Maintainer guide (English)](../../extensions/maintainers/README.md)
-- [维护者指南（简体中文）](../../extensions/maintainers/README.zh-CN.md)
+- [Architecture (English)](../../extensions/maintainers/architecture.md)
+- [架构（简体中文）](../../extensions/maintainers/architecture.zh-CN.md)
+- [Status and release gates (English)](../../extensions/maintainers/status-and-release.md)
+- [当前状态与发布门槛（简体中文）](../../extensions/maintainers/status-and-release.zh-CN.md)
 
-Those guides are the source of truth for module boundaries, invocation flow, lifecycle, security, host importers, current integration status, and release gates. Keep architectural changes there so the project has one maintained description in each supported language.
+Keep system structure on the architecture page and implementation gaps on the status page so intended boundaries are not mistaken for completed behavior.

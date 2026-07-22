@@ -1,19 +1,12 @@
-# Extension system documentation
+# M3UAndroid extension documentation / M3UAndroid 插件文档
 
-The extension documentation is split by audience and language. It covers only the extension system and its host integration.
+Choose the path that matches what you are doing. / 请按你的任务选择入口。
 
-## Extension developers
+| Goal / 目标 | English | 简体中文 |
+| --- | --- | --- |
+| Build a local Android extension APK / 开发本地 Android 插件 APK | [Developer guide](developers/README.md) | [插件开发指南](developers/README.zh-CN.md) |
+| Change the host extension platform / 修改宿主插件平台 | [Maintainer guide](maintainers/README.md) | [插件系统维护指南](maintainers/README.zh-CN.md) |
 
-- [English guide](developers/README.md)
-- [简体中文指南](developers/README.zh-CN.md)
+Built-in extensions are used in normal app flows today. Independently installed APK extensions are still a developer preview, and their public SDK is not frozen yet.
 
-Use these guides when building an independently installed Android extension APK.
-
-## Project maintainers
-
-- [English guide](maintainers/README.md)
-- [简体中文指南](maintainers/README.zh-CN.md)
-
-Use these guides when changing contracts, runtime policy, Android transport, security boundaries, host call sites, or conformance tests.
-
-The external APK platform is currently guarded by the **External Extensions** developer feature. The guides contain a current-support table showing which hooks have production host UI and importer coverage.
+内置插件已经用于正式应用流程。独立安装的 APK 插件仍属于开发者预览功能，公开 SDK 尚未冻结。
