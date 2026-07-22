@@ -150,12 +150,17 @@ internal class ExtensionContributionRefreshWorker @AssistedInject constructor(
             setProgress(workDataOf(OUTPUT_PROGRESS to 50))
 
             val now = System.currentTimeMillis()
+            val epgRefreshGeneration = importer.captureExtensionEpgRefreshGeneration()
             val epgRefreshes = contributions.refreshEpg(
                 channelReferences = snapshots.map { snapshot -> snapshot.stableReference },
                 fromEpochMillis = now - EPG_HISTORY_MILLIS,
                 toEpochMillis = now + EPG_FUTURE_MILLIS,
             )
-            val importedProgrammeCount = importer.replaceExtensionEpg(playlistUrl, epgRefreshes)
+            val importedProgrammeCount = importer.replaceExtensionEpg(
+                playlistUrl = playlistUrl,
+                refreshes = epgRefreshes,
+                refreshGeneration = epgRefreshGeneration,
+            )
             setProgress(workDataOf(OUTPUT_PROGRESS to 100))
             Result.success(
                 workDataOf(

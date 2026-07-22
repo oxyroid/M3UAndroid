@@ -84,6 +84,9 @@ interface PlaylistDao {
     @Query("UPDATE playlists SET title = :title, source = :source WHERE url = :url")
     suspend fun updateProviderPlaylist(url: String, title: String, source: DataSource)
 
+    @Query("UPDATE playlists SET epg_urls = :epgUrls WHERE url = :url")
+    suspend fun replaceEpgUrls(url: String, epgUrls: List<String>): Int
+
     @Transaction
     suspend fun updateUrl(oldUrl: String, newUrl: String) {
         val playlist = get(oldUrl) ?: return
@@ -109,11 +112,7 @@ interface PlaylistDao {
     @Transaction
     suspend fun updateEpgUrls(url: String, updater: (List<String>) -> List<String>) {
         val playlist = get(url) ?: return
-        insertOrReplace(
-            playlist.copy(
-                epgUrls = updater(playlist.epgUrls)
-            )
-        )
+        replaceEpgUrls(url, updater(playlist.epgUrls))
     }
 
     @Transaction

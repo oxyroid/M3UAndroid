@@ -19,10 +19,14 @@ import com.m3u.data.repository.extension.ExtensionMetadataContribution
 import com.m3u.extension.api.ChannelMetadataSnapshot
 import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.subscription.SubscriptionContentRefreshResult
-import javax.inject.Inject
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
+@Singleton
 internal class SubscriptionProviderImporter @Inject constructor(
     private val database: M3UDatabase,
     private val playlistDao: PlaylistDao,
@@ -31,6 +35,10 @@ internal class SubscriptionProviderImporter @Inject constructor(
     private val programmeDao: ProgrammeDao,
     private val credentialVault: CredentialVault,
 ) {
+    private val extensionEpgMutex = Mutex()
+    private var extensionEpgGeneration = 0L
+    private val extensionEpgInvalidatedAt = mutableMapOf<ExtensionId, Long>()
+
     suspend fun import(
         title: String,
         source: DataSource,
@@ -140,7 +148,32 @@ internal class SubscriptionProviderImporter @Inject constructor(
         }
     }
 
+    suspend fun captureExtensionEpgRefreshGeneration(): ExtensionEpgRefreshGeneration =
+        extensionEpgMutex.withLock {
+            ExtensionEpgRefreshGeneration(extensionEpgGeneration)
+        }
+
     suspend fun replaceExtensionEpg(
+        playlistUrl: String,
+        refreshes: List<ExtensionEpgRefreshContribution>,
+    ): Int = extensionEpgMutex.withLock {
+        replaceExtensionEpgLocked(playlistUrl, refreshes)
+    }
+
+    suspend fun replaceExtensionEpg(
+        playlistUrl: String,
+        refreshes: List<ExtensionEpgRefreshContribution>,
+        refreshGeneration: ExtensionEpgRefreshGeneration,
+    ): Int = extensionEpgMutex.withLock {
+        val currentRefreshes = refreshes.filter { contribution ->
+            extensionEpgInvalidatedAt[contribution.extensionId]
+                ?.let { invalidatedAt -> invalidatedAt <= refreshGeneration.value }
+                ?: true
+        }
+        replaceExtensionEpgLocked(playlistUrl, currentRefreshes)
+    }
+
+    private suspend fun replaceExtensionEpgLocked(
         playlistUrl: String,
         refreshes: List<ExtensionEpgRefreshContribution>,
     ): Int = database.withTransaction {
@@ -197,28 +230,32 @@ internal class SubscriptionProviderImporter @Inject constructor(
             }
             acceptedCount += accepted.size
         }
-        playlistDao.insertOrReplace(
-            playlist.copy(
-                epgUrls = playlist.epgUrls.filterNot(refreshedSources.values::contains) + activeSources
-            )
+        playlistDao.replaceEpgUrls(
+            playlistUrl,
+            playlist.epgUrls.filterNot(refreshedSources.values::contains) + activeSources,
         )
         acceptedCount
     }
 
-    suspend fun clearExtensionEpg(extensionId: ExtensionId): Int = database.withTransaction {
-        val prefix = "$EXTENSION_EPG_SCHEME${extensionId.value}/"
-        var removedSources = 0
-        playlistDao.getAll().forEach { playlist ->
-            val ownedSources = playlist.epgUrls.filter { source -> source.startsWith(prefix) }
-            if (ownedSources.isNotEmpty()) {
-                ownedSources.forEach { source -> programmeDao.cleanByEpgUrl(source) }
-                playlistDao.insertOrReplace(
-                    playlist.copy(epgUrls = playlist.epgUrls - ownedSources.toSet())
-                )
-                removedSources += ownedSources.size
+    suspend fun clearExtensionEpg(extensionId: ExtensionId): Int = extensionEpgMutex.withLock {
+        extensionEpgGeneration += 1
+        extensionEpgInvalidatedAt[extensionId] = extensionEpgGeneration
+        database.withTransaction {
+            val prefix = "$EXTENSION_EPG_SCHEME${extensionId.value}/"
+            var removedSources = 0
+            playlistDao.getAll().forEach { playlist ->
+                val ownedSources = playlist.epgUrls.filter { source -> source.startsWith(prefix) }
+                if (ownedSources.isNotEmpty()) {
+                    ownedSources.forEach { source -> programmeDao.cleanByEpgUrl(source) }
+                    playlistDao.replaceEpgUrls(
+                        playlist.url,
+                        playlist.epgUrls - ownedSources.toSet(),
+                    )
+                    removedSources += ownedSources.size
+                }
             }
+            removedSources
         }
-        removedSources
     }
 
     private companion object {
@@ -228,3 +265,7 @@ internal class SubscriptionProviderImporter @Inject constructor(
             "$EXTENSION_EPG_SCHEME${extensionId.value}/$encodedPlaylist"
     }
 }
+
+internal data class ExtensionEpgRefreshGeneration(
+    val value: Long,
+)

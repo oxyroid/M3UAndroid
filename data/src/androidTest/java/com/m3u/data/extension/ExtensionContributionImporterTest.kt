@@ -8,6 +8,7 @@ import com.m3u.data.database.M3UDatabase
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
+import com.m3u.data.database.model.ProviderAccount
 import com.m3u.data.database.model.ProviderCredentialEntity
 import com.m3u.data.extension.security.CredentialVault
 import com.m3u.data.repository.extension.ExtensionEpgRefreshContribution
@@ -52,6 +53,29 @@ class ExtensionContributionImporterTest {
                     url = PLAYLIST_URL,
                     source = DataSource.Provider,
                     epgUrls = listOf(NORMAL_EPG_URL),
+                )
+            )
+            database.providerDao().insertOrReplace(
+                ProviderAccount(
+                    id = PROVIDER_ACCOUNT_ID,
+                    providerId = EXTENSION_ID.value,
+                    providerKind = "reference",
+                    baseUrl = "https://example.test",
+                    serverId = "server-1",
+                    serverName = "Reference server",
+                    serverVersion = "1.0",
+                    userId = "user-1",
+                    username = "viewer",
+                    playlistUrl = PLAYLIST_URL,
+                )
+            )
+            database.providerDao().insertOrReplace(
+                ProviderCredentialEntity(
+                    accountId = PROVIDER_ACCOUNT_ID,
+                    credentialHandle = CREDENTIAL_HANDLE,
+                    ciphertext = "ciphertext",
+                    nonce = "nonce",
+                    keyVersion = 1,
                 )
             )
             database.channelDao().insertOrReplace(
@@ -232,6 +256,33 @@ class ExtensionContributionImporterTest {
         assertTrue(programmes.any { it.epgUrl.startsWith("m3u-extension-epg://${otherExtensionId.value}/") })
     }
 
+    @Test
+    fun replacingAndClearingExtensionEpgPreservesProviderAccountAndCredential() = runBlocking {
+        importer.replaceExtensionEpg(
+            PLAYLIST_URL,
+            listOf(
+                ExtensionEpgRefreshContribution(
+                    EXTENSION_ID,
+                    listOf(ExtensionProgramme(CHANNEL_REFERENCE, "Reference", 1_000, 2_000)),
+                )
+            ),
+        )
+
+        assertProviderOwnershipIsPresent()
+
+        importer.clearExtensionEpg(EXTENSION_ID)
+
+        assertProviderOwnershipIsPresent()
+    }
+
+    private suspend fun assertProviderOwnershipIsPresent() {
+        assertEquals(PROVIDER_ACCOUNT_ID, database.providerDao().getAccount(PROVIDER_ACCOUNT_ID)?.id)
+        assertEquals(
+            CREDENTIAL_HANDLE,
+            database.providerDao().getCredential(PROVIDER_ACCOUNT_ID)?.credentialHandle,
+        )
+    }
+
     private object UnusedCredentialVault : CredentialVault {
         override fun encrypt(
             accountId: String,
@@ -246,6 +297,8 @@ class ExtensionContributionImporterTest {
 
     private companion object {
         const val PLAYLIST_URL = "m3u-provider://account/test/live"
+        const val PROVIDER_ACCOUNT_ID = "provider-account-1"
+        const val CREDENTIAL_HANDLE = "credential-handle-1"
         const val NORMAL_EPG_URL = "https://example.test/guide.xml"
         const val CHANNEL_REFERENCE = "channel-42"
         val EXTENSION_ID = ExtensionId("com.m3u.reference.provider")
