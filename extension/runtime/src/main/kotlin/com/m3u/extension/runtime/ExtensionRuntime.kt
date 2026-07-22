@@ -2,6 +2,7 @@ package com.m3u.extension.runtime
 
 import com.m3u.extension.api.Capability
 import com.m3u.extension.api.ExtensionApiVersion
+import com.m3u.extension.api.ExtensionContractCatalog
 import com.m3u.extension.api.ExtensionCallContext
 import com.m3u.extension.api.ExtensionError
 import com.m3u.extension.api.ExtensionErrorCodes
@@ -144,8 +145,8 @@ class ExtensionRuntime(
 
     fun register(transport: ExtensionTransport): ExtensionRegistrationResult {
         val manifest = transport.manifest
-        if (!isApiMajorCompatible(manifest)) {
-            return ExtensionRegistrationResult.Rejected(incompatibleApiError(manifest))
+        validateExternalManifest(manifest)?.let { error ->
+            return ExtensionRegistrationResult.Rejected(error)
         }
         val registration = Registration(
             manifest = manifest,
@@ -179,6 +180,11 @@ class ExtensionRuntime(
     override fun registeredExtensions(): List<RegisteredExtension> = registrations.values
         .map(Registration::publicModel)
         .sortedBy { extension -> extension.manifest.id.value }
+
+    fun validateExternalManifest(manifest: ExtensionManifest): ExtensionError? {
+        if (!isApiMajorCompatible(manifest)) return incompatibleApiError(manifest)
+        return externalManifestError(manifest)
+    }
 
     override fun extensionsSupporting(hook: Hook): List<RegisteredExtension> = registrations.values
         .filter { registration -> registration.supports(hook) }
@@ -286,6 +292,37 @@ class ExtensionRuntime(
     private fun isApiMajorCompatible(manifest: ExtensionManifest): Boolean =
         manifest.apiRange.minimum.major == hostApiVersion.major &&
             manifest.apiRange.maximum.major == hostApiVersion.major
+
+    private fun externalManifestError(manifest: ExtensionManifest): ExtensionError? {
+        val unsupportedHooks = manifest.hooks.filter { declaration ->
+            declaration.schemaVersion !in ExtensionContractCatalog.SupportedHookSchemaVersions[declaration.hook].orEmpty()
+        }
+        if (unsupportedHooks.isNotEmpty()) {
+            return ExtensionError(
+                code = ExtensionErrorCodes.SchemaIncompatible,
+                message = "Extension declares an unsupported hook schema",
+                recoverable = false,
+                details = mapOf(
+                    "hooks" to unsupportedHooks.joinToString { declaration ->
+                        "${declaration.hook.id}@${declaration.schemaVersion}"
+                    }
+                ),
+            )
+        }
+        val unknownRequiredCapabilities = manifest.capabilities
+            .filter { request -> request.required && request.capability !in ExtensionContractCatalog.SupportedCapabilities }
+        if (unknownRequiredCapabilities.isNotEmpty()) {
+            return ExtensionError(
+                code = ExtensionErrorCodes.CapabilityDenied,
+                message = "Extension requires capabilities unknown to this host",
+                recoverable = false,
+                details = mapOf(
+                    "capabilities" to unknownRequiredCapabilities.joinToString { it.capability.id }
+                ),
+            )
+        }
+        return null
+    }
 
     private fun sanitize(error: ExtensionError): ExtensionError = error.copy(
         message = redact(error.message),

@@ -4,6 +4,7 @@ import android.os.ParcelFileDescriptor;
 import com.m3u.extension.transport.android.ipc.IExtensionHostBridge;
 
 interface IExtensionService {
+    ParcelFileDescriptor handshake(in ParcelFileDescriptor request);
     ParcelFileDescriptor openManifest();
     ParcelFileDescriptor invoke(
         String invocationId,

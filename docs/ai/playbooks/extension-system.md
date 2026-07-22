@@ -57,12 +57,20 @@ discovered through the explicit extension service action. The host never loads
 plugin dex code. AIDL is only the control plane; manifests and invocation JSON
 use `ParcelFileDescriptor` streams. External extension support remains behind
 the developer feature switch until the reference APK and security suite pass.
+Binding starts with a versioned handshake before the manifest is accepted. The
+host validates API major, each hook schema, and every required capability before
+the user can enable the plugin. First enable shows the package, declared
+developer and version, requested capabilities, and pinned signing-certificate
+SHA-256. A changed certificate never inherits trust.
 
 Plugins receive opaque credential handles, never plaintext provider tokens.
 Network access goes through the host broker. The broker derives the extension
 identity and account origin on the host side, rejects cross-account and
 cross-origin access, injects referenced secrets, limits redirects and payloads,
-and redacts captured credentials from responses.
+binds every secret handle to the selected account, strips sensitive response
+headers, and redacts captured or recognizable JSON credentials from responses.
+Background hooks run through WorkManager with retry, backoff, constraints, and
+bounded output rather than directly from an ordinary repository call.
 
 ## Adding a hook
 
@@ -114,6 +122,7 @@ Use JDK 17 and run the smallest relevant checks first:
 
 ```bash
 ./gradlew --configure-on-demand :extension:api:test :extension:runtime:test
+./gradlew :extension:transport-android:connectedDebugAndroidTest
 ./gradlew :data:connectedDebugAndroidTest
 ./gradlew :app:smartphone:assembleDebug :app:tv:assembleDebug
 ./gradlew :app:smartphone:connectedDebugAndroidTest :app:tv:connectedDebugAndroidTest

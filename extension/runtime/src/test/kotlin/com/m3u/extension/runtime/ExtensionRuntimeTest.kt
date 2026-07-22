@@ -1,6 +1,7 @@
 package com.m3u.extension.runtime
 
 import com.m3u.extension.api.EmptyExtensionPayload
+import com.m3u.extension.api.Capability
 import com.m3u.extension.api.ExtensionApiRange
 import com.m3u.extension.api.ExtensionApiVersion
 import com.m3u.extension.api.ExtensionApiVersions
@@ -185,6 +186,47 @@ class ExtensionRuntimeTest {
             TestPayload("resolved-transport"),
             assertIs<HookResult.Success<TestPayload>>(result.outcome).payload,
         )
+    }
+
+    @Test
+    fun `external transport rejects unsupported hook schema`() {
+        val manifest = entrypoint().manifest.copy(
+            hooks = setOf(ExtensionHookDeclaration(TEST_SPEC.hook, schemaVersion = 99))
+        )
+
+        val rejected = assertIs<ExtensionRegistrationResult.Rejected>(
+            runtime().register(transport(manifest))
+        )
+
+        assertEquals(ExtensionErrorCodes.SchemaIncompatible, rejected.error.code)
+    }
+
+    @Test
+    fun `external transport rejects unknown required capability but ignores optional one`() {
+        val unknown = Capability("future.capability")
+        val requiredManifest = entrypoint().manifest.copy(
+            capabilities = entrypoint().manifest.capabilities +
+                ExtensionCapabilityRequest(unknown, "A future host service", required = true)
+        )
+        val optionalManifest = requiredManifest.copy(
+            capabilities = requiredManifest.capabilities.mapTo(mutableSetOf()) { request ->
+                if (request.capability == unknown) request.copy(required = false) else request
+            }
+        )
+
+        val rejected = assertIs<ExtensionRegistrationResult.Rejected>(
+            runtime().register(transport(requiredManifest))
+        )
+        assertEquals(ExtensionErrorCodes.CapabilityDenied, rejected.error.code)
+        assertIs<ExtensionRegistrationResult.Registered>(runtime().register(transport(optionalManifest)))
+    }
+
+    private fun transport(extensionManifest: ExtensionManifest) = object : ExtensionTransport {
+        override val manifest = extensionManifest
+        override suspend fun invoke(request: SerializedExtensionEnvelope): SerializedExtensionResult =
+            error("Not invoked")
+        override suspend fun cancel(invocationId: InvocationId) = Unit
+        override suspend fun health(): ExtensionTransportHealth = ExtensionTransportHealth.HEALTHY
     }
 
     private fun runtime(

@@ -7,6 +7,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.BackoffPolicy
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
@@ -14,8 +15,18 @@ import com.m3u.data.repository.provider.ProviderOperationException
 import com.m3u.data.repository.provider.SubscriptionProviderRepository
 import com.m3u.data.repository.plugin.ExtensionPluginRepository
 import com.m3u.extension.api.subscription.SubscriptionRefreshReason
+import com.m3u.extension.api.BackgroundTaskRequest
+import com.m3u.extension.api.BackgroundTaskResult
+import com.m3u.extension.api.ExtensionId
+import com.m3u.extension.api.HookResult
+import com.m3u.extension.api.HostHookSpecs
+import com.m3u.extension.runtime.ExtensionRuntime
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import java.util.concurrent.TimeUnit
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 @HiltWorker
 class ProviderRefreshWorker @AssistedInject constructor(
@@ -112,6 +123,88 @@ class ExtensionPluginBootstrapWorker @AssistedInject constructor(
                 "extension-plugin-bootstrap",
                 ExistingWorkPolicy.KEEP,
                 OneTimeWorkRequestBuilder<ExtensionPluginBootstrapWorker>().build(),
+            )
+        }
+    }
+}
+
+@HiltWorker
+class ExtensionBackgroundTaskWorker @AssistedInject constructor(
+    @Assisted context: Context,
+    @Assisted params: WorkerParameters,
+    private val runtime: ExtensionRuntime,
+) : CoroutineWorker(context, params) {
+    override suspend fun doWork(): Result {
+        val extensionId = inputData.getString(INPUT_EXTENSION_ID)?.let(::ExtensionId)
+            ?: return Result.failure()
+        val taskId = inputData.getString(INPUT_TASK_ID) ?: return Result.failure()
+        val input = inputData.getString(INPUT_JSON)?.let { encoded ->
+            runCatching { json.decodeFromString<Map<String, String>>(encoded) }.getOrNull()
+        } ?: emptyMap()
+        return when (
+            val outcome = runtime.invoke(
+                extensionId,
+                HostHookSpecs.BackgroundTask,
+                BackgroundTaskRequest(taskId, input, runAttemptCount),
+            ).outcome
+        ) {
+            is HookResult.Success -> outcome.payload.toWorkResult()
+            is HookResult.Failure -> if (outcome.error.recoverable && runAttemptCount < MAX_ATTEMPTS) {
+                Result.retry()
+            } else {
+                Result.failure(workDataOf(OUTPUT_ERROR_CODE to outcome.error.code.value))
+            }
+        }
+    }
+
+    private fun BackgroundTaskResult.toWorkResult(): Result {
+        if (retryAfterMillis != null && runAttemptCount < MAX_ATTEMPTS) return Result.retry()
+        val encoded = json.encodeToString(output)
+        return if (encoded.encodeToByteArray().size <= MAX_OUTPUT_BYTES) {
+            Result.success(workDataOf(OUTPUT_JSON to encoded))
+        } else {
+            Result.failure(workDataOf(OUTPUT_ERROR_CODE to "background.output_too_large"))
+        }
+    }
+
+    companion object {
+        private val json = Json { ignoreUnknownKeys = true }
+        private const val INPUT_EXTENSION_ID = "extension-id"
+        private const val INPUT_TASK_ID = "task-id"
+        private const val INPUT_JSON = "input-json"
+        private const val OUTPUT_JSON = "output-json"
+        private const val OUTPUT_ERROR_CODE = "error-code"
+        private const val MAX_ATTEMPTS = 3
+        private const val MAX_OUTPUT_BYTES = 8 * 1024
+
+        fun enqueue(
+            workManager: WorkManager,
+            extensionId: ExtensionId,
+            taskId: String,
+            input: Map<String, String> = emptyMap(),
+            requiresNetwork: Boolean = false,
+        ) {
+            val request = OneTimeWorkRequestBuilder<ExtensionBackgroundTaskWorker>()
+                .setInputData(
+                    workDataOf(
+                        INPUT_EXTENSION_ID to extensionId.value,
+                        INPUT_TASK_ID to taskId,
+                        INPUT_JSON to json.encodeToString(input),
+                    )
+                )
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkType(
+                            if (requiresNetwork) NetworkType.CONNECTED else NetworkType.NOT_REQUIRED
+                        )
+                        .build()
+                )
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 10, TimeUnit.SECONDS)
+                .build()
+            workManager.enqueueUniqueWork(
+                "extension-background:${extensionId.value}:$taskId",
+                ExistingWorkPolicy.REPLACE,
+                request,
             )
         }
     }

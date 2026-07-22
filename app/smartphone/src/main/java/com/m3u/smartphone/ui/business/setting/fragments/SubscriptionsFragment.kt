@@ -63,6 +63,7 @@ import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.repository.plugin.InstalledPlugin
 import com.m3u.extension.api.ExtensionSettingType
+import com.m3u.extension.api.ExtensionState
 import com.m3u.extension.api.subscription.SubscriptionProviderDescriptor
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.benchmark.DebugBenchmarkSettings
@@ -220,6 +221,7 @@ private fun ExtensionPluginsContent(
                 Text(plugin.displayName ?: plugin.packageName, style = MaterialTheme.typography.titleMedium)
                 plugin.developer?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
                 plugin.version?.let { Text("v$it", style = MaterialTheme.typography.bodySmall) }
+                Text(extensionStateLabel(plugin.state), style = MaterialTheme.typography.labelMedium)
                 Text(plugin.serviceName, style = MaterialTheme.typography.bodySmall)
                 Text(plugin.certificateSha256, style = MaterialTheme.typography.labelSmall)
                 if (plugin.grantedCapabilities.isNotEmpty()) {
@@ -227,6 +229,9 @@ private fun ExtensionPluginsContent(
                         plugin.grantedCapabilities.sorted().joinToString(),
                         style = MaterialTheme.typography.labelSmall,
                     )
+                }
+                plugin.inspectionError?.let { error ->
+                    Text(error, color = MaterialTheme.colorScheme.error)
                 }
                 if (plugin.signatureChanged) {
                     Text(
@@ -239,7 +244,7 @@ private fun ExtensionPluginsContent(
                         FilledTonalButton(onClick = { onDisable(extensionId) }) {
                             Text(stringResource(string.feat_setting_extension_disable))
                         }
-                    } else if (!plugin.signatureChanged) {
+                    } else if (!plugin.signatureChanged && plugin.inspectionError == null) {
                         Button(onClick = { pendingTrust = plugin }) {
                             Text(stringResource(string.feat_setting_extension_enable))
                         }
@@ -263,6 +268,10 @@ private fun ExtensionPluginsContent(
                         string.feat_setting_extension_confirm_body,
                         plugin.packageName,
                         plugin.certificateSha256,
+                        plugin.displayName.orEmpty(),
+                        plugin.developer.orEmpty(),
+                        plugin.version.orEmpty(),
+                        plugin.requestedCapabilities.sorted().joinToString().ifEmpty { "—" },
                     )
                 )
             },
@@ -282,6 +291,16 @@ private fun ExtensionPluginsContent(
         )
     }
 }
+
+@Composable
+private fun extensionStateLabel(state: ExtensionState): String = stringResource(
+    when (state) {
+        ExtensionState.ENABLED -> string.feat_setting_extension_state_enabled
+        ExtensionState.DISABLED -> string.feat_setting_extension_state_disabled
+        ExtensionState.INCOMPATIBLE -> string.feat_setting_extension_state_incompatible
+        ExtensionState.UNHEALTHY -> string.feat_setting_extension_state_unhealthy
+    }
+)
 
 @Composable
 context(properties: SettingProperties)

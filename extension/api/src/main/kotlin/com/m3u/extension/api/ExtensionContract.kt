@@ -107,6 +107,37 @@ object ExtensionCapabilityIds {
     val SettingsContribute = Capability("settings.contribute")
     val SearchRead = Capability("search.read")
     val BackgroundTask = Capability("background.task")
+
+    val All = setOf(
+        Network,
+        CredentialRead,
+        CredentialWrite,
+        SubscriptionRead,
+        SubscriptionWrite,
+        PlaybackResolve,
+        EpgRead,
+        MetadataWrite,
+        SettingsContribute,
+        SearchRead,
+        BackgroundTask,
+    )
+}
+
+object ExtensionContractCatalog {
+    val SupportedHookSchemaVersions: Map<Hook, Set<Int>> = mapOf(
+        ExtensionHookIds.SubscriptionProviderDiscover to setOf(1),
+        ExtensionHookIds.SubscriptionProviderValidate to setOf(1),
+        ExtensionHookIds.SubscriptionContentRefresh to setOf(1),
+        ExtensionHookIds.PlaybackSourceResolve to setOf(1),
+        ExtensionHookIds.PlaybackSessionClose to setOf(1),
+        ExtensionHookIds.MetadataChannelEnrich to setOf(1),
+        ExtensionHookIds.EpgContentRefresh to setOf(1),
+        ExtensionHookIds.SettingsSchemaContribute to setOf(1),
+        ExtensionHookIds.SearchProviderQuery to setOf(1),
+        ExtensionHookIds.BackgroundTaskRun to setOf(1),
+    )
+
+    val SupportedCapabilities: Set<Capability> = ExtensionCapabilityIds.All
 }
 
 @Serializable

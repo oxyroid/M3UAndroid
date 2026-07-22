@@ -1,6 +1,7 @@
 package com.m3u.data.repository.plugin
 
 import com.m3u.extension.api.ExtensionManifest
+import com.m3u.extension.api.ExtensionState
 
 interface ExtensionPluginRepository {
     suspend fun installedPlugins(): List<InstalledPlugin>
@@ -18,10 +19,13 @@ data class InstalledPlugin(
     val signatureChanged: Boolean,
     val extensionId: String?,
     val enabled: Boolean,
+    val state: ExtensionState,
     val displayName: String?,
     val version: String?,
     val developer: String?,
+    val requestedCapabilities: Set<String>,
     val grantedCapabilities: Set<String>,
+    val inspectionError: String?,
 )
 
 sealed interface PluginEnableResult {

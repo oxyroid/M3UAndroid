@@ -14,8 +14,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import okio.Buffer
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -48,7 +52,7 @@ internal class HostNetworkBrokerImpl @Inject constructor(
         var url = request.url.toHttpUrlOrThrow()
         require(url.origin in allowedOrigins) { "Extension request origin is not approved" }
         val requestBody = buildString {
-            request.body.forEach { value -> append(resolve(value)) }
+            request.body.forEach { value -> append(resolve(value, accountId)) }
         }
             .takeIf(String::isNotEmpty)
             ?.toRequestBody(request.headers["Content-Type"].literalOrNull()?.toMediaTypeOrNull())
@@ -60,7 +64,7 @@ internal class HostNetworkBrokerImpl @Inject constructor(
                 if (SENSITIVE_HEADERS.any { it.equals(name, ignoreCase = true) } && value is BrokerValue.Literal) {
                     error("Sensitive headers require a credential reference")
                 }
-                builder.header(name, resolve(value))
+                builder.header(name, resolve(value, accountId))
             }
             builder.method(request.method.uppercase(), requestBody)
             client.newBuilder().followRedirects(false).followSslRedirects(false).build()
@@ -73,10 +77,16 @@ internal class HostNetworkBrokerImpl @Inject constructor(
                         continue
                     }
                     val body = response.body?.source()?.let { source ->
-                        source.request(request.maximumResponseBytes.toLong() + 1)
-                        val bytes = source.readByteArray(request.maximumResponseBytes.toLong() + 1)
-                        require(bytes.size <= request.maximumResponseBytes) { "Extension response exceeds limit" }
-                        bytes.decodeToString()
+                        val buffer = Buffer()
+                        val limit = request.maximumResponseBytes.toLong() + 1
+                        while (buffer.size < limit) {
+                            val read = source.read(buffer, minOf(8_192L, limit - buffer.size))
+                            if (read == -1L) break
+                        }
+                        require(buffer.size <= request.maximumResponseBytes) {
+                            "Extension response exceeds limit"
+                        }
+                        buffer.readByteArray().decodeToString()
                     }.orEmpty()
                     val captured = capture(request.secretCapture, response.headers.toMultimap(), body)
                     val handle = captured?.let { (secret, targetHandle) ->
@@ -90,10 +100,13 @@ internal class HostNetworkBrokerImpl @Inject constructor(
                     return@withContext BrokeredHttpResponse(
                         statusCode = response.code,
                         headers = response.headers.toMap().filterKeys { name ->
-                            captureRule !is SecretCaptureRule.ResponseHeader ||
-                                !name.equals(captureRule.name, ignoreCase = true)
+                            RESPONSE_SENSITIVE_HEADERS.none { it.equals(name, ignoreCase = true) } &&
+                                (captureRule !is SecretCaptureRule.ResponseHeader ||
+                                    !name.equals(captureRule.name, ignoreCase = true))
                         },
-                        body = captured?.first?.let { secret -> body.replace(secret, "***") } ?: body,
+                        body = redactSensitiveJson(
+                            captured?.first?.let { secret -> body.replace(secret, "***") } ?: body
+                        ),
                         capturedCredential = handle,
                     )
                 }
@@ -101,11 +114,14 @@ internal class HostNetworkBrokerImpl @Inject constructor(
         error("Unreachable")
     }
 
-    private suspend fun resolve(value: BrokerValue): String = when (value) {
+    private suspend fun resolve(value: BrokerValue, accountId: String): String = when (value) {
         is BrokerValue.Literal -> value.value
         is BrokerValue.Secret -> {
             val credential = providerDao.getCredentialByHandle(value.reference.handle.value)
                 ?: error("Credential handle was not found")
+            require(credential.accountId == accountId) {
+                "Credential handle does not belong to the selected provider account"
+            }
             credentialVault.decrypt(credential) ?: run {
                 providerDao.deleteCredential(credential.accountId)
                 providerDao.setRequiresReauthentication(credential.accountId, true)
@@ -138,6 +154,22 @@ internal class HostNetworkBrokerImpl @Inject constructor(
         }
     }
 
+    private fun redactSensitiveJson(body: String): String = runCatching {
+        json.encodeToString(JsonElement.serializer(), json.parseToJsonElement(body).redacted())
+    }.getOrDefault(body)
+
+    private fun JsonElement.redacted(): JsonElement = when (this) {
+        is JsonObject -> JsonObject(mapValues { (key, value) ->
+            if (SENSITIVE_JSON_KEYS.any { key.contains(it, ignoreCase = true) }) {
+                JsonPrimitive("***")
+            } else {
+                value.redacted()
+            }
+        })
+        is JsonArray -> JsonArray(map { element -> element.redacted() })
+        else -> this
+    }
+
     private fun String.toHttpUrlOrThrow(): HttpUrl = toHttpUrl()
     private fun normalizeOrigin(value: String): String = value.toHttpUrlOrThrow().origin
     private val HttpUrl.origin: String get() = "$scheme://$host:$port"
@@ -146,6 +178,8 @@ internal class HostNetworkBrokerImpl @Inject constructor(
     private companion object {
         val ALLOWED_METHODS = setOf("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD")
         val SENSITIVE_HEADERS = setOf("Authorization", "Cookie", "X-Emby-Token")
+        val RESPONSE_SENSITIVE_HEADERS = SENSITIVE_HEADERS + "Set-Cookie"
+        val SENSITIVE_JSON_KEYS = setOf("token", "password", "secret", "authorization", "credential")
         const val MAX_REDIRECTS = 5
         const val MAX_RESPONSE_BYTES = 4 * 1024 * 1024
     }

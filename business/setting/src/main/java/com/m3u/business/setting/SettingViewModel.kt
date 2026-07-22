@@ -31,6 +31,7 @@ import com.m3u.data.repository.provider.ProviderSubscriptionRequest
 import com.m3u.data.repository.provider.SubscriptionProviderRepository
 import com.m3u.data.repository.plugin.ExtensionPluginRepository
 import com.m3u.data.repository.plugin.InstalledPlugin
+import com.m3u.data.repository.plugin.PluginEnableResult
 import com.m3u.data.repository.tv.TvRepository
 import com.m3u.data.service.Messager
 import com.m3u.data.worker.BackupWorker
@@ -107,7 +108,10 @@ class SettingViewModel @Inject constructor(
 
     fun enableExtensionPlugin(packageName: String, serviceName: String) {
         viewModelScope.launch {
-            extensionPluginRepository.enable(packageName, serviceName)
+            when (val result = extensionPluginRepository.enable(packageName, serviceName)) {
+                is PluginEnableResult.Enabled -> Unit
+                is PluginEnableResult.Rejected -> messager.emit(result.reason)
+            }
             refreshExtensionPlugins()
         }
     }

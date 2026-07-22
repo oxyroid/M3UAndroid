@@ -9,6 +9,8 @@ import com.m3u.extension.api.SerializedExtensionResult
 import com.m3u.extension.runtime.ExtensionTransport
 import com.m3u.extension.transport.android.ParcelFileCodec
 import com.m3u.extension.transport.android.ExtensionProtocol
+import com.m3u.extension.transport.android.ExtensionHandshakeRequest
+import com.m3u.extension.transport.android.ExtensionHandshakeResponse
 import com.m3u.extension.transport.android.ipc.IExtensionHostBridge
 import com.m3u.extension.transport.android.ipc.IExtensionService
 import kotlinx.coroutines.runBlocking
@@ -26,6 +28,24 @@ abstract class ExtensionService : Service() {
     ): SerializedExtensionResult = transport.invoke(envelope)
 
     private val binder = object : IExtensionService.Stub() {
+        override fun handshake(request: ParcelFileDescriptor): ParcelFileDescriptor {
+            val handshake = json.decodeFromString<ExtensionHandshakeRequest>(
+                ParcelFileCodec.read(request, MAX_HANDSHAKE_BYTES)
+            )
+            require(handshake.transportVersion == ExtensionProtocol.TRANSPORT_VERSION) {
+                "Unsupported extension transport protocol"
+            }
+            return ParcelFileCodec.write(
+                this@ExtensionService,
+                json.encodeToString(
+                    ExtensionHandshakeResponse(
+                        transportVersion = ExtensionProtocol.TRANSPORT_VERSION,
+                        extensionApiRange = transport.manifest.apiRange,
+                    )
+                ),
+            )
+        }
+
         override fun openManifest(): ParcelFileDescriptor =
             ParcelFileCodec.write(this@ExtensionService, json.encodeToString(transport.manifest))
 
@@ -60,6 +80,7 @@ abstract class ExtensionService : Service() {
         binder.takeIf { intent?.action == ExtensionProtocol.SERVICE_ACTION }
 
     private companion object {
+        const val MAX_HANDSHAKE_BYTES = 16 * 1024
         const val MAX_REQUEST_BYTES = 4 * 1024 * 1024
     }
 }
