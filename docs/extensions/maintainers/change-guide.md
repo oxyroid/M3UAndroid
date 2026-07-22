@@ -1,102 +1,89 @@
-# Change the extension platform safely
+# Change recipes
 
 [简体中文](change-guide.zh-CN.md) · [Maintainer guide](README.md)
 
-Start from the user-visible behavior, identify the typed hook, and trace it all the way to the host consumer. A change is complete only when the contract and the real product path agree.
+Before editing code, write the complete path: who creates the request, which Hook is called, who applies the result, and where the user sees the change. A contract with no host caller or result applier is still a placeholder.
 
-## Add or change a hook
+## Add or change a Hook
 
-1. Define one request type, one result type, and one `HookSpec` in `:extension:api`.
-2. Give the hook its own positive schema version.
-3. Define the minimum capabilities in host policy, independent of what a manifest chooses to declare.
-4. Add the hook to negotiation and manifest validation.
-5. Implement or adapt both built-in and Android transport fixtures.
-6. Add the host caller and a narrow importer or renderer.
-7. Add serialization fixtures, policy tests, importer tests, and an end-to-end path.
-8. Update the developer hook matrix and both languages of the affected maintainer page.
+Work in this order:
 
-If steps 6 and 7 are absent, mark the hook as contract-only rather than connected.
+1. Define request, result, and `HookSpec` in [`:extension:api`](../../../extension/api/src/main/kotlin/com/m3u/extension/api). Put general features in `HostHookContracts.kt` and provider features under `subscription/`.
+2. Register host-supported schema versions and capabilities in [`ExtensionContractCatalog`](../../../extension/api/src/main/kotlin/com/m3u/extension/api/ExtensionContract.kt).
+3. Cover affected registration, version, capability, error, size, timeout, and cancellation behavior in [`ExtensionRuntimeTest`](../../../extension/runtime/src/test/kotlin/com/m3u/extension/runtime/ExtensionRuntimeTest.kt).
+4. Add a real host caller; the manifest declaration only advertises that the Hook is available.
+5. Add a scoped host applier and test errors, oversized results, partial failure, and successful empty results.
+6. Update an APK example with [`TypedExtensionService`](../../../extension/sdk-android/src/main/java/com/m3u/extension/sdk/android/TypedExtensionService.kt), then cover cross-process behavior in [`extension-reference`](../../../testing/extension-reference).
+7. Update the English and Chinese developer feature page and maintainer status page.
 
-## Version a contract
+Additive compatible fields need defaults. Raise the Hook schema version when an old implementation cannot safely handle the new shape; raise the API major only for platform-wide incompatibility.
 
-Use an optional serialized field with a default for a compatible addition. Change the hook schema version when an old implementation cannot safely decode or answer the new shape. Change the extension API major only for a platform-wide break.
+## Change the built-in Emby/Jellyfin provider
 
-Keep refresh, close, and similar reason values as validated open strings. Ignore unknown optional JSON fields. Reject an incompatible API major, an unsupported declared hook schema, or an unknown required capability.
-
-Before freezing a wire field, identify its host consumer. A field such as continuation, diagnostics, expiry, retry delay, or sync metadata should either have tested behavior or stay out of the public 1.0 contract.
-
-## Add a built-in provider
-
-A built-in provider is an extension implementation registered by host code. It follows the same five-hook provider lifecycle as an APK extension:
+The complete path is:
 
 ```text
-discover -> validate -> refresh -> resolve playback -> close session
+SubscriptionProviderRepositoryImpl
+  -> ExtensionRuntime.invoke(SubscriptionHookSpecs.*)
+  -> EmbyCompatibleProvider -> EmbyCompatibleClient
+  <- typed result
+SubscriptionProviderRepositoryImpl -> SubscriptionProviderImporter
 ```
 
-The provider result must remain contract data. Put HTTP clients and host credentials behind data adapters, persist generic provider/account identity, and keep UI selection driven by provider descriptors rather than `when` branches on provider kind.
+Start in [`EmbyCompatibleProviderIntegrationTest`](../../../data/src/androidTest/java/com/m3u/data/extension/emby/EmbyCompatibleProviderIntegrationTest.kt) for HTTP behavior and [`SubscriptionProviderRepositoryIntegrationTest`](../../../data/src/androidTest/java/com/m3u/data/repository/provider/SubscriptionProviderRepositoryIntegrationTest.kt) for persistence and lifecycle.
 
-Validate with strict mock-server flows for login, initial import, refresh, playback selection, session close, idempotent import, and local channel-state preservation.
+New provider kinds are driven by descriptors and declarative settings. App, business, and data remain independent of concrete provider kinds, and provider implementations return generic contract types.
 
-## Connect an external provider
+## Change APK discovery, trust, or IPC
 
-External provider work additionally needs:
+| Change | Main files |
+| --- | --- |
+| Service action, discovery, and package identity | [`ExtensionProtocol`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android/ExtensionProtocol.kt), [`AndroidExtensionDiscovery`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android/AndroidExtensionDiscovery.kt) |
+| Explicit binding, handshake, PFD, and calls | [`AndroidBoundExtensionTransport`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android/AndroidBoundExtensionTransport.kt) |
+| APK-side Binder implementation | [`ExtensionService`](../../../extension/sdk-android/src/main/java/com/m3u/extension/sdk/android/ExtensionService.kt) |
+| APK-side typed Hook registration | [`TypedExtensionService`](../../../extension/sdk-android/src/main/java/com/m3u/extension/sdk/android/TypedExtensionService.kt) |
+| Certificate pinning and user authorization | [`ExtensionTrustStore`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android/ExtensionTrustStore.kt), [`ExtensionPluginRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/plugin/ExtensionPluginRepositoryImpl.kt) |
+| Cross-process fixture | [`testing/extension-reference`](../../../testing/extension-reference) |
 
-- a provisional auth session bound to complete plugin identity and an approved origin;
-- host-owned credential capture and promotion into a persisted account;
-- contributor/provider ownership checks on every result;
-- bounds for descriptors, channels, strings, metadata, URLs, and headers;
-- WorkManager restore ordering before refresh or session recovery;
-- a reference APK implementing all five hooks through repository, broker, importer, Room, player, and close paths.
+Every lifecycle change must cover normal return, cancellation, timeout, Binder death, disable, revocation, and process restart. Use [`ExtensionConnectionStateTest`](../../../extension/transport-android/src/androidTest/java/com/m3u/extension/transport/android/ExtensionConnectionStateTest.kt) for connection state and [`ExternalExtensionIpcTest`](../../../app/smartphone/src/androidTest/java/com/m3u/testing/ExternalExtensionIpcTest.kt) for the cross-process path.
 
-Provider discovery alone is not a completed provider integration.
+## Change a result applier
 
-## Add a contribution importer
+An applier must define the current request scope, result owner, and old-data replacement scope.
 
-Keep the importer independent from transport. It receives the contributing extension ID, the original request scope, and a typed result.
+At minimum, cover that:
 
-For every imported item, verify:
+- a failure or exception preserves previous valid data;
+- one extension failure does not affect another extension;
+- a successful empty result clears only the current owner's data;
+- cancellation continues upward;
+- count or field overflow is not treated as a complete truncated success;
+- deletion and insertion happen in one transaction.
 
-- the item belongs to the contributing extension and request;
-- stable and remote IDs are nonblank, unique where required, and bounded;
-- counts, strings, maps, time ranges, URLs, and headers are bounded;
-- a retry or single-extension failure preserves previously valid data;
-- a successful empty result clears only that extension's owned data;
-- cancellation propagates rather than becoming an empty contribution.
+For persistent channel, provider, and EPG work, start with [`SubscriptionProviderImporter`](../../../data/src/main/java/com/m3u/data/extension/SubscriptionProviderImporter.kt), [`ExtensionContributionRepositoryImplTest`](../../../data/src/androidTest/java/com/m3u/data/repository/extension/ExtensionContributionRepositoryImplTest.kt), and [`ExtensionContributionImporterTest`](../../../data/src/androidTest/java/com/m3u/data/extension/ExtensionContributionImporterTest.kt).
 
-Use one reusable contribution importer from provider, M3U, and Xtream ingestion paths where the semantics are the same.
+## Change settings, credentials, or the network broker
 
-## Change Android IPC
+[`ExtensionSettingsRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/extension/ExtensionSettingsRepositoryImpl.kt) owns settings schema and ordinary values. Host vaults encrypt secret settings and provider tokens. Extension contracts carry credential handles, never plaintext secrets.
 
-Treat Binder calls, PFDs, broker bridges, and lifecycle callbacks as one revocable plugin session.
-
-The session identity needs package, service, certificate set, UID, extension ID, grants, and invocation IDs. Disable, revoke, quarantine, Binder death, and timeout must invalidate the session and close its descriptors. Long extension work runs after a short asynchronous control transaction, on bounded executors.
-
-Exercise the change with cooperative and hostile fixture APKs: hang, ignore cancel, die, return a wrong envelope, exceed limits, retain a broker handle, change signer, and reuse another extension ID.
-
-## Change credentials or broker behavior
-
-One credential registry should cover provider credentials, provisional login input, captured login output, and extension secret settings. Every handle is scoped by owner identity, purpose, account/auth-session/setting scope, key version, and approved origin.
-
-Authentication request headers and capture rules come from host-approved schema. Authentication responses return an allowlisted data shape plus a handle; sensitive-key guessing is not a security boundary. Broker calls require an active invocation/session grant, caller UID verification, deadline, concurrency quota, redirect policy, and response bound.
+When changing the broker, add denial cases to [`HostNetworkBrokerSecurityTest`](../../../data/src/androidTest/java/com/m3u/data/extension/security/HostNetworkBrokerSecurityTest.kt) before implementing behavior. Changes to owner, origin, redirect, authentication headers, response size, or credential capture must also be checked against the [release blockers](status-and-release.md#release-blockers).
 
 ## Change phone or TV UI
 
-The UI presents repository state and sends lifecycle actions; it does not bind services or access trust storage directly.
+UI observes repository state and sends operations; it does not discover or bind services directly.
 
-For phone, verify full-row touch targets, scrollable authorization, visible errors, settings validation, and lifecycle refresh. For TV, verify DPad focus order, focused-state contrast, long capability reasons, back behavior, and the full settings form. Dynamic provider entries must come from descriptors on both surfaces.
+- On phone, start with [`SubscriptionsFragment`](../../../app/smartphone/src/main/java/com/m3u/smartphone/ui/business/setting/fragments/SubscriptionsFragment.kt) and [`ExtensionSettingsDialog`](../../../app/smartphone/src/main/java/com/m3u/smartphone/ui/business/setting/fragments/ExtensionSettingsDialog.kt).
+- On TV, start with [`TvHomeViewModel`](../../../app/tv/src/main/java/com/m3u/tv/TvHomeViewModel.kt) and [`TvScreens`](../../../app/tv/src/main/java/com/m3u/tv/TvScreens.kt).
 
-## Validation ladder
+Check full-row clicks, scrollable authorization, visible errors, and settings persistence on phone. Check DPad order, focus contrast, back behavior, and long text on TV.
 
-Start with the smallest affected layer, then broaden:
+## Validation evidence
 
-```bash
-./gradlew :extension:api:test :extension:runtime:test
-./gradlew :extension:transport-android:connectedDebugAndroidTest
-./gradlew :data:testDebugUnitTest :data:connectedDebugAndroidTest
-./gradlew :app:smartphone:assembleDebug :app:tv:assembleDebug
-./gradlew :app:smartphone:connectedDebugAndroidTest :app:tv:connectedDebugAndroidTest
-```
-
-For Room changes, update entities, migrations, exported schemas, and migration tests together. Before committing, run `git diff --check` and keep generated parser output and unrelated IDE files out of the change.
-
-Next: [Status and release gates](status-and-release.md).
+| Change | Closest evidence |
+| --- | --- |
+| API or runtime | [`ExtensionContractTest`](../../../extension/api/src/test/kotlin/com/m3u/extension/api/ExtensionContractTest.kt), [`ExtensionRuntimeTest`](../../../extension/runtime/src/test/kotlin/com/m3u/extension/runtime/ExtensionRuntimeTest.kt) |
+| APK SDK and typed handlers | [`TypedExtensionServiceTest`](../../../extension/sdk-android/src/test/java/com/m3u/extension/sdk/android/TypedExtensionServiceTest.kt), [`hello-extension`](../../../samples/hello-extension) |
+| Certificate trust and connection state | [`CertificateSetFingerprintTest`](../../../extension/transport-android/src/test/java/com/m3u/extension/transport/android/CertificateSetFingerprintTest.kt), [`ExtensionTrustStoreTest`](../../../extension/transport-android/src/androidTest/java/com/m3u/extension/transport/android/ExtensionTrustStoreTest.kt), [`ExtensionConnectionStateTest`](../../../extension/transport-android/src/androidTest/java/com/m3u/extension/transport/android/ExtensionConnectionStateTest.kt) |
+| Cross-process discovery, binding, PFD, invocation, and cancellation | [`ExternalExtensionIpcTest`](../../../app/smartphone/src/androidTest/java/com/m3u/testing/ExternalExtensionIpcTest.kt), [`extension-reference`](../../../testing/extension-reference) |
+| Built-in provider and importer | [`EmbyCompatibleProviderIntegrationTest`](../../../data/src/androidTest/java/com/m3u/data/extension/emby/EmbyCompatibleProviderIntegrationTest.kt), [`SubscriptionProviderRepositoryIntegrationTest`](../../../data/src/androidTest/java/com/m3u/data/repository/provider/SubscriptionProviderRepositoryIntegrationTest.kt), and the applier tests linked above |
+| Phone or TV product flow | The product UI test for the changed trigger and visible result |

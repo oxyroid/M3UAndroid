@@ -17,9 +17,7 @@ Read the audience-specific documentation before editing:
 - Extension developers: [`docs/extensions/developers/README.md`](../../extensions/developers/README.md)
 - 插件开发者：[`docs/extensions/developers/README.zh-CN.md`](../../extensions/developers/README.zh-CN.md)
 
-The maintainer pages are canonical. Keep architecture, change workflow, and current release gaps on their respective pages instead of duplicating them in this playbook.
-
-Also read the root `AGENTS.md` and the nearest module-specific `AGENTS.md` for every changed file.
+The maintainer pages are canonical: architecture, change workflow, and current release gaps live on their respective pages.
 
 ## Change workflow
 
@@ -30,18 +28,8 @@ Also read the root `AGENTS.md` and the nearest module-specific `AGENTS.md` for e
 5. Test the smallest affected module, then the cross-process or app path when relevant.
 6. Update the support matrix and both language versions of every affected extension page.
 
-For contract changes, include golden serialization, schema negotiation, and both transport paths. For Room changes, update migrations, schema artifacts, and migration tests together. For phone or TV changes, verify interaction on the appropriate device surface when practical.
+For contract changes, include golden serialization, schema negotiation, and both transport paths. For phone or TV extension changes, verify the product trigger and visible result on the affected surface.
 
-## Useful validation commands
+## Validation evidence
 
-Use JDK 17 and select the commands that match the change:
-
-```bash
-./gradlew :extension:api:test :extension:runtime:test
-./gradlew :extension:transport-android:connectedDebugAndroidTest
-./gradlew :data:connectedDebugAndroidTest
-./gradlew :app:smartphone:assembleDebug :app:tv:assembleDebug
-./gradlew :app:smartphone:connectedDebugAndroidTest :app:tv:connectedDebugAndroidTest
-```
-
-Before committing, run `git diff --check` and confirm generated parser outputs and unrelated IDE files are not staged.
+Choose the closest API, runtime, SDK, transport, cross-process, provider, importer, or UI evidence from the maintainer [validation table](../../extensions/maintainers/change-guide.md#validation-evidence). External transport changes require the reference extension path; developer-facing SDK changes keep Hello working through its M3UAndroid settings entry.

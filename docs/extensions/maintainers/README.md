@@ -1,23 +1,39 @@
 # Maintain the extension platform
 
-[简体中文](README.zh-CN.md)
+[简体中文](README.zh-CN.md) · [Extension docs](../README.md)
 
-These pages are for M3UAndroid maintainers changing extension contracts, built-in extensions, external APK transport, host importers, plugin UI, or conformance tests.
+Start from the failure the user can see, then follow the call path to the first owning component. To build an independent APK, use the [extension developer guide](../developers/README.md) instead.
 
-## Choose the page for your task
+## Where did the flow stop?
 
-| Task | Read |
-| --- | --- |
-| Understand how built-in and APK extensions fit together | [Architecture](architecture.md) |
-| Add or change a hook, importer, provider, transport, or UI | [Change guide](change-guide.md) |
-| Decide whether a feature is actually connected or ready to ship | [Status and release gates](status-and-release.md) |
+An external extension call has four stages:
 
-## Working rules
+```text
+discover extension Service -> user authorizes -> invoke Hook -> host applies result
+```
 
-- A serialized contract is not a finished feature. Record the real host caller, importer, UI, and test evidence.
-- Built-in and external transports share the same typed hook contract and runtime behavior.
-- Extension results are proposals. Host code validates ownership and bounds before applying them.
-- Public developer docs describe only behavior that an independently installed APK can exercise.
-- Keep every extension page paired in English and Simplified Chinese.
+| Visible symptom | Start here | Closest validation |
+| --- | --- | --- |
+| Service discovery returns an empty list | [`AndroidExtensionDiscovery`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android/AndroidExtensionDiscovery.kt) | [`ExternalExtensionIpcTest`](../../../app/smartphone/src/androidTest/java/com/m3u/testing/ExternalExtensionIpcTest.kt) |
+| It appears, but cannot be enabled or disconnects after an update | [`ExtensionPluginRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/plugin/ExtensionPluginRepositoryImpl.kt), [`AndroidBoundExtensionTransport`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android/AndroidBoundExtensionTransport.kt) | [`ExtensionTrustStoreTest`](../../../extension/transport-android/src/androidTest/java/com/m3u/extension/transport/android/ExtensionTrustStoreTest.kt), [`ExtensionConnectionStateTest`](../../../extension/transport-android/src/androidTest/java/com/m3u/extension/transport/android/ExtensionConnectionStateTest.kt), and [`ExternalExtensionIpcTest`](../../../app/smartphone/src/androidTest/java/com/m3u/testing/ExternalExtensionIpcTest.kt) |
+| A Hook is not called, times out, or is incompatible | [`ExtensionRuntime`](../../../extension/runtime/src/main/kotlin/com/m3u/extension/runtime/ExtensionRuntime.kt), [`ExtensionContractCatalog`](../../../extension/api/src/main/kotlin/com/m3u/extension/api/ExtensionContract.kt) | [`ExtensionRuntimeTest`](../../../extension/runtime/src/test/kotlin/com/m3u/extension/runtime/ExtensionRuntimeTest.kt) |
+| The Hook succeeds but UI, Room, or playback does not change | The calling repository and its importer or renderer | The adjacent repository/importer test |
 
-The external APK platform remains behind a developer feature switch. The [status page](status-and-release.md) is the source of truth for remaining release blockers.
+For Emby/Jellyfin subscription, refresh, or playback failures, start at [`SubscriptionProviderRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/provider/SubscriptionProviderRepositoryImpl.kt). They are built-in extensions and do not use Android IPC.
+
+## Answer four questions before editing
+
+1. Which user action triggers this flow?
+2. Which `HookSpec` does it invoke?
+3. Who validates and applies the result?
+4. What is the smallest visible acceptance result?
+
+If any answer is missing, the flow usually still lacks a real host caller or result applicator.
+
+## Three boundaries
+
+- An extension returns candidate data; it does not directly modify Room, UI, or the player.
+- One extension's failure must not delete another extension's data or its own last successful data.
+- Built-in and APK extensions share the same Hook contracts; only the APK path crosses Android IPC.
+
+Use [Current architecture and code map](architecture.md) to trace a complete path, [Change by task](change-guide.md) before editing, and [Current status and release gate](status-and-release.md) only when deciding whether a capability is open or releasable.

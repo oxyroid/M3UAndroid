@@ -1,119 +1,93 @@
-# Extension platform architecture
+# Current architecture and code map
 
 [简体中文](architecture.zh-CN.md) · [Maintainer guide](README.md)
 
-This page explains the current system shape. It does not imply that every path is ready for external plugins; see [Status and release gates](status-and-release.md) for that assessment.
+This page answers one question: where does an extension call travel in the current code? Incomplete capabilities are kept in the [status page](status-and-release.md).
 
-## Mental model
-
-Every extension reaches the same typed runtime, then a host-owned consumer decides what to do with the result.
+## Shared path
 
 ```text
-built-in extension --------------------\
-                                        > ExtensionRuntime
-external APK -> Android transport -----/         |
-                                                  v
-                                      HookSpec<Request, Result>
-                                                  |
-                                                  v
-                                      host importer / renderer
-                                                  |
-                                                  v
-                                        Room / UI / player
+user action or Worker
+  -> product repository
+  -> ExtensionRuntime
+  -> extension implementation
+  -> product repository receives and applies result
+  -> Room, UI, or player
 ```
 
-Emby/Jellyfin support is implemented by one **built-in extension**. Its adapter is registered directly by the host and runs in the host process. An external extension is a separately installed APK reached through Android IPC. Transport changes how a call crosses the boundary; the hook meaning stays the same.
+There are two extension implementations:
 
-## Vocabulary
+- **Built-in:** the handler runs in the host process, such as Emby/Jellyfin.
+- **APK:** the runtime calls a Service in another APK through `AndroidBoundExtensionTransport`.
 
-| Term | Meaning |
-| --- | --- |
-| Extension manifest | Stable identity, version range, hooks, capability requests, settings, and diagnostics metadata |
-| Hook spec | One typed request/result pair with an independent schema version |
-| Catalog | Registered implementations that declare support for a hook |
-| Runtime | API/schema compatibility validation, serialization, invocation limits, cancellation, health, and failure tracking |
-| Transport | Built-in call adapter or Android process-boundary adapter |
-| Importer/renderer | Host code that validates and applies a returned contribution |
+Both paths meet at `ExtensionRuntime` and use the same `HookSpec<Request, Result>`.
 
-## Module ownership
+## Ownership by layer
 
-| Module | Owns |
-| --- | --- |
-| `:extension:api` | Android-free serializable contracts, manifests, hook specs, settings, errors, credential and broker types |
-| `:extension:runtime` | Catalog, registration, API/schema compatibility validation, invocation policy, concurrency, cancellation, and health |
-| `:extension:transport-android` | APK discovery, explicit service binding, AIDL, PFD payloads, package identity, and trust persistence |
-| `:extension:sdk-android` | APK-side `ExtensionService` and host bridge adapter |
-| `data` | Built-in registration, plugin lifecycle repository, vaults, broker, workers, Room, and host importers |
-| phone and TV apps | Preview switch, plugin authorization, management, and settings; smartphone currently owns the dynamic provider form |
-| `:testing:extension-reference` | Installed APK fixture used to exercise the external boundary |
+| Layer | Owns | First code to open |
+| --- | --- | --- |
+| Contract | Extension identity, settings, and Hook request/result types | [`:extension:api`](../../../extension/api/src/main/kotlin/com/m3u/extension/api) |
+| Runtime | Registration, versions, capabilities, size, concurrency, timeout, health | [`ExtensionRuntime`](../../../extension/runtime/src/main/kotlin/com/m3u/extension/runtime/ExtensionRuntime.kt) |
+| Android discovery | Installed extension Services and signing identity | [`AndroidExtensionDiscovery`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android/AndroidExtensionDiscovery.kt) |
+| Android invocation | Service binding, handshake, invocation, and cancellation | [`AndroidBoundExtensionTransport`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android/AndroidBoundExtensionTransport.kt) |
+| APK SDK | Receive a call in the extension process and run a typed handler | [`ExtensionService`](../../../extension/sdk-android/src/main/java/com/m3u/extension/sdk/android/ExtensionService.kt) |
+| Plugin lifecycle | Trust, enable, disable, reconnect, reauthorize, diagnostics | [`ExtensionPluginRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/plugin/ExtensionPluginRepositoryImpl.kt) |
+| Provider product flow | Discover, validate, refresh, playback, close session | [`SubscriptionProviderRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/provider/SubscriptionProviderRepositoryImpl.kt) |
+| Result application | Validate and write host data, or map to UI/player | [`data/extension`](../../../data/src/main/java/com/m3u/data/extension), [`data/repository/extension`](../../../data/src/main/java/com/m3u/data/repository/extension) |
 
-`:extension:api` stays Kotlin Multiplatform-compatible. Android discovery, Binder, Keystore, WorkManager, and Room remain in Android-facing modules.
+## One Hook call
 
-## One invocation
+For any typed Hook:
 
-1. Host code selects a `HookSpec<Request, Result>` and creates a typed request.
-2. Host code queries `ExtensionCatalog` and selects registered implementations; the runtime rejects disabled, unhealthy, or incompatible entries.
-3. `CapabilityPolicy` supplies the currently granted manifest capabilities.
-4. `InvocationPolicy` applies request/result size, logical timeout, and per-extension concurrency limits.
-5. The built-in adapter or Android transport invokes the extension.
-6. The runtime decodes the result and records success or failure for that extension.
-7. A host importer or renderer validates the contribution before applying it.
+1. A repository selects a `HookSpec` and creates a request.
+2. The runtime loads the extension ID selected by the caller and confirms that it is enabled and declares the Hook.
+3. The runtime checks API/schema, granted capabilities, payload, concurrency, and timeout.
+4. A built-in handler runs directly; an APK handler crosses the Android transport.
+5. The runtime decodes the result and records success or failure.
+6. The repository handles the result according to the current product flow; validation maturity differs by flow.
 
-The runtime currently enforces the capabilities named by each extension's hook declaration. It does not yet impose a host-defined minimum capability set for every public hook. Adding that host-owned mapping is a release requirement.
+Step 6 cannot live in the generic runtime. Search results, EPG entries, channel snapshots, and playback URLs each have different ownership and validity rules. Missing checks are listed under [release blockers](status-and-release.md#release-blockers).
 
-## Built-in extensions
-
-`EmbyCompatibleProvider` publishes one **Emby Compatible** descriptor whose supported kinds are Emby, Jellyfin, and automatic detection. It implements the five provider hooks and uses the same contract models as an external extension. Built-in code can use host services through adapters, but it still returns public contract results rather than Room entities or player objects.
-
-This is the reference path for provider semantics, not proof that the external provider lifecycle is complete.
-
-## External APK lifecycle
-
-The host discovers services that declare the extension service action, resolves an explicit component, reads its package and signing certificate, performs a handshake, and reads the manifest. The user then reviews identity and requested capabilities before enablement.
+## Real example: Emby/Jellyfin refresh
 
 ```text
-installed -> discovered -> inspected -> trusted -> enabled
-                                      \-> rejected / incompatible
-enabled -> disabled -> enabled
-enabled -> repeated failures -> unhealthy
-identity change -> new trust decision
+ProviderWorker or user refresh
+  -> SubscriptionProviderRepositoryImpl
+  -> SubscriptionHookSpecs.Refresh
+  -> ExtensionRuntime
+  -> EmbyCompatibleProvider
+  -> SubscriptionProviderImporter
+  -> Room
 ```
 
-The platform-visible extension states are `ENABLED`, `DISABLED`, `INCOMPATIBLE`, and `UNHEALTHY`.
+This path is connected today: the repository reads the account and credentials, the built-in provider returns a channel snapshot, and the importer updates that account in one transaction before metadata and EPG contributions run.
 
-The present trust implementation pins the inspected signer for a package/service. Grants, settings, and provider ownership are not yet consistently keyed by the complete package/service/certificate identity; the status page tracks this as a release blocker.
+When an APK provider eventually replaces the built-in implementation, the repository and importer around `ExtensionRuntime` should not change. Only the extension invocation crosses Android transport.
 
-## Android transport
+## External Service registration
 
-The control plane uses AIDL. JSON envelopes move through `ParcelFileDescriptor` so results can exceed Binder's normal inline transaction size. Handshake, manifest, invoke, cancel, and health are exposed by the service.
+```text
+discovery finds Service
+  -> host verifies one package owns the process and network stays brokered
+  -> host reads manifest
+  -> user confirms identity and capabilities
+  -> repository registers transport
+  -> runtime can invoke Hooks
+```
 
-The current `invoke` transaction is synchronous even though its payload uses a PFD. A coroutine timeout does not terminate a Binder transaction that never returns. Production isolation therefore requires an asynchronous, bounded session protocol and hostile-plugin tests.
+These terms refer to distinct states:
 
-## Host-owned data application
+- **Discovered:** a Service with the expected entry declaration exists on the device.
+- **Enabled:** the user allows the host to call it.
+- **Registered:** the current host process has a usable transport.
 
-Extensions do not receive DAOs or write Room entities. Each contribution path needs a narrow consumer:
+After an app restart, the bootstrap worker restores extensions that are still trusted and enabled. After an extension update or Binder disconnect, the next plugin-list refresh or restore run makes the repository rebuild registration; the runtime does not own Android Service lifecycle.
 
-- provider discovery validates contributor identity, descriptor count, kinds, and field bounds;
-- provider refresh validates ownership, unique remote IDs, limits, and playback references;
-- search resolves a stable reference to an existing visible channel;
-- metadata applies only approved fields to request-owned channels;
-- EPG replaces data for the successful contributing extension without deleting data after another extension fails;
-- playback validates URLs, schemes, headers, expiry, and session ownership before reaching the player.
+## Most important ownership rules
 
-Several of these checks are incomplete today. Keep the intended boundary here and the concrete gaps on the [status page](status-and-release.md).
+- The runtime safely completes one call; it does not write Room or update UI.
+- Repositories/importers decide whether a result belongs to the request and may replace old data.
+- The plugin repository owns external APK trust, enablement, and grants.
+- The credential vault and Android Keystore own secrets; extension contracts carry handles.
 
-## Credentials and broker
-
-Provider credentials and extension secret settings are encrypted with Android Keystore-backed AES-GCM stores. Contract requests carry `CredentialHandle` values rather than plaintext secrets.
-
-The current `HostNetworkBroker` can resolve credentials for an already persisted provider account. It checks account ownership, restricts the target to the account origin, rechecks redirects, and bounds the response body. It does not yet support pre-account login, secret-setting credentials, user-approved additional origins, a revocable per-invocation broker session, or a safe allowlisted authentication response.
-
-The production design needs one host credential registry with explicit owner, purpose, scope, and approved origin. A provisional login session must be promoted to a persisted account only after validation succeeds.
-
-## Persistence and recovery
-
-Provider accounts, generic provider playlists, playback references, and open playback sessions are host-owned data. Tokens are excluded from backup. A restored provider account must be reauthenticated before refresh or playback.
-
-Open playback sessions are recorded before playback proceeds, removed after a normal close, and eligible for idempotent recovery cleanup after restart. WorkManager owns long-running provider refresh and recovery work.
-
-Next: [Change the platform safely](change-guide.md).
+Continue with [Change by task](change-guide.md) before editing code.

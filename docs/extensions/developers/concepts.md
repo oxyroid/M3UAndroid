@@ -1,121 +1,61 @@
-# Understand the extension model
+# What happened during that call
 
 [简体中文](concepts.zh-CN.md) · [Developer guide](README.md)
 
-You only need four pieces to understand an M3UAndroid extension:
+You have already run the dynamic-settings Hook. Now attach code names to that path:
 
-1. an Android service makes the APK available to the host;
-2. a manifest describes the extension;
-3. hooks receive and return typed contract data;
-4. M3UAndroid validates and applies each result.
-
-## The service is the entry point
-
-Declare one service in the extension APK's `AndroidManifest.xml`:
-
-```xml
-<service
-    android:name=".ExampleExtensionService"
-    android:exported="true"
-    android:permission="com.m3u.permission.BIND_EXTENSION_HOST">
-    <intent-filter>
-        <action android:name="com.m3u.extension.action.BIND_EXTENSION" />
-    </intent-filter>
-</service>
+```text
+open Hello settings
+  -> HostHookSpecs.SettingsSchema
+  -> HelloExtensionService
+  -> handle { request, context -> result }
+  -> SettingsSchemaResult
+  -> M3UAndroid renders the Device section
 ```
 
-The service supplies an `ExtensionTransport`:
+## M3UAndroid discovers the Service
 
-```kotlin
-class ExampleExtensionService : ExtensionService() {
-    override val transport: ExtensionTransport = ExampleTransport
-}
-```
+[`AndroidManifest.xml`](../../../samples/hello-extension/src/main/AndroidManifest.xml) registers `HelloExtensionService` as the component M3UAndroid discovers and connects to.
 
-Use [`ReferenceExtensionService.kt`](../../../testing/extension-reference/src/main/java/com/m3u/testing/extension/reference/ReferenceExtensionService.kt) as the complete executable example.
+## ExtensionManifest describes the extension
 
-## `ExtensionManifest` describes one stable extension
+The `ExtensionManifest` in [`HelloExtensionService.kt`](../../../samples/hello-extension/src/main/java/com/m3u/samples/hello/extension/HelloExtensionService.kt) tells the host:
 
-`ExtensionManifest` is read before any hook runs.
+- the extension identity and version;
+- which Hooks it implements;
+- which capabilities it requests;
+- whether it has fixed setting fields.
 
-| Field | Meaning |
-| --- | --- |
-| `id` | Stable lowercase identifier, such as `com.example.guide` |
-| `displayName` | Name shown in M3UAndroid |
-| `extensionVersion` | Your semantic version |
-| `apiRange` | Host extension API versions accepted by this APK |
-| `hooks` | Hook IDs and schema versions implemented by the APK |
-| `capabilities` | Capabilities requested from the user, with a plain-language reason |
-| `settingsSchema` | Optional settings shown by the host |
-| `metadata["developer"]` | Developer name shown during authorization |
+The Service declaration provides the connection entry; `ExtensionManifest` provides the M3UAndroid extension contract.
 
-The current host API is `1.0`, and current hook schemas use version `1`. Keep the extension ID stable across upgrades. Increment `extensionVersion` when you ship a new APK.
+## HookSpec fixes the call types
 
-A hook may list required capabilities only when the same capabilities are requested by the manifest. Declare only hooks that can return a valid response.
+`HostHookSpecs.SettingsSchema` defines:
 
-## A hook is a typed function
+- Hook name `settings.schema.contribute`;
+- schema version 1;
+- request type `SettingsSchemaRequest`;
+- result type `SettingsSchemaResult`.
 
-Every published `HookSpec<Request, Result>` contains the hook ID, schema version, and serializers for both directions. Use those serializers instead of defining another JSON shape.
+Code inside `handle(HostHookSpecs.SettingsSchema)` therefore does not inspect Hook strings or parse JSON manually.
 
-The dispatch pattern is:
+## A capability is user authorization
 
-```kotlin
-val spec = HostHookSpecs.SearchProvider
-val input = json.decodeFromJsonElement(spec.requestSerializer, envelope.payload)
-val output = SearchProviderResult(/* ... */)
+Hello requests `settings.contribute` because it adds fields to the host settings screen. On first enablement, M3UAndroid shows the reason to the user. The runtime calls the handler only when that capability is granted.
 
-return SerializedExtensionResult(
-    invocationId = envelope.invocationId,
-    extensionId = manifest.id,
-    hook = spec.hook,
-    schemaVersion = spec.schemaVersion,
-    payload = json.encodeToJsonElement(spec.responseSerializer, output),
-)
-```
+A capability says what category of work the extension may do. A Hook says what this specific call does.
 
-The result must repeat the invocation ID, extension ID, hook, and schema version from the request. Return either a payload or an `ExtensionError`, never both.
+## Fixed and dynamic settings
 
-## The host applies results
+Hello demonstrates both forms:
 
-Hook results are contributions, not direct database or player commands. For example:
+- **Greeting** comes from `ExtensionManifest.settingsSchema` and is always present.
+- **Phone name** comes from `settings.schema.contribute` and can vary with the request.
 
-- search returns stable references that the host resolves to existing channels;
-- metadata returns a narrow patch that the host validates;
-- EPG returns programme descriptions that the host imports;
-- playback returns a source description; this product path is currently connected only for the built-in provider.
+Both return declarative schemas. M3UAndroid owns field rendering, validation, and storage.
 
-This keeps extension code independent from M3UAndroid's Room entities and UI models. Check [Choose a hook](hooks.md) before relying on a contribution path; several are still partial in the developer preview.
+## Built-in extensions only skip Android IPC
 
-## Settings
+Emby/Jellyfin handlers run in the M3UAndroid process. Hello's handler runs in a separate APK. They use the same `HookSpec` and request/result types; the APK path adds a Service call.
 
-Use `ExtensionSettingSchema` for settings that should appear in M3UAndroid. Supported field types are text, secret, boolean, number, and single choice.
-
-The manifest schema appears under the `manifest` section. A settings-schema hook can add more named sections. Hook requests receive the current values in `ExtensionSettingsSnapshot` using keys such as `manifest/enabled` or `playback/quality`.
-
-Secret fields have no plaintext default. Their snapshot entry is a `CredentialHandle`, while ordinary values appear in `values`. Treat every value as optional because a user can clear it or a schema upgrade can reset it.
-
-## Capabilities
-
-A manifest capability request contains:
-
-- the capability ID;
-- a reason written for the person enabling the extension;
-- whether the capability is required.
-
-The host may grant a requested capability, leave an optional one ungranted, or reject an incompatible extension. The preview runtime checks the capabilities listed by the extension in `requiredCapabilities`; a host-defined minimum for every hook has not been frozen yet. A later APK that adds capabilities may require reauthorization.
-
-## Network access and credentials
-
-The Android SDK exposes `ExtensionHostNetworkBroker` for host-mediated requests. Credentials are represented by handles; hooks do not receive the secret value.
-
-The complete external login and provider-account workflow is not ready for third-party use yet. In particular, pre-account login and secret settings are not currently usable as broker credentials. Treat broker-dependent provider work as experimental until the [provider hooks](hooks.md#subscription-provider) are marked ready.
-
-## Cancellation and errors
-
-- Track work by `InvocationId` and stop it when `cancel` is called.
-- Make refresh, close, retry, and cleanup operations idempotent.
-- Expect concurrent invocations.
-- Treat reason fields as open strings; a newer host may send a value your APK has not seen before.
-- Put safe, actionable text in `ExtensionError`; keep credentials and response bodies out of errors and logs.
-
-Next: [Choose a hook](hooks.md).
+Use [Terms and extension identity](reference/glossary.md) to compare `applicationId`, Service class, and `ExtensionId`. Choose the next feature from the [Hook catalog](hooks.md).

@@ -1,80 +1,40 @@
-# Run the reference extension
+# Run Hello in 10 minutes
 
 [简体中文](quickstart.zh-CN.md) · [Developer guide](README.md)
 
-This walkthrough ends with **M3U Reference Extension** installed and enabled in a debug build of M3UAndroid.
+Done means: **Hello Extension** appears in M3UAndroid and its settings screen contains **Greeting** and **Phone name**.
 
-## What you need
+This tutorial uses the runnable sample already in the repository.
 
-- This repository checked out locally
-- JDK 17
-- Android SDK and `adb`
-- An Android 8.0 (API 26) or newer device or emulator
+## 1. Build and deploy
 
-Confirm that `adb devices` shows the target as `device` before continuing.
-
-## 1. Build and install both APKs
-
-From the repository root, run:
+Run from the repository root:
 
 ```bash
-JAVA_HOME=/path/to/jdk-17 ./gradlew \
+./gradlew \
   :app:smartphone:installDebug \
-  :testing:extension-reference:installDebug
+  :samples:hello-extension:installDebug
 ```
 
-The two packages are independent. Rebuilding the extension does not require rebuilding the host unless the extension contract changed.
+## 2. Enable Hello in M3UAndroid
 
-## 2. Turn on the preview
+1. Open **Settings → Optional features** and enable **External extensions**.
+2. Open **Settings → Playlist management**.
+3. Swipe left to the **Extension plugins** page.
+4. Find **Hello Extension**, press **Enable**, and confirm.
+5. Open Hello's **Settings**.
 
-In M3UAndroid on the device:
+On a phone you should see:
 
-1. Open **Settings → Optional features**.
-2. Turn on **External extensions**.
-3. Open **Settings → Playlist management** and move to the **Extension plugins** page.
-4. Refresh the list if needed.
+- **Greeting**, with default `Hello from my extension`;
+- **Phone name**, with default `My phone`.
 
-You should see a plugin card named **Reference Provider**. Its state, service name, and certificate appear below the title.
+These fields prove that discovery, user authorization, and one real Hook call all work.
 
-## 3. Enable the extension
+## 3. Make one change
 
-Select **Enable**, review the extension identity and requested capabilities, and confirm. The state should change to **Enabled**.
+Open [`HelloExtensionService.kt`](../../../samples/hello-extension/src/main/java/com/m3u/samples/hello/extension/HelloExtensionService.kt) and change the static field from `label = "Greeting"` to `label = "Message"`. Deploy the updated sample, return to **Extension plugins**, press **Refresh**, and open Hello settings again. The label should now be **Message**.
 
-Open **Settings** for the extension. The reference extension contributes:
+That is the normal development loop: edit, deploy the sample, refresh, and inspect the real UI.
 
-- an Enabled switch;
-- an API key secret field;
-- a Playback section with a Quality choice.
-
-Saving the secret should show only that it is configured. The saved value is never filled back into the form.
-
-## 4. Make one visible change
-
-Edit `displayName` in [`ReferenceExtensionService.kt`](../../../testing/extension-reference/src/main/java/com/m3u/testing/extension/reference/ReferenceExtensionService.kt), then reinstall only the extension:
-
-```bash
-JAVA_HOME=/path/to/jdk-17 ./gradlew :testing:extension-reference:installDebug
-```
-
-Return to the plugin page and refresh. This gives you a short edit-build-install loop before you create a new module.
-
-If the old name is still registered, disable and enable the extension again, or restart M3UAndroid, before refreshing the page.
-
-## Create your own module
-
-Until the SDK is published, keep your first extension in the same checkout:
-
-1. Create an Android application module modeled on `:testing:extension-reference`.
-2. Depend on `project(":extension:sdk-android")`.
-3. Give the module its own `applicationId` and service class.
-4. Give the `ExtensionManifest` a stable extension ID, display name, developer name, and semantic version.
-5. Start with one hook and declare only the capabilities it uses.
-
-Read [Understand the extension model](concepts.md) before changing the service or manifest.
-
-## If the extension is missing
-
-- Confirm that `adb shell pm list packages com.m3u.testing.extension.reference` prints the package.
-- Confirm that **External extensions** is still enabled.
-- Reopen the plugin page and refresh after installing a new APK.
-- If you changed the package, service, signer, or extension ID, use **Forget trust**, then install and authorize the new identity.
+Next: [Understand and modify your first Hook](first-hook.md).

@@ -1,77 +1,60 @@
-# 选择 Hook
+# Hook 目录
 
 [English](hooks.md) · [插件开发指南](README.zh-CN.md)
 
-本页区分“`:extension:api` 中已经存在的契约”和“当前真正可用的宿主链路”。
+完成 [第一个 Hook](first-hook.zh-CN.md) 后，再用本页选择下一项功能。
 
-## 状态说明
+- **可用**：已有真实用户入口和可见结果。
+- **有限可用**：只有指定宿主流程会调用。
+- **尚不可用**：契约存在，但产品链路没有接完。
 
-- **预览可用**：外部 APK 已有宿主 UI 或导入行为，可以用参考插件实际验证。
-- **部分接通**：已有一部分宿主链路，但仍缺少重要消费端、平台或故障处理。
-- **仅内置插件**：Emby/Jellyfin 已通过内置插件使用，但外部 APK 还无法完成同样的产品流程。
-- **仅有契约**：已有类型和传输测试，但应用中没有产品入口。
-
-## 当前状态
-
-| Hook | 用途 | 外部 APK 状态 |
+| 用户目标 | Hook | APK 插件状态 |
 | --- | --- | --- |
-| `settings.schema.contribute` | 增加声明式设置分组 | 手机和 TV **预览可用** |
-| `search.provider.query` | 为搜索返回频道引用 | **部分接通**，仅手机端 |
-| `metadata.channel.enrich` | 建议修改频道标题或分类 | **部分接通**，仅通用 provider 刷新链路 |
-| `epg.content.refresh` | 为已有频道返回节目 | **部分接通**，仅通用 provider 刷新链路 |
-| `subscription.provider.discover` | 声明可用的订阅 provider | **部分接通**，发现后还不能完成外部订阅 |
-| `subscription.provider.validate` | 校验登录设置并返回账号描述 | **仅内置插件** |
-| `subscription.content.refresh` | 返回 provider 的频道快照 | **仅内置插件** |
-| `playback.source.resolve` | 把频道解析为播放源 | **仅内置插件** |
-| `playback.session.close` | 关闭 provider 播放 session | **仅内置插件** |
-| `background.task.run` | 执行声明的后台任务 | **仅有契约**，宿主尚无调度入口 |
+| 动态生成设置 | `settings.schema.contribute` | **可用** |
+| 扩展手机搜索 | `search.provider.query` | **有限可用** |
+| 修改频道标题或分类 | `metadata.channel.enrich` | **有限可用** |
+| 为频道补充节目单 | `epg.content.refresh` | **有限可用** |
+| 提供完整订阅服务 | provider Hook 组 | **尚不可用** |
+| 运行后台任务 | `background.task.run` | **尚不可用** |
 
-这张表描述当前宿主，而不是最终设计。开始开发依赖“部分接通”Hook 的插件前，请重新确认状态。
+## 动态设置
 
-## 设置
+- **何时调用：** 用户打开已启用插件的设置页。
+- **输入：** 当前语言和界面类型。
+- **输出：** 声明式设置分组；界面由 M3UAndroid 绘制。
+- **Capability：** `settings.contribute`。
+- **示例：** [`HelloExtensionService.kt`](../../../samples/hello-extension/src/main/java/com/m3u/samples/hello/extension/HelloExtensionService.kt)。
 
-`settings.schema.contribute` 接收 `SettingsSchemaRequest`，返回若干命名的 `ExtensionSettingSection`。当设置需要随 locale 变化，或者不适合全部写在 manifest schema 中时，可以使用这个 Hook。
+固定不变的设置可以直接写入 `ExtensionManifest.settingsSchema`，不需要 Hook。
 
-手机和 TV 能渲染文本、密码、布尔、数字和单选字段。密码只以 handle 保存。密码设置目前还不能作为网络 broker 的凭据，因此现阶段只适合参考插件所演示的“配置是否存在”一类流程。
+## 手机搜索
 
-## 搜索
+- **何时调用：** 用户在手机搜索页输入内容。
+- **输入：** 查询文字和结果上限。
+- **输出：** 频道的稳定引用。
+- **宿主如何使用：** M3UAndroid 只把返回的引用解析为本地已有且当前可见的频道。
+- **Capability：** `search.read`。
 
-`search.provider.query` 接收查询文本和数量上限。每个结果都必须带有 `stableReference`，并且该引用已经对应宿主中的频道。未知频道和已隐藏频道会被忽略。
+## 频道信息与节目单
 
-手机端搜索链路已经接通。当前 UI 最终展示宿主频道，不会使用插件返回的 title、subtitle、artwork 或 metadata。TV 搜索和 continuation token 尚未接通。
+这两个 Hook 目前只在通用 provider 刷新之后调用，不会在普通 M3U 或 Xtream 导入后调用。
 
-## 元数据
+`metadata.channel.enrich` 返回本次请求中频道的标题或分类修改，需要 `metadata.write`。`epg.content.refresh` 返回指定频道和时间窗口内的节目，需要 `epg.read`。
 
-`metadata.channel.enrich` 接收宿主已有频道的快照。返回的 `ChannelMetadataPatch` 只能引用本次请求中的频道。
+EPG 调用失败时，宿主保留该插件上一次成功的数据；成功返回空列表时，只清除该插件自己的节目单。
 
-通用 provider 刷新完成后，当前 importer 可以应用允许修改的标题和分类。M3U 与 Xtream 导入还不会调用该 Hook，自由格式 metadata 也没有消费端。
+## 完整订阅服务
 
-## EPG
-
-`epg.content.refresh` 接收宿主频道引用和时间范围。返回节目的 `channelReference` 必须来自本次请求，节目时间段必须与请求范围有交集。
-
-当前 Hook 只在通用 provider 刷新后运行，并没有覆盖所有 M3U/Xtream 链路。插件刷新失败时会保留它此前的 EPG；成功返回空结果时，只清除该插件自己的 source。
-
-## Subscription provider
-
-Provider 由五个 Hook 组成完整生命周期：
+完整 provider 需要依次支持：
 
 ```text
-discover -> validate -> refresh -> resolve playback -> close session
+列出服务 -> 验证账号 -> 刷新频道 -> 解析播放地址 -> 关闭播放会话
 ```
 
-内置 Emby/Jellyfin 插件已经完成这条链路。外部 APK 可以返回 descriptor 用于测试，但用户目前还不能完成外部 provider 订阅。
-
-参考 APK 只声明了 `subscription.provider.discover`。它返回的 provider descriptor 用于验证 IPC，不是可完成订阅的 provider。
+Emby/Jellyfin 内置插件已经走通。APK 插件目前还没有可用的登录、订阅和播放端到端入口，因此这一组 Hook 不能作为可发布功能。
 
 ## 后台任务
 
-`background.task.run` 已有契约和 transport fixture，但 M3UAndroid 中没有调用它的产品操作或调度入口，因此目前不可用。
+`background.task.run` 的请求和返回类型已经存在，但宿主尚未调度它。
 
-## 契约源码
-
-- 通用贡献 Hook：[`HostHookContracts.kt`](../../../extension/api/src/main/kotlin/com/m3u/extension/api/HostHookContracts.kt)
-- Provider Hook：[`SubscriptionProviderContracts.kt`](../../../extension/api/src/main/kotlin/com/m3u/extension/api/subscription/SubscriptionProviderContracts.kt)
-- ID、capability、manifest 与 envelope：[`ExtensionContract.kt`](../../../extension/api/src/main/kotlin/com/m3u/extension/api/ExtensionContract.kt)
-
-下一步：[测试插件](testing.zh-CN.md)。
+请求和返回类型可在 [`HostHookContracts.kt`](../../../extension/api/src/main/kotlin/com/m3u/extension/api/HostHookContracts.kt) 与 [`SubscriptionProviderContracts.kt`](../../../extension/api/src/main/kotlin/com/m3u/extension/api/subscription/SubscriptionProviderContracts.kt) 查询。

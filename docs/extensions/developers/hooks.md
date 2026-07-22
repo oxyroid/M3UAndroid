@@ -1,77 +1,60 @@
-# Choose a hook
+# Hook catalog
 
 [简体中文](hooks.zh-CN.md) · [Developer guide](README.md)
 
-This page separates the contract that exists in `:extension:api` from the host path that is usable today.
+Use this page to choose the next feature after completing [Your first Hook](first-hook.md).
 
-## Status labels
+- **Available:** has a real user trigger and visible result.
+- **Limited:** called only from a specific host flow.
+- **Not available:** the contract exists, but the product path is incomplete.
 
-- **Preview usable**: the external APK path has host UI or import behavior and can be exercised with the reference extension.
-- **Partial**: part of the host path exists, but important consumers, platforms, or failure cases are missing.
-- **Built-in only**: Emby/Jellyfin use the hook through a built-in extension; an external APK cannot complete the same product flow yet.
-- **Contract only**: types and transport tests exist, but the app has no product entry point.
-
-## Current matrix
-
-| Hook | Purpose | External APK status |
+| User goal | Hook | APK extension status |
 | --- | --- | --- |
-| `settings.schema.contribute` | Add declarative settings sections | **Preview usable** on phone and TV |
-| `search.provider.query` | Return channel references for a search | **Partial**; smartphone only |
-| `metadata.channel.enrich` | Suggest channel title/category changes | **Partial**; generic provider refresh only |
-| `epg.content.refresh` | Return programmes for existing channels | **Partial**; generic provider refresh only |
-| `subscription.provider.discover` | Advertise subscription providers | **Partial**; discovery does not yet lead to a complete external subscription |
-| `subscription.provider.validate` | Validate login settings and create an account description | **Built-in only** |
-| `subscription.content.refresh` | Return a provider channel snapshot | **Built-in only** |
-| `playback.source.resolve` | Resolve a channel to a playable source | **Built-in only** |
-| `playback.session.close` | Close a provider playback session | **Built-in only** |
-| `background.task.run` | Run a declared background task | **Contract only**; no host scheduling entry point |
+| Generate settings dynamically | `settings.schema.contribute` | **Available** |
+| Extend phone search | `search.provider.query` | **Limited** |
+| Change channel titles or categories | `metadata.channel.enrich` | **Limited** |
+| Add programme guide entries | `epg.content.refresh` | **Limited** |
+| Provide a complete subscription service | Provider Hook group | **Not available** |
+| Run background work | `background.task.run` | **Not available** |
 
-This table describes the current host, not the intended final platform. Recheck it before starting a plugin that depends on a partial hook.
+## Dynamic settings
 
-## Settings
+- **Called when:** the user opens settings for an enabled extension.
+- **Input:** current language and UI surface.
+- **Output:** declarative setting sections; M3UAndroid renders the controls.
+- **Capability:** `settings.contribute`.
+- **Example:** [`HelloExtensionService.kt`](../../../samples/hello-extension/src/main/java/com/m3u/samples/hello/extension/HelloExtensionService.kt).
 
-`settings.schema.contribute` receives `SettingsSchemaRequest` and returns named `ExtensionSettingSection` values. Use it when settings differ by locale or cannot all live in the manifest schema.
+Put settings that never change directly in `ExtensionManifest.settingsSchema`; they do not need a Hook.
 
-Phone and TV render text, secret, boolean, number, and single-choice fields. Secret values are stored as handles. A secret setting cannot yet be used as a network-broker credential, so it is currently suitable only for presence/configuration flows demonstrated by the reference extension.
+## Phone search
 
-## Search
+- **Called when:** the user types on the phone search screen.
+- **Input:** query text and a result limit.
+- **Output:** stable channel references.
+- **Host behavior:** M3UAndroid resolves returned references to channels that already exist locally and are currently visible.
+- **Capability:** `search.read`.
 
-`search.provider.query` receives a query and limit. Each result must contain a `stableReference` that already identifies a host channel. Unknown or hidden channel references are dropped.
+## Channel metadata and programme guide
 
-The smartphone search path is connected. The current renderer uses the host channel rather than the extension-provided title, subtitle, artwork, or metadata. TV search and continuation tokens are not connected.
+These Hooks currently run only after a generic provider refresh, not after ordinary M3U or Xtream imports.
 
-## Metadata
+`metadata.channel.enrich` returns title or category changes for channels in the request and needs `metadata.write`. `epg.content.refresh` returns programmes for the requested channels and time window and needs `epg.read`.
 
-`metadata.channel.enrich` receives snapshots of channels already owned by the host. Return `ChannelMetadataPatch` values only for references from that request.
+If an EPG call fails, the host keeps that extension's last successful data. A successful empty list clears only that extension's programmes.
 
-The current importer can apply approved title and category changes after a generic provider refresh. M3U and Xtream imports do not call this hook yet, and free-form metadata is not consumed.
+## Complete subscription service
 
-## EPG
-
-`epg.content.refresh` receives host channel references and a time window. Return programmes whose `channelReference` came from the request and whose time interval overlaps the requested window.
-
-The hook currently runs after a generic provider refresh. It does not run for every M3U/Xtream path. A failed extension refresh now preserves its previous EPG, while a successful empty result clears only that extension's source.
-
-## Subscription provider
-
-The provider family is a five-hook lifecycle:
+A complete provider must support this sequence:
 
 ```text
-discover -> validate -> refresh -> resolve playback -> close session
+list service -> validate account -> refresh channels -> resolve playback -> close session
 ```
 
-The built-in Emby/Jellyfin extension completes this lifecycle. External APKs can advertise a descriptor for testing, but users cannot complete an external provider subscription yet.
+The built-in Emby/Jellyfin extension completes it. APK extensions do not yet have a usable end-to-end login, subscription, and playback path, so this Hook group is not a publishable feature.
 
-The reference APK declares only `subscription.provider.discover`. Its provider descriptor is an IPC fixture, not a subscribable provider.
+## Background work
 
-## Background task
+The `background.task.run` request and result exist, but the host does not schedule it yet.
 
-The contract and transport fixture for `background.task.run` exist, but M3UAndroid has no product action or schedule that invokes this hook. Treat it as unavailable.
-
-## Contract source
-
-- General contribution specs: [`HostHookContracts.kt`](../../../extension/api/src/main/kotlin/com/m3u/extension/api/HostHookContracts.kt)
-- Provider specs: [`SubscriptionProviderContracts.kt`](../../../extension/api/src/main/kotlin/com/m3u/extension/api/subscription/SubscriptionProviderContracts.kt)
-- IDs, capabilities, manifest, and envelopes: [`ExtensionContract.kt`](../../../extension/api/src/main/kotlin/com/m3u/extension/api/ExtensionContract.kt)
-
-Next: [Test an extension](testing.md).
+Look up request and result types in [`HostHookContracts.kt`](../../../extension/api/src/main/kotlin/com/m3u/extension/api/HostHookContracts.kt) and [`SubscriptionProviderContracts.kt`](../../../extension/api/src/main/kotlin/com/m3u/extension/api/subscription/SubscriptionProviderContracts.kt).

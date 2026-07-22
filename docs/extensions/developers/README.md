@@ -1,24 +1,20 @@
-# Build an M3UAndroid extension
+# Build an APK extension
 
-[简体中文](README.zh-CN.md)
+[简体中文](README.zh-CN.md) · [Extension docs](../README.md)
 
-An M3UAndroid extension is a separate Android APK that contributes typed data or behavior to the app. Start with the reference extension, get it running on a device, and then replace one hook at a time with your own implementation.
+This learning path has two outcomes:
 
-## Start here
+1. Run Hello and see it in M3UAndroid in about 10 minutes.
+2. Run and modify a real Hook in about 20 more minutes.
 
-1. [Run the reference extension](quickstart.md) — build, install, enable, and inspect a working APK.
-2. [Understand the extension model](concepts.md) — service, manifest, hooks, settings, and credentials.
-3. [Choose a hook](hooks.md) — see what each hook does and how much host support exists today.
-4. [Test an extension](testing.md) — local checks, device checks, upgrade checks, and release expectations.
+[Start with Hello](quickstart.md) · [Jump to the first Hook](first-hook.md)
 
-## What is ready today
+The SDK is currently built from the same M3UAndroid checkout and is not yet a stable Maven dependency.
 
-The external APK platform is a developer preview. The reference extension can be discovered, authorized, invoked, disabled, reauthorized, configured, and diagnosed on phone and TV.
+After both tutorials, use these pages as needed:
 
-Not every public hook is ready for a third-party product. Declarative settings have the most complete external path. Search, metadata, EPG, provider, and background hooks still have limitations listed in the [hook status](hooks.md). The SDK is also not published as a stable Maven artifact yet.
-
-Preview builds should target the same M3UAndroid source revision. Cross-version compatibility starts when the SDK artifact and version policy are published.
-
-## Reference implementation
-
-The executable example lives in [`:testing:extension-reference`](../../../testing/extension-reference). It is the canonical in-repository example for APK wiring and typed request dispatch. Public contract types live in [`:extension:api`](../../../extension/api), and the Android service base lives in [`:extension:sdk-android`](../../../extension/sdk-android).
+- [What happened during that call](concepts.md)
+- [Choose the next Hook](hooks.md)
+- [Verify extension behavior](testing.md)
+- [Terms and extension identity](reference/glossary.md)
+- [Publish and upgrade](reference/compatibility.md)

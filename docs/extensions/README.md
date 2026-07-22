@@ -1,12 +1,12 @@
-# M3UAndroid extension documentation / M3UAndroid 插件文档
+# M3UAndroid extensions
 
-Choose the path that matches what you are doing. / 请按你的任务选择入口。
+[简体中文](README.zh-CN.md)
 
-| Goal / 目标 | English | 简体中文 |
-| --- | --- | --- |
-| Build a local Android extension APK / 开发本地 Android 插件 APK | [Developer guide](developers/README.md) | [插件开发指南](developers/README.zh-CN.md) |
-| Change the host extension platform / 修改宿主插件平台 | [Maintainer guide](maintainers/README.md) | [插件系统维护指南](maintainers/README.zh-CN.md) |
+Choose the path that matches what you are building:
 
-Built-in extensions are used in normal app flows today. Independently installed APK extensions are still a developer preview, and their public SDK is not frozen yet.
+- To build a separately installed Android extension APK, start with [Run Hello in 10 minutes](developers/quickstart.md).
+- To change M3UAndroid's runtime, IPC, or host data integration, go to the [extension platform maintainer guide](maintainers/README.md).
 
-内置插件已经用于正式应用流程。独立安装的 APK 插件仍属于开发者预览功能，公开 SDK 尚未冻结。
+Emby and Jellyfin already ship as built-in extensions.
+
+External APK extensions are still a developer preview. Discovery, authorization, settings, and selected Hooks are testable; a complete third-party subscription service is not available yet.
