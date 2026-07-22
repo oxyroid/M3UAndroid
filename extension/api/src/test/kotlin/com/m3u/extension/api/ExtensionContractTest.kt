@@ -4,6 +4,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 
 class ExtensionContractTest {
     @Test
@@ -61,5 +64,24 @@ class ExtensionContractTest {
         assertFailsWith<IllegalArgumentException> { ExtensionId("Example Provider") }
         assertFailsWith<IllegalArgumentException> { Hook("playback/source") }
         assertFailsWith<IllegalArgumentException> { Capability("") }
+    }
+
+    @Test
+    fun `serialized envelope keeps old fixtures compatible and carries host grants`() {
+        val json = Json { ignoreUnknownKeys = true }
+        val oldFixture = """{"apiVersion":{"major":1,"minor":0},"invocationId":"call-1","extensionId":"com.example.provider","hook":"settings.schema.contribute","schemaVersion":1,"payload":{}}"""
+
+        val decoded = json.decodeFromString<SerializedExtensionEnvelope>(oldFixture)
+
+        assertTrue(decoded.grantedCapabilities.isEmpty())
+        assertEquals(
+            """{"apiVersion":{"major":1,"minor":0},"invocationId":"call-1","extensionId":"com.example.provider","hook":"settings.schema.contribute","schemaVersion":1,"payload":{},"grantedCapabilities":["settings.contribute"]}""",
+            json.encodeToString(
+                decoded.copy(
+                    payload = JsonObject(emptyMap()),
+                    grantedCapabilities = setOf(ExtensionCapabilityIds.SettingsContribute),
+                )
+            ),
+        )
     }
 }

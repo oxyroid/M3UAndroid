@@ -25,7 +25,7 @@ class ExtensionHostNetworkBroker internal constructor(
             context,
             json.encodeToString(BrokerInvocation(accountId = accountId, request = request)),
         )
-        val output = bridge.executeHttp(input)
+        val output = input.use(bridge::executeHttp)
         json.decodeFromString(
             ParcelFileCodec.read(output, MAX_RESPONSE_BYTES),
         )

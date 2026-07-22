@@ -416,6 +416,7 @@ class ExtensionRuntime(
                 schemaVersion = spec.schemaVersion,
                 payload = json.encodeToJsonElement(spec.requestSerializer, request),
                 settings = context.settings,
+                grantedCapabilities = context.grantedCapabilities,
             )
             val result = try {
                 currentTransport.invoke(envelope)

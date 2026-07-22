@@ -158,6 +158,7 @@ data class SerializedExtensionEnvelope(
     val schemaVersion: Int,
     val payload: JsonElement,
     val settings: ExtensionSettingsSnapshot = ExtensionSettingsSnapshot(),
+    val grantedCapabilities: Set<Capability> = emptySet(),
 )
 
 @Serializable

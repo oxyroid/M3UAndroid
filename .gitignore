@@ -25,3 +25,4 @@ __pycache__/
 testing/mock-server/bin/
 testing/mock-server/build/
 testing/extension-reference/build/
+samples/*/build/

@@ -173,6 +173,7 @@ class ExtensionRuntimeTest {
 
             override suspend fun invoke(request: SerializedExtensionEnvelope): SerializedExtensionResult {
                 assertEquals(settings, request.settings)
+                assertEquals(setOf(ExtensionCapabilityIds.PlaybackResolve), request.grantedCapabilities)
                 val payload = json.decodeFromJsonElement(TEST_SPEC.requestSerializer, request.payload)
                 return SerializedExtensionResult(
                     invocationId = request.invocationId,

@@ -4,13 +4,14 @@ import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import android.os.ParcelFileDescriptor
+import com.m3u.extension.api.InvocationId
 import com.m3u.extension.api.SerializedExtensionEnvelope
 import com.m3u.extension.api.SerializedExtensionResult
 import com.m3u.extension.runtime.ExtensionTransport
-import com.m3u.extension.transport.android.ParcelFileCodec
-import com.m3u.extension.transport.android.ExtensionProtocol
 import com.m3u.extension.transport.android.ExtensionHandshakeRequest
 import com.m3u.extension.transport.android.ExtensionHandshakeResponse
+import com.m3u.extension.transport.android.ExtensionProtocol
+import com.m3u.extension.transport.android.ParcelFileCodec
 import com.m3u.extension.transport.android.ipc.IExtensionHostBridge
 import com.m3u.extension.transport.android.ipc.IExtensionService
 import kotlinx.coroutines.runBlocking
@@ -70,7 +71,7 @@ abstract class ExtensionService : Service() {
         }
 
         override fun cancel(invocationId: String) = runBlocking {
-            transport.cancel(com.m3u.extension.api.InvocationId(invocationId))
+            transport.cancel(InvocationId(invocationId))
         }
 
         override fun health(): String = runBlocking { transport.health().name.lowercase() }

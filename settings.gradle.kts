@@ -46,6 +46,7 @@ include(":i18n")
 include(":testing:device-benchmark")
 include(":testing:mock-server")
 include(":testing:extension-reference")
+include(":samples:hello-extension")
 include(
     ":lint:annotation",
     ":lint:processor"

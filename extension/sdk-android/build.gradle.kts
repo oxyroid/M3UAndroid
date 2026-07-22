@@ -11,4 +11,5 @@ dependencies {
     api(project(":extension:transport-android"))
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
+    testImplementation(kotlin("test"))
 }
