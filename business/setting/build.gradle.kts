@@ -19,6 +19,7 @@ android {
 dependencies {
     implementation(project(":core:foundation"))
     implementation(project(":data"))
+    implementation(project(":extension:api"))
 
     implementation(libs.androidx.core.ktx)
 

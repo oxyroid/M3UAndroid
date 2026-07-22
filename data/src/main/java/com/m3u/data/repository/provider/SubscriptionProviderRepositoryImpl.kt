@@ -5,15 +5,13 @@ import com.m3u.data.database.dao.ProviderDao
 import com.m3u.data.database.model.ChannelPlaybackReference
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.ProviderAccount
+import com.m3u.data.database.model.ProviderPlaybackSessionEntity
 import com.m3u.data.extension.SubscriptionProviderImporter
-import com.m3u.data.extension.emby.EmbyCompatibleProvider
-import com.m3u.extension.api.ExtensionCapabilityIds
-import com.m3u.extension.api.ExtensionHookIds
-import com.m3u.extension.api.ExtensionHookOutcome
+import com.m3u.data.extension.security.CredentialVault
+import com.m3u.extension.api.HookResult
 import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.ExtensionPayload
 import com.m3u.extension.api.ExtensionResult
-import com.m3u.extension.api.subscription.EmbyCompatibleProviderKinds
 import com.m3u.extension.api.subscription.PlaybackReference
 import com.m3u.extension.api.subscription.PlaybackSessionCloseReason
 import com.m3u.extension.api.subscription.PlaybackSessionCloseRequest
@@ -29,7 +27,11 @@ import com.m3u.extension.api.subscription.SubscriptionContentRefreshRequest
 import com.m3u.extension.api.subscription.SubscriptionContentRefreshResult
 import com.m3u.extension.api.subscription.SubscriptionProviderValidateRequest
 import com.m3u.extension.api.subscription.SubscriptionProviderValidateResult
+import com.m3u.extension.api.subscription.SubscriptionProviderDescriptor
+import com.m3u.extension.api.subscription.SubscriptionProviderDiscoverRequest
+import com.m3u.extension.api.security.CredentialHandle
 import com.m3u.extension.api.subscription.SubscriptionRefreshReason
+import com.m3u.extension.api.subscription.SubscriptionHookSpecs
 import com.m3u.extension.runtime.ExtensionRuntime
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -40,27 +42,37 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
     private val providerDao: ProviderDao,
     private val playlistDao: PlaylistDao,
     private val importer: SubscriptionProviderImporter,
+    private val credentialVault: CredentialVault,
 ) : SubscriptionProviderRepository {
     private val activePlaybackContexts = ConcurrentHashMap<ProviderPlaybackSession, PlaybackCloseContext>()
 
+    override suspend fun discoverProviders(): List<SubscriptionProviderDescriptor> = runtime
+        .extensionsSupporting(SubscriptionHookSpecs.Discover.hook)
+        .flatMap { extension ->
+            runtime.invoke(
+                extensionId = extension.manifest.id,
+                spec = SubscriptionHookSpecs.Discover,
+                request = SubscriptionProviderDiscoverRequest(),
+            ).payloadOrThrow().providers
+        }
+
+    override fun stageCredential(secret: String): CredentialHandle = credentialVault.stage(secret)
+
     override suspend fun subscribe(request: ProviderSubscriptionRequest): ProviderSubscriptionResult {
-        val requestedKind = request.source.toProviderKind()
         val validation = runtime.invoke(
-            extensionId = PROVIDER_ID,
-            hook = ExtensionHookIds.SubscriptionProviderValidate,
-            grantedCapabilities = VALIDATE_CAPABILITIES,
-            payload = SubscriptionProviderValidateRequest(
-                baseUrl = request.baseUrl,
-                providerKind = requestedKind,
-                authentication = ProviderAuthentication.UsernamePassword(
-                    username = request.username,
-                    password = request.password,
-                ),
+            extensionId = request.providerId,
+            spec = SubscriptionHookSpecs.Validate,
+            request = SubscriptionProviderValidateRequest(
+                providerKind = request.providerKind,
+                settingValues = request.settingValues,
+                credentialHandles = request.credentialHandles,
             ),
         ).payloadOrThrow<SubscriptionProviderValidateResult>()
+        val accessToken = credentialVault.consume(validation.credential)
+            ?: throw ProviderOperationException("Provider credential capture expired")
         val validated = validation.account
         val existing = providerDao.getAccountByRemoteIdentity(
-            providerId = PROVIDER_ID.value,
+            providerId = request.providerId.value,
             serverId = validated.serverId,
             userId = validated.userId,
         )
@@ -68,7 +80,7 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
         val playlistUrl = existing?.playlistUrl ?: providerPlaylistUrl(accountId)
         val accountReference = ProviderAccountReference(
             accountId = accountId,
-            providerId = PROVIDER_ID,
+            providerId = request.providerId,
             providerKind = validated.detectedKind,
             baseUrl = validated.normalizedBaseUrl,
             serverId = validated.serverId,
@@ -79,38 +91,46 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
         )
         val refresh = refresh(
             account = accountReference,
-            accessToken = validation.accessToken,
-            reason = SubscriptionRefreshReason.INITIAL,
+            credentialHandle = credentialVault.stage(accessToken),
+            reason = SubscriptionRefreshReason.Initial,
         )
         val account = accountReference.toEntity(playlistUrl)
-        val source = account.providerKind.toDataSource()
+        val source = DataSource.Provider
         val count = importer.import(
             title = request.title,
             source = source,
             account = account,
-            accessToken = validation.accessToken,
+            accessToken = accessToken,
             refresh = refresh,
         )
         return ProviderSubscriptionResult(playlistUrl = playlistUrl, channelCount = count)
     }
 
-    override suspend fun refresh(playlistUrl: String): ProviderSubscriptionResult {
+    override suspend fun refresh(
+        playlistUrl: String,
+        reason: SubscriptionRefreshReason,
+    ): ProviderSubscriptionResult {
         val account = providerDao.getAccountByPlaylistUrl(playlistUrl)
             ?: throw ProviderOperationException("Provider account was not found")
         val credential = providerDao.getCredential(account.id)
-            ?: throw ProviderOperationException("Provider credential was not found")
+            ?: throw ProviderOperationException("Provider credentials must be entered again")
         val title = playlistDao.get(playlistUrl)?.title
             ?: throw ProviderOperationException("Provider playlist was not found")
         val refresh = refresh(
             account = account.toReference(),
-            accessToken = credential.accessToken,
-            reason = SubscriptionRefreshReason.MANUAL,
+            credentialHandle = CredentialHandle(credential.credentialHandle),
+            reason = reason,
         )
+        val accessToken = credentialVault.decrypt(credential) ?: run {
+            providerDao.deleteCredential(account.id)
+            providerDao.setRequiresReauthentication(account.id, true)
+            throw ProviderOperationException("Provider credentials must be entered again")
+        }
         val count = importer.import(
             title = title,
-            source = account.providerKind.toDataSource(),
+            source = DataSource.Provider,
             account = account,
-            accessToken = credential.accessToken,
+            accessToken = accessToken,
             refresh = refresh,
         )
         return ProviderSubscriptionResult(playlistUrl = playlistUrl, channelCount = count)
@@ -121,19 +141,19 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
         val account = providerDao.getAccount(reference.accountId)
             ?: throw ProviderOperationException("Provider account was not found")
         val credential = providerDao.getCredential(reference.accountId)
-            ?: throw ProviderOperationException("Provider credential was not found")
+            ?: throw ProviderOperationException("Provider credentials must be entered again")
         val payload = runtime.invoke(
             extensionId = ExtensionId(reference.providerId),
-            hook = ExtensionHookIds.PlaybackSourceResolve,
-            grantedCapabilities = PLAYBACK_CAPABILITIES,
-            payload = PlaybackSourceResolveRequest(
+            spec = SubscriptionHookSpecs.ResolvePlayback,
+            request = PlaybackSourceResolveRequest(
                 account = account.toReference(),
-                credential = ProviderCredential(credential.accessToken),
+                credential = ProviderCredential(CredentialHandle(credential.credentialHandle)),
                 reference = reference.toContract(),
             ),
         ).payloadOrThrow<PlaybackSourceResolveResult>()
         val session = payload.session?.let { providerSession ->
             ProviderPlaybackSession(
+                id = UUID.randomUUID().toString(),
                 accountId = account.id,
                 providerId = reference.providerId,
                 itemId = reference.itemId,
@@ -145,9 +165,15 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
             )
         }
         session?.let { activeSession ->
+            val closeCredential = credentialVault.decrypt(credential) ?: run {
+                providerDao.deleteCredential(account.id)
+                providerDao.setRequiresReauthentication(account.id, true)
+                throw ProviderOperationException("Provider credentials must be entered again")
+            }
+            providerDao.insertOrReplace(activeSession.toEntity())
             activePlaybackContexts[activeSession] = PlaybackCloseContext(
                 account = account.toReference(),
-                accessToken = credential.accessToken,
+                credentialHandle = credentialVault.stage(closeCredential),
             )
         }
         return ProviderPlaybackSource(
@@ -166,16 +192,15 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
             val credential = providerDao.getCredential(session.accountId) ?: return false
             PlaybackCloseContext(
                 account = account.toReference(),
-                accessToken = credential.accessToken,
+                credentialHandle = CredentialHandle(credential.credentialHandle),
             )
         }
         val payload = runtime.invoke(
             extensionId = ExtensionId(session.providerId),
-            hook = ExtensionHookIds.PlaybackSessionClose,
-            grantedCapabilities = PLAYBACK_CAPABILITIES,
-            payload = PlaybackSessionCloseRequest(
+            spec = SubscriptionHookSpecs.ClosePlayback,
+            request = PlaybackSessionCloseRequest(
                 account = context.account,
-                credential = ProviderCredential(context.accessToken),
+                credential = ProviderCredential(context.credentialHandle),
                 reference = PlaybackReference(
                     providerId = ExtensionId(session.providerId),
                     itemId = session.itemId,
@@ -190,6 +215,7 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
                 reason = reason.toContract(),
             ),
         ).payloadOrThrow<PlaybackSessionCloseResult>()
+        if (payload.closed) providerDao.deletePlaybackSession(session.id)
         return payload.closed
     }
 
@@ -197,27 +223,32 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
         providerDao.deleteAccountByPlaylistUrl(playlistUrl)
     }
 
+    override suspend fun closeOrphanedPlaybackSessions(): Int {
+        var closed = 0
+        providerDao.getPlaybackSessions().forEach { entity ->
+            if (closePlayback(entity.toModel(), ProviderPlaybackCloseReason.STOPPED)) closed++
+        }
+        return closed
+    }
+
     private suspend fun refresh(
         account: ProviderAccountReference,
-        accessToken: String,
+        credentialHandle: CredentialHandle,
         reason: SubscriptionRefreshReason,
     ): SubscriptionContentRefreshResult = runtime.invoke(
-        extensionId = PROVIDER_ID,
-        hook = ExtensionHookIds.SubscriptionContentRefresh,
-        grantedCapabilities = REFRESH_CAPABILITIES,
-        payload = SubscriptionContentRefreshRequest(
+        extensionId = account.providerId,
+        spec = SubscriptionHookSpecs.Refresh,
+        request = SubscriptionContentRefreshRequest(
             account = account,
-            credential = ProviderCredential(accessToken),
+            credential = ProviderCredential(credentialHandle),
             reason = reason,
         ),
     ).payloadOrThrow()
 
-    private inline fun <reified T : ExtensionPayload> ExtensionResult.payloadOrThrow(): T {
+    private fun <T : ExtensionPayload> ExtensionResult<T>.payloadOrThrow(): T {
         return when (val current = outcome) {
-            is ExtensionHookOutcome.Success -> current.payload as? T
-                ?: throw ProviderOperationException("Provider returned an unexpected result")
-
-            is ExtensionHookOutcome.Failure -> throw ProviderOperationException(current.error.message)
+            is HookResult.Success -> current.payload
+            is HookResult.Failure -> throw ProviderOperationException(current.error.message)
         }
     }
 
@@ -254,46 +285,42 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
         fallbackDirectUrl = fallbackDirectUrl,
     )
 
-    private fun DataSource.toProviderKind(): ProviderKind = when (this) {
-        DataSource.Emby -> EmbyCompatibleProviderKinds.Emby
-        DataSource.Jellyfin -> EmbyCompatibleProviderKinds.Jellyfin
-        else -> throw ProviderOperationException("Unsupported provider data source")
-    }
-
-    private fun String.toDataSource(): DataSource = when (this) {
-        EmbyCompatibleProviderKinds.Emby.value -> DataSource.Emby
-        EmbyCompatibleProviderKinds.Jellyfin.value -> DataSource.Jellyfin
-        else -> throw ProviderOperationException("Unsupported provider kind")
-    }
-
     private fun ProviderPlaybackCloseReason.toContract(): PlaybackSessionCloseReason = when (this) {
-        ProviderPlaybackCloseReason.STOPPED -> PlaybackSessionCloseReason.STOPPED
-        ProviderPlaybackCloseReason.CHANNEL_CHANGED -> PlaybackSessionCloseReason.CHANNEL_CHANGED
-        ProviderPlaybackCloseReason.PLAYBACK_FAILED -> PlaybackSessionCloseReason.PLAYBACK_FAILED
+        ProviderPlaybackCloseReason.STOPPED -> PlaybackSessionCloseReason.Stopped
+        ProviderPlaybackCloseReason.CHANNEL_CHANGED -> PlaybackSessionCloseReason.ChannelChanged
+        ProviderPlaybackCloseReason.PLAYBACK_FAILED -> PlaybackSessionCloseReason.PlaybackFailed
     }
+
+    private fun ProviderPlaybackSession.toEntity() = ProviderPlaybackSessionEntity(
+        id = id,
+        accountId = accountId,
+        providerId = providerId,
+        itemId = itemId,
+        mediaSourceId = mediaSourceId,
+        sourceType = sourceType,
+        fallbackDirectUrl = fallbackDirectUrl,
+        playSessionId = playSessionId,
+        liveStreamId = liveStreamId,
+        createdAtEpochMillis = System.currentTimeMillis(),
+    )
+
+    private fun ProviderPlaybackSessionEntity.toModel() = ProviderPlaybackSession(
+        id = id,
+        accountId = accountId,
+        providerId = providerId,
+        itemId = itemId,
+        mediaSourceId = mediaSourceId,
+        sourceType = sourceType,
+        fallbackDirectUrl = fallbackDirectUrl,
+        playSessionId = playSessionId,
+        liveStreamId = liveStreamId,
+    )
 
     private fun providerPlaylistUrl(accountId: String): String = "m3u-provider://account/$accountId/live"
 
     private data class PlaybackCloseContext(
         val account: ProviderAccountReference,
-        val accessToken: String,
+        val credentialHandle: CredentialHandle,
     )
 
-    private companion object {
-        val PROVIDER_ID = EmbyCompatibleProvider.ID
-        val VALIDATE_CAPABILITIES = setOf(
-            ExtensionCapabilityIds.Network,
-            ExtensionCapabilityIds.CredentialWrite,
-        )
-        val REFRESH_CAPABILITIES = setOf(
-            ExtensionCapabilityIds.Network,
-            ExtensionCapabilityIds.CredentialRead,
-            ExtensionCapabilityIds.SubscriptionRead,
-        )
-        val PLAYBACK_CAPABILITIES = setOf(
-            ExtensionCapabilityIds.Network,
-            ExtensionCapabilityIds.CredentialRead,
-            ExtensionCapabilityIds.PlaybackResolve,
-        )
-    }
 }

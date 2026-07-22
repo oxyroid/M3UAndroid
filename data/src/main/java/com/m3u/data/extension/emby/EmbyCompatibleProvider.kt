@@ -4,44 +4,50 @@ import com.m3u.extension.api.ExtensionApiRange
 import com.m3u.extension.api.ExtensionApiVersions
 import com.m3u.extension.api.ExtensionCapabilityIds
 import com.m3u.extension.api.ExtensionCapabilityRequest
-import com.m3u.extension.api.ExtensionEntrypoint
 import com.m3u.extension.api.ExtensionError
 import com.m3u.extension.api.ExtensionErrorCode
-import com.m3u.extension.api.ExtensionHook
 import com.m3u.extension.api.ExtensionHookDeclaration
 import com.m3u.extension.api.ExtensionHookIds
-import com.m3u.extension.api.ExtensionHookOutcome
+import com.m3u.extension.api.ExtensionHandler
 import com.m3u.extension.api.ExtensionId
-import com.m3u.extension.api.ExtensionInvocation
 import com.m3u.extension.api.ExtensionManifest
-import com.m3u.extension.api.ExtensionPayload
-import com.m3u.extension.api.Hook
+import com.m3u.extension.api.ExtensionSemanticVersion
+import com.m3u.extension.api.ExtensionSettingField
+import com.m3u.extension.api.ExtensionSettingSchema
+import com.m3u.extension.api.ExtensionSettingType
+import com.m3u.extension.api.ExtensionCallContext
+import com.m3u.extension.api.HookResult
+import com.m3u.extension.api.HookSpec
+import com.m3u.extension.api.ExtensionEntrypoint
 import com.m3u.extension.api.subscription.EmbyCompatibleProviderKinds
 import com.m3u.extension.api.subscription.PlaybackSessionCloseRequest
 import com.m3u.extension.api.subscription.PlaybackSessionCloseResult
 import com.m3u.extension.api.subscription.PlaybackSourceResolveRequest
 import com.m3u.extension.api.subscription.PlaybackSourceResolveResult
 import com.m3u.extension.api.subscription.ProviderAccountReference
-import com.m3u.extension.api.subscription.ProviderAuthentication
 import com.m3u.extension.api.subscription.SubscriptionContentRefreshRequest
 import com.m3u.extension.api.subscription.SubscriptionContentRefreshResult
 import com.m3u.extension.api.subscription.SubscriptionProviderDescriptor
 import com.m3u.extension.api.subscription.SubscriptionProviderDiscoverRequest
 import com.m3u.extension.api.subscription.SubscriptionProviderDiscoverResult
+import com.m3u.extension.api.subscription.SubscriptionProviderSettingKeys
 import com.m3u.extension.api.subscription.SubscriptionProviderValidateRequest
 import com.m3u.extension.api.subscription.SubscriptionProviderValidateResult
+import com.m3u.extension.api.subscription.SubscriptionHookSpecs
 import com.m3u.extension.api.subscription.SubscriptionSourceDescriptor
 import com.m3u.extension.api.subscription.ValidatedProviderAccount
+import com.m3u.data.extension.security.CredentialResolver
 import java.util.concurrent.CancellationException
 import javax.inject.Inject
 
 internal class EmbyCompatibleProvider @Inject constructor(
     private val client: EmbyCompatibleClient,
+    private val credentialResolver: CredentialResolver,
 ) : ExtensionEntrypoint {
     override val manifest = ExtensionManifest(
         id = ID,
         displayName = DISPLAY_NAME,
-        extensionVersion = "1.0.0",
+        extensionVersion = ExtensionSemanticVersion(1, 0, 0),
         apiRange = ExtensionApiRange(
             minimum = ExtensionApiVersions.Current,
             maximum = ExtensionApiVersions.Current,
@@ -104,18 +110,20 @@ internal class EmbyCompatibleProvider @Inject constructor(
         ),
     )
 
-    override val hooks: Collection<ExtensionHook> = listOf(
-        boundHook(ExtensionHookIds.SubscriptionProviderDiscover, ::discover),
-        boundHook(ExtensionHookIds.SubscriptionProviderValidate, ::validate),
-        boundHook(ExtensionHookIds.SubscriptionContentRefresh, ::refresh),
-        boundHook(ExtensionHookIds.PlaybackSourceResolve, ::resolvePlayback),
-        boundHook(ExtensionHookIds.PlaybackSessionClose, ::closePlayback),
+    override val handlers: Collection<ExtensionHandler<*, *>> = listOf(
+        boundHandler(SubscriptionHookSpecs.Discover, ::discover),
+        boundHandler(SubscriptionHookSpecs.Validate, ::validate),
+        boundHandler(SubscriptionHookSpecs.Refresh, ::refresh),
+        boundHandler(SubscriptionHookSpecs.ResolvePlayback, ::resolvePlayback),
+        boundHandler(SubscriptionHookSpecs.ClosePlayback, ::closePlayback),
     )
 
-    private suspend fun discover(invocation: ExtensionInvocation): ExtensionHookOutcome {
-        if (invocation.payload !is SubscriptionProviderDiscoverRequest) return invalidPayload(invocation)
-        return ExtensionHookOutcome.Success(
-            SubscriptionProviderDiscoverResult(
+    private suspend fun discover(
+        context: ExtensionCallContext,
+        request: SubscriptionProviderDiscoverRequest,
+    ): HookResult<SubscriptionProviderDiscoverResult> {
+        return HookResult.Success(
+            payload = SubscriptionProviderDiscoverResult(
                 providers = listOf(
                     SubscriptionProviderDescriptor(
                         providerId = ID,
@@ -125,40 +133,47 @@ internal class EmbyCompatibleProvider @Inject constructor(
                             EmbyCompatibleProviderKinds.Jellyfin,
                             EmbyCompatibleProviderKinds.Auto,
                         ),
+                        settingsSchema = SETTINGS_SCHEMA,
                     )
                 )
             )
         )
     }
 
-    private suspend fun validate(invocation: ExtensionInvocation): ExtensionHookOutcome {
-        val request = invocation.payload as? SubscriptionProviderValidateRequest
-            ?: return invalidPayload(invocation)
-        val authentication = request.authentication as? ProviderAuthentication.UsernamePassword
-            ?: return failure(
-                code = INVALID_PAYLOAD,
-                message = "This provider requires username and password authentication",
-            )
+    private suspend fun validate(
+        context: ExtensionCallContext,
+        request: SubscriptionProviderValidateRequest,
+    ): HookResult<SubscriptionProviderValidateResult> {
+        val baseUrl = request.settingValues[SubscriptionProviderSettingKeys.BaseUrl]
+            ?: return failure(INVALID_PAYLOAD, "Server URL is required")
+        val username = request.settingValues[SubscriptionProviderSettingKeys.Username]
+            ?: return failure(INVALID_PAYLOAD, "Username is required")
+        val password = request.credentialHandles[SubscriptionProviderSettingKeys.Password]
+            ?: return failure(INVALID_PAYLOAD, "Password is required")
         return providerCall {
             val result = client.validate(
-                baseUrl = request.baseUrl,
+                baseUrl = baseUrl,
                 requestedKind = request.providerKind,
-                username = authentication.username,
-                password = authentication.password,
+                username = username,
+                password = credentialResolver.resolve(password)
+                    ?: error("Provider credential must be entered again"),
             )
             SubscriptionProviderValidateResult(
                 account = result.account,
-                accessToken = result.accessToken,
+                credential = credentialResolver.stage(result.accessToken),
             )
         }
     }
 
-    private suspend fun refresh(invocation: ExtensionInvocation): ExtensionHookOutcome {
-        val request = invocation.payload as? SubscriptionContentRefreshRequest
-            ?: return invalidPayload(invocation)
+    private suspend fun refresh(
+        context: ExtensionCallContext,
+        request: SubscriptionContentRefreshRequest,
+    ): HookResult<SubscriptionContentRefreshResult> {
         return providerCall {
             val account = request.account.toValidatedAccount()
-            val result = client.refreshChannels(account, request.credential.accessToken)
+            val accessToken = credentialResolver.resolve(request.credential.handle)
+                ?: error("Provider credential must be entered again")
+            val result = client.refreshChannels(account, accessToken)
             SubscriptionContentRefreshResult(
                 source = SubscriptionSourceDescriptor(
                     remoteId = request.account.serverId,
@@ -171,13 +186,15 @@ internal class EmbyCompatibleProvider @Inject constructor(
         }
     }
 
-    private suspend fun resolvePlayback(invocation: ExtensionInvocation): ExtensionHookOutcome {
-        val request = invocation.payload as? PlaybackSourceResolveRequest
-            ?: return invalidPayload(invocation)
+    private suspend fun resolvePlayback(
+        context: ExtensionCallContext,
+        request: PlaybackSourceResolveRequest,
+    ): HookResult<PlaybackSourceResolveResult> {
         return providerCall {
             val source = client.resolvePlayback(
                 account = request.account.toValidatedAccount(),
-                accessToken = request.credential.accessToken,
+                accessToken = credentialResolver.resolve(request.credential.handle)
+                    ?: error("Provider credential must be entered again"),
                 reference = request.reference,
                 preferences = request.preferences,
             )
@@ -190,14 +207,16 @@ internal class EmbyCompatibleProvider @Inject constructor(
         }
     }
 
-    private suspend fun closePlayback(invocation: ExtensionInvocation): ExtensionHookOutcome {
-        val request = invocation.payload as? PlaybackSessionCloseRequest
-            ?: return invalidPayload(invocation)
+    private suspend fun closePlayback(
+        context: ExtensionCallContext,
+        request: PlaybackSessionCloseRequest,
+    ): HookResult<PlaybackSessionCloseResult> {
         return providerCall {
             PlaybackSessionCloseResult(
                 closed = client.closePlayback(
                     account = request.account.toValidatedAccount(),
-                    accessToken = request.credential.accessToken,
+                    accessToken = credentialResolver.resolve(request.credential.handle)
+                        ?: error("Provider credential must be entered again"),
                     reference = request.reference,
                     session = request.session,
                 )
@@ -205,9 +224,11 @@ internal class EmbyCompatibleProvider @Inject constructor(
         }
     }
 
-    private suspend fun providerCall(block: suspend () -> ExtensionPayload): ExtensionHookOutcome =
+    private suspend fun <Response : com.m3u.extension.api.ExtensionPayload> providerCall(
+        block: suspend () -> Response,
+    ): HookResult<Response> =
         try {
-            ExtensionHookOutcome.Success(block())
+            HookResult.Success(block())
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (exception: EmbyHttpException) {
@@ -230,17 +251,12 @@ internal class EmbyCompatibleProvider @Inject constructor(
             )
         }
 
-    private fun invalidPayload(invocation: ExtensionInvocation): ExtensionHookOutcome = failure(
-        code = INVALID_PAYLOAD,
-        message = "Unexpected payload for hook ${invocation.hook}",
-    )
-
     private fun failure(
         code: ExtensionErrorCode,
         message: String,
         recoverable: Boolean = false,
         details: Map<String, String> = emptyMap(),
-    ): ExtensionHookOutcome.Failure = ExtensionHookOutcome.Failure(
+    ): HookResult.Failure = HookResult.Failure(
         ExtensionError(
             code = code,
             message = message,
@@ -249,13 +265,16 @@ internal class EmbyCompatibleProvider @Inject constructor(
         )
     )
 
-    private fun boundHook(
-        hook: Hook,
-        block: suspend (ExtensionInvocation) -> ExtensionHookOutcome,
-    ): ExtensionHook = object : ExtensionHook {
-        override val hook: Hook = hook
+    private fun <Request : com.m3u.extension.api.ExtensionPayload, Response : com.m3u.extension.api.ExtensionPayload> boundHandler(
+        spec: HookSpec<Request, Response>,
+        block: suspend (ExtensionCallContext, Request) -> HookResult<Response>,
+    ): ExtensionHandler<Request, Response> = object : ExtensionHandler<Request, Response> {
+        override val spec: HookSpec<Request, Response> = spec
 
-        override suspend fun invoke(invocation: ExtensionInvocation): ExtensionHookOutcome = block(invocation)
+        override suspend fun invoke(
+            context: ExtensionCallContext,
+            request: Request,
+        ): HookResult<Response> = block(context, request)
     }
 
     private fun ProviderAccountReference.toValidatedAccount(): ValidatedProviderAccount = ValidatedProviderAccount(
@@ -270,6 +289,29 @@ internal class EmbyCompatibleProvider @Inject constructor(
 
     companion object {
         val ID = ExtensionId("com.m3u.provider.emby-compatible")
+        val SETTINGS_SCHEMA = ExtensionSettingSchema(
+            version = 1,
+            fields = listOf(
+                ExtensionSettingField(
+                    key = SubscriptionProviderSettingKeys.BaseUrl,
+                    label = "Server URL",
+                    type = ExtensionSettingType.TEXT,
+                    required = true,
+                ),
+                ExtensionSettingField(
+                    key = SubscriptionProviderSettingKeys.Username,
+                    label = "Username",
+                    type = ExtensionSettingType.TEXT,
+                    required = true,
+                ),
+                ExtensionSettingField(
+                    key = SubscriptionProviderSettingKeys.Password,
+                    label = "Password",
+                    type = ExtensionSettingType.SECRET,
+                    required = true,
+                ),
+            ),
+        )
         private const val DISPLAY_NAME = "Emby Compatible"
         private val INVALID_PAYLOAD = ExtensionErrorCode("provider.invalid_payload")
         private val AUTHENTICATION_FAILED = ExtensionErrorCode("provider.authentication_failed")

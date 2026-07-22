@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="feat_setting_external_extensions">外部扩展</string>
+    <string name="feat_setting_external_extensions_description">开发者功能：允许使用本地安装的扩展 APK</string>
     <string name="feat_setting_app_version">应用版本</string>
     <string name="feat_setting_label_subscribe">订阅</string>
     <string name="feat_setting_success_subscribe">订阅成功</string>
@@ -120,4 +122,13 @@
     <string name="feat_setting_provider_credentials_required">请输入用户名以连接此服务器</string>
     <string name="feat_setting_provider_added">已连接并导入 %1$d 个直播频道</string>
     <string name="feat_setting_provider_subscription_failed">无法连接或刷新此服务器</string>
+    <string name="feat_setting_data_source_provider">插件服务</string>
+    <string name="feat_setting_extension_plugins">扩展插件</string>
+    <string name="feat_setting_extension_no_plugins">未安装兼容的扩展插件</string>
+    <string name="feat_setting_extension_enable">启用</string>
+    <string name="feat_setting_extension_disable">停用</string>
+    <string name="feat_setting_extension_revoke">取消信任</string>
+    <string name="feat_setting_extension_confirm_title">信任这个扩展？</string>
+    <string name="feat_setting_extension_confirm_body">包名：%1$s\n证书 SHA-256：%2$s</string>
+    <string name="feat_setting_extension_signature_changed">签名证书已改变，扩展已被停用</string>
 </resources>

@@ -44,6 +44,26 @@ Providers return declarative results. They do not write databases or call
 arbitrary host APIs. Data-layer importers decide how to preserve favorites,
 hidden state, ordering, recent playback, and other local state.
 
+## Built-in versus external extensions
+
+`EmbyCompatibleProvider` is a **built-in extension**. It is compiled with the
+host, but it uses the same typed manifest, hook specifications, capability
+policy, invocation limits, and conformance behavior as an external extension.
+Being built-in only changes discovery and transport: the host registers its
+entrypoint directly instead of binding an installed APK.
+
+External extensions live in a separate Android application process and are
+discovered through the explicit extension service action. The host never loads
+plugin dex code. AIDL is only the control plane; manifests and invocation JSON
+use `ParcelFileDescriptor` streams. External extension support remains behind
+the developer feature switch until the reference APK and security suite pass.
+
+Plugins receive opaque credential handles, never plaintext provider tokens.
+Network access goes through the host broker. The broker derives the extension
+identity and account origin on the host side, rejects cross-account and
+cross-origin access, injects referenced secrets, limits redirects and payloads,
+and redacts captured credentials from responses.
+
 ## Adding a hook
 
 1. Define a stable hook identifier in `ExtensionHookIds`.
@@ -69,11 +89,17 @@ actual URL and headers immediately before playback. If resolution opens a server
 session, close it on stop, channel change, or playback failure. Do not persist a
 short-lived URL as the channel's permanent URL.
 
-The built-in data adapter stores accounts, credentials, and channel playback
+The built-in data adapter stores accounts, encrypted credentials, channel playback
 references in `provider_accounts`, `provider_credentials`, and
-`channel_playback_references`. Provider channels use the non-network
+`channel_playback_references`. Schema 23 uses Android Keystore AES-GCM and a
+credential handle/ciphertext/nonce/key-version record; plaintext tokens are
+removed by the manual 22-to-23 migration. Provider channels use the non-network
 `Channel.URL_DYNAMIC` marker; only the stable reference is durable. Schema 22 and
-the 21-to-22 migration introduce these tables.
+the 21-to-22 migration introduce the original provider tables, while schema 23
+adds encrypted credentials and persistent playback-session recovery.
+
+Provider backup records include accounts and stable playback references but no
+credentials. Restored accounts are marked as requiring reauthentication.
 
 Use the Emby authorization headers for Emby servers. Jellyfin requests use the
 current `Authorization: MediaBrowser …` scheme and do not send deprecated token

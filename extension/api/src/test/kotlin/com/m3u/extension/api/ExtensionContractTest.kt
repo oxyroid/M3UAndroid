@@ -11,7 +11,7 @@ class ExtensionContractTest {
         val manifest = ExtensionManifest(
             id = ExtensionId("com.example.provider"),
             displayName = "Example",
-            extensionVersion = "1.0.0",
+            extensionVersion = ExtensionSemanticVersion(1, 0, 0),
             apiRange = ExtensionApiRange(
                 minimum = ExtensionApiVersions.Current,
                 maximum = ExtensionApiVersions.Current,
@@ -40,7 +40,7 @@ class ExtensionContractTest {
             ExtensionManifest(
                 id = ExtensionId("com.example.provider"),
                 displayName = "Example",
-                extensionVersion = "1.0.0",
+                extensionVersion = ExtensionSemanticVersion(1, 0, 0),
                 apiRange = ExtensionApiRange(
                     minimum = ExtensionApiVersions.Current,
                     maximum = ExtensionApiVersions.Current,

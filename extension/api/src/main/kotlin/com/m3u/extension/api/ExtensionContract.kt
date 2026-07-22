@@ -1,7 +1,10 @@
 package com.m3u.extension.api
 
+import kotlinx.serialization.Serializable
+
 private val CONTRACT_ID_PATTERN = Regex("[a-z0-9]+(?:[._-][a-z0-9]+)*")
 
+@Serializable
 @JvmInline
 value class ExtensionId(val value: String) {
     init {
@@ -13,6 +16,7 @@ value class ExtensionId(val value: String) {
     override fun toString(): String = value
 }
 
+@Serializable
 @JvmInline
 value class InvocationId(val value: String) {
     init {
@@ -22,6 +26,7 @@ value class InvocationId(val value: String) {
     override fun toString(): String = value
 }
 
+@Serializable
 @JvmInline
 value class Hook(val id: String) {
     init {
@@ -33,6 +38,7 @@ value class Hook(val id: String) {
     override fun toString(): String = id
 }
 
+@Serializable
 @JvmInline
 value class Capability(val id: String) {
     init {
@@ -44,6 +50,7 @@ value class Capability(val id: String) {
     override fun toString(): String = id
 }
 
+@Serializable
 data class ExtensionApiVersion(
     val major: Int,
     val minor: Int,
@@ -59,6 +66,7 @@ data class ExtensionApiVersion(
     override fun toString(): String = "$major.$minor"
 }
 
+@Serializable
 data class ExtensionApiRange(
     val minimum: ExtensionApiVersion,
     val maximum: ExtensionApiVersion,
@@ -83,6 +91,8 @@ object ExtensionHookIds {
     val MetadataChannelEnrich = Hook("metadata.channel.enrich")
     val EpgContentRefresh = Hook("epg.content.refresh")
     val SettingsSchemaContribute = Hook("settings.schema.contribute")
+    val SearchProviderQuery = Hook("search.provider.query")
+    val BackgroundTaskRun = Hook("background.task.run")
 }
 
 object ExtensionCapabilityIds {
@@ -95,8 +105,11 @@ object ExtensionCapabilityIds {
     val EpgRead = Capability("epg.read")
     val MetadataWrite = Capability("metadata.write")
     val SettingsContribute = Capability("settings.contribute")
+    val SearchRead = Capability("search.read")
+    val BackgroundTask = Capability("background.task")
 }
 
+@Serializable
 data class ExtensionCapabilityRequest(
     val capability: Capability,
     val reason: String,
@@ -107,22 +120,30 @@ data class ExtensionCapabilityRequest(
     }
 }
 
+@Serializable
 data class ExtensionHookDeclaration(
     val hook: Hook,
+    val schemaVersion: Int = 1,
     val requiredCapabilities: Set<Capability> = emptySet(),
-)
+) {
+    init {
+        require(schemaVersion > 0) { "Hook schema version must be positive" }
+    }
+}
 
+@Serializable
 data class ExtensionManifest(
     val id: ExtensionId,
     val displayName: String,
-    val extensionVersion: String,
+    val extensionVersion: ExtensionSemanticVersion,
     val apiRange: ExtensionApiRange,
     val hooks: Set<ExtensionHookDeclaration>,
     val capabilities: Set<ExtensionCapabilityRequest>,
+    val settingsSchema: ExtensionSettingSchema? = null,
+    val metadata: Map<String, String> = emptyMap(),
 ) {
     init {
         require(displayName.isNotBlank()) { "Extension display name must not be blank" }
-        require(extensionVersion.isNotBlank()) { "Extension version must not be blank" }
         require(hooks.map(ExtensionHookDeclaration::hook).toSet().size == hooks.size) {
             "Extension manifest must not declare a hook more than once"
         }
@@ -142,16 +163,10 @@ data class ExtensionManifest(
 
 interface ExtensionPayload
 
+@Serializable
 data object EmptyExtensionPayload : ExtensionPayload
 
-data class ExtensionInvocation(
-    val id: InvocationId,
-    val extensionId: ExtensionId,
-    val hook: Hook,
-    val grantedCapabilities: Set<Capability>,
-    val payload: ExtensionPayload,
-)
-
+@Serializable
 @JvmInline
 value class ExtensionErrorCode(val value: String) {
     init {
@@ -172,8 +187,14 @@ object ExtensionErrorCodes {
     val CapabilityDenied = ExtensionErrorCode("capability.denied")
     val RegistrationInvalid = ExtensionErrorCode("registration.invalid")
     val InvocationFailed = ExtensionErrorCode("invocation.failed")
+    val InvocationTimedOut = ExtensionErrorCode("invocation.timed_out")
+    val PayloadTooLarge = ExtensionErrorCode("invocation.payload_too_large")
+    val SchemaIncompatible = ExtensionErrorCode("hook.schema_incompatible")
+    val ExtensionDisabled = ExtensionErrorCode("extension.disabled")
+    val ExtensionUnhealthy = ExtensionErrorCode("extension.unhealthy")
 }
 
+@Serializable
 data class ExtensionError(
     val code: ExtensionErrorCode,
     val message: String,
@@ -183,32 +204,4 @@ data class ExtensionError(
     init {
         require(message.isNotBlank()) { "Extension error message must not be blank" }
     }
-}
-
-sealed interface ExtensionHookOutcome {
-    data class Success(
-        val payload: ExtensionPayload = EmptyExtensionPayload,
-    ) : ExtensionHookOutcome
-
-    data class Failure(
-        val error: ExtensionError,
-    ) : ExtensionHookOutcome
-}
-
-data class ExtensionResult(
-    val invocationId: InvocationId,
-    val extensionId: ExtensionId,
-    val hook: Hook,
-    val outcome: ExtensionHookOutcome,
-)
-
-interface ExtensionHook {
-    val hook: Hook
-
-    suspend fun invoke(invocation: ExtensionInvocation): ExtensionHookOutcome
-}
-
-interface ExtensionEntrypoint {
-    val manifest: ExtensionManifest
-    val hooks: Collection<ExtensionHook>
 }

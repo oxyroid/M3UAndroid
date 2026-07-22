@@ -5,6 +5,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
 @Entity(
     tableName = "channel_playback_references",
@@ -26,6 +27,7 @@ import androidx.room.PrimaryKey
     ],
     indices = [Index(value = ["account_id"])],
 )
+@Serializable
 data class ChannelPlaybackReference(
     @PrimaryKey
     @ColumnInfo(name = "channel_id")

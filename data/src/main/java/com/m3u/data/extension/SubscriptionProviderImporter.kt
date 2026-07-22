@@ -11,6 +11,7 @@ import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.ProviderAccount
 import com.m3u.data.database.model.ProviderCredentialEntity
+import com.m3u.data.extension.security.CredentialVault
 import com.m3u.extension.api.subscription.SubscriptionContentRefreshResult
 import javax.inject.Inject
 
@@ -19,6 +20,7 @@ internal class SubscriptionProviderImporter @Inject constructor(
     private val playlistDao: PlaylistDao,
     private val channelDao: ChannelDao,
     private val providerDao: ProviderDao,
+    private val credentialVault: CredentialVault,
 ) {
     suspend fun import(
         title: String,
@@ -44,10 +46,12 @@ internal class SubscriptionProviderImporter @Inject constructor(
             )
         }
         providerDao.insertOrReplace(account)
+        val existingCredential = providerDao.getCredential(account.id)
         providerDao.insertOrReplace(
-            ProviderCredentialEntity(
+            credentialVault.encrypt(
                 accountId = account.id,
-                accessToken = accessToken,
+                secret = accessToken,
+                credentialHandle = existingCredential?.credentialHandle,
             )
         )
 

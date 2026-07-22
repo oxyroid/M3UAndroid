@@ -13,7 +13,11 @@ import com.m3u.data.database.model.DataSource
 import com.m3u.data.extension.SubscriptionProviderImporter
 import com.m3u.data.extension.emby.EmbyCompatibleProvider
 import com.m3u.data.extension.emby.OkHttpEmbyCompatibleClient
+import com.m3u.data.extension.security.AndroidKeystoreCredentialVault
+import com.m3u.data.extension.security.CredentialResolver
 import com.m3u.extension.api.ExtensionApiVersions
+import com.m3u.extension.api.subscription.EmbyCompatibleProviderKinds
+import com.m3u.extension.api.subscription.SubscriptionProviderSettingKeys
 import com.m3u.extension.runtime.ExtensionRegistrationResult
 import com.m3u.extension.runtime.ExtensionRuntime
 import kotlinx.coroutines.runBlocking
@@ -42,7 +46,11 @@ class SubscriptionProviderRepositoryIntegrationTest {
                 publisher = TestPublisher,
                 okHttpClient = OkHttpClient(),
             )
-            val provider = EmbyCompatibleProvider(client)
+            val credentialVault = AndroidKeystoreCredentialVault()
+            val provider = EmbyCompatibleProvider(
+                client = client,
+                credentialResolver = CredentialResolver(providerDao, credentialVault),
+            )
             val runtime = ExtensionRuntime(ExtensionApiVersions.Current)
             assertTrue(runtime.register(provider) is ExtensionRegistrationResult.Registered)
             val repository = SubscriptionProviderRepositoryImpl(
@@ -54,7 +62,9 @@ class SubscriptionProviderRepositoryIntegrationTest {
                     playlistDao = playlistDao,
                     channelDao = channelDao,
                     providerDao = providerDao,
+                    credentialVault = credentialVault,
                 ),
+                credentialVault = credentialVault,
             )
             val serverUrl = InstrumentationRegistry.getArguments()
                 .getString("m3uMockServerUrl")
@@ -64,15 +74,20 @@ class SubscriptionProviderRepositoryIntegrationTest {
             val subscription = repository.subscribe(
                 ProviderSubscriptionRequest(
                     title = "Living Room Emby",
-                    baseUrl = serverUrl,
-                    username = "m3u",
-                    password = "m3u",
-                    source = DataSource.Emby,
+                    providerId = EmbyCompatibleProvider.ID,
+                    providerKind = EmbyCompatibleProviderKinds.Emby,
+                    settingValues = mapOf(
+                        SubscriptionProviderSettingKeys.BaseUrl to serverUrl,
+                        SubscriptionProviderSettingKeys.Username to "m3u",
+                    ),
+                    credentialHandles = mapOf(
+                        SubscriptionProviderSettingKeys.Password to repository.stageCredential("m3u"),
+                    ),
                 )
             )
 
             assertEquals(2, subscription.channelCount)
-            assertEquals(DataSource.Emby, playlistDao.get(subscription.playlistUrl)?.source)
+            assertEquals(DataSource.Provider, playlistDao.get(subscription.playlistUrl)?.source)
             val channels = channelDao.getByPlaylistUrl(subscription.playlistUrl)
             assertEquals(2, channels.size)
             assertTrue(channels.all { channel -> channel.url == Channel.URL_DYNAMIC })
@@ -100,8 +115,10 @@ class SubscriptionProviderRepositoryIntegrationTest {
 
             val account = requireNotNull(providerDao.getAccountByPlaylistUrl(subscription.playlistUrl))
             val credential = requireNotNull(providerDao.getCredential(account.id))
-            assertTrue(credential.accessToken.isNotBlank())
-            assertTrue(channels.none { channel -> channel.url.contains(credential.accessToken) })
+            val decryptedToken = requireNotNull(credentialVault.decrypt(credential))
+            assertTrue(decryptedToken.isNotBlank())
+            assertFalse(credential.ciphertext.contains(decryptedToken))
+            assertTrue(channels.none { channel -> channel.url.contains(decryptedToken) })
 
             val finalPlayback = requireNotNull(repository.resolvePlayback(news.id))
             repository.removeAccount(subscription.playlistUrl)

@@ -29,11 +29,18 @@ import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.provider.ProviderSubscriptionRequest
 import com.m3u.data.repository.provider.SubscriptionProviderRepository
+import com.m3u.data.repository.plugin.ExtensionPluginRepository
+import com.m3u.data.repository.plugin.InstalledPlugin
 import com.m3u.data.repository.tv.TvRepository
 import com.m3u.data.service.Messager
 import com.m3u.data.worker.BackupWorker
 import com.m3u.data.worker.RestoreWorker
 import com.m3u.data.worker.SubscriptionWorker
+import com.m3u.extension.api.subscription.EmbyCompatibleProviderKinds
+import com.m3u.extension.api.subscription.ProviderKind
+import com.m3u.extension.api.ExtensionSettingType
+import com.m3u.extension.api.subscription.SubscriptionProviderSettingKeys
+import com.m3u.extension.api.subscription.SubscriptionProviderDescriptor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -57,6 +64,7 @@ class SettingViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val channelRepository: ChannelRepository,
     private val subscriptionProviderRepository: SubscriptionProviderRepository,
+    private val extensionPluginRepository: ExtensionPluginRepository,
     private val workManager: WorkManager,
     private val settings: Settings,
     private val messager: Messager,
@@ -71,8 +79,47 @@ class SettingViewModel @Inject constructor(
     val codecPackState: StateFlow<CodecPackState> = _codecPackState
     private var providerSubscriptionJob: Job? = null
 
+    private val _extensionPlugins = MutableStateFlow<List<InstalledPlugin>>(emptyList())
+    val extensionPlugins: StateFlow<List<InstalledPlugin>> = _extensionPlugins
+
+    private val _subscriptionProviders = MutableStateFlow<List<SubscriptionProviderDescriptor>>(emptyList())
+    val subscriptionProviders: StateFlow<List<SubscriptionProviderDescriptor>> = _subscriptionProviders
+
     init {
         refreshCodecPack()
+        refreshExtensionPlugins()
+    }
+
+    fun refreshSubscriptionProviders() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _subscriptionProviders.value = runCatching {
+                subscriptionProviderRepository.discoverProviders()
+            }.getOrDefault(emptyList())
+        }
+    }
+
+    fun refreshExtensionPlugins() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _extensionPlugins.value = extensionPluginRepository.installedPlugins()
+            refreshSubscriptionProviders()
+        }
+    }
+
+    fun enableExtensionPlugin(packageName: String, serviceName: String) {
+        viewModelScope.launch {
+            extensionPluginRepository.enable(packageName, serviceName)
+            refreshExtensionPlugins()
+        }
+    }
+
+    fun disableExtensionPlugin(extensionId: String) {
+        extensionPluginRepository.disable(extensionId)
+        refreshExtensionPlugins()
+    }
+
+    fun revokeExtensionPlugin(packageName: String, serviceName: String) {
+        extensionPluginRepository.revoke(packageName, serviceName)
+        refreshExtensionPlugins()
     }
 
     val epgs: StateFlow<List<Playlist>> = playlistRepository
@@ -304,14 +351,49 @@ class SettingViewModel @Inject constructor(
                         return
                     }
                     subscribeProvider(
-                        request = ProviderSubscriptionRequest(
-                            title = title,
-                            baseUrl = basicUrl,
-                            username = username,
-                            password = password,
-                            source = selected,
-                        )
+                        title = title,
+                        baseUrl = basicUrl,
+                        username = username,
+                        password = password,
+                        providerKind = when (selected) {
+                            DataSource.Emby -> EmbyCompatibleProviderKinds.Emby
+                            DataSource.Jellyfin -> EmbyCompatibleProviderKinds.Jellyfin
+                            else -> return
+                        },
                     )
+                    return
+                }
+
+                DataSource.Provider -> {
+                    val descriptor = subscriptionProviders.value.firstOrNull {
+                        it.providerId.value == properties.selectedProviderIdState.value
+                    } ?: return
+                    val kind = descriptor.supportedKinds.firstOrNull {
+                        it.value == properties.selectedProviderKindState.value
+                    } ?: descriptor.supportedKinds.firstOrNull() ?: return
+                    val schema = descriptor.settingsSchema ?: return
+                    val values = properties.providerSettingValues.toMap()
+                    if (title.isBlank() || schema.fields.any { it.required && values[it.key].isNullOrBlank() }) {
+                        messager.emit(SettingMessage.ProviderCredentialsRequired)
+                        return
+                    }
+                    enqueueProviderSubscription {
+                        ProviderSubscriptionRequest(
+                            title = title,
+                            providerId = descriptor.providerId,
+                            providerKind = kind,
+                            settingValues = schema.fields
+                                .filter { it.type != ExtensionSettingType.SECRET }
+                                .associate { it.key to values[it.key].orEmpty() },
+                            credentialHandles = schema.fields
+                                .filter { it.type == ExtensionSettingType.SECRET }
+                                .associate { field ->
+                                    field.key to subscriptionProviderRepository.stageCredential(
+                                        values[field.key].orEmpty()
+                                    )
+                                },
+                        )
+                    }
                     return
                 }
 
@@ -320,12 +402,41 @@ class SettingViewModel @Inject constructor(
         resetAllInputs()
     }
 
-    private fun subscribeProvider(request: ProviderSubscriptionRequest) {
+    private fun subscribeProvider(
+        title: String,
+        baseUrl: String,
+        username: String,
+        password: String,
+        providerKind: ProviderKind,
+    ) {
+        enqueueProviderSubscription {
+                    val provider = subscriptionProviderRepository.discoverProviders()
+                        .firstOrNull { descriptor -> providerKind in descriptor.supportedKinds }
+                        ?: error("No enabled extension supports provider kind ${providerKind.value}")
+                    ProviderSubscriptionRequest(
+                            title = title,
+                            providerId = provider.providerId,
+                            providerKind = providerKind,
+                            settingValues = mapOf(
+                                SubscriptionProviderSettingKeys.BaseUrl to baseUrl,
+                                SubscriptionProviderSettingKeys.Username to username,
+                            ),
+                            credentialHandles = mapOf(
+                                SubscriptionProviderSettingKeys.Password to
+                                    subscriptionProviderRepository.stageCredential(password),
+                            ),
+                    )
+        }
+    }
+
+    private fun enqueueProviderSubscription(
+        request: suspend () -> ProviderSubscriptionRequest,
+    ) {
         if (providerSubscriptionJob?.isActive == true) return
         providerSubscriptionJob = viewModelScope.launch {
             val result = runCatching {
                 withContext(Dispatchers.IO) {
-                    subscriptionProviderRepository.subscribe(request)
+                    subscriptionProviderRepository.subscribe(request())
                 }
             }.onFailure { error ->
                 if (error is CancellationException) throw error
@@ -478,6 +589,7 @@ class SettingViewModel @Inject constructor(
             usernameState.value = ""
             passwordState.value = ""
             epgState.value = ""
+            providerSettingValues.clear()
         }
     }
 

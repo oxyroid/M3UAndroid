@@ -36,6 +36,8 @@ import com.m3u.core.foundation.util.basic.title
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.ColorScheme
 import com.m3u.data.database.model.Playlist
+import com.m3u.data.repository.plugin.InstalledPlugin
+import com.m3u.extension.api.subscription.SubscriptionProviderDescriptor
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.business.setting.components.CanvasBottomSheet
 import com.m3u.smartphone.ui.business.setting.fragments.AppearanceFragment
@@ -67,6 +69,8 @@ fun SettingRoute(
     val hiddenCategoriesWithPlaylists by viewModel.hiddenCategoriesWithPlaylists.collectAsStateWithLifecycle()
     val backingUpOrRestoring by viewModel.backingUpOrRestoring.collectAsStateWithLifecycle()
     val codecPackState by viewModel.codecPackState.collectAsStateWithLifecycle()
+    val extensionPlugins by viewModel.extensionPlugins.collectAsStateWithLifecycle()
+    val subscriptionProviders by viewModel.subscriptionProviders.collectAsStateWithLifecycle()
 
     val sheetState = rememberModalBottomSheetState()
     var colorScheme: ColorScheme? by remember { mutableStateOf(null) }
@@ -117,6 +121,12 @@ fun SettingRoute(
             onInstallCodecPack = viewModel::installCodecPack,
             onDeleteCodecPack = viewModel::deleteCodecPack,
             onRefreshCodecPack = viewModel::refreshCodecPack,
+            extensionPlugins = extensionPlugins,
+            subscriptionProviders = subscriptionProviders,
+            onRefreshExtensionPlugins = viewModel::refreshExtensionPlugins,
+            onEnableExtensionPlugin = viewModel::enableExtensionPlugin,
+            onDisableExtensionPlugin = viewModel::disableExtensionPlugin,
+            onRevokeExtensionPlugin = viewModel::revokeExtensionPlugin,
             modifier = modifier.fillMaxSize(),
             contentPadding = contentPadding,
         )
@@ -157,6 +167,12 @@ private fun SettingScreen(
     onInstallCodecPack: () -> Unit,
     onDeleteCodecPack: () -> Unit,
     onRefreshCodecPack: () -> Unit,
+    extensionPlugins: List<InstalledPlugin>,
+    subscriptionProviders: List<SubscriptionProviderDescriptor>,
+    onRefreshExtensionPlugins: () -> Unit,
+    onEnableExtensionPlugin: (String, String) -> Unit,
+    onDisableExtensionPlugin: (String) -> Unit,
+    onRevokeExtensionPlugin: (String, String) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
 ) {
@@ -265,6 +281,12 @@ private fun SettingScreen(
                         restore = restore,
                         epgs = epgs,
                         onDeleteEpgPlaylist = onDeleteEpgPlaylist,
+                        extensionPlugins = extensionPlugins,
+                        subscriptionProviders = subscriptionProviders,
+                        onRefreshExtensionPlugins = onRefreshExtensionPlugins,
+                        onEnableExtensionPlugin = onEnableExtensionPlugin,
+                        onDisableExtensionPlugin = onDisableExtensionPlugin,
+                        onRevokeExtensionPlugin = onRevokeExtensionPlugin,
                         contentPadding = contentPadding,
                         modifier = Modifier.fillMaxSize()
                     )

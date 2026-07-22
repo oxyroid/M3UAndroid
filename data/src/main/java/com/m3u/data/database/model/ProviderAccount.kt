@@ -5,6 +5,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
 @Entity(
     tableName = "provider_accounts",
@@ -22,6 +23,7 @@ import androidx.room.PrimaryKey
         Index(value = ["provider_id", "server_id", "user_id"], unique = true),
     ],
 )
+@Serializable
 data class ProviderAccount(
     @PrimaryKey
     @ColumnInfo(name = "id")
@@ -44,4 +46,6 @@ data class ProviderAccount(
     val username: String,
     @ColumnInfo(name = "playlist_url")
     val playlistUrl: String,
+    @ColumnInfo(name = "requires_reauthentication", defaultValue = "0")
+    val requiresReauthentication: Boolean = false,
 )

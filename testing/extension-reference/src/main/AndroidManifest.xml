@@ -1,0 +1,15 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application
+        android:allowBackup="false"
+        android:label="M3U Reference Extension"
+        android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+        <service
+            android:name=".ReferenceExtensionService"
+            android:exported="true"
+            android:permission="com.m3u.permission.BIND_EXTENSION_HOST">
+            <intent-filter>
+                <action android:name="com.m3u.extension.action.BIND_EXTENSION" />
+            </intent-filter>
+        </service>
+    </application>
+</manifest>

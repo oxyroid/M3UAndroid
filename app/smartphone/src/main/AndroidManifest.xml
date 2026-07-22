@@ -2,6 +2,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <permission
+        android:name="com.m3u.permission.BIND_EXTENSION_HOST"
+        android:protectionLevel="signature" />
+    <uses-permission android:name="com.m3u.permission.BIND_EXTENSION_HOST" />
+
+    <queries>
+        <intent>
+            <action android:name="com.m3u.extension.action.BIND_EXTENSION" />
+        </intent>
+    </queries>
+
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />

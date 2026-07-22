@@ -33,6 +33,7 @@ android {
 dependencies {
     implementation(project(":core:foundation"))
     implementation(project(":extension:runtime"))
+    implementation(project(":extension:transport-android"))
     implementation("dev.oxyroid.parser:m3u")
     api("dev.oxyroid.parser:xtream")
     implementation(project(":lint:annotation"))

@@ -28,6 +28,7 @@ import androidx.compose.material.icons.rounded.ContentPaste
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -40,6 +41,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -57,6 +61,9 @@ import com.m3u.core.foundation.architecture.preferences.preferenceOf
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
+import com.m3u.data.repository.plugin.InstalledPlugin
+import com.m3u.extension.api.ExtensionSettingType
+import com.m3u.extension.api.subscription.SubscriptionProviderDescriptor
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.benchmark.DebugBenchmarkSettings
 import com.m3u.smartphone.ui.business.setting.components.DataSourceSelection
@@ -75,7 +82,7 @@ import com.m3u.smartphone.ui.material.ktx.textHorizontalLabel
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 
 private enum class SubscriptionsFragmentPage {
-    MAIN, EPG_PLAYLISTS, HIDDEN_STREAMS, HIDDEN_PLAYLIST_CATEGORIES
+    MAIN, EPG_PLAYLISTS, HIDDEN_STREAMS, HIDDEN_PLAYLIST_CATEGORIES, EXTENSION_PLUGINS
 }
 
 @Composable
@@ -92,6 +99,12 @@ internal fun SubscriptionsFragment(
     restore: () -> Unit,
     epgs: List<Playlist>,
     onDeleteEpgPlaylist: (String) -> Unit,
+    extensionPlugins: List<InstalledPlugin>,
+    subscriptionProviders: List<SubscriptionProviderDescriptor>,
+    onRefreshExtensionPlugins: () -> Unit,
+    onEnableExtensionPlugin: (String, String) -> Unit,
+    onDisableExtensionPlugin: (String) -> Unit,
+    onRevokeExtensionPlugin: (String, String) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
 ) {
@@ -114,6 +127,7 @@ internal fun SubscriptionsFragment(
                         backingUpOrRestoring = backingUpOrRestoring,
                         onClipboard = onClipboard,
                         onSubscribe = onSubscribe,
+                        subscriptionProviders = subscriptionProviders,
                         backup = backup,
                         restore = restore,
                         modifier = Modifier.fillMaxSize()
@@ -143,6 +157,17 @@ internal fun SubscriptionsFragment(
                         modifier = Modifier.fillMaxSize()
                     )
                 }
+
+                SubscriptionsFragmentPage.EXTENSION_PLUGINS -> {
+                    ExtensionPluginsContent(
+                        plugins = extensionPlugins,
+                        onRefresh = onRefreshExtensionPlugins,
+                        onEnable = onEnableExtensionPlugin,
+                        onDisable = onDisableExtensionPlugin,
+                        onRevoke = onRevokeExtensionPlugin,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
             }
         }
         HorizontalPagerIndicator(
@@ -156,11 +181,115 @@ internal fun SubscriptionsFragment(
 }
 
 @Composable
+private fun ExtensionPluginsContent(
+    plugins: List<InstalledPlugin>,
+    onRefresh: () -> Unit,
+    onEnable: (String, String) -> Unit,
+    onDisable: (String) -> Unit,
+    onRevoke: (String, String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var pendingTrust by remember { mutableStateOf<InstalledPlugin?>(null) }
+    LazyColumn(
+        modifier = modifier,
+        contentPadding = PaddingValues(LocalSpacing.current.medium),
+        verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.medium),
+    ) {
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(string.feat_setting_extension_plugins),
+                    style = MaterialTheme.typography.titleLarge,
+                )
+                TextButton(onClick = onRefresh) {
+                    Text(stringResource(string.feat_setting_codec_pack_refresh))
+                }
+            }
+        }
+        if (plugins.isEmpty()) {
+            item { Text(stringResource(string.feat_setting_extension_no_plugins)) }
+        }
+        items(plugins.size, key = { index -> "${plugins[index].packageName}/${plugins[index].serviceName}" }) { index ->
+            val plugin = plugins[index]
+            val extensionId = plugin.extensionId
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(plugin.displayName ?: plugin.packageName, style = MaterialTheme.typography.titleMedium)
+                plugin.developer?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                plugin.version?.let { Text("v$it", style = MaterialTheme.typography.bodySmall) }
+                Text(plugin.serviceName, style = MaterialTheme.typography.bodySmall)
+                Text(plugin.certificateSha256, style = MaterialTheme.typography.labelSmall)
+                if (plugin.grantedCapabilities.isNotEmpty()) {
+                    Text(
+                        plugin.grantedCapabilities.sorted().joinToString(),
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                }
+                if (plugin.signatureChanged) {
+                    Text(
+                        stringResource(string.feat_setting_extension_signature_changed),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (plugin.enabled && extensionId != null) {
+                        FilledTonalButton(onClick = { onDisable(extensionId) }) {
+                            Text(stringResource(string.feat_setting_extension_disable))
+                        }
+                    } else if (!plugin.signatureChanged) {
+                        Button(onClick = { pendingTrust = plugin }) {
+                            Text(stringResource(string.feat_setting_extension_enable))
+                        }
+                    }
+                    if (plugin.trusted || plugin.signatureChanged) {
+                        TextButton(onClick = { onRevoke(plugin.packageName, plugin.serviceName) }) {
+                            Text(stringResource(string.feat_setting_extension_revoke))
+                        }
+                    }
+                }
+            }
+        }
+    }
+    pendingTrust?.let { plugin ->
+        AlertDialog(
+            onDismissRequest = { pendingTrust = null },
+            title = { Text(stringResource(string.feat_setting_extension_confirm_title)) },
+            text = {
+                Text(
+                    stringResource(
+                        string.feat_setting_extension_confirm_body,
+                        plugin.packageName,
+                        plugin.certificateSha256,
+                    )
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        pendingTrust = null
+                        onEnable(plugin.packageName, plugin.serviceName)
+                    }
+                ) { Text(stringResource(string.feat_setting_extension_enable)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingTrust = null }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+        )
+    }
+}
+
+@Composable
 context(properties: SettingProperties)
 private fun MainContentImpl(
     backingUpOrRestoring: BackingUpAndRestoringState,
     onClipboard: (String) -> Unit,
     onSubscribe: () -> Unit,
+    subscriptionProviders: List<SubscriptionProviderDescriptor>,
     backup: () -> Unit,
     restore: () -> Unit,
     modifier: Modifier = Modifier
@@ -184,6 +313,7 @@ private fun MainContentImpl(
                     DataSource.Xtream,
                     DataSource.Emby,
                     DataSource.Jellyfin,
+                    DataSource.Provider,
                 )
             )
         }
@@ -194,6 +324,7 @@ private fun MainContentImpl(
                 DataSource.EPG -> EPGInputContent()
                 DataSource.Xtream -> XtreamInputContent()
                 DataSource.Emby, DataSource.Jellyfin -> EmbyCompatibleInputContent()
+                DataSource.Provider -> DynamicProviderInputContent(subscriptionProviders)
                 DataSource.Dropbox -> {}
             }
         }
@@ -518,6 +649,119 @@ private fun EmbyCompatibleInputContent(modifier: Modifier = Modifier) {
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth()
         )
+    }
+}
+
+@Composable
+context(properties: SettingProperties)
+private fun DynamicProviderInputContent(
+    providers: List<SubscriptionProviderDescriptor>,
+    modifier: Modifier = Modifier,
+) {
+    val spacing = LocalSpacing.current
+    LaunchedEffect(providers) {
+        val selected = providers.firstOrNull {
+            it.providerId.value == properties.selectedProviderIdState.value
+        } ?: providers.firstOrNull()
+        if (selected != null) {
+            properties.selectedProviderIdState.value = selected.providerId.value
+            if (selected.supportedKinds.none {
+                    it.value == properties.selectedProviderKindState.value
+                }
+            ) {
+                properties.selectedProviderKindState.value =
+                    selected.supportedKinds.firstOrNull()?.value.orEmpty()
+            }
+        }
+    }
+    val selected = providers.firstOrNull {
+        it.providerId.value == properties.selectedProviderIdState.value
+    }
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(spacing.small),
+    ) {
+        PlaceholderField(
+            text = properties.titleState.value,
+            placeholder = stringResource(string.feat_setting_placeholder_title).uppercase(),
+            onValueChange = { properties.titleState.value = Uri.decode(it) },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        if (providers.isEmpty()) {
+            Text(stringResource(string.feat_setting_extension_no_plugins))
+            return@Column
+        }
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(spacing.small)) {
+            providers.forEach { provider ->
+                val active = provider.providerId == selected?.providerId
+                FilledTonalButton(
+                    onClick = {
+                        properties.selectedProviderIdState.value = provider.providerId.value
+                        properties.selectedProviderKindState.value =
+                            provider.supportedKinds.firstOrNull()?.value.orEmpty()
+                        properties.providerSettingValues.clear()
+                    },
+                    colors = if (active) {
+                        ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        )
+                    } else {
+                        ButtonDefaults.filledTonalButtonColors()
+                    },
+                ) { Text(provider.displayName) }
+            }
+        }
+        selected?.let { provider ->
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(spacing.small)) {
+                provider.supportedKinds.forEach { kind ->
+                    FilledTonalButton(
+                        onClick = { properties.selectedProviderKindState.value = kind.value },
+                    ) { Text(kind.value) }
+                }
+            }
+            provider.settingsSchema?.fields?.forEach { field ->
+                val value = properties.providerSettingValues[field.key].orEmpty()
+                when (field.type) {
+                    ExtensionSettingType.TEXT,
+                    ExtensionSettingType.NUMBER,
+                    ExtensionSettingType.SECRET -> PlaceholderField(
+                        text = value,
+                        placeholder = field.label.uppercase(),
+                        onValueChange = { properties.providerSettingValues[field.key] = it },
+                        keyboardType = when (field.type) {
+                            ExtensionSettingType.NUMBER -> KeyboardType.Number
+                            ExtensionSettingType.SECRET -> KeyboardType.Password
+                            else -> KeyboardType.Text
+                        },
+                        visualTransformation = if (field.type == ExtensionSettingType.SECRET) {
+                            PasswordVisualTransformation()
+                        } else {
+                            androidx.compose.ui.text.input.VisualTransformation.None
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    ExtensionSettingType.BOOLEAN -> FilledTonalButton(
+                        onClick = {
+                            properties.providerSettingValues[field.key] =
+                                (value.toBooleanStrictOrNull() != true).toString()
+                        },
+                    ) { Text("${field.label}: ${value.toBooleanStrictOrNull() == true}") }
+
+                    ExtensionSettingType.SINGLE_CHOICE -> FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(spacing.small),
+                    ) {
+                        field.choices.forEach { choice ->
+                            FilledTonalButton(
+                                onClick = {
+                                    properties.providerSettingValues[field.key] = choice.value
+                                },
+                            ) { Text(choice.label) }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

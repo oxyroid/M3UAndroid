@@ -18,6 +18,7 @@ import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.ProviderAccount
 import com.m3u.data.database.model.ProviderCredentialEntity
+import com.m3u.data.database.model.ProviderPlaybackSessionEntity
 
 @Database(
     entities = [
@@ -29,8 +30,9 @@ import com.m3u.data.database.model.ProviderCredentialEntity
         ProviderAccount::class,
         ProviderCredentialEntity::class,
         ChannelPlaybackReference::class,
+        ProviderPlaybackSessionEntity::class,
     ],
-    version = 22,
+    version = 23,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(

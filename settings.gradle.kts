@@ -23,7 +23,12 @@ include(
     ":app:tv"
 )
 include(":core", ":core:foundation")
-include(":extension:api", ":extension:runtime")
+include(
+    ":extension:api",
+    ":extension:runtime",
+    ":extension:transport-android",
+    ":extension:sdk-android",
+)
 include(":data")
 include(
     ":business:foryou",
@@ -40,6 +45,7 @@ include(
 include(":i18n")
 include(":testing:device-benchmark")
 include(":testing:mock-server")
+include(":testing:extension-reference")
 include(
     ":lint:annotation",
     ":lint:processor"

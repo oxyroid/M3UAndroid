@@ -21,6 +21,12 @@ data class ProviderCredentialEntity(
     @PrimaryKey
     @ColumnInfo(name = "account_id")
     val accountId: String,
-    @ColumnInfo(name = "access_token")
-    val accessToken: String,
+    @ColumnInfo(name = "credential_handle")
+    val credentialHandle: String,
+    @ColumnInfo(name = "ciphertext")
+    val ciphertext: String,
+    @ColumnInfo(name = "nonce")
+    val nonce: String,
+    @ColumnInfo(name = "key_version")
+    val keyVersion: Int,
 )

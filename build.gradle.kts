@@ -13,6 +13,7 @@ plugins {
     alias(libs.plugins.com.android.test) apply false
     alias(libs.plugins.org.jetbrains.kotlin.serialization) apply false
     alias(libs.plugins.org.jetbrains.kotlin.jvm) apply false
+    alias(libs.plugins.org.jetbrains.kotlin.multiplatform) apply false
     alias(libs.plugins.androidx.baselineprofile) apply false
     alias(libs.plugins.com.squareup.wire) apply false
 }

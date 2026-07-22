@@ -4,23 +4,30 @@ import com.m3u.extension.api.EmptyExtensionPayload
 import com.m3u.extension.api.ExtensionApiRange
 import com.m3u.extension.api.ExtensionApiVersion
 import com.m3u.extension.api.ExtensionApiVersions
+import com.m3u.extension.api.ExtensionCallContext
 import com.m3u.extension.api.ExtensionCapabilityIds
 import com.m3u.extension.api.ExtensionCapabilityRequest
-import com.m3u.extension.api.ExtensionEntrypoint
 import com.m3u.extension.api.ExtensionErrorCodes
-import com.m3u.extension.api.ExtensionHook
+import com.m3u.extension.api.ExtensionHandler
 import com.m3u.extension.api.ExtensionHookDeclaration
 import com.m3u.extension.api.ExtensionHookIds
-import com.m3u.extension.api.ExtensionHookOutcome
 import com.m3u.extension.api.ExtensionId
-import com.m3u.extension.api.ExtensionInvocation
 import com.m3u.extension.api.ExtensionManifest
 import com.m3u.extension.api.ExtensionPayload
-import com.m3u.extension.api.Hook
+import com.m3u.extension.api.ExtensionSemanticVersion
+import com.m3u.extension.api.ExtensionState
+import com.m3u.extension.api.HookResult
+import com.m3u.extension.api.HookSpec
 import com.m3u.extension.api.InvocationId
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.coroutines.startCoroutine
+import com.m3u.extension.api.SerializedExtensionEnvelope
+import com.m3u.extension.api.SerializedExtensionResult
+import com.m3u.extension.api.ExtensionEntrypoint
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.encodeToJsonElement
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -28,44 +35,31 @@ import kotlin.test.assertTrue
 
 class ExtensionRuntimeTest {
     @Test
-    fun `runtime registers queries and invokes declared hook`() {
+    fun `runtime registers queries and invokes typed hook`() = runBlocking {
         val runtime = runtime()
         val entrypoint = entrypoint()
 
         assertIs<ExtensionRegistrationResult.Registered>(runtime.register(entrypoint))
-        assertEquals(entrypoint.manifest.id, runtime.extensionsSupporting(PLAYBACK_HOOK).single().manifest.id)
+        assertEquals(entrypoint.manifest.id, runtime.extensionsSupporting(TEST_SPEC.hook).single().manifest.id)
 
-        val result = runSuspend {
-            runtime.invoke(
-                extensionId = entrypoint.manifest.id,
-                hook = PLAYBACK_HOOK,
-                grantedCapabilities = setOf(ExtensionCapabilityIds.PlaybackResolve),
-                payload = TestPayload("stable-reference"),
-            )
-        }
+        val result = runtime.invoke(entrypoint.manifest.id, TEST_SPEC, TestPayload("stable-reference"))
 
         assertEquals(InvocationId("invocation-1"), result.invocationId)
-        val success = assertIs<ExtensionHookOutcome.Success>(result.outcome)
-        assertEquals(TestPayload("resolved-stable-reference"), success.payload)
+        assertEquals(TestPayload("resolved-stable-reference"), assertIs<HookResult.Success<TestPayload>>(result.outcome).payload)
     }
 
     @Test
-    fun `runtime rejects invocation without required capability`() {
-        val runtime = runtime()
+    fun `runtime derives and rejects missing capabilities from policy`() = runBlocking {
+        val runtime = runtime(capabilityPolicy = CapabilityPolicy { _, _ -> emptySet() })
         val entrypoint = entrypoint()
         runtime.register(entrypoint)
 
-        val result = runSuspend {
-            runtime.invoke(
-                extensionId = entrypoint.manifest.id,
-                hook = PLAYBACK_HOOK,
-                grantedCapabilities = emptySet(),
-                payload = EmptyExtensionPayload,
-            )
-        }
+        val result = runtime.invoke(entrypoint.manifest.id, TEST_SPEC, TestPayload("request"))
 
-        val failure = assertIs<ExtensionHookOutcome.Failure>(result.outcome)
-        assertEquals(ExtensionErrorCodes.CapabilityDenied, failure.error.code)
+        assertEquals(
+            ExtensionErrorCodes.CapabilityDenied,
+            assertIs<HookResult.Failure>(result.outcome).error.code,
+        )
     }
 
     @Test
@@ -85,36 +79,122 @@ class ExtensionRuntimeTest {
     }
 
     @Test
-    fun `runtime converts provider exception into structured failure`() {
-        val runtime = runtime()
+    fun `runtime negotiates hook schemas across API minor versions`() {
+        val runtime = ExtensionRuntime(hostApiVersion = ExtensionApiVersion(major = 1, minor = 9))
         val entrypoint = entrypoint(
-            hook = object : ExtensionHook {
-                override val hook: Hook = PLAYBACK_HOOK
-
-                override suspend fun invoke(invocation: ExtensionInvocation): ExtensionHookOutcome {
-                    error("Provider unavailable")
-                }
-            }
+            apiRange = ExtensionApiRange(
+                minimum = ExtensionApiVersion(major = 1, minor = 0),
+                maximum = ExtensionApiVersion(major = 1, minor = 0),
+            )
         )
+
+        assertIs<ExtensionRegistrationResult.Registered>(runtime.register(entrypoint))
+    }
+
+    @Test
+    fun `runtime converts provider exception into safe structured failure`() = runBlocking {
+        val runtime = runtime()
+        val entrypoint = entrypoint { _, _ -> error("secret provider detail") }
         runtime.register(entrypoint)
 
-        val result = runSuspend {
-            runtime.invoke(
-                extensionId = entrypoint.manifest.id,
-                hook = PLAYBACK_HOOK,
-                grantedCapabilities = setOf(ExtensionCapabilityIds.PlaybackResolve),
-                payload = EmptyExtensionPayload,
-            )
-        }
+        val result = runtime.invoke(entrypoint.manifest.id, TEST_SPEC, TestPayload("request"))
 
-        val failure = assertIs<ExtensionHookOutcome.Failure>(result.outcome)
+        val failure = assertIs<HookResult.Failure>(result.outcome)
         assertEquals(ExtensionErrorCodes.InvocationFailed, failure.error.code)
+        assertEquals("Extension invocation failed", failure.error.message)
         assertEquals("IllegalStateException", failure.error.details["exception"])
     }
 
-    private fun runtime(): ExtensionRuntime = ExtensionRuntime(
+    @Test
+    fun `runtime times out and quarantines repeatedly failing extension`() = runBlocking {
+        val runtime = runtime(
+            invocationPolicy = InvocationPolicy(
+                timeoutMillis = 10,
+                unhealthyFailureThreshold = 1,
+            )
+        )
+        val entrypoint = entrypoint { _, _ ->
+            delay(100)
+            HookResult.Success(TestPayload("late"))
+        }
+        runtime.register(entrypoint)
+
+        val timedOut = runtime.invoke(entrypoint.manifest.id, TEST_SPEC, TestPayload("request"))
+        assertEquals(ExtensionErrorCodes.InvocationTimedOut, assertIs<HookResult.Failure>(timedOut.outcome).error.code)
+
+        val quarantined = runtime.invoke(entrypoint.manifest.id, TEST_SPEC, TestPayload("request"))
+        assertEquals(ExtensionErrorCodes.ExtensionUnhealthy, assertIs<HookResult.Failure>(quarantined.outcome).error.code)
+    }
+
+    @Test
+    fun `runtime keeps extension enabled below consecutive failure threshold`() = runBlocking {
+        val runtime = runtime(invocationPolicy = InvocationPolicy(unhealthyFailureThreshold = 2))
+        val entrypoint = entrypoint { _, _ -> error("first failure") }
+        runtime.register(entrypoint)
+
+        runtime.invoke(entrypoint.manifest.id, TEST_SPEC, TestPayload("request"))
+
+        assertEquals(ExtensionState.ENABLED, runtime.registeredExtensions().single().state)
+        assertEquals(1, runtime.registeredExtensions().single().consecutiveFailures)
+    }
+
+    @Test
+    fun `runtime rejects oversized response`() = runBlocking {
+        val runtime = runtime(invocationPolicy = InvocationPolicy(maxPayloadBytes = 64))
+        val entrypoint = entrypoint { _, _ -> HookResult.Success(TestPayload("x".repeat(100))) }
+        runtime.register(entrypoint)
+
+        val result = runtime.invoke(entrypoint.manifest.id, TEST_SPEC, TestPayload("small"))
+
+        assertEquals(
+            ExtensionErrorCodes.PayloadTooLarge,
+            assertIs<HookResult.Failure>(result.outcome).error.code,
+        )
+    }
+
+    @Test
+    fun `serialized transport conforms to typed invocation behavior`() = runBlocking {
+        val runtime = runtime()
+        val manifest = entrypoint().manifest
+        val json = Json
+        val transport = object : ExtensionTransport {
+            override val manifest = manifest
+
+            override suspend fun invoke(request: SerializedExtensionEnvelope): SerializedExtensionResult {
+                val payload = json.decodeFromJsonElement(TEST_SPEC.requestSerializer, request.payload)
+                return SerializedExtensionResult(
+                    invocationId = request.invocationId,
+                    extensionId = request.extensionId,
+                    hook = request.hook,
+                    schemaVersion = request.schemaVersion,
+                    payload = json.encodeToJsonElement(
+                        TEST_SPEC.responseSerializer,
+                        TestPayload("resolved-${payload.value}"),
+                    ),
+                )
+            }
+
+            override suspend fun cancel(invocationId: InvocationId) = Unit
+            override suspend fun health(): ExtensionTransportHealth = ExtensionTransportHealth.HEALTHY
+        }
+        assertIs<ExtensionRegistrationResult.Registered>(runtime.register(transport))
+
+        val result = runtime.invoke(manifest.id, TEST_SPEC, TestPayload("transport"))
+
+        assertEquals(
+            TestPayload("resolved-transport"),
+            assertIs<HookResult.Success<TestPayload>>(result.outcome).payload,
+        )
+    }
+
+    private fun runtime(
+        capabilityPolicy: CapabilityPolicy = DeclaredCapabilityPolicy,
+        invocationPolicy: InvocationPolicy = InvocationPolicy(),
+    ) = ExtensionRuntime(
         hostApiVersion = ExtensionApiVersions.Current,
         invocationIdFactory = InvocationIdFactory { InvocationId("invocation-1") },
+        capabilityPolicy = capabilityPolicy,
+        invocationPolicy = invocationPolicy,
     )
 
     private fun entrypoint(
@@ -122,23 +202,19 @@ class ExtensionRuntimeTest {
             minimum = ExtensionApiVersions.Current,
             maximum = ExtensionApiVersions.Current,
         ),
-        hook: ExtensionHook = object : ExtensionHook {
-            override val hook: Hook = PLAYBACK_HOOK
-
-            override suspend fun invoke(invocation: ExtensionInvocation): ExtensionHookOutcome {
-                val payload = invocation.payload as TestPayload
-                return ExtensionHookOutcome.Success(TestPayload("resolved-${payload.value}"))
-            }
+        invoke: suspend (ExtensionCallContext, TestPayload) -> HookResult<TestPayload> = { _, payload ->
+            HookResult.Success(TestPayload("resolved-${payload.value}"))
         },
     ): ExtensionEntrypoint = object : ExtensionEntrypoint {
         override val manifest = ExtensionManifest(
             id = ExtensionId("com.example.provider"),
             displayName = "Example Provider",
-            extensionVersion = "1.0.0",
+            extensionVersion = ExtensionSemanticVersion(1, 0, 0),
             apiRange = apiRange,
             hooks = setOf(
                 ExtensionHookDeclaration(
-                    hook = PLAYBACK_HOOK,
+                    hook = TEST_SPEC.hook,
+                    schemaVersion = TEST_SPEC.schemaVersion,
                     requiredCapabilities = setOf(ExtensionCapabilityIds.PlaybackResolve),
                 )
             ),
@@ -149,26 +225,23 @@ class ExtensionRuntimeTest {
                 )
             ),
         )
-        override val hooks: Collection<ExtensionHook> = listOf(hook)
-    }
-
-    private fun <T> runSuspend(block: suspend () -> T): T {
-        var result: Result<T>? = null
-        block.startCoroutine(
-            object : Continuation<T> {
-                override val context = EmptyCoroutineContext
-
-                override fun resumeWith(resumeResult: Result<T>) {
-                    result = resumeResult
-                }
+        override val handlers: Collection<ExtensionHandler<*, *>> = listOf(
+            object : ExtensionHandler<TestPayload, TestPayload> {
+                override val spec = TEST_SPEC
+                override suspend fun invoke(context: ExtensionCallContext, request: TestPayload) = invoke(context, request)
             }
         )
-        return checkNotNull(result).getOrThrow()
     }
 
+    @Serializable
     private data class TestPayload(val value: String) : ExtensionPayload
 
     private companion object {
-        val PLAYBACK_HOOK = ExtensionHookIds.PlaybackSourceResolve
+        val TEST_SPEC = HookSpec(
+            hook = ExtensionHookIds.PlaybackSourceResolve,
+            schemaVersion = 1,
+            requestSerializer = TestPayload.serializer(),
+            responseSerializer = TestPayload.serializer(),
+        )
     }
 }

@@ -1,11 +1,23 @@
 plugins {
-    alias(libs.plugins.org.jetbrains.kotlin.jvm)
+    alias(libs.plugins.org.jetbrains.kotlin.multiplatform)
+    alias(libs.plugins.org.jetbrains.kotlin.serialization)
 }
 
 kotlin {
+    jvm()
     jvmToolchain(17)
-}
-
-dependencies {
-    testImplementation(kotlin("test"))
+    sourceSets {
+        commonMain {
+            kotlin.srcDir("src/main/kotlin")
+            dependencies {
+                api(libs.kotlinx.serialization.json)
+            }
+        }
+        commonTest {
+            kotlin.srcDir("src/test/kotlin")
+            dependencies {
+                implementation(kotlin("test"))
+            }
+        }
+    }
 }

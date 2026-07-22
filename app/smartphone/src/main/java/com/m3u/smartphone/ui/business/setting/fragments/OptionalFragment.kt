@@ -56,6 +56,16 @@ internal fun OptionalFragment(
         modifier = modifier.fillMaxSize()
     ) {
         item {
+            var externalExtensions by mutablePreferenceOf(PreferencesKeys.EXTERNAL_EXTENSIONS)
+            SwitchSharedPreference(
+                title = string.feat_setting_external_extensions,
+                content = string.feat_setting_external_extensions_description,
+                icon = Icons.Rounded.SettingsEthernet,
+                checked = externalExtensions,
+                onChanged = { externalExtensions = !externalExtensions }
+            )
+        }
+        item {
             var tunneling by mutablePreferenceOf(PreferencesKeys.TUNNELING)
             SwitchSharedPreference(
                 title = string.feat_setting_tunneling,

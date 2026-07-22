@@ -38,6 +38,7 @@ import com.m3u.data.repository.BackupOrRestoreContracts
 import com.m3u.data.repository.createCoroutineCache
 import com.m3u.data.repository.provider.SubscriptionProviderRepository
 import com.m3u.data.worker.SubscriptionWorker
+import com.m3u.data.worker.ProviderRefreshWorker
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.ktor.http.Url
 import kotlinx.coroutines.Dispatchers
@@ -72,6 +73,7 @@ private const val BUFFER_RESTORE_CAPACITY = 400
 internal class PlaylistRepositoryImpl @Inject constructor(
     private val playlistDao: PlaylistDao,
     private val channelDao: ChannelDao,
+    private val providerDao: com.m3u.data.database.dao.ProviderDao,
     private val programmeDao: ProgrammeDao,
     @OkhttpClient(true) private val okHttpClient: OkHttpClient,
     private val m3uParser: M3UParser,
@@ -384,8 +386,8 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                 )
             }
 
-            DataSource.Emby, DataSource.Jellyfin -> {
-                subscriptionProviderRepository.refresh(url)
+            DataSource.Emby, DataSource.Jellyfin, DataSource.Provider -> {
+                ProviderRefreshWorker.enqueue(workManager, url)
             }
 
             else -> throw IllegalStateException("Refresh data source ${playlist.source} is unsupported currently.")
@@ -410,6 +412,16 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                     writer.appendLine(wrappedChannel)
                 }
             }
+            providerDao.getAccounts().forEach { account ->
+                writer.appendLine(
+                    BackupOrRestoreContracts.wrapProviderAccount(json.encodeToString(account))
+                )
+            }
+            providerDao.getPlaybackReferences().forEach { reference ->
+                writer.appendLine(
+                    BackupOrRestoreContracts.wrapPlaybackReference(json.encodeToString(reference))
+                )
+            }
             writer.flush()
         }
     }
@@ -423,10 +435,14 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             val reader = it.bufferedReader()
 
             val channels = mutableListOf<Channel>()
+            val providerAccounts = mutableListOf<com.m3u.data.database.model.ProviderAccount>()
+            val playbackReferences = mutableListOf<com.m3u.data.database.model.ChannelPlaybackReference>()
             reader.forEachLine { line ->
                 if (line.isBlank()) return@forEachLine
                 val encodedPlaylist = BackupOrRestoreContracts.unwrapPlaylist(line)
                 val encodedChannel = BackupOrRestoreContracts.unwrapChannel(line)
+                val encodedProviderAccount = BackupOrRestoreContracts.unwrapProviderAccount(line)
+                val encodedPlaybackReference = BackupOrRestoreContracts.unwrapPlaybackReference(line)
                 when {
                     encodedPlaylist != null -> {
                         val playlist = json.decodeFromString<Playlist>(encodedPlaylist)
@@ -446,11 +462,23 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                         }
                     }
 
+                    encodedProviderAccount != null -> providerAccounts +=
+                        json.decodeFromString<com.m3u.data.database.model.ProviderAccount>(
+                            encodedProviderAccount
+                        ).copy(requiresReauthentication = true)
+
+                    encodedPlaybackReference != null -> playbackReferences +=
+                        json.decodeFromString<com.m3u.data.database.model.ChannelPlaybackReference>(
+                            encodedPlaybackReference
+                        )
+
                     else -> {}
                 }
             }
             mutex.withLock {
                 channelDao.insertOrReplaceAll(*channels.toTypedArray())
+                providerAccounts.forEach { providerDao.insertOrReplace(it) }
+                playbackReferences.forEach { providerDao.insertOrReplace(it) }
             }
         }
     }

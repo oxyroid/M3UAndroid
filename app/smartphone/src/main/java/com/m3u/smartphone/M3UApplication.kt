@@ -4,6 +4,9 @@ import android.app.Application
 import android.content.Context
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import androidx.work.WorkManager
+import com.m3u.data.worker.ProviderSessionCleanupWorker
+import com.m3u.data.worker.ExtensionPluginBootstrapWorker
 import com.m3u.i18n.R.string
 import dagger.hilt.android.HiltAndroidApp
 import org.acra.config.mailSender
@@ -24,6 +27,8 @@ class M3UApplication : Application(), Configuration.Provider {
         if (BuildConfig.DEBUG) {
             Timber.plant(DebugTree())
         }
+        ProviderSessionCleanupWorker.enqueue(WorkManager.getInstance(this))
+        ExtensionPluginBootstrapWorker.enqueue(WorkManager.getInstance(this))
     }
 
     override fun attachBaseContext(base: Context?) {

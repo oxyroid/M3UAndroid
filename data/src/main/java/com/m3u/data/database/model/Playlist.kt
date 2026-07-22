@@ -82,7 +82,7 @@ val Playlist.refreshable: Boolean
             ignoreCase = true
         )
 
-        DataSource.Emby, DataSource.Jellyfin -> true
+        DataSource.Emby, DataSource.Jellyfin, DataSource.Provider -> true
         else -> false
     }
 
@@ -142,6 +142,8 @@ sealed class DataSource(
 
     object Jellyfin : DataSource(R.string.feat_setting_data_source_jellyfin, "jellyfin", true)
 
+    object Provider : DataSource(R.string.feat_setting_data_source_provider, "provider", true)
+
     object Dropbox : DataSource(R.string.feat_setting_data_source_dropbox, "dropbox")
 
     override fun toString(): String = value
@@ -153,6 +155,7 @@ sealed class DataSource(
             "xtream" -> Xtream
             "emby" -> Emby
             "jellyfin" -> Jellyfin
+            "provider" -> Provider
             "dropbox" -> Dropbox
             else -> throw UnsupportedOperationException()
         }

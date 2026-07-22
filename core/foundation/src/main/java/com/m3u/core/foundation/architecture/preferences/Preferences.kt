@@ -174,4 +174,5 @@ object PreferencesKeys {
     val PLAYER_PANEL = booleanPreferencesKey("player_panel")
 
     val COMPACT_DIMENSION = booleanPreferencesKey("compact-dimension")
+    val EXTERNAL_EXTENSIONS = booleanPreferencesKey("external-extensions")
 }

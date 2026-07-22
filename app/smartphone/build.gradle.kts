@@ -111,6 +111,7 @@ baselineProfile {
 }
 
 dependencies {
+    implementation(project(":extension:api"))
     implementation(project(":i18n"))
     implementation(project(":core:foundation"))
     implementation(project(":data"))
@@ -186,4 +187,6 @@ dependencies {
     androidTestImplementation(libs.androidx.test.core)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.uiautomator.uiautomator)
+    androidTestImplementation(project(":extension:runtime"))
+    androidTestImplementation(project(":extension:transport-android"))
 }
