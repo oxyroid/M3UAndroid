@@ -73,6 +73,8 @@ Settings use qualified `section/field` keys. A `SECRET` field must not declare a
 
 The settings UI never reads a stored secret back into an input. It shows only a configured marker, accepts a replacement value, or lets the user clear the handle. Labels and descriptions come from the negotiated settings schema, so extensions should provide concise phone- and TV-readable copy for the requested locale.
 
+The host's **Clear data** operation removes the extension's settings, encrypted secret handles, and isolated EPG cache. It deliberately preserves host-owned subscriptions, channels, favorites, hidden state, and playback history. A diagnostic export contains only a host-defined identity/status whitelist and aggregate setting counts; manifest metadata, setting keys and values, invocation payloads, and broker traffic are excluded.
+
 An extension that must read raw passwords or tokens, manage its own credential encryption, or bypass the broker is incompatible with this platform.
 
 ## Invocation rules

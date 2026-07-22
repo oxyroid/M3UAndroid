@@ -17,6 +17,7 @@ import com.m3u.data.extension.security.CredentialVault
 import com.m3u.data.repository.extension.ExtensionEpgContribution
 import com.m3u.data.repository.extension.ExtensionMetadataContribution
 import com.m3u.extension.api.ChannelMetadataSnapshot
+import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.subscription.SubscriptionContentRefreshResult
 import javax.inject.Inject
 import java.net.URLEncoder
@@ -188,6 +189,22 @@ internal class SubscriptionProviderImporter @Inject constructor(
             )
         )
         accepted.size
+    }
+
+    suspend fun clearExtensionEpg(extensionId: ExtensionId): Int = database.withTransaction {
+        val prefix = "$EXTENSION_EPG_SCHEME${extensionId.value}/"
+        var removedSources = 0
+        playlistDao.getAll().forEach { playlist ->
+            val ownedSources = playlist.epgUrls.filter { source -> source.startsWith(prefix) }
+            if (ownedSources.isNotEmpty()) {
+                ownedSources.forEach { source -> programmeDao.cleanByEpgUrl(source) }
+                playlistDao.insertOrReplace(
+                    playlist.copy(epgUrls = playlist.epgUrls - ownedSources.toSet())
+                )
+                removedSources += ownedSources.size
+            }
+        }
+        removedSources
     }
 
     private companion object {

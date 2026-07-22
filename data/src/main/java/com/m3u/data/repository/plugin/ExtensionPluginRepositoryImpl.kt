@@ -5,6 +5,9 @@ import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
 import com.m3u.core.foundation.architecture.preferences.Settings
 import com.m3u.core.foundation.architecture.preferences.get
 import com.m3u.data.extension.security.ExtensionHostBridge
+import com.m3u.data.extension.SubscriptionProviderImporter
+import com.m3u.data.repository.extension.ExtensionSettingStore
+import com.m3u.data.repository.extension.ExtensionSettingsRepository
 import com.m3u.extension.api.security.HostNetworkBroker
 import com.m3u.extension.api.ExtensionContractCatalog
 import com.m3u.extension.api.ExtensionManifest
@@ -30,6 +33,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 internal class ExtensionPluginRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -37,6 +43,9 @@ internal class ExtensionPluginRepositoryImpl @Inject constructor(
     private val trustStore: ExtensionTrustStore,
     private val hostNetworkBroker: HostNetworkBroker,
     private val runtime: ExtensionRuntime,
+    private val extensionSettingsRepository: ExtensionSettingsRepository,
+    private val extensionSettingStore: ExtensionSettingStore,
+    private val subscriptionProviderImporter: SubscriptionProviderImporter,
     private val settings: Settings,
 ) : ExtensionPluginRepository {
     private val transports = ConcurrentHashMap<String, AndroidBoundExtensionTransport>()
@@ -229,6 +238,54 @@ internal class ExtensionPluginRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun clearData(extensionId: String): PluginDataClearResult {
+        val id = ExtensionId(extensionId)
+        val snapshot = extensionSettingStore.snapshot(extensionId)
+        extensionSettingsRepository.clear(id)
+        return PluginDataClearResult(
+            clearedSettingValues = snapshot.values.size,
+            clearedCredentialHandles = snapshot.credentialHandles.size,
+            clearedEpgSources = subscriptionProviderImporter.clearExtensionEpg(id),
+        )
+    }
+
+    override suspend fun diagnostics(extensionId: String): String? {
+        val plugin = installedPlugins().singleOrNull { candidate ->
+            candidate.extensionId == extensionId
+        } ?: return null
+        val registration = runtime.registeredExtensions().singleOrNull { extension ->
+            extension.manifest.id.value == extensionId
+        }
+        val snapshot = extensionSettingStore.snapshot(extensionId)
+        return DIAGNOSTICS_JSON.encodeToString(
+            PluginDiagnostics(
+                generatedAtEpochMillis = System.currentTimeMillis(),
+                hostApiVersion = com.m3u.extension.api.ExtensionApiVersions.Current.toString(),
+                packageName = plugin.packageName,
+                serviceName = plugin.serviceName,
+                certificateSha256 = plugin.certificateSha256,
+                extensionId = extensionId,
+                extensionVersion = plugin.version,
+                trusted = plugin.trusted,
+                enabled = plugin.enabled,
+                signatureChanged = plugin.signatureChanged,
+                state = plugin.state.name.lowercase(),
+                requestedCapabilities = plugin.requestedCapabilities.sorted(),
+                grantedCapabilities = plugin.grantedCapabilities.sorted(),
+                declaredHooks = registration?.manifest?.hooks
+                    ?.map { declaration ->
+                        "${declaration.hook.id}@${declaration.schemaVersion}"
+                    }
+                    ?.sorted()
+                    .orEmpty(),
+                consecutiveFailures = registration?.consecutiveFailures ?: 0,
+                storedValueCount = snapshot.values.size,
+                storedCredentialHandleCount = snapshot.credentialHandles.size,
+                inspectionAvailable = plugin.inspectionError == null,
+            )
+        )
+    }
+
     override suspend fun restoreEnabled(): Int {
         if (!settings[PreferencesKeys.EXTERNAL_EXTENSIONS]) return 0
         var restored = 0
@@ -287,5 +344,32 @@ internal class ExtensionPluginRepositoryImpl @Inject constructor(
 
     private companion object {
         const val CONNECT_TIMEOUT_MILLIS = 5_000L
+        val DIAGNOSTICS_JSON = Json {
+            prettyPrint = true
+            explicitNulls = false
+        }
     }
 }
+
+@Serializable
+private data class PluginDiagnostics(
+    val formatVersion: Int = 1,
+    val generatedAtEpochMillis: Long,
+    val hostApiVersion: String,
+    val packageName: String,
+    val serviceName: String,
+    val certificateSha256: String,
+    val extensionId: String,
+    val extensionVersion: String?,
+    val trusted: Boolean,
+    val enabled: Boolean,
+    val signatureChanged: Boolean,
+    val state: String,
+    val requestedCapabilities: List<String>,
+    val grantedCapabilities: List<String>,
+    val declaredHooks: List<String>,
+    val consecutiveFailures: Int,
+    val storedValueCount: Int,
+    val storedCredentialHandleCount: Int,
+    val inspectionAvailable: Boolean,
+)

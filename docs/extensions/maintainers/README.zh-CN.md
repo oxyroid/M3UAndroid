@@ -40,6 +40,8 @@ API major 不一致即不兼容。同 major 内按 manifest 声明协商 hook sc
 
 禁止直接记录完整序列化 payload。runtime 和 transport 诊断必须脱敏凭据、认证 header、secret 设置、捕获值和其他已知敏感字段。
 
+管理诊断采用正向字段白名单：宿主 API 版本、package/service 身份、固定证书摘要、插件版本/状态、capability 与 hook 标识、失败次数和设置数量汇总。禁止加入自由格式 manifest metadata、设置键/值、envelope、响应 body 或异常消息。清除插件数据只能删除设置、secret handle 以及 `m3u-extension-epg://<extension-id>/` 下的 EPG source；必须保留 provider playlist 和所有用户持有的频道状态。
+
 ## 外部 APK 生命周期
 
 发现只查询 action `com.m3u.extension.action.BIND_EXTENSION`，禁止增加 `QUERY_ALL_PACKAGES`。必须显式绑定解析出的 component，并要求权限 `com.m3u.permission.BIND_EXTENSION_HOST`。绝不把 APK 代码加载进宿主进程。

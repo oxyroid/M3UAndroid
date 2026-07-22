@@ -8,8 +8,16 @@ interface ExtensionPluginRepository {
     suspend fun enable(packageName: String, serviceName: String): PluginEnableResult
     fun disable(extensionId: String): Boolean
     fun revoke(packageName: String, serviceName: String)
+    suspend fun clearData(extensionId: String): PluginDataClearResult
+    suspend fun diagnostics(extensionId: String): String?
     suspend fun restoreEnabled(): Int
 }
+
+data class PluginDataClearResult(
+    val clearedSettingValues: Int,
+    val clearedCredentialHandles: Int,
+    val clearedEpgSources: Int,
+)
 
 data class InstalledPlugin(
     val packageName: String,

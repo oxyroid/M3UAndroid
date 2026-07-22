@@ -40,6 +40,8 @@ Cancellation must propagate to the runtime and Android transport. Ordinary exten
 
 Never log serialized payloads blindly. Runtime and transport diagnostics must redact credentials, authorization headers, secret settings, captured values, and other known sensitive fields.
 
+Management diagnostics use a positive field whitelist: host API version, package/service identity, pinned certificate digest, extension version/state, capability and hook identifiers, failure count, and aggregate setting counts. Do not add free-form manifest metadata, setting keys/values, envelopes, response bodies, or exception messages. Clearing extension data removes settings, secret handles, and only EPG sources under `m3u-extension-epg://<extension-id>/`; it must preserve provider playlists and all user-owned channel state.
+
 ## External APK lifecycle
 
 Discovery uses an intent query for `com.m3u.extension.action.BIND_EXTENSION`; do not add `QUERY_ALL_PACKAGES`. Bind explicitly to the resolved component and require `com.m3u.permission.BIND_EXTENSION_HOST`. Never load APK code into the host process.

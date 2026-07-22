@@ -146,6 +146,35 @@ class ExtensionContributionImporterTest {
         })
     }
 
+    @Test
+    fun clearingOneExtensionEpgPreservesHostAndOtherExtensionSources() = runBlocking {
+        val otherExtensionId = ExtensionId("com.m3u.other.provider")
+        importer.replaceExtensionEpg(
+            PLAYLIST_URL,
+            listOf(
+                ExtensionEpgContribution(
+                    EXTENSION_ID,
+                    ExtensionProgramme(CHANNEL_REFERENCE, "Reference", 1_000, 2_000),
+                ),
+                ExtensionEpgContribution(
+                    otherExtensionId,
+                    ExtensionProgramme(CHANNEL_REFERENCE, "Other", 2_000, 3_000),
+                ),
+            ),
+        )
+
+        assertEquals(1, importer.clearExtensionEpg(EXTENSION_ID))
+
+        val playlist = database.playlistDao().get(PLAYLIST_URL)
+        val remainingSources = playlist?.epgUrls.orEmpty()
+        val programmes = database.programmeDao().observeAll().first()
+        assertTrue(NORMAL_EPG_URL in remainingSources)
+        assertTrue(remainingSources.any { it.startsWith("m3u-extension-epg://${otherExtensionId.value}/") })
+        assertFalse(remainingSources.any { it.startsWith("m3u-extension-epg://${EXTENSION_ID.value}/") })
+        assertTrue(programmes.all { !it.epgUrl.startsWith("m3u-extension-epg://${EXTENSION_ID.value}/") })
+        assertTrue(programmes.any { it.epgUrl.startsWith("m3u-extension-epg://${otherExtensionId.value}/") })
+    }
+
     private object UnusedCredentialVault : CredentialVault {
         override fun encrypt(
             accountId: String,
