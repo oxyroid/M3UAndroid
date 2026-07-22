@@ -78,6 +78,7 @@ baselineProfile {
 dependencies {
     implementation(project(":core:foundation"))
     implementation(project(":data"))
+    implementation(project(":extension:api"))
     // business
     implementation(project(":business:foryou"))
     implementation(project(":business:favorite"))
@@ -128,6 +129,7 @@ dependencies {
     implementation(libs.androidx.media3.ui.compose)
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.airbnb.lottie.compose)
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.minabox)
     implementation(libs.net.mm2d.mmupnp.mmupnp)
     implementation(libs.haze)

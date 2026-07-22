@@ -2,6 +2,7 @@ package com.m3u.tv
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -40,13 +41,17 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -56,6 +61,9 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -63,8 +71,16 @@ import com.m3u.core.foundation.util.basic.title
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.repository.plugin.InstalledPlugin
+import com.m3u.data.repository.extension.ExtensionSettingsConfiguration
+import com.m3u.extension.api.ExtensionSettingField
+import com.m3u.extension.api.ExtensionSettingKeys
+import com.m3u.extension.api.ExtensionSettingType
+import com.m3u.extension.api.ExtensionState
 import com.m3u.i18n.R.string
 import kotlinx.coroutines.yield
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.contentOrNull
 
 @Composable
 fun TvBrowsePane(
@@ -79,6 +95,9 @@ fun TvBrowsePane(
     onEnableExtension: (String, String) -> Unit,
     onDisableExtension: (String) -> Unit,
     onRevokeExtension: (String, String) -> Unit,
+    onOpenExtensionSettings: (String) -> Unit,
+    onCloseExtensionSettings: () -> Unit,
+    onUpdateExtensionSetting: (String, String, String?) -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -117,6 +136,9 @@ fun TvBrowsePane(
                     onEnableExtension = onEnableExtension,
                     onDisableExtension = onDisableExtension,
                     onRevokeExtension = onRevokeExtension,
+                    onOpenExtensionSettings = onOpenExtensionSettings,
+                    onCloseExtensionSettings = onCloseExtensionSettings,
+                    onUpdateExtensionSetting = onUpdateExtensionSetting,
                 )
             }
         }
@@ -537,6 +559,9 @@ private fun StatusScreen(
     onEnableExtension: (String, String) -> Unit,
     onDisableExtension: (String) -> Unit,
     onRevokeExtension: (String, String) -> Unit,
+    onOpenExtensionSettings: (String) -> Unit,
+    onCloseExtensionSettings: () -> Unit,
+    onUpdateExtensionSetting: (String, String, String?) -> Unit,
 ) {
     var pendingTrust by remember { mutableStateOf<InstalledPlugin?>(null) }
     val trustConfirmationFocusRequester = remember { FocusRequester() }
@@ -548,7 +573,27 @@ private fun StatusScreen(
         }
     }
     LaunchedEffect(state.externalExtensionsEnabled) {
-        if (!state.externalExtensionsEnabled) pendingTrust = null
+        if (!state.externalExtensionsEnabled) {
+            pendingTrust = null
+            onCloseExtensionSettings()
+        }
+    }
+
+    state.extensionSettings?.let { configuration ->
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+            contentPadding = PaddingValues(start = 48.dp, top = 48.dp, end = 64.dp, bottom = 48.dp),
+            modifier = Modifier.fillMaxSize().focusGroup(),
+        ) {
+            item {
+                ExtensionSettingsPanel(
+                    configuration = configuration,
+                    onClose = onCloseExtensionSettings,
+                    onUpdate = onUpdateExtensionSetting,
+                )
+            }
+        }
+        return
     }
 
     LazyColumn(
@@ -625,6 +670,7 @@ private fun StatusScreen(
                     onEnable = { pendingTrust = plugin },
                     onDisable = { plugin.extensionId?.let(onDisableExtension) },
                     onRevoke = { onRevokeExtension(plugin.packageName, plugin.serviceName) },
+                    onOpenSettings = { plugin.extensionId?.let(onOpenExtensionSettings) },
                 )
             }
         }
@@ -680,6 +726,7 @@ private fun ExtensionPluginCard(
     onEnable: () -> Unit,
     onDisable: () -> Unit,
     onRevoke: () -> Unit,
+    onOpenSettings: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
         Text(
@@ -696,7 +743,12 @@ private fun ExtensionPluginCard(
         Text(plugin.certificateSha256, color = TvColors.TextMuted, fontSize = 12.sp)
         plugin.inspectionError?.let { Text(it, color = TvColors.Danger, fontSize = 14.sp) }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            if (plugin.enabled && plugin.extensionId != null) {
+            if (plugin.enabled && plugin.state == ExtensionState.ENABLED && plugin.extensionId != null) {
+                TvActionButton(
+                    text = stringResource(string.feat_setting_extension_settings),
+                    icon = Icons.Rounded.Extension,
+                    onClick = onOpenSettings,
+                )
                 TvActionButton(
                     text = stringResource(string.feat_setting_extension_disable),
                     icon = Icons.Rounded.Block,
@@ -718,6 +770,197 @@ private fun ExtensionPluginCard(
             }
         }
     }
+}
+
+@Composable
+private fun ExtensionSettingsPanel(
+    configuration: ExtensionSettingsConfiguration,
+    onClose: () -> Unit,
+    onUpdate: (sectionId: String, fieldKey: String, rawValue: String?) -> Unit,
+) {
+    val initialFocusRequester = remember { FocusRequester() }
+    val firstFieldKey = configuration.sections.firstNotNullOfOrNull { section ->
+        section.schema.fields.firstOrNull()?.let { field ->
+            ExtensionSettingKeys.qualified(section.id, field.key)
+        }
+    }
+    val draftValues = remember(configuration) {
+        mutableStateMapOf<String, String>().apply {
+            configuration.sections.forEach { section ->
+                section.schema.fields.forEach { field ->
+                    val key = ExtensionSettingKeys.qualified(section.id, field.key)
+                    if (field.type != ExtensionSettingType.SECRET) {
+                        put(key, configuration.snapshot.values[key].tvPrimitiveContent())
+                    }
+                }
+            }
+        }
+    }
+    LaunchedEffect(configuration.extensionId) {
+        repeat(2) { withFrameNanos { } }
+        initialFocusRequester.requestFocus()
+    }
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(string.feat_setting_extension_settings),
+                color = TvColors.TextPrimary,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            TvActionButton(
+                text = stringResource(android.R.string.cancel),
+                icon = Icons.Rounded.Block,
+                focusRequester = initialFocusRequester.takeIf { firstFieldKey == null },
+                onClick = onClose,
+            )
+        }
+        if (configuration.sections.isEmpty()) {
+            Text(
+                stringResource(string.feat_setting_extension_settings_empty),
+                color = TvColors.TextSecondary,
+            )
+        }
+        configuration.sections.forEach { section ->
+            Text(
+                text = section.title,
+                color = TvColors.TextPrimary,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            section.schema.fields.forEach { field ->
+                val key = ExtensionSettingKeys.qualified(section.id, field.key)
+                TvExtensionSettingControl(
+                    field = field,
+                    rawValue = draftValues[key].orEmpty(),
+                    secretConfigured = key in configuration.snapshot.credentialHandles,
+                    focusRequester = initialFocusRequester.takeIf { key == firstFieldKey },
+                    onDraftChange = { value -> draftValues[key] = value },
+                    onUpdate = { value -> onUpdate(section.id, field.key, value) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TvExtensionSettingControl(
+    field: ExtensionSettingField,
+    rawValue: String,
+    secretConfigured: Boolean,
+    focusRequester: FocusRequester?,
+    onDraftChange: (String) -> Unit,
+    onUpdate: (String?) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = if (field.required) "${field.label} *" else field.label,
+            color = TvColors.TextPrimary,
+            fontSize = 16.sp,
+        )
+        field.description?.let { description ->
+            Text(description, color = TvColors.TextSecondary, fontSize = 14.sp)
+        }
+        when (field.type) {
+            ExtensionSettingType.BOOLEAN -> {
+                TvActionButton(
+                    text = stringResource(
+                        if (rawValue.toBooleanStrictOrNull() == true) {
+                            string.feat_setting_extension_state_enabled
+                        } else {
+                            string.feat_setting_extension_state_disabled
+                        }
+                    ),
+                    icon = Icons.Rounded.CheckCircle,
+                    focusRequester = focusRequester,
+                    onClick = {
+                        onUpdate((rawValue.toBooleanStrictOrNull() != true).toString())
+                    },
+                )
+            }
+
+            ExtensionSettingType.SINGLE_CHOICE -> {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    field.choices.forEach { choice ->
+                        TvActionButton(
+                            text = choice.label,
+                            icon = if (rawValue == choice.value) {
+                                Icons.Rounded.CheckCircle
+                            } else {
+                                Icons.Rounded.Extension
+                            },
+                            focusRequester = focusRequester.takeIf { choice == field.choices.firstOrNull() },
+                            onClick = { onUpdate(choice.value) },
+                        )
+                    }
+                }
+            }
+
+            ExtensionSettingType.TEXT,
+            ExtensionSettingType.NUMBER,
+            ExtensionSettingType.SECRET -> {
+                var focused by remember { mutableStateOf(false) }
+                if (field.type == ExtensionSettingType.SECRET && secretConfigured) {
+                    Text(
+                        stringResource(string.feat_setting_extension_secret_configured),
+                        color = TvColors.TextSecondary,
+                        fontSize = 14.sp,
+                    )
+                }
+                BasicTextField(
+                    value = rawValue,
+                    onValueChange = onDraftChange,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                        .then(focusRequester?.let { Modifier.focusRequester(it) } ?: Modifier)
+                        .onFocusChanged { focused = it.isFocused }
+                        .border(
+                            width = if (focused) 3.dp else 1.dp,
+                            color = if (focused) TvColors.Focus else TvColors.TextMuted,
+                            shape = RoundedCornerShape(10.dp),
+                        )
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    textStyle = TextStyle(
+                        color = TvColors.TextPrimary,
+                        fontSize = 16.sp,
+                    ),
+                    visualTransformation = if (field.type == ExtensionSettingType.SECRET) {
+                        PasswordVisualTransformation()
+                    } else {
+                        VisualTransformation.None
+                    },
+                    singleLine = true,
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    TvActionButton(
+                        text = stringResource(string.feat_setting_extension_setting_save),
+                        icon = Icons.Rounded.CheckCircle,
+                        onClick = { onUpdate(rawValue) },
+                    )
+                    if (rawValue.isNotEmpty() || secretConfigured) {
+                        TvActionButton(
+                            text = stringResource(string.feat_setting_extension_setting_clear),
+                            icon = Icons.Rounded.Block,
+                            onClick = { onUpdate(null) },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun Any?.tvPrimitiveContent(): String = when (this) {
+    is JsonPrimitive -> booleanOrNull?.toString() ?: contentOrNull.orEmpty()
+    else -> ""
 }
 
 @Composable

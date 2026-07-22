@@ -106,6 +106,11 @@
     <string name="feat_setting_extension_state_disabled">Disabled</string>
     <string name="feat_setting_extension_state_incompatible">Incompatible</string>
     <string name="feat_setting_extension_state_unhealthy">Unhealthy (isolated)</string>
+    <string name="feat_setting_extension_settings">Settings</string>
+    <string name="feat_setting_extension_settings_empty">This extension has no configurable settings</string>
+    <string name="feat_setting_extension_secret_configured">Configured; enter a new value to replace it</string>
+    <string name="feat_setting_extension_setting_save">Save</string>
+    <string name="feat_setting_extension_setting_clear">Clear</string>
     <string name="feat_setting_data_source_dropbox" translatable="false">Dropbox</string>
     <string name="feat_setting_placeholder_basic_url">address</string>
     <string name="feat_setting_placeholder_username">username</string>

@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -43,6 +44,7 @@ fun App(
     val playbackState by viewModel.playbackState.collectAsStateWithLifecycle()
     val remoteControlCode by viewModel.remoteControlCode.collectAsStateWithLifecycle()
     val view = LocalView.current
+    val localeTag = LocalConfiguration.current.locales[0].toLanguageTag()
     var destination by remember { mutableStateOf(TvDestination.Home) }
     var surface by remember { mutableStateOf(TvSurface.Browse) }
     val closePlayer = {
@@ -98,6 +100,13 @@ fun App(
                 onEnableExtension = viewModel::enableExtensionPlugin,
                 onDisableExtension = viewModel::disableExtensionPlugin,
                 onRevokeExtension = viewModel::revokeExtensionPlugin,
+                onOpenExtensionSettings = { extensionId ->
+                    viewModel.openExtensionSettings(extensionId, localeTag)
+                },
+                onCloseExtensionSettings = viewModel::closeExtensionSettings,
+                onUpdateExtensionSetting = { sectionId, fieldKey, value ->
+                    viewModel.updateExtensionSetting(sectionId, fieldKey, value, localeTag)
+                },
             )
         }
 

@@ -11,6 +11,9 @@ import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.repository.channel.ChannelRepository
+import com.m3u.data.repository.extension.ExtensionSettingUpdateResult
+import com.m3u.data.repository.extension.ExtensionSettingsConfiguration
+import com.m3u.data.repository.extension.ExtensionSettingsRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.plugin.ExtensionPluginRepository
 import com.m3u.data.repository.plugin.InstalledPlugin
@@ -18,6 +21,7 @@ import com.m3u.data.repository.tv.TvRepository
 import com.m3u.data.service.DPadReactionService
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.PlayerManager
+import com.m3u.extension.api.ExtensionId
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -41,6 +45,7 @@ data class TvUiState(
     val loadingChannels: Boolean = false,
     val externalExtensionsEnabled: Boolean = false,
     val extensionPlugins: List<InstalledPlugin> = emptyList(),
+    val extensionSettings: ExtensionSettingsConfiguration? = null,
 ) {
     val channelCount: Int get() = counts.values.sum()
     val heroChannel: Channel? get() = recent ?: channels.firstOrNull()
@@ -52,6 +57,7 @@ class TvHomeViewModel @Inject constructor(
     private val channelRepository: ChannelRepository,
     private val playerManager: PlayerManager,
     private val extensionPluginRepository: ExtensionPluginRepository,
+    private val extensionSettingsRepository: ExtensionSettingsRepository,
     private val settings: Settings,
     tvRepository: TvRepository,
     dPadReactionService: DPadReactionService
@@ -125,13 +131,64 @@ class TvHomeViewModel @Inject constructor(
     }
 
     fun disableExtensionPlugin(extensionId: String) {
+        if (state.value.extensionSettings?.extensionId?.value == extensionId) {
+            closeExtensionSettings()
+        }
         extensionPluginRepository.disable(extensionId)
         refreshExtensionPlugins()
     }
 
     fun revokeExtensionPlugin(packageName: String, serviceName: String) {
+        val revokedExtensionId = state.value.extensionPlugins
+            .firstOrNull { it.packageName == packageName && it.serviceName == serviceName }
+            ?.extensionId
+        if (state.value.extensionSettings?.extensionId?.value == revokedExtensionId) {
+            closeExtensionSettings()
+        }
         extensionPluginRepository.revoke(packageName, serviceName)
         refreshExtensionPlugins()
+    }
+
+    fun openExtensionSettings(extensionId: String, localeTag: String?) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val configuration = extensionSettingsRepository.configuration(
+                ExtensionId(extensionId),
+                localeTag,
+                TV_SETTINGS_SURFACE,
+            )
+            _state.update { it.copy(extensionSettings = configuration) }
+        }
+    }
+
+    fun closeExtensionSettings() {
+        _state.update { it.copy(extensionSettings = null) }
+    }
+
+    fun updateExtensionSetting(
+        sectionId: String,
+        fieldKey: String,
+        rawValue: String?,
+        localeTag: String?,
+    ) {
+        val extensionId = state.value.extensionSettings?.extensionId ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = extensionSettingsRepository.update(
+                extensionId,
+                sectionId,
+                fieldKey,
+                rawValue,
+                localeTag,
+                TV_SETTINGS_SURFACE,
+            )
+            if (result is ExtensionSettingUpdateResult.Updated) {
+                val configuration = extensionSettingsRepository.configuration(
+                    extensionId,
+                    localeTag,
+                    TV_SETTINGS_SURFACE,
+                )
+                _state.update { it.copy(extensionSettings = configuration) }
+            }
+        }
     }
 
     private fun observeExternalExtensions() {
@@ -226,4 +283,8 @@ class TvHomeViewModel @Inject constructor(
 
     private fun Map<Playlist, Int>.countFor(url: String): Int? =
         entries.firstOrNull { it.key.url == url }?.value
+
+    private companion object {
+        const val TV_SETTINGS_SURFACE = "tv"
+    }
 }

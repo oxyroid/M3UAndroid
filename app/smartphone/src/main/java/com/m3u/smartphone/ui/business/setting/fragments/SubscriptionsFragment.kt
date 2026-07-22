@@ -61,6 +61,7 @@ import com.m3u.core.foundation.architecture.preferences.preferenceOf
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
+import com.m3u.data.repository.extension.ExtensionSettingsConfiguration
 import com.m3u.data.repository.plugin.InstalledPlugin
 import com.m3u.extension.api.ExtensionSettingType
 import com.m3u.extension.api.ExtensionState
@@ -101,11 +102,15 @@ internal fun SubscriptionsFragment(
     epgs: List<Playlist>,
     onDeleteEpgPlaylist: (String) -> Unit,
     extensionPlugins: List<InstalledPlugin>,
+    extensionSettings: ExtensionSettingsConfiguration?,
     subscriptionProviders: List<SubscriptionProviderDescriptor>,
     onRefreshExtensionPlugins: () -> Unit,
     onEnableExtensionPlugin: (String, String) -> Unit,
     onDisableExtensionPlugin: (String) -> Unit,
     onRevokeExtensionPlugin: (String, String) -> Unit,
+    onOpenExtensionSettings: (String) -> Unit,
+    onCloseExtensionSettings: () -> Unit,
+    onUpdateExtensionSetting: (String, String, String?) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
 ) {
@@ -162,10 +167,14 @@ internal fun SubscriptionsFragment(
                 SubscriptionsFragmentPage.EXTENSION_PLUGINS -> {
                     ExtensionPluginsContent(
                         plugins = extensionPlugins,
+                        settings = extensionSettings,
                         onRefresh = onRefreshExtensionPlugins,
                         onEnable = onEnableExtensionPlugin,
                         onDisable = onDisableExtensionPlugin,
                         onRevoke = onRevokeExtensionPlugin,
+                        onOpenSettings = onOpenExtensionSettings,
+                        onCloseSettings = onCloseExtensionSettings,
+                        onUpdateSetting = onUpdateExtensionSetting,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
@@ -184,10 +193,14 @@ internal fun SubscriptionsFragment(
 @Composable
 private fun ExtensionPluginsContent(
     plugins: List<InstalledPlugin>,
+    settings: ExtensionSettingsConfiguration?,
     onRefresh: () -> Unit,
     onEnable: (String, String) -> Unit,
     onDisable: (String) -> Unit,
     onRevoke: (String, String) -> Unit,
+    onOpenSettings: (String) -> Unit,
+    onCloseSettings: () -> Unit,
+    onUpdateSetting: (String, String, String?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var pendingTrust by remember { mutableStateOf<InstalledPlugin?>(null) }
@@ -240,7 +253,10 @@ private fun ExtensionPluginsContent(
                     )
                 }
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (plugin.enabled && extensionId != null) {
+                    if (plugin.enabled && plugin.state == ExtensionState.ENABLED && extensionId != null) {
+                        FilledTonalButton(onClick = { onOpenSettings(extensionId) }) {
+                            Text(stringResource(string.feat_setting_extension_settings))
+                        }
                         FilledTonalButton(onClick = { onDisable(extensionId) }) {
                             Text(stringResource(string.feat_setting_extension_disable))
                         }
@@ -288,6 +304,13 @@ private fun ExtensionPluginsContent(
                     Text(stringResource(android.R.string.cancel))
                 }
             },
+        )
+    }
+    settings?.let { configuration ->
+        ExtensionSettingsDialog(
+            configuration = configuration,
+            onDismiss = onCloseSettings,
+            onUpdate = onUpdateSetting,
         )
     }
 }

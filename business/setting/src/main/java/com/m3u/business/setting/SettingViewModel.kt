@@ -26,6 +26,9 @@ import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.parser.xtream.XtreamInput
 import com.m3u.data.repository.channel.ChannelRepository
+import com.m3u.data.repository.extension.ExtensionSettingUpdateResult
+import com.m3u.data.repository.extension.ExtensionSettingsConfiguration
+import com.m3u.data.repository.extension.ExtensionSettingsRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.provider.ProviderSubscriptionRequest
 import com.m3u.data.repository.provider.SubscriptionProviderRepository
@@ -39,6 +42,7 @@ import com.m3u.data.worker.RestoreWorker
 import com.m3u.data.worker.SubscriptionWorker
 import com.m3u.extension.api.subscription.EmbyCompatibleProviderKinds
 import com.m3u.extension.api.subscription.ProviderKind
+import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.ExtensionSettingType
 import com.m3u.extension.api.subscription.SubscriptionProviderSettingKeys
 import com.m3u.extension.api.subscription.SubscriptionProviderDescriptor
@@ -50,6 +54,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -66,6 +71,7 @@ class SettingViewModel @Inject constructor(
     private val channelRepository: ChannelRepository,
     private val subscriptionProviderRepository: SubscriptionProviderRepository,
     private val extensionPluginRepository: ExtensionPluginRepository,
+    private val extensionSettingsRepository: ExtensionSettingsRepository,
     private val workManager: WorkManager,
     private val settings: Settings,
     private val messager: Messager,
@@ -83,12 +89,20 @@ class SettingViewModel @Inject constructor(
     private val _extensionPlugins = MutableStateFlow<List<InstalledPlugin>>(emptyList())
     val extensionPlugins: StateFlow<List<InstalledPlugin>> = _extensionPlugins
 
+    private val _extensionSettings = MutableStateFlow<ExtensionSettingsConfiguration?>(null)
+    val extensionSettings: StateFlow<ExtensionSettingsConfiguration?> = _extensionSettings
+
     private val _subscriptionProviders = MutableStateFlow<List<SubscriptionProviderDescriptor>>(emptyList())
     val subscriptionProviders: StateFlow<List<SubscriptionProviderDescriptor>> = _subscriptionProviders
 
     init {
         refreshCodecPack()
         refreshExtensionPlugins()
+        viewModelScope.launch {
+            settings.flowOf(PreferencesKeys.EXTERNAL_EXTENSIONS).collect { enabled ->
+                if (!enabled) closeExtensionSettings()
+            }
+        }
     }
 
     fun refreshSubscriptionProviders() {
@@ -117,13 +131,66 @@ class SettingViewModel @Inject constructor(
     }
 
     fun disableExtensionPlugin(extensionId: String) {
+        if (_extensionSettings.value?.extensionId?.value == extensionId) {
+            closeExtensionSettings()
+        }
         extensionPluginRepository.disable(extensionId)
         refreshExtensionPlugins()
     }
 
     fun revokeExtensionPlugin(packageName: String, serviceName: String) {
+        val revokedExtensionId = _extensionPlugins.value
+            .firstOrNull { it.packageName == packageName && it.serviceName == serviceName }
+            ?.extensionId
+        if (_extensionSettings.value?.extensionId?.value == revokedExtensionId) {
+            closeExtensionSettings()
+        }
         extensionPluginRepository.revoke(packageName, serviceName)
         refreshExtensionPlugins()
+    }
+
+    fun openExtensionSettings(extensionId: String, localeTag: String?) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _extensionSettings.value = extensionSettingsRepository.configuration(
+                ExtensionId(extensionId),
+                localeTag,
+                PHONE_SETTINGS_SURFACE,
+            )
+        }
+    }
+
+    fun closeExtensionSettings() {
+        _extensionSettings.value = null
+    }
+
+    fun updateExtensionSetting(
+        sectionId: String,
+        fieldKey: String,
+        rawValue: String?,
+        localeTag: String?,
+    ) {
+        val extensionId = _extensionSettings.value?.extensionId ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            when (
+                val result = extensionSettingsRepository.update(
+                    extensionId,
+                    sectionId,
+                    fieldKey,
+                    rawValue,
+                    localeTag,
+                    PHONE_SETTINGS_SURFACE,
+                )
+            ) {
+                is ExtensionSettingUpdateResult.Updated -> {
+                    _extensionSettings.value = extensionSettingsRepository.configuration(
+                        extensionId,
+                        localeTag,
+                        PHONE_SETTINGS_SURFACE,
+                    )
+                }
+                is ExtensionSettingUpdateResult.Rejected -> messager.emit(result.reason)
+            }
+        }
     }
 
     val epgs: StateFlow<List<Playlist>> = playlistRepository
@@ -635,4 +702,8 @@ class SettingViewModel @Inject constructor(
     val versionCode: Int = publisher.versionCode
 
     val properties = SettingProperties()
+
+    private companion object {
+        const val PHONE_SETTINGS_SURFACE = "phone"
+    }
 }

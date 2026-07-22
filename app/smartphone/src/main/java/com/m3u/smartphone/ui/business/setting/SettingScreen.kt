@@ -19,6 +19,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -36,6 +37,7 @@ import com.m3u.core.foundation.util.basic.title
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.ColorScheme
 import com.m3u.data.database.model.Playlist
+import com.m3u.data.repository.extension.ExtensionSettingsConfiguration
 import com.m3u.data.repository.plugin.InstalledPlugin
 import com.m3u.extension.api.subscription.SubscriptionProviderDescriptor
 import com.m3u.i18n.R.string
@@ -70,7 +72,9 @@ fun SettingRoute(
     val backingUpOrRestoring by viewModel.backingUpOrRestoring.collectAsStateWithLifecycle()
     val codecPackState by viewModel.codecPackState.collectAsStateWithLifecycle()
     val extensionPlugins by viewModel.extensionPlugins.collectAsStateWithLifecycle()
+    val extensionSettings by viewModel.extensionSettings.collectAsStateWithLifecycle()
     val subscriptionProviders by viewModel.subscriptionProviders.collectAsStateWithLifecycle()
+    val localeTag = LocalConfiguration.current.locales[0].toLanguageTag()
 
     val sheetState = rememberModalBottomSheetState()
     var colorScheme: ColorScheme? by remember { mutableStateOf(null) }
@@ -122,11 +126,19 @@ fun SettingRoute(
             onDeleteCodecPack = viewModel::deleteCodecPack,
             onRefreshCodecPack = viewModel::refreshCodecPack,
             extensionPlugins = extensionPlugins,
+            extensionSettings = extensionSettings,
             subscriptionProviders = subscriptionProviders,
             onRefreshExtensionPlugins = viewModel::refreshExtensionPlugins,
             onEnableExtensionPlugin = viewModel::enableExtensionPlugin,
             onDisableExtensionPlugin = viewModel::disableExtensionPlugin,
             onRevokeExtensionPlugin = viewModel::revokeExtensionPlugin,
+            onOpenExtensionSettings = { extensionId ->
+                viewModel.openExtensionSettings(extensionId, localeTag)
+            },
+            onCloseExtensionSettings = viewModel::closeExtensionSettings,
+            onUpdateExtensionSetting = { sectionId, fieldKey, value ->
+                viewModel.updateExtensionSetting(sectionId, fieldKey, value, localeTag)
+            },
             modifier = modifier.fillMaxSize(),
             contentPadding = contentPadding,
         )
@@ -168,11 +180,15 @@ private fun SettingScreen(
     onDeleteCodecPack: () -> Unit,
     onRefreshCodecPack: () -> Unit,
     extensionPlugins: List<InstalledPlugin>,
+    extensionSettings: ExtensionSettingsConfiguration?,
     subscriptionProviders: List<SubscriptionProviderDescriptor>,
     onRefreshExtensionPlugins: () -> Unit,
     onEnableExtensionPlugin: (String, String) -> Unit,
     onDisableExtensionPlugin: (String) -> Unit,
     onRevokeExtensionPlugin: (String, String) -> Unit,
+    onOpenExtensionSettings: (String) -> Unit,
+    onCloseExtensionSettings: () -> Unit,
+    onUpdateExtensionSetting: (String, String, String?) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
 ) {
@@ -282,11 +298,15 @@ private fun SettingScreen(
                         epgs = epgs,
                         onDeleteEpgPlaylist = onDeleteEpgPlaylist,
                         extensionPlugins = extensionPlugins,
+                        extensionSettings = extensionSettings,
                         subscriptionProviders = subscriptionProviders,
                         onRefreshExtensionPlugins = onRefreshExtensionPlugins,
                         onEnableExtensionPlugin = onEnableExtensionPlugin,
                         onDisableExtensionPlugin = onDisableExtensionPlugin,
                         onRevokeExtensionPlugin = onRevokeExtensionPlugin,
+                        onOpenExtensionSettings = onOpenExtensionSettings,
+                        onCloseExtensionSettings = onCloseExtensionSettings,
+                        onUpdateExtensionSetting = onUpdateExtensionSetting,
                         contentPadding = contentPadding,
                         modifier = Modifier.fillMaxSize()
                     )
