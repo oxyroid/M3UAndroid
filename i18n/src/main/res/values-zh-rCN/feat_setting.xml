@@ -146,4 +146,9 @@
     <string name="feat_setting_extension_data_cleared">插件数据已清除</string>
     <string name="feat_setting_extension_export_diagnostics">导出诊断</string>
     <string name="feat_setting_extension_diagnostics_share_title">分享插件诊断</string>
+    <string name="feat_setting_extension_reauthorize">重新授权</string>
+    <string name="feat_setting_extension_capability_required">必要</string>
+    <string name="feat_setting_extension_capability_optional">可选</string>
+    <string name="feat_setting_extension_capability_granted">已授予</string>
+    <string name="feat_setting_extension_capability_not_granted">未授予</string>
 </resources>

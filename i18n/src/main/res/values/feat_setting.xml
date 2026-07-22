@@ -117,6 +117,11 @@
     <string name="feat_setting_extension_data_cleared">Extension data cleared</string>
     <string name="feat_setting_extension_export_diagnostics">Export diagnostics</string>
     <string name="feat_setting_extension_diagnostics_share_title">Share extension diagnostics</string>
+    <string name="feat_setting_extension_reauthorize">Reauthorize</string>
+    <string name="feat_setting_extension_capability_required">required</string>
+    <string name="feat_setting_extension_capability_optional">optional</string>
+    <string name="feat_setting_extension_capability_granted">granted</string>
+    <string name="feat_setting_extension_capability_not_granted">not granted</string>
     <string name="feat_setting_data_source_dropbox" translatable="false">Dropbox</string>
     <string name="feat_setting_placeholder_basic_url">address</string>
     <string name="feat_setting_placeholder_username">username</string>

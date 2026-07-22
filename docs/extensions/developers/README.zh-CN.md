@@ -12,6 +12,8 @@
 
 即使升级包签名相同，也不能静默扩大权限。宿主会取旧 grant 与新 manifest 的交集；新增必要能力会阻止自动恢复并要求用户重新确认，新增可选能力在重新授权前保持未授予状态。
 
+授权确认会列出每个 capability 标识、必要/可选属性、当前授权状态和插件给出的理由。重新授权会再次核对固定签名者与稳定 extension 身份，再更新 grant；不会替换插件，也不会把插件代码加载进宿主进程。
+
 控制面使用少量 AIDL，JSON 数据通过 `ParcelFileDescriptor` 流传输。流中承载 `SerializedExtensionEnvelope` 或 `SerializedExtensionResult`，避免 Binder 事务大小上限。传输层提供 handshake、manifest、invoke、cancel 和 health 操作。
 
 ## 模块与最小 service

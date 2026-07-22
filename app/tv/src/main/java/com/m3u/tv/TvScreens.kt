@@ -94,6 +94,7 @@ fun TvBrowsePane(
     onPlayRecent: () -> Unit,
     onExternalExtensionsEnabled: (Boolean) -> Unit,
     onEnableExtension: (String, String) -> Unit,
+    onReauthorizeExtension: (String, String) -> Unit,
     onDisableExtension: (String) -> Unit,
     onRevokeExtension: (String, String) -> Unit,
     onClearExtensionData: (String) -> Unit,
@@ -137,6 +138,7 @@ fun TvBrowsePane(
                     state = state,
                     onExternalExtensionsEnabled = onExternalExtensionsEnabled,
                     onEnableExtension = onEnableExtension,
+                    onReauthorizeExtension = onReauthorizeExtension,
                     onDisableExtension = onDisableExtension,
                     onRevokeExtension = onRevokeExtension,
                     onClearExtensionData = onClearExtensionData,
@@ -562,6 +564,7 @@ private fun StatusScreen(
     state: TvUiState,
     onExternalExtensionsEnabled: (Boolean) -> Unit,
     onEnableExtension: (String, String) -> Unit,
+    onReauthorizeExtension: (String, String) -> Unit,
     onDisableExtension: (String) -> Unit,
     onRevokeExtension: (String, String) -> Unit,
     onClearExtensionData: (String) -> Unit,
@@ -571,6 +574,7 @@ private fun StatusScreen(
     onUpdateExtensionSetting: (String, String, String?) -> Unit,
 ) {
     var pendingTrust by remember { mutableStateOf<InstalledPlugin?>(null) }
+    var pendingReauthorization by remember { mutableStateOf(false) }
     var pendingClear by remember { mutableStateOf<InstalledPlugin?>(null) }
     val trustConfirmationFocusRequester = remember { FocusRequester() }
 
@@ -583,6 +587,7 @@ private fun StatusScreen(
     LaunchedEffect(state.externalExtensionsEnabled) {
         if (!state.externalExtensionsEnabled) {
             pendingTrust = null
+            pendingReauthorization = false
             pendingClear = null
             onCloseExtensionSettings()
         }
@@ -689,6 +694,10 @@ private fun StatusScreen(
                 ExtensionPluginCard(
                     plugin = plugin,
                     onEnable = { pendingTrust = plugin },
+                    onReauthorize = {
+                        pendingReauthorization = true
+                        pendingTrust = plugin
+                    },
                     onDisable = { plugin.extensionId?.let(onDisableExtension) },
                     onRevoke = { onRevokeExtension(plugin.packageName, plugin.serviceName) },
                     onOpenSettings = { plugin.extensionId?.let(onOpenExtensionSettings) },
@@ -716,7 +725,7 @@ private fun StatusScreen(
                             plugin.displayName.orEmpty(),
                             plugin.developer.orEmpty(),
                             plugin.version.orEmpty(),
-                            plugin.requestedCapabilities.sorted().joinToString().ifEmpty { "—" },
+                            tvExtensionCapabilitySummary(plugin),
                         ),
                         color = TvColors.TextSecondary,
                         fontSize = 14.sp,
@@ -729,14 +738,23 @@ private fun StatusScreen(
                             icon = Icons.Rounded.CheckCircle,
                             focusRequester = trustConfirmationFocusRequester,
                             onClick = {
+                                val reauthorize = pendingReauthorization
                                 pendingTrust = null
-                                onEnableExtension(plugin.packageName, plugin.serviceName)
+                                pendingReauthorization = false
+                                if (reauthorize) {
+                                    onReauthorizeExtension(plugin.packageName, plugin.serviceName)
+                                } else {
+                                    onEnableExtension(plugin.packageName, plugin.serviceName)
+                                }
                             },
                         )
                         TvActionButton(
                             text = stringResource(android.R.string.cancel),
                             icon = Icons.Rounded.Block,
-                            onClick = { pendingTrust = null },
+                            onClick = {
+                                pendingTrust = null
+                                pendingReauthorization = false
+                            },
                         )
                     }
                 }
@@ -749,6 +767,7 @@ private fun StatusScreen(
 private fun ExtensionPluginCard(
     plugin: InstalledPlugin,
     onEnable: () -> Unit,
+    onReauthorize: () -> Unit,
     onDisable: () -> Unit,
     onRevoke: () -> Unit,
     onOpenSettings: () -> Unit,
@@ -798,6 +817,13 @@ private fun ExtensionPluginCard(
                     onClick = onRevoke,
                 )
             }
+            if (plugin.trusted && !plugin.signatureChanged) {
+                TvActionButton(
+                    text = stringResource(string.feat_setting_extension_reauthorize),
+                    icon = Icons.Rounded.CheckCircle,
+                    onClick = onReauthorize,
+                )
+            }
             if (plugin.extensionId != null) {
                 TvActionButton(
                     text = stringResource(string.feat_setting_extension_export_diagnostics),
@@ -812,6 +838,19 @@ private fun ExtensionPluginCard(
             }
         }
     }
+}
+
+@Composable
+private fun tvExtensionCapabilitySummary(plugin: InstalledPlugin): String {
+    val required = stringResource(string.feat_setting_extension_capability_required)
+    val optional = stringResource(string.feat_setting_extension_capability_optional)
+    val granted = stringResource(string.feat_setting_extension_capability_granted)
+    val notGranted = stringResource(string.feat_setting_extension_capability_not_granted)
+    return plugin.capabilityPermissions.joinToString("\n") { permission ->
+        val requirement = if (permission.required) required else optional
+        val grant = if (permission.granted) granted else notGranted
+        "${permission.id} ($requirement, $grant) — ${permission.reason}"
+    }.ifEmpty { "—" }
 }
 
 @Composable

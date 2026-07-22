@@ -117,6 +117,7 @@ fun App(
                 },
                 onExternalExtensionsEnabled = viewModel::setExternalExtensionsEnabled,
                 onEnableExtension = viewModel::enableExtensionPlugin,
+                onReauthorizeExtension = viewModel::reauthorizeExtensionPlugin,
                 onDisableExtension = viewModel::disableExtensionPlugin,
                 onRevokeExtension = viewModel::revokeExtensionPlugin,
                 onClearExtensionData = viewModel::clearExtensionData,

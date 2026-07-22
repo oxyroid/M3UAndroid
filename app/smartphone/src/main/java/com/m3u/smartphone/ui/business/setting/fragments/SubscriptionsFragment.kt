@@ -106,6 +106,7 @@ internal fun SubscriptionsFragment(
     subscriptionProviders: List<SubscriptionProviderDescriptor>,
     onRefreshExtensionPlugins: () -> Unit,
     onEnableExtensionPlugin: (String, String) -> Unit,
+    onReauthorizeExtensionPlugin: (String, String) -> Unit,
     onDisableExtensionPlugin: (String) -> Unit,
     onRevokeExtensionPlugin: (String, String) -> Unit,
     onClearExtensionData: (String) -> Unit,
@@ -172,6 +173,7 @@ internal fun SubscriptionsFragment(
                         settings = extensionSettings,
                         onRefresh = onRefreshExtensionPlugins,
                         onEnable = onEnableExtensionPlugin,
+                        onReauthorize = onReauthorizeExtensionPlugin,
                         onDisable = onDisableExtensionPlugin,
                         onRevoke = onRevokeExtensionPlugin,
                         onClearData = onClearExtensionData,
@@ -200,6 +202,7 @@ private fun ExtensionPluginsContent(
     settings: ExtensionSettingsConfiguration?,
     onRefresh: () -> Unit,
     onEnable: (String, String) -> Unit,
+    onReauthorize: (String, String) -> Unit,
     onDisable: (String) -> Unit,
     onRevoke: (String, String) -> Unit,
     onClearData: (String) -> Unit,
@@ -210,6 +213,7 @@ private fun ExtensionPluginsContent(
     modifier: Modifier = Modifier,
 ) {
     var pendingTrust by remember { mutableStateOf<InstalledPlugin?>(null) }
+    var pendingReauthorization by remember { mutableStateOf(false) }
     var pendingClear by remember { mutableStateOf<InstalledPlugin?>(null) }
     LazyColumn(
         modifier = modifier,
@@ -277,6 +281,14 @@ private fun ExtensionPluginsContent(
                             Text(stringResource(string.feat_setting_extension_revoke))
                         }
                     }
+                    if (plugin.trusted && !plugin.signatureChanged) {
+                        TextButton(onClick = {
+                            pendingReauthorization = true
+                            pendingTrust = plugin
+                        }) {
+                            Text(stringResource(string.feat_setting_extension_reauthorize))
+                        }
+                    }
                     if (extensionId != null) {
                         TextButton(onClick = { onExportDiagnostics(extensionId) }) {
                             Text(stringResource(string.feat_setting_extension_export_diagnostics))
@@ -302,20 +314,29 @@ private fun ExtensionPluginsContent(
                         plugin.displayName.orEmpty(),
                         plugin.developer.orEmpty(),
                         plugin.version.orEmpty(),
-                        plugin.requestedCapabilities.sorted().joinToString().ifEmpty { "—" },
+                        extensionCapabilitySummary(plugin),
                     )
                 )
             },
             confirmButton = {
                 TextButton(
                     onClick = {
+                        val reauthorize = pendingReauthorization
                         pendingTrust = null
-                        onEnable(plugin.packageName, plugin.serviceName)
+                        pendingReauthorization = false
+                        if (reauthorize) {
+                            onReauthorize(plugin.packageName, plugin.serviceName)
+                        } else {
+                            onEnable(plugin.packageName, plugin.serviceName)
+                        }
                     }
                 ) { Text(stringResource(string.feat_setting_extension_enable)) }
             },
             dismissButton = {
-                TextButton(onClick = { pendingTrust = null }) {
+                TextButton(onClick = {
+                    pendingTrust = null
+                    pendingReauthorization = false
+                }) {
                     Text(stringResource(android.R.string.cancel))
                 }
             },
@@ -346,6 +367,19 @@ private fun ExtensionPluginsContent(
             },
         )
     }
+}
+
+@Composable
+private fun extensionCapabilitySummary(plugin: InstalledPlugin): String {
+    val required = stringResource(string.feat_setting_extension_capability_required)
+    val optional = stringResource(string.feat_setting_extension_capability_optional)
+    val granted = stringResource(string.feat_setting_extension_capability_granted)
+    val notGranted = stringResource(string.feat_setting_extension_capability_not_granted)
+    return plugin.capabilityPermissions.joinToString("\n") { permission ->
+        val requirement = if (permission.required) required else optional
+        val grant = if (permission.granted) granted else notGranted
+        "${permission.id} ($requirement, $grant) — ${permission.reason}"
+    }.ifEmpty { "—" }
 }
 
 @Composable

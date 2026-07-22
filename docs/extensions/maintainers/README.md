@@ -52,6 +52,8 @@ First enable is a security decision. Phone and TV must show package, developer, 
 
 Restore must never call the user-authorization path. Reconcile saved grants against the current manifest: drop removed capabilities, leave new optional capabilities ungranted, and disable restoration when any new required capability is missing. A component that changes its extension ID also requires explicit reauthorization.
 
+Explicit reauthorization may grant the currently requested supported capabilities only after the UI shows required/optional status, current grant state, and each reason. It must recheck the pinned certificate and extension ID. For an already registered same-signer extension, update the trust grants in place so reauthorization does not race a duplicate runtime registration; preserve a disabled plugin's disabled state.
+
 ## Credentials and network
 
 The host owns secrets. `CredentialVault` stores AES-GCM ciphertext protected by Android Keystore and exposes opaque handles. Database and backup payloads must never contain plaintext tokens. If a key is missing or restored ciphertext cannot be decrypted, remove the unusable credential and mark the provider for reauthentication.

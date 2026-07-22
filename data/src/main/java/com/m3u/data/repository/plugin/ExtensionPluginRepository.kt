@@ -6,6 +6,7 @@ import com.m3u.extension.api.ExtensionState
 interface ExtensionPluginRepository {
     suspend fun installedPlugins(): List<InstalledPlugin>
     suspend fun enable(packageName: String, serviceName: String): PluginEnableResult
+    suspend fun reauthorize(packageName: String, serviceName: String): PluginEnableResult
     fun disable(extensionId: String): Boolean
     fun revoke(packageName: String, serviceName: String)
     suspend fun clearData(extensionId: String): PluginDataClearResult
@@ -33,7 +34,15 @@ data class InstalledPlugin(
     val developer: String?,
     val requestedCapabilities: Set<String>,
     val grantedCapabilities: Set<String>,
+    val capabilityPermissions: List<PluginCapabilityPermission>,
     val inspectionError: String?,
+)
+
+data class PluginCapabilityPermission(
+    val id: String,
+    val reason: String,
+    val required: Boolean,
+    val granted: Boolean,
 )
 
 sealed interface PluginEnableResult {

@@ -52,6 +52,8 @@ API major 不一致即不兼容。同 major 内按 manifest 声明协商 hook sc
 
 恢复流程不得调用用户授权路径。必须用当前 manifest 重新核对已保存 grant：删除不再申请的能力、新增可选能力保持未授予，缺少任何新增必要能力时停止恢复并禁用。component 改变 extension ID 时同样必须显式重新授权。
 
+显式重新授权只能在 UI 展示必要/可选属性、当前 grant 状态和每项理由后，授予当前申请且宿主支持的 capability。流程必须再次校验固定证书与 extension ID。对于已注册的同签名插件，应原位更新 trust grant，避免与重复 runtime 注册竞态；原本禁用的插件必须保持禁用。
+
 ## 凭据与网络
 
 secret 归宿主所有。`CredentialVault` 使用 Android Keystore 保护的 AES-GCM 密文，只暴露不透明 handle。数据库和备份中不得出现明文 token。密钥丢失或恢复后的密文无法解密时，应删除不可用凭据，并将 provider 标记为需要重新认证。

@@ -135,6 +135,16 @@ class SettingViewModel @Inject constructor(
         }
     }
 
+    fun reauthorizeExtensionPlugin(packageName: String, serviceName: String) {
+        viewModelScope.launch {
+            when (val result = extensionPluginRepository.reauthorize(packageName, serviceName)) {
+                is PluginEnableResult.Enabled -> Unit
+                is PluginEnableResult.Rejected -> messager.emit(result.reason)
+            }
+            refreshExtensionPlugins()
+        }
+    }
+
     fun disableExtensionPlugin(extensionId: String) {
         if (_extensionSettings.value?.extensionId?.value == extensionId) {
             closeExtensionSettings()

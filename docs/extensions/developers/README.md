@@ -12,6 +12,8 @@ On first enable, the host shows the package, extension name, developer metadata,
 
 A same-signer upgrade does not silently expand authority. Previously granted capabilities are intersected with the new manifest. Adding a required capability disables automatic restoration and requires a new user confirmation; adding an optional capability leaves it ungranted until the user reauthorizes the extension.
 
+The authorization confirmation lists every capability identifier, whether it is required or optional, its current grant state, and the extension-provided reason. Reauthorization rechecks the pinned signer and stable extension identity, then updates grants without replacing or loading plugin code in the host process.
+
 The host and extension exchange a small AIDL control plane and JSON through `ParcelFileDescriptor`. The stream carries a `SerializedExtensionEnvelope` or `SerializedExtensionResult`, avoiding Binder's transaction-size ceiling. Handshake, manifest, invoke, cancel, and health are transport operations.
 
 ## Modules and a minimal service

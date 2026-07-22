@@ -94,6 +94,9 @@ internal class ExtensionPluginRepositoryImpl @Inject constructor(
             val runtimeState = extensionId?.let { id ->
                 runtime.registeredExtensions().firstOrNull { it.manifest.id.value == id }?.state
             }
+            val grantedCapabilities = trustStore.extensionId(service)
+                ?.let(trustStore::grantedCapabilities)
+                .orEmpty()
             InstalledPlugin(
                 packageName = service.packageName,
                 serviceName = service.serviceName,
@@ -113,8 +116,17 @@ internal class ExtensionPluginRepositoryImpl @Inject constructor(
                 requestedCapabilities = manifest?.capabilities
                     ?.mapTo(mutableSetOf()) { request -> request.capability.id }
                     ?: trustStore.extensionId(service)?.let(trustStore::grantedCapabilities).orEmpty(),
-                grantedCapabilities = trustStore.extensionId(service)
-                    ?.let(trustStore::grantedCapabilities)
+                grantedCapabilities = grantedCapabilities,
+                capabilityPermissions = manifest?.capabilities
+                    ?.sortedBy { request -> request.capability.id }
+                    ?.map { request ->
+                        PluginCapabilityPermission(
+                            id = request.capability.id,
+                            reason = request.reason,
+                            required = request.required,
+                            granted = request.capability.id in grantedCapabilities,
+                        )
+                    }
                     .orEmpty(),
                 inspectionError = inspection?.exceptionOrNull()?.let {
                     "Extension manifest is incompatible or unavailable"
@@ -127,6 +139,52 @@ internal class ExtensionPluginRepositoryImpl @Inject constructor(
         lifecycleMutex.withLock {
             enableLocked(packageName, serviceName, reauthorizeCapabilities = true)
         }
+
+    override suspend fun reauthorize(
+        packageName: String,
+        serviceName: String,
+    ): PluginEnableResult = lifecycleMutex.withLock {
+        if (!settings[PreferencesKeys.EXTERNAL_EXTENSIONS]) {
+            return@withLock PluginEnableResult.Rejected("External extensions are disabled")
+        }
+        val service = discovery.discover().singleOrNull {
+            it.packageName == packageName && it.serviceName == serviceName
+        } ?: return@withLock PluginEnableResult.Rejected("Extension service is not installed")
+        if (!trustStore.isTrusted(service)) {
+            return@withLock PluginEnableResult.Rejected("Extension identity is not trusted")
+        }
+        val previousExtensionId = trustStore.extensionId(service)
+            ?: return@withLock PluginEnableResult.Rejected("Extension identity is unavailable")
+        val manifest = runtime.registeredExtensions()
+            .singleOrNull { extension -> extension.manifest.id.value == previousExtensionId }
+            ?.manifest
+            ?: inspect(service).getOrElse { error ->
+                return@withLock PluginEnableResult.Rejected(
+                    "Extension inspection failed (${error.javaClass.simpleName})"
+                )
+            }
+        if (manifest.id.value != previousExtensionId) {
+            return@withLock PluginEnableResult.Rejected(
+                "Extension identity changed and requires trust reset"
+            )
+        }
+        val wasEnabled = trustStore.isEnabled(service)
+        val granted = manifest.capabilities.mapNotNullTo(mutableSetOf()) { request ->
+            request.capability.id.takeIf {
+                request.capability in ExtensionContractCatalog.SupportedCapabilities
+            }
+        }
+        trustStore.trust(
+            service = service,
+            extensionId = manifest.id.value,
+            capabilities = granted,
+            displayName = manifest.displayName,
+            version = manifest.extensionVersion.toString(),
+            developer = manifest.metadata["developer"],
+        )
+        if (!wasEnabled) trustStore.setEnabled(service, false)
+        PluginEnableResult.Enabled(manifest)
+    }
 
     private suspend fun enableLocked(
         packageName: String,

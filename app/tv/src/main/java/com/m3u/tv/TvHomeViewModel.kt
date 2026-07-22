@@ -134,6 +134,13 @@ class TvHomeViewModel @Inject constructor(
         }
     }
 
+    fun reauthorizeExtensionPlugin(packageName: String, serviceName: String) {
+        viewModelScope.launch {
+            extensionPluginRepository.reauthorize(packageName, serviceName)
+            refreshExtensionPlugins()
+        }
+    }
+
     fun disableExtensionPlugin(extensionId: String) {
         if (state.value.extensionSettings?.extensionId?.value == extensionId) {
             closeExtensionSettings()
