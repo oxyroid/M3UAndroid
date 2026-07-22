@@ -1,8 +1,13 @@
 package com.m3u.extension.api
 
+import com.m3u.extension.api.security.CredentialHandle
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.doubleOrNull
 
 @Serializable
 data class ExtensionSemanticVersion(
@@ -73,6 +78,33 @@ data class ExtensionSettingField(
         require(type == ExtensionSettingType.SINGLE_CHOICE || choices.isEmpty()) {
             "Choices are only valid for single-choice fields"
         }
+        require(type != ExtensionSettingType.SINGLE_CHOICE || choices.isNotEmpty()) {
+            "Single-choice fields must declare at least one choice"
+        }
+        require(choices.map(ExtensionSettingChoice::value).distinct().size == choices.size) {
+            "Setting choice values must be unique"
+        }
+        require(type != ExtensionSettingType.SECRET || defaultValue == null) {
+            "Secret settings cannot declare a plaintext default"
+        }
+        require(defaultValue == null || defaultValue.isValidDefaultFor(type, choices)) {
+            "Setting default does not match its declared type"
+        }
+    }
+}
+
+private fun JsonElement.isValidDefaultFor(
+    type: ExtensionSettingType,
+    choices: List<ExtensionSettingChoice>,
+): Boolean {
+    val primitive = this as? JsonPrimitive ?: return false
+    return when (type) {
+        ExtensionSettingType.TEXT -> primitive.isString
+        ExtensionSettingType.SECRET -> false
+        ExtensionSettingType.BOOLEAN -> primitive.booleanOrNull != null
+        ExtensionSettingType.NUMBER -> primitive.doubleOrNull != null
+        ExtensionSettingType.SINGLE_CHOICE -> primitive.contentOrNull in
+            choices.map(ExtensionSettingChoice::value)
     }
 }
 
@@ -90,6 +122,34 @@ data class ExtensionSettingSchema(
 }
 
 @Serializable
+data class ExtensionSettingsSnapshot(
+    val schemaVersions: Map<String, Int> = emptyMap(),
+    val values: Map<String, JsonElement> = emptyMap(),
+    val credentialHandles: Map<String, CredentialHandle> = emptyMap(),
+) {
+    init {
+        require(schemaVersions.values.all { version -> version > 0 }) {
+            "Settings schema versions must be positive"
+        }
+        require(values.keys.intersect(credentialHandles.keys).isEmpty()) {
+            "A setting cannot contain both a literal value and a credential handle"
+        }
+    }
+}
+
+object ExtensionSettingKeys {
+    fun qualified(sectionId: String, fieldKey: String): String {
+        require(sectionId.matches(Regex("[a-z][a-z0-9._-]*"))) {
+            "Invalid settings section id: $sectionId"
+        }
+        require(fieldKey.matches(Regex("[a-z][a-z0-9._-]*"))) {
+            "Invalid setting field key: $fieldKey"
+        }
+        return "$sectionId/$fieldKey"
+    }
+}
+
+@Serializable
 data class SerializedExtensionEnvelope(
     val apiVersion: ExtensionApiVersion,
     val invocationId: InvocationId,
@@ -97,6 +157,7 @@ data class SerializedExtensionEnvelope(
     val hook: Hook,
     val schemaVersion: Int,
     val payload: JsonElement,
+    val settings: ExtensionSettingsSnapshot = ExtensionSettingsSnapshot(),
 )
 
 @Serializable
@@ -135,6 +196,7 @@ data class ExtensionCallContext(
     val invocationId: InvocationId,
     val extensionId: ExtensionId,
     val grantedCapabilities: Set<Capability>,
+    val settings: ExtensionSettingsSnapshot = ExtensionSettingsSnapshot(),
 )
 
 sealed interface HookResult<out Response : ExtensionPayload> {

@@ -11,10 +11,17 @@ import com.m3u.extension.api.ExtensionHookDeclaration
 import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.ExtensionManifest
 import com.m3u.extension.api.ExtensionProgramme
+import com.m3u.extension.api.ExtensionSettingChoice
+import com.m3u.extension.api.ExtensionSettingField
+import com.m3u.extension.api.ExtensionSettingSchema
+import com.m3u.extension.api.ExtensionSettingSection
+import com.m3u.extension.api.ExtensionSettingsSnapshot
+import com.m3u.extension.api.ExtensionSettingType
 import com.m3u.extension.api.ExtensionSemanticVersion
 import com.m3u.extension.api.InvocationId
 import com.m3u.extension.api.MetadataEnrichmentResult
 import com.m3u.extension.api.EpgRefreshResult
+import com.m3u.extension.api.SettingsSchemaResult
 import com.m3u.extension.api.SerializedExtensionEnvelope
 import com.m3u.extension.api.SerializedExtensionResult
 import com.m3u.extension.api.HostHookSpecs
@@ -30,6 +37,7 @@ import com.m3u.extension.sdk.android.ExtensionService
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
@@ -76,6 +84,11 @@ private object ReferenceTransport : ExtensionTransport {
                 schemaVersion = HostHookSpecs.EpgRefresh.schemaVersion,
                 requiredCapabilities = setOf(ExtensionCapabilityIds.EpgRead),
             ),
+            ExtensionHookDeclaration(
+                hook = HostHookSpecs.SettingsSchema.hook,
+                schemaVersion = HostHookSpecs.SettingsSchema.schemaVersion,
+                requiredCapabilities = setOf(ExtensionCapabilityIds.SettingsContribute),
+            ),
         ),
         capabilities = setOf(
             ExtensionCapabilityRequest(
@@ -93,6 +106,26 @@ private object ReferenceTransport : ExtensionTransport {
             ExtensionCapabilityRequest(
                 ExtensionCapabilityIds.EpgRead,
                 "Exercise host-owned EPG import",
+            ),
+            ExtensionCapabilityRequest(
+                ExtensionCapabilityIds.SettingsContribute,
+                "Exercise declarative extension settings",
+            ),
+        ),
+        settingsSchema = ExtensionSettingSchema(
+            version = 1,
+            fields = listOf(
+                ExtensionSettingField(
+                    key = "enabled",
+                    label = "Enabled",
+                    type = ExtensionSettingType.BOOLEAN,
+                    defaultValue = JsonPrimitive(true),
+                ),
+                ExtensionSettingField(
+                    key = "api-key",
+                    label = "API key",
+                    type = ExtensionSettingType.SECRET,
+                ),
             ),
         ),
         metadata = mapOf("developer" to "M3U Conformance Suite"),
@@ -141,7 +174,7 @@ private object ReferenceTransport : ExtensionTransport {
                 )
                 json.encodeToJsonElement(
                     HostHookSpecs.BackgroundTask.responseSerializer,
-                    runBackgroundTask(request.invocationId, input),
+                    runBackgroundTask(request.invocationId, input, request.settings),
                 )
             }
             HostHookSpecs.MetadataEnrichment.hook -> {
@@ -183,6 +216,32 @@ private object ReferenceTransport : ExtensionTransport {
                     ),
                 )
             }
+            HostHookSpecs.SettingsSchema.hook -> json.encodeToJsonElement(
+                HostHookSpecs.SettingsSchema.responseSerializer,
+                SettingsSchemaResult(
+                    sections = listOf(
+                        ExtensionSettingSection(
+                            id = "playback",
+                            title = "Playback",
+                            schema = ExtensionSettingSchema(
+                                version = 1,
+                                fields = listOf(
+                                    ExtensionSettingField(
+                                        key = "quality",
+                                        label = "Quality",
+                                        type = ExtensionSettingType.SINGLE_CHOICE,
+                                        choices = listOf(
+                                            ExtensionSettingChoice("auto", "Automatic"),
+                                            ExtensionSettingChoice("direct", "Direct play"),
+                                        ),
+                                        defaultValue = JsonPrimitive("auto"),
+                                    )
+                                ),
+                            ),
+                        )
+                    )
+                ),
+            )
             else -> error("Unsupported reference hook: ${request.hook}")
         }
         return SerializedExtensionResult(
@@ -197,7 +256,18 @@ private object ReferenceTransport : ExtensionTransport {
     private suspend fun runBackgroundTask(
         invocationId: InvocationId,
         request: BackgroundTaskRequest,
+        settings: ExtensionSettingsSnapshot,
     ): BackgroundTaskResult {
+        if (request.taskId == "settings-status") {
+            return BackgroundTaskResult(
+                mapOf(
+                    "enabled" to settings.values["manifest/enabled"].toString(),
+                    "hasApiKey" to settings.credentialHandles
+                        .containsKey("manifest/api-key")
+                        .toString(),
+                )
+            )
+        }
         if (request.taskId == "cancel-status") {
             return BackgroundTaskResult(mapOf("cancelled" to (lastCancelled.get() != null).toString()))
         }

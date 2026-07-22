@@ -13,7 +13,12 @@ data class ExtensionSettingSection(
     val id: String,
     val title: String,
     val schema: ExtensionSettingSchema,
-)
+) {
+    init {
+        require(id.matches(Regex("[a-z][a-z0-9._-]*"))) { "Invalid settings section id: $id" }
+        require(title.isNotBlank()) { "Settings section title must not be blank" }
+    }
+}
 
 @Serializable
 data class SettingsSchemaResult(

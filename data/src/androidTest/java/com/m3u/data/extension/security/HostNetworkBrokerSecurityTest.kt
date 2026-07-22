@@ -49,7 +49,7 @@ class HostNetworkBrokerSecurityTest {
                     playlistUrl = PLAYLIST_URL,
                 )
             )
-            val vault = AndroidKeystoreCredentialVault()
+            val vault = AndroidKeystoreCredentialVault(context)
             val credential = vault.encrypt(ACCOUNT_ID, "secret-token")
             providerDao.insertOrReplace(credential)
             database.playlistDao().insertOrReplace(
@@ -178,7 +178,7 @@ class HostNetworkBrokerSecurityTest {
             val broker = HostNetworkBrokerImpl(
                 client,
                 database.providerDao(),
-                AndroidKeystoreCredentialVault(),
+                AndroidKeystoreCredentialVault(context),
             )
 
             assertFails { broker.execute(EXTENSION_ID, ACCOUNT_ID, request("$BASE_URL/login")) }

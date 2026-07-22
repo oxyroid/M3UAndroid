@@ -79,7 +79,7 @@ provider refresh 必须进入 WorkManager，具备联网约束、取消、重试
 
 目前已有生产宿主链路：内置 Emby/Jellyfin 发现、校验、刷新、播放解析、close、provider 持久化、后台刷新与播放 session 恢复。外部 APK 的发现、信任、启禁用、签名固定、handshake、invoke、cancel、health、broker 代理、进程恢复和后台任务已在开发者开关下实现。手机端搜索贡献使用宿主持有的 stable-reference 映射。通用 provider 刷新以受限分批方式调用 metadata 与 EPG 贡献者；metadata 只能通过窄 DAO 更新标题/分类，EPG 经引用、时间和大小校验后替换到插件专属的宿主数据源。
 
-metadata 与 EPG importer 尚未覆盖所有旧 M3U/Xtream 导入路径。设置 hook 已经类型化，但完整的外部设置 renderer、值存储与调用上下文仍在建设中。在这些链路和测试落地前，不得称其为生产接入。
+metadata 与 EPG importer 尚未覆盖所有旧 M3U/Xtream 导入路径。类型化设置的持久化与调用上下文已经接通：值按 section 隔离，schema version 对账会删除过期数据，secret 字段加密保存且调用 envelope 中只有不透明 handle。手机与 TV 设置 renderer 仍在建设中。在这些 UI 链路和测试落地前，不得称其为生产接入。
 
 ## 发布门槛
 

@@ -59,7 +59,7 @@
 - 搜索 provider；
 - 后台任务。
 
-“已有契约”不等于“所有宿主入口都已接通”。订阅和播放 hook 已为内置 Emby/Jellyfin provider 提供生产调用链。外部插件的生命周期、传输、取消、健康检查和后台任务已接通。搜索贡献已接入手机端：只有当结果中的不透明 `stableReference` 能映射到宿主已有且未隐藏的频道时才会展示。provider 刷新现在也会调用元数据与 EPG 贡献者：元数据 patch 只能更新宿主批准的标题/分类字段，EPG 结果经过校验后进入宿主隔离的数据源。这两个 importer 目前用于通用 provider playlist，尚未覆盖所有旧 M3U/Xtream 导入路径。设置契约已经类型化，但完整的外部设置存储/UI 链路尚未达到生产标准。
+“已有契约”不等于“所有宿主入口都已接通”。订阅和播放 hook 已为内置 Emby/Jellyfin provider 提供生产调用链。外部插件的生命周期、传输、取消、健康检查和后台任务已接通。搜索贡献已接入手机端：只有当结果中的不透明 `stableReference` 能映射到宿主已有且未隐藏的频道时才会展示。provider 刷新现在也会调用元数据与 EPG 贡献者：元数据 patch 只能更新宿主批准的标题/分类字段，EPG 结果经过校验后进入宿主隔离的数据源。这两个 importer 目前用于通用 provider playlist，尚未覆盖所有旧 M3U/Xtream 导入路径。设置契约、持久化和调用上下文已经类型化并接通，手机与 TV renderer 仍在建设中。
 
 不要返回数据库实体、播放器对象、`DataSource`、密码或 token。插件只返回声明式数据和稳定的不透明引用；校验、持久化、导入和播放对象构造都归宿主所有。
 
@@ -68,6 +68,8 @@
 能力由插件在 manifest 中申请，再由宿主策略和用户授权共同决定。声明能力不等于获得能力。hook 只能使用自身声明且宿主批准的能力。
 
 外部插件不能获取明文凭据。凭据以不透明 handle 表示。网络请求必须经过宿主 broker：只允许访问账号 base origin 或额外获批的 origin；移除插件自行提供的认证 header；注入宿主持有的 secret；限制重定向、超时、响应大小和并发；返回脱敏数据。登录 capture rule 可以从 header 或 JSON pointer 捕获值并写入宿主 vault，只把 handle 返回插件。
+
+设置项使用限定的 `section/field` key。`SECRET` 字段不得声明明文默认值。宿主用 Android Keystore 支持的 AES-GCM 存储加密值，并且只在 `ExtensionSettingsSnapshot` 中传递它的 `CredentialHandle`。section 的 schema version 改变时，宿主会丢弃该 section 的值并删除已保存 secret。插件必须把值或 handle 缺失视为正常状态，并且只使用宿主快照中已经解析的默认值。
 
 必须读取原始密码/token、自行加密凭据或绕过 broker 的插件与本平台不兼容。
 

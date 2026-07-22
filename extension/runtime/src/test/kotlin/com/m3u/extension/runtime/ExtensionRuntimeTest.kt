@@ -17,16 +17,19 @@ import com.m3u.extension.api.ExtensionManifest
 import com.m3u.extension.api.ExtensionPayload
 import com.m3u.extension.api.ExtensionSemanticVersion
 import com.m3u.extension.api.ExtensionState
+import com.m3u.extension.api.ExtensionSettingsSnapshot
 import com.m3u.extension.api.HookResult
 import com.m3u.extension.api.HookSpec
 import com.m3u.extension.api.InvocationId
 import com.m3u.extension.api.SerializedExtensionEnvelope
 import com.m3u.extension.api.SerializedExtensionResult
+import com.m3u.extension.api.security.CredentialHandle
 import com.m3u.extension.api.ExtensionEntrypoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlin.test.Test
@@ -155,13 +158,21 @@ class ExtensionRuntimeTest {
 
     @Test
     fun `serialized transport conforms to typed invocation behavior`() = runBlocking {
-        val runtime = runtime()
+        val settings = ExtensionSettingsSnapshot(
+            schemaVersions = mapOf("general" to 2),
+            values = mapOf("general.enabled" to JsonPrimitive(true)),
+            credentialHandles = mapOf(
+                "general.password" to CredentialHandle("extension-secret:opaque"),
+            ),
+        )
+        val runtime = runtime(settingsProvider = ExtensionSettingsProvider { settings })
         val manifest = entrypoint().manifest
         val json = Json
         val transport = object : ExtensionTransport {
             override val manifest = manifest
 
             override suspend fun invoke(request: SerializedExtensionEnvelope): SerializedExtensionResult {
+                assertEquals(settings, request.settings)
                 val payload = json.decodeFromJsonElement(TEST_SPEC.requestSerializer, request.payload)
                 return SerializedExtensionResult(
                     invocationId = request.invocationId,
@@ -185,6 +196,46 @@ class ExtensionRuntimeTest {
         assertEquals(
             TestPayload("resolved-transport"),
             assertIs<HookResult.Success<TestPayload>>(result.outcome).payload,
+        )
+    }
+
+    @Test
+    fun `runtime passes host settings to built-in handler context`() = runBlocking {
+        val settings = ExtensionSettingsSnapshot(
+            schemaVersions = mapOf("manifest" to 1),
+            values = mapOf("manifest.enabled" to JsonPrimitive(false)),
+        )
+        var received: ExtensionSettingsSnapshot? = null
+        val runtime = runtime(settingsProvider = ExtensionSettingsProvider { settings })
+        val entrypoint = entrypoint { context, payload ->
+            received = context.settings
+            HookResult.Success(payload)
+        }
+        runtime.register(entrypoint)
+
+        runtime.invoke(entrypoint.manifest.id, TEST_SPEC, TestPayload("request"))
+
+        assertEquals(settings, received)
+    }
+
+    @Test
+    fun `settings count toward invocation payload limit`() = runBlocking {
+        val runtime = runtime(
+            invocationPolicy = InvocationPolicy(maxPayloadBytes = 128),
+            settingsProvider = ExtensionSettingsProvider {
+                ExtensionSettingsSnapshot(
+                    values = mapOf("manifest.value" to JsonPrimitive("x".repeat(256))),
+                )
+            },
+        )
+        val entrypoint = entrypoint()
+        runtime.register(entrypoint)
+
+        val result = runtime.invoke(entrypoint.manifest.id, TEST_SPEC, TestPayload("small"))
+
+        assertEquals(
+            ExtensionErrorCodes.PayloadTooLarge,
+            assertIs<HookResult.Failure>(result.outcome).error.code,
         )
     }
 
@@ -232,10 +283,12 @@ class ExtensionRuntimeTest {
     private fun runtime(
         capabilityPolicy: CapabilityPolicy = DeclaredCapabilityPolicy,
         invocationPolicy: InvocationPolicy = InvocationPolicy(),
+        settingsProvider: ExtensionSettingsProvider = EmptyExtensionSettingsProvider,
     ) = ExtensionRuntime(
         hostApiVersion = ExtensionApiVersions.Current,
         invocationIdFactory = InvocationIdFactory { InvocationId("invocation-1") },
         capabilityPolicy = capabilityPolicy,
+        settingsProvider = settingsProvider,
         invocationPolicy = invocationPolicy,
     )
 

@@ -11,6 +11,7 @@ import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.ExtensionManifest
 import com.m3u.extension.api.ExtensionPayload
 import com.m3u.extension.api.ExtensionState
+import com.m3u.extension.api.ExtensionSettingsSnapshot
 import com.m3u.extension.api.Hook
 import com.m3u.extension.api.HookResult
 import com.m3u.extension.api.HookSpec
@@ -61,6 +62,15 @@ object DeclaredCapabilityPolicy : CapabilityPolicy {
         manifest.capabilities.mapTo(mutableSetOf()) { request -> request.capability }
 }
 
+fun interface ExtensionSettingsProvider {
+    fun snapshot(manifest: ExtensionManifest): ExtensionSettingsSnapshot
+}
+
+object EmptyExtensionSettingsProvider : ExtensionSettingsProvider {
+    override fun snapshot(manifest: ExtensionManifest): ExtensionSettingsSnapshot =
+        ExtensionSettingsSnapshot()
+}
+
 interface ExtensionCatalog {
     fun registeredExtensions(): List<RegisteredExtension>
     fun extensionsSupporting(hook: Hook): List<RegisteredExtension>
@@ -82,6 +92,7 @@ class ExtensionRuntime(
     private val hostApiVersion: ExtensionApiVersion,
     private val invocationIdFactory: InvocationIdFactory = UuidInvocationIdFactory(),
     private val capabilityPolicy: CapabilityPolicy = DeclaredCapabilityPolicy,
+    private val settingsProvider: ExtensionSettingsProvider = EmptyExtensionSettingsProvider,
     private val invocationPolicy: InvocationPolicy = InvocationPolicy(),
     private val json: Json = Json {
         ignoreUnknownKeys = true
@@ -224,11 +235,23 @@ class ExtensionRuntime(
                 mapOf("missingCapabilities" to missing.joinToString(transform = Capability::id)),
             )
         }
-        val payloadSize = json.encodeToString(spec.requestSerializer, request).encodeToByteArray().size
+        val settings = runCatching { settingsProvider.snapshot(registration.manifest) }
+            .getOrElse {
+                return failure(
+                    invocationId,
+                    extensionId,
+                    spec,
+                    ExtensionErrorCodes.InvocationFailed,
+                    "Extension settings are unavailable",
+                    true,
+                )
+            }
+        val payloadSize = json.encodeToString(spec.requestSerializer, request).encodeToByteArray().size +
+            json.encodeToString(ExtensionSettingsSnapshot.serializer(), settings).encodeToByteArray().size
         if (payloadSize > invocationPolicy.maxPayloadBytes) {
             return failure(invocationId, extensionId, spec, ExtensionErrorCodes.PayloadTooLarge, "Invocation payload exceeds the host limit", false)
         }
-        val context = ExtensionCallContext(invocationId, extensionId, granted)
+        val context = ExtensionCallContext(invocationId, extensionId, granted, settings)
         val rawOutcome = try {
             withTimeout(invocationPolicy.timeoutMillis) {
                 registration.semaphore.withPermit {
@@ -392,6 +415,7 @@ class ExtensionRuntime(
                 hook = spec.hook,
                 schemaVersion = spec.schemaVersion,
                 payload = json.encodeToJsonElement(spec.requestSerializer, request),
+                settings = context.settings,
             )
             val result = try {
                 currentTransport.invoke(envelope)

@@ -5,12 +5,17 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.m3u.extension.api.ExtensionApiVersions
 import com.m3u.extension.api.HookResult
 import com.m3u.extension.api.BackgroundTaskRequest
+import com.m3u.extension.api.BackgroundTaskResult
 import com.m3u.extension.api.HostHookSpecs
 import com.m3u.extension.api.ChannelMetadataSnapshot
 import com.m3u.extension.api.MetadataEnrichmentRequest
 import com.m3u.extension.api.MetadataEnrichmentResult
 import com.m3u.extension.api.EpgRefreshRequest
 import com.m3u.extension.api.EpgRefreshResult
+import com.m3u.extension.api.ExtensionSettingsSnapshot
+import com.m3u.extension.api.SettingsSchemaRequest
+import com.m3u.extension.api.SettingsSchemaResult
+import com.m3u.extension.api.security.CredentialHandle
 import com.m3u.extension.api.SearchProviderRequest
 import com.m3u.extension.api.SearchProviderResult
 import com.m3u.extension.api.subscription.SubscriptionHookSpecs
@@ -18,6 +23,7 @@ import com.m3u.extension.api.subscription.SubscriptionProviderDiscoverRequest
 import com.m3u.extension.runtime.ExtensionRegistrationResult
 import com.m3u.extension.runtime.ExtensionRuntime
 import com.m3u.extension.runtime.InvocationPolicy
+import com.m3u.extension.runtime.ExtensionSettingsProvider
 import com.m3u.extension.transport.android.AndroidBoundExtensionTransport
 import com.m3u.extension.transport.android.AndroidExtensionDiscovery
 import com.m3u.extension.transport.android.ipc.IExtensionHostBridge
@@ -28,6 +34,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Test
+import kotlinx.serialization.json.JsonPrimitive
 
 class ExternalExtensionIpcTest {
     @Test
@@ -46,6 +53,15 @@ class ExternalExtensionIpcTest {
             val runtime = ExtensionRuntime(
                 ExtensionApiVersions.Current,
                 invocationPolicy = InvocationPolicy(maxPayloadBytes = 2_000_000),
+                settingsProvider = ExtensionSettingsProvider {
+                    ExtensionSettingsSnapshot(
+                        schemaVersions = mapOf("manifest" to 1),
+                        values = mapOf("manifest/enabled" to JsonPrimitive(false)),
+                        credentialHandles = mapOf(
+                            "manifest/api-key" to CredentialHandle("extension-secret:test"),
+                        ),
+                    )
+                },
             )
             assertTrue(runtime.register(transport) is ExtensionRegistrationResult.Registered)
 
@@ -99,6 +115,25 @@ class ExternalExtensionIpcTest {
             assertEquals("channel-42", epg.programmes.single().channelReference)
             assertEquals("Reference programme", epg.programmes.single().title)
 
+            val settingsResult = runtime.invoke(
+                extensionId = transport.manifest.id,
+                spec = HostHookSpecs.SettingsSchema,
+                request = SettingsSchemaRequest(localeTag = "en-US", surface = "phone"),
+            )
+            val settings = (settingsResult.outcome as HookResult.Success<*>).payload as
+                SettingsSchemaResult
+            assertEquals("playback", settings.sections.single().id)
+
+            val settingsStatus = runtime.invoke(
+                extensionId = transport.manifest.id,
+                spec = HostHookSpecs.BackgroundTask,
+                request = BackgroundTaskRequest("settings-status"),
+            )
+            val settingsOutput = (settingsStatus.outcome as HookResult.Success<*>).payload as
+                BackgroundTaskResult
+            assertEquals("false", settingsOutput.output["enabled"])
+            assertEquals("true", settingsOutput.output["hasApiKey"])
+
             val slowInvocation = async {
                 runtime.invoke(
                     extensionId = transport.manifest.id,
@@ -116,7 +151,7 @@ class ExternalExtensionIpcTest {
                 request = BackgroundTaskRequest("cancel-status"),
             )
             val status = (cancelStatus.outcome as HookResult.Success<*>).payload as
-                com.m3u.extension.api.BackgroundTaskResult
+                BackgroundTaskResult
             assertEquals("true", status.output["cancelled"])
         } finally {
             transport.close()

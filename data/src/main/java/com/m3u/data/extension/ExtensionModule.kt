@@ -5,10 +5,14 @@ import com.m3u.data.extension.emby.EmbyCompatibleProvider
 import com.m3u.data.extension.emby.OkHttpEmbyCompatibleClient
 import com.m3u.data.extension.security.AndroidKeystoreCredentialVault
 import com.m3u.data.extension.security.CredentialVault
+import com.m3u.data.extension.security.ExtensionSecretStore
 import com.m3u.data.extension.security.HostNetworkBrokerImpl
 import com.m3u.data.repository.extension.ExtensionContributionRepository
 import com.m3u.data.repository.extension.ExtensionContributionRepositoryImpl
 import com.m3u.data.repository.extension.ExtensionContributionScheduler
+import com.m3u.data.repository.extension.ExtensionSettingStore
+import com.m3u.data.repository.extension.ExtensionSettingsRepository
+import com.m3u.data.repository.extension.ExtensionSettingsRepositoryImpl
 import com.m3u.data.repository.extension.WorkManagerExtensionContributionScheduler
 import com.m3u.data.repository.plugin.ExtensionPluginRepository
 import com.m3u.data.repository.plugin.ExtensionPluginRepositoryImpl
@@ -19,6 +23,7 @@ import com.m3u.extension.api.security.HostNetworkBroker
 import com.m3u.extension.runtime.CapabilityPolicy
 import com.m3u.extension.runtime.ExtensionRegistrationResult
 import com.m3u.extension.runtime.ExtensionRuntime
+import com.m3u.extension.runtime.ExtensionSettingsProvider
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -37,6 +42,18 @@ internal abstract class ExtensionBindingsModule {
 
     @Binds
     @Singleton
+    abstract fun bindExtensionSettingsProvider(
+        store: ExtensionSettingStore,
+    ): ExtensionSettingsProvider
+
+    @Binds
+    @Singleton
+    abstract fun bindExtensionSettingsRepository(
+        repository: ExtensionSettingsRepositoryImpl,
+    ): ExtensionSettingsRepository
+
+    @Binds
+    @Singleton
     abstract fun bindExtensionContributionRepository(
         repository: ExtensionContributionRepositoryImpl,
     ): ExtensionContributionRepository
@@ -52,6 +69,12 @@ internal abstract class ExtensionBindingsModule {
     abstract fun bindCredentialVault(
         vault: AndroidKeystoreCredentialVault,
     ): CredentialVault
+
+    @Binds
+    @Singleton
+    abstract fun bindExtensionSecretStore(
+        vault: AndroidKeystoreCredentialVault,
+    ): ExtensionSecretStore
 
     @Binds
     @Singleton
@@ -92,6 +115,7 @@ internal object ExtensionRuntimeModule {
     fun provideExtensionRuntime(
         provider: EmbyCompatibleProvider,
         trustStore: com.m3u.extension.transport.android.ExtensionTrustStore,
+        settingsProvider: ExtensionSettingsProvider,
     ): ExtensionRuntime = ExtensionRuntime(
         hostApiVersion = ExtensionApiVersions.Current,
         capabilityPolicy = CapabilityPolicy { manifest, _ ->
@@ -104,6 +128,7 @@ internal object ExtensionRuntimeModule {
                 request.capability.takeIf { it.id in grantedIds }
             }
         },
+        settingsProvider = settingsProvider,
     ).apply {
         val registration = register(provider)
         check(registration is ExtensionRegistrationResult.Registered) {

@@ -59,7 +59,7 @@ The typed catalog currently defines:
 - search provider query;
 - background task execution.
 
-Host integration is intentionally narrower than the catalog. Subscription and playback hooks have production host call sites for the built-in Emby/Jellyfin provider. External plugin lifecycle, transport, cancellation, health, and background task execution are connected. Search contributions are connected on the smartphone surface: an item is displayed only when its opaque `stableReference` resolves to an existing, non-hidden host channel. Provider refresh also invokes metadata and EPG contributors: metadata patches can update only host-approved title/category fields, while EPG results are validated and imported into isolated host-owned sources. These two importers currently run for generic provider playlists; integration with every legacy M3U/Xtream import path is still in progress. Settings contracts are typed, but the complete external settings storage/UI path is not yet production-ready.
+Host integration is intentionally narrower than the catalog. Subscription and playback hooks have production host call sites for the built-in Emby/Jellyfin provider. External plugin lifecycle, transport, cancellation, health, and background task execution are connected. Search contributions are connected on the smartphone surface: an item is displayed only when its opaque `stableReference` resolves to an existing, non-hidden host channel. Provider refresh also invokes metadata and EPG contributors: metadata patches can update only host-approved title/category fields, while EPG results are validated and imported into isolated host-owned sources. These two importers currently run for generic provider playlists; integration with every legacy M3U/Xtream import path is still in progress. Settings contracts, persistence, and invocation context are typed and connected; phone and TV renderers are still in progress.
 
 Never return a database entity, player object, `DataSource`, password, or token. Return declarative data and stable opaque references; the host owns validation, persistence, import, and playback construction.
 
@@ -68,6 +68,8 @@ Never return a database entity, player object, `DataSource`, password, or token.
 Capabilities are requested in the manifest and granted by host policy plus user approval. Declaring a capability does not grant it. A hook can run only with the capabilities declared for it and approved by the host.
 
 External extensions must not receive plaintext credentials. Credentials are represented by opaque handles. Network access goes through the host broker, which restricts requests to the account base origin or separately approved origins, strips extension-supplied authentication headers, injects host-held secrets, limits redirects, time, response size, and concurrency, and returns redacted data. Login capture rules may store a header or JSON-pointer value in the host vault and return only a handle.
+
+Settings use qualified `section/field` keys. A `SECRET` field must not declare a plaintext default. The host encrypts its value with Android Keystore-backed AES-GCM storage and includes only its `CredentialHandle` in `ExtensionSettingsSnapshot`. Schema-version changes discard values in that section and delete its stored secrets. Plugins must treat missing values and handles as normal and apply manifest defaults only through the host-provided snapshot.
 
 An extension that must read raw passwords or tokens, manage its own credential encryption, or bypass the broker is incompatible with this platform.
 

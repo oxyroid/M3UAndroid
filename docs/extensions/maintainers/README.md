@@ -79,7 +79,7 @@ Provider refresh belongs in WorkManager with network constraints, cancellation, 
 
 Production host paths currently exist for built-in Emby/Jellyfin discovery, validation, refresh, playback resolution, close, provider persistence, background refresh, and playback-session recovery. External APK discovery, trust, enable/disable, signer pinning, handshake, invocation, cancellation, health, broker mediation, process restoration, and background tasks are implemented behind the developer feature. Smartphone search contributions use host-owned stable-reference resolution. Generic provider refresh invokes metadata and EPG contributors in bounded batches; metadata can update only title/category through a narrow DAO query, and EPG is replaced in extension-specific host sources after reference/time/size validation.
 
-Metadata and EPG importers are not yet connected to every legacy M3U/Xtream ingestion path. Typed settings hooks exist, but the complete external settings renderer, value storage, and invocation context remain work in progress. Do not describe those incomplete paths as production integrations until their call sites and tests land.
+Metadata and EPG importers are not yet connected to every legacy M3U/Xtream ingestion path. Typed settings persistence and invocation context are connected: values are namespaced by section, schema-version reconciliation removes stale data, and secret fields are encrypted while only opaque handles enter invocation envelopes. Phone and TV settings renderers remain in progress. Do not describe those incomplete UI paths as production integrations until their call sites and tests land.
 
 ## Release gates
 
