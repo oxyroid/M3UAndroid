@@ -4,11 +4,16 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.Player
+import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
+import com.m3u.core.foundation.architecture.preferences.Settings
+import com.m3u.core.foundation.architecture.preferences.set
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
+import com.m3u.data.repository.plugin.ExtensionPluginRepository
+import com.m3u.data.repository.plugin.InstalledPlugin
 import com.m3u.data.repository.tv.TvRepository
 import com.m3u.data.service.DPadReactionService
 import com.m3u.data.service.MediaCommand
@@ -21,6 +26,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -32,7 +38,9 @@ data class TvUiState(
     val channels: List<Channel> = emptyList(),
     val favorites: List<Channel> = emptyList(),
     val recent: Channel? = null,
-    val loadingChannels: Boolean = false
+    val loadingChannels: Boolean = false,
+    val externalExtensionsEnabled: Boolean = false,
+    val extensionPlugins: List<InstalledPlugin> = emptyList(),
 ) {
     val channelCount: Int get() = counts.values.sum()
     val heroChannel: Channel? get() = recent ?: channels.firstOrNull()
@@ -43,6 +51,8 @@ class TvHomeViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val channelRepository: ChannelRepository,
     private val playerManager: PlayerManager,
+    private val extensionPluginRepository: ExtensionPluginRepository,
+    private val settings: Settings,
     tvRepository: TvRepository,
     dPadReactionService: DPadReactionService
 ) : ViewModel() {
@@ -61,6 +71,7 @@ class TvHomeViewModel @Inject constructor(
         observePlaylists()
         observeFavorites()
         observeRecent()
+        observeExternalExtensions()
     }
 
     fun selectPlaylist(playlist: Playlist) {
@@ -100,6 +111,45 @@ class TvHomeViewModel @Inject constructor(
 
     fun releasePlayer() {
         playerManager.release()
+    }
+
+    fun setExternalExtensionsEnabled(enabled: Boolean) {
+        viewModelScope.launch { settings[PreferencesKeys.EXTERNAL_EXTENSIONS] = enabled }
+    }
+
+    fun enableExtensionPlugin(packageName: String, serviceName: String) {
+        viewModelScope.launch {
+            extensionPluginRepository.enable(packageName, serviceName)
+            refreshExtensionPlugins()
+        }
+    }
+
+    fun disableExtensionPlugin(extensionId: String) {
+        extensionPluginRepository.disable(extensionId)
+        refreshExtensionPlugins()
+    }
+
+    fun revokeExtensionPlugin(packageName: String, serviceName: String) {
+        extensionPluginRepository.revoke(packageName, serviceName)
+        refreshExtensionPlugins()
+    }
+
+    private fun observeExternalExtensions() {
+        viewModelScope.launch {
+            settings.data
+                .map { preferences -> preferences[PreferencesKeys.EXTERNAL_EXTENSIONS] ?: false }
+                .collect { enabled ->
+                    _state.update { it.copy(externalExtensionsEnabled = enabled) }
+                    refreshExtensionPlugins()
+                }
+        }
+    }
+
+    private fun refreshExtensionPlugins() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val plugins = extensionPluginRepository.installedPlugins()
+            _state.update { it.copy(extensionPlugins = plugins) }
+        }
     }
 
     private fun observePlaylists() {

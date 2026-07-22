@@ -15,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,7 +37,7 @@ class TvRepositoryImpl @Inject constructor(
     private val tvApi: TvApiDelegate,
     @param:ApplicationContext private val context: Context
 ) : TvRepository() {
-    private val coroutineScope = CoroutineScope(SupervisorJob())
+    private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val isTelevision: Boolean
         get() {
             val mode = context.resources.configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
@@ -58,28 +59,37 @@ class TvRepositoryImpl @Inject constructor(
     }
 
     override fun broadcastOnTv() {
-        val serverPort = debugServerPort() ?: Utils.findPort()
-        timber.d("broadcastOnTv start, port=$serverPort")
         closeBroadcastOnTv()
-        httpServer.start(serverPort)
         broadcastOnTvJob = coroutineScope.launch {
-            while (true) {
-                val pin = Utils.createPin()
-                val host = Utils.getLocalHostAddress() ?: continue
-                timber.d("broadcast pin=$pin, host=$host, port=$serverPort")
-                nsdDeviceManager
-                    .broadcast(
-                        port = serverPort,
-                        pin = pin,
-                        metadata = mapOf(
-                            NsdDeviceManager.META_DATA_PORT to serverPort,
-                            NsdDeviceManager.META_DATA_HOST to host
-                        )
-                    )
-                    .collect { registered ->
-                        timber.d("broadcast registration changed: registered=${registered != null}")
-                        _broadcastCodeOnTv.value = if (registered != null) pin else null
+            val serverPort = debugServerPort() ?: Utils.findPort()
+            timber.d("broadcastOnTv start, port=$serverPort")
+            httpServer.start(serverPort)
+            try {
+                while (true) {
+                    val pin = Utils.createPin()
+                    val host = Utils.getLocalHostAddress()
+                    if (host == null) {
+                        delay(HOST_RETRY_DELAY_MILLIS)
+                        continue
                     }
+                    timber.d("broadcast pin=$pin, host=$host, port=$serverPort")
+                    nsdDeviceManager
+                        .broadcast(
+                            port = serverPort,
+                            pin = pin,
+                            metadata = mapOf(
+                                NsdDeviceManager.META_DATA_PORT to serverPort,
+                                NsdDeviceManager.META_DATA_HOST to host
+                            )
+                        )
+                        .collect { registered ->
+                            timber.d("broadcast registration changed: registered=${registered != null}")
+                            _broadcastCodeOnTv.value = if (registered != null) pin else null
+                        }
+                }
+            } finally {
+                _broadcastCodeOnTv.value = null
+                httpServer.stop()
             }
         }
     }
@@ -89,7 +99,6 @@ class TvRepositoryImpl @Inject constructor(
         _broadcastCodeOnTv.value = null
         broadcastOnTvJob?.cancel()
         broadcastOnTvJob = null
-        httpServer.stop()
     }
 
     override fun connectToTv(
@@ -173,5 +182,6 @@ class TvRepositoryImpl @Inject constructor(
         const val DEBUG_TV_HOST = "m3u_remote_control_tv_host"
         const val DEBUG_TV_PORT = "m3u_remote_control_tv_port"
         const val DEBUG_SERVER_PORT = "m3u_remote_control_server_port"
+        const val HOST_RETRY_DELAY_MILLIS = 1_000L
     }
 }

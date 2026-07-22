@@ -267,7 +267,7 @@ private fun ExtensionPluginsContent(
                     stringResource(
                         string.feat_setting_extension_confirm_body,
                         plugin.packageName,
-                        plugin.certificateSha256,
+                        plugin.certificateSha256.chunked(16).joinToString(" "),
                         plugin.displayName.orEmpty(),
                         plugin.developer.orEmpty(),
                         plugin.version.orEmpty(),

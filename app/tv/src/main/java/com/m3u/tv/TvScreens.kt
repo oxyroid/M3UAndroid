@@ -28,6 +28,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
 import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.Extension
+import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.VideoLibrary
@@ -59,6 +62,7 @@ import androidx.compose.ui.unit.sp
 import com.m3u.core.foundation.util.basic.title
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
+import com.m3u.data.repository.plugin.InstalledPlugin
 import com.m3u.i18n.R.string
 import kotlinx.coroutines.yield
 
@@ -70,14 +74,18 @@ fun TvBrowsePane(
     onPlaylist: (Playlist) -> Unit,
     onRefresh: () -> Unit,
     onPlay: (Channel) -> Unit,
-    onPlayRecent: () -> Unit
+    onPlayRecent: () -> Unit,
+    onExternalExtensionsEnabled: (Boolean) -> Unit,
+    onEnableExtension: (String, String) -> Unit,
+    onDisableExtension: (String) -> Unit,
+    onRevokeExtension: (String, String) -> Unit,
 ) {
     Box(
         modifier = Modifier
             .fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        if (state.playlists.isEmpty()) {
+        if (state.playlists.isEmpty() && destination != TvDestination.Status) {
             EmptyLibraryScreen()
         } else {
             when (destination) {
@@ -103,7 +111,13 @@ fun TvBrowsePane(
                     onPlay = onPlay
                 )
 
-                TvDestination.Status -> StatusScreen(state)
+                TvDestination.Status -> StatusScreen(
+                    state = state,
+                    onExternalExtensionsEnabled = onExternalExtensionsEnabled,
+                    onEnableExtension = onEnableExtension,
+                    onDisableExtension = onDisableExtension,
+                    onRevokeExtension = onRevokeExtension,
+                )
             }
         }
     }
@@ -517,21 +531,42 @@ private fun ChannelGridScreen(
 }
 
 @Composable
-private fun StatusScreen(state: TvUiState) {
-    Column(
+private fun StatusScreen(
+    state: TvUiState,
+    onExternalExtensionsEnabled: (Boolean) -> Unit,
+    onEnableExtension: (String, String) -> Unit,
+    onDisableExtension: (String) -> Unit,
+    onRevokeExtension: (String, String) -> Unit,
+) {
+    var pendingTrust by remember { mutableStateOf<InstalledPlugin?>(null) }
+    val trustConfirmationFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(pendingTrust) {
+        if (pendingTrust != null) {
+            yield()
+            trustConfirmationFocusRequester.requestFocus()
+        }
+    }
+    LaunchedEffect(state.externalExtensionsEnabled) {
+        if (!state.externalExtensionsEnabled) pendingTrust = null
+    }
+
+    LazyColumn(
         verticalArrangement = Arrangement.spacedBy(24.dp),
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(start = 48.dp, top = 48.dp, end = 64.dp, bottom = 48.dp)
+        contentPadding = PaddingValues(start = 48.dp, top = 48.dp, end = 64.dp, bottom = 48.dp),
+        modifier = Modifier.fillMaxSize().focusGroup(),
     ) {
-        SectionTitle(
-            title = stringResource(string.tv_settings_title),
-            subtitle = stringResource(string.tv_settings_subtitle)
-        )
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        item {
+            SectionTitle(
+                title = stringResource(string.tv_settings_title),
+                subtitle = stringResource(string.tv_settings_subtitle)
+            )
+        }
+        item {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
             MetricTile(
                 title = stringResource(string.tv_metric_playlists),
                 value = state.playlists.size.toString(),
@@ -556,6 +591,131 @@ private fun StatusScreen(state: TvUiState) {
                     .weight(1f)
                     .height(136.dp)
             )
+        }
+        }
+        item {
+            SectionTitle(
+                title = stringResource(string.feat_setting_extension_plugins),
+                subtitle = stringResource(string.tv_extensions_subtitle),
+            )
+        }
+        item {
+            TvActionButton(
+                text = stringResource(
+                    if (state.externalExtensionsEnabled) {
+                        string.tv_extensions_disable_developer_mode
+                    } else {
+                        string.tv_extensions_enable_developer_mode
+                    }
+                ),
+                icon = if (state.externalExtensionsEnabled) Icons.Rounded.Block else Icons.Rounded.Extension,
+                onClick = { onExternalExtensionsEnabled(!state.externalExtensionsEnabled) },
+            )
+        }
+        if (state.externalExtensionsEnabled && state.extensionPlugins.isEmpty()) {
+            item { Text(stringResource(string.feat_setting_extension_no_plugins), color = TvColors.TextSecondary) }
+        }
+        if (state.externalExtensionsEnabled) {
+            items(
+                items = state.extensionPlugins,
+                key = { plugin -> "${plugin.packageName}/${plugin.serviceName}" },
+            ) { plugin ->
+                ExtensionPluginCard(
+                    plugin = plugin,
+                    onEnable = { pendingTrust = plugin },
+                    onDisable = { plugin.extensionId?.let(onDisableExtension) },
+                    onRevoke = { onRevokeExtension(plugin.packageName, plugin.serviceName) },
+                )
+            }
+        }
+        pendingTrust?.takeIf { state.externalExtensionsEnabled }?.let { plugin ->
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        text = stringResource(string.feat_setting_extension_confirm_title),
+                        color = TvColors.TextPrimary,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        text = stringResource(
+                            string.feat_setting_extension_confirm_body,
+                            plugin.packageName,
+                            plugin.certificateSha256.chunked(16).joinToString(" "),
+                            plugin.displayName.orEmpty(),
+                            plugin.developer.orEmpty(),
+                            plugin.version.orEmpty(),
+                            plugin.requestedCapabilities.sorted().joinToString().ifEmpty { "—" },
+                        ),
+                        color = TvColors.TextSecondary,
+                        fontSize = 14.sp,
+                        maxLines = 10,
+                        overflow = TextOverflow.Clip,
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        TvActionButton(
+                            text = stringResource(string.feat_setting_extension_enable),
+                            icon = Icons.Rounded.CheckCircle,
+                            focusRequester = trustConfirmationFocusRequester,
+                            onClick = {
+                                pendingTrust = null
+                                onEnableExtension(plugin.packageName, plugin.serviceName)
+                            },
+                        )
+                        TvActionButton(
+                            text = stringResource(android.R.string.cancel),
+                            icon = Icons.Rounded.Block,
+                            onClick = { pendingTrust = null },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ExtensionPluginCard(
+    plugin: InstalledPlugin,
+    onEnable: () -> Unit,
+    onDisable: () -> Unit,
+    onRevoke: () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = plugin.displayName ?: plugin.packageName,
+            color = TvColors.TextPrimary,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Text(
+            text = listOfNotNull(plugin.developer, plugin.version?.let { "v$it" }).joinToString(" · "),
+            color = TvColors.TextSecondary,
+            fontSize = 14.sp,
+        )
+        Text(plugin.certificateSha256, color = TvColors.TextMuted, fontSize = 12.sp)
+        plugin.inspectionError?.let { Text(it, color = TvColors.Danger, fontSize = 14.sp) }
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            if (plugin.enabled && plugin.extensionId != null) {
+                TvActionButton(
+                    text = stringResource(string.feat_setting_extension_disable),
+                    icon = Icons.Rounded.Block,
+                    onClick = onDisable,
+                )
+            } else if (!plugin.signatureChanged && plugin.inspectionError == null) {
+                TvActionButton(
+                    text = stringResource(string.feat_setting_extension_enable),
+                    icon = Icons.Rounded.CheckCircle,
+                    onClick = onEnable,
+                )
+            }
+            if (plugin.trusted || plugin.signatureChanged) {
+                TvActionButton(
+                    text = stringResource(string.feat_setting_extension_revoke),
+                    icon = Icons.Rounded.Block,
+                    onClick = onRevoke,
+                )
+            }
         }
     }
 }

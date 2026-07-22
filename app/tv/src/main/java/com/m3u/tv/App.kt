@@ -93,7 +93,11 @@ fun App(
                 onPlayRecent = {
                     viewModel.playRecent()
                     surface = TvSurface.Player
-                }
+                },
+                onExternalExtensionsEnabled = viewModel::setExternalExtensionsEnabled,
+                onEnableExtension = viewModel::enableExtensionPlugin,
+                onDisableExtension = viewModel::disableExtensionPlugin,
+                onRevokeExtension = viewModel::revokeExtensionPlugin,
             )
         }
 

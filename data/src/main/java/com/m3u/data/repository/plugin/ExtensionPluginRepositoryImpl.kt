@@ -20,6 +20,14 @@ import com.m3u.extension.transport.android.InstalledExtensionService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 
 internal class ExtensionPluginRepositoryImpl @Inject constructor(
@@ -31,6 +39,23 @@ internal class ExtensionPluginRepositoryImpl @Inject constructor(
     private val settings: Settings,
 ) : ExtensionPluginRepository {
     private val transports = ConcurrentHashMap<String, AndroidBoundExtensionTransport>()
+    private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val lifecycleMutex = Mutex()
+
+    init {
+        repositoryScope.launch {
+            settings.data
+                .map { preferences -> preferences[PreferencesKeys.EXTERNAL_EXTENSIONS] ?: false }
+                .distinctUntilChanged()
+                .collect { enabled ->
+                    if (enabled) {
+                        restoreEnabled()
+                    } else {
+                        lifecycleMutex.withLock { suspendExternalTransports() }
+                    }
+                }
+        }
+    }
 
     override suspend fun installedPlugins(): List<InstalledPlugin> {
         if (!settings[PreferencesKeys.EXTERNAL_EXTENSIONS]) return emptyList()
@@ -79,7 +104,10 @@ internal class ExtensionPluginRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun enable(packageName: String, serviceName: String): PluginEnableResult {
+    override suspend fun enable(packageName: String, serviceName: String): PluginEnableResult =
+        lifecycleMutex.withLock { enableLocked(packageName, serviceName) }
+
+    private suspend fun enableLocked(packageName: String, serviceName: String): PluginEnableResult {
         if (!settings[PreferencesKeys.EXTERNAL_EXTENSIONS]) {
             return PluginEnableResult.Rejected("External extensions are disabled")
         }
@@ -164,6 +192,13 @@ internal class ExtensionPluginRepositoryImpl @Inject constructor(
                 if (enable(service.packageName, service.serviceName) is PluginEnableResult.Enabled) restored++
             }
         return restored
+    }
+
+    private fun suspendExternalTransports() {
+        transports.keys.toList().forEach { extensionId ->
+            runtime.unregister(ExtensionId(extensionId))
+            transports.remove(extensionId)?.close()
+        }
     }
 
     private suspend fun inspect(service: InstalledExtensionService): Result<ExtensionManifest> = runCatching {

@@ -24,6 +24,9 @@
     <string name="tv_favorites_subtitle">Fast access to channels you marked for the sofa.</string>
     <string name="tv_settings_title">TV status</string>
     <string name="tv_settings_subtitle">A compact overview for the TV build.</string>
+    <string name="tv_extensions_subtitle">Installed local APK extensions and their trust status.</string>
+    <string name="tv_extensions_enable_developer_mode">Enable developer extensions</string>
+    <string name="tv_extensions_disable_developer_mode">Disable developer extensions</string>
     <string name="tv_metric_playlists">Playlists</string>
     <string name="tv_metric_channels">Channels</string>
     <string name="tv_metric_favorites">Favorites</string>

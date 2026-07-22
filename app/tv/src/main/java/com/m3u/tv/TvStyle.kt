@@ -18,6 +18,7 @@ object TvColors {
     val SurfaceRaised = Color(0xFF202A36)
     val Focus = Color(0xFF8DF2C7)
     val Accent = Color(0xFFFFC37A)
+    val Danger = Color(0xFFFF8A80)
     val OnFocus = Color(0xFF06100C)
     val TextPrimary = Color(0xFFF7FAFC)
     val TextSecondary = Color(0xFFB6C1CC)

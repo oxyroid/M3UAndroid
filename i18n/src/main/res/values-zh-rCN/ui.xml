@@ -6,6 +6,9 @@
     <string name="ui_destination_foryou">主页</string>
     <string name="ui_destination_favourite">喜欢</string>
     <string name="ui_destination_setting">设置</string>
+    <string name="tv_extensions_subtitle">已安装的本地 APK 扩展及其信任状态。</string>
+    <string name="tv_extensions_enable_developer_mode">启用开发者扩展</string>
+    <string name="tv_extensions_disable_developer_mode">停用开发者扩展</string>
     <string name="ui_error_unknown">未知错误</string>
     <string name="ui_cd_top_bar_on_back_pressed">返回</string>
     <string name="ui_theme_card_left">你知道吗？</string>

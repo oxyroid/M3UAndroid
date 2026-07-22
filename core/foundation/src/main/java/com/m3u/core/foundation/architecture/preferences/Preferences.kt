@@ -124,7 +124,8 @@ private val PREFERENCES: Map<Preferences.Key<*>, *> = listOf(
     PreferencesKeys.SLIDER to true,
     PreferencesKeys.ALWAYS_SHOW_REPLAY to false,
     PreferencesKeys.PLAYER_PANEL to true,
-    PreferencesKeys.COMPACT_DIMENSION to false
+    PreferencesKeys.COMPACT_DIMENSION to false,
+    PreferencesKeys.EXTERNAL_EXTENSIONS to false,
 )
     .associateBy { it.key }
     .mapValues { it.value.value }
