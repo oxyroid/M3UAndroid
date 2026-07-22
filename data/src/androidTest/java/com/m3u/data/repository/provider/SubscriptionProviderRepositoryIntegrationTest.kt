@@ -15,6 +15,7 @@ import com.m3u.data.extension.emby.EmbyCompatibleProvider
 import com.m3u.data.extension.emby.OkHttpEmbyCompatibleClient
 import com.m3u.data.extension.security.AndroidKeystoreCredentialVault
 import com.m3u.data.extension.security.CredentialResolver
+import com.m3u.data.repository.extension.ExtensionContributionScheduler
 import com.m3u.extension.api.ExtensionApiVersions
 import com.m3u.extension.api.subscription.EmbyCompatibleProviderKinds
 import com.m3u.extension.api.subscription.SubscriptionProviderSettingKeys
@@ -62,9 +63,11 @@ class SubscriptionProviderRepositoryIntegrationTest {
                     playlistDao = playlistDao,
                     channelDao = channelDao,
                     providerDao = providerDao,
+                    programmeDao = database.programmeDao(),
                     credentialVault = credentialVault,
                 ),
                 credentialVault = credentialVault,
+                extensionContributionScheduler = NoOpExtensionContributionScheduler,
             )
             val serverUrl = InstrumentationRegistry.getArguments()
                 .getString("m3uMockServerUrl")
@@ -140,5 +143,9 @@ class SubscriptionProviderRepositoryIntegrationTest {
         override val debug = true
         override val model = "Android test"
         override val abi = Abi.x86_64
+    }
+
+    private data object NoOpExtensionContributionScheduler : ExtensionContributionScheduler {
+        override fun enqueue(playlistUrl: String) = Unit
     }
 }

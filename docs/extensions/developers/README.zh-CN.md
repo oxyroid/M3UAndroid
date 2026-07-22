@@ -10,6 +10,8 @@
 
 首次启用时，宿主会展示包名、插件名称、开发者元数据、语义化版本、申请的能力和签名证书 SHA-256，并固定用户接受的证书。后续升级若证书不一致，插件会自动禁用，必须由用户重新确认。
 
+即使升级包签名相同，也不能静默扩大权限。宿主会取旧 grant 与新 manifest 的交集；新增必要能力会阻止自动恢复并要求用户重新确认，新增可选能力在重新授权前保持未授予状态。
+
 控制面使用少量 AIDL，JSON 数据通过 `ParcelFileDescriptor` 流传输。流中承载 `SerializedExtensionEnvelope` 或 `SerializedExtensionResult`，避免 Binder 事务大小上限。传输层提供 handshake、manifest、invoke、cancel 和 health 操作。
 
 ## 模块与最小 service
@@ -57,7 +59,7 @@
 - 搜索 provider；
 - 后台任务。
 
-“已有契约”不等于“所有宿主入口都已接通”。订阅和播放 hook 已为内置 Emby/Jellyfin provider 提供生产调用链。外部插件的生命周期、传输、取消、健康检查和后台任务已接通。搜索贡献已接入手机端：只有当结果中的不透明 `stableReference` 能映射到宿主已有且未隐藏的频道时才会展示。设置、EPG 和元数据契约已经类型化，但完整的外部插件宿主导入/UI 链路尚未达到生产标准。
+“已有契约”不等于“所有宿主入口都已接通”。订阅和播放 hook 已为内置 Emby/Jellyfin provider 提供生产调用链。外部插件的生命周期、传输、取消、健康检查和后台任务已接通。搜索贡献已接入手机端：只有当结果中的不透明 `stableReference` 能映射到宿主已有且未隐藏的频道时才会展示。provider 刷新现在也会调用元数据与 EPG 贡献者：元数据 patch 只能更新宿主批准的标题/分类字段，EPG 结果经过校验后进入宿主隔离的数据源。这两个 importer 目前用于通用 provider playlist，尚未覆盖所有旧 M3U/Xtream 导入路径。设置契约已经类型化，但完整的外部设置存储/UI 链路尚未达到生产标准。
 
 不要返回数据库实体、播放器对象、`DataSource`、密码或 token。插件只返回声明式数据和稳定的不透明引用；校验、持久化、导入和播放对象构造都归宿主所有。
 

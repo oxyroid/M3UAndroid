@@ -8,6 +8,8 @@ import com.m3u.data.extension.security.CredentialVault
 import com.m3u.data.extension.security.HostNetworkBrokerImpl
 import com.m3u.data.repository.extension.ExtensionContributionRepository
 import com.m3u.data.repository.extension.ExtensionContributionRepositoryImpl
+import com.m3u.data.repository.extension.ExtensionContributionScheduler
+import com.m3u.data.repository.extension.WorkManagerExtensionContributionScheduler
 import com.m3u.data.repository.plugin.ExtensionPluginRepository
 import com.m3u.data.repository.plugin.ExtensionPluginRepositoryImpl
 import com.m3u.data.repository.provider.SubscriptionProviderRepository
@@ -27,6 +29,12 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 internal abstract class ExtensionBindingsModule {
+    @Binds
+    @Singleton
+    abstract fun bindExtensionContributionScheduler(
+        scheduler: WorkManagerExtensionContributionScheduler,
+    ): ExtensionContributionScheduler
+
     @Binds
     @Singleton
     abstract fun bindExtensionContributionRepository(

@@ -48,6 +48,8 @@ External extensions remain behind `PreferencesKeys.EXTERNAL_EXTENSIONS`. Turning
 
 First enable is a security decision. Phone and TV must show package, developer, certificate SHA-256, version, and requested capabilities before accepting. Trust is keyed to package/component identity and pinned signer. A signer change disables the plugin and requires explicit reauthorization. “Forget trust” removes the persisted decision; it is not equivalent to merely disabling the extension.
 
+Restore must never call the user-authorization path. Reconcile saved grants against the current manifest: drop removed capabilities, leave new optional capabilities ungranted, and disable restoration when any new required capability is missing. A component that changes its extension ID also requires explicit reauthorization.
+
 ## Credentials and network
 
 The host owns secrets. `CredentialVault` stores AES-GCM ciphertext protected by Android Keystore and exposes opaque handles. Database and backup payloads must never contain plaintext tokens. If a key is missing or restored ciphertext cannot be decrypted, remove the unusable credential and mark the provider for reauthentication.
@@ -75,9 +77,9 @@ Provider refresh belongs in WorkManager with network constraints, cancellation, 
 
 ## Current integration status
 
-Production host paths currently exist for built-in Emby/Jellyfin discovery, validation, refresh, playback resolution, close, provider persistence, background refresh, and playback-session recovery. External APK discovery, trust, enable/disable, signer pinning, handshake, invocation, cancellation, health, broker mediation, process restoration, and background tasks are implemented behind the developer feature. Smartphone search contributions now use host-owned stable-reference resolution.
+Production host paths currently exist for built-in Emby/Jellyfin discovery, validation, refresh, playback resolution, close, provider persistence, background refresh, and playback-session recovery. External APK discovery, trust, enable/disable, signer pinning, handshake, invocation, cancellation, health, broker mediation, process restoration, and background tasks are implemented behind the developer feature. Smartphone search contributions use host-owned stable-reference resolution. Generic provider refresh invokes metadata and EPG contributors in bounded batches; metadata can update only title/category through a narrow DAO query, and EPG is replaced in extension-specific host sources after reference/time/size validation.
 
-Typed settings, EPG, and metadata hooks exist, but their complete external host renderer/importer call sites and conformance coverage remain work in progress. Do not describe them as production integrations until those paths and tests land.
+Metadata and EPG importers are not yet connected to every legacy M3U/Xtream ingestion path. Typed settings hooks exist, but the complete external settings renderer, value storage, and invocation context remain work in progress. Do not describe those incomplete paths as production integrations until their call sites and tests land.
 
 ## Release gates
 

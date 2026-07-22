@@ -4,13 +4,17 @@ import com.m3u.extension.api.ExtensionApiRange
 import com.m3u.extension.api.ExtensionApiVersions
 import com.m3u.extension.api.BackgroundTaskRequest
 import com.m3u.extension.api.BackgroundTaskResult
+import com.m3u.extension.api.ChannelMetadataPatch
 import com.m3u.extension.api.ExtensionCapabilityIds
 import com.m3u.extension.api.ExtensionCapabilityRequest
 import com.m3u.extension.api.ExtensionHookDeclaration
 import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.ExtensionManifest
+import com.m3u.extension.api.ExtensionProgramme
 import com.m3u.extension.api.ExtensionSemanticVersion
 import com.m3u.extension.api.InvocationId
+import com.m3u.extension.api.MetadataEnrichmentResult
+import com.m3u.extension.api.EpgRefreshResult
 import com.m3u.extension.api.SerializedExtensionEnvelope
 import com.m3u.extension.api.SerializedExtensionResult
 import com.m3u.extension.api.HostHookSpecs
@@ -62,6 +66,16 @@ private object ReferenceTransport : ExtensionTransport {
                 schemaVersion = HostHookSpecs.BackgroundTask.schemaVersion,
                 requiredCapabilities = setOf(ExtensionCapabilityIds.BackgroundTask),
             ),
+            ExtensionHookDeclaration(
+                hook = HostHookSpecs.MetadataEnrichment.hook,
+                schemaVersion = HostHookSpecs.MetadataEnrichment.schemaVersion,
+                requiredCapabilities = setOf(ExtensionCapabilityIds.MetadataWrite),
+            ),
+            ExtensionHookDeclaration(
+                hook = HostHookSpecs.EpgRefresh.hook,
+                schemaVersion = HostHookSpecs.EpgRefresh.schemaVersion,
+                requiredCapabilities = setOf(ExtensionCapabilityIds.EpgRead),
+            ),
         ),
         capabilities = setOf(
             ExtensionCapabilityRequest(
@@ -71,6 +85,14 @@ private object ReferenceTransport : ExtensionTransport {
             ExtensionCapabilityRequest(
                 ExtensionCapabilityIds.BackgroundTask,
                 "Exercise cancellation conformance",
+            ),
+            ExtensionCapabilityRequest(
+                ExtensionCapabilityIds.MetadataWrite,
+                "Exercise host-owned metadata import",
+            ),
+            ExtensionCapabilityRequest(
+                ExtensionCapabilityIds.EpgRead,
+                "Exercise host-owned EPG import",
             ),
         ),
         metadata = mapOf("developer" to "M3U Conformance Suite"),
@@ -120,6 +142,45 @@ private object ReferenceTransport : ExtensionTransport {
                 json.encodeToJsonElement(
                     HostHookSpecs.BackgroundTask.responseSerializer,
                     runBackgroundTask(request.invocationId, input),
+                )
+            }
+            HostHookSpecs.MetadataEnrichment.hook -> {
+                val input = json.decodeFromJsonElement(
+                    HostHookSpecs.MetadataEnrichment.requestSerializer,
+                    request.payload,
+                )
+                json.encodeToJsonElement(
+                    HostHookSpecs.MetadataEnrichment.responseSerializer,
+                    MetadataEnrichmentResult(
+                        patches = input.channels.map { channel ->
+                            ChannelMetadataPatch(
+                                stableReference = channel.stableReference,
+                                title = channel.title.takeIf { it.startsWith("unenriched:") }
+                                    ?.removePrefix("unenriched:"),
+                                metadata = mapOf("reference-extension" to "true"),
+                            )
+                        }
+                    ),
+                )
+            }
+            HostHookSpecs.EpgRefresh.hook -> {
+                val input = json.decodeFromJsonElement(
+                    HostHookSpecs.EpgRefresh.requestSerializer,
+                    request.payload,
+                )
+                json.encodeToJsonElement(
+                    HostHookSpecs.EpgRefresh.responseSerializer,
+                    EpgRefreshResult(
+                        programmes = input.sourceIds.map { reference ->
+                            ExtensionProgramme(
+                                channelReference = reference,
+                                title = "Reference programme",
+                                startEpochMillis = input.fromEpochMillis,
+                                endEpochMillis = input.toEpochMillis,
+                                metadata = mapOf("categories" to "Reference,Conformance"),
+                            )
+                        }
+                    ),
                 )
             }
             else -> error("Unsupported reference hook: ${request.hook}")

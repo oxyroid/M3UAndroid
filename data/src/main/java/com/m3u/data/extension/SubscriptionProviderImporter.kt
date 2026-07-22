@@ -4,6 +4,7 @@ import androidx.room.withTransaction
 import com.m3u.data.database.M3UDatabase
 import com.m3u.data.database.dao.ChannelDao
 import com.m3u.data.database.dao.PlaylistDao
+import com.m3u.data.database.dao.ProgrammeDao
 import com.m3u.data.database.dao.ProviderDao
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.ChannelPlaybackReference
@@ -11,15 +12,22 @@ import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.ProviderAccount
 import com.m3u.data.database.model.ProviderCredentialEntity
+import com.m3u.data.database.model.Programme
 import com.m3u.data.extension.security.CredentialVault
+import com.m3u.data.repository.extension.ExtensionEpgContribution
+import com.m3u.data.repository.extension.ExtensionMetadataContribution
+import com.m3u.extension.api.ChannelMetadataSnapshot
 import com.m3u.extension.api.subscription.SubscriptionContentRefreshResult
 import javax.inject.Inject
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 internal class SubscriptionProviderImporter @Inject constructor(
     private val database: M3UDatabase,
     private val playlistDao: PlaylistDao,
     private val channelDao: ChannelDao,
     private val providerDao: ProviderDao,
+    private val programmeDao: ProgrammeDao,
     private val credentialVault: CredentialVault,
 ) {
     suspend fun import(
@@ -97,5 +105,92 @@ internal class SubscriptionProviderImporter @Inject constructor(
             }
             .forEach { channel -> channelDao.delete(channel) }
         refresh.channels.size
+    }
+
+    suspend fun metadataSnapshots(playlistUrl: String): List<ChannelMetadataSnapshot> = channelDao
+        .getByPlaylistUrl(playlistUrl)
+        .mapNotNull { channel ->
+            channel.relationId?.let { stableReference ->
+                ChannelMetadataSnapshot(
+                    stableReference = stableReference,
+                    title = channel.title,
+                    category = channel.category,
+                )
+            }
+        }
+
+    suspend fun applyMetadataEnrichment(
+        playlistUrl: String,
+        contributions: List<ExtensionMetadataContribution>,
+    ): Int = database.withTransaction {
+        if (contributions.isEmpty()) return@withTransaction 0
+        val channelsByReference = channelDao.getByPlaylistUrl(playlistUrl)
+            .mapNotNull { channel ->
+                channel.relationId?.let { stableReference -> stableReference to channel }
+            }
+            .toMap()
+        contributions.count { contribution ->
+            val patch = contribution.patch
+            val channel = channelsByReference[patch.stableReference]
+                ?: return@count false
+            if (patch.title == null && patch.category == null) return@count false
+            channelDao.applyMetadataEnrichment(channel.id, patch.title, patch.category)
+            true
+        }
+    }
+
+    suspend fun replaceExtensionEpg(
+        playlistUrl: String,
+        contributions: List<ExtensionEpgContribution>,
+    ): Int = database.withTransaction {
+        val playlist = playlistDao.get(playlistUrl) ?: return@withTransaction 0
+        val previousExtensionSources = playlist.epgUrls.filter { source ->
+            source.startsWith(EXTENSION_EPG_SCHEME)
+        }
+        previousExtensionSources.forEach { source -> programmeDao.cleanByEpgUrl(source) }
+
+        val knownReferences = channelDao.getByPlaylistUrl(playlistUrl)
+            .mapNotNullTo(mutableSetOf(), Channel::relationId)
+        val encodedPlaylist = URLEncoder.encode(
+            playlistUrl,
+            StandardCharsets.UTF_8.name(),
+        )
+        val accepted = contributions.filter { contribution ->
+            contribution.programme.channelReference in knownReferences
+        }
+        val sources = accepted
+            .mapTo(linkedSetOf()) { contribution ->
+                "$EXTENSION_EPG_SCHEME${contribution.extensionId.value}/$encodedPlaylist"
+            }
+        accepted.forEach { contribution ->
+            val item = contribution.programme
+            val source = "$EXTENSION_EPG_SCHEME${contribution.extensionId.value}/$encodedPlaylist"
+            programmeDao.insertOrReplace(
+                Programme(
+                    channelId = item.channelReference,
+                    epgUrl = source,
+                    start = item.startEpochMillis,
+                    end = item.endEpochMillis,
+                    title = item.title,
+                    description = item.description.orEmpty(),
+                    icon = item.metadata["icon"],
+                    categories = item.metadata["categories"]
+                        ?.split(',')
+                        ?.map(String::trim)
+                        ?.filter(String::isNotBlank)
+                        .orEmpty(),
+                )
+            )
+        }
+        playlistDao.insertOrReplace(
+            playlist.copy(
+                epgUrls = playlist.epgUrls.filterNot(previousExtensionSources::contains) + sources
+            )
+        )
+        accepted.size
+    }
+
+    private companion object {
+        const val EXTENSION_EPG_SCHEME = "m3u-extension-epg://"
     }
 }

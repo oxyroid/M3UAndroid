@@ -13,6 +13,7 @@ import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.runtime.ExtensionRegistrationResult
 import com.m3u.extension.runtime.ExtensionRuntime
 import com.m3u.extension.runtime.ExtensionTransportHealth
+import com.m3u.extension.runtime.reconcileCapabilitiesForRestore
 import com.m3u.extension.transport.android.AndroidBoundExtensionTransport
 import com.m3u.extension.transport.android.AndroidExtensionDiscovery
 import com.m3u.extension.transport.android.ExtensionTrustStore
@@ -69,7 +70,16 @@ internal class ExtensionPluginRepositoryImpl @Inject constructor(
                     transports.remove(extensionId)?.close()
                 }
             }
-            val inspection = if (trusted || signatureChanged) null else inspect(service)
+            val registeredManifest = trustStore.extensionId(service)?.let { extensionId ->
+                runtime.registeredExtensions()
+                    .firstOrNull { extension -> extension.manifest.id.value == extensionId }
+                    ?.manifest
+            }
+            val inspection = when {
+                signatureChanged -> null
+                registeredManifest != null -> Result.success(registeredManifest)
+                else -> inspect(service)
+            }
             val manifest = inspection?.getOrNull()
             val extensionId = manifest?.id?.value ?: trustStore.extensionId(service)
             val runtimeState = extensionId?.let { id ->
@@ -105,9 +115,15 @@ internal class ExtensionPluginRepositoryImpl @Inject constructor(
     }
 
     override suspend fun enable(packageName: String, serviceName: String): PluginEnableResult =
-        lifecycleMutex.withLock { enableLocked(packageName, serviceName) }
+        lifecycleMutex.withLock {
+            enableLocked(packageName, serviceName, reauthorizeCapabilities = true)
+        }
 
-    private suspend fun enableLocked(packageName: String, serviceName: String): PluginEnableResult {
+    private suspend fun enableLocked(
+        packageName: String,
+        serviceName: String,
+        reauthorizeCapabilities: Boolean,
+    ): PluginEnableResult {
         if (!settings[PreferencesKeys.EXTERNAL_EXTENSIONS]) {
             return PluginEnableResult.Rejected("External extensions are disabled")
         }
@@ -137,17 +153,47 @@ internal class ExtensionPluginRepositoryImpl @Inject constructor(
                 transport.close()
                 return@runCatching PluginEnableResult.Rejected("Extension reported unavailable health")
             }
+            val manifest = transport.manifest
+            val previousExtensionId = trustStore.extensionId(service)
+            val previousGrants = previousExtensionId
+                ?.let(trustStore::grantedCapabilities)
+                .orEmpty()
+            val requestedCapabilities = manifest.capabilities
+                .mapNotNullTo(mutableSetOf()) { request ->
+                    request.capability.id.takeIf {
+                        request.capability in ExtensionContractCatalog.SupportedCapabilities
+                    }
+                }
+            if (!reauthorizeCapabilities) {
+                if (previousExtensionId != manifest.id.value) {
+                    trustStore.setEnabled(service, false)
+                    transport.close()
+                    return@runCatching PluginEnableResult.Rejected(
+                        "Extension identity changed and requires reauthorization"
+                    )
+                }
+                if (
+                    reconcileCapabilitiesForRestore(manifest, previousGrants)
+                        .requiresReauthorization
+                ) {
+                    trustStore.setEnabled(service, false)
+                    transport.close()
+                    return@runCatching PluginEnableResult.Rejected(
+                        "New required capabilities need user approval"
+                    )
+                }
+            }
             when (val registration = runtime.register(transport)) {
                 is ExtensionRegistrationResult.Registered -> {
+                    val capabilities = if (reauthorizeCapabilities) {
+                        requestedCapabilities
+                    } else {
+                        reconcileCapabilitiesForRestore(manifest, previousGrants).granted
+                    }
                     trustStore.trust(
                         service = service,
                         extensionId = registration.extension.manifest.id.value,
-                        capabilities = registration.extension.manifest.capabilities
-                            .mapNotNullTo(mutableSetOf()) { request ->
-                                request.capability.id.takeIf {
-                                    request.capability in ExtensionContractCatalog.SupportedCapabilities
-                                }
-                            },
+                        capabilities = capabilities,
                         displayName = registration.extension.manifest.displayName,
                         version = registration.extension.manifest.extensionVersion.toString(),
                         developer = registration.extension.manifest.metadata["developer"],
@@ -189,7 +235,25 @@ internal class ExtensionPluginRepositoryImpl @Inject constructor(
         discovery.discover()
             .filter { service -> trustStore.isTrusted(service) && trustStore.isEnabled(service) }
             .forEach { service ->
-                if (enable(service.packageName, service.serviceName) is PluginEnableResult.Enabled) restored++
+                val extensionId = trustStore.extensionId(service)
+                val alreadyRegistered = extensionId != null &&
+                    transports.containsKey(extensionId) &&
+                    runtime.registeredExtensions().any { extension ->
+                        extension.manifest.id.value == extensionId &&
+                            extension.state == ExtensionState.ENABLED
+                    }
+                if (alreadyRegistered) {
+                    restored++
+                } else {
+                    val result = lifecycleMutex.withLock {
+                        enableLocked(
+                            service.packageName,
+                            service.serviceName,
+                            reauthorizeCapabilities = false,
+                        )
+                    }
+                    if (result is PluginEnableResult.Enabled) restored++
+                }
             }
         return restored
     }

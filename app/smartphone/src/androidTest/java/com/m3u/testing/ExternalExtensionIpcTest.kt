@@ -6,6 +6,11 @@ import com.m3u.extension.api.ExtensionApiVersions
 import com.m3u.extension.api.HookResult
 import com.m3u.extension.api.BackgroundTaskRequest
 import com.m3u.extension.api.HostHookSpecs
+import com.m3u.extension.api.ChannelMetadataSnapshot
+import com.m3u.extension.api.MetadataEnrichmentRequest
+import com.m3u.extension.api.MetadataEnrichmentResult
+import com.m3u.extension.api.EpgRefreshRequest
+import com.m3u.extension.api.EpgRefreshResult
 import com.m3u.extension.api.SearchProviderRequest
 import com.m3u.extension.api.SearchProviderResult
 import com.m3u.extension.api.subscription.SubscriptionHookSpecs
@@ -62,6 +67,37 @@ class ExternalExtensionIpcTest {
             )
             val search = (largeResult.outcome as HookResult.Success<*>).payload as SearchProviderResult
             assertEquals(1_200_000, search.items.single().subtitle?.length)
+
+            val metadataResult = runtime.invoke(
+                extensionId = transport.manifest.id,
+                spec = HostHookSpecs.MetadataEnrichment,
+                request = MetadataEnrichmentRequest(
+                    channels = listOf(
+                        ChannelMetadataSnapshot(
+                            stableReference = "channel-42",
+                            title = "unenriched:Reference Channel",
+                            category = "Reference",
+                        )
+                    )
+                ),
+            )
+            val metadata = (metadataResult.outcome as HookResult.Success<*>).payload as
+                MetadataEnrichmentResult
+            assertEquals("channel-42", metadata.patches.single().stableReference)
+            assertEquals("Reference Channel", metadata.patches.single().title)
+
+            val epgResult = runtime.invoke(
+                extensionId = transport.manifest.id,
+                spec = HostHookSpecs.EpgRefresh,
+                request = EpgRefreshRequest(
+                    sourceIds = listOf("channel-42"),
+                    fromEpochMillis = 1_000,
+                    toEpochMillis = 2_000,
+                ),
+            )
+            val epg = (epgResult.outcome as HookResult.Success<*>).payload as EpgRefreshResult
+            assertEquals("channel-42", epg.programmes.single().channelReference)
+            assertEquals("Reference programme", epg.programmes.single().title)
 
             val slowInvocation = async {
                 runtime.invoke(

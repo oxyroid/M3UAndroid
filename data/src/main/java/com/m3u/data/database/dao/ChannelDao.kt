@@ -220,6 +220,16 @@ interface ChannelDao {
 
     @Query(
         """
+        UPDATE streams
+        SET title = COALESCE(:title, title),
+            `group` = COALESCE(:category, `group`)
+        WHERE id = :id
+        """
+    )
+    suspend fun applyMetadataEnrichment(id: Int, title: String?, category: String?)
+
+    @Query(
+        """
             WITH TargetChannel AS (
                 SELECT *
                 FROM streams

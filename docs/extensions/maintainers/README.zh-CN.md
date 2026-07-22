@@ -48,6 +48,8 @@ API major 不一致即不兼容。同 major 内按 manifest 声明协商 hook sc
 
 首次启用是安全决策。手机和 TV 都必须在接受前展示包名、开发者、证书 SHA-256、版本和申请能力。信任绑定包/component 身份并固定签名者。签名变化会禁用插件并要求显式重新授权。“忘记信任”删除持久化决定，不等同于普通禁用。
 
+恢复流程不得调用用户授权路径。必须用当前 manifest 重新核对已保存 grant：删除不再申请的能力、新增可选能力保持未授予，缺少任何新增必要能力时停止恢复并禁用。component 改变 extension ID 时同样必须显式重新授权。
+
 ## 凭据与网络
 
 secret 归宿主所有。`CredentialVault` 使用 Android Keystore 保护的 AES-GCM 密文，只暴露不透明 handle。数据库和备份中不得出现明文 token。密钥丢失或恢复后的密文无法解密时，应删除不可用凭据，并将 provider 标记为需要重新认证。
@@ -75,9 +77,9 @@ provider refresh 必须进入 WorkManager，具备联网约束、取消、重试
 
 ## 当前接入状态
 
-目前已有生产宿主链路：内置 Emby/Jellyfin 发现、校验、刷新、播放解析、close、provider 持久化、后台刷新与播放 session 恢复。外部 APK 的发现、信任、启禁用、签名固定、handshake、invoke、cancel、health、broker 代理、进程恢复和后台任务已在开发者开关下实现。手机端搜索贡献已使用宿主持有的 stable-reference 映射。
+目前已有生产宿主链路：内置 Emby/Jellyfin 发现、校验、刷新、播放解析、close、provider 持久化、后台刷新与播放 session 恢复。外部 APK 的发现、信任、启禁用、签名固定、handshake、invoke、cancel、health、broker 代理、进程恢复和后台任务已在开发者开关下实现。手机端搜索贡献使用宿主持有的 stable-reference 映射。通用 provider 刷新以受限分批方式调用 metadata 与 EPG 贡献者；metadata 只能通过窄 DAO 更新标题/分类，EPG 经引用、时间和大小校验后替换到插件专属的宿主数据源。
 
-设置、EPG 和元数据 hook 已经类型化，但完整的外部宿主 renderer/importer 调用点与一致性覆盖仍在建设中。在这些链路和测试落地前，不得称其为生产接入。
+metadata 与 EPG importer 尚未覆盖所有旧 M3U/Xtream 导入路径。设置 hook 已经类型化，但完整的外部设置 renderer、值存储与调用上下文仍在建设中。在这些链路和测试落地前，不得称其为生产接入。
 
 ## 发布门槛
 

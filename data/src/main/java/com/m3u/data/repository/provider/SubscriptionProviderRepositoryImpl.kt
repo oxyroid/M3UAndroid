@@ -8,6 +8,7 @@ import com.m3u.data.database.model.ProviderAccount
 import com.m3u.data.database.model.ProviderPlaybackSessionEntity
 import com.m3u.data.extension.SubscriptionProviderImporter
 import com.m3u.data.extension.security.CredentialVault
+import com.m3u.data.repository.extension.ExtensionContributionScheduler
 import com.m3u.extension.api.HookResult
 import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.ExtensionPayload
@@ -43,6 +44,7 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
     private val playlistDao: PlaylistDao,
     private val importer: SubscriptionProviderImporter,
     private val credentialVault: CredentialVault,
+    private val extensionContributionScheduler: ExtensionContributionScheduler,
 ) : SubscriptionProviderRepository {
     private val activePlaybackContexts = ConcurrentHashMap<ProviderPlaybackSession, PlaybackCloseContext>()
 
@@ -103,6 +105,7 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
             accessToken = accessToken,
             refresh = refresh,
         )
+        extensionContributionScheduler.enqueue(account.playlistUrl)
         return ProviderSubscriptionResult(playlistUrl = playlistUrl, channelCount = count)
     }
 
@@ -133,6 +136,7 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
             accessToken = accessToken,
             refresh = refresh,
         )
+        extensionContributionScheduler.enqueue(account.playlistUrl)
         return ProviderSubscriptionResult(playlistUrl = playlistUrl, channelCount = count)
     }
 
@@ -244,6 +248,7 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
             reason = reason,
         ),
     ).payloadOrThrow()
+
 
     private fun <T : ExtensionPayload> ExtensionResult<T>.payloadOrThrow(): T {
         return when (val current = outcome) {
