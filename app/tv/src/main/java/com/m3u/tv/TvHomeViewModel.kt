@@ -4,6 +4,9 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.Player
+import com.m3u.business.setting.ProviderDiscoveryState
+import com.m3u.business.setting.ProviderSubscriptionForm
+import com.m3u.business.setting.ProviderSubscriptionFormBuildResult
 import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
 import com.m3u.core.foundation.architecture.preferences.Settings
 import com.m3u.core.foundation.architecture.preferences.set
@@ -19,6 +22,10 @@ import com.m3u.data.repository.plugin.ExtensionPluginRepository
 import com.m3u.data.repository.plugin.InstalledPlugin
 import com.m3u.data.repository.plugin.PluginDataClearResult
 import com.m3u.data.repository.plugin.PluginEnableResult
+import com.m3u.data.repository.provider.DiscoveredSubscriptionProvider
+import com.m3u.data.repository.provider.ProviderAccountSummary
+import com.m3u.data.repository.provider.ProviderDiscoveryException
+import com.m3u.data.repository.provider.SubscriptionProviderRepository
 import com.m3u.data.repository.tv.TvRepository
 import com.m3u.data.service.DPadReactionService
 import com.m3u.data.service.MediaCommand
@@ -26,6 +33,7 @@ import com.m3u.data.service.PlayerManager
 import com.m3u.extension.api.ExtensionId
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,6 +45,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Immutable
 data class TvUiState(
@@ -51,9 +60,21 @@ data class TvUiState(
     val extensionPlugins: List<InstalledPlugin> = emptyList(),
     val extensionSettings: ExtensionSettingsConfiguration? = null,
     val extensionPluginError: String? = null,
+    val providerDiscoveryState: ProviderDiscoveryState = ProviderDiscoveryState.Loading,
+    val providerAccounts: List<ProviderAccountSummary> = emptyList(),
+    val providerSubscriptionForm: ProviderSubscriptionForm? = null,
+    val providerSubscriptionTitle: String = "",
+    val providerSubscriptionInProgress: Boolean = false,
+    val providerSubscriptionFeedback: TvProviderSubscriptionFeedback? = null,
 ) {
     val channelCount: Int get() = counts.values.sum()
     val heroChannel: Channel? get() = recent ?: channels.firstOrNull()
+}
+
+sealed interface TvProviderSubscriptionFeedback {
+    data object InvalidSettings : TvProviderSubscriptionFeedback
+    data object Failed : TvProviderSubscriptionFeedback
+    data class Added(val channelCount: Int) : TvProviderSubscriptionFeedback
 }
 
 @HiltViewModel
@@ -63,6 +84,7 @@ class TvHomeViewModel @Inject constructor(
     private val playerManager: PlayerManager,
     private val extensionPluginRepository: ExtensionPluginRepository,
     private val extensionSettingsRepository: ExtensionSettingsRepository,
+    private val subscriptionProviderRepository: SubscriptionProviderRepository,
     private val settings: Settings,
     tvRepository: TvRepository,
     dPadReactionService: DPadReactionService
@@ -79,12 +101,16 @@ class TvHomeViewModel @Inject constructor(
     val remoteControlCode: StateFlow<Int?> = tvRepository.broadcastCodeOnTv
     val remoteDirections = dPadReactionService.incoming
     private var loadChannelsJob: Job? = null
+    private var providerDiscoveryJob: Job? = null
+    private var providerSubscriptionJob: Job? = null
 
     init {
         observePlaylists()
         observeFavorites()
         observeRecent()
         observeExternalExtensions()
+        observeProviderAccounts()
+        refreshSubscriptionProviders()
     }
 
     fun selectPlaylist(playlist: Playlist) {
@@ -236,6 +262,213 @@ class TvHomeViewModel @Inject constructor(
         }
     }
 
+    fun refreshSubscriptionProviders() {
+        providerDiscoveryJob?.cancel()
+        providerDiscoveryJob = viewModelScope.launch {
+            _state.update { state ->
+                state.copy(providerDiscoveryState = ProviderDiscoveryState.Loading)
+            }
+            try {
+                val providers = withContext(Dispatchers.IO) {
+                    subscriptionProviderRepository.discoverProviders()
+                }
+                _state.update { state ->
+                    val formAvailable = state.providerSubscriptionForm?.let { form ->
+                        providers.any { provider ->
+                            provider.descriptor.providerId == form.providerId &&
+                                provider.descriptor.variants.any { variant ->
+                                    variant.kind == form.providerKind
+                                }
+                        }
+                    } != false
+                    state.copy(
+                        providerDiscoveryState = if (providers.isEmpty()) {
+                            ProviderDiscoveryState.Empty
+                        } else {
+                            ProviderDiscoveryState.Ready(providers)
+                        },
+                        providerSubscriptionForm = state.providerSubscriptionForm
+                            .takeIf { formAvailable },
+                        providerSubscriptionTitle = state.providerSubscriptionTitle
+                            .takeIf { formAvailable }
+                            .orEmpty(),
+                    )
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                _state.update { state ->
+                    state.copy(
+                        providerDiscoveryState = ProviderDiscoveryState.Failed(
+                            failureCount = (error as? ProviderDiscoveryException)?.failureCount,
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    fun openProviderSubscription(providerId: String, providerKind: String) {
+        val descriptor = currentProviders().firstOrNull { provider ->
+            provider.descriptor.providerId.value == providerId
+        }?.descriptor ?: return
+        val kind = descriptor.variants.firstOrNull { variant ->
+            variant.kind.value == providerKind
+        }?.kind ?: return
+        _state.update { state ->
+            state.copy(
+                providerSubscriptionForm = ProviderSubscriptionForm.create(descriptor, kind),
+                providerSubscriptionTitle = descriptor.displayName,
+                providerSubscriptionFeedback = null,
+            )
+        }
+    }
+
+    fun reauthenticateProviderAccount(playlistUrl: String) {
+        val account = state.value.providerAccounts.firstOrNull { summary ->
+            summary.playlistUrl == playlistUrl && summary.requiresReauthentication
+        } ?: return
+        providerDiscoveryJob?.cancel()
+        providerDiscoveryJob = viewModelScope.launch {
+            val providers = currentProviders().ifEmpty {
+                loadProvidersForAction() ?: return@launch
+            }
+            val descriptor = providers.singleOrNull { provider ->
+                provider.descriptor.providerId == account.providerId &&
+                    provider.descriptor.variants.any { variant ->
+                        variant.kind == account.providerKind
+                    }
+            }?.descriptor ?: run {
+                _state.update {
+                    it.copy(providerSubscriptionFeedback = TvProviderSubscriptionFeedback.Failed)
+                }
+                return@launch
+            }
+            _state.update { current ->
+                current.copy(
+                    providerSubscriptionForm = ProviderSubscriptionForm.createForReauthentication(
+                        descriptor = descriptor,
+                        account = account,
+                    ),
+                    providerSubscriptionTitle = account.playlistTitle,
+                    providerSubscriptionFeedback = null,
+                )
+            }
+        }
+    }
+
+    fun closeProviderSubscription() {
+        if (state.value.providerSubscriptionInProgress) return
+        _state.update { current ->
+            current.copy(
+                providerSubscriptionForm = null,
+                providerSubscriptionTitle = "",
+                providerSubscriptionFeedback = null,
+            )
+        }
+    }
+
+    fun updateProviderSubscriptionTitle(title: String) {
+        _state.update {
+            it.copy(providerSubscriptionTitle = title, providerSubscriptionFeedback = null)
+        }
+    }
+
+    fun selectProviderKind(kindValue: String) {
+        val form = state.value.providerSubscriptionForm ?: return
+        val descriptor = currentProviders().firstOrNull { provider ->
+            provider.descriptor.providerId == form.providerId
+        }?.descriptor ?: return
+        val kind = descriptor.variants.firstOrNull { variant ->
+            variant.kind.value == kindValue
+        }?.kind ?: return
+        if (kind == form.providerKind) return
+        _state.update { current ->
+            current.copy(
+                providerSubscriptionForm = ProviderSubscriptionForm.create(descriptor, kind),
+                providerSubscriptionFeedback = null,
+            )
+        }
+    }
+
+    fun updateProviderSetting(fieldKey: String, value: String?) {
+        _state.update { current ->
+            current.copy(
+                providerSubscriptionForm = current.providerSubscriptionForm?.update(fieldKey, value),
+                providerSubscriptionFeedback = null,
+            )
+        }
+    }
+
+    fun submitProviderSubscription() {
+        if (providerSubscriptionJob?.isActive == true) return
+        val current = state.value
+        val form = current.providerSubscriptionForm ?: return
+        if (current.providerSubscriptionTitle.isBlank()) {
+            _state.update {
+                it.copy(providerSubscriptionFeedback = TvProviderSubscriptionFeedback.InvalidSettings)
+            }
+            return
+        }
+        val buildResult = runCatching {
+            form.buildRequest(
+                title = current.providerSubscriptionTitle,
+                stageCredential = subscriptionProviderRepository::stageCredential,
+            )
+        }.getOrElse {
+            _state.update {
+                it.copy(providerSubscriptionFeedback = TvProviderSubscriptionFeedback.Failed)
+            }
+            return
+        }
+        when (val result = buildResult) {
+            is ProviderSubscriptionFormBuildResult.Invalid -> {
+                _state.update {
+                    it.copy(
+                        providerSubscriptionForm = result.form,
+                        providerSubscriptionFeedback = TvProviderSubscriptionFeedback.InvalidSettings,
+                    )
+                }
+            }
+
+            is ProviderSubscriptionFormBuildResult.Ready -> {
+                providerSubscriptionJob = viewModelScope.launch {
+                    _state.update {
+                        it.copy(
+                            providerSubscriptionInProgress = true,
+                            providerSubscriptionFeedback = null,
+                        )
+                    }
+                    try {
+                        val subscription = withContext(Dispatchers.IO) {
+                            subscriptionProviderRepository.subscribe(result.request)
+                        }
+                        _state.update {
+                            it.copy(
+                                providerSubscriptionForm = null,
+                                providerSubscriptionTitle = "",
+                                providerSubscriptionInProgress = false,
+                                providerSubscriptionFeedback = TvProviderSubscriptionFeedback.Added(
+                                    subscription.channelCount
+                                ),
+                            )
+                        }
+                    } catch (cancelled: CancellationException) {
+                        _state.update { it.copy(providerSubscriptionInProgress = false) }
+                        throw cancelled
+                    } catch (_: Exception) {
+                        _state.update {
+                            it.copy(
+                                providerSubscriptionInProgress = false,
+                                providerSubscriptionFeedback = TvProviderSubscriptionFeedback.Failed,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private fun observeExternalExtensions() {
         viewModelScope.launch {
             settings.data
@@ -251,6 +484,50 @@ class TvHomeViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val plugins = extensionPluginRepository.installedPlugins()
             _state.update { it.copy(extensionPlugins = plugins) }
+            refreshSubscriptionProviders()
+        }
+    }
+
+    private fun observeProviderAccounts() {
+        viewModelScope.launch {
+            subscriptionProviderRepository.observeAccountSummaries().collect { accounts ->
+                _state.update { it.copy(providerAccounts = accounts) }
+            }
+        }
+    }
+
+    private fun currentProviders(): List<DiscoveredSubscriptionProvider> =
+        (state.value.providerDiscoveryState as? ProviderDiscoveryState.Ready)
+            ?.providers
+            .orEmpty()
+
+    private suspend fun loadProvidersForAction(): List<DiscoveredSubscriptionProvider>? {
+        _state.update { it.copy(providerDiscoveryState = ProviderDiscoveryState.Loading) }
+        return try {
+            val providers = withContext(Dispatchers.IO) {
+                subscriptionProviderRepository.discoverProviders()
+            }
+            _state.update {
+                it.copy(
+                    providerDiscoveryState = if (providers.isEmpty()) {
+                        ProviderDiscoveryState.Empty
+                    } else {
+                        ProviderDiscoveryState.Ready(providers)
+                    }
+                )
+            }
+            providers
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            _state.update {
+                it.copy(
+                    providerDiscoveryState = ProviderDiscoveryState.Failed(
+                        failureCount = (error as? ProviderDiscoveryException)?.failureCount,
+                    )
+                )
+            }
+            null
         }
     }
 

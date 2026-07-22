@@ -70,6 +70,50 @@ class Migration22To23Test {
         database.close()
     }
 
+    @Test
+    fun migrationMarksAccountForReauthenticationWhenCredentialEncryptionFails() {
+        migrationHelper.createDatabase(FAILED_DATABASE_NAME, 22).apply {
+            execSQL(
+                "INSERT INTO playlists (title, url, pinned_groups, hidden_groups, source, epg_urls, auto_refresh_programmes) " +
+                    "VALUES ('Emby', 'm3u-provider://account/a/live', '[]', '[]', 'emby', '[]', 0)"
+            )
+            execSQL(
+                "INSERT INTO provider_accounts " +
+                    "(id, provider_id, provider_kind, base_url, server_id, server_name, server_version, user_id, username, playlist_url) " +
+                    "VALUES ('a', 'com.example', 'emby', 'https://example.test', 's', 'Server', '1', 'u', 'user', 'm3u-provider://account/a/live')"
+            )
+            execSQL(
+                "INSERT INTO provider_credentials (account_id, access_token) VALUES ('a', 'plain-token')"
+            )
+            close()
+        }
+
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val database = Room.databaseBuilder(
+            context,
+            M3UDatabase::class.java,
+            FAILED_DATABASE_NAME,
+        )
+            .allowMainThreadQueries()
+            .addMigrations(DatabaseMigrations.migration22To23(FailingCredentialVault))
+            .build()
+        val migrated = database.openHelper.writableDatabase
+
+        migrated.query(
+            "SELECT requires_reauthentication FROM provider_accounts WHERE id = 'a'"
+        ).use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(1, cursor.getInt(0))
+        }
+        migrated.query(
+            "SELECT COUNT(*) FROM provider_credentials WHERE account_id = 'a'"
+        ).use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(0, cursor.getInt(0))
+        }
+        database.close()
+    }
+
     private fun SupportSQLiteDatabase.hasTable(tableName: String): Boolean = query(
         "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
         arrayOf(tableName),
@@ -92,7 +136,22 @@ class Migration22To23Test {
         override fun consume(handle: CredentialHandle): String? = null
     }
 
+    private data object FailingCredentialVault : CredentialVault {
+        override fun encrypt(
+            accountId: String,
+            secret: String,
+            credentialHandle: String?,
+        ): ProviderCredentialEntity = error("Keystore is unavailable")
+
+        override fun decrypt(credential: ProviderCredentialEntity): String? = null
+
+        override fun stage(secret: String): CredentialHandle = CredentialHandle("transient")
+
+        override fun consume(handle: CredentialHandle): String? = null
+    }
+
     private companion object {
         const val DATABASE_NAME = "migration-22-23"
+        const val FAILED_DATABASE_NAME = "migration-22-23-encryption-failure"
     }
 }

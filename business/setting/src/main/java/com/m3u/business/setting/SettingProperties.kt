@@ -3,7 +3,6 @@ package com.m3u.business.setting
 import android.net.Uri
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.mutableStateMapOf
 import com.m3u.data.database.model.DataSource
 
 class SettingProperties(
@@ -17,7 +16,4 @@ class SettingProperties(
     val passwordState: MutableState<String> = mutableStateOf(""),
     val epgState: MutableState<String> = mutableStateOf(""),
     val selectedState: MutableState<DataSource> = mutableStateOf(DataSource.M3U),
-    val selectedProviderIdState: MutableState<String> = mutableStateOf(""),
-    val selectedProviderKindState: MutableState<String> = mutableStateOf(""),
-    val providerSettingValues: MutableMap<String, String> = mutableStateMapOf(),
 )

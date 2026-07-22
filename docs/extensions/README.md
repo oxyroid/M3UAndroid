@@ -2,11 +2,9 @@
 
 [简体中文](README.zh-CN.md)
 
-Choose the path that matches what you are building:
+Choose the guide for your task:
 
-- To build a separately installed Android extension APK, start with [Run Hello in 10 minutes](developers/quickstart.md).
-- To change M3UAndroid's runtime, IPC, or host data integration, go to the [extension platform maintainer guide](maintainers/README.md).
+- [Build an extension](developers/README.md): declare the extension, implement a typed Hook, and verify the host result.
+- [Maintain the extension platform](maintainers/README.md): trace runtime, transport, broker, provider, or result-import failures.
 
-Emby and Jellyfin already ship as built-in extensions.
-
-External APK extensions are still a developer preview. Discovery, authorization, settings, and selected Hooks are testable; a complete third-party subscription service is not available yet.
+Emby and Jellyfin ship as built-in extensions. External extensions use the same typed Hook contracts through the Android transport.

@@ -1,28 +1,46 @@
-# Publish and upgrade an extension
+# Prepare a release or update
 
 [简体中文](compatibility.zh-CN.md) · [Developer guide](../README.md)
 
-Read this after the extension works. The SDK is still a developer preview, so build the host and extension from the same checkout.
+Before an update, decide separately whether you are changing extension identity, extension code version, a Hook contract, saved settings, or capabilities.
 
-## Create your own in-repository extension
+## Keep identity stable
 
-The shortest current path is to copy the `samples/hello-extension` module. Give the copy its own package and Service identity, its own `ExtensionId`, display name, and developer name, then register the module in this checkout. Keep its dependency on `:extension:sdk-android`; the sample is an in-repository template while the SDK artifact remains unpublished.
+Keep these values unchanged across updates:
 
-## The three version numbers serve different purposes
+1. Android `applicationId`
+2. Service class name
+3. Signing certificate
+4. `ExtensionId`
 
-| Version | Change it when |
+Change one only when you intend to create a different extension identity.
+
+## Set each version deliberately
+
+| Value | Update rule |
 | --- | --- |
-| Extension `extensionVersion` | Publishing an extension feature or fix |
-| Hook schema version | One Hook's input or output becomes incompatible |
-| Extension API major | The platform contract as a whole becomes incompatible |
+| `extensionVersion` | Increase it for every released feature or fix. |
+| `apiRange` | Set it to the host API range supported by this build. |
+| Hook `schemaVersion` | Copy it from the selected `HookSpec`; the declaration and handler must match exactly. |
+| `settingsSchema.version` | Increase it when saved values are no longer compatible, such as after a field is removed, renamed, or changes type or meaning. |
 
-Give new optional fields defaults. Raise a schema or API major only when an older host or extension cannot safely understand the new shape.
+For a compatible field addition, keep the schema version and existing keys. M3UAndroid applies the new field's default. If you increase the schema version, M3UAndroid clears saved values and credential handles for that schema before applying defaults.
 
-## Upgrade checklist
+## Review capability changes
 
-- The four extension identity fields stay unchanged.
-- `extensionVersion` is updated.
-- Existing ordinary settings still load.
-- Stored settings reconcile after fields are removed or renamed.
-- A new required capability asks the user to authorize again.
-- After a same-signature update, refreshing the extension list loads the new manifest.
+Adding a required capability changes what the user authorizes. Add the capability to both the Hook declaration and `manifest.capabilities`, and give it a concrete reason. Verify the authorization prompt as part of the update test.
+
+When removing a capability, also remove every handler operation that uses it.
+
+## Release checklist
+
+- Build the extension module successfully.
+- Trigger every declared Hook from its host feature.
+- Test both a first enable and an update over the previous version.
+- Confirm existing settings reconcile as intended.
+- Confirm the extension keeps the same identity.
+- Confirm results and diagnostics contain no secrets or user-identifying request data.
+
+The most common incompatible update is renaming a setting key without increasing `settingsSchema.version`. The second is copying an old Hook schema version instead of using the current `HookSpec.schemaVersion`.
+
+For the names used here, see [Contract terms](glossary.md).

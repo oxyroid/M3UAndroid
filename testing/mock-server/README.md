@@ -1,6 +1,6 @@
 # M3U Mock Server
 
-Local HTTP fixtures for manual testing M3U, HLS, Xtream, and Emby-compatible flows.
+Local HTTP fixtures for M3U, HLS, Xtream, Emby-compatible, and external reference-provider flows.
 
 ## Run
 
@@ -21,6 +21,7 @@ Android emulator URLs use `10.0.2.2`:
 - Xtream server: `http://10.0.2.2:8080/player_api.php?username=m3u&password=m3u`
 - Emby-compatible server: `http://10.0.2.2:8080`
 - Jellyfin server with strict modern authorization: `http://10.0.2.2:8080/jellyfin`
+- Reference provider server: `http://10.0.2.2:8080`
 
 For a physical phone or TV, replace `10.0.2.2` with the host machine's LAN IP.
 
@@ -66,5 +67,12 @@ physical device:
 - `/emby-stream/{item}/index.m3u8` requires the token and playback headers.
 - `/Sessions/Playing/Stopped` and `/LiveStreams/Close` accept session cleanup.
 - `/jellyfin/*` mirrors the same lifecycle while rejecting deprecated Jellyfin authorization headers.
+- `POST /reference-provider/login` accepts `{"username":"m3u","password":"reference-password"}` and returns the reference access token plus projected account fields.
+- `GET /reference-provider/channels` requires `X-Emby-Token: mock-reference-access-token` and returns two channels.
+- `GET /reference-provider/playback/{item}` requires the token and opens a deterministic session.
+- `POST /reference-provider/sessions/close` requires the token and closes that session.
+- `GET /reference-provider/sessions/{playSessionId}` requires the token and returns `open` or `closed`.
+- `/reference-provider/stream/{item}/index.m3u8` and its segments require the token.
 
 The default Xtream and Emby-compatible credentials are `m3u` / `m3u`.
+The reference provider uses `m3u` / `reference-password` and returns `mock-reference-access-token`.

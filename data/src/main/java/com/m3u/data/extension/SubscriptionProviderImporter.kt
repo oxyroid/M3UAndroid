@@ -25,6 +25,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 @Singleton
 internal class SubscriptionProviderImporter @Inject constructor(
@@ -45,7 +47,9 @@ internal class SubscriptionProviderImporter @Inject constructor(
         account: ProviderAccount,
         accessToken: String,
         refresh: SubscriptionContentRefreshResult,
-    ): Int = database.withTransaction {
+    ): Int {
+        validateProviderSnapshot(account, refresh)
+        return database.withTransaction {
         val existingPlaylist = playlistDao.get(account.playlistUrl)
         if (existingPlaylist == null) {
             playlistDao.insertOrReplace(
@@ -113,8 +117,66 @@ internal class SubscriptionProviderImporter @Inject constructor(
                 channel.relationId !in refreshedRemoteIds && !channel.favourite && !channel.hidden
             }
             .forEach { channel -> channelDao.delete(channel) }
-        refresh.channels.size
+            refresh.channels.size
+        }
     }
+
+    private fun validateProviderSnapshot(
+        account: ProviderAccount,
+        refresh: SubscriptionContentRefreshResult,
+    ) {
+        require(account.id.isNotBlank() && account.id.length <= MAX_ID_LENGTH)
+        require(account.providerId.isNotBlank() && account.providerId.length <= MAX_ID_LENGTH)
+        require(account.serverId.isNotBlank() && account.serverId.length <= MAX_ID_LENGTH)
+        require(account.userId.isNotBlank() && account.userId.length <= MAX_ID_LENGTH)
+        require(account.baseUrl.toHttpUrlOrNull() != null)
+        require(refresh.source.remoteId == account.serverId)
+        require(refresh.source.providerKind.value == account.providerKind)
+        require(refresh.channels.size <= MAX_CHANNELS_PER_REFRESH)
+        require(refresh.syncMetadata.size <= MAX_METADATA_ENTRIES)
+        require(refresh.diagnostics.size <= MAX_DIAGNOSTICS)
+        require(refresh.diagnostics.all { value -> value.length <= MAX_DIAGNOSTIC_LENGTH })
+        require(refresh.channels.map { descriptor -> descriptor.remoteId }.distinct().size ==
+            refresh.channels.size)
+        val approvedOrigin = account.baseUrl.toHttpUrlOrNull()?.origin
+        refresh.channels.forEach { descriptor ->
+            require(descriptor.remoteId.isNotBlank() && descriptor.remoteId.length <= MAX_ID_LENGTH)
+            require(descriptor.title.isNotBlank() && descriptor.title.length <= MAX_TITLE_LENGTH)
+            require(descriptor.category.length <= MAX_TITLE_LENGTH)
+            require(descriptor.logoUrl?.isApprovedUrl(
+                approvedOrigin = approvedOrigin,
+                restrictOrigin = account.ownerPackageName != null,
+            ) ?: true)
+            require(descriptor.metadata.size <= MAX_METADATA_ENTRIES)
+            require(descriptor.metadata.all { (key, value) ->
+                key.isNotBlank() &&
+                    key.length <= MAX_METADATA_KEY_LENGTH &&
+                    value.length <= MAX_METADATA_VALUE_LENGTH
+            })
+            require(descriptor.epgReference?.length?.let { it <= MAX_ID_LENGTH } ?: true)
+            val reference = descriptor.playbackReference
+            require(reference.providerId.value == account.providerId)
+            require(reference.itemId.isNotBlank() && reference.itemId.length <= MAX_ID_LENGTH)
+            require(reference.sourceType.isNotBlank() && reference.sourceType.length <= MAX_ID_LENGTH)
+            require(reference.mediaSourceId?.length?.let { it <= MAX_ID_LENGTH } ?: true)
+            require(reference.fallbackDirectUrl?.isApprovedUrl(
+                approvedOrigin = approvedOrigin,
+                restrictOrigin = account.ownerPackageName != null,
+            ) ?: true)
+        }
+    }
+
+    private fun String.isApprovedUrl(
+        approvedOrigin: String?,
+        restrictOrigin: Boolean,
+    ): Boolean {
+        if (length > MAX_URL_LENGTH) return false
+        val url = toHttpUrlOrNull() ?: return false
+        return !restrictOrigin || url.origin == approvedOrigin
+    }
+
+    private val HttpUrl.origin: String
+        get() = "$scheme://$host:$port"
 
     suspend fun metadataSnapshots(playlistUrl: String): List<ChannelMetadataSnapshot> = channelDao
         .getByPlaylistUrl(playlistUrl)
@@ -260,6 +322,15 @@ internal class SubscriptionProviderImporter @Inject constructor(
 
     private companion object {
         const val EXTENSION_EPG_SCHEME = "m3u-extension-epg://"
+        const val MAX_CHANNELS_PER_REFRESH = 50_000
+        const val MAX_ID_LENGTH = 512
+        const val MAX_TITLE_LENGTH = 1_024
+        const val MAX_URL_LENGTH = 8_192
+        const val MAX_METADATA_ENTRIES = 64
+        const val MAX_METADATA_KEY_LENGTH = 128
+        const val MAX_METADATA_VALUE_LENGTH = 4_096
+        const val MAX_DIAGNOSTICS = 32
+        const val MAX_DIAGNOSTIC_LENGTH = 2_048
 
         fun extensionEpgSource(extensionId: ExtensionId, encodedPlaylist: String): String =
             "$EXTENSION_EPG_SCHEME${extensionId.value}/$encodedPlaylist"

@@ -2,7 +2,7 @@
 
 ## When to use this playbook
 
-Use it for extension contracts, runtime policy, built-in providers, Android plugin transport, host importers, plugin management, or extension conformance tests.
+Use it for extension contracts, runtime policy, built-in extensions such as the Emby/Jellyfin provider, Android plugin transport, host importers, plugin management, or extension conformance tests.
 
 ## Canonical documentation
 

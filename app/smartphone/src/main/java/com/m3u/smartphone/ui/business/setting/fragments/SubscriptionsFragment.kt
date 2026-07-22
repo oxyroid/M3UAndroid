@@ -31,6 +31,9 @@ import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -50,13 +53,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.business.setting.BackingUpAndRestoringState
+import com.m3u.business.setting.ProviderDiscoveryState
+import com.m3u.business.setting.ProviderSettingFieldError
+import com.m3u.business.setting.ProviderSubscriptionForm
+import com.m3u.business.setting.ProviderSubscriptionFormField
 import com.m3u.business.setting.SettingProperties
 import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
 import com.m3u.core.foundation.architecture.preferences.preferenceOf
@@ -65,9 +74,9 @@ import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.repository.extension.ExtensionSettingsConfiguration
 import com.m3u.data.repository.plugin.InstalledPlugin
+import com.m3u.data.repository.provider.ProviderAccountSummary
 import com.m3u.extension.api.ExtensionSettingType
 import com.m3u.extension.api.ExtensionState
-import com.m3u.extension.api.subscription.SubscriptionProviderDescriptor
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.benchmark.DebugBenchmarkSettings
 import com.m3u.smartphone.ui.business.setting.components.DataSourceSelection
@@ -105,7 +114,14 @@ internal fun SubscriptionsFragment(
     onDeleteEpgPlaylist: (String) -> Unit,
     extensionPlugins: List<InstalledPlugin>,
     extensionSettings: ExtensionSettingsConfiguration?,
-    subscriptionProviders: List<SubscriptionProviderDescriptor>,
+    providerDiscoveryState: ProviderDiscoveryState,
+    providerAccountSummaries: List<ProviderAccountSummary>,
+    providerSubscriptionForm: ProviderSubscriptionForm?,
+    onSelectSubscriptionProvider: (String) -> Unit,
+    onSelectSubscriptionProviderKind: (String) -> Unit,
+    onUpdateSubscriptionProviderSetting: (String, String?) -> Unit,
+    onRetryProviderDiscovery: () -> Unit,
+    onReauthenticateProviderAccount: (String) -> Unit,
     onRefreshExtensionPlugins: () -> Unit,
     onEnableExtensionPlugin: (String, String) -> Unit,
     onReauthorizeExtensionPlugin: (String, String) -> Unit,
@@ -138,7 +154,14 @@ internal fun SubscriptionsFragment(
                         backingUpOrRestoring = backingUpOrRestoring,
                         onClipboard = onClipboard,
                         onSubscribe = onSubscribe,
-                        subscriptionProviders = subscriptionProviders,
+                        providerDiscoveryState = providerDiscoveryState,
+                        providerAccountSummaries = providerAccountSummaries,
+                        providerSubscriptionForm = providerSubscriptionForm,
+                        onSelectSubscriptionProvider = onSelectSubscriptionProvider,
+                        onSelectSubscriptionProviderKind = onSelectSubscriptionProviderKind,
+                        onUpdateSubscriptionProviderSetting = onUpdateSubscriptionProviderSetting,
+                        onRetryProviderDiscovery = onRetryProviderDiscovery,
+                        onReauthenticateProviderAccount = onReauthenticateProviderAccount,
                         backup = backup,
                         restore = restore,
                         modifier = Modifier.fillMaxSize()
@@ -452,7 +475,14 @@ private fun MainContentImpl(
     backingUpOrRestoring: BackingUpAndRestoringState,
     onClipboard: (String) -> Unit,
     onSubscribe: () -> Unit,
-    subscriptionProviders: List<SubscriptionProviderDescriptor>,
+    providerDiscoveryState: ProviderDiscoveryState,
+    providerAccountSummaries: List<ProviderAccountSummary>,
+    providerSubscriptionForm: ProviderSubscriptionForm?,
+    onSelectSubscriptionProvider: (String) -> Unit,
+    onSelectSubscriptionProviderKind: (String) -> Unit,
+    onUpdateSubscriptionProviderSetting: (String, String?) -> Unit,
+    onRetryProviderDiscovery: () -> Unit,
+    onReauthenticateProviderAccount: (String) -> Unit,
     backup: () -> Unit,
     restore: () -> Unit,
     modifier: Modifier = Modifier
@@ -481,13 +511,38 @@ private fun MainContentImpl(
             )
         }
 
+        val reauthenticationAccounts = providerAccountSummaries.filter { account ->
+            account.requiresReauthentication
+        }
+        if (reauthenticationAccounts.isNotEmpty()) {
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(spacing.small)) {
+                    reauthenticationAccounts.forEach { account ->
+                        ProviderReauthenticationCard(
+                            account = account,
+                            onReauthenticate = {
+                                onReauthenticateProviderAccount(account.playlistUrl)
+                            },
+                        )
+                    }
+                }
+            }
+        }
+
         item {
             when (properties.selectedState.value) {
                 DataSource.M3U -> M3UInputContent()
                 DataSource.EPG -> EPGInputContent()
                 DataSource.Xtream -> XtreamInputContent()
                 DataSource.Emby, DataSource.Jellyfin -> EmbyCompatibleInputContent()
-                DataSource.Provider -> DynamicProviderInputContent(subscriptionProviders)
+                DataSource.Provider -> DynamicProviderInputContent(
+                    discoveryState = providerDiscoveryState,
+                    form = providerSubscriptionForm,
+                    onSelectProvider = onSelectSubscriptionProvider,
+                    onSelectKind = onSelectSubscriptionProviderKind,
+                    onUpdateField = onUpdateSubscriptionProviderSetting,
+                    onRetry = onRetryProviderDiscovery,
+                )
                 DataSource.Dropbox -> {}
             }
         }
@@ -520,6 +575,11 @@ private fun MainContentImpl(
                 Row {
                     Button(
                         modifier = Modifier.weight(1f),
+                        enabled = properties.selectedState.value != DataSource.Provider ||
+                            (
+                                providerDiscoveryState is ProviderDiscoveryState.Ready &&
+                                    providerSubscriptionForm != null
+                            ),
                         onClick = {
                             postNotificationPermission.checkPermissionOrRationale(
                                 showRationale = {
@@ -585,6 +645,57 @@ private fun MainContentImpl(
 
         item {
             Spacer(Modifier.imePadding())
+        }
+    }
+}
+
+@Composable
+private fun ProviderReauthenticationCard(
+    account: ProviderAccountSummary,
+    onReauthenticate: () -> Unit,
+) {
+    val spacing = LocalSpacing.current
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("provider-reauthentication"),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        ),
+    ) {
+        Column(
+            modifier = Modifier.padding(spacing.medium),
+            verticalArrangement = Arrangement.spacedBy(spacing.small),
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(spacing.small),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(Icons.Rounded.Warning, contentDescription = null)
+                Text(
+                    text = stringResource(
+                        string.feat_setting_provider_reauthentication_required,
+                        account.playlistTitle,
+                    ),
+                    style = MaterialTheme.typography.titleSmall,
+                )
+            }
+            Text(
+                text = stringResource(
+                    string.feat_setting_provider_account_summary,
+                    account.serverName,
+                    account.username,
+                    account.baseUrl,
+                ),
+                style = MaterialTheme.typography.bodySmall,
+            )
+            FilledTonalButton(
+                onClick = onReauthenticate,
+                modifier = Modifier.testTag("provider-reauthenticate-action"),
+            ) {
+                Text(stringResource(string.feat_setting_provider_reauthenticate))
+            }
         }
     }
 }
@@ -818,27 +929,28 @@ private fun EmbyCompatibleInputContent(modifier: Modifier = Modifier) {
 @Composable
 context(properties: SettingProperties)
 private fun DynamicProviderInputContent(
-    providers: List<SubscriptionProviderDescriptor>,
+    discoveryState: ProviderDiscoveryState,
+    form: ProviderSubscriptionForm?,
+    onSelectProvider: (String) -> Unit,
+    onSelectKind: (String) -> Unit,
+    onUpdateField: (String, String?) -> Unit,
+    onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val spacing = LocalSpacing.current
-    LaunchedEffect(providers) {
-        val selected = providers.firstOrNull {
-            it.providerId.value == properties.selectedProviderIdState.value
-        } ?: providers.firstOrNull()
-        if (selected != null) {
-            properties.selectedProviderIdState.value = selected.providerId.value
-            if (selected.supportedKinds.none {
-                    it.value == properties.selectedProviderKindState.value
-                }
-            ) {
-                properties.selectedProviderKindState.value =
-                    selected.supportedKinds.firstOrNull()?.value.orEmpty()
+    val providers = (discoveryState as? ProviderDiscoveryState.Ready)
+        ?.providers
+        .orEmpty()
+        .map { provider -> provider.descriptor }
+    LaunchedEffect(providers, form?.providerId) {
+        if (providers.none { provider -> provider.providerId == form?.providerId }) {
+            providers.firstOrNull()?.let { provider ->
+                onSelectProvider(provider.providerId.value)
             }
         }
     }
     val selected = providers.firstOrNull {
-        it.providerId.value == properties.selectedProviderIdState.value
+        it.providerId == form?.providerId
     }
     Column(
         modifier = modifier,
@@ -850,82 +962,212 @@ private fun DynamicProviderInputContent(
             onValueChange = { properties.titleState.value = Uri.decode(it) },
             modifier = Modifier.fillMaxWidth(),
         )
-        if (providers.isEmpty()) {
-            Text(stringResource(string.feat_setting_extension_no_plugins))
-            return@Column
+        when (discoveryState) {
+            ProviderDiscoveryState.Loading -> {
+                Row(
+                    modifier = Modifier.testTag("provider-discovery-loading"),
+                    horizontalArrangement = Arrangement.spacedBy(spacing.small),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    Text(stringResource(string.feat_setting_provider_discovery_loading))
+                }
+                return@Column
+            }
+
+            ProviderDiscoveryState.Empty -> {
+                Text(
+                    text = stringResource(string.feat_setting_provider_discovery_empty),
+                    modifier = Modifier.testTag("provider-discovery-empty"),
+                )
+                return@Column
+            }
+
+            is ProviderDiscoveryState.Failed -> {
+                Column(
+                    modifier = Modifier.testTag("provider-discovery-failed"),
+                    verticalArrangement = Arrangement.spacedBy(spacing.small),
+                ) {
+                    Text(stringResource(string.feat_setting_provider_discovery_failed))
+                    FilledTonalButton(
+                        onClick = onRetry,
+                        modifier = Modifier.testTag("provider-discovery-retry"),
+                    ) {
+                        Text(stringResource(string.feat_setting_provider_discovery_retry))
+                    }
+                }
+                return@Column
+            }
+
+            is ProviderDiscoveryState.Ready -> Unit
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(spacing.small)) {
             providers.forEach { provider ->
                 val active = provider.providerId == selected?.providerId
-                FilledTonalButton(
+                ProviderChoiceButton(
+                    selected = active,
                     onClick = {
-                        properties.selectedProviderIdState.value = provider.providerId.value
-                        properties.selectedProviderKindState.value =
-                            provider.supportedKinds.firstOrNull()?.value.orEmpty()
-                        properties.providerSettingValues.clear()
+                        onSelectProvider(provider.providerId.value)
                     },
-                    colors = if (active) {
-                        ButtonDefaults.filledTonalButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        )
-                    } else {
-                        ButtonDefaults.filledTonalButtonColors()
-                    },
-                ) { Text(provider.displayName) }
+                    text = provider.displayName,
+                )
             }
         }
         selected?.let { provider ->
             FlowRow(horizontalArrangement = Arrangement.spacedBy(spacing.small)) {
-                provider.supportedKinds.forEach { kind ->
-                    FilledTonalButton(
-                        onClick = { properties.selectedProviderKindState.value = kind.value },
-                    ) { Text(kind.value) }
+                provider.variants.forEach { variant ->
+                    ProviderChoiceButton(
+                        selected = variant.kind == form?.providerKind,
+                        onClick = { onSelectKind(variant.kind.value) },
+                        text = variant.displayName,
+                    )
                 }
             }
-            provider.settingsSchema?.fields?.forEach { field ->
-                val value = properties.providerSettingValues[field.key].orEmpty()
-                when (field.type) {
-                    ExtensionSettingType.TEXT,
-                    ExtensionSettingType.NUMBER,
-                    ExtensionSettingType.SECRET -> PlaceholderField(
-                        text = value,
-                        placeholder = field.label.uppercase(),
-                        onValueChange = { properties.providerSettingValues[field.key] = it },
-                        keyboardType = when (field.type) {
-                            ExtensionSettingType.NUMBER -> KeyboardType.Number
-                            ExtensionSettingType.SECRET -> KeyboardType.Password
-                            else -> KeyboardType.Text
-                        },
-                        visualTransformation = if (field.type == ExtensionSettingType.SECRET) {
-                            PasswordVisualTransformation()
-                        } else {
-                            androidx.compose.ui.text.input.VisualTransformation.None
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-
-                    ExtensionSettingType.BOOLEAN -> FilledTonalButton(
-                        onClick = {
-                            properties.providerSettingValues[field.key] =
-                                (value.toBooleanStrictOrNull() != true).toString()
-                        },
-                    ) { Text("${field.label}: ${value.toBooleanStrictOrNull() == true}") }
-
-                    ExtensionSettingType.SINGLE_CHOICE -> FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(spacing.small),
-                    ) {
-                        field.choices.forEach { choice ->
-                            FilledTonalButton(
-                                onClick = {
-                                    properties.providerSettingValues[field.key] = choice.value
-                                },
-                            ) { Text(choice.label) }
-                        }
-                    }
-                }
+            form?.fields?.forEach { field ->
+                ProviderFormField(
+                    field = field,
+                    onUpdate = { value -> onUpdateField(field.definition.key, value) },
+                )
             }
         }
     }
+}
+
+@Composable
+private fun ProviderFormField(
+    field: ProviderSubscriptionFormField,
+    onUpdate: (String?) -> Unit,
+) {
+    val definition = field.definition
+    val spacing = LocalSpacing.current
+    Column(verticalArrangement = Arrangement.spacedBy(spacing.extraSmall)) {
+        Text(
+            text = definition.label + if (definition.required) " *" else "",
+            style = MaterialTheme.typography.labelLarge,
+        )
+        definition.description?.let { description ->
+            Text(description, style = MaterialTheme.typography.bodySmall)
+        }
+        when (definition.type) {
+            ExtensionSettingType.TEXT,
+            ExtensionSettingType.NUMBER,
+            ExtensionSettingType.SECRET -> PlaceholderField(
+                text = field.value.orEmpty(),
+                placeholder = definition.label,
+                onValueChange = onUpdate,
+                contentColor = if (field.error == null) {
+                    MaterialTheme.colorScheme.onSurface
+                } else {
+                    MaterialTheme.colorScheme.error
+                },
+                keyboardType = when (definition.type) {
+                    ExtensionSettingType.NUMBER -> KeyboardType.Decimal
+                    ExtensionSettingType.SECRET -> KeyboardType.Password
+                    else -> KeyboardType.Text
+                },
+                visualTransformation = if (definition.type == ExtensionSettingType.SECRET) {
+                    PasswordVisualTransformation()
+                } else {
+                    VisualTransformation.None
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            ExtensionSettingType.BOOLEAN -> FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(spacing.small),
+            ) {
+                ProviderResetChoice(field, onUpdate)
+                ProviderChoiceButton(
+                    selected = field.value == "true" && !field.isUsingDefault,
+                    onClick = { onUpdate("true") },
+                    text = stringResource(string.feat_setting_provider_value_true),
+                )
+                ProviderChoiceButton(
+                    selected = field.value == "false" && !field.isUsingDefault,
+                    onClick = { onUpdate("false") },
+                    text = stringResource(string.feat_setting_provider_value_false),
+                )
+            }
+
+            ExtensionSettingType.SINGLE_CHOICE -> FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(spacing.small),
+            ) {
+                ProviderResetChoice(field, onUpdate)
+                definition.choices.forEach { choice ->
+                    ProviderChoiceButton(
+                        selected = field.value == choice.value && !field.isUsingDefault,
+                        onClick = { onUpdate(choice.value) },
+                        text = choice.label,
+                    )
+                }
+            }
+        }
+        if (field.isUsingDefault) {
+            Text(
+                text = stringResource(
+                    string.feat_setting_provider_default_value,
+                    field.value.orEmpty(),
+                ),
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+        field.error?.let { error ->
+            Text(
+                text = stringResource(error.messageResource()),
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProviderResetChoice(
+    field: ProviderSubscriptionFormField,
+    onUpdate: (String?) -> Unit,
+) {
+    if (field.definition.defaultValue != null || !field.definition.required) {
+        ProviderChoiceButton(
+            selected = field.isUsingDefault || field.value == null,
+            onClick = { onUpdate(null) },
+            text = stringResource(
+                if (field.definition.defaultValue == null) {
+                    string.feat_setting_provider_value_not_set
+                } else {
+                    string.feat_setting_provider_value_default
+                }
+            ),
+        )
+    }
+}
+
+@Composable
+private fun ProviderChoiceButton(
+    selected: Boolean,
+    onClick: () -> Unit,
+    text: String,
+) {
+    FilledTonalButton(
+        onClick = onClick,
+        colors = if (selected) {
+            ButtonDefaults.filledTonalButtonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            )
+        } else {
+            ButtonDefaults.filledTonalButtonColors()
+        },
+    ) {
+        Text(text)
+    }
+}
+
+private fun ProviderSettingFieldError.messageResource(): Int = when (this) {
+    ProviderSettingFieldError.REQUIRED -> string.feat_setting_provider_error_required
+    ProviderSettingFieldError.TOO_LONG -> string.feat_setting_provider_error_too_long
+    ProviderSettingFieldError.INVALID_NUMBER -> string.feat_setting_provider_error_number
+    ProviderSettingFieldError.INVALID_BOOLEAN -> string.feat_setting_provider_error_boolean
+    ProviderSettingFieldError.INVALID_CHOICE -> string.feat_setting_provider_error_choice
 }
 
 @Composable

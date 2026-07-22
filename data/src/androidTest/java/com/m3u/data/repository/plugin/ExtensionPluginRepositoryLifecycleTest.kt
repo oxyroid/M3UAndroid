@@ -10,8 +10,11 @@ import com.m3u.core.foundation.architecture.preferences.settings
 import com.m3u.data.database.M3UDatabase
 import com.m3u.data.database.model.ProviderCredentialEntity
 import com.m3u.data.extension.SubscriptionProviderImporter
+import com.m3u.data.extension.security.ActiveExtensionPrincipalRegistry
 import com.m3u.data.extension.security.CredentialVault
 import com.m3u.data.extension.security.ExtensionSecretStore
+import com.m3u.data.extension.security.InactiveExtensionPrincipalLeaseException
+import com.m3u.data.extension.security.ProviderAccountOwnerStore
 import com.m3u.data.repository.extension.ExtensionSettingStore
 import com.m3u.data.repository.extension.ExtensionSettingUpdateResult
 import com.m3u.data.repository.extension.ExtensionSettingsConfiguration
@@ -104,6 +107,44 @@ class ExtensionPluginRepositoryLifecycleTest {
         assertFalse(trustStore.isEnabled(SERVICE))
         assertTrue(runtimeExtensions(repository).isEmpty())
         assertTrue(transport.closed)
+    }
+
+    @Test
+    fun disableWaitsForStartedProviderCommitAndRejectsEveryQueuedLease() = runBlocking {
+        val principalRegistry = ActiveExtensionPrincipalRegistry()
+        val repository = repository(
+            connector = ExtensionPluginTransportConnector { FakePluginTransport(MANIFEST) },
+            activePrincipalRegistry = principalRegistry,
+        )
+        assertTrue(
+            repository.enable(SERVICE.packageName, SERVICE.serviceName) is
+                PluginEnableResult.Enabled
+        )
+        val startedLease = checkNotNull(principalRegistry.captureLease(EXTENSION_ID))
+        val queuedLease = checkNotNull(principalRegistry.captureLease(EXTENSION_ID))
+        val persistenceStarted = CompletableDeferred<Unit>()
+        val releasePersistence = CompletableDeferred<Unit>()
+        val startedCommit = async {
+            principalRegistry.commit(startedLease) {
+                persistenceStarted.complete(Unit)
+                releasePersistence.await()
+                "saved"
+            }
+        }
+
+        persistenceStarted.await()
+        val disable = async { repository.disable(EXTENSION_ID.value) }
+        yield()
+
+        assertFalse(disable.isCompleted)
+        releasePersistence.complete(Unit)
+
+        assertEquals("saved", startedCommit.await())
+        assertTrue(disable.await())
+        assertTrue(
+            runCatching { principalRegistry.commit(queuedLease) { Unit } }
+                .exceptionOrNull() is InactiveExtensionPrincipalLeaseException
+        )
     }
 
     @Test
@@ -314,6 +355,33 @@ class ExtensionPluginRepositoryLifecycleTest {
     }
 
     @Test
+    fun clearDataInvalidatesInFlightProviderLeaseWithoutDisablingThePrincipal() = runBlocking {
+        trust(MANIFEST)
+        val principalRegistry = ActiveExtensionPrincipalRegistry()
+        val repository = repository(
+            connector = ExtensionPluginTransportConnector { FakePluginTransport(MANIFEST) },
+            activePrincipalRegistry = principalRegistry,
+        )
+        assertTrue(
+            repository.enable(SERVICE.packageName, SERVICE.serviceName) is
+                PluginEnableResult.Enabled
+        )
+        val staleLease = checkNotNull(principalRegistry.captureLease(EXTENSION_ID))
+
+        assertTrue(
+            repository.clearData(SERVICE.packageName, SERVICE.serviceName) is
+                PluginDataClearResult.Cleared
+        )
+
+        assertTrue(
+            runCatching { principalRegistry.commit(staleLease) { Unit } }
+                .exceptionOrNull() is InactiveExtensionPrincipalLeaseException
+        )
+        val currentLease = checkNotNull(principalRegistry.captureLease(EXTENSION_ID))
+        assertEquals("current", principalRegistry.commit(currentLease) { "current" })
+    }
+
+    @Test
     fun missingTrustIsVisibleAndForgetClearsDataBeforeReleasingItsId() = runBlocking {
         trust(MANIFEST)
         settingStore.save(
@@ -391,6 +459,8 @@ class ExtensionPluginRepositoryLifecycleTest {
         connector: ExtensionPluginTransportConnector,
         services: List<InstalledExtensionService> = listOf(SERVICE),
         extensionSettingsRepository: ExtensionSettingsRepository = NoOpSettingsRepository,
+        activePrincipalRegistry: ActiveExtensionPrincipalRegistry =
+            ActiveExtensionPrincipalRegistry(),
     ): TestRepository {
         val runtime = ExtensionRuntime(
             hostApiVersion = ExtensionApiVersions.Current,
@@ -416,6 +486,11 @@ class ExtensionPluginRepositoryLifecycleTest {
                 providerDao = database.providerDao(),
                 programmeDao = database.programmeDao(),
                 credentialVault = NoOpCredentialVault,
+            ),
+            activePrincipalRegistry = activePrincipalRegistry,
+            providerAccountOwnerStore = ProviderAccountOwnerStore(
+                database = database,
+                providerDao = database.providerDao(),
             ),
             settings = context.settings,
         )

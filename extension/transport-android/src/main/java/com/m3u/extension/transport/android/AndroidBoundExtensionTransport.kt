@@ -10,6 +10,7 @@ import android.os.ParcelFileDescriptor
 import com.m3u.extension.api.ExtensionApiVersion
 import com.m3u.extension.api.ExtensionApiVersions
 import com.m3u.extension.api.ExtensionManifest
+import com.m3u.extension.api.security.BrokerProtocolVersions
 import com.m3u.extension.api.InvocationId
 import com.m3u.extension.api.SerializedExtensionEnvelope
 import com.m3u.extension.api.SerializedExtensionResult
@@ -219,8 +220,10 @@ class AndroidBoundExtensionTransport private constructor(
                                             appContext,
                                             json.encodeToString(
                                                 ExtensionHandshakeRequest(
-                                                    ExtensionProtocol.TRANSPORT_VERSION,
-                                                    hostApiVersion,
+                                                    transportVersion = ExtensionProtocol.TRANSPORT_VERSION,
+                                                    hostApiVersion = hostApiVersion,
+                                                    supportedBrokerProtocolVersions =
+                                                        BrokerProtocolVersions.Supported,
                                                 )
                                             )
                                         ).use { requestFile ->
@@ -232,6 +235,17 @@ class AndroidBoundExtensionTransport private constructor(
                                 require(handshake.transportVersion == ExtensionProtocol.TRANSPORT_VERSION) {
                                     "Extension transport protocol is incompatible"
                                 }
+                                handshake.error?.let { error ->
+                                    throw IllegalStateException(
+                                        "Extension handshake failed (${error.code}): ${error.message}"
+                                    )
+                                }
+                                val brokerProtocolVersion = checkNotNull(
+                                    handshake.brokerProtocolVersion
+                                ) { "Extension handshake did not select a broker protocol" }
+                                require(
+                                    brokerProtocolVersion in BrokerProtocolVersions.Supported
+                                ) { "Extension broker protocol is incompatible" }
                                 val manifest = json.decodeFromString<ExtensionManifest>(
                                     ParcelFileCodec.read(service.openManifest(), MAX_MANIFEST_BYTES)
                                 )

@@ -68,9 +68,13 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.m3u.business.setting.ProviderDiscoveryState
+import com.m3u.business.setting.ProviderSettingFieldError
+import com.m3u.business.setting.ProviderSubscriptionForm
 import com.m3u.core.foundation.util.basic.title
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
+import com.m3u.data.repository.provider.ProviderAccountSummary
 import com.m3u.data.repository.plugin.InstalledPlugin
 import com.m3u.data.repository.extension.ExtensionSettingsConfiguration
 import com.m3u.extension.api.ExtensionSettingField
@@ -102,6 +106,14 @@ fun TvBrowsePane(
     onOpenExtensionSettings: (String) -> Unit,
     onCloseExtensionSettings: () -> Unit,
     onUpdateExtensionSetting: (String, String, String?) -> Unit,
+    onRefreshProviders: () -> Unit,
+    onOpenProviderSubscription: (String, String) -> Unit,
+    onReauthenticateProvider: (String) -> Unit,
+    onCloseProviderSubscription: () -> Unit,
+    onUpdateProviderTitle: (String) -> Unit,
+    onSelectProviderKind: (String) -> Unit,
+    onUpdateProviderSetting: (String, String?) -> Unit,
+    onSubmitProviderSubscription: () -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -146,6 +158,14 @@ fun TvBrowsePane(
                     onOpenExtensionSettings = onOpenExtensionSettings,
                     onCloseExtensionSettings = onCloseExtensionSettings,
                     onUpdateExtensionSetting = onUpdateExtensionSetting,
+                    onRefreshProviders = onRefreshProviders,
+                    onOpenProviderSubscription = onOpenProviderSubscription,
+                    onReauthenticateProvider = onReauthenticateProvider,
+                    onCloseProviderSubscription = onCloseProviderSubscription,
+                    onUpdateProviderTitle = onUpdateProviderTitle,
+                    onSelectProviderKind = onSelectProviderKind,
+                    onUpdateProviderSetting = onUpdateProviderSetting,
+                    onSubmitProviderSubscription = onSubmitProviderSubscription,
                 )
             }
         }
@@ -572,6 +592,14 @@ private fun StatusScreen(
     onOpenExtensionSettings: (String) -> Unit,
     onCloseExtensionSettings: () -> Unit,
     onUpdateExtensionSetting: (String, String, String?) -> Unit,
+    onRefreshProviders: () -> Unit,
+    onOpenProviderSubscription: (String, String) -> Unit,
+    onReauthenticateProvider: (String) -> Unit,
+    onCloseProviderSubscription: () -> Unit,
+    onUpdateProviderTitle: (String) -> Unit,
+    onSelectProviderKind: (String) -> Unit,
+    onUpdateProviderSetting: (String, String?) -> Unit,
+    onSubmitProviderSubscription: () -> Unit,
 ) {
     var pendingTrust by remember { mutableStateOf<InstalledPlugin?>(null) }
     var pendingReauthorization by remember { mutableStateOf(false) }
@@ -630,6 +658,38 @@ private fun StatusScreen(
                     configuration = configuration,
                     onClose = onCloseExtensionSettings,
                     onUpdate = onUpdateExtensionSetting,
+                )
+            }
+        }
+        return
+    }
+
+    state.providerSubscriptionForm?.let { form ->
+        val descriptor = (state.providerDiscoveryState as? ProviderDiscoveryState.Ready)
+            ?.providers
+            ?.firstOrNull { provider -> provider.descriptor.providerId == form.providerId }
+            ?.descriptor
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+            contentPadding = PaddingValues(start = 48.dp, top = 48.dp, end = 64.dp, bottom = 48.dp),
+            modifier = Modifier.fillMaxSize().focusGroup(),
+        ) {
+            item {
+                ProviderSubscriptionPanel(
+                    form = form,
+                    providerName = descriptor?.displayName
+                        ?: stringResource(string.feat_setting_data_source_provider),
+                    variants = descriptor?.variants.orEmpty().map { variant ->
+                        variant.kind.value to variant.displayName
+                    },
+                    title = state.providerSubscriptionTitle,
+                    inProgress = state.providerSubscriptionInProgress,
+                    feedback = state.providerSubscriptionFeedback,
+                    onClose = onCloseProviderSubscription,
+                    onTitleChange = onUpdateProviderTitle,
+                    onKind = onSelectProviderKind,
+                    onSetting = onUpdateProviderSetting,
+                    onSubmit = onSubmitProviderSubscription,
                 )
             }
         }
@@ -703,6 +763,80 @@ private fun StatusScreen(
         }
         item {
             SectionTitle(
+                title = stringResource(string.feat_setting_data_source_provider),
+                subtitle = stringResource(string.feat_setting_playlist_management),
+            )
+        }
+        state.providerSubscriptionFeedback?.let { feedback ->
+            item {
+                ProviderSubscriptionFeedback(feedback)
+            }
+        }
+        items(
+            items = state.providerAccounts.filter(ProviderAccountSummary::requiresReauthentication),
+            key = { account -> "reauth:${account.playlistUrl}" },
+        ) { account ->
+            ProviderReauthenticationCard(
+                account = account,
+                onReauthenticate = { onReauthenticateProvider(account.playlistUrl) },
+            )
+        }
+        when (val discovery = state.providerDiscoveryState) {
+            ProviderDiscoveryState.Loading -> item {
+                Text(
+                    stringResource(string.feat_setting_provider_discovery_loading),
+                    color = TvColors.TextSecondary,
+                )
+            }
+
+            ProviderDiscoveryState.Empty -> item {
+                Text(
+                    stringResource(string.feat_setting_provider_discovery_empty),
+                    color = TvColors.TextSecondary,
+                )
+            }
+
+            is ProviderDiscoveryState.Failed -> {
+                item {
+                    Text(
+                        stringResource(string.feat_setting_provider_discovery_failed),
+                        color = TvColors.Danger,
+                    )
+                }
+                item {
+                    TvActionButton(
+                        text = stringResource(string.feat_setting_provider_discovery_retry),
+                        icon = Icons.Rounded.Refresh,
+                        onClick = onRefreshProviders,
+                    )
+                }
+            }
+
+            is ProviderDiscoveryState.Ready -> {
+                discovery.providers.forEach { provider ->
+                    provider.descriptor.variants.forEach { variant ->
+                        item(key = "provider:${provider.descriptor.providerId.value}:${variant.kind.value}") {
+                            TvActionButton(
+                                text = if (provider.descriptor.variants.size == 1) {
+                                    provider.descriptor.displayName
+                                } else {
+                                    "${provider.descriptor.displayName} · ${variant.displayName}"
+                                },
+                                icon = Icons.Rounded.Extension,
+                                onClick = {
+                                    onOpenProviderSubscription(
+                                        provider.descriptor.providerId.value,
+                                        variant.kind.value,
+                                    )
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        item {
+            SectionTitle(
                 title = stringResource(string.feat_setting_extension_plugins),
                 subtitle = stringResource(string.tv_extensions_subtitle),
             )
@@ -749,6 +883,194 @@ private fun StatusScreen(
             }
         }
     }
+}
+
+@Composable
+private fun ProviderSubscriptionPanel(
+    form: ProviderSubscriptionForm,
+    providerName: String,
+    variants: List<Pair<String, String>>,
+    title: String,
+    inProgress: Boolean,
+    feedback: TvProviderSubscriptionFeedback?,
+    onClose: () -> Unit,
+    onTitleChange: (String) -> Unit,
+    onKind: (String) -> Unit,
+    onSetting: (String, String?) -> Unit,
+    onSubmit: () -> Unit,
+) {
+    val initialFocusRequester = remember { FocusRequester() }
+    val titleField = ExtensionSettingField(
+        key = "playlist_title",
+        label = stringResource(string.feat_setting_placeholder_title),
+        type = ExtensionSettingType.TEXT,
+        required = true,
+    )
+    LaunchedEffect(form.providerId, form.providerKind) {
+        repeat(2) { withFrameNanos { } }
+        initialFocusRequester.requestFocus()
+    }
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = providerName,
+                    color = TvColors.TextPrimary,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    text = variants.firstOrNull { (kind, _) -> kind == form.providerKind.value }
+                        ?.second
+                        .orEmpty(),
+                    color = TvColors.TextSecondary,
+                    fontSize = 14.sp,
+                )
+            }
+            TvActionButton(
+                text = stringResource(android.R.string.cancel),
+                icon = Icons.Rounded.Block,
+                enabled = !inProgress,
+                onClick = onClose,
+            )
+        }
+        if (variants.size > 1) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                variants.forEach { (kind, label) ->
+                    TvActionButton(
+                        text = label,
+                        icon = if (kind == form.providerKind.value) {
+                            Icons.Rounded.CheckCircle
+                        } else {
+                            Icons.Rounded.Extension
+                        },
+                        enabled = !inProgress,
+                        onClick = { onKind(kind) },
+                    )
+                }
+            }
+        }
+        TvExtensionSettingControl(
+            field = titleField,
+            rawValue = title,
+            secretConfigured = false,
+            focusRequester = initialFocusRequester,
+            onDraftChange = onTitleChange,
+            onUpdate = { value -> onTitleChange(value.orEmpty()) },
+        )
+        if (feedback == TvProviderSubscriptionFeedback.InvalidSettings && title.isBlank()) {
+            ProviderFieldError(ProviderSettingFieldError.REQUIRED)
+        }
+        form.fields.forEach { field ->
+            TvExtensionSettingControl(
+                field = field.definition,
+                rawValue = field.input ?: field.value.orEmpty(),
+                secretConfigured = false,
+                focusRequester = null,
+                onDraftChange = { value -> onSetting(field.definition.key, value) },
+                onUpdate = { value -> onSetting(field.definition.key, value) },
+            )
+            if (field.isUsingDefault) {
+                Text(
+                    text = stringResource(string.feat_setting_provider_value_default),
+                    color = TvColors.TextSecondary,
+                    fontSize = 14.sp,
+                )
+            }
+            field.error?.let { error -> ProviderFieldError(error) }
+        }
+        feedback?.let { ProviderSubscriptionFeedback(it) }
+        TvActionButton(
+            text = stringResource(
+                if (inProgress) {
+                    string.feat_setting_label_subscribing
+                } else {
+                    string.feat_setting_label_subscribe
+                }
+            ),
+            icon = Icons.Rounded.CheckCircle,
+            enabled = !inProgress,
+            onClick = onSubmit,
+        )
+    }
+}
+
+@Composable
+private fun ProviderReauthenticationCard(
+    account: ProviderAccountSummary,
+    onReauthenticate: () -> Unit,
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, TvColors.Danger, RoundedCornerShape(12.dp))
+            .padding(16.dp),
+    ) {
+        Text(
+            text = stringResource(
+                string.feat_setting_provider_reauthentication_required,
+                account.playlistTitle,
+            ),
+            color = TvColors.TextPrimary,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Text(
+            text = stringResource(
+                string.feat_setting_provider_account_summary,
+                account.serverName,
+                account.username,
+                account.baseUrl,
+            ),
+            color = TvColors.TextSecondary,
+            fontSize = 14.sp,
+        )
+        TvActionButton(
+            text = stringResource(string.feat_setting_provider_reauthenticate),
+            icon = Icons.Rounded.Refresh,
+            onClick = onReauthenticate,
+        )
+    }
+}
+
+@Composable
+private fun ProviderSubscriptionFeedback(feedback: TvProviderSubscriptionFeedback) {
+    val (text, color) = when (feedback) {
+        TvProviderSubscriptionFeedback.InvalidSettings ->
+            stringResource(string.feat_setting_provider_credentials_required) to TvColors.Danger
+
+        TvProviderSubscriptionFeedback.Failed ->
+            stringResource(string.feat_setting_provider_subscription_failed) to TvColors.Danger
+
+        is TvProviderSubscriptionFeedback.Added ->
+            stringResource(string.feat_setting_provider_added, feedback.channelCount) to TvColors.Focus
+    }
+    Text(text = text, color = color, fontSize = 16.sp)
+}
+
+@Composable
+private fun ProviderFieldError(error: ProviderSettingFieldError) {
+    val message = stringResource(
+        when (error) {
+            ProviderSettingFieldError.REQUIRED -> string.feat_setting_provider_error_required
+            ProviderSettingFieldError.TOO_LONG -> string.feat_setting_provider_error_too_long
+            ProviderSettingFieldError.INVALID_NUMBER -> string.feat_setting_provider_error_number
+            ProviderSettingFieldError.INVALID_BOOLEAN -> string.feat_setting_provider_error_boolean
+            ProviderSettingFieldError.INVALID_CHOICE -> string.feat_setting_provider_error_choice
+        }
+    )
+    Text(text = message, color = TvColors.Danger, fontSize = 14.sp)
 }
 
 @Composable

@@ -33,4 +33,6 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     ksp(libs.androidx.hilt.compiler)
     implementation(libs.androidx.hilt.work)
+
+    testImplementation(kotlin("test-junit"))
 }

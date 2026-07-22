@@ -14,18 +14,22 @@ import com.m3u.data.extension.SubscriptionProviderImporter
 import com.m3u.data.extension.emby.EmbyCompatibleProvider
 import com.m3u.data.extension.emby.OkHttpEmbyCompatibleClient
 import com.m3u.data.extension.security.AndroidKeystoreCredentialVault
+import com.m3u.data.extension.security.ActiveExtensionPrincipalRegistry
 import com.m3u.data.extension.security.CredentialResolver
+import com.m3u.data.extension.security.ProviderBrokerScopeStore
 import com.m3u.data.repository.extension.ExtensionContributionScheduler
 import com.m3u.extension.api.ExtensionApiVersions
 import com.m3u.extension.api.subscription.EmbyCompatibleProviderKinds
 import com.m3u.extension.api.subscription.SubscriptionProviderSettingKeys
 import com.m3u.extension.runtime.ExtensionRegistrationResult
 import com.m3u.extension.runtime.ExtensionRuntime
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -48,6 +52,7 @@ class SubscriptionProviderRepositoryIntegrationTest {
                 okHttpClient = OkHttpClient(),
             )
             val credentialVault = AndroidKeystoreCredentialVault(context)
+            val principalRegistry = ActiveExtensionPrincipalRegistry()
             val provider = EmbyCompatibleProvider(
                 client = client,
                 credentialResolver = CredentialResolver(providerDao, credentialVault),
@@ -68,6 +73,11 @@ class SubscriptionProviderRepositoryIntegrationTest {
                 ),
                 credentialVault = credentialVault,
                 extensionContributionScheduler = NoOpExtensionContributionScheduler,
+                activePrincipalRegistry = principalRegistry,
+                providerBrokerScopeStore = ProviderBrokerScopeStore(
+                    credentialVault = credentialVault,
+                    principalRegistry = principalRegistry,
+                ),
             )
             val serverUrl = InstrumentationRegistry.getArguments()
                 .getString("m3uMockServerUrl")
@@ -123,14 +133,35 @@ class SubscriptionProviderRepositoryIntegrationTest {
             assertFalse(credential.ciphertext.contains(decryptedToken))
             assertTrue(channels.none { channel -> channel.url.contains(decryptedToken) })
 
-            val finalPlayback = requireNotNull(repository.resolvePlayback(news.id))
-            repository.removeAccount(subscription.playlistUrl)
+            providerDao.invalidateCredential(account.id)
             assertTrue(
-                repository.closePlayback(
-                    session = requireNotNull(finalPlayback.session),
-                    reason = ProviderPlaybackCloseReason.STOPPED,
+                repository.observeAccountSummaries().first().single().requiresReauthentication
+            )
+            val reauthenticated = repository.subscribe(
+                ProviderSubscriptionRequest(
+                    title = "Living Room Emby",
+                    providerId = EmbyCompatibleProvider.ID,
+                    providerKind = EmbyCompatibleProviderKinds.Emby,
+                    settingValues = mapOf(
+                        SubscriptionProviderSettingKeys.BaseUrl to serverUrl,
+                        SubscriptionProviderSettingKeys.Username to "m3u",
+                    ),
+                    credentialHandles = mapOf(
+                        SubscriptionProviderSettingKeys.Password to
+                            repository.stageCredential("m3u"),
+                    ),
                 )
             )
+            assertEquals(subscription.playlistUrl, reauthenticated.playlistUrl)
+            assertFalse(
+                repository.observeAccountSummaries().first().single().requiresReauthentication
+            )
+
+            val finalPlayback = requireNotNull(repository.resolvePlayback(news.id))
+            val finalSession = requireNotNull(finalPlayback.session)
+            repository.removeAccount(subscription.playlistUrl)
+            assertNull(providerDao.getAccountByPlaylistUrl(subscription.playlistUrl))
+            assertTrue(providerDao.getPlaybackSessions().none { session -> session.id == finalSession.id })
         } finally {
             database.close()
         }

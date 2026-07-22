@@ -4,6 +4,7 @@ import com.m3u.extension.api.Capability
 import com.m3u.extension.api.ExtensionApiVersion
 import com.m3u.extension.api.ExtensionContractCatalog
 import com.m3u.extension.api.ExtensionCallContext
+import com.m3u.extension.api.ExtensionEntrypoint
 import com.m3u.extension.api.ExtensionError
 import com.m3u.extension.api.ExtensionErrorCodes
 import com.m3u.extension.api.ExtensionHandler
@@ -17,8 +18,9 @@ import com.m3u.extension.api.HookResult
 import com.m3u.extension.api.HookSpec
 import com.m3u.extension.api.InvocationId
 import com.m3u.extension.api.SerializedExtensionEnvelope
-import com.m3u.extension.api.ExtensionEntrypoint
 import com.m3u.extension.api.ExtensionResult
+import com.m3u.extension.api.security.BrokerScopeHandle
+import java.io.OutputStream
 import java.util.UUID
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
@@ -27,9 +29,11 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withTimeout
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.encodeToStream
 
 fun interface InvocationIdFactory {
     fun create(): InvocationId
@@ -79,9 +83,15 @@ interface ExtensionCatalog {
 data class RegisteredExtension(
     val manifest: ExtensionManifest,
     val boundHooks: Set<Hook>,
+    val executionKind: ExtensionExecutionKind,
     val state: ExtensionState,
     val consecutiveFailures: Int,
 )
+
+enum class ExtensionExecutionKind {
+    BUILT_IN,
+    EXTERNAL,
+}
 
 sealed interface ExtensionRegistrationResult {
     data class Registered(val extension: RegisteredExtension) : ExtensionRegistrationResult
@@ -105,6 +115,9 @@ class ExtensionRuntime(
         val manifest = entrypoint.manifest
         if (!isApiMajorCompatible(manifest)) {
             return ExtensionRegistrationResult.Rejected(incompatibleApiError(manifest))
+        }
+        validateManifestBounds(manifest)?.let { error ->
+            return ExtensionRegistrationResult.Rejected(error)
         }
         val handlers = entrypoint.handlers.toList()
         val duplicateHooks = handlers.groupingBy { handler -> handler.spec.hook }
@@ -194,6 +207,7 @@ class ExtensionRuntime(
 
     fun validateExternalManifest(manifest: ExtensionManifest): ExtensionError? {
         if (!isApiMajorCompatible(manifest)) return incompatibleApiError(manifest)
+        validateManifestBounds(manifest)?.let { return it }
         return externalManifestError(manifest)
     }
 
@@ -206,6 +220,7 @@ class ExtensionRuntime(
         extensionId: ExtensionId,
         spec: HookSpec<Request, Response>,
         request: Request,
+        brokerScope: BrokerScopeHandle? = null,
     ): ExtensionResult<Response> {
         val invocationId = invocationIdFactory.create()
         val registration = registrations[extensionId]
@@ -252,35 +267,49 @@ class ExtensionRuntime(
             return failure(invocationId, extensionId, spec, ExtensionErrorCodes.PayloadTooLarge, "Invocation payload exceeds the host limit", false)
         }
         val context = ExtensionCallContext(invocationId, extensionId, granted, settings)
-        val rawOutcome = try {
+        val invocation = try {
             withTimeout(invocationPolicy.timeoutMillis) {
                 registration.semaphore.withPermit {
-                    registration.invoke(spec, context, request, json, hostApiVersion)
+                    registration.invoke(
+                        spec = spec,
+                        context = context,
+                        request = request,
+                        brokerScope = brokerScope,
+                        json = json,
+                        hostApiVersion = hostApiVersion,
+                    )
                 }
             }
         } catch (cancellation: TimeoutCancellationException) {
-            HookResult.Failure(
-                ExtensionError(ExtensionErrorCodes.InvocationTimedOut, "Extension invocation timed out", true)
+            InvocationAttempt(
+                outcome = HookResult.Failure(
+                    ExtensionError(ExtensionErrorCodes.InvocationTimedOut, "Extension invocation timed out", true)
+                ),
+                runtimeFailure = true,
             )
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (exception: Exception) {
-            HookResult.Failure(
-                ExtensionError(
-                    code = ExtensionErrorCodes.InvocationFailed,
-                    message = "Extension invocation failed",
-                    recoverable = true,
-                    details = mapOf("exception" to exception.javaClass.simpleName),
-                )
+            InvocationAttempt(
+                outcome = HookResult.Failure(
+                    ExtensionError(
+                        code = ExtensionErrorCodes.InvocationFailed,
+                        message = "Extension invocation failed",
+                        recoverable = true,
+                        details = mapOf("exception" to exception.javaClass.simpleName),
+                    )
+                ),
+                runtimeFailure = true,
             )
         }
-        val outcome = when (rawOutcome) {
+        val outcome = when (val rawOutcome = invocation.outcome) {
             is HookResult.Success -> {
                 val responseBytes = runCatching {
                     json.encodeToString(spec.responseSerializer, rawOutcome.payload)
                         .encodeToByteArray().size
                 }.getOrElse { Int.MAX_VALUE }
                 if (responseBytes > invocationPolicy.maxPayloadBytes) {
+                    invocation.runtimeFailure = true
                     HookResult.Failure(
                         ExtensionError(
                             ExtensionErrorCodes.PayloadTooLarge,
@@ -292,11 +321,25 @@ class ExtensionRuntime(
                     rawOutcome
                 }
             }
-            is HookResult.Failure -> HookResult.Failure(sanitize(rawOutcome.error))
+            is HookResult.Failure -> {
+                if (!errorEnvelopeFitsPayloadLimit(rawOutcome.error)) {
+                    invocation.runtimeFailure = true
+                    HookResult.Failure(
+                        ExtensionError(
+                            ExtensionErrorCodes.PayloadTooLarge,
+                            "Extension response exceeds the host limit",
+                            false,
+                        )
+                    )
+                } else {
+                    HookResult.Failure(sanitize(rawOutcome.error))
+                }
+            }
         }
-        when (outcome) {
-            is HookResult.Success -> registration.failures.set(0)
-            is HookResult.Failure -> registration.failures.incrementAndGet()
+        if (invocation.runtimeFailure) {
+            registration.failures.incrementAndGet()
+        } else {
+            registration.failures.set(0)
         }
         return ExtensionResult(invocationId, extensionId, spec, outcome)
     }
@@ -347,12 +390,65 @@ class ExtensionRuntime(
         return null
     }
 
+    private fun validateManifestBounds(manifest: ExtensionManifest): ExtensionError? {
+        val schema = manifest.settingsSchema
+        val invalid =
+            manifest.displayName.length > MAX_MANIFEST_DISPLAY_NAME_LENGTH ||
+                (manifest.extensionVersion.preRelease?.length ?: 0) >
+                    MAX_MANIFEST_VERSION_LABEL_LENGTH ||
+                manifest.hooks.size > MAX_MANIFEST_HOOKS ||
+                manifest.capabilities.size > MAX_MANIFEST_CAPABILITIES ||
+                manifest.capabilities.any { request ->
+                    request.reason.length > MAX_CAPABILITY_REASON_LENGTH
+                } ||
+                manifest.metadata.size > MAX_MANIFEST_METADATA_ENTRIES ||
+                manifest.metadata.any { (key, value) ->
+                    key.isBlank() ||
+                        key.length > MAX_MANIFEST_METADATA_KEY_LENGTH ||
+                        value.length > MAX_MANIFEST_METADATA_VALUE_LENGTH
+                } ||
+                (schema != null && (
+                    schema.fields.size > MAX_MANIFEST_SETTING_FIELDS ||
+                        schema.fields.any { field ->
+                            field.label.length > MAX_SETTING_LABEL_LENGTH ||
+                                (field.description?.length ?: 0) > MAX_SETTING_DESCRIPTION_LENGTH ||
+                                field.choices.size > MAX_SETTING_CHOICES ||
+                                field.choices.any { choice ->
+                                    choice.label.isBlank() ||
+                                        choice.label.length > MAX_SETTING_LABEL_LENGTH ||
+                                        choice.value.length > MAX_SETTING_CHOICE_VALUE_LENGTH
+                                } ||
+                                (field.defaultValue?.toString()?.encodeToByteArray()?.size ?: 0) >
+                                    MAX_SETTING_DEFAULT_BYTES
+                        }
+                    )) ||
+                runCatching {
+                    json.encodeToString(ExtensionManifest.serializer(), manifest)
+                        .encodeToByteArray().size
+                }.getOrDefault(Int.MAX_VALUE) > MAX_MANIFEST_BYTES
+        if (!invalid) return null
+        return ExtensionError(
+            code = ExtensionErrorCodes.RegistrationInvalid,
+            message = "Extension manifest exceeds host limits",
+            recoverable = false,
+        )
+    }
+
     private fun sanitize(error: ExtensionError): ExtensionError = error.copy(
         message = redact(error.message),
         details = error.details
             .filterKeys { key -> SENSITIVE_KEY_WORDS.none { word -> key.contains(word, ignoreCase = true) } }
             .mapValues { (_, value) -> redact(value) },
     )
+
+    @OptIn(ExperimentalSerializationApi::class)
+    private fun errorEnvelopeFitsPayloadLimit(error: ExtensionError): Boolean = runCatching {
+        json.encodeToStream(
+            serializer = ExtensionError.serializer(),
+            value = error,
+            stream = PayloadLimitOutputStream(invocationPolicy.maxPayloadBytes),
+        )
+    }.isSuccess
 
     private fun redact(value: String): String = SENSITIVE_VALUE_PATTERN.replace(value) { match ->
         "${match.groupValues[1]}=<redacted>"
@@ -400,13 +496,22 @@ class ExtensionRuntime(
             spec: HookSpec<Request, Response>,
             context: ExtensionCallContext,
             request: Request,
+            brokerScope: BrokerScopeHandle?,
             json: Json,
             hostApiVersion: ExtensionApiVersion,
-        ): HookResult<Response> {
+        ): InvocationAttempt<Response> {
             val handler = handlers[spec.hook] as? ExtensionHandler<Request, Response>
-            if (handler != null) return handler.invoke(context, request)
-            val currentTransport = transport ?: return HookResult.Failure(
-                ExtensionError(ExtensionErrorCodes.HookNotBound, "Extension did not bind ${spec.hook}", false)
+            if (handler != null) {
+                return InvocationAttempt(
+                    outcome = handler.invoke(context, request),
+                    runtimeFailure = false,
+                )
+            }
+            val currentTransport = transport ?: return InvocationAttempt(
+                outcome = HookResult.Failure(
+                    ExtensionError(ExtensionErrorCodes.HookNotBound, "Extension did not bind ${spec.hook}", false)
+                ),
+                runtimeFailure = true,
             )
             val envelope = SerializedExtensionEnvelope(
                 apiVersion = hostApiVersion,
@@ -417,6 +522,7 @@ class ExtensionRuntime(
                 payload = json.encodeToJsonElement(spec.requestSerializer, request),
                 settings = context.settings,
                 grantedCapabilities = context.grantedCapabilities,
+                brokerScope = brokerScope,
             )
             val result = try {
                 currentTransport.invoke(envelope)
@@ -427,16 +533,32 @@ class ExtensionRuntime(
             if (result.invocationId != context.invocationId || result.extensionId != context.extensionId ||
                 result.hook != spec.hook || result.schemaVersion != spec.schemaVersion
             ) {
-                return HookResult.Failure(
-                    ExtensionError(ExtensionErrorCodes.SchemaIncompatible, "Extension response envelope is invalid", false)
+                return InvocationAttempt(
+                    outcome = HookResult.Failure(
+                        ExtensionError(ExtensionErrorCodes.SchemaIncompatible, "Extension response envelope is invalid", false)
+                    ),
+                    runtimeFailure = true,
                 )
             }
-            result.error?.let { return HookResult.Failure(it) }
+            result.error?.let { error ->
+                return InvocationAttempt(
+                    outcome = HookResult.Failure(error),
+                    runtimeFailure = error.code in RUNTIME_FAILURE_CODES,
+                )
+            }
             return runCatching {
-                HookResult.Success(json.decodeFromJsonElement(spec.responseSerializer, checkNotNull(result.payload)))
+                InvocationAttempt(
+                    outcome = HookResult.Success(
+                        json.decodeFromJsonElement(spec.responseSerializer, checkNotNull(result.payload))
+                    ),
+                    runtimeFailure = false,
+                )
             }.getOrElse {
-                HookResult.Failure(
-                    ExtensionError(ExtensionErrorCodes.SchemaIncompatible, "Extension response payload is invalid", false)
+                InvocationAttempt(
+                    outcome = HookResult.Failure(
+                        ExtensionError(ExtensionErrorCodes.SchemaIncompatible, "Extension response payload is invalid", false)
+                    ),
+                    runtimeFailure = true,
                 )
             }
         }
@@ -447,6 +569,11 @@ class ExtensionRuntime(
         fun publicModel() = RegisteredExtension(
             manifest = manifest,
             boundHooks = if (transport == null) handlers.keys else manifest.hooks.mapTo(mutableSetOf()) { it.hook },
+            executionKind = if (transport == null) {
+                ExtensionExecutionKind.BUILT_IN
+            } else {
+                ExtensionExecutionKind.EXTERNAL
+            },
             state = when {
                 !enabled -> ExtensionState.DISABLED
                 failures.get() >= unhealthyFailureThreshold -> ExtensionState.UNHEALTHY
@@ -456,11 +583,61 @@ class ExtensionRuntime(
         )
     }
 
+    private data class InvocationAttempt<Response : ExtensionPayload>(
+        val outcome: HookResult<Response>,
+        var runtimeFailure: Boolean,
+    )
+
+    private class PayloadLimitOutputStream(
+        private val maxBytes: Int,
+    ) : OutputStream() {
+        private var bytesWritten: Int = 0
+
+        override fun write(value: Int) {
+            reserve(1)
+        }
+
+        override fun write(buffer: ByteArray, offset: Int, length: Int) {
+            reserve(length)
+        }
+
+        private fun reserve(byteCount: Int) {
+            if (byteCount > maxBytes - bytesWritten) {
+                throw PayloadLimitExceededException()
+            }
+            bytesWritten += byteCount
+        }
+    }
+
+    private class PayloadLimitExceededException : RuntimeException(null, null, false, false)
+
 
     private companion object {
+        val RUNTIME_FAILURE_CODES = setOf(
+            ExtensionErrorCodes.HookNotBound,
+            ExtensionErrorCodes.InvocationFailed,
+            ExtensionErrorCodes.InvocationTimedOut,
+            ExtensionErrorCodes.PayloadTooLarge,
+            ExtensionErrorCodes.SchemaIncompatible,
+        )
         val SENSITIVE_KEY_WORDS = setOf("token", "password", "authorization", "secret", "credential")
         val SENSITIVE_VALUE_PATTERN = Regex(
             "(?i)\\b(token|password|authorization|secret|credential)\\s*[=:]\\s*[^\\s,;]+",
         )
+        const val MAX_MANIFEST_BYTES = 256 * 1024
+        const val MAX_MANIFEST_DISPLAY_NAME_LENGTH = 160
+        const val MAX_MANIFEST_VERSION_LABEL_LENGTH = 64
+        const val MAX_MANIFEST_HOOKS = 64
+        const val MAX_MANIFEST_CAPABILITIES = 64
+        const val MAX_CAPABILITY_REASON_LENGTH = 1_024
+        const val MAX_MANIFEST_METADATA_ENTRIES = 32
+        const val MAX_MANIFEST_METADATA_KEY_LENGTH = 64
+        const val MAX_MANIFEST_METADATA_VALUE_LENGTH = 1_024
+        const val MAX_MANIFEST_SETTING_FIELDS = 100
+        const val MAX_SETTING_LABEL_LENGTH = 160
+        const val MAX_SETTING_DESCRIPTION_LENGTH = 1_024
+        const val MAX_SETTING_CHOICES = 64
+        const val MAX_SETTING_CHOICE_VALUE_LENGTH = 512
+        const val MAX_SETTING_DEFAULT_BYTES = 4_096
     }
 }

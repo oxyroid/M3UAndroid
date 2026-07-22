@@ -45,6 +45,30 @@ class SubscriptionSourceSelectionTest {
         }
     }
 
+    @Test
+    fun builtInProviderFormIsLoadedFromDiscovery() {
+        ActivityScenario.launch(MainActivity::class.java).use {
+            device.waitForIdle()
+            device.findRequiredObject(
+                By.desc(caseInsensitive(context.getString(string.ui_destination_setting)))
+            ).click()
+            device.findRequiredObject(
+                By.text(caseInsensitive(context.getString(string.feat_setting_playlist_management)))
+            ).click()
+
+            selectSourceAcrossFullRow(
+                currentResId = string.feat_setting_data_source_m3u,
+                targetResId = string.feat_setting_data_source_provider,
+                menuSentinelResId = string.feat_setting_data_source_xtream,
+            )
+
+            device.findRequiredObject(By.text(caseInsensitive("Emby Compatible")))
+            device.findRequiredObject(By.text(caseInsensitive("Server URL")))
+            device.findRequiredObject(By.text(caseInsensitive("Username")))
+            device.findRequiredObject(By.text(caseInsensitive("Password")))
+        }
+    }
+
     private fun selectSourceAcrossFullRow(
         currentResId: Int,
         targetResId: Int,

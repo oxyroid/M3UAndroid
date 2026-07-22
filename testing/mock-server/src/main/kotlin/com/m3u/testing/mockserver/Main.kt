@@ -26,12 +26,20 @@ import kotlinx.serialization.json.putJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import java.util.concurrent.ConcurrentHashMap
 
 private const val DEFAULT_HOST = "0.0.0.0"
 private const val DEFAULT_PORT = 8080
 private const val DEFAULT_USERNAME = "m3u"
 private const val DEFAULT_PASSWORD = "m3u"
 private const val EMBY_ACCESS_TOKEN = "mock-emby-access-token"
+private const val REFERENCE_PASSWORD = "reference-password"
+private const val REFERENCE_ACCESS_TOKEN = "mock-reference-access-token"
+private const val REFERENCE_SERVER_ID = "reference-server-id"
+private const val REFERENCE_USER_ID = "reference-user-id"
+
+private val referenceChannelIds = setOf("reference.news", "reference.sports")
+private val referenceSessions = ConcurrentHashMap<String, ReferenceSession>()
 
 private val json = Json {
     prettyPrint = true
@@ -48,7 +56,7 @@ fun main(args: Array<String>) {
     ).start(wait = true)
 }
 
-private fun Application.mockServerModule() {
+internal fun Application.mockServerModule() {
     routing {
         get("/") {
             val baseUrl = call.baseUrl()
@@ -60,6 +68,152 @@ private fun Application.mockServerModule() {
 
         get("/health") {
             call.respondText("ok", ContentType.Text.Plain)
+        }
+
+        post("/reference-provider/login") {
+            val body = runCatching {
+                Json.parseToJsonElement(call.receiveText()).jsonObject
+            }.getOrNull()
+            if (body == null || body.keys != setOf("username", "password")) {
+                call.respond(HttpStatusCode.BadRequest, "invalid reference login payload")
+                return@post
+            }
+            val username = body["username"]?.jsonPrimitive?.content
+            val password = body["password"]?.jsonPrimitive?.content
+            if (username != DEFAULT_USERNAME || password != REFERENCE_PASSWORD) {
+                call.respond(HttpStatusCode.Unauthorized, "invalid reference credentials")
+                return@post
+            }
+            call.respondText(
+                text = json.encodeToString(referenceLoginResponse()),
+                contentType = ContentType.Application.Json,
+            )
+        }
+
+        get("/reference-provider/channels") {
+            if (
+                !call.referenceAuthenticated() ||
+                call.request.headers["X-Reference-User"] != REFERENCE_USER_ID
+            ) {
+                call.respond(HttpStatusCode.Unauthorized, "missing reference provider token")
+                return@get
+            }
+            call.respondText(
+                text = json.encodeToString(referenceChannels()),
+                contentType = ContentType.Application.Json,
+            )
+        }
+
+        get("/reference-provider/playback/{item}") {
+            if (!call.referenceAuthenticated()) {
+                call.respond(HttpStatusCode.Unauthorized, "missing reference provider token")
+                return@get
+            }
+            val itemId = call.parameters["item"].orEmpty()
+            if (itemId !in referenceChannelIds) {
+                call.respond(HttpStatusCode.NotFound, "unknown reference channel")
+                return@get
+            }
+            val session = ReferenceSession(
+                itemId = itemId,
+                playSessionId = "reference-play-session-$itemId",
+                liveStreamId = "reference-live-stream-$itemId",
+                closed = false,
+            )
+            referenceSessions[session.playSessionId] = session
+            call.respondText(
+                text = json.encodeToString(referencePlayback(call.baseUrl(), session)),
+                contentType = ContentType.Application.Json,
+            )
+        }
+
+        post("/reference-provider/sessions/close") {
+            if (!call.referenceAuthenticated()) {
+                call.respond(HttpStatusCode.Unauthorized, "missing reference provider token")
+                return@post
+            }
+            val body = runCatching {
+                Json.parseToJsonElement(call.receiveText()).jsonObject
+            }.getOrNull()
+            val expectedKeys = setOf(
+                "item_id",
+                "play_session_id",
+                "live_stream_id",
+                "reason",
+            )
+            if (body == null || body.keys != expectedKeys) {
+                call.respond(HttpStatusCode.BadRequest, "invalid reference close payload")
+                return@post
+            }
+            val itemId = body["item_id"]?.jsonPrimitive?.content.orEmpty()
+            val playSessionId = body["play_session_id"]?.jsonPrimitive?.content.orEmpty()
+            val liveStreamId = body["live_stream_id"]?.jsonPrimitive?.content.orEmpty()
+            val reason = body["reason"]?.jsonPrimitive?.content.orEmpty()
+            val session = referenceSessions[playSessionId]
+            if (
+                session == null ||
+                session.itemId != itemId ||
+                session.liveStreamId != liveStreamId ||
+                reason.isBlank()
+            ) {
+                call.respond(HttpStatusCode.NotFound, "reference session was not found")
+                return@post
+            }
+            referenceSessions[playSessionId] = session.copy(closed = true)
+            call.respondText(
+                text = json.encodeToString(buildJsonObject { put("closed", true) }),
+                contentType = ContentType.Application.Json,
+            )
+        }
+
+        get("/reference-provider/sessions/{session}") {
+            if (!call.referenceAuthenticated()) {
+                call.respond(HttpStatusCode.Unauthorized, "missing reference provider token")
+                return@get
+            }
+            val playSessionId = call.parameters["session"].orEmpty()
+            val session = referenceSessions[playSessionId]
+            if (session == null) {
+                call.respond(HttpStatusCode.NotFound, "reference session was not found")
+                return@get
+            }
+            call.respondText(
+                text = json.encodeToString(referenceSessionState(session)),
+                contentType = ContentType.Application.Json,
+            )
+        }
+
+        get("/reference-provider/stream/{item}/index.m3u8") {
+            if (!call.referenceAuthenticated()) {
+                call.respond(HttpStatusCode.Unauthorized, "missing reference provider token")
+                return@get
+            }
+            val itemId = call.parameters["item"].orEmpty()
+            if (itemId !in referenceChannelIds) {
+                call.respond(HttpStatusCode.NotFound, "unknown reference channel")
+                return@get
+            }
+            call.respondText(
+                text = hlsPlaylist(itemId),
+                contentType = ContentType.parse("application/vnd.apple.mpegurl"),
+            )
+        }
+
+        get("/reference-provider/stream/{item}/segment-{number}.ts") {
+            if (!call.referenceAuthenticated()) {
+                call.respond(HttpStatusCode.Unauthorized, "missing reference provider token")
+                return@get
+            }
+            val itemId = call.parameters["item"].orEmpty()
+            val number = call.parameters["number"]?.toIntOrNull()
+            if (itemId !in referenceChannelIds || number == null) {
+                call.respond(HttpStatusCode.NotFound, "unknown reference stream segment")
+                return@get
+            }
+            call.respondBytes(
+                bytes = transportStreamPlaceholder(itemId, number),
+                contentType = ContentType.parse("video/mp2t"),
+            )
         }
 
         get("/playlist/live.m3u") {
@@ -337,6 +491,13 @@ private data class ServerOptions(
 
 private data class XtreamAuth(val valid: Boolean)
 
+private data class ReferenceSession(
+    val itemId: String,
+    val playSessionId: String,
+    val liveStreamId: String,
+    val closed: Boolean,
+)
+
 private fun io.ktor.server.application.ApplicationCall.xtreamAuth(): XtreamAuth {
     val username = parameters["username"] ?: request.queryParameters["username"]
     val password = parameters["password"] ?: request.queryParameters["password"]
@@ -368,6 +529,9 @@ private fun io.ktor.server.application.ApplicationCall.jellyfinAuthenticated(): 
     jellyfinIdentityAuthenticated() &&
         "Token=\"$EMBY_ACCESS_TOKEN\"" in request.headers["Authorization"].orEmpty()
 
+private fun io.ktor.server.application.ApplicationCall.referenceAuthenticated(): Boolean =
+    request.headers["X-Emby-Token"] == REFERENCE_ACCESS_TOKEN
+
 private fun endpointIndex(baseUrl: String): String = json.encodeToString(
     buildJsonObject {
         put("name", "M3U mock server")
@@ -377,8 +541,60 @@ private fun endpointIndex(baseUrl: String): String = json.encodeToString(
         put("xtream", "$baseUrl/player_api.php?username=$DEFAULT_USERNAME&password=$DEFAULT_PASSWORD")
         put("emby", baseUrl)
         put("jellyfin", "$baseUrl/jellyfin")
+        put("reference_provider", "$baseUrl/reference-provider")
     }
 )
+
+private fun referenceLoginResponse(): JsonObject = buildJsonObject {
+    put("accessToken", REFERENCE_ACCESS_TOKEN)
+    put("server_id", REFERENCE_SERVER_ID)
+    put("server_name", "M3U Reference Provider")
+    put("server_version", "1.0.0")
+    put("user_id", REFERENCE_USER_ID)
+    put("username", DEFAULT_USERNAME)
+}
+
+private fun referenceChannels(): JsonObject = buildJsonObject {
+    put("source_id", REFERENCE_SERVER_ID)
+    put("source_title", "Reference Live TV")
+    put("revision", "1")
+    putJsonArray("channels") {
+        add(
+            buildJsonObject {
+                put("id", "reference.news")
+                put("title", "Reference News")
+                put("category", "News")
+                put("epg_reference", "reference.news")
+            }
+        )
+        add(
+            buildJsonObject {
+                put("id", "reference.sports")
+                put("title", "Reference Sports")
+                put("category", "Sports")
+                put("epg_reference", "reference.sports")
+            }
+        )
+    }
+}
+
+private fun referencePlayback(baseUrl: String, session: ReferenceSession): JsonObject =
+    buildJsonObject {
+        put(
+            "url",
+            "$baseUrl/reference-provider/stream/${session.itemId}/index.m3u8",
+        )
+        put("media_source_id", "reference-media-${session.itemId}")
+        put("play_session_id", session.playSessionId)
+        put("live_stream_id", session.liveStreamId)
+    }
+
+private fun referenceSessionState(session: ReferenceSession): JsonObject = buildJsonObject {
+    put("item_id", session.itemId)
+    put("play_session_id", session.playSessionId)
+    put("live_stream_id", session.liveStreamId)
+    put("state", if (session.closed) "closed" else "open")
+}
 
 private fun embySystemInfo(): JsonObject = buildJsonObject {
     put("Id", "mock-server-id")

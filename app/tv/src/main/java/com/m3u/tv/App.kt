@@ -59,10 +59,11 @@ fun App(
     }
 
     BackHandler {
-        if (surface == TvSurface.Player) {
-            closePlayer()
-        } else {
-            onBackPressed()
+        when {
+            surface == TvSurface.Player -> closePlayer()
+            state.providerSubscriptionForm != null -> viewModel.closeProviderSubscription()
+            state.extensionSettings != null -> viewModel.closeExtensionSettings()
+            else -> onBackPressed()
         }
     }
 
@@ -129,6 +130,14 @@ fun App(
                 onUpdateExtensionSetting = { sectionId, fieldKey, value ->
                     viewModel.updateExtensionSetting(sectionId, fieldKey, value, localeTag)
                 },
+                onRefreshProviders = viewModel::refreshSubscriptionProviders,
+                onOpenProviderSubscription = viewModel::openProviderSubscription,
+                onReauthenticateProvider = viewModel::reauthenticateProviderAccount,
+                onCloseProviderSubscription = viewModel::closeProviderSubscription,
+                onUpdateProviderTitle = viewModel::updateProviderSubscriptionTitle,
+                onSelectProviderKind = viewModel::selectProviderKind,
+                onUpdateProviderSetting = viewModel::updateProviderSetting,
+                onSubmitProviderSubscription = viewModel::submitProviderSubscription,
             )
         }
 

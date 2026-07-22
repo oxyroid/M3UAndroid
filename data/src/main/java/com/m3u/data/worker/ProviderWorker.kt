@@ -12,6 +12,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.m3u.data.repository.provider.ProviderOperationException
+import com.m3u.data.repository.provider.ProviderSessionCleanupResult
 import com.m3u.data.repository.provider.SubscriptionProviderRepository
 import com.m3u.data.repository.plugin.ExtensionPluginRepository
 import com.m3u.data.extension.SubscriptionProviderImporter
@@ -36,11 +37,13 @@ class ProviderRefreshWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted params: WorkerParameters,
     private val repository: SubscriptionProviderRepository,
+    private val pluginRepository: ExtensionPluginRepository,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val playlistUrl = inputData.getString(INPUT_PLAYLIST_URL) ?: return Result.failure()
         return try {
             setProgress(workDataOf(OUTPUT_PROGRESS to 0))
+            pluginRepository.restoreEnabled()
             val refreshed = repository.refresh(
                 playlistUrl,
                 reason = SubscriptionRefreshReason.Background,
@@ -48,6 +51,17 @@ class ProviderRefreshWorker @AssistedInject constructor(
             setProgress(workDataOf(OUTPUT_PROGRESS to 100))
             Result.success(workDataOf(OUTPUT_CHANNEL_COUNT to refreshed.channelCount))
         } catch (exception: ProviderOperationException) {
+            if (exception.recoverable && runAttemptCount < MAX_ATTEMPTS) {
+                Result.retry()
+            } else {
+                Result.failure(
+                    exception.code?.let { code -> workDataOf(OUTPUT_ERROR_CODE to code) }
+                        ?: workDataOf()
+                )
+            }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
             if (runAttemptCount < MAX_ATTEMPTS) Result.retry() else Result.failure()
         }
     }
@@ -56,6 +70,7 @@ class ProviderRefreshWorker @AssistedInject constructor(
         private const val INPUT_PLAYLIST_URL = "playlist-url"
         private const val OUTPUT_CHANNEL_COUNT = "channel-count"
         private const val OUTPUT_PROGRESS = "progress"
+        private const val OUTPUT_ERROR_CODE = "error-code"
         private const val MAX_ATTEMPTS = 3
 
         fun enqueue(workManager: WorkManager, playlistUrl: String) {
@@ -83,16 +98,27 @@ class ProviderSessionCleanupWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted params: WorkerParameters,
     private val repository: SubscriptionProviderRepository,
+    private val pluginRepository: ExtensionPluginRepository,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result = try {
-        repository.closeOrphanedPlaybackSessions()
-        Result.success()
+        pluginRepository.restoreEnabled()
+        repository.closeOrphanedPlaybackSessions().toWorkerResult(runAttemptCount)
+    } catch (cancelled: CancellationException) {
+        throw cancelled
     } catch (exception: ProviderOperationException) {
+        if (exception.recoverable && runAttemptCount < MAX_ATTEMPTS) {
+            Result.retry()
+        } else {
+            Result.failure()
+        }
+    } catch (_: Exception) {
         if (runAttemptCount < MAX_ATTEMPTS) Result.retry() else Result.failure()
     }
 
     companion object {
         private const val MAX_ATTEMPTS = 3
+        private const val OUTPUT_CLOSED_SESSION_COUNT = "closed-session-count"
+        private const val OUTPUT_PENDING_SESSION_COUNT = "pending-session-count"
 
         fun enqueue(workManager: WorkManager) {
             val request = OneTimeWorkRequestBuilder<ProviderSessionCleanupWorker>()
@@ -108,6 +134,14 @@ class ProviderSessionCleanupWorker @AssistedInject constructor(
                 request,
             )
         }
+    }
+
+    private fun ProviderSessionCleanupResult.toWorkerResult(runAttemptCount: Int): Result = when {
+        pendingCount == 0 -> Result.success(
+            workDataOf(OUTPUT_CLOSED_SESSION_COUNT to closedCount)
+        )
+        recoverablePendingCount > 0 && runAttemptCount < MAX_ATTEMPTS -> Result.retry()
+        else -> Result.failure(workDataOf(OUTPUT_PENDING_SESSION_COUNT to pendingCount))
     }
 }
 
@@ -208,6 +242,7 @@ class ExtensionBackgroundTaskWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted params: WorkerParameters,
     private val runtime: ExtensionRuntime,
+    private val pluginRepository: ExtensionPluginRepository,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val extensionId = inputData.getString(INPUT_EXTENSION_ID)?.let(::ExtensionId)
@@ -216,19 +251,28 @@ class ExtensionBackgroundTaskWorker @AssistedInject constructor(
         val input = inputData.getString(INPUT_JSON)?.let { encoded ->
             runCatching { json.decodeFromString<Map<String, String>>(encoded) }.getOrNull()
         } ?: emptyMap()
-        return when (
-            val outcome = runtime.invoke(
-                extensionId,
-                HostHookSpecs.BackgroundTask,
-                BackgroundTaskRequest(taskId, input, runAttemptCount),
-            ).outcome
-        ) {
-            is HookResult.Success -> outcome.payload.toWorkResult()
-            is HookResult.Failure -> if (outcome.error.recoverable && runAttemptCount < MAX_ATTEMPTS) {
-                Result.retry()
-            } else {
-                Result.failure(workDataOf(OUTPUT_ERROR_CODE to outcome.error.code.value))
+        return try {
+            pluginRepository.restoreEnabled()
+            when (
+                val outcome = runtime.invoke(
+                    extensionId,
+                    HostHookSpecs.BackgroundTask,
+                    BackgroundTaskRequest(taskId, input, runAttemptCount),
+                ).outcome
+            ) {
+                is HookResult.Success -> outcome.payload.toWorkResult()
+                is HookResult.Failure -> if (
+                    outcome.error.recoverable && runAttemptCount < MAX_ATTEMPTS
+                ) {
+                    Result.retry()
+                } else {
+                    Result.failure(workDataOf(OUTPUT_ERROR_CODE to outcome.error.code.value))
+                }
             }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            if (runAttemptCount < MAX_ATTEMPTS) Result.retry() else Result.failure()
         }
     }
 

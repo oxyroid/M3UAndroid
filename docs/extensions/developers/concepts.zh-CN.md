@@ -1,61 +1,103 @@
-# 刚才那次调用经过了什么
+# 定义插件 manifest
 
 [English](concepts.md) · [插件开发指南](README.zh-CN.md)
 
-你已经运行过动态设置 Hook。现在只给那条链路中的代码命名：
+插件需要一个 `TypedExtensionService` 和一个 `ExtensionManifest`。先复制 Hello 的两个文件，再把示例身份和功能替换为自己的内容。
 
-```text
-打开 Hello 设置
-  -> HostHookSpecs.SettingsSchema
-  -> HelloExtensionService
-  -> handle { request, context -> result }
-  -> SettingsSchemaResult
-  -> M3UAndroid 绘制 Device 分组
+## 1. 添加 SDK
+
+```kotlin
+dependencies {
+    implementation(project(":extension:sdk-android"))
+}
 ```
 
-## M3UAndroid 如何发现 Service
+## 2. 声明 Service
 
-[`AndroidManifest.xml`](../../../samples/hello-extension/src/main/AndroidManifest.xml) 把 `HelloExtensionService` 注册为 M3UAndroid 发现和连接的组件。
+把以下 Service 声明加入插件的 [`AndroidManifest.xml`](../../../samples/hello-extension/src/main/AndroidManifest.xml)，只替换类名：
 
-## ExtensionManifest 是插件说明
+```xml
+<service
+    android:name=".HelloExtensionService"
+    android:exported="true"
+    android:permission="com.m3u.permission.BIND_EXTENSION_HOST">
+    <intent-filter>
+        <action android:name="com.m3u.extension.action.BIND_EXTENSION" />
+    </intent-filter>
+</service>
+```
 
-[`HelloExtensionService.kt`](../../../samples/hello-extension/src/main/java/com/m3u/samples/hello/extension/HelloExtensionService.kt) 中的 `ExtensionManifest` 告诉宿主：
+该类必须继承 `TypedExtensionService`：
 
-- 插件身份和版本；
-- 它实现哪些 Hook；
-- 它申请哪些 capability；
-- 是否有固定设置字段。
+```kotlin
+class HelloExtensionService : TypedExtensionService() {
+    override val extensionManifest = ExtensionManifest(
+        id = ExtensionId("com.m3u.samples.hello"),
+        displayName = "Hello Extension",
+        extensionVersion = ExtensionSemanticVersion(1, 0, 0),
+        apiRange = ExtensionApiRange(
+            minimum = ExtensionApiVersions.Current,
+            maximum = ExtensionApiVersions.Current,
+        ),
+        hooks = emptySet(),
+        capabilities = emptySet(),
+        metadata = mapOf("developer" to "M3UAndroid sample"),
+    )
+}
+```
 
-Service 声明提供连接入口，`ExtensionManifest` 提供 M3UAndroid 插件契约。
+需要替换的值：
 
-## HookSpec 固定一次调用的类型
+| 值 | 填写内容 |
+| --- | --- |
+| `id` | 插件自有的小写稳定 ID。 |
+| `displayName` | M3UAndroid 中显示的名称。 |
+| `extensionVersion` | 当前插件构建的版本。 |
+| `apiRange` | 当前构建支持的 M3UAndroid 插件 API 范围。 |
+| `metadata["developer"]` | 随插件显示的开发者名称。 |
 
-`HostHookSpecs.SettingsSchema` 指定：
+## 3. 声明每个已实现 Hook
 
-- Hook 名称是 `settings.schema.contribute`；
-- schema version 是 1；
-- request 类型是 `SettingsSchemaRequest`；
-- result 类型是 `SettingsSchemaResult`。
+例如，设置 Hook 需要以下 manifest 声明：
 
-因此 `handle(HostHookSpecs.SettingsSchema)` 中不需要手工判断 Hook 字符串或解析 JSON。
+```kotlin
+hooks = setOf(
+    ExtensionHookDeclaration(
+        hook = HostHookSpecs.SettingsSchema.hook,
+        schemaVersion = HostHookSpecs.SettingsSchema.schemaVersion,
+        requiredCapabilities = setOf(ExtensionCapabilityIds.SettingsContribute),
+    )
+)
+capabilities = setOf(
+    ExtensionCapabilityRequest(
+        capability = ExtensionCapabilityIds.SettingsContribute,
+        reason = "Add settings for the current device type",
+    )
+)
+```
 
-## Capability 是用户授权
+handler 与声明必须使用同一个 `HookSpec`。`requiredCapabilities` 中的每一项都必须有对应的 `ExtensionCapabilityRequest`，并填写用户能看懂的具体用途。
 
-Hello 声明 `settings.contribute`，因为它会给宿主设置页增加字段。首次启用时，M3UAndroid 把申请原因显示给用户；runtime 只在该 capability 已授权时调用 handler。
+## 4. 按需声明固定设置
 
-Capability 描述“插件可以做哪类事情”，Hook 描述“这一次具体调用什么”。
+不依赖当前 request 的字段写在 `settingsSchema` 中：
 
-## 固定设置与动态设置
+```kotlin
+settingsSchema = ExtensionSettingSchema(
+    version = 1,
+    fields = listOf(
+        ExtensionSettingField(
+            key = "greeting",
+            label = "Greeting",
+            type = ExtensionSettingType.TEXT,
+            defaultValue = JsonPrimitive("Hello from my extension"),
+        )
+    ),
+)
+```
 
-Hello 同时展示了两种方式：
+M3UAndroid 负责显示和保存这些值。如果字段取决于 Hook request，例如 `request.surface`，应改用设置 Hook 返回字段。
 
-- **Greeting** 来自 `ExtensionManifest.settingsSchema`，每次都相同。
-- **Phone name** 来自 `settings.schema.contribute`，可以根据 request 返回不同字段。
+发布更新时必须保持插件身份稳定，具体字段见[准备发布或更新](reference/compatibility.zh-CN.md)。
 
-两者都只返回声明式 schema。字段的绘制、校验和保存由 M3UAndroid 完成。
-
-## 内置插件只少了 Android IPC
-
-Emby/Jellyfin 的 handler 在 M3UAndroid 进程内，Hello 的 handler 在独立 APK 中。它们使用相同的 `HookSpec` 和 request/result；APK 路径多了一次 Service 调用。
-
-需要查询 `applicationId`、Service 类名和 `ExtensionId` 的区别时，查看 [术语与插件身份](reference/glossary.zh-CN.md)。下一项功能从 [Hook 目录](hooks.zh-CN.md) 选择。
+下一步：[注册类型化 Hook](first-hook.zh-CN.md)。

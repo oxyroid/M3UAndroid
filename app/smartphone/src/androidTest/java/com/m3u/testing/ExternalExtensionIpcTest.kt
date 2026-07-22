@@ -18,6 +18,11 @@ import com.m3u.extension.api.SearchProviderResult
 import com.m3u.extension.api.SettingsSchemaRequest
 import com.m3u.extension.api.SettingsSchemaResult
 import com.m3u.extension.api.security.BrokerInvocation
+import com.m3u.extension.api.security.BrokerInvocationResult
+import com.m3u.extension.api.security.BrokerOperation
+import com.m3u.extension.api.security.BrokerOperationResult
+import com.m3u.extension.api.security.BrokerProtocolVersions
+import com.m3u.extension.api.security.BrokerValue
 import com.m3u.extension.api.security.BrokeredHttpResponse
 import com.m3u.extension.api.security.CredentialHandle
 import com.m3u.extension.api.subscription.SubscriptionHookSpecs
@@ -79,7 +84,8 @@ class ExternalExtensionIpcTest {
                 SubscriptionProviderDiscoverResult
 
             assertEquals("Reference Provider", payload.providers.single().displayName)
-            assertEquals("reference", payload.providers.single().supportedKinds.single().value)
+            assertEquals("Reference", payload.providers.single().variants.single().displayName)
+            assertEquals("reference", payload.providers.single().variants.single().kind.value)
 
             val largeResult = runtime.invoke(
                 extensionId = transport.manifest.id,
@@ -144,8 +150,13 @@ class ExternalExtensionIpcTest {
                 spec = HostHookSpecs.BackgroundTask,
                 request = BackgroundTaskRequest("broker-probe"),
             )
-            val brokerOutput = (brokerProbe.outcome as HookResult.Success<*>).payload as
-                BackgroundTaskResult
+            val brokerOutcome = brokerProbe.outcome
+            check(brokerOutcome is HookResult.Success<*>) {
+                val failure = brokerOutcome as HookResult.Failure
+                "Broker probe failed: ${failure.error.code.value} ${failure.error.message} " +
+                    failure.error.details
+            }
+            val brokerOutput = brokerOutcome.payload as BackgroundTaskResult
             assertEquals("204", brokerOutput.output["status"])
             assertEquals("caller-bound", brokerOutput.output["body"])
 
@@ -180,17 +191,24 @@ class ExternalExtensionIpcTest {
             val invocation = json.decodeFromString<BrokerInvocation>(
                 ParcelFileCodec.read(request, 64 * 1024)
             )
-            assertEquals("reference-account", invocation.accountId)
-            assertEquals("https://reference.invalid/probe", invocation.request.url)
-            return ParcelFileCodec.write(
-                InstrumentationRegistry.getInstrumentation().targetContext,
-                json.encodeToString(
+            assertEquals(BrokerProtocolVersions.Current, invocation.brokerProtocolVersion)
+            val operation = invocation.operation as BrokerOperation.Http
+            assertEquals(
+                BrokerValue.Literal("https://reference.invalid/probe"),
+                operation.request.url,
+            )
+            val result: BrokerInvocationResult = BrokerInvocationResult.Success(
+                BrokerOperationResult.Http(
                     BrokeredHttpResponse(
                         statusCode = 204,
                         headers = emptyMap(),
                         body = "caller-bound",
                     )
-                ),
+                )
+            )
+            return ParcelFileCodec.write(
+                InstrumentationRegistry.getInstrumentation().targetContext,
+                json.encodeToString(result),
             )
         }
     }

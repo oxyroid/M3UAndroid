@@ -5,7 +5,10 @@ import com.m3u.extension.api.ExtensionHookIds
 import com.m3u.extension.api.ExtensionPayload
 import com.m3u.extension.api.ExtensionSettingSchema
 import com.m3u.extension.api.HookSpec
+import com.m3u.extension.api.security.BrokerValue
 import com.m3u.extension.api.security.CredentialHandle
+import com.m3u.extension.api.security.ProviderAuthenticationReceipt
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 
@@ -35,13 +38,9 @@ object SubscriptionProviderSettingKeys {
     const val Password = "password"
 }
 
-@Serializable
-sealed interface ProviderAuthentication {
-    @Serializable
-    data class UsernamePassword(
-        val username: String,
-        val password: CredentialHandle,
-    ) : ProviderAuthentication
+object ProviderAuthenticationContextKeys {
+    const val ServerId = "server_id"
+    const val UserId = "user_id"
 }
 
 @Serializable
@@ -50,12 +49,30 @@ data class SubscriptionProviderDiscoverRequest(
 ) : ExtensionPayload
 
 @Serializable
+data class SubscriptionProviderVariant(
+    val kind: ProviderKind,
+    val displayName: String,
+) {
+    init {
+        require(displayName.isNotBlank()) { "Provider variant display name must not be blank" }
+    }
+}
+
+@Serializable
 data class SubscriptionProviderDescriptor(
     val providerId: ExtensionId,
     val displayName: String,
-    val supportedKinds: Set<ProviderKind>,
+    val variants: List<SubscriptionProviderVariant>,
     val settingsSchema: ExtensionSettingSchema? = null,
-)
+) {
+    init {
+        require(displayName.isNotBlank()) { "Provider display name must not be blank" }
+        require(variants.isNotEmpty()) { "Provider must declare at least one variant" }
+        require(variants.map(SubscriptionProviderVariant::kind).distinct().size == variants.size) {
+            "Provider variant kinds must be unique"
+        }
+    }
+}
 
 @Serializable
 data class SubscriptionProviderDiscoverResult(
@@ -81,9 +98,24 @@ data class ValidatedProviderAccount(
 )
 
 @Serializable
+sealed interface ProviderValidationEvidence {
+    @Serializable
+    @SerialName("trusted_direct")
+    data class TrustedDirect(
+        val account: ValidatedProviderAccount,
+        val credential: CredentialHandle,
+    ) : ProviderValidationEvidence
+
+    @Serializable
+    @SerialName("host_broker_receipt")
+    data class HostBrokerReceipt(
+        val receipt: ProviderAuthenticationReceipt,
+    ) : ProviderValidationEvidence
+}
+
+@Serializable
 data class SubscriptionProviderValidateResult(
-    val account: ValidatedProviderAccount,
-    val credential: CredentialHandle,
+    val evidence: ProviderValidationEvidence,
 ) : ExtensionPayload
 
 @Serializable
@@ -182,9 +214,24 @@ data class PlaybackSessionDescriptor(
 )
 
 @Serializable
+data class PlaybackHeaderValue(
+    val parts: List<BrokerValue>,
+) {
+    init {
+        require(parts.isNotEmpty()) { "Playback header value must not be empty" }
+        require(parts.size <= 8) { "Playback header value has too many parts" }
+    }
+
+    companion object {
+        fun literal(value: String): PlaybackHeaderValue =
+            PlaybackHeaderValue(listOf(BrokerValue.Literal(value)))
+    }
+}
+
+@Serializable
 data class PlaybackSourceResolveResult(
     val url: String,
-    val headers: Map<String, String> = emptyMap(),
+    val headers: Map<String, PlaybackHeaderValue> = emptyMap(),
     val mediaSourceId: String? = null,
     val expiresAtEpochMilliseconds: Long? = null,
     val session: PlaybackSessionDescriptor? = null,
@@ -224,13 +271,13 @@ data class PlaybackSessionCloseResult(
 object SubscriptionHookSpecs {
     val Discover = HookSpec(
         hook = ExtensionHookIds.SubscriptionProviderDiscover,
-        schemaVersion = 1,
+        schemaVersion = 2,
         requestSerializer = SubscriptionProviderDiscoverRequest.serializer(),
         responseSerializer = SubscriptionProviderDiscoverResult.serializer(),
     )
     val Validate = HookSpec(
         hook = ExtensionHookIds.SubscriptionProviderValidate,
-        schemaVersion = 1,
+        schemaVersion = 2,
         requestSerializer = SubscriptionProviderValidateRequest.serializer(),
         responseSerializer = SubscriptionProviderValidateResult.serializer(),
     )
@@ -242,7 +289,7 @@ object SubscriptionHookSpecs {
     )
     val ResolvePlayback = HookSpec(
         hook = ExtensionHookIds.PlaybackSourceResolve,
-        schemaVersion = 1,
+        schemaVersion = 2,
         requestSerializer = PlaybackSourceResolveRequest.serializer(),
         responseSerializer = PlaybackSourceResolveResult.serializer(),
     )

@@ -7,8 +7,10 @@ import android.os.ParcelFileDescriptor
 import com.m3u.extension.api.InvocationId
 import com.m3u.extension.api.SerializedExtensionEnvelope
 import com.m3u.extension.api.SerializedExtensionResult
+import com.m3u.extension.api.security.BrokerProtocolVersions
 import com.m3u.extension.runtime.ExtensionTransport
 import com.m3u.extension.transport.android.ExtensionHandshakeRequest
+import com.m3u.extension.transport.android.ExtensionHandshakeError
 import com.m3u.extension.transport.android.ExtensionHandshakeResponse
 import com.m3u.extension.transport.android.ExtensionProtocol
 import com.m3u.extension.transport.android.ParcelFileCodec
@@ -21,6 +23,8 @@ import kotlinx.serialization.json.Json
 abstract class ExtensionService : Service() {
     protected abstract val transport: ExtensionTransport
     protected open val json: Json = Json { ignoreUnknownKeys = true; explicitNulls = false }
+    @Volatile
+    private var negotiatedBrokerProtocolVersion: Int? = null
 
     /** Override when a hook needs the host broker. The default delegates to [transport]. */
     protected open suspend fun invoke(
@@ -29,19 +33,57 @@ abstract class ExtensionService : Service() {
     ): SerializedExtensionResult = transport.invoke(envelope)
 
     private val binder = object : IExtensionService.Stub() {
+        @Synchronized
         override fun handshake(request: ParcelFileDescriptor): ParcelFileDescriptor {
             val handshake = json.decodeFromString<ExtensionHandshakeRequest>(
                 ParcelFileCodec.read(request, MAX_HANDSHAKE_BYTES)
             )
-            require(handshake.transportVersion == ExtensionProtocol.TRANSPORT_VERSION) {
-                "Unsupported extension transport protocol"
+            val extensionApiRange = transport.manifest.apiRange
+            val brokerProtocolVersion = BrokerProtocolVersions.negotiate(
+                handshake.supportedBrokerProtocolVersions
+            )
+            val error = when {
+                handshake.transportVersion != ExtensionProtocol.TRANSPORT_VERSION ->
+                    ExtensionHandshakeError(
+                        code = "transport.incompatible",
+                        message = "Extension transport protocol is incompatible",
+                    )
+                handshake.hostApiVersion !in extensionApiRange -> ExtensionHandshakeError(
+                    code = "api.incompatible",
+                    message = "Host API version is outside the extension range",
+                )
+                brokerProtocolVersion == null -> ExtensionHandshakeError(
+                    code = "broker.incompatible",
+                    message = "Host and extension do not share a broker protocol version",
+                )
+                else -> null
             }
+            if (error != null) {
+                return ParcelFileCodec.write(
+                    this@ExtensionService,
+                    json.encodeToString(
+                        ExtensionHandshakeResponse(
+                            transportVersion = ExtensionProtocol.TRANSPORT_VERSION,
+                            extensionApiRange = extensionApiRange,
+                            error = error,
+                        )
+                    ),
+                )
+            }
+            checkNotNull(brokerProtocolVersion)
+            negotiatedBrokerProtocolVersion?.let { previous ->
+                require(previous == brokerProtocolVersion) {
+                    "Broker protocol changed during an active extension connection"
+                }
+            }
+            negotiatedBrokerProtocolVersion = brokerProtocolVersion
             return ParcelFileCodec.write(
                 this@ExtensionService,
                 json.encodeToString(
                     ExtensionHandshakeResponse(
                         transportVersion = ExtensionProtocol.TRANSPORT_VERSION,
-                        extensionApiRange = transport.manifest.apiRange,
+                        extensionApiRange = extensionApiRange,
+                        brokerProtocolVersion = brokerProtocolVersion,
                     )
                 ),
             )
@@ -63,7 +105,14 @@ abstract class ExtensionService : Service() {
             require(envelope.invocationId.value == invocationId)
             require(envelope.hook.id == hookId)
             require(envelope.schemaVersion == schemaVersion)
-            val broker = ExtensionHostNetworkBroker(this@ExtensionService, hostBridge, json)
+            val broker = ExtensionHostNetworkBroker(
+                context = this@ExtensionService,
+                bridge = hostBridge,
+                json = json,
+                brokerProtocolVersion = checkNotNull(negotiatedBrokerProtocolVersion) {
+                    "Extension handshake must complete before invocation"
+                },
+            )
             ParcelFileCodec.write(
                 this@ExtensionService,
                 json.encodeToString(invoke(envelope, broker)),

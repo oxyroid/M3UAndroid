@@ -38,17 +38,23 @@ internal object DatabaseMigrations {
                 while (cursor.moveToNext()) {
                     val accountId = cursor.getString(0)
                     val accessToken = cursor.getString(1)
-                    runCatching { credentialVault.encrypt(accountId, accessToken) }
-                        .getOrNull()
-                        ?.let { encrypted ->
-                            insert.clearBindings()
-                            insert.bindString(1, encrypted.accountId)
-                            insert.bindString(2, encrypted.credentialHandle)
-                            insert.bindString(3, encrypted.ciphertext)
-                            insert.bindString(4, encrypted.nonce)
-                            insert.bindLong(5, encrypted.keyVersion.toLong())
-                            insert.executeInsert()
-                        }
+                    val encrypted = runCatching {
+                        credentialVault.encrypt(accountId, accessToken)
+                    }.getOrNull()
+                    if (encrypted == null) {
+                        db.execSQL(
+                            "UPDATE provider_accounts SET requires_reauthentication = 1 WHERE id = ?",
+                            arrayOf(accountId),
+                        )
+                    } else {
+                        insert.clearBindings()
+                        insert.bindString(1, encrypted.accountId)
+                        insert.bindString(2, encrypted.credentialHandle)
+                        insert.bindString(3, encrypted.ciphertext)
+                        insert.bindString(4, encrypted.nonce)
+                        insert.bindLong(5, encrypted.keyVersion.toLong())
+                        insert.executeInsert()
+                    }
                 }
             }
             db.execSQL("DROP TABLE provider_credentials")

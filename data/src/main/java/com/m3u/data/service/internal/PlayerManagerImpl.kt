@@ -297,7 +297,7 @@ class PlayerManagerImpl @Inject constructor(
         val dataSourceFactory = if (rtmp) {
             RtmpDataSource.Factory()
         } else {
-            createHttpDataSourceFactory(userAgent, requestHeaders, providerPlayback)
+            createHttpDataSourceFactory(url, userAgent, requestHeaders, providerPlayback)
         }
         val extractorsFactory = DefaultExtractorsFactory().setTsExtractorFlags(
             FLAG_ALLOW_NON_IDR_KEYFRAMES and FLAG_DETECT_ACCESS_UNITS
@@ -511,14 +511,24 @@ class PlayerManagerImpl @Inject constructor(
     }
 
     private fun createHttpDataSourceFactory(
+        url: String,
         userAgent: String?,
         requestHeaders: Map<String, String>,
         providerPlayback: Boolean,
     ): DataSource.Factory {
-        val client = if (providerPlayback) providerOkHttpClient else okHttpClient
+        val client = if (providerPlayback) {
+            providerOkHttpClient.withProviderPlaybackHeaders(
+                entryUrl = url,
+                headers = requestHeaders,
+            )
+        } else {
+            okHttpClient
+        }
         val upstream = OkHttpDataSource.Factory(client)
             .setUserAgent(userAgent)
-            .setDefaultRequestProperties(requestHeaders)
+        if (!providerPlayback) {
+            upstream.setDefaultRequestProperties(requestHeaders)
+        }
 //        return if (cache) {
 //            CacheDataSource.Factory()
 //                .setUpstreamDataSourceFactory(upstream)

@@ -1,60 +1,51 @@
-# Hook catalog
+# Choose a Hook
 
 [简体中文](hooks.zh-CN.md) · [Developer guide](README.md)
 
-Use this page to choose the next feature after completing [Your first Hook](first-hook.md).
+Choose by the M3UAndroid feature that should call your code. Declare and register only the Hooks you implement.
 
-- **Available:** has a real user trigger and visible result.
-- **Limited:** called only from a specific host flow.
-- **Not available:** the contract exists, but the product path is incomplete.
+| Your feature | HookSpec | Required capability | When M3UAndroid calls it |
+| --- | --- | --- | --- |
+| Add settings dynamically | `HostHookSpecs.SettingsSchema` | `settings.contribute` | The user opens the enabled extension's settings. |
+| Contribute phone search results | `HostHookSpecs.SearchProvider` | `search.read` | The user searches on the phone search screen. |
+| Enrich channel metadata | `HostHookSpecs.MetadataEnrichment` | `metadata.write` | After a provider subscription refresh imports channels. |
+| Contribute programme entries | `HostHookSpecs.EpgRefresh` | `epg.read` | After a provider subscription refresh requests programme data. |
 
-| User goal | Hook | APK extension status |
-| --- | --- | --- |
-| Generate settings dynamically | `settings.schema.contribute` | **Available** |
-| Extend phone search | `search.provider.query` | **Limited** |
-| Change channel titles or categories | `metadata.channel.enrich` | **Limited** |
-| Add programme guide entries | `epg.content.refresh` | **Limited** |
-| Provide a complete subscription service | Provider Hook group | **Not available** |
-| Run background work | `background.task.run` | **Not available** |
+Subscription providers use a separate five-Hook lifecycle described in [Build a subscription provider](host-broker.md).
 
-## Dynamic settings
+## What each Hook receives and returns
 
-- **Called when:** the user opens settings for an enabled extension.
-- **Input:** current language and UI surface.
-- **Output:** declarative setting sections; M3UAndroid renders the controls.
-- **Capability:** `settings.contribute`.
-- **Example:** [`HelloExtensionService.kt`](../../../samples/hello-extension/src/main/java/com/m3u/samples/hello/extension/HelloExtensionService.kt).
+### Dynamic settings
 
-Put settings that never change directly in `ExtensionManifest.settingsSchema`; they do not need a Hook.
+Input: `SettingsSchemaRequest` with the locale and UI surface.
 
-## Phone search
+Output: `SettingsSchemaResult` containing declarative sections. M3UAndroid renders and stores the fields. Put settings that never change in `ExtensionManifest.settingsSchema` instead.
 
-- **Called when:** the user types on the phone search screen.
-- **Input:** query text and a result limit.
-- **Output:** stable channel references.
-- **Host behavior:** M3UAndroid resolves returned references to channels that already exist locally and are currently visible.
-- **Capability:** `search.read`.
+Example: [`HelloExtensionService.kt`](../../../samples/hello-extension/src/main/java/com/m3u/samples/hello/extension/HelloExtensionService.kt).
 
-## Channel metadata and programme guide
+### Phone search
 
-These Hooks currently run only after a generic provider refresh, not after ordinary M3U or Xtream imports.
+Input: `SearchProviderRequest` with the query, result limit, and optional continuation token.
 
-`metadata.channel.enrich` returns title or category changes for channels in the request and needs `metadata.write`. `epg.content.refresh` returns programmes for the requested channels and time window and needs `epg.read`.
+Output: `SearchProviderResult`. Return stable references for channels already known to the host. M3UAndroid displays only references it can resolve to currently visible channels.
 
-If an EPG call fails, the host keeps that extension's last successful data. A successful empty list clears only that extension's programmes.
+### Channel metadata
 
-## Complete subscription service
+Input: `MetadataEnrichmentRequest` containing the channels being refreshed.
 
-A complete provider must support this sequence:
+Output: `MetadataEnrichmentResult` with patches keyed by `stableReference`. Return patches only for channels present in the request.
 
-```text
-list service -> validate account -> refresh channels -> resolve playback -> close session
-```
+### Programme guide
 
-The built-in Emby/Jellyfin extension completes it. APK extensions do not yet have a usable end-to-end login, subscription, and playback path, so this Hook group is not a publishable feature.
+Input: `EpgRefreshRequest` containing source IDs and the requested time window.
 
-## Background work
+Output: `EpgRefreshResult`. A failed call preserves the extension's previous contribution; a successful empty programme list clears that contribution.
 
-The `background.task.run` request and result exist, but the host does not schedule it yet.
+## Result rules
 
-Look up request and result types in [`HostHookContracts.kt`](../../../extension/api/src/main/kotlin/com/m3u/extension/api/HostHookContracts.kt) and [`SubscriptionProviderContracts.kt`](../../../extension/api/src/main/kotlin/com/m3u/extension/api/subscription/SubscriptionProviderContracts.kt).
+- Return only entries related to the current request.
+- Keep `stableReference` values stable between calls.
+- Use `HookResult.Failure` for an expected failure; do not return a partly valid result.
+- Do not include credentials or user-identifying request data in result metadata or diagnostics.
+
+Read the exact fields and current schema versions in [`HostHookContracts.kt`](../../../extension/api/src/main/kotlin/com/m3u/extension/api/HostHookContracts.kt).

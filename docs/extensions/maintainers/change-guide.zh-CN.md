@@ -66,7 +66,7 @@ SubscriptionProviderRepositoryImpl -> SubscriptionProviderImporter
 
 设置 schema 和普通值由 [`ExtensionSettingsRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/extension/ExtensionSettingsRepositoryImpl.kt) 管理；密码设置和 provider token 由宿主 vault 加密。插件契约只能携带凭据句柄，不能携带明文 secret。
 
-修改 broker 时，从 [`HostNetworkBrokerSecurityTest`](../../../data/src/androidTest/java/com/m3u/data/extension/security/HostNetworkBrokerSecurityTest.kt) 增加拒绝场景，再实现行为。涉及 owner、origin、redirect、认证 header、响应大小或凭据 capture 的改动也必须检查 [发布阻塞项](status-and-release.zh-CN.md#发布阻塞项)。
+修改 broker 时，从 [`HostNetworkBrokerSecurityTest`](../../../data/src/androidTest/java/com/m3u/data/extension/security/HostNetworkBrokerSecurityTest.kt) 增加拒绝场景，再实现行为。涉及 owner、origin、redirect、认证 header、响应大小或凭据 capture 的改动也必须检查[剩余发布门槛](status-and-release.zh-CN.md#剩余发布门槛)。
 
 ## 修改手机或 TV 界面
 
@@ -85,5 +85,6 @@ SubscriptionProviderRepositoryImpl -> SubscriptionProviderImporter
 | APK SDK 与类型化 handler | [`TypedExtensionServiceTest`](../../../extension/sdk-android/src/test/java/com/m3u/extension/sdk/android/TypedExtensionServiceTest.kt)、[`hello-extension`](../../../samples/hello-extension) |
 | 证书信任与连接状态 | [`CertificateSetFingerprintTest`](../../../extension/transport-android/src/test/java/com/m3u/extension/transport/android/CertificateSetFingerprintTest.kt)、[`ExtensionTrustStoreTest`](../../../extension/transport-android/src/androidTest/java/com/m3u/extension/transport/android/ExtensionTrustStoreTest.kt)、[`ExtensionConnectionStateTest`](../../../extension/transport-android/src/androidTest/java/com/m3u/extension/transport/android/ExtensionConnectionStateTest.kt) |
 | 跨进程发现、绑定、PFD、调用与取消 | [`ExternalExtensionIpcTest`](../../../app/smartphone/src/androidTest/java/com/m3u/testing/ExternalExtensionIpcTest.kt)、[`extension-reference`](../../../testing/extension-reference) |
+| 外部 provider 生命周期 | [`ExternalProviderEndToEndTest`](../../../app/smartphone/src/androidTest/java/com/m3u/testing/ExternalProviderEndToEndTest.kt)、[`extension-reference`](../../../testing/extension-reference)、[`mock-server`](../../../testing/mock-server) |
 | 内置 provider 与 importer | [`EmbyCompatibleProviderIntegrationTest`](../../../data/src/androidTest/java/com/m3u/data/extension/emby/EmbyCompatibleProviderIntegrationTest.kt)、[`SubscriptionProviderRepositoryIntegrationTest`](../../../data/src/androidTest/java/com/m3u/data/repository/provider/SubscriptionProviderRepositoryIntegrationTest.kt)，以及上文链接的应用器测试 |
 | 手机或 TV 产品链路 | 对应触发入口与可见结果的产品 UI 测试 |

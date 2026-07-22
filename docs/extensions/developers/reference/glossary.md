@@ -1,31 +1,32 @@
-# Terms and extension identity
+# Contract terms
 
 [简体中文](glossary.zh-CN.md) · [Developer guide](../README.md)
 
-| Name | Who uses it | Hello example |
-| --- | --- | --- |
-| `applicationId` | Package component of the extension's trusted identity | `com.m3u.samples.hello.extension` |
-| Service class | Component M3UAndroid binds for this extension | `HelloExtensionService` |
-| `ExtensionId` | Identity used by the M3UAndroid runtime and catalog | `com.m3u.samples.hello` |
-| `ExtensionManifest` | The extension declares its name, version, settings, and Hooks | The Kotlin object in `HelloExtensionService.kt` |
-| Hook | One host call with a defined input and output | `settings.schema.contribute` |
-| Capability | A category of work the user authorizes | `settings.contribute` |
-| Provider | A service that supplies channel subscriptions, refresh, and playback URLs | Built-in Emby and Jellyfin |
+| Term | What extension code uses it for |
+| --- | --- |
+| `applicationId` | One of the stable identity values kept across updates. |
+| Service class | The extension's `TypedExtensionService` implementation. |
+| Signing certificate | The publisher identity kept across updates. |
+| `ExtensionId` | The stable ID supplied in `ExtensionManifest`. |
+| `ExtensionManifest` | Declares the extension version, Hooks, capabilities, settings, and display metadata. |
+| `HookSpec<Request, Result>` | Supplies the request type, result type, Hook ID, and current schema version. |
+| `ExtensionHookDeclaration` | Adds an implemented `HookSpec` to `ExtensionManifest`. |
+| Capability | Declares an operation the Hook needs the user to authorize. |
+| `ExtensionCallContext` | Supplies the invocation ID, granted capabilities, and saved extension settings for the current call. |
+| `ExtensionSettingsSnapshot` | Contains ordinary setting values and credential handles for secret fields. |
+| `CredentialHandle` | A reference used with broker values; it is not the credential text. |
+| `BrokerValue` | One literal, credential reference, concatenation, or encoded value in a broker request. |
+| `ExtensionHostNetworkBroker` | Sends a provider HTTP request for the current handler call. |
+| `ProviderKind` | A stable lowercase ID for one provider variant. |
+| `PlaybackReference` | Provider-owned values saved by M3UAndroid and sent back when playback is requested. |
 
-## Two manifests
+## Service declaration and extension contract
 
-They define different parts of the M3UAndroid extension:
+[`AndroidManifest.xml`](../../../../samples/hello-extension/src/main/AndroidManifest.xml) contains the Service declaration. The Kotlin `ExtensionManifest` returned by that Service contains the M3UAndroid contract.
 
-- [`AndroidManifest.xml`](../../../../samples/hello-extension/src/main/AndroidManifest.xml) registers the extension Service.
-- `ExtensionManifest` declares the extension's M3UAndroid identity, settings, capabilities, and Hooks.
+The Hello implementation shows both parts:
 
-## Four stable identity fields
+- [`AndroidManifest.xml`](../../../../samples/hello-extension/src/main/AndroidManifest.xml)
+- [`HelloExtensionService.kt`](../../../../samples/hello-extension/src/main/java/com/m3u/samples/hello/extension/HelloExtensionService.kt)
 
-Keep these stable after publishing an extension:
-
-1. Android `applicationId`
-2. Service class name
-3. APK signing certificate
-4. `ExtensionId`
-
-Changing any of them can make the host treat the APK as a different extension or ask the user to confirm its identity again.
+Keep the application ID, Service class, signing certificate, and `ExtensionId` stable across updates. See [Prepare a release or update](compatibility.md).

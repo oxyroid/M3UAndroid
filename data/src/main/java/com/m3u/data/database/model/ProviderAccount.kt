@@ -1,6 +1,7 @@
 package com.m3u.data.database.model
 
 import androidx.room.ColumnInfo
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -48,4 +49,17 @@ data class ProviderAccount(
     val playlistUrl: String,
     @ColumnInfo(name = "requires_reauthentication", defaultValue = "0")
     val requiresReauthentication: Boolean = false,
+    @ColumnInfo(name = "owner_package_name")
+    val ownerPackageName: String? = null,
+    @ColumnInfo(name = "owner_service_name")
+    val ownerServiceName: String? = null,
+    @ColumnInfo(name = "owner_certificate_sha256")
+    val ownerCertificateSha256: String? = null,
+)
+
+data class ProviderAccountSummaryRow(
+    @Embedded
+    val account: ProviderAccount,
+    @ColumnInfo(name = "playlist_title")
+    val playlistTitle: String,
 )

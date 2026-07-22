@@ -2,11 +2,9 @@
 
 [English](README.md)
 
-你是哪一种读者？
+按你的任务选择文档：
 
-- 想做一个单独安装的 Android 插件 APK：从 [10 分钟运行 Hello](developers/quickstart.zh-CN.md) 开始。
-- 想修改 M3UAndroid 自身的插件运行时、IPC 或数据接入：前往 [插件平台维护指南](maintainers/README.zh-CN.md)。
+- [开发插件](developers/README.zh-CN.md)：声明插件、实现类型化 Hook，并验证宿主结果。
+- [维护插件平台](maintainers/README.zh-CN.md)：排查 runtime、transport、broker、provider 或结果导入问题。
 
-Emby 和 Jellyfin 已作为内置插件随 M3UAndroid 发布。
-
-独立 APK 插件目前仍是开发者预览：发现、授权、设置和部分 Hook 已可试用，完整第三方订阅服务尚未开放。
+Emby 和 Jellyfin 随 M3UAndroid 作为内置插件发布。外部插件通过 Android transport 使用相同的类型化 Hook 契约。

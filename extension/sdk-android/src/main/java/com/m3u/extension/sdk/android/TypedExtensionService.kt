@@ -36,6 +36,11 @@ abstract class TypedExtensionService : ExtensionService() {
     final override val transport: ExtensionTransport
         get() = transportDelegate.value
 
+    final override suspend fun invoke(
+        envelope: SerializedExtensionEnvelope,
+        hostNetworkBroker: ExtensionHostNetworkBroker,
+    ): SerializedExtensionResult = transportDelegate.value.invoke(envelope, hostNetworkBroker)
+
     /** Register a handler that returns a successful typed response. */
     protected fun <Request : ExtensionPayload, Response : ExtensionPayload> handle(
         spec: HookSpec<Request, Response>,
@@ -59,6 +64,38 @@ abstract class TypedExtensionService : ExtensionService() {
         }
         registry.handle(spec, handler)
     }
+
+    /** Register a typed handler that can make requests through the invocation-scoped host broker. */
+    protected fun <Request : ExtensionPayload, Response : ExtensionPayload> handleWithBroker(
+        spec: HookSpec<Request, Response>,
+        handler: suspend (
+            request: Request,
+            context: ExtensionCallContext,
+            broker: ExtensionHostNetworkBroker,
+        ) -> Response,
+    ) {
+        check(!transportDelegate.isInitialized()) {
+            "Hooks must be registered before the extension service is bound"
+        }
+        registry.handleWithBroker(spec) { request, context, broker ->
+            HookResult.Success(handler(request, context, broker))
+        }
+    }
+
+    /** Register a broker-backed typed handler that can return a contract error without throwing. */
+    protected fun <Request : ExtensionPayload, Response : ExtensionPayload> handleResultWithBroker(
+        spec: HookSpec<Request, Response>,
+        handler: suspend (
+            request: Request,
+            context: ExtensionCallContext,
+            broker: ExtensionHostNetworkBroker,
+        ) -> HookResult<Response>,
+    ) {
+        check(!transportDelegate.isInitialized()) {
+            "Hooks must be registered before the extension service is bound"
+        }
+        registry.handleWithBroker(spec, handler)
+    }
 }
 
 internal class TypedHookRegistry {
@@ -69,15 +106,42 @@ internal class TypedHookRegistry {
         spec: HookSpec<Request, Response>,
         handler: suspend (request: Request, context: ExtensionCallContext) -> HookResult<Response>,
     ) {
+        register(spec, requiresBroker = false) { request, context, _ ->
+            handler(request, context)
+        }
+    }
+
+    fun <Request : ExtensionPayload, Response : ExtensionPayload> handleWithBroker(
+        spec: HookSpec<Request, Response>,
+        handler: suspend (
+            request: Request,
+            context: ExtensionCallContext,
+            broker: ExtensionHostNetworkBroker,
+        ) -> HookResult<Response>,
+    ) {
+        register(spec, requiresBroker = true) { request, context, broker ->
+            handler(request, context, checkNotNull(broker))
+        }
+    }
+
+    private fun <Request : ExtensionPayload, Response : ExtensionPayload> register(
+        spec: HookSpec<Request, Response>,
+        requiresBroker: Boolean,
+        handler: suspend (
+            request: Request,
+            context: ExtensionCallContext,
+            broker: ExtensionHostNetworkBroker?,
+        ) -> HookResult<Response>,
+    ) {
         check(!sealed) { "Hooks cannot be registered after the transport is created" }
         check(spec.hook !in bindings) { "Hook ${spec.hook} is already registered" }
-        bindings[spec.hook] = TypedHookBindingImpl(spec, handler)
+        bindings[spec.hook] = TypedHookBindingImpl(spec, requiresBroker, handler)
     }
 
     fun createTransport(
         manifest: ExtensionManifest,
         json: Json,
-    ): ExtensionTransport {
+    ): BrokerAwareExtensionTransport {
         sealed = true
         return TypedExtensionTransport(manifest, bindings.values.toList(), json)
     }
@@ -89,19 +153,35 @@ private interface TypedHookBinding {
     suspend fun invoke(
         payload: JsonElement,
         context: ExtensionCallContext,
+        hostNetworkBroker: ExtensionHostNetworkBroker?,
         json: Json,
     ): TypedHookOutcome
 }
 
 private class TypedHookBindingImpl<Request : ExtensionPayload, Response : ExtensionPayload>(
     override val spec: HookSpec<Request, Response>,
-    private val handler: suspend (request: Request, context: ExtensionCallContext) -> HookResult<Response>,
+    private val requiresBroker: Boolean,
+    private val handler: suspend (
+        request: Request,
+        context: ExtensionCallContext,
+        broker: ExtensionHostNetworkBroker?,
+    ) -> HookResult<Response>,
 ) : TypedHookBinding {
     override suspend fun invoke(
         payload: JsonElement,
         context: ExtensionCallContext,
+        hostNetworkBroker: ExtensionHostNetworkBroker?,
         json: Json,
     ): TypedHookOutcome {
+        if (requiresBroker && hostNetworkBroker == null) {
+            return TypedHookOutcome.Failure(
+                ExtensionError(
+                    code = ExtensionErrorCodes.InvocationFailed,
+                    message = "Host network broker is unavailable",
+                    recoverable = true,
+                )
+            )
+        }
         val request = runCatching {
             json.decodeFromJsonElement(spec.requestSerializer, payload)
         }.getOrElse {
@@ -113,7 +193,7 @@ private class TypedHookBindingImpl<Request : ExtensionPayload, Response : Extens
                 )
             )
         }
-        return when (val result = handler(request, context)) {
+        return when (val result = handler(request, context, hostNetworkBroker)) {
             is HookResult.Success -> runCatching {
                 TypedHookOutcome.Success(
                     json.encodeToJsonElement(spec.responseSerializer, result.payload)
@@ -137,11 +217,18 @@ private sealed interface TypedHookOutcome {
     data class Failure(val error: ExtensionError) : TypedHookOutcome
 }
 
+internal interface BrokerAwareExtensionTransport : ExtensionTransport {
+    suspend fun invoke(
+        request: SerializedExtensionEnvelope,
+        hostNetworkBroker: ExtensionHostNetworkBroker?,
+    ): SerializedExtensionResult
+}
+
 private class TypedExtensionTransport(
     override val manifest: ExtensionManifest,
     bindings: Collection<TypedHookBinding>,
     private val json: Json,
-) : ExtensionTransport {
+) : BrokerAwareExtensionTransport {
     private val bindings = bindings.associateBy { binding -> binding.spec.hook }
     private val invocations = InvocationRegistry()
 
@@ -164,7 +251,13 @@ private class TypedExtensionTransport(
         }
     }
 
-    override suspend fun invoke(request: SerializedExtensionEnvelope): SerializedExtensionResult {
+    override suspend fun invoke(request: SerializedExtensionEnvelope): SerializedExtensionResult =
+        invoke(request, hostNetworkBroker = null)
+
+    override suspend fun invoke(
+        request: SerializedExtensionEnvelope,
+        hostNetworkBroker: ExtensionHostNetworkBroker?,
+    ): SerializedExtensionResult {
         validate(request)?.let { error -> return request.errorResult(error) }
         val binding = bindings.getValue(request.hook)
         val declaredCapabilities = manifest.capabilities
@@ -209,7 +302,14 @@ private class TypedExtensionTransport(
             }
         }
         return try {
-            when (val outcome = binding.invoke(request.payload, context, json)) {
+            when (
+                val outcome = binding.invoke(
+                    payload = request.payload,
+                    context = context,
+                    hostNetworkBroker = hostNetworkBroker,
+                    json = json,
+                )
+            ) {
                 is TypedHookOutcome.Success -> request.successResult(outcome.payload)
                 is TypedHookOutcome.Failure -> request.errorResult(outcome.error)
             }

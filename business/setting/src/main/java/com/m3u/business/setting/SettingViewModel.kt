@@ -30,6 +30,9 @@ import com.m3u.data.repository.extension.ExtensionSettingUpdateResult
 import com.m3u.data.repository.extension.ExtensionSettingsConfiguration
 import com.m3u.data.repository.extension.ExtensionSettingsRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
+import com.m3u.data.repository.provider.DiscoveredSubscriptionProvider
+import com.m3u.data.repository.provider.ProviderAccountSummary
+import com.m3u.data.repository.provider.ProviderDiscoveryException
 import com.m3u.data.repository.provider.ProviderSubscriptionRequest
 import com.m3u.data.repository.provider.SubscriptionProviderRepository
 import com.m3u.data.repository.plugin.ExtensionPluginRepository
@@ -44,9 +47,7 @@ import com.m3u.data.worker.SubscriptionWorker
 import com.m3u.extension.api.subscription.EmbyCompatibleProviderKinds
 import com.m3u.extension.api.subscription.ProviderKind
 import com.m3u.extension.api.ExtensionId
-import com.m3u.extension.api.ExtensionSettingType
 import com.m3u.extension.api.subscription.SubscriptionProviderSettingKeys
-import com.m3u.extension.api.subscription.SubscriptionProviderDescriptor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -88,6 +89,7 @@ class SettingViewModel @Inject constructor(
     private val _codecPackState = MutableStateFlow(codecPackRepository.toPendingState())
     val codecPackState: StateFlow<CodecPackState> = _codecPackState
     private var providerSubscriptionJob: Job? = null
+    private var providerDiscoveryJob: Job? = null
 
     private val _extensionPlugins = MutableStateFlow<List<InstalledPlugin>>(emptyList())
     val extensionPlugins: StateFlow<List<InstalledPlugin>> = _extensionPlugins
@@ -98,8 +100,22 @@ class SettingViewModel @Inject constructor(
     private val _extensionDiagnostics = MutableSharedFlow<String>(extraBufferCapacity = 1)
     val extensionDiagnostics = _extensionDiagnostics.asSharedFlow()
 
-    private val _subscriptionProviders = MutableStateFlow<List<SubscriptionProviderDescriptor>>(emptyList())
-    val subscriptionProviders: StateFlow<List<SubscriptionProviderDescriptor>> = _subscriptionProviders
+    private val _providerDiscoveryState = MutableStateFlow<ProviderDiscoveryState>(
+        ProviderDiscoveryState.Loading
+    )
+    val providerDiscoveryState: StateFlow<ProviderDiscoveryState> = _providerDiscoveryState
+
+    val providerAccountSummaries: StateFlow<List<ProviderAccountSummary>> =
+        subscriptionProviderRepository.observeAccountSummaries()
+            .catch { emit(emptyList()) }
+            .stateIn(
+                scope = viewModelScope,
+                initialValue = emptyList(),
+                started = SharingStarted.WhileSubscribed(5_000L),
+            )
+
+    private val _providerSubscriptionForm = MutableStateFlow<ProviderSubscriptionForm?>(null)
+    val providerSubscriptionForm: StateFlow<ProviderSubscriptionForm?> = _providerSubscriptionForm
 
     init {
         refreshCodecPack()
@@ -112,10 +128,112 @@ class SettingViewModel @Inject constructor(
     }
 
     fun refreshSubscriptionProviders() {
-        viewModelScope.launch(Dispatchers.IO) {
-            _subscriptionProviders.value = runCatching {
+        providerDiscoveryJob?.cancel()
+        providerDiscoveryJob = viewModelScope.launch {
+            loadSubscriptionProviders()
+        }
+    }
+
+    fun selectSubscriptionProvider(providerId: String) {
+        val descriptor = currentSubscriptionProviders().firstOrNull { provider ->
+            provider.descriptor.providerId.value == providerId
+        }?.descriptor ?: return
+        val current = _providerSubscriptionForm.value
+        if (
+            current?.providerId == descriptor.providerId &&
+            current.schemaVersion == descriptor.settingsSchema?.version &&
+            descriptor.variants.any { variant -> variant.kind == current.providerKind }
+        ) {
+            return
+        }
+        val kind = descriptor.variants.first().kind
+        _providerSubscriptionForm.value = ProviderSubscriptionForm.create(descriptor, kind)
+    }
+
+    fun selectSubscriptionProviderKind(kindValue: String) {
+        val current = _providerSubscriptionForm.value ?: return
+        val descriptor = currentSubscriptionProviders().firstOrNull { provider ->
+            provider.descriptor.providerId == current.providerId
+        }?.descriptor ?: return
+        val kind = descriptor.variants.firstOrNull { variant ->
+            variant.kind.value == kindValue
+        }?.kind ?: return
+        if (kind == current.providerKind) return
+        _providerSubscriptionForm.value = ProviderSubscriptionForm.create(descriptor, kind)
+    }
+
+    fun updateSubscriptionProviderSetting(fieldKey: String, value: String?) {
+        _providerSubscriptionForm.value = _providerSubscriptionForm.value?.update(fieldKey, value)
+    }
+
+    private fun synchronizeProviderSubscriptionForm(
+        providers: List<DiscoveredSubscriptionProvider>,
+    ) {
+        val current = _providerSubscriptionForm.value
+        val descriptor = providers.firstOrNull { provider ->
+            provider.descriptor.providerId == current?.providerId
+        }?.descriptor ?: providers.firstOrNull()?.descriptor
+        if (descriptor == null) {
+            _providerSubscriptionForm.value = null
+            return
+        }
+        val kind = descriptor.variants.firstOrNull { variant ->
+            variant.kind == current?.providerKind
+        }?.kind ?: descriptor.variants.first().kind
+        val currentDefinitions = current?.fields?.map(ProviderSubscriptionFormField::definition)
+        if (
+            current?.providerId != descriptor.providerId ||
+            current.providerKind != kind ||
+            current.schemaVersion != descriptor.settingsSchema?.version ||
+            currentDefinitions != descriptor.settingsSchema?.fields.orEmpty()
+        ) {
+            _providerSubscriptionForm.value = ProviderSubscriptionForm.create(descriptor, kind)
+        }
+    }
+
+    private suspend fun loadSubscriptionProviders(): List<DiscoveredSubscriptionProvider>? {
+        _providerDiscoveryState.value = ProviderDiscoveryState.Loading
+        return try {
+            val providers = withContext(Dispatchers.IO) {
                 subscriptionProviderRepository.discoverProviders()
-            }.getOrDefault(emptyList())
+            }
+            synchronizeProviderSubscriptionForm(providers)
+            _providerDiscoveryState.value = providers.toProviderDiscoveryState()
+            providers
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            _providerDiscoveryState.value = ProviderDiscoveryState.Failed(
+                failureCount = (error as? ProviderDiscoveryException)?.failureCount,
+            )
+            null
+        }
+    }
+
+    private fun currentSubscriptionProviders(): List<DiscoveredSubscriptionProvider> =
+        (_providerDiscoveryState.value as? ProviderDiscoveryState.Ready)?.providers.orEmpty()
+
+    fun reauthenticateProviderAccount(playlistUrl: String) {
+        val account = providerAccountSummaries.value.firstOrNull { summary ->
+            summary.playlistUrl == playlistUrl && summary.requiresReauthentication
+        } ?: return
+        providerDiscoveryJob?.cancel()
+        providerDiscoveryJob = viewModelScope.launch {
+            var provider = currentSubscriptionProviders().providerFor(account)
+            if (provider == null) {
+                provider = loadSubscriptionProviders().orEmpty().providerFor(account)
+            }
+            if (provider == null) {
+                messager.emit(SettingMessage.ProviderSubscriptionFailed)
+                return@launch
+            }
+            resetAllInputs()
+            properties.selectedState.value = DataSource.Provider
+            properties.titleState.value = account.playlistTitle
+            _providerSubscriptionForm.value = ProviderSubscriptionForm.createForReauthentication(
+                descriptor = provider,
+                account = account,
+            )
         }
     }
 
@@ -481,34 +599,25 @@ class SettingViewModel @Inject constructor(
                 }
 
                 DataSource.Provider -> {
-                    val descriptor = subscriptionProviders.value.firstOrNull {
-                        it.providerId.value == properties.selectedProviderIdState.value
-                    } ?: return
-                    val kind = descriptor.supportedKinds.firstOrNull {
-                        it.value == properties.selectedProviderKindState.value
-                    } ?: descriptor.supportedKinds.firstOrNull() ?: return
-                    val schema = descriptor.settingsSchema ?: return
-                    val values = properties.providerSettingValues.toMap()
-                    if (title.isBlank() || schema.fields.any { it.required && values[it.key].isNullOrBlank() }) {
-                        messager.emit(SettingMessage.ProviderCredentialsRequired)
+                    if (title.isBlank()) {
+                        messager.emit(SettingMessage.EmptyTitle)
                         return
                     }
-                    enqueueProviderSubscription {
-                        ProviderSubscriptionRequest(
+                    if (_providerDiscoveryState.value !is ProviderDiscoveryState.Ready) return
+                    val form = _providerSubscriptionForm.value ?: return
+                    when (
+                        val result = form.buildRequest(
                             title = title,
-                            providerId = descriptor.providerId,
-                            providerKind = kind,
-                            settingValues = schema.fields
-                                .filter { it.type != ExtensionSettingType.SECRET }
-                                .associate { it.key to values[it.key].orEmpty() },
-                            credentialHandles = schema.fields
-                                .filter { it.type == ExtensionSettingType.SECRET }
-                                .associate { field ->
-                                    field.key to subscriptionProviderRepository.stageCredential(
-                                        values[field.key].orEmpty()
-                                    )
-                                },
+                            stageCredential = subscriptionProviderRepository::stageCredential,
                         )
+                    ) {
+                        is ProviderSubscriptionFormBuildResult.Invalid -> {
+                            _providerSubscriptionForm.value = result.form
+                            messager.emit(SettingMessage.ProviderCredentialsRequired)
+                        }
+                        is ProviderSubscriptionFormBuildResult.Ready -> {
+                            enqueueProviderSubscription { result.request }
+                        }
                     }
                     return
                 }
@@ -525,23 +634,27 @@ class SettingViewModel @Inject constructor(
         password: String,
         providerKind: ProviderKind,
     ) {
-        enqueueProviderSubscription {
-                    val provider = subscriptionProviderRepository.discoverProviders()
-                        .firstOrNull { descriptor -> providerKind in descriptor.supportedKinds }
-                        ?: error("No enabled extension supports provider kind ${providerKind.value}")
-                    ProviderSubscriptionRequest(
-                            title = title,
-                            providerId = provider.providerId,
-                            providerKind = providerKind,
-                            settingValues = mapOf(
-                                SubscriptionProviderSettingKeys.BaseUrl to baseUrl,
-                                SubscriptionProviderSettingKeys.Username to username,
-                            ),
-                            credentialHandles = mapOf(
-                                SubscriptionProviderSettingKeys.Password to
-                                    subscriptionProviderRepository.stageCredential(password),
-                            ),
-                    )
+        val provider = currentSubscriptionProviders().singleBuiltInProviderFor(providerKind)
+        if (provider == null) {
+            messager.emit(SettingMessage.ProviderSubscriptionFailed)
+            return
+        }
+        val form = ProviderSubscriptionForm.create(provider, providerKind)
+            .update(SubscriptionProviderSettingKeys.BaseUrl, baseUrl)
+            .update(SubscriptionProviderSettingKeys.Username, username)
+            .update(SubscriptionProviderSettingKeys.Password, password)
+        when (
+            val result = form.buildRequest(
+                title = title,
+                stageCredential = subscriptionProviderRepository::stageCredential,
+            )
+        ) {
+            is ProviderSubscriptionFormBuildResult.Invalid -> {
+                messager.emit(SettingMessage.ProviderCredentialsRequired)
+            }
+            is ProviderSubscriptionFormBuildResult.Ready -> {
+                enqueueProviderSubscription { result.request }
+            }
         }
     }
 
@@ -705,7 +818,12 @@ class SettingViewModel @Inject constructor(
             usernameState.value = ""
             passwordState.value = ""
             epgState.value = ""
-            providerSettingValues.clear()
+        }
+        _providerSubscriptionForm.value = _providerSubscriptionForm.value?.let { form ->
+            val descriptor = currentSubscriptionProviders().firstOrNull { provider ->
+                provider.descriptor.providerId == form.providerId
+            }?.descriptor ?: return@let null
+            ProviderSubscriptionForm.create(descriptor, form.providerKind)
         }
     }
 
@@ -752,3 +870,10 @@ class SettingViewModel @Inject constructor(
         const val PHONE_SETTINGS_SURFACE = "phone"
     }
 }
+
+private fun List<DiscoveredSubscriptionProvider>.providerFor(
+    account: ProviderAccountSummary,
+) = singleOrNull { discovered ->
+    discovered.descriptor.providerId == account.providerId &&
+        discovered.descriptor.variants.any { variant -> variant.kind == account.providerKind }
+}?.descriptor

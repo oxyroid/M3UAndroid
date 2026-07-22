@@ -1,12 +1,12 @@
-# Understand and modify your first Hook
+# Register a typed Hook
 
 [简体中文](first-hook.zh-CN.md) · [Developer guide](README.md)
 
-The **Phone name** field in Hello settings is not hard-coded in the extension manifest. When the settings screen opens, M3UAndroid invokes `settings.schema.contribute`, and Hello returns a field for the current UI surface.
+A Hook is one function M3UAndroid can call. Its `HookSpec` fixes the request type, result type, and schema version. This example adds one setting based on the current UI surface.
 
-This page uses only the three relevant parts of [`HelloExtensionService.kt`](../../../samples/hello-extension/src/main/java/com/m3u/samples/hello/extension/HelloExtensionService.kt).
+## 1. Add the Hook to the manifest
 
-## 1. Declare the Hook
+Add the Hook and its capability to `ExtensionManifest`:
 
 ```kotlin
 hooks = setOf(
@@ -16,13 +16,6 @@ hooks = setOf(
         requiredCapabilities = setOf(ExtensionCapabilityIds.SettingsContribute),
     )
 )
-```
-
-This tells the host that Hello implements the dynamic-settings Hook and that it can run only after the user grants `settings.contribute`.
-
-The manifest also explains why the extension requests that capability:
-
-```kotlin
 capabilities = setOf(
     ExtensionCapabilityRequest(
         capability = ExtensionCapabilityIds.SettingsContribute,
@@ -31,61 +24,66 @@ capabilities = setOf(
 )
 ```
 
-## 2. Register a typed handler
+Use `HostHookSpecs.SettingsSchema.hook` and `.schemaVersion` directly so the declaration follows the selected contract.
+
+## 2. Return the typed result
+
+Register handlers in the `TypedExtensionService` initializer:
 
 ```kotlin
-handle(HostHookSpecs.SettingsSchema) { request, _ ->
-    val (fieldLabel, defaultValue) = when (request.surface) {
-        "phone" -> "Phone name" to "My phone"
-        "tv" -> "TV name" to "My TV"
-        else -> "Device name" to "My device"
-    }
-    SettingsSchemaResult(
-        sections = listOf(
-            ExtensionSettingSection(
-                id = "device",
-                title = "Device",
-                schema = ExtensionSettingSchema(
-                    version = 1,
-                    fields = listOf(
-                        ExtensionSettingField(
-                            key = "name",
-                            label = fieldLabel,
-                            type = ExtensionSettingType.TEXT,
-                            defaultValue = JsonPrimitive(defaultValue),
-                        )
+init {
+    handle(HostHookSpecs.SettingsSchema) { request, _ ->
+        val (label, defaultValue) = when (request.surface) {
+            "phone" -> "Phone name" to "My phone"
+            "tv" -> "TV name" to "My TV"
+            else -> "Device name" to "My device"
+        }
+        SettingsSchemaResult(
+            sections = listOf(
+                ExtensionSettingSection(
+                    id = "device",
+                    title = "Device",
+                    schema = ExtensionSettingSchema(
+                        version = 1,
+                        fields = listOf(
+                            ExtensionSettingField(
+                                key = "name",
+                                label = label,
+                                type = ExtensionSettingType.TEXT,
+                                defaultValue = JsonPrimitive(defaultValue),
+                            )
+                        ),
                     ),
-                ),
+                )
             )
         )
-    )
+    }
 }
 ```
 
-`request` is already a `SettingsSchemaRequest`, and the return value must be a `SettingsSchemaResult`. `TypedExtensionService` converts between these types and the extension transport.
+For this `HookSpec`, `request` is `SettingsSchemaRequest` and the returned value must be `SettingsSchemaResult`. The SDK handles serialization.
 
-## 3. Change the Hook result
+## 3. Use the call context only when needed
 
-Change the phone branch to:
+The second handler argument is `ExtensionCallContext`:
 
-```kotlin
-"phone" -> "Handset name" to "My handset"
-```
+| Property | Use |
+| --- | --- |
+| `invocationId` | Correlate diagnostics for one call. |
+| `grantedCapabilities` | Check the capabilities granted for this call. |
+| `settings.values` | Read non-secret settings saved by the host. |
+| `settings.credentialHandles` | Read opaque handles for secret settings. |
 
-Deploy the updated sample, refresh the extension page, and open Hello settings again. **Phone name** should become **Handset name**.
+Use `handleResult(...)` if the Hook can return an expected validation or domain failure. Return `HookResult.Failure(ExtensionError(...))` for that case. Do not catch coroutine cancellation.
 
-This edit adds no Hook or capability, so it needs no reauthorization. If an update adds a required capability, the host disables the old grant until the user confirms it.
+## Common contract errors
 
-## What just happened
+- A handler is registered but the Hook is missing from the manifest.
+- The declaration does not use the selected `HookSpec.schemaVersion`.
+- A required capability is missing from `manifest.capabilities`.
+- The same Hook is registered twice.
+- The handler returns a result from another `HookSpec`.
 
-```text
-open Hello settings
-  -> M3UAndroid creates SettingsSchemaRequest
-  -> Hello's typed handler runs
-  -> returns SettingsSchemaResult
-  -> M3UAndroid renders the Device section
-```
+After adding the handler, repeat the [Hello acceptance check](quickstart.md#2-check-the-result-in-m3uandroid).
 
-Other Hooks follow the same basic shape: declare them in the manifest, register a handler in `TypedExtensionService`, receive a typed request, and return a typed result.
-
-Next: [Attach names to this call path](concepts.md), or jump to the [Hook catalog](hooks.md).
+Next: [choose another Hook](hooks.md). Provider extensions should continue with [Build a subscription provider](host-broker.md).

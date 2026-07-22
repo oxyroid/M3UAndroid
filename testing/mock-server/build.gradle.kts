@@ -100,4 +100,5 @@ tasks.register("stopMockServer") {
 dependencies {
     implementation(libs.ktor.server.netty)
     implementation(libs.kotlinx.serialization.json)
+    testImplementation(kotlin("test-junit"))
 }

@@ -477,7 +477,9 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             }
             mutex.withLock {
                 channelDao.insertOrReplaceAll(*channels.toTypedArray())
-                providerAccounts.forEach { providerDao.insertOrReplace(it) }
+                providerAccounts.forEach { account ->
+                    providerDao.restoreReauthenticationRequiredAccount(account)
+                }
                 playbackReferences.forEach { providerDao.insertOrReplace(it) }
             }
         }

@@ -2,11 +2,12 @@ package com.m3u.data.repository.plugin
 
 import android.content.Context
 import com.m3u.data.extension.security.ExtensionHostBridge
+import com.m3u.data.extension.security.ProviderHostNetworkBroker
+import com.m3u.data.extension.security.toPrincipal
 import com.m3u.extension.api.ExtensionManifest
 import com.m3u.extension.api.InvocationId
 import com.m3u.extension.api.SerializedExtensionEnvelope
 import com.m3u.extension.api.SerializedExtensionResult
-import com.m3u.extension.api.security.HostNetworkBroker
 import com.m3u.extension.runtime.ExtensionTransport
 import com.m3u.extension.runtime.ExtensionTransportHealth
 import com.m3u.extension.transport.android.AndroidBoundExtensionTransport
@@ -36,7 +37,7 @@ internal fun interface ExtensionPluginTransportConnector {
 
 internal class AndroidExtensionPluginTransportConnector @Inject constructor(
     @param:ApplicationContext private val context: Context,
-    private val hostNetworkBroker: HostNetworkBroker,
+    private val hostNetworkBroker: ProviderHostNetworkBroker,
 ) : ExtensionPluginTransportConnector {
     override suspend fun connect(service: InstalledExtensionService): ExtensionPluginTransport =
         AndroidExtensionPluginTransport(
@@ -44,7 +45,13 @@ internal class AndroidExtensionPluginTransportConnector @Inject constructor(
                 context = context,
                 installed = service,
                 hostBridgeFactory = { manifest, envelope ->
-                    ExtensionHostBridge(context, hostNetworkBroker, manifest, envelope)
+                    ExtensionHostBridge(
+                        context = context,
+                        broker = hostNetworkBroker,
+                        principal = service.toPrincipal(manifest.id),
+                        manifest = manifest,
+                        envelope = envelope,
+                    )
                 },
             )
         )

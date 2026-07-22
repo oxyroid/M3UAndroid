@@ -23,6 +23,9 @@ import com.m3u.extension.api.InvocationId
 import com.m3u.extension.api.SerializedExtensionEnvelope
 import com.m3u.extension.api.SettingsSchemaRequest
 import com.m3u.extension.api.SettingsSchemaResult
+import com.m3u.extension.api.security.BrokeredHttpRequest
+import com.m3u.extension.api.security.BrokeredHttpResponse
+import com.m3u.extension.api.security.BrokerValue
 import com.m3u.extension.runtime.ExtensionTransportHealth
 import java.util.concurrent.CancellationException
 import kotlin.test.Test
@@ -85,6 +88,67 @@ class TypedExtensionServiceTest {
             ),
         )
         assertEquals(ExtensionTransportHealth.HEALTHY, transport.health())
+    }
+
+    @Test
+    fun `broker-backed typed handler receives the invocation-scoped broker`() = runBlocking {
+        lateinit var receivedBrokerRequest: BrokeredHttpRequest
+        val registry = TypedHookRegistry().apply {
+            handleWithBroker(HostHookSpecs.SettingsSchema) { _, _, broker ->
+                val response = broker.execute(
+                    BrokeredHttpRequest(
+                        method = "GET",
+                        url = "https://media.example.test/system/info",
+                    )
+                )
+                assertEquals(204, response.statusCode)
+                HookResult.Success(SETTINGS_RESULT)
+            }
+        }
+        val transport = registry.createTransport(manifest(), json)
+        val broker = ExtensionHostNetworkBroker.forHttpTesting { request ->
+            receivedBrokerRequest = request
+            BrokeredHttpResponse(
+                statusCode = 204,
+                headers = emptyMap(),
+                body = "",
+            )
+        }
+
+        val result = transport.invoke(envelope(), broker)
+
+        assertEquals("GET", receivedBrokerRequest.method)
+        assertEquals(
+            BrokerValue.Literal(
+                "https://media.example.test/system/info"
+            ),
+            receivedBrokerRequest.url,
+        )
+        assertEquals(
+            SETTINGS_RESULT,
+            json.decodeFromJsonElement(
+                HostHookSpecs.SettingsSchema.responseSerializer,
+                requireNotNull(result.payload),
+            ),
+        )
+    }
+
+    @Test
+    fun `broker-backed typed handler fails safely when invoked without a host broker`() = runBlocking {
+        var invoked = false
+        val registry = TypedHookRegistry().apply {
+            handleWithBroker(HostHookSpecs.SettingsSchema) { _, _, _ ->
+                invoked = true
+                HookResult.Success(SETTINGS_RESULT)
+            }
+        }
+        val transport = registry.createTransport(manifest(), json)
+
+        val result = transport.invoke(envelope())
+
+        assertFalse(invoked)
+        assertEquals(ExtensionErrorCodes.InvocationFailed, result.error?.code)
+        assertEquals("Host network broker is unavailable", result.error?.message)
     }
 
     @Test

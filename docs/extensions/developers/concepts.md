@@ -1,61 +1,103 @@
-# What happened during that call
+# Define the extension manifest
 
 [简体中文](concepts.zh-CN.md) · [Developer guide](README.md)
 
-You have already run the dynamic-settings Hook. Now attach code names to that path:
+You need one `TypedExtensionService` and one `ExtensionManifest`. Copy the Hello files first, then replace the example identity and features with your own.
 
-```text
-open Hello settings
-  -> HostHookSpecs.SettingsSchema
-  -> HelloExtensionService
-  -> handle { request, context -> result }
-  -> SettingsSchemaResult
-  -> M3UAndroid renders the Device section
+## 1. Add the SDK
+
+```kotlin
+dependencies {
+    implementation(project(":extension:sdk-android"))
+}
 ```
 
-## M3UAndroid discovers the Service
+## 2. Declare the Service
 
-[`AndroidManifest.xml`](../../../samples/hello-extension/src/main/AndroidManifest.xml) registers `HelloExtensionService` as the component M3UAndroid discovers and connects to.
+Add this Service entry to the extension's [`AndroidManifest.xml`](../../../samples/hello-extension/src/main/AndroidManifest.xml), changing only the class name:
 
-## ExtensionManifest describes the extension
+```xml
+<service
+    android:name=".HelloExtensionService"
+    android:exported="true"
+    android:permission="com.m3u.permission.BIND_EXTENSION_HOST">
+    <intent-filter>
+        <action android:name="com.m3u.extension.action.BIND_EXTENSION" />
+    </intent-filter>
+</service>
+```
 
-The `ExtensionManifest` in [`HelloExtensionService.kt`](../../../samples/hello-extension/src/main/java/com/m3u/samples/hello/extension/HelloExtensionService.kt) tells the host:
+The declared class must extend `TypedExtensionService`:
 
-- the extension identity and version;
-- which Hooks it implements;
-- which capabilities it requests;
-- whether it has fixed setting fields.
+```kotlin
+class HelloExtensionService : TypedExtensionService() {
+    override val extensionManifest = ExtensionManifest(
+        id = ExtensionId("com.m3u.samples.hello"),
+        displayName = "Hello Extension",
+        extensionVersion = ExtensionSemanticVersion(1, 0, 0),
+        apiRange = ExtensionApiRange(
+            minimum = ExtensionApiVersions.Current,
+            maximum = ExtensionApiVersions.Current,
+        ),
+        hooks = emptySet(),
+        capabilities = emptySet(),
+        metadata = mapOf("developer" to "M3UAndroid sample"),
+    )
+}
+```
 
-The Service declaration provides the connection entry; `ExtensionManifest` provides the M3UAndroid extension contract.
+Replace these values:
 
-## HookSpec fixes the call types
+| Value | What to enter |
+| --- | --- |
+| `id` | A lowercase, stable ID owned by your extension. |
+| `displayName` | The name shown by M3UAndroid. |
+| `extensionVersion` | This extension build's version. |
+| `apiRange` | The M3UAndroid extension API range this build supports. |
+| `metadata["developer"]` | The developer name shown with the extension. |
 
-`HostHookSpecs.SettingsSchema` defines:
+## 3. Declare each Hook you implement
 
-- Hook name `settings.schema.contribute`;
-- schema version 1;
-- request type `SettingsSchemaRequest`;
-- result type `SettingsSchemaResult`.
+For example, a settings Hook needs this manifest declaration:
 
-Code inside `handle(HostHookSpecs.SettingsSchema)` therefore does not inspect Hook strings or parse JSON manually.
+```kotlin
+hooks = setOf(
+    ExtensionHookDeclaration(
+        hook = HostHookSpecs.SettingsSchema.hook,
+        schemaVersion = HostHookSpecs.SettingsSchema.schemaVersion,
+        requiredCapabilities = setOf(ExtensionCapabilityIds.SettingsContribute),
+    )
+)
+capabilities = setOf(
+    ExtensionCapabilityRequest(
+        capability = ExtensionCapabilityIds.SettingsContribute,
+        reason = "Add settings for the current device type",
+    )
+)
+```
 
-## A capability is user authorization
+The handler and declaration must use the same `HookSpec`. Every item in `requiredCapabilities` must also have an `ExtensionCapabilityRequest` with a concrete user-facing reason.
 
-Hello requests `settings.contribute` because it adds fields to the host settings screen. On first enablement, M3UAndroid shows the reason to the user. The runtime calls the handler only when that capability is granted.
+## 4. Declare fixed settings, if any
 
-A capability says what category of work the extension may do. A Hook says what this specific call does.
+Put fields that do not depend on the current request in `settingsSchema`:
 
-## Fixed and dynamic settings
+```kotlin
+settingsSchema = ExtensionSettingSchema(
+    version = 1,
+    fields = listOf(
+        ExtensionSettingField(
+            key = "greeting",
+            label = "Greeting",
+            type = ExtensionSettingType.TEXT,
+            defaultValue = JsonPrimitive("Hello from my extension"),
+        )
+    ),
+)
+```
 
-Hello demonstrates both forms:
+M3UAndroid renders and stores these values. Use the settings Hook instead when fields depend on its request, such as `request.surface`.
 
-- **Greeting** comes from `ExtensionManifest.settingsSchema` and is always present.
-- **Phone name** comes from `settings.schema.contribute` and can vary with the request.
+Keep the extension identity stable when publishing an update. The exact identity fields are listed in [Prepare a release or update](reference/compatibility.md).
 
-Both return declarative schemas. M3UAndroid owns field rendering, validation, and storage.
-
-## Built-in extensions only skip Android IPC
-
-Emby/Jellyfin handlers run in the M3UAndroid process. Hello's handler runs in a separate APK. They use the same `HookSpec` and request/result types; the APK path adds a Service call.
-
-Use [Terms and extension identity](reference/glossary.md) to compare `applicationId`, Service class, and `ExtensionId`. Choose the next feature from the [Hook catalog](hooks.md).
+Next: [register the typed Hook](first-hook.md).

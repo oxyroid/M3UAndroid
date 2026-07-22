@@ -8,6 +8,7 @@ import com.m3u.data.extension.security.AndroidKeystoreCredentialVault
 import com.m3u.data.extension.security.CredentialVault
 import com.m3u.data.extension.security.ExtensionSecretStore
 import com.m3u.data.extension.security.HostNetworkBrokerImpl
+import com.m3u.data.extension.security.ProviderHostNetworkBroker
 import com.m3u.data.repository.extension.ExtensionContributionRepository
 import com.m3u.data.repository.extension.ExtensionContributionRepositoryImpl
 import com.m3u.data.repository.extension.ExtensionContributionScheduler
@@ -24,7 +25,6 @@ import com.m3u.data.repository.plugin.ExtensionPluginTransportConnector
 import com.m3u.data.repository.provider.SubscriptionProviderRepository
 import com.m3u.data.repository.provider.SubscriptionProviderRepositoryImpl
 import com.m3u.extension.api.ExtensionApiVersions
-import com.m3u.extension.api.security.HostNetworkBroker
 import com.m3u.extension.runtime.CapabilityPolicy
 import com.m3u.extension.runtime.ExtensionRegistrationResult
 import com.m3u.extension.runtime.ExtensionRuntime
@@ -100,7 +100,7 @@ internal abstract class ExtensionBindingsModule {
     @Singleton
     abstract fun bindHostNetworkBroker(
         broker: HostNetworkBrokerImpl,
-    ): HostNetworkBroker
+    ): ProviderHostNetworkBroker
 
     @Binds
     @Singleton

@@ -6,10 +6,12 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.m3u.data.database.M3UDatabase
 import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.ChannelPlaybackReference
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.ProviderAccount
 import com.m3u.data.database.model.ProviderCredentialEntity
+import com.m3u.data.database.model.ProviderPlaybackSessionEntity
 import com.m3u.data.extension.security.CredentialVault
 import com.m3u.data.repository.extension.ExtensionEpgRefreshContribution
 import com.m3u.data.repository.extension.ExtensionMetadataContribution
@@ -31,6 +33,7 @@ import org.junit.runner.RunWith
 class ExtensionContributionImporterTest {
     private lateinit var database: M3UDatabase
     private lateinit var importer: SubscriptionProviderImporter
+    private var channelId: Int = 0
 
     @Before
     fun setUp() {
@@ -78,7 +81,7 @@ class ExtensionContributionImporterTest {
                     keyVersion = 1,
                 )
             )
-            database.channelDao().insertOrReplace(
+            channelId = database.channelDao().insertOrReplace(
                 Channel(
                     url = Channel.URL_DYNAMIC,
                     category = "Original category",
@@ -87,6 +90,31 @@ class ExtensionContributionImporterTest {
                     favourite = true,
                     hidden = true,
                     relationId = CHANNEL_REFERENCE,
+                )
+            ).toInt()
+            database.providerDao().insertOrReplace(
+                ChannelPlaybackReference(
+                    channelId = channelId,
+                    accountId = PROVIDER_ACCOUNT_ID,
+                    providerId = EXTENSION_ID.value,
+                    itemId = PLAYBACK_ITEM_ID,
+                    mediaSourceId = null,
+                    sourceType = "live",
+                    fallbackDirectUrl = null,
+                )
+            )
+            database.providerDao().insertOrReplace(
+                ProviderPlaybackSessionEntity(
+                    id = PLAYBACK_SESSION_ID,
+                    accountId = PROVIDER_ACCOUNT_ID,
+                    providerId = EXTENSION_ID.value,
+                    itemId = PLAYBACK_ITEM_ID,
+                    mediaSourceId = null,
+                    sourceType = "live",
+                    fallbackDirectUrl = null,
+                    playSessionId = "remote-session-1",
+                    liveStreamId = "live-stream-1",
+                    createdAtEpochMillis = 1_000,
                 )
             )
         }
@@ -281,6 +309,14 @@ class ExtensionContributionImporterTest {
             CREDENTIAL_HANDLE,
             database.providerDao().getCredential(PROVIDER_ACCOUNT_ID)?.credentialHandle,
         )
+        assertEquals(
+            PLAYBACK_ITEM_ID,
+            database.providerDao().getPlaybackReference(channelId)?.itemId,
+        )
+        assertEquals(
+            PLAYBACK_SESSION_ID,
+            database.providerDao().getPlaybackSessions().singleOrNull()?.id,
+        )
     }
 
     private object UnusedCredentialVault : CredentialVault {
@@ -299,6 +335,8 @@ class ExtensionContributionImporterTest {
         const val PLAYLIST_URL = "m3u-provider://account/test/live"
         const val PROVIDER_ACCOUNT_ID = "provider-account-1"
         const val CREDENTIAL_HANDLE = "credential-handle-1"
+        const val PLAYBACK_ITEM_ID = "item-1"
+        const val PLAYBACK_SESSION_ID = "session-1"
         const val NORMAL_EPG_URL = "https://example.test/guide.xml"
         const val CHANNEL_REFERENCE = "channel-42"
         val EXTENSION_ID = ExtensionId("com.m3u.reference.provider")

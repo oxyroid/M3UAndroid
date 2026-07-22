@@ -1,4 +1,4 @@
-# Change recipes
+# Change by task
 
 [简体中文](change-guide.zh-CN.md) · [Maintainer guide](README.md)
 
@@ -66,7 +66,7 @@ For persistent channel, provider, and EPG work, start with [`SubscriptionProvide
 
 [`ExtensionSettingsRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/extension/ExtensionSettingsRepositoryImpl.kt) owns settings schema and ordinary values. Host vaults encrypt secret settings and provider tokens. Extension contracts carry credential handles, never plaintext secrets.
 
-When changing the broker, add denial cases to [`HostNetworkBrokerSecurityTest`](../../../data/src/androidTest/java/com/m3u/data/extension/security/HostNetworkBrokerSecurityTest.kt) before implementing behavior. Changes to owner, origin, redirect, authentication headers, response size, or credential capture must also be checked against the [release blockers](status-and-release.md#release-blockers).
+When changing the broker, add denial cases to [`HostNetworkBrokerSecurityTest`](../../../data/src/androidTest/java/com/m3u/data/extension/security/HostNetworkBrokerSecurityTest.kt) before implementing behavior. Changes to owner, origin, redirect, authentication headers, response size, or credential capture must also be checked against the [remaining release gates](status-and-release.md#remaining-release-gates).
 
 ## Change phone or TV UI
 
@@ -85,5 +85,6 @@ Check full-row clicks, scrollable authorization, visible errors, and settings pe
 | APK SDK and typed handlers | [`TypedExtensionServiceTest`](../../../extension/sdk-android/src/test/java/com/m3u/extension/sdk/android/TypedExtensionServiceTest.kt), [`hello-extension`](../../../samples/hello-extension) |
 | Certificate trust and connection state | [`CertificateSetFingerprintTest`](../../../extension/transport-android/src/test/java/com/m3u/extension/transport/android/CertificateSetFingerprintTest.kt), [`ExtensionTrustStoreTest`](../../../extension/transport-android/src/androidTest/java/com/m3u/extension/transport/android/ExtensionTrustStoreTest.kt), [`ExtensionConnectionStateTest`](../../../extension/transport-android/src/androidTest/java/com/m3u/extension/transport/android/ExtensionConnectionStateTest.kt) |
 | Cross-process discovery, binding, PFD, invocation, and cancellation | [`ExternalExtensionIpcTest`](../../../app/smartphone/src/androidTest/java/com/m3u/testing/ExternalExtensionIpcTest.kt), [`extension-reference`](../../../testing/extension-reference) |
+| External provider lifecycle | [`ExternalProviderEndToEndTest`](../../../app/smartphone/src/androidTest/java/com/m3u/testing/ExternalProviderEndToEndTest.kt), [`extension-reference`](../../../testing/extension-reference), [`mock-server`](../../../testing/mock-server) |
 | Built-in provider and importer | [`EmbyCompatibleProviderIntegrationTest`](../../../data/src/androidTest/java/com/m3u/data/extension/emby/EmbyCompatibleProviderIntegrationTest.kt), [`SubscriptionProviderRepositoryIntegrationTest`](../../../data/src/androidTest/java/com/m3u/data/repository/provider/SubscriptionProviderRepositoryIntegrationTest.kt), and the applier tests linked above |
 | Phone or TV product flow | The product UI test for the changed trigger and visible result |

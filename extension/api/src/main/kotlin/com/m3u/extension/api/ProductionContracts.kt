@@ -1,5 +1,6 @@
 package com.m3u.extension.api
 
+import com.m3u.extension.api.security.BrokerScopeHandle
 import com.m3u.extension.api.security.CredentialHandle
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -159,6 +160,7 @@ data class SerializedExtensionEnvelope(
     val payload: JsonElement,
     val settings: ExtensionSettingsSnapshot = ExtensionSettingsSnapshot(),
     val grantedCapabilities: Set<Capability> = emptySet(),
+    val brokerScope: BrokerScopeHandle? = null,
 )
 
 @Serializable

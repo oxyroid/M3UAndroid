@@ -1,20 +1,24 @@
-# Build an APK extension
+# Build an M3UAndroid extension
 
 [简体中文](README.zh-CN.md) · [Extension docs](../README.md)
 
-This learning path has two outcomes:
+An extension implements typed requests from M3UAndroid and returns typed results. This guide covers the in-repository development preview: extension modules currently use `project(":extension:sdk-android")`.
 
-1. Run Hello and see it in M3UAndroid in about 10 minutes.
-2. Run and modify a real Hook in about 20 more minutes.
+## Start here
 
-[Start with Hello](quickstart.md) · [Jump to the first Hook](first-hook.md)
+- [Run Hello](quickstart.md): see a result first, then define its manifest and handler.
+- [Build a subscription provider](host-broker.md): implement discovery, login, refresh, playback, and close.
+- [Choose a Hook](hooks.md): find the request, result, capability, and host trigger for an existing extension.
 
-The SDK is currently built from the same M3UAndroid checkout and is not yet a stable Maven dependency.
+The two examples to copy are:
 
-After both tutorials, use these pages as needed:
+- [`HelloExtensionService`](../../../samples/hello-extension/src/main/java/com/m3u/samples/hello/extension/HelloExtensionService.kt): the smallest extension;
+- [`ReferenceExtensionService`](../../../testing/extension-reference/src/main/java/com/m3u/testing/extension/reference/ReferenceExtensionService.kt): a complete subscription provider.
 
-- [What happened during that call](concepts.md)
-- [Choose the next Hook](hooks.md)
-- [Verify extension behavior](testing.md)
-- [Terms and extension identity](reference/glossary.md)
-- [Publish and upgrade](reference/compatibility.md)
+## API reference
+
+- [`TypedExtensionService`](../../../extension/sdk-android/src/main/java/com/m3u/extension/sdk/android/TypedExtensionService.kt)
+- [`:extension:api`](../../../extension/api/src/main/kotlin/com/m3u/extension/api)
+- [Contract terms](reference/glossary.md)
+- [Test an extension](testing.md)
+- [Prepare an update](reference/compatibility.md)

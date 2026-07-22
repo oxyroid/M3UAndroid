@@ -1,12 +1,12 @@
-# 读懂并修改第一个 Hook
+# 注册类型化 Hook
 
 [English](first-hook.md) · [插件开发指南](README.zh-CN.md)
 
-你在 Hello 设置页看到的 **Phone name** 不是写死在插件 manifest 里的。打开设置页时，M3UAndroid 调用了 `settings.schema.contribute`，Hello 根据当前界面返回了这个字段。
+一个 Hook 就是一个可由 M3UAndroid 调用的函数。它的 `HookSpec` 固定 request 类型、result 类型和 schema version。以下示例根据当前界面类型返回一个设置项。
 
-本页只看 [`HelloExtensionService.kt`](../../../samples/hello-extension/src/main/java/com/m3u/samples/hello/extension/HelloExtensionService.kt) 中与这次调用有关的三处代码。
+## 1. 把 Hook 加入 manifest
 
-## 1. 声明要提供的 Hook
+在 `ExtensionManifest` 中加入 Hook 及其 capability：
 
 ```kotlin
 hooks = setOf(
@@ -16,13 +16,6 @@ hooks = setOf(
         requiredCapabilities = setOf(ExtensionCapabilityIds.SettingsContribute),
     )
 )
-```
-
-这段声明告诉宿主：Hello 实现了动态设置 Hook，而且只有在用户授予 `settings.contribute` 后才能调用。
-
-manifest 中还要说明为什么申请该 capability：
-
-```kotlin
 capabilities = setOf(
     ExtensionCapabilityRequest(
         capability = ExtensionCapabilityIds.SettingsContribute,
@@ -31,61 +24,66 @@ capabilities = setOf(
 )
 ```
 
-## 2. 注册类型化 handler
+直接使用 `HostHookSpecs.SettingsSchema.hook` 和 `.schemaVersion`，让声明跟随所选契约。
+
+## 2. 返回类型化 result
+
+在 `TypedExtensionService` 的初始化代码中注册 handler：
 
 ```kotlin
-handle(HostHookSpecs.SettingsSchema) { request, _ ->
-    val (fieldLabel, defaultValue) = when (request.surface) {
-        "phone" -> "Phone name" to "My phone"
-        "tv" -> "TV name" to "My TV"
-        else -> "Device name" to "My device"
-    }
-    SettingsSchemaResult(
-        sections = listOf(
-            ExtensionSettingSection(
-                id = "device",
-                title = "Device",
-                schema = ExtensionSettingSchema(
-                    version = 1,
-                    fields = listOf(
-                        ExtensionSettingField(
-                            key = "name",
-                            label = fieldLabel,
-                            type = ExtensionSettingType.TEXT,
-                            defaultValue = JsonPrimitive(defaultValue),
-                        )
+init {
+    handle(HostHookSpecs.SettingsSchema) { request, _ ->
+        val (label, defaultValue) = when (request.surface) {
+            "phone" -> "Phone name" to "My phone"
+            "tv" -> "TV name" to "My TV"
+            else -> "Device name" to "My device"
+        }
+        SettingsSchemaResult(
+            sections = listOf(
+                ExtensionSettingSection(
+                    id = "device",
+                    title = "Device",
+                    schema = ExtensionSettingSchema(
+                        version = 1,
+                        fields = listOf(
+                            ExtensionSettingField(
+                                key = "name",
+                                label = label,
+                                type = ExtensionSettingType.TEXT,
+                                defaultValue = JsonPrimitive(defaultValue),
+                            )
+                        ),
                     ),
-                ),
+                )
             )
         )
-    )
+    }
 }
 ```
 
-`request` 已经是 `SettingsSchemaRequest`，返回值必须是 `SettingsSchemaResult`。`TypedExtensionService` 负责在这些类型与插件 transport 之间转换。
+这个 `HookSpec` 的 request 是 `SettingsSchemaRequest`，返回值必须是 `SettingsSchemaResult`。序列化由 SDK 处理。
 
-## 3. 改一次 Hook 结果
+## 3. 只在需要时使用调用上下文
 
-把手机分支改为：
+handler 的第二个参数是 `ExtensionCallContext`：
 
-```kotlin
-"phone" -> "Handset name" to "My handset"
-```
+| 属性 | 用途 |
+| --- | --- |
+| `invocationId` | 关联同一次调用的诊断信息。 |
+| `grantedCapabilities` | 检查本次调用已授予的 capability。 |
+| `settings.values` | 读取宿主保存的非敏感设置。 |
+| `settings.credentialHandles` | 读取敏感设置对应的不透明 handle。 |
 
-部署修改后的样例，在插件页点击刷新，再打开 Hello 设置。**Phone name** 应变成 **Handset name**。
+Hook 可能发生预期内的校验或业务失败时，使用 `handleResult(...)`，并返回 `HookResult.Failure(ExtensionError(...))`。不要捕获协程取消。
 
-这次修改没有新增 Hook 或 capability，所以不需要重新授权。如果新增了必要 capability，宿主会停用旧授权，直到用户确认。
+## 常见契约错误
 
-## 刚才发生了什么
+- 注册了 handler，却没有在 manifest 中声明 Hook；
+- 声明没有使用所选 `HookSpec.schemaVersion`；
+- 必要 capability 没有加入 `manifest.capabilities`；
+- 同一个 Hook 注册了两次；
+- handler 返回了其他 `HookSpec` 的 result。
 
-```text
-打开 Hello 设置
-  -> M3UAndroid 创建 SettingsSchemaRequest
-  -> Hello 的类型化 handler 运行
-  -> 返回 SettingsSchemaResult
-  -> M3UAndroid 绘制 Device 分组
-```
+加入 handler 后，重新执行 [Hello 验收步骤](quickstart.zh-CN.md#2-在-m3uandroid-中检查结果)。
 
-这就是其他 Hook 也遵循的基本形状：在 manifest 声明，在 `TypedExtensionService` 中注册 handler，接收类型化 request，返回类型化 result。
-
-下一步：[给这条调用链中的代码名词对上号](concepts.zh-CN.md)，或直接查看 [Hook 目录](hooks.zh-CN.md)。
+下一步：[选择其他 Hook](hooks.zh-CN.md)。Provider 插件继续阅读[开发订阅 provider](host-broker.zh-CN.md)。

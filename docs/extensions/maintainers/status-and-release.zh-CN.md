@@ -2,80 +2,43 @@
 
 [English](status-and-release.md) · [维护者指南](README.zh-CN.md)
 
-本页是查表和发布审查用的参考页，不是入门教程。先在“当前支持情况”找到相关能力；只有判断能否开放外部插件时，才需要继续阅读全部阻塞项。宿主调用点、UI 链路、安全边界或端到端测试发生变化时，应同步更新本页。
+本页定义当前分支可以发布到什么范围。插件实现方法见[插件开发指南](../developers/README.zh-CN.md)。
 
-## 当前支持情况
+## 发布边界
 
-| 范围 | 当前证据 | 状态 |
+- Emby/Jellyfin 内置插件进入正常产品链路。
+- 外部插件继续放在开发者功能开关后。
+- **开放外部插件之前**的项目全部完成前，不得移除这个开关。
+
+## 已接通链路
+
+| 范围 | 当前行为 | 证据 |
 | --- | --- | --- |
-| 内置 Emby/Jellyfin validate、refresh、playback 和 close | 严格 mock server 设备集成测试覆盖两种 kind 与 repository 持久化 | 已接通 |
-| 通用 provider Room model、加密凭据、WorkManager 刷新、open-session 恢复 | 已有 data 集成链路 | 已接内置 provider 流程 |
-| APK 发现、handshake、PFD payload、类型化调用、设置和取消 | SDK 单测覆盖类型化 handler；Hello 可显示静态与动态设置；`ExternalExtensionIpcTest` 完成 1/1 | 开发者预览 |
-| 单次调用范围的宿主 broker | 宿主检查 caller UID 与 grant、撤销被保留的 bridge、限制并发，并拒绝可直接联网的 APK；参考 APK 已完成 broker probe | Transport 边界已接通，provider 登录未接通 |
-| 手机插件授权、启停、设置、重新授权、诊断和清除数据 | 产品 UI 已有，手工设备链路可用 | 开发者预览，UI 自动化不完整 |
-| TV 插件管理与声明式设置 | 产品 UI 已有 | 开发者预览，没有 DPad 自动化 |
-| 声明式插件设置 | 手机、TV、repository、加密密码存储、Hello 样例和 reference fixture | 外部 Hook 中最完整 |
-| 手机端插件搜索 | 把 stable reference 映射到已有可见频道 | 部分接通 |
-| 元数据与 EPG 贡献 | 通用 provider 刷新后运行；EPG 只替换调用成功的插件数据 | 部分接通，未覆盖 M3U/Xtream 导入 |
-| 外部 provider discovery | 手机能展示返回的 descriptor | 部分接通，参考 provider 无法订阅 |
-| 外部 provider validate/refresh/playback/close | 没有完整参考 APK，也没有账号创建前的登录链路 | 未接通 |
-| TV 动态 provider 订阅 | 没有 provider 列表或表单 state | 未接通 |
-| 恢复或密钥丢失后的 provider 重新认证 | 已有状态字段，但没有用户修复流程 | 未接通 |
-| 后台任务 | 已有契约、Worker 和直接 transport 测试，但没有代码调度 Worker | 仅有契约 |
+| 契约与 Runtime | 类型化、带版本的 Hook 契约；宿主计算 Capability；限制 Payload、超时和并发；传播取消；记录健康状态并隔离连续失败 | `ExtensionContractTest`、`ExtensionRuntimeTest` 与 Transport 一致性测试 |
+| 内置 Provider | Emby 和 Jellyfin 是同一个内置插件的两个类型；发现、验证、刷新、播放解析与 Session 关闭共用 Provider 链路 | `EmbyCompatibleProviderIntegrationTest` 与 `SubscriptionProviderRepositoryIntegrationTest` |
+| Provider 凭据 | 外部登录只返回一次性宿主回执；Token 和不透明上下文留在宿主，并作为一条加密凭据记录保存 | `HostNetworkBrokerSecurityTest`、`ExtensionHostBridgeTest`、`ProviderBrokerScopeStoreTest` 与 `CredentialVaultTest` |
+| Provider 持久化 | 通用 Provider 账号、数据库迁移、无 Token 备份、重新认证状态、WorkManager 刷新和重启后的 Session 清理 | Migration、Provider Repository、Worker、Restore 与 Session Cleanup 测试 |
+| 外部插件生命周期 | 发现、身份与证书信任、启停、Capability 重新授权、重连、清除数据、诊断、流式 Payload 和取消 | Transport 测试、`ExtensionPluginRepositoryLifecycleTest` 与 `ExternalExtensionIpcTest` |
+| 外部参考 Provider | 发现、宿主管理登录、首次刷新、Room 导入、受保护播放解析和 Session 关闭与内置 Provider 共用 Repository | `ExternalProviderEndToEndTest` |
+| Provider 界面 | 手机和 TV 都由 Descriptor 生成 Provider 列表与表单，并显示重新认证状态；Emby 与 Jellyfin 仍是两个独立选项 | `SubscriptionSourceSelectionTest` 以及手机、TV 设备检查 |
+| 其他 Hook | 设置、搜索、Metadata、EPG 和受限后台任务已有类型化 SDK Handler 与宿主调用点 | SDK、Contribution Repository/Importer、Worker 与 IPC 测试 |
 
-## 发布阻塞项
+## 发布内置 Provider 链路之前
 
-### 1. 隔离 Android 进程边界
+- 运行数据库 21、22、23 起点的全部 Migration 测试；
+- Provider 或播放链路变化后，回归 M3U、EPG、Xtream、普通播放和 DLNA；
+- 使用真实输入与焦点移动检查手机和 TV Provider 表单；
+- 数据库 Schema Artifact 与所有手写 Migration 必须处于同一变更中。
 
-- 把耗时工作移到短异步控制调用和宿主持有的结果 pipe 后面。
-- 为所有 transport 设置宿主级 executor 总预算；同步 Binder 调用在远端返回前仍会占用当前 transport 的预算。
-- Handshake、manifest、invoke、cancel、health 和 broker 失败使用同一种稳定错误结果。
+## 开放外部插件之前
 
-### 2. 补齐凭据与登录所有权
+- 在 TV、WorkManager 和真实播放器中跑通完整外部 Provider 流程，而不只依赖 Repository 级设备测试；
+- 为授权、重新授权、设置、错误和 TV 焦点增加可重复的界面自动化；
+- 增加进程级恶意 Fixture，覆盖调用阻塞、忽略取消、进程死亡、错误或超限输出、保留 Broker、签名变化与 Extension ID 冲突；
+- 实施宿主级调用总预算，并让一次 Hook 与其全部 Broker 请求共用一个 Deadline；
+- 让同一套公开一致性测试同时运行于内置和外部 Transport；
+- 发布 Wire Golden Fixture、SDK Artifact 与同 Major 兼容策略。
 
-- Trust、grant、设置、凭据和 provider 所有权按 package、service、证书集合、UID 与 extension ID 索引。
-- 增加 provider 账号创建前使用的临时 auth session。
-- 用带 scope 的宿主 handle 统一 provider 凭据、登录 capture 结果与插件密码设置。
-- 认证 header、capture rule 和允许返回的字段来自宿主批准的 schema；认证响应只暴露白名单字段。
-- 为 broker 与 HTTP 增加贯穿整次调用的 deadline，以及用户批准的附加 origin 策略。
+## 决策规则
 
-### 3. 让每个 importer 保护所有权与有效旧数据
-
-- 校验贡献者/provider 身份、kind、remote ID、结果数量、字段长度、map、URL、scheme、header 和播放 session。
-- 每个 provider discovery 失败相互隔离，并始终保留内置 provider。
-- Wire 冻结前，对当前未使用的 sync metadata、diagnostics、expiry、continuation 和 retry 字段选择“持久化/消费”或“移除”。
-- 在支持的 M3U 与 Xtream 导入完成后，运行共用的 metadata/EPG 贡献逻辑。
-
-### 4. 完成 provider 产品链路
-
-- 让独立安装的参考 APK 通过真实 settings schema 实现 discover、validate、refresh、resolve 和 close。
-- 参考插件经过 repository、broker、Room、WorkManager、播放器和 session close 完成验收。
-- 为 TV 增加动态 provider 订阅。
-- 为恢复后或无法解密的 provider 账号增加可见的重新认证流程。
-- Provider descriptor 与 schema 是 UI 唯一的 provider 特定输入；app 与 business 不依赖 Emby/Jellyfin kind。
-- Settings schema 缺失、为空或订阅失败时显示明确错误。
-
-### 5. 冻结更小且可强制执行的公开契约
-
-- 为每个 Hook 增加宿主持有的最低 capability。
-- Wire 1.0 冻结前，删除没有经过测试的消费端的公开字段，或补齐真实行为。
-- 为每种 request、result 和 error 发布 golden JSON fixture。
-- 发布 SDK artifact 和同 major 兼容策略。
-
-### 6. 建立发布证据
-
-- 同一套参数化一致性测试同时运行内置与 Android transport。
-- 增加恶意 fixture APK，覆盖永久阻塞、忽略取消、进程死亡、错误/超限输出、保留 broker、签名变化和 extension ID 冲突。
-- 增加稳定手机测试，覆盖 Jellyfin 选择、动态 provider 表单、插件授权、重新授权、设置和可见错误。
-- 增加 TV DPad 测试，覆盖插件管理、授权、设置和 provider 订阅。
-- 回归 M3U、EPG、Xtream、普通播放和 DLNA。
-
-## 可以开放的定义
-
-满足以下全部条件后，才能移除开发者开关：
-
-- 新增 provider 无需在 app/business/data 中增加按具体 kind 分支；
-- 独立安装 APK 能在手机和 TV 上完成它声明的产品流程；
-- 每个公开 Hook 都有真实宿主调用点、有边界的 importer/renderer 和端到端测试；
-- 插件永久阻塞、崩溃、错误数据、保留 broker、签名变化和凭据丢失不会破坏宿主数据或主进程；
-- 兼容性 fixture 与公开 SDK 版本策略已经发布。
+内置 Provider 的回归全部通过后，可以进入发布。外部插件可以继续作为开发者预览；只有开放清单全部通过，并确认各种失败不会破坏宿主数据和主进程后，才能默认开启。

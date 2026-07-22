@@ -17,8 +17,8 @@
 
 插件实现有两种：
 
-- **内置插件：** handler 与宿主在同一进程，例如 Emby/Jellyfin。
-- **APK 插件：** runtime 通过 `AndroidBoundExtensionTransport` 调用另一个 APK 的 Service。
+- **内置插件：** Handler 与宿主在同一进程，例如 Emby/Jellyfin。
+- **外部插件：** Runtime 通过 `AndroidBoundExtensionTransport` 调用插件进程。
 
 两条路径在 `ExtensionRuntime` 汇合，使用相同的 `HookSpec<Request, Result>`。
 
@@ -30,7 +30,7 @@
 | Runtime | 注册、版本、能力、大小、并发、超时和健康状态 | [`ExtensionRuntime`](../../../extension/runtime/src/main/kotlin/com/m3u/extension/runtime/ExtensionRuntime.kt) |
 | Android 发现 | 查找已安装的插件 Service 和签名身份 | [`AndroidExtensionDiscovery`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android/AndroidExtensionDiscovery.kt) |
 | Android 调用 | 绑定 Service、handshake、发送调用和取消 | [`AndroidBoundExtensionTransport`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android/AndroidBoundExtensionTransport.kt) |
-| APK SDK | 在插件进程接收调用并运行类型化 handler | [`ExtensionService`](../../../extension/sdk-android/src/main/java/com/m3u/extension/sdk/android/ExtensionService.kt) |
+| 外部插件 SDK | 在插件进程接收调用并运行类型化 Handler | [`ExtensionService`](../../../extension/sdk-android/src/main/java/com/m3u/extension/sdk/android/ExtensionService.kt) |
 | 插件生命周期 | 信任、启用、停用、重连、重新授权和诊断 | [`ExtensionPluginRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/plugin/ExtensionPluginRepositoryImpl.kt) |
 | Provider 产品流程 | 发现、验证、刷新、播放和关闭 session | [`SubscriptionProviderRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/provider/SubscriptionProviderRepositoryImpl.kt) |
 | 结果应用 | 校验并写入宿主数据，或映射到界面/播放器 | [`data/extension`](../../../data/src/main/java/com/m3u/data/extension)、[`data/repository/extension`](../../../data/src/main/java/com/m3u/data/repository/extension) |
@@ -42,11 +42,11 @@
 1. Repository 选择一个 `HookSpec`，创建 request。
 2. Runtime 读取调用方指定的 extension ID，并确认它已启用且声明了该 Hook。
 3. Runtime 检查 API/schema、授权能力、payload、并发和超时。
-4. 内置 handler 直接运行；APK handler 经过 Android transport。
+4. 内置 Handler 直接运行；外部 Handler 经过 Android Transport。
 5. Runtime 解码 result，并记录本次成功或失败。
-6. Repository 按当前产品流程处理 result；各流程的校验完整度并不相同。
+6. Repository 按当前 request 校验 result，并将其应用到产品流程。
 
-第 6 步不能放进通用 runtime。搜索结果、EPG、频道快照和播放地址各有不同的所有权与有效性规则；尚未补齐的检查列在 [发布阻塞项](status-and-release.zh-CN.md#发布阻塞项)。
+第 6 步不能放进通用 runtime。搜索结果、EPG、频道快照和播放地址各有不同的所有权与有效性规则。
 
 ## 真实例子：Emby/Jellyfin 刷新
 
@@ -62,7 +62,23 @@ ProviderWorker 或用户刷新
 
 这条路径已经接通：repository 读取账号与凭据，内置 provider 返回频道快照，importer 在事务中更新当前账号的数据，随后再运行 metadata 与 EPG 贡献。
 
-如果将来换成 APK provider，`ExtensionRuntime` 前后的 repository 和 importer 不应改变；只有插件调用这一步经过 Android transport。
+外部 provider 使用相同的 repository 和 importer；它的 handler 通过 Android transport 运行，而不是进入 `EmbyCompatibleProvider`。
+
+## Provider 认证
+
+```text
+Validate Hook
+  -> broker.authenticate（登录请求与字段位置）
+  -> 宿主发送请求
+  -> 宿主保留访问凭据和不透明账号上下文
+  -> 插件只收到一次性回执
+  -> Repository 消费回执
+  -> Vault 保存一条加密的 Provider 凭据记录
+```
+
+外部 Provider 不会收到登录响应正文。Repository 使用已批准 Origin 与保存的上下文生成稳定账号身份。刷新和播放只传递短期句柄；`HostNetworkBrokerImpl` 仅在当前插件身份、Hook、账号和 Origin 都匹配时解析句柄。
+
+Emby/Jellyfin 内置插件属于宿主代码，因此使用 `ProviderValidationEvidence.TrustedDirect`。外部插件必须返回 `ProviderValidationEvidence.HostBrokerReceipt`。
 
 ## 外部 Service 注册
 
@@ -87,7 +103,7 @@ ProviderWorker 或用户刷新
 
 - Runtime 只负责安全地完成一次调用，不写 Room，也不更新 UI。
 - Repository/importer 决定结果是否属于本次请求、是否可以替换旧数据。
-- Plugin repository 持有外部 APK 的信任、启停和授权。
-- Credential vault 和 Android Keystore 持有 secret；插件契约只传句柄。
+- Plugin Repository 持有外部插件的信任、启停和授权。
+- Credential Vault 和 Android Keystore 持有 Secret；插件契约只传句柄与一次性回执。
 
 准备修改代码时，继续阅读 [按改动类型操作](change-guide.zh-CN.md)。

@@ -1,25 +1,64 @@
-# 验证插件行为
+# 测试插件
 
 [English](testing.md) · [插件开发指南](README.zh-CN.md)
 
-插件功能完成的标志，是 Hook 在 M3UAndroid 的真实产品入口产生预期结果。
+每个 Hook 需要证明两件事：handler 返回预期的类型化 result，M3UAndroid 也会在调用该 Hook 的功能中正确应用 result。
 
-## 从产品入口验证
+## 1. 测试 result 对象
 
-部署修改后，刷新 **设置 → 订阅管理 → 扩展插件**，再从 [Hook 目录](hooks.zh-CN.md) 列出的产品入口触发 Hook。只有插件新增必要 capability 时才使用 **重新授权**。
+把解析、映射和校验放在普通 Kotlin 函数中。使用 request fixture 对这些函数做单元测试，并断言完整的 result 对象。
 
-| Hook 范围 | 验收结果 |
+至少覆盖：
+
+- 最小合法 request；
+- 空值与边界值；
+- 预期内的服务端或校验失败；
+- 长任务进行中的取消；
+- 缺少必要设置或 credential handle。
+
+预期内的失败使用 `handleResult(...)` 或 `handleResultWithBroker(...)` 返回。只有意外故障才抛出异常。
+
+## 2. 构建模块
+
+Hello 模块使用：
+
+```bash
+./gradlew :samples:hello-extension:assembleDebug
+```
+
+自己的插件使用对应模块任务。
+
+## 3. 从 M3UAndroid 触发 Hook
+
+更新插件后刷新插件列表，再使用对应的 M3UAndroid 功能。
+
+| Hook | 验收结果 |
 | --- | --- |
-| 设置 | 插件设置页绘制返回的分组，并能重新载入已保存值。 |
-| 手机搜索 | 返回的稳定引用会在手机搜索中提升本地已有且可见的频道。 |
-| 频道信息与 EPG | 通用 provider 刷新只把贡献应用到请求中的频道；EPG 调用失败时保留上一次成功贡献。 |
-| Provider 与后台任务 | 这些 APK 产品链路尚未开放，当前调用只验证契约。 |
+| `settings.schema.contribute` | 设置页绘制返回的分组，并能重新载入已保存值。 |
+| `search.provider.query` | 返回的稳定引用会在手机搜索中提升匹配的可见频道。 |
+| `metadata.channel.enrich` | 通用 provider 刷新只把 patch 应用到 request 中的频道。 |
+| `epg.content.refresh` | 刷新会导入返回的节目；调用失败时保留上一次贡献。 |
+| Provider 发现与验证 | 订阅表单显示 descriptor schema，合法凭据可以创建账号。 |
+| Provider 刷新 | 导入后的播放列表包含返回的完整频道快照。 |
+| Provider 播放与关闭 | 解析后的 source 使用返回的 header 播放，停止播放后远端 session 已关闭。 |
 
-## M3UAndroid 插件状态
+## 4. 检查失败行为
 
-- **不兼容：** 插件 API range 或声明的 Hook schema 不受支持。
-- **异常：** 连续 Hook 失败达到 runtime 阈值；修正 handler 后，停用并重新启用插件以再次运行。
+为每个 Hook 触发一次预期内的失败，并确认：
 
-SDK 测试验证类型化 handler；功能验收以以上宿主可见结果为准。
+- 插件返回稳定的 `ExtensionError.code`；
+- `recoverable` 与“重复同一次调用是否可能成功”一致；
+- M3UAndroid 不会应用部分有效的 result；
+- 取消会停止长时间运行的工作。
 
-发布和升级约束见 [发布与升级](reference/compatibility.zh-CN.md)。修改宿主平台时使用 [维护者验证证据](../maintainers/change-guide.zh-CN.md#验证证据)。
+Provider 还应覆盖凭据被拒、刷新失败后保留已有数据、无效播放 result，以及重复关闭 session。
+
+## 5. 验证更新
+
+- 保持相同的插件身份与签名证书；
+- 确认已有设置仍能读取；
+- 确认删除或改名的字段按预期 reconcile；
+- 确认新增必要 capability 时会请求授权；
+- 确认诊断信息不包含 secret、credential handle，以及能识别用户的 request 或 response 数据。
+
+下一步：[准备发布或更新](reference/compatibility.zh-CN.md)。

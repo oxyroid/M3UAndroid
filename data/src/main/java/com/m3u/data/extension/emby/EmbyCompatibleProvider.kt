@@ -7,7 +7,6 @@ import com.m3u.extension.api.ExtensionCapabilityRequest
 import com.m3u.extension.api.ExtensionError
 import com.m3u.extension.api.ExtensionErrorCode
 import com.m3u.extension.api.ExtensionHookDeclaration
-import com.m3u.extension.api.ExtensionHookIds
 import com.m3u.extension.api.ExtensionHandler
 import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.ExtensionManifest
@@ -22,15 +21,18 @@ import com.m3u.extension.api.ExtensionEntrypoint
 import com.m3u.extension.api.subscription.EmbyCompatibleProviderKinds
 import com.m3u.extension.api.subscription.PlaybackSessionCloseRequest
 import com.m3u.extension.api.subscription.PlaybackSessionCloseResult
+import com.m3u.extension.api.subscription.PlaybackHeaderValue
 import com.m3u.extension.api.subscription.PlaybackSourceResolveRequest
 import com.m3u.extension.api.subscription.PlaybackSourceResolveResult
 import com.m3u.extension.api.subscription.ProviderAccountReference
+import com.m3u.extension.api.subscription.ProviderValidationEvidence
 import com.m3u.extension.api.subscription.SubscriptionContentRefreshRequest
 import com.m3u.extension.api.subscription.SubscriptionContentRefreshResult
 import com.m3u.extension.api.subscription.SubscriptionProviderDescriptor
 import com.m3u.extension.api.subscription.SubscriptionProviderDiscoverRequest
 import com.m3u.extension.api.subscription.SubscriptionProviderDiscoverResult
 import com.m3u.extension.api.subscription.SubscriptionProviderSettingKeys
+import com.m3u.extension.api.subscription.SubscriptionProviderVariant
 import com.m3u.extension.api.subscription.SubscriptionProviderValidateRequest
 import com.m3u.extension.api.subscription.SubscriptionProviderValidateResult
 import com.m3u.extension.api.subscription.SubscriptionHookSpecs
@@ -53,16 +55,21 @@ internal class EmbyCompatibleProvider @Inject constructor(
             maximum = ExtensionApiVersions.Current,
         ),
         hooks = setOf(
-            ExtensionHookDeclaration(ExtensionHookIds.SubscriptionProviderDiscover),
             ExtensionHookDeclaration(
-                hook = ExtensionHookIds.SubscriptionProviderValidate,
+                hook = SubscriptionHookSpecs.Discover.hook,
+                schemaVersion = SubscriptionHookSpecs.Discover.schemaVersion,
+            ),
+            ExtensionHookDeclaration(
+                hook = SubscriptionHookSpecs.Validate.hook,
+                schemaVersion = SubscriptionHookSpecs.Validate.schemaVersion,
                 requiredCapabilities = setOf(
                     ExtensionCapabilityIds.Network,
                     ExtensionCapabilityIds.CredentialWrite,
                 ),
             ),
             ExtensionHookDeclaration(
-                hook = ExtensionHookIds.SubscriptionContentRefresh,
+                hook = SubscriptionHookSpecs.Refresh.hook,
+                schemaVersion = SubscriptionHookSpecs.Refresh.schemaVersion,
                 requiredCapabilities = setOf(
                     ExtensionCapabilityIds.Network,
                     ExtensionCapabilityIds.CredentialRead,
@@ -70,7 +77,8 @@ internal class EmbyCompatibleProvider @Inject constructor(
                 ),
             ),
             ExtensionHookDeclaration(
-                hook = ExtensionHookIds.PlaybackSourceResolve,
+                hook = SubscriptionHookSpecs.ResolvePlayback.hook,
+                schemaVersion = SubscriptionHookSpecs.ResolvePlayback.schemaVersion,
                 requiredCapabilities = setOf(
                     ExtensionCapabilityIds.Network,
                     ExtensionCapabilityIds.CredentialRead,
@@ -78,7 +86,8 @@ internal class EmbyCompatibleProvider @Inject constructor(
                 ),
             ),
             ExtensionHookDeclaration(
-                hook = ExtensionHookIds.PlaybackSessionClose,
+                hook = SubscriptionHookSpecs.ClosePlayback.hook,
+                schemaVersion = SubscriptionHookSpecs.ClosePlayback.schemaVersion,
                 requiredCapabilities = setOf(
                     ExtensionCapabilityIds.Network,
                     ExtensionCapabilityIds.CredentialRead,
@@ -128,10 +137,19 @@ internal class EmbyCompatibleProvider @Inject constructor(
                     SubscriptionProviderDescriptor(
                         providerId = ID,
                         displayName = DISPLAY_NAME,
-                        supportedKinds = setOf(
-                            EmbyCompatibleProviderKinds.Emby,
-                            EmbyCompatibleProviderKinds.Jellyfin,
-                            EmbyCompatibleProviderKinds.Auto,
+                        variants = listOf(
+                            SubscriptionProviderVariant(
+                                kind = EmbyCompatibleProviderKinds.Emby,
+                                displayName = "Emby",
+                            ),
+                            SubscriptionProviderVariant(
+                                kind = EmbyCompatibleProviderKinds.Jellyfin,
+                                displayName = "Jellyfin",
+                            ),
+                            SubscriptionProviderVariant(
+                                kind = EmbyCompatibleProviderKinds.Auto,
+                                displayName = "Automatic",
+                            ),
                         ),
                         settingsSchema = SETTINGS_SCHEMA,
                     )
@@ -159,8 +177,10 @@ internal class EmbyCompatibleProvider @Inject constructor(
                     ?: error("Provider credential must be entered again"),
             )
             SubscriptionProviderValidateResult(
-                account = result.account,
-                credential = credentialResolver.stage(result.accessToken),
+                evidence = ProviderValidationEvidence.TrustedDirect(
+                    account = result.account,
+                    credential = credentialResolver.stage(result.accessToken),
+                ),
             )
         }
     }
@@ -200,7 +220,9 @@ internal class EmbyCompatibleProvider @Inject constructor(
             )
             PlaybackSourceResolveResult(
                 url = source.url,
-                headers = source.headers,
+                headers = source.headers.mapValues { (_, value) ->
+                    PlaybackHeaderValue.literal(value)
+                },
                 mediaSourceId = source.mediaSourceId,
                 session = source.session,
             )

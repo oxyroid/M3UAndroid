@@ -32,6 +32,8 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.business.setting.BackingUpAndRestoringState
 import com.m3u.business.setting.CodecPackState
+import com.m3u.business.setting.ProviderDiscoveryState
+import com.m3u.business.setting.ProviderSubscriptionForm
 import com.m3u.business.setting.SettingProperties
 import com.m3u.business.setting.SettingViewModel
 import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
@@ -42,7 +44,7 @@ import com.m3u.data.database.model.ColorScheme
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.repository.extension.ExtensionSettingsConfiguration
 import com.m3u.data.repository.plugin.InstalledPlugin
-import com.m3u.extension.api.subscription.SubscriptionProviderDescriptor
+import com.m3u.data.repository.provider.ProviderAccountSummary
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.business.setting.components.CanvasBottomSheet
 import com.m3u.smartphone.ui.business.setting.fragments.AppearanceFragment
@@ -76,7 +78,9 @@ fun SettingRoute(
     val codecPackState by viewModel.codecPackState.collectAsStateWithLifecycle()
     val extensionPlugins by viewModel.extensionPlugins.collectAsStateWithLifecycle()
     val extensionSettings by viewModel.extensionSettings.collectAsStateWithLifecycle()
-    val subscriptionProviders by viewModel.subscriptionProviders.collectAsStateWithLifecycle()
+    val providerDiscoveryState by viewModel.providerDiscoveryState.collectAsStateWithLifecycle()
+    val providerAccountSummaries by viewModel.providerAccountSummaries.collectAsStateWithLifecycle()
+    val providerSubscriptionForm by viewModel.providerSubscriptionForm.collectAsStateWithLifecycle()
     val localeTag = LocalConfiguration.current.locales[0].toLanguageTag()
     val context = LocalContext.current
     val diagnosticsShareTitle = stringResource(string.feat_setting_extension_diagnostics_share_title)
@@ -146,7 +150,14 @@ fun SettingRoute(
             onRefreshCodecPack = viewModel::refreshCodecPack,
             extensionPlugins = extensionPlugins,
             extensionSettings = extensionSettings,
-            subscriptionProviders = subscriptionProviders,
+            providerDiscoveryState = providerDiscoveryState,
+            providerAccountSummaries = providerAccountSummaries,
+            providerSubscriptionForm = providerSubscriptionForm,
+            onSelectSubscriptionProvider = viewModel::selectSubscriptionProvider,
+            onSelectSubscriptionProviderKind = viewModel::selectSubscriptionProviderKind,
+            onUpdateSubscriptionProviderSetting = viewModel::updateSubscriptionProviderSetting,
+            onRetryProviderDiscovery = viewModel::refreshSubscriptionProviders,
+            onReauthenticateProviderAccount = viewModel::reauthenticateProviderAccount,
             onRefreshExtensionPlugins = viewModel::refreshExtensionPlugins,
             onEnableExtensionPlugin = viewModel::enableExtensionPlugin,
             onReauthorizeExtensionPlugin = viewModel::reauthorizeExtensionPlugin,
@@ -203,7 +214,14 @@ private fun SettingScreen(
     onRefreshCodecPack: () -> Unit,
     extensionPlugins: List<InstalledPlugin>,
     extensionSettings: ExtensionSettingsConfiguration?,
-    subscriptionProviders: List<SubscriptionProviderDescriptor>,
+    providerDiscoveryState: ProviderDiscoveryState,
+    providerAccountSummaries: List<ProviderAccountSummary>,
+    providerSubscriptionForm: ProviderSubscriptionForm?,
+    onSelectSubscriptionProvider: (String) -> Unit,
+    onSelectSubscriptionProviderKind: (String) -> Unit,
+    onUpdateSubscriptionProviderSetting: (String, String?) -> Unit,
+    onRetryProviderDiscovery: () -> Unit,
+    onReauthenticateProviderAccount: (String) -> Unit,
     onRefreshExtensionPlugins: () -> Unit,
     onEnableExtensionPlugin: (String, String) -> Unit,
     onReauthorizeExtensionPlugin: (String, String) -> Unit,
@@ -324,7 +342,14 @@ private fun SettingScreen(
                         onDeleteEpgPlaylist = onDeleteEpgPlaylist,
                         extensionPlugins = extensionPlugins,
                         extensionSettings = extensionSettings,
-                        subscriptionProviders = subscriptionProviders,
+                        providerDiscoveryState = providerDiscoveryState,
+                        providerAccountSummaries = providerAccountSummaries,
+                        providerSubscriptionForm = providerSubscriptionForm,
+                        onSelectSubscriptionProvider = onSelectSubscriptionProvider,
+                        onSelectSubscriptionProviderKind = onSelectSubscriptionProviderKind,
+                        onUpdateSubscriptionProviderSetting = onUpdateSubscriptionProviderSetting,
+                        onRetryProviderDiscovery = onRetryProviderDiscovery,
+                        onReauthenticateProviderAccount = onReauthenticateProviderAccount,
                         onRefreshExtensionPlugins = onRefreshExtensionPlugins,
                         onEnableExtensionPlugin = onEnableExtensionPlugin,
                         onReauthorizeExtensionPlugin = onReauthorizeExtensionPlugin,

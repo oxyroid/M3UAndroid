@@ -4,6 +4,11 @@ import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
 import com.m3u.core.foundation.architecture.preferences.Settings
 import com.m3u.core.foundation.architecture.preferences.get
 import com.m3u.data.extension.SubscriptionProviderImporter
+import com.m3u.data.extension.security.ActiveExtensionPrincipalRegistry
+import com.m3u.data.extension.security.ExtensionOwnerIdentity
+import com.m3u.data.extension.security.ProviderAccountOwnerStore
+import com.m3u.data.extension.security.ProviderBrokerScopeStore
+import com.m3u.data.extension.security.toPrincipal
 import com.m3u.data.repository.extension.ExtensionSettingStore
 import com.m3u.data.repository.extension.ExtensionSettingsRepository
 import com.m3u.extension.api.ExtensionApiVersions
@@ -40,6 +45,9 @@ internal class ExtensionPluginRepositoryImpl private constructor(
     private val extensionSettingsRepository: ExtensionSettingsRepository,
     private val extensionSettingStore: ExtensionSettingStore,
     private val subscriptionProviderImporter: SubscriptionProviderImporter,
+    private val activePrincipalRegistry: ActiveExtensionPrincipalRegistry,
+    private val providerAccountOwnerStore: ProviderAccountOwnerStore,
+    private val providerBrokerScopeStore: ProviderBrokerScopeStore?,
     private val settings: Settings,
     observeSettingsChanges: Boolean,
 ) : ExtensionPluginRepository {
@@ -56,6 +64,9 @@ internal class ExtensionPluginRepositoryImpl private constructor(
         extensionSettingsRepository: ExtensionSettingsRepository,
         extensionSettingStore: ExtensionSettingStore,
         subscriptionProviderImporter: SubscriptionProviderImporter,
+        activePrincipalRegistry: ActiveExtensionPrincipalRegistry,
+        providerAccountOwnerStore: ProviderAccountOwnerStore,
+        providerBrokerScopeStore: ProviderBrokerScopeStore,
         settings: Settings,
     ) : this(
         discovery = discovery,
@@ -65,6 +76,9 @@ internal class ExtensionPluginRepositoryImpl private constructor(
         extensionSettingsRepository = extensionSettingsRepository,
         extensionSettingStore = extensionSettingStore,
         subscriptionProviderImporter = subscriptionProviderImporter,
+        activePrincipalRegistry = activePrincipalRegistry,
+        providerAccountOwnerStore = providerAccountOwnerStore,
+        providerBrokerScopeStore = providerBrokerScopeStore,
         settings = settings,
         observeSettingsChanges = true,
     )
@@ -363,6 +377,15 @@ internal class ExtensionPluginRepositoryImpl private constructor(
                             developer = registration.extension.manifest.metadata["developer"],
                         )
                     }
+                    val principal = service.toPrincipal(registration.extension.manifest.id)
+                    runCatching { activePrincipalRegistry.activate(principal) }
+                        .getOrElse { error ->
+                            runtime.unregister(registration.extension.manifest.id)
+                            transport.close()
+                            return@runCatching PluginEnableResult.Rejected(
+                                "Extension identity could not be activated (${error.javaClass.simpleName})"
+                            )
+                        }
                     val replaced = transports.put(
                         key = service.key,
                         extensionId = registration.extension.manifest.id.value,
@@ -393,6 +416,14 @@ internal class ExtensionPluginRepositoryImpl private constructor(
         val services = discovery.discover().filter { trustStore.extensionId(it) == extensionId }
         services.forEach { service -> trustStore.setEnabled(service, false) }
         val removed = deactivateExtension(extensionId)
+        services.forEach { service ->
+            activePrincipalRegistry.deactivate(
+                extensionId = ExtensionId(extensionId),
+                packageName = service.packageName,
+                serviceName = service.serviceName,
+            )?.let { principal -> providerBrokerScopeStore?.closeAll(principal) }
+        }
+        activePrincipalRegistry.awaitPersistence(ExtensionId(extensionId))
         removed || services.isNotEmpty()
     }
 
@@ -402,6 +433,22 @@ internal class ExtensionPluginRepositoryImpl private constructor(
                 record.packageName == packageName && record.serviceName == serviceName
             }
             deactivateService(ExtensionServiceKey(packageName, serviceName))
+            trustedService?.extensionId?.let { extensionId ->
+                activePrincipalRegistry.deactivate(
+                    extensionId = ExtensionId(extensionId),
+                    packageName = trustedService.packageName,
+                    serviceName = trustedService.serviceName,
+                )?.let { principal -> providerBrokerScopeStore?.closeAll(principal) }
+                activePrincipalRegistry.awaitPersistence(ExtensionId(extensionId))
+                providerAccountOwnerStore.revoke(
+                    ExtensionOwnerIdentity(
+                        extensionId = extensionId,
+                        packageName = trustedService.packageName,
+                        serviceName = trustedService.serviceName,
+                        certificateSha256 = trustedService.certificateSha256,
+                    )
+                )
+            }
             trustedService?.extensionId?.takeIf { extensionId ->
                 trustStore.isSoleStoredOwner(packageName, serviceName, extensionId)
             }?.let { extensionId ->
@@ -429,7 +476,18 @@ internal class ExtensionPluginRepositoryImpl private constructor(
                 "Extension is not the unique trusted owner of this data"
             )
         }
-        clearExtensionData(extensionId)
+        activePrincipalRegistry.invalidateAndRun(ExtensionId(extensionId)) {
+            providerBrokerScopeStore?.closeAll(service.toPrincipal(ExtensionId(extensionId)))
+            providerAccountOwnerStore.revoke(
+                ExtensionOwnerIdentity(
+                    extensionId = extensionId,
+                    packageName = service.packageName,
+                    serviceName = service.serviceName,
+                    certificateSha256 = service.certificateSha256,
+                )
+            )
+            clearExtensionData(extensionId)
+        }
     }
 
     private suspend fun clearExtensionData(extensionId: String): PluginDataClearResult.Cleared {
@@ -511,14 +569,16 @@ internal class ExtensionPluginRepositoryImpl private constructor(
         return restored
     }
 
-    private fun suspendExternalTransports() {
-        transports.removeAll().forEach(::deactivateTransport)
+    private suspend fun suspendExternalTransports() {
+        transports.removeAll().forEach { active -> deactivateTransport(active) }
     }
 
     private suspend fun pruneMissingServices(discovered: List<InstalledExtensionService>) =
         lifecycleMutex.withLock {
             val installedKeys = discovered.mapTo(mutableSetOf(), InstalledExtensionService::key)
-            transports.removeMissing(installedKeys).forEach(::deactivateTransport)
+            transports.removeMissing(installedKeys).forEach { active ->
+                deactivateTransport(active)
+            }
         }
 
     private suspend fun ensureConnected(service: InstalledExtensionService) {
@@ -558,23 +618,42 @@ internal class ExtensionPluginRepositoryImpl private constructor(
         }
     }
 
-    private fun deactivateService(key: ExtensionServiceKey): Boolean {
+    private suspend fun deactivateService(key: ExtensionServiceKey): Boolean {
         val active = transports.remove(key) ?: return false
         deactivateTransport(active)
         return true
     }
 
-    private fun deactivateTransport(
+    private suspend fun deactivateTransport(
         active: ActiveExtensionTransport<ExtensionPluginTransport>,
     ) {
-        runtime.unregister(ExtensionId(active.extensionId))
+        val extensionId = ExtensionId(active.extensionId)
+        val principal = activePrincipalRegistry.deactivate(
+            extensionId = extensionId,
+            packageName = active.serviceKey.packageName,
+            serviceName = active.serviceKey.serviceName,
+        )
+        principal?.let { providerBrokerScopeStore?.closeAll(it) }
+        runtime.unregister(extensionId)
         active.transport.close()
+        activePrincipalRegistry.awaitPersistence(extensionId)
     }
 
-    private fun deactivateExtension(extensionId: String): Boolean {
+    private suspend fun deactivateExtension(extensionId: String): Boolean {
         val removed = transports.removeByExtensionId(extensionId)
-        removed.forEach { active -> active.transport.close() }
+        removed.forEach { active ->
+            val principal = activePrincipalRegistry.deactivate(
+                extensionId = ExtensionId(extensionId),
+                packageName = active.serviceKey.packageName,
+                serviceName = active.serviceKey.serviceName,
+            )
+            principal?.let { providerBrokerScopeStore?.closeAll(it) }
+            active.transport.close()
+        }
         if (removed.isNotEmpty()) runtime.unregister(ExtensionId(extensionId))
+        if (removed.isNotEmpty()) {
+            activePrincipalRegistry.awaitPersistence(ExtensionId(extensionId))
+        }
         return removed.isNotEmpty()
     }
 
@@ -583,7 +662,7 @@ internal class ExtensionPluginRepositoryImpl private constructor(
             trustStore.isTrusted(service) &&
             trustStore.isEnabled(service)
 
-    private fun quarantine(
+    private suspend fun quarantine(
         service: InstalledExtensionService,
         reason: String,
     ): PluginEnableResult.Rejected {
@@ -629,6 +708,10 @@ internal class ExtensionPluginRepositoryImpl private constructor(
             extensionSettingsRepository: ExtensionSettingsRepository,
             extensionSettingStore: ExtensionSettingStore,
             subscriptionProviderImporter: SubscriptionProviderImporter,
+            activePrincipalRegistry: ActiveExtensionPrincipalRegistry =
+                ActiveExtensionPrincipalRegistry(),
+            providerAccountOwnerStore: ProviderAccountOwnerStore,
+            providerBrokerScopeStore: ProviderBrokerScopeStore? = null,
             settings: Settings,
         ): ExtensionPluginRepositoryImpl = ExtensionPluginRepositoryImpl(
             discovery = discovery,
@@ -638,6 +721,9 @@ internal class ExtensionPluginRepositoryImpl private constructor(
             extensionSettingsRepository = extensionSettingsRepository,
             extensionSettingStore = extensionSettingStore,
             subscriptionProviderImporter = subscriptionProviderImporter,
+            activePrincipalRegistry = activePrincipalRegistry,
+            providerAccountOwnerStore = providerAccountOwnerStore,
+            providerBrokerScopeStore = providerBrokerScopeStore,
             settings = settings,
             observeSettingsChanges = false,
         )

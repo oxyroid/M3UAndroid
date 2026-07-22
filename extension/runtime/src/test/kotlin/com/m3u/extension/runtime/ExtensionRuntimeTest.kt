@@ -8,6 +8,8 @@ import com.m3u.extension.api.ExtensionApiVersions
 import com.m3u.extension.api.ExtensionCallContext
 import com.m3u.extension.api.ExtensionCapabilityIds
 import com.m3u.extension.api.ExtensionCapabilityRequest
+import com.m3u.extension.api.ExtensionError
+import com.m3u.extension.api.ExtensionErrorCode
 import com.m3u.extension.api.ExtensionErrorCodes
 import com.m3u.extension.api.ExtensionHandler
 import com.m3u.extension.api.ExtensionHookDeclaration
@@ -23,6 +25,7 @@ import com.m3u.extension.api.HookSpec
 import com.m3u.extension.api.InvocationId
 import com.m3u.extension.api.SerializedExtensionEnvelope
 import com.m3u.extension.api.SerializedExtensionResult
+import com.m3u.extension.api.security.BrokerScopeHandle
 import com.m3u.extension.api.security.CredentialHandle
 import com.m3u.extension.api.ExtensionEntrypoint
 import kotlinx.coroutines.delay
@@ -44,7 +47,9 @@ class ExtensionRuntimeTest {
         val entrypoint = entrypoint()
 
         assertIs<ExtensionRegistrationResult.Registered>(runtime.register(entrypoint))
-        assertEquals(entrypoint.manifest.id, runtime.extensionsSupporting(TEST_SPEC.hook).single().manifest.id)
+        val registered = runtime.extensionsSupporting(TEST_SPEC.hook).single()
+        assertEquals(entrypoint.manifest.id, registered.manifest.id)
+        assertEquals(ExtensionExecutionKind.BUILT_IN, registered.executionKind)
 
         val result = runtime.invoke(entrypoint.manifest.id, TEST_SPEC, TestPayload("stable-reference"))
 
@@ -143,6 +148,43 @@ class ExtensionRuntimeTest {
     }
 
     @Test
+    fun `structured hook failures do not make an external extension unhealthy`() = runBlocking {
+        val runtime = runtime(invocationPolicy = InvocationPolicy(unhealthyFailureThreshold = 1))
+        val manifest = entrypoint().manifest
+        val authenticationFailure = ExtensionError(
+            code = ExtensionErrorCode("provider.authentication_failed"),
+            message = "Credentials were rejected",
+            recoverable = false,
+        )
+        val transport = object : ExtensionTransport {
+            override val manifest = manifest
+
+            override suspend fun invoke(request: SerializedExtensionEnvelope) = SerializedExtensionResult(
+                invocationId = request.invocationId,
+                extensionId = request.extensionId,
+                hook = request.hook,
+                schemaVersion = request.schemaVersion,
+                error = authenticationFailure,
+            )
+
+            override suspend fun cancel(invocationId: InvocationId) = Unit
+            override suspend fun health(): ExtensionTransportHealth = ExtensionTransportHealth.HEALTHY
+        }
+        runtime.register(transport)
+
+        repeat(2) {
+            val result = runtime.invoke(manifest.id, TEST_SPEC, TestPayload("wrong-password"))
+            assertEquals(
+                authenticationFailure.code,
+                assertIs<HookResult.Failure>(result.outcome).error.code,
+            )
+        }
+
+        assertEquals(ExtensionState.ENABLED, runtime.registeredExtensions().single().state)
+        assertEquals(0, runtime.registeredExtensions().single().consecutiveFailures)
+    }
+
+    @Test
     fun `runtime rejects oversized response`() = runBlocking {
         val runtime = runtime(invocationPolicy = InvocationPolicy(maxPayloadBytes = 64))
         val entrypoint = entrypoint { _, _ -> HookResult.Success(TestPayload("x".repeat(100))) }
@@ -157,6 +199,84 @@ class ExtensionRuntimeTest {
     }
 
     @Test
+    fun `runtime rejects oversized external failure message and details`() = runBlocking {
+        val manifest = entrypoint().manifest
+        val oversizedFailures = listOf(
+            ExtensionError(
+                code = ExtensionErrorCode("provider.authentication_failed"),
+                message = "token=${"x".repeat(4_096)}",
+                recoverable = true,
+            ),
+            ExtensionError(
+                code = ExtensionErrorCode("provider.authentication_failed"),
+                message = "Authentication failed",
+                recoverable = true,
+                details = mapOf("context" to "authorization=${"x".repeat(4_096)}"),
+            ),
+        )
+
+        oversizedFailures.forEach { oversizedFailure ->
+            val runtime = runtime(
+                invocationPolicy = InvocationPolicy(
+                    maxPayloadBytes = 256,
+                    unhealthyFailureThreshold = 1,
+                )
+            )
+            runtime.register(failingTransport(manifest, oversizedFailure))
+
+            val result = runtime.invoke(manifest.id, TEST_SPEC, TestPayload("request"))
+            val failure = assertIs<HookResult.Failure>(result.outcome).error
+
+            assertEquals(ExtensionErrorCodes.PayloadTooLarge, failure.code)
+            assertEquals("Extension response exceeds the host limit", failure.message)
+            assertEquals(false, failure.recoverable)
+            assertTrue(failure.details.isEmpty())
+            assertEquals(ExtensionState.UNHEALTHY, runtime.registeredExtensions().single().state)
+            assertEquals(1, runtime.registeredExtensions().single().consecutiveFailures)
+        }
+    }
+
+    @Test
+    fun `runtime preserves and sanitizes external failure at payload limit`() = runBlocking {
+        val manifest = entrypoint().manifest
+        val rawFailure = ExtensionError(
+            code = ExtensionErrorCode("provider.authentication_failed"),
+            message = "Credentials rejected; token=top-secret",
+            recoverable = true,
+            details = linkedMapOf(
+                "password" to "not-visible",
+                "reason" to "authorization=Bearer-secret",
+                "retry" to "allowed",
+            ),
+        )
+        val encodedSize = Json.encodeToString(ExtensionError.serializer(), rawFailure)
+            .encodeToByteArray().size
+        val runtime = runtime(
+            invocationPolicy = InvocationPolicy(
+                maxPayloadBytes = encodedSize,
+                unhealthyFailureThreshold = 1,
+            )
+        )
+        runtime.register(failingTransport(manifest, rawFailure))
+
+        val result = runtime.invoke(manifest.id, TEST_SPEC, TestPayload("request"))
+        val failure = assertIs<HookResult.Failure>(result.outcome).error
+
+        assertEquals(rawFailure.code, failure.code)
+        assertEquals("Credentials rejected; token=<redacted>", failure.message)
+        assertEquals(true, failure.recoverable)
+        assertEquals(
+            mapOf(
+                "reason" to "authorization=<redacted>",
+                "retry" to "allowed",
+            ),
+            failure.details,
+        )
+        assertEquals(ExtensionState.ENABLED, runtime.registeredExtensions().single().state)
+        assertEquals(0, runtime.registeredExtensions().single().consecutiveFailures)
+    }
+
+    @Test
     fun `serialized transport conforms to typed invocation behavior`() = runBlocking {
         val settings = ExtensionSettingsSnapshot(
             schemaVersions = mapOf("general" to 2),
@@ -168,12 +288,14 @@ class ExtensionRuntimeTest {
         val runtime = runtime(settingsProvider = ExtensionSettingsProvider { settings })
         val manifest = entrypoint().manifest
         val json = Json
+        val brokerScope = BrokerScopeHandle("broker-scope-1")
         val transport = object : ExtensionTransport {
             override val manifest = manifest
 
             override suspend fun invoke(request: SerializedExtensionEnvelope): SerializedExtensionResult {
                 assertEquals(settings, request.settings)
                 assertEquals(setOf(ExtensionCapabilityIds.PlaybackResolve), request.grantedCapabilities)
+                assertEquals(brokerScope, request.brokerScope)
                 val payload = json.decodeFromJsonElement(TEST_SPEC.requestSerializer, request.payload)
                 return SerializedExtensionResult(
                     invocationId = request.invocationId,
@@ -190,9 +312,15 @@ class ExtensionRuntimeTest {
             override suspend fun cancel(invocationId: InvocationId) = Unit
             override suspend fun health(): ExtensionTransportHealth = ExtensionTransportHealth.HEALTHY
         }
-        assertIs<ExtensionRegistrationResult.Registered>(runtime.register(transport))
+        val registration = assertIs<ExtensionRegistrationResult.Registered>(runtime.register(transport))
+        assertEquals(ExtensionExecutionKind.EXTERNAL, registration.extension.executionKind)
 
-        val result = runtime.invoke(manifest.id, TEST_SPEC, TestPayload("transport"))
+        val result = runtime.invoke(
+            extensionId = manifest.id,
+            spec = TEST_SPEC,
+            request = TestPayload("transport"),
+            brokerScope = brokerScope,
+        )
 
         assertEquals(
             TestPayload("resolved-transport"),
@@ -273,10 +401,60 @@ class ExtensionRuntimeTest {
         assertIs<ExtensionRegistrationResult.Registered>(runtime().register(transport(optionalManifest)))
     }
 
+    @Test
+    fun `runtime rejects oversized built in manifest before registration`() {
+        val original = entrypoint()
+        val oversized = object : ExtensionEntrypoint {
+            override val manifest = original.manifest.copy(displayName = "x".repeat(161))
+            override val handlers = original.handlers
+        }
+
+        val rejected = assertIs<ExtensionRegistrationResult.Rejected>(
+            runtime().register(oversized)
+        )
+
+        assertEquals(ExtensionErrorCodes.RegistrationInvalid, rejected.error.code)
+        assertTrue(runtime().registeredExtensions().isEmpty())
+    }
+
+    @Test
+    fun `runtime rejects oversized external capability reason`() {
+        val original = entrypoint().manifest
+        val oversized = original.copy(
+            capabilities = original.capabilities.mapTo(mutableSetOf()) { request ->
+                request.copy(reason = "x".repeat(1_025))
+            }
+        )
+
+        val rejected = assertIs<ExtensionRegistrationResult.Rejected>(
+            runtime().register(transport(oversized))
+        )
+
+        assertEquals(ExtensionErrorCodes.RegistrationInvalid, rejected.error.code)
+    }
+
     private fun transport(extensionManifest: ExtensionManifest) = object : ExtensionTransport {
         override val manifest = extensionManifest
         override suspend fun invoke(request: SerializedExtensionEnvelope): SerializedExtensionResult =
             error("Not invoked")
+        override suspend fun cancel(invocationId: InvocationId) = Unit
+        override suspend fun health(): ExtensionTransportHealth = ExtensionTransportHealth.HEALTHY
+    }
+
+    private fun failingTransport(
+        extensionManifest: ExtensionManifest,
+        error: ExtensionError,
+    ) = object : ExtensionTransport {
+        override val manifest = extensionManifest
+
+        override suspend fun invoke(request: SerializedExtensionEnvelope) = SerializedExtensionResult(
+            invocationId = request.invocationId,
+            extensionId = request.extensionId,
+            hook = request.hook,
+            schemaVersion = request.schemaVersion,
+            error = error,
+        )
+
         override suspend fun cancel(invocationId: InvocationId) = Unit
         override suspend fun health(): ExtensionTransportHealth = ExtensionTransportHealth.HEALTHY
     }
@@ -335,7 +513,7 @@ class ExtensionRuntimeTest {
     private companion object {
         val TEST_SPEC = HookSpec(
             hook = ExtensionHookIds.PlaybackSourceResolve,
-            schemaVersion = 1,
+            schemaVersion = 2,
             requestSerializer = TestPayload.serializer(),
             responseSerializer = TestPayload.serializer(),
         )

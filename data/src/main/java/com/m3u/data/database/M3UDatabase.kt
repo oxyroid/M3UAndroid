@@ -32,7 +32,7 @@ import com.m3u.data.database.model.ProviderPlaybackSessionEntity
         ChannelPlaybackReference::class,
         ProviderPlaybackSessionEntity::class,
     ],
-    version = 23,
+    version = 24,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(
@@ -72,6 +72,7 @@ import com.m3u.data.database.model.ProviderPlaybackSessionEntity
         ),
         AutoMigration(from = 20, to = 21),
         AutoMigration(from = 21, to = 22),
+        AutoMigration(from = 23, to = 24),
     ]
 )
 @TypeConverters(Converters::class)
