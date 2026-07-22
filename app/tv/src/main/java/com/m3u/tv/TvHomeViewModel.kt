@@ -17,6 +17,7 @@ import com.m3u.data.repository.extension.ExtensionSettingsRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.plugin.ExtensionPluginRepository
 import com.m3u.data.repository.plugin.InstalledPlugin
+import com.m3u.data.repository.plugin.PluginEnableResult
 import com.m3u.data.repository.tv.TvRepository
 import com.m3u.data.service.DPadReactionService
 import com.m3u.data.service.MediaCommand
@@ -48,6 +49,7 @@ data class TvUiState(
     val externalExtensionsEnabled: Boolean = false,
     val extensionPlugins: List<InstalledPlugin> = emptyList(),
     val extensionSettings: ExtensionSettingsConfiguration? = null,
+    val extensionPluginError: String? = null,
 ) {
     val channelCount: Int get() = counts.values.sum()
     val heroChannel: Channel? get() = recent ?: channels.firstOrNull()
@@ -129,14 +131,14 @@ class TvHomeViewModel @Inject constructor(
 
     fun enableExtensionPlugin(packageName: String, serviceName: String) {
         viewModelScope.launch {
-            extensionPluginRepository.enable(packageName, serviceName)
+            updateExtensionPluginResult(extensionPluginRepository.enable(packageName, serviceName))
             refreshExtensionPlugins()
         }
     }
 
     fun reauthorizeExtensionPlugin(packageName: String, serviceName: String) {
         viewModelScope.launch {
-            extensionPluginRepository.reauthorize(packageName, serviceName)
+            updateExtensionPluginResult(extensionPluginRepository.reauthorize(packageName, serviceName))
             refreshExtensionPlugins()
         }
     }
@@ -234,6 +236,17 @@ class TvHomeViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val plugins = extensionPluginRepository.installedPlugins()
             _state.update { it.copy(extensionPlugins = plugins) }
+        }
+    }
+
+    private fun updateExtensionPluginResult(result: PluginEnableResult) {
+        _state.update { state ->
+            state.copy(
+                extensionPluginError = when (result) {
+                    is PluginEnableResult.Enabled -> null
+                    is PluginEnableResult.Rejected -> result.reason
+                }
+            )
         }
     }
 

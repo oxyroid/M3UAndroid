@@ -622,6 +622,29 @@ private fun StatusScreen(
         return
     }
 
+    pendingTrust?.takeIf { state.externalExtensionsEnabled }?.let { plugin ->
+        ExtensionAuthorizationConfirmation(
+            plugin = plugin,
+            reauthorization = pendingReauthorization,
+            confirmFocusRequester = trustConfirmationFocusRequester,
+            onConfirm = {
+                val reauthorize = pendingReauthorization
+                pendingTrust = null
+                pendingReauthorization = false
+                if (reauthorize) {
+                    onReauthorizeExtension(plugin.packageName, plugin.serviceName)
+                } else {
+                    onEnableExtension(plugin.packageName, plugin.serviceName)
+                }
+            },
+            onCancel = {
+                pendingTrust = null
+                pendingReauthorization = false
+            },
+        )
+        return
+    }
+
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(24.dp),
         contentPadding = PaddingValues(start = 48.dp, top = 48.dp, end = 64.dp, bottom = 48.dp),
@@ -670,6 +693,9 @@ private fun StatusScreen(
                 subtitle = stringResource(string.tv_extensions_subtitle),
             )
         }
+        state.extensionPluginError?.let { error ->
+            item { Text(error, color = TvColors.Danger, fontSize = 16.sp) }
+        }
         item {
             TvActionButton(
                 text = stringResource(
@@ -708,55 +734,102 @@ private fun StatusScreen(
                 )
             }
         }
-        pendingTrust?.takeIf { state.externalExtensionsEnabled }?.let { plugin ->
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    }
+}
+
+@Composable
+private fun ExtensionAuthorizationConfirmation(
+    plugin: InstalledPlugin,
+    reauthorization: Boolean,
+    confirmFocusRequester: FocusRequester,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(20.dp),
+        contentPadding = PaddingValues(start = 48.dp, top = 48.dp, end = 64.dp, bottom = 48.dp),
+        modifier = Modifier.fillMaxSize().focusGroup(),
+    ) {
+        item {
+            Text(
+                text = stringResource(string.feat_setting_extension_confirm_title),
+                color = TvColors.TextPrimary,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+        item {
+            Text(
+                text = stringResource(
+                    string.feat_setting_extension_confirm_identity,
+                    plugin.packageName,
+                    plugin.certificateSha256.chunked(16).joinToString(" "),
+                    plugin.displayName.orEmpty(),
+                    plugin.developer.orEmpty(),
+                    plugin.version.orEmpty(),
+                ),
+                color = TvColors.TextSecondary,
+                fontSize = 16.sp,
+            )
+        }
+        item {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                TvActionButton(
+                    text = stringResource(
+                        if (reauthorization) {
+                            string.feat_setting_extension_reauthorize
+                        } else {
+                            string.feat_setting_extension_enable
+                        }
+                    ),
+                    icon = Icons.Rounded.CheckCircle,
+                    focusRequester = confirmFocusRequester,
+                    onClick = onConfirm,
+                )
+                TvActionButton(
+                    text = stringResource(android.R.string.cancel),
+                    icon = Icons.Rounded.Block,
+                    onClick = onCancel,
+                )
+            }
+        }
+        item {
+            Text(
+                text = stringResource(string.feat_setting_extension_requested_capabilities),
+                color = TvColors.TextPrimary,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+        if (plugin.capabilityPermissions.isEmpty()) {
+            item { Text("—", color = TvColors.TextSecondary, fontSize = 16.sp) }
+        } else {
+            items(
+                items = plugin.capabilityPermissions,
+                key = { permission -> permission.id },
+            ) { permission ->
+                val requirement = stringResource(
+                    if (permission.required) {
+                        string.feat_setting_extension_capability_required
+                    } else {
+                        string.feat_setting_extension_capability_optional
+                    }
+                )
+                val grant = stringResource(
+                    if (permission.granted) {
+                        string.feat_setting_extension_capability_granted
+                    } else {
+                        string.feat_setting_extension_capability_not_granted
+                    }
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = stringResource(string.feat_setting_extension_confirm_title),
+                        text = "${permission.id} ($requirement, $grant)",
                         color = TvColors.TextPrimary,
-                        fontSize = 24.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
                     )
-                    Text(
-                        text = stringResource(
-                            string.feat_setting_extension_confirm_body,
-                            plugin.packageName,
-                            plugin.certificateSha256.chunked(16).joinToString(" "),
-                            plugin.displayName.orEmpty(),
-                            plugin.developer.orEmpty(),
-                            plugin.version.orEmpty(),
-                            tvExtensionCapabilitySummary(plugin),
-                        ),
-                        color = TvColors.TextSecondary,
-                        fontSize = 14.sp,
-                        maxLines = 10,
-                        overflow = TextOverflow.Clip,
-                    )
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        TvActionButton(
-                            text = stringResource(string.feat_setting_extension_enable),
-                            icon = Icons.Rounded.CheckCircle,
-                            focusRequester = trustConfirmationFocusRequester,
-                            onClick = {
-                                val reauthorize = pendingReauthorization
-                                pendingTrust = null
-                                pendingReauthorization = false
-                                if (reauthorize) {
-                                    onReauthorizeExtension(plugin.packageName, plugin.serviceName)
-                                } else {
-                                    onEnableExtension(plugin.packageName, plugin.serviceName)
-                                }
-                            },
-                        )
-                        TvActionButton(
-                            text = stringResource(android.R.string.cancel),
-                            icon = Icons.Rounded.Block,
-                            onClick = {
-                                pendingTrust = null
-                                pendingReauthorization = false
-                            },
-                        )
-                    }
+                    Text(permission.reason, color = TvColors.TextSecondary, fontSize = 14.sp)
                 }
             }
         }
@@ -838,19 +911,6 @@ private fun ExtensionPluginCard(
             }
         }
     }
-}
-
-@Composable
-private fun tvExtensionCapabilitySummary(plugin: InstalledPlugin): String {
-    val required = stringResource(string.feat_setting_extension_capability_required)
-    val optional = stringResource(string.feat_setting_extension_capability_optional)
-    val granted = stringResource(string.feat_setting_extension_capability_granted)
-    val notGranted = stringResource(string.feat_setting_extension_capability_not_granted)
-    return plugin.capabilityPermissions.joinToString("\n") { permission ->
-        val requirement = if (permission.required) required else optional
-        val grant = if (permission.granted) granted else notGranted
-        "${permission.id} ($requirement, $grant) — ${permission.reason}"
-    }.ifEmpty { "—" }
 }
 
 @Composable

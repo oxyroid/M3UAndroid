@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
@@ -303,20 +305,32 @@ private fun ExtensionPluginsContent(
     }
     pendingTrust?.let { plugin ->
         AlertDialog(
-            onDismissRequest = { pendingTrust = null },
+            onDismissRequest = {
+                pendingTrust = null
+                pendingReauthorization = false
+            },
             title = { Text(stringResource(string.feat_setting_extension_confirm_title)) },
             text = {
-                Text(
-                    stringResource(
-                        string.feat_setting_extension_confirm_body,
-                        plugin.packageName,
-                        plugin.certificateSha256.chunked(16).joinToString(" "),
-                        plugin.displayName.orEmpty(),
-                        plugin.developer.orEmpty(),
-                        plugin.version.orEmpty(),
-                        extensionCapabilitySummary(plugin),
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text(
+                        stringResource(
+                            string.feat_setting_extension_confirm_identity,
+                            plugin.packageName,
+                            plugin.certificateSha256.chunked(16).joinToString(" "),
+                            plugin.displayName.orEmpty(),
+                            plugin.developer.orEmpty(),
+                            plugin.version.orEmpty(),
+                        )
                     )
-                )
+                    Text(
+                        stringResource(string.feat_setting_extension_requested_capabilities),
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                    Text(extensionCapabilitySummary(plugin))
+                }
             },
             confirmButton = {
                 TextButton(
@@ -330,7 +344,17 @@ private fun ExtensionPluginsContent(
                             onEnable(plugin.packageName, plugin.serviceName)
                         }
                     }
-                ) { Text(stringResource(string.feat_setting_extension_enable)) }
+                ) {
+                    Text(
+                        stringResource(
+                            if (pendingReauthorization) {
+                                string.feat_setting_extension_reauthorize
+                            } else {
+                                string.feat_setting_extension_enable
+                            }
+                        )
+                    )
+                }
             },
             dismissButton = {
                 TextButton(onClick = {

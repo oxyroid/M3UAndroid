@@ -129,7 +129,8 @@
     <string name="feat_setting_extension_disable">停用</string>
     <string name="feat_setting_extension_revoke">取消信任</string>
     <string name="feat_setting_extension_confirm_title">信任这个扩展？</string>
-    <string name="feat_setting_extension_confirm_body">包名：%1$s\n证书 SHA-256：%2$s\n名称：%3$s\n开发者：%4$s\n版本：%5$s\n请求的能力：%6$s</string>
+    <string name="feat_setting_extension_confirm_identity">包名：%1$s\n证书 SHA-256：%2$s\n名称：%3$s\n开发者：%4$s\n版本：%5$s</string>
+    <string name="feat_setting_extension_requested_capabilities">请求的能力</string>
     <string name="feat_setting_extension_signature_changed">签名证书已改变，扩展已被停用</string>
     <string name="feat_setting_extension_state_enabled">已启用</string>
     <string name="feat_setting_extension_state_disabled">已停用</string>

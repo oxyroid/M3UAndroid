@@ -100,7 +100,8 @@
     <string name="feat_setting_extension_disable">Disable</string>
     <string name="feat_setting_extension_revoke">Forget trust</string>
     <string name="feat_setting_extension_confirm_title">Trust this extension?</string>
-    <string name="feat_setting_extension_confirm_body">Package: %1$s\nCertificate SHA-256: %2$s\nName: %3$s\nDeveloper: %4$s\nVersion: %5$s\nRequested capabilities: %6$s</string>
+    <string name="feat_setting_extension_confirm_identity">Package: %1$s\nCertificate SHA-256: %2$s\nName: %3$s\nDeveloper: %4$s\nVersion: %5$s</string>
+    <string name="feat_setting_extension_requested_capabilities">Requested capabilities</string>
     <string name="feat_setting_extension_signature_changed">Signing certificate changed; this extension is disabled</string>
     <string name="feat_setting_extension_state_enabled">Enabled</string>
     <string name="feat_setting_extension_state_disabled">Disabled</string>
