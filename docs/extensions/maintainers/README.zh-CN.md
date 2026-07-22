@@ -1,99 +1,154 @@
-# 插件系统维护者指南
+# 维护插件系统
 
 [English](README.md)
 
-本文记录 M3UAndroid 插件系统专属的架构与发布约束，不扩展到无关的应用架构。
+本文写给修改 M3UAndroid 插件平台的项目维护者，只讨论插件系统。
 
-## 架构边界
+## 一分钟理解架构
 
-插件栈按以下层次划分：
+无论内置还是外部插件，都必须经过同一个 runtime：
 
-- `:extension:api`：KMP-compatible、基于 `kotlinx.serialization` 的契约、hook spec、manifest、设置模型、错误、凭据 handle 和 broker 契约；不得依赖 Android。
-- `:extension:runtime`：目录注册、兼容性协商、能力与调用策略、类型化序列化、资源限制、健康状态和故障隔离。
-- `:extension:transport-android`：service 发现、显式绑定、AIDL 控制面、`ParcelFileDescriptor` JSON 流、Binder death 和 Android 传输错误。
-- `:extension:sdk-android`：面向外部 APK 的 service 与网络 broker 适配器。
-- `data`：宿主适配，包括内置 provider 注册、插件信任持久化、凭据 vault、网络 broker 实现、Room migration、worker、session 恢复和 hook repository。
-- phone/TV app：权限与信任展示、插件管理 UI。
-- `:testing:extension-reference`：外部进程参考插件与一致性样例。
+```text
+内置 Kotlin adapter ----\
+                       > ExtensionRuntime -> 类型化 hook -> 宿主 importer -> Room/UI/播放器
+外部 APK -> Android IPC /
+```
 
-内置 extension 和外部 APK transport 必须进入同一个 runtime，并遵守相同的类型化 hook、能力、超时、payload、并发、取消、健康和错误规则。不要增加 app 直连插件的捷径。
+这条链路保证两件事：
 
-## 契约演进
+1. transport 只决定请求怎样到达插件，不改变请求的含义；
+2. 插件返回的是“建议结果”，最终校验和应用始终由宿主负责。
 
-每个 hook 都有 `HookSpec<Request, Result>` 和独立的正整数 schema version。兼容演进应新增带默认值的可选序列化字段。refresh reason、close reason 等开放 wire 值使用可扩展字符串。禁止重新引入任意 payload 的运行时强转。
+不要增加 app 直连插件的捷径，也不要让插件调用 DAO。如果新功能无法进入这条链路，应明确修改类型化契约和宿主 importer。
 
-API major 不一致即不兼容。同 major 内按 manifest 声明协商 hook schema。未知必要能力和不受支持的必要 hook version 必须拒绝；未知可选 JSON 字段应忽略。
+## 代码应该放在哪里
 
-冻结或修改契约前：
+| 模块 | 负责 | 不应负责 |
+| --- | --- | --- |
+| `:extension:api` | 序列化模型、manifest、hook spec、设置、错误、凭据/broker 契约 | Android API 或宿主持久化 |
+| `:extension:runtime` | 注册、协商、策略、调用限制、健康状态、故障隔离 | APK 发现或 UI |
+| `:extension:transport-android` | 发现、显式绑定、AIDL、PFD 流、Binder death | hook 语义或数据导入 |
+| `:extension:sdk-android` | service 基类和 APK 侧 broker adapter | 宿主凭据或数据库访问 |
+| `data` | 内置注册、信任存储、vault、broker、worker、Room、宿主 importer | 权限展示 |
+| phone / TV app | 信任与权限详情、管理界面、声明式设置 UI | transport 或 DAO 逻辑 |
+| `:testing:extension-reference` | 可执行的外部参考插件 | 只在生产出现的行为 |
 
-1. 更新 API catalog 与类型化 serializer；
-2. 增补 golden JSON fixture 和版本协商测试；
-3. 让内置与 Android transport 通过相同的行为测试；
-4. 同步更新本目录树中开发者、维护者各自的中英文文档；
-5. 明确该契约是“仅已定义”还是“已有生产宿主调用点”。
+`:extension:api` 必须保持 Android-free、KMP-compatible。内置插件与 APK 插件必须使用相同的 `HookSpec`、能力检查、超时、大小/并发限制、取消、健康状态和错误 envelope。
 
-## Runtime 策略与隔离
+## 顺着一次调用排查
 
-调用方只指定插件和类型化 hook，不得手工传入一组临时的已授权能力。`CapabilityPolicy` 根据宿主支持、manifest 声明、hook 要求、信任和用户授权计算 grant；`InvocationPolicy` 提供超时、并发和 payload 限制。
+遇到 hook 问题时，按这个顺序追踪：
 
-取消必须传播到 runtime 和 Android transport。普通插件故障必须被限制在该插件内。多插件贡献点使用 supervisor 语义，保留取消，并把其他单插件异常转为失败/空贡献。连续失败更新健康状态，并可将插件隔离为 `UNHEALTHY`；统一生命周期状态为 `ENABLED`、`DISABLED`、`INCOMPATIBLE`、`UNHEALTHY`。
+1. 宿主选择类型化 `HookSpec<Request, Result>`。
+2. `ExtensionCatalog` 查找已启用且 schema version 兼容的实现。
+3. `CapabilityPolicy` 检查宿主支持、manifest 声明和用户 grant。
+4. `InvocationPolicy` 施加超时、payload 和并发限制。
+5. 内置 adapter 或 Android transport 执行请求。
+6. runtime 解码类型化结果，并记录成功/失败健康状态。
+7. 宿主持有的 importer 在写入前校验引用、数量、大小和允许字段。
 
-禁止直接记录完整序列化 payload。runtime 和 transport 诊断必须脱敏凭据、认证 header、secret 设置、捕获值和其他已知敏感字段。
+调用方不能临时传入一组“已授权能力”。插件不能返回 Room 实体、`DataSource`、播放器对象或原始凭据。
 
-管理诊断采用正向字段白名单：宿主 API 版本、package/service 身份、固定证书摘要、插件版本/状态、capability 与 hook 标识、失败次数和设置数量汇总。禁止加入自由格式 manifest metadata、设置键/值、envelope、响应 body 或异常消息。清除插件数据只能删除设置、secret handle 以及 `m3u-extension-epg://<extension-id>/` 下的 EPG source；必须保留 provider playlist 和所有用户持有的频道状态。
+## 安全修改契约
 
-## 外部 APK 生命周期
+每个 hook 有独立的正整数 schema version，插件 API 另有 major version。
 
-发现只查询 action `com.m3u.extension.action.BIND_EXTENSION`，禁止增加 `QUERY_ALL_PACKAGES`。必须显式绑定解析出的 component，并要求权限 `com.m3u.permission.BIND_EXTENSION_HOST`。绝不把 APK 代码加载进宿主进程。
+兼容改动通常是新增带默认值的可选序列化字段。破坏字段兼容需要新 hook schema；平台整体不兼容才需要新 API major。refresh/close reason 等开放值继续使用字符串，避免新值破坏旧插件。
 
-外部插件受 `PreferencesKeys.EXTERNAL_EXTENSIONS` 开关保护。关闭功能会注销并关闭外部 transport，但保留信任记录；重新开启后恢复满足条件的已启用插件。repository 必须串行化生命周期变更，避免设置 observer、worker、刷新和 UI 操作竞态注册。
+每次修改契约都要：
 
-首次启用是安全决策。手机和 TV 都必须在接受前展示包名、开发者、证书 SHA-256、版本和申请能力。信任绑定包/component 身份并固定签名者。签名变化会禁用插件并要求显式重新授权。“忘记信任”删除持久化决定，不等同于普通禁用。
+1. 更新 API 模型、catalog 和 serializer；
+2. 增补 golden JSON 与协商测试；
+3. 让内置和 Android transport 通过同一行为测试；
+4. 增补或更新宿主 importer/调用点；
+5. 明确该 hook 是“仅定义”还是“已经接通”；
+6. 同步更新开发者和维护者的中英文文档。
 
-恢复流程不得调用用户授权路径。必须用当前 manifest 重新核对已保存 grant：删除不再申请的能力、新增可选能力保持未授予，缺少任何新增必要能力时停止恢复并禁用。component 改变 extension ID 时同样必须显式重新授权。
+API major 不同、未知必要 capability、不支持的必要 hook schema 都应拒绝。未知可选 JSON 字段应忽略。禁止恢复任意 payload 的运行时强转。
 
-显式重新授权只能在 UI 展示必要/可选属性、当前 grant 状态和每项理由后，授予当前申请且宿主支持的 capability。流程必须再次校验固定证书与 extension ID。对于已注册的同签名插件，应原位更新 trust grant，避免与重复 runtime 注册竞态；原本禁用的插件必须保持禁用。
+## 外部插件生命周期
+
+正常生命周期如下：
+
+```text
+已安装 -> 已发现 -> 已检查 -> 用户信任 -> 已启用
+                              \-> 已拒绝 / 不兼容
+已启用 -> 已禁用 -> 已启用
+已启用 -> 连续失败 -> 异常隔离
+签名或稳定 ID 变化 -> 已禁用 -> 重新作出信任决定
+```
+
+发现流程只查询 `com.m3u.extension.action.BIND_EXTENSION`，再显式绑定解析出的 component；service 必须要求 `com.m3u.permission.BIND_EXTENSION_HOST`。禁止增加 `QUERY_ALL_PACKAGES`、`DexClassLoader` 或进程内 APK 加载。
+
+外部插件仍受 `PreferencesKeys.EXTERNAL_EXTENSIONS` 保护。关闭开关会注销并关闭外部 transport，但保留信任。生命周期操作在 repository 中串行化，避免 UI、恢复、刷新和 worker 同时注册同一插件。
+
+信任固定到 package/component 身份和签名证书。首次启用会展示身份及每项申请能力。恢复时取旧 grant 与新 manifest 的交集：新增可选能力保持未授予；新增必要能力会阻止恢复。签名或 extension ID 改变时必须重新作出信任决定。
+
+显式重新授权会再次校验签名和 extension ID，再更新当前申请且宿主支持的能力。它不能重复注册 runtime，原本已禁用的插件也必须保持禁用。手机授权内容必须可滚动；TV 使用独立的遥控器界面，不能截断任何能力理由。拒绝原因必须让用户看见。
+
+## 故障隔离与诊断
+
+取消要贯穿 runtime 和 transport。多插件贡献点使用 supervisor 行为：保留取消，但把单个插件的普通异常转成空结果/失败贡献。连续失败只能把该插件变为 `UNHEALTHY`。
+
+有效状态统一为 `ENABLED`、`DISABLED`、`INCOMPATIBLE` 和 `UNHEALTHY`。
+
+禁止记录完整 envelope 或响应 body。诊断导出采用正向白名单：宿主 API、package/service 身份、固定证书、版本/状态、capability/hook ID、失败次数和设置数量汇总。禁止导出自由 metadata、设置 key/value、payload、broker 流量、响应 body 或异常文本。
+
+“清除数据”删除插件设置、加密 secret handle，以及 `m3u-extension-epg://<extension-id>/` 下的插件 EPG；保留订阅、频道、收藏、隐藏状态和播放历史。
 
 ## 凭据与网络
 
-secret 归宿主所有。`CredentialVault` 使用 Android Keystore 保护的 AES-GCM 密文，只暴露不透明 handle。数据库和备份中不得出现明文 token。密钥丢失或恢复后的密文无法解密时，应删除不可用凭据，并将 provider 标记为需要重新认证。
+`CredentialVault` 使用 Android Keystore 支持的 AES-GCM 加密 secret，只暴露不透明 handle。数据库和备份中永远不能出现明文 token。密钥丢失或恢复密文无法解密时，删除不可用凭据并要求重新认证。
 
-外部网络请求必须经过 `HostNetworkBroker`，并保持以下约束：
+所有外部网络请求都经过 `HostNetworkBroker`，以下检查缺一不可：
 
-- 目标 origin 只能是账号 base origin 或用户显式批准的附加 origin；
-- 移除插件提供的认证 header；
+- 目标是账号 origin 或用户批准的额外 origin；
+- 删除插件提供的认证 header；
 - 按引用注入宿主持有的 secret；
-- 每次 redirect 都重新校验 origin；
+- 每个重定向目标都重新检查；
 - 限制超时、响应大小和并发；
-- 登录 capture 从 header/JSON pointer 提取 secret 写入 vault，只返回脱敏内容与 handle。
+- 登录 capture 把 header/JSON-pointer 值写入 vault，只返回脱敏数据和 handle。
 
-不得为了兼容性增加读取原始 secret 的逃生口。
+不得增加读取原始 secret 的逃生口。
 
-## 宿主调用点规则
+## 宿主持有的 Importer
 
-插件只返回声明式结果，宿主 importer 负责校验和持久化。UI、business 与插件均不得操作 DAO，也不得构造按 provider 分支的 `DataSource`。
+解码之后，importer 是安全边界。它在写入前检查 stable reference、结果数量/大小、允许字段和数据所有权。
 
-provider 订阅应持久化通用 provider/account 身份与 credential handle。`providerId`、`providerKind` 从 provider account 解析，禁止硬编码 Emby ID。备份包含账号元数据和稳定播放引用，绝不包含 token；恢复后的 provider playlist 必须重新认证。
+- Provider 订阅保存通用 provider/account 身份和 credential handle；UI/repository 禁止硬编码 Emby ID。
+- Search 把不透明引用映射到已有且未隐藏的频道；未知引用直接丢弃。
+- Metadata 只能通过窄数据方法修改宿主批准的标题/分类等字段。
+- EPG 校验引用、时间和大小边界，再写入插件隔离的数据源。
+- Settings 按 section 隔离；schema version 改变时清除旧值与 secret。
+- Provider refresh 在 WorkManager 中运行，具备联网约束、重试、进度、取消和配额。
+- Playback session 打开后立即保存，正常 close 后删除，重启后幂等清理。
 
-搜索时，宿主并发调用已启用的贡献者，再把不透明 stable reference 映射回已有且未隐藏的宿主频道。无法映射的插件结果不能构造成可播放对象。未来设置、EPG、元数据和后台贡献也遵守同一所有权规则：对应的宿主 renderer/importer 始终拥有最终决定权。
+备份可以包含账号元数据和稳定播放引用，绝不能包含 token。恢复的 provider playlist 必须重新认证。
 
-provider refresh 必须进入 WorkManager，具备联网约束、取消、重试、进度和受控配额。播放 session 打开后立即持久化，正常 close 后删除，进程重启后执行幂等清理。
+## 当前接通情况
 
-## 当前接入状态
+| 范围 | 状态 |
+| --- | --- |
+| 内置 Emby/Jellyfin 订阅、刷新、播放、close | 已接通 |
+| 通用 provider 持久化、WorkManager 刷新、session 恢复 | 已接通 |
+| APK 发现、信任、IPC、取消、健康、broker、恢复 | 已接通，受开发者开关保护 |
+| 手机/TV 插件管理与声明式设置 | 已接通 |
+| 手机端搜索贡献 | 已接通 |
+| 通用 provider 刷新中的 metadata 与 EPG | 已接通 |
+| 所有旧 M3U/Xtream 导入路径中的 metadata/EPG | 尚未补齐 |
+| 面向所有用户发布的外部 provider 流程 | 尚未发布 |
 
-目前已有生产宿主链路：内置 Emby/Jellyfin 发现、校验、刷新、播放解析、close、provider 持久化、后台刷新与播放 session 恢复。外部 APK 的发现、信任、启禁用、签名固定、handshake、invoke、cancel、health、broker 代理、进程恢复和后台任务已在开发者开关下实现。手机端搜索贡献使用宿主持有的 stable-reference 映射。通用 provider 刷新以受限分批方式调用 metadata 与 EPG 贡献者；metadata 只能通过窄 DAO 更新标题/分类，EPG 经引用、时间和大小校验后替换到插件专属的宿主数据源。
-
-metadata 与 EPG importer 尚未覆盖所有旧 M3U/Xtream 导入路径。类型化设置的持久化与调用上下文已经接通：值按 section 隔离，schema version 对账会删除过期数据，secret 字段加密保存且调用 envelope 中只有不透明 handle。手机与 TV 的声明式设置 renderer 已接通布尔、单选、文本、数字和 secret 字段。只有 runtime 确实处于 `ENABLED` 状态时才能打开设置；禁用、撤销信任或关闭外部扩展会清理陈旧设置状态。secret 字段只暴露已配置/替换/清除操作；TV 首次焦点和保存后焦点保持已在模拟器上使用遥控器输入验证。手机与 TV 插件卡均提供二次确认的数据清理和宿主分享面板诊断导出；TV 操作行可换行且每个操作保持独立遥控器焦点。
+必须如实维护这张表。`:extension:api` 中存在序列化类型，不代表已经有生产宿主调用点。
 
 ## 发布门槛
 
-至少验证：
+移除开发者开关前，至少要有以下验证证据：
 
-- API/runtime golden 序列化、协商、类型错误、大小限制、超时、取消、并发、能力拒绝、异常隔离和脱敏；
-- Room migration、凭据丢失、备份恢复后的重认证、幂等导入、后台刷新和重启 session 清理；
-- 跨域/跨域 redirect 拒绝、认证 header 移除、签名变化和未授权能力；
-- 参考插件发现、绑定、handshake、大 PFD 结果、取消、Binder death、进程崩溃和版本不兼容；
-- 手机与 TV 的发现、全行/DPad 交互、信任详情、启禁用、重新授权、功能开关恢复和错误状态；
+- golden 序列化、协商、错误类型、大小/超时/并发限制、取消、能力拒绝、隔离和脱敏；
+- Room migration、凭据丢失、备份恢复重认证、幂等导入、后台刷新和重启清理；
+- origin/redirect 拒绝、认证 header 移除、签名不符和能力拒绝；
+- 独立安装参考 APK 的发现、绑定、handshake、大 PFD 结果、取消、Binder death、崩溃和版本不兼容；
+- 手机与 TV 的发现、授权详情、遥控器/全行交互、启禁用、重新授权、恢复和可见错误；
 - M3U、EPG、Xtream、普通播放与 DLNA 回归。
 
-在独立安装的兼容 APK 可以安全发现和启用、所有对外 hook 都有宿主持有的 importer、且插件崩溃、恶意请求或凭据失败不会破坏宿主数据或终止宿主进程之前，不得移除开发者开关。
+只有当独立安装的兼容 APK 能安全发现和启用、所有公开 hook 都有宿主持有的 importer、且插件崩溃、恶意请求或凭据失败不会破坏宿主数据或终止主进程时，平台才达到开放标准。

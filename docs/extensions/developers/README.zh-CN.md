@@ -1,102 +1,149 @@
-# Android 插件开发者指南
+# 开发 Android 插件
 
 [English](README.md)
 
-本文说明当前已经实现的本地 Android 插件契约。外部插件目前仍属于开发者功能：用户通过 Android 系统安装器安装 APK，开启“外部扩展”，查看插件身份和申请的能力后，显式确认信任。
+本文写给准备为 M3UAndroid 开发插件 APK 的开发者。外部插件目前仍是开发者功能，在默认开放前契约仍可能调整。
 
-## 运行与信任模型
+## 先记住这张图
 
-插件以独立 APK、独立进程运行。宿主通过 action `com.m3u.extension.action.BIND_EXTENSION` 发现导出的 bound service，绝不会使用 `DexClassLoader` 把插件代码载入宿主进程。该 service 必须要求权限 `com.m3u.permission.BIND_EXTENSION_HOST`。
+插件是一个独立 Android 应用，其中包含一个 bound service。M3UAndroid 找到该 service，读取 manifest，再调用 manifest 声明的 hook。
 
-首次启用时，宿主会展示包名、插件名称、开发者元数据、语义化版本、申请的能力和签名证书 SHA-256，并固定用户接受的证书。后续升级若证书不一致，插件会自动禁用，必须由用户重新确认。
-
-即使升级包签名相同，也不能静默扩大权限。宿主会取旧 grant 与新 manifest 的交集；新增必要能力会阻止自动恢复并要求用户重新确认，新增可选能力在重新授权前保持未授予状态。
-
-授权确认会列出每个 capability 标识、必要/可选属性、当前授权状态和插件给出的理由。重新授权会再次核对固定签名者与稳定 extension 身份，再更新 grant；不会替换插件，也不会把插件代码加载进宿主进程。
-
-控制面使用少量 AIDL，JSON 数据通过 `ParcelFileDescriptor` 流传输。流中承载 `SerializedExtensionEnvelope` 或 `SerializedExtensionResult`，避免 Binder 事务大小上限。传输层提供 handshake、manifest、invoke、cancel 和 health 操作。
-
-## 模块与最小 service
-
-契约位于 `:extension:api`，Android service 基类位于 `:extension:sdk-android`。`:testing:extension-reference` 是可运行的参考实现和一致性测试样例。
-
-在 manifest 中声明：
-
-```xml
-<service
-    android:name=".MyExtensionService"
-    android:exported="true"
-    android:permission="com.m3u.permission.BIND_EXTENSION_HOST">
-    <intent-filter>
-        <action android:name="com.m3u.extension.action.BIND_EXTENSION" />
-    </intent-filter>
-</service>
+```text
+你的 APK                         M3UAndroid
+--------                         ----------
+声明 hook   -- 类型化 JSON --->  校验结果
+返回数据    <--- 请求 ---------  保存数据 / 构造播放
+使用 handle -- broker 请求 --->  保管凭据 / 执行网络访问
 ```
 
-继承 `ExtensionService` 并提供 `ExtensionTransport`。transport 负责暴露 manifest 和处理类型化 envelope。仅当 hook 需要宿主网络代理时，才覆盖 SDK service 中带 broker 的 `invoke`。
+插件代码不会进入 M3UAndroid 进程，也拿不到 Room 实体、播放器对象、密码或 token。插件只返回契约数据，是否导入以及怎样保存由宿主决定。
 
-## Manifest 与兼容性
+## 从参考插件开始
 
-`ExtensionManifest` 包含：
+最快的可运行样例是 [`:testing:extension-reference`](../../../testing/extension-reference)。它已经包含合法 service、manifest、类型化 hook 分发、取消处理、设置、搜索、元数据、EPG 和后台任务。
 
-- 全小写、稳定的 `ExtensionId`；
-- 展示名称与插件语义化版本；
-- 支持的插件 API 范围；
-- 每个 hook 的唯一声明，包括 schema version 和必要能力；
-- 必要或可选的能力申请，以及面向用户的申请理由；
-- 可选的声明式设置 schema，以及 `developer` 等诊断元数据。
+SDK 目前还没有作为稳定 Maven artifact 发布。现阶段请在本仓库内构建参考插件，或从同一源码版本引入 extension 模块。公开 artifact 和兼容策略完成后，第三方分发才算稳定支持。
 
-当前插件 API 为 `1.0`，已定义 hook 的 schema 均为版本 `1`。API major 不一致会直接拒绝；同 major 下逐个协商 hook schema。未知的必要能力或不受支持的必要 hook schema 会使插件进入不兼容状态。JSON 解码会忽略未知可选字段，但插件不应假设宿主会原样保留这些字段。
+创建最小插件：
 
-必须使用已发布的 `HookSpec<Request, Result>` 序列化器，不要强转任意 payload，也不要另造 wire 格式。
+1. 在本仓库开发时依赖 `:extension:sdk-android`；它会暴露 service 所需的 API 与 transport 类型。
+2. 在 `AndroidManifest.xml` 声明导出的 service：
 
-## Hook
+   ```xml
+   <service
+       android:name=".MyExtensionService"
+       android:exported="true"
+       android:permission="com.m3u.permission.BIND_EXTENSION_HOST">
+       <intent-filter>
+           <action android:name="com.m3u.extension.action.BIND_EXTENSION" />
+       </intent-filter>
+   </service>
+   ```
 
-当前类型化目录定义了：
+3. 继承 `ExtensionService` 并提供一个 `ExtensionTransport`：
 
-- 订阅 provider 发现、校验、内容刷新、播放解析和播放 session 关闭；
-- 设置 schema 贡献；
-- EPG 刷新；
-- 频道元数据增强；
-- 搜索 provider；
-- 后台任务。
+   ```kotlin
+   class MyExtensionService : ExtensionService() {
+       override val transport: ExtensionTransport = MyExtensionTransport
+   }
+   ```
 
-“已有契约”不等于“所有宿主入口都已接通”。订阅和播放 hook 已为内置 Emby/Jellyfin provider 提供生产调用链。外部插件的生命周期、传输、取消、健康检查和后台任务已接通。搜索贡献已接入手机端：只有当结果中的不透明 `stableReference` 能映射到宿主已有且未隐藏的频道时才会展示。provider 刷新现在也会调用元数据与 EPG 贡献者：元数据 patch 只能更新宿主批准的标题/分类字段，EPG 结果经过校验后进入宿主隔离的数据源。这两个 importer 目前用于通用 provider playlist，尚未覆盖所有旧 M3U/Xtream 导入路径。设置契约、持久化、调用上下文及手机/TV 声明式 renderer 已经接通。两端都支持布尔、单选、文本、数字和 secret 字段；TV renderer 以遥控器为先，保存设置并刷新配置后会保持焦点。
+4. 为 transport 提供 `ExtensionManifest`，只实现 manifest 声明的 hook。
+5. 用 Android 系统安装器安装 APK，在 M3UAndroid 中开启“外部扩展”，核对证书和申请的权限，再启用插件。
 
-不要返回数据库实体、播放器对象、`DataSource`、密码或 token。插件只返回声明式数据和稳定的不透明引用；校验、持久化、导入和播放对象构造都归宿主所有。
+宿主只按 service action 发现插件。不要申请 `QUERY_ALL_PACKAGES`，也不要期待宿主通过 `DexClassLoader` 加载你的类。
 
-## 能力与凭据
+## Manifest 要写什么
 
-能力由插件在 manifest 中申请，再由宿主策略和用户授权共同决定。声明能力不等于获得能力。hook 只能使用自身声明且宿主批准的能力。
+可以把 `ExtensionManifest` 理解为插件的身份证和权限申请表：
 
-外部插件不能获取明文凭据。凭据以不透明 handle 表示。网络请求必须经过宿主 broker：只允许访问账号 base origin 或额外获批的 origin；移除插件自行提供的认证 header；注入宿主持有的 secret；限制重定向、超时、响应大小和并发；返回脱敏数据。登录 capture rule 可以从 header 或 JSON pointer 捕获值并写入宿主 vault，只把 handle 返回插件。
+| 字段 | 应填写的内容 |
+| --- | --- |
+| `id` | 全小写、永不随版本改变的插件 ID |
+| `displayName` | 展示给用户的名称 |
+| `extensionVersion` | 插件的语义化版本 |
+| `apiRange` | 插件支持的宿主扩展 API 范围 |
+| `hooks` | 实现的每个 hook 及其 schema version |
+| `capabilities` | 必要/可选权限，每项都写清原因 |
+| `settingsSchema` | 可选的声明式设置 |
+| `metadata["developer"]` | 授权时展示的开发者名称 |
 
-设置项使用限定的 `section/field` key。`SECRET` 字段不得声明明文默认值。宿主用 Android Keystore 支持的 AES-GCM 存储加密值，并且只在 `ExtensionSettingsSnapshot` 中传递它的 `CredentialHandle`。section 的 schema version 改变时，宿主会丢弃该 section 的值并删除已保存 secret。插件必须把值或 handle 缺失视为正常状态，并且只使用宿主快照中已经解析的默认值。
+当前 API 是 `1.0`，hook schema 均为版本 `1`。API major 不同会被拒绝；存在宿主不支持的必要 hook 或未知必要 capability 时，插件会被判定为不兼容。
 
-设置 UI 绝不会把已保存 secret 重新读回输入框，只显示“已配置”标记，并允许用户输入替换值或清除 handle。标签和说明来自协商后的 settings schema，因此插件应按请求的 locale 提供适合手机与 TV 阅读的简洁文案。
+请使用已发布的 `HookSpec<Request, Result>` serializer。它就是 wire 契约；不要另造 JSON 结构，也不要强转任意 payload。
 
-宿主的“清除数据”操作会删除该插件的设置、加密 secret handle 和隔离的 EPG 缓存，并特意保留宿主持有的订阅、频道、收藏、隐藏状态与播放历史。诊断导出只包含宿主定义的身份/状态白名单和设置数量汇总；manifest metadata、设置键和值、调用 payload 与 broker 流量均不导出。
+## 选择 Hook
 
-必须读取原始密码/token、自行加密凭据或绕过 broker 的插件与本平台不兼容。
+| 目标 | Hook | 当前宿主接入情况 |
+| --- | --- | --- |
+| 增加订阅 provider | discover、validate、refresh | 内置 Emby/Jellyfin 已走完整链路；外部 provider 仍在补齐 |
+| 解析播放并关闭服务端 session | playback resolve/close | 内置 provider 已有生产链路 |
+| 增加设置 | settings schema | 手机和 TV 均已渲染 |
+| 增加搜索结果 | search provider | 已接手机端；结果必须指向宿主已有频道 |
+| 改善频道标题/分类 | metadata enrichment | 已接通用 provider 刷新 |
+| 增加节目单 | EPG refresh | 已接通用 provider 刷新 |
+| 执行定时工作 | background task | 已接宿主配额与取消机制 |
 
-## 调用约束
+“契约已经定义”不代表“所有旧 M3U/Xtream 路径都已调用”。使用某个 hook 前请先看最后一列。
 
-- 将 invocation ID 视为唯一值，并及时传播取消。
-- 请求和响应必须符合声明的 schema 及宿主大小限制。
-- refresh reason、session close reason 等字段按可扩展字符串处理，容忍兼容宿主新增的值。
-- close、cleanup、refresh 和 retry 必须幂等。
-- 使用稳定错误 envelope，不要泄漏异常详情或敏感信息。
-- 不要假设调用串行；宿主会施加并发上限和超时。
+搜索、元数据和 EPG 结果使用 `stableReference`。它只是返回宿主已有数据的不透明桥梁。宿主会忽略无法识别的引用，绝不会直接把它变成数据库记录或可播放对象。
 
-## 开发验收清单
+## 权限、升级与重新授权
 
-发布测试 APK 前：
+在 manifest 中声明 capability 只是提出申请。只有宿主策略允许且用户授权后，hook 才能使用它。
 
-1. 使用参考插件/一致性样例验证发现、handshake、manifest 解码、invoke、cancel 和 health。
-2. 测试不兼容 API 范围和不支持的 hook schema。
-3. 测试进程死亡、Binder death、超时、超大输出和连续失败。
-4. 确认日志与错误中没有密码、token、Authorization header 或捕获的 secret。
-5. 确认未获宿主批准的 origin 和跨域 redirect 都会失败。
-6. 安装同签名升级包验证信任保留，再用不同签名验证插件会被禁用。
+首次启用时，M3UAndroid 会显示包名、开发者、版本、签名证书 SHA-256，以及每项 capability 和申请理由，并固定用户接受的证书。
 
-在宿主功能仍受开发者开关保护期间，不应把 APK 宣传为默认开放支持的插件。
+后续升级规则：
+
+- 签名相同且没有新增能力：可以恢复原信任；
+- 新增可选能力：保持未授予，直到用户重新授权；
+- 新增必要能力：停止自动恢复，直到用户重新授权；
+- 签名不同或 extension ID 改变：禁用插件，要求重新作出信任决定。
+
+权限理由要写给用户看。“从你配置的服务器读取节目单”是清楚的；“需要 `epg.read`”不是。
+
+## 凭据与网络请求
+
+所有 secret 都由宿主持有。插件只会收到不透明的 `CredentialHandle`，不会看到其中的密码或 token。
+
+网络请求经过 `HostNetworkBroker`。它会：
+
+- 只允许账号 origin 和另行获批的 origin；
+- 删除插件自行添加的认证 header；
+- 按引用注入宿主持有的 secret；
+- 对每次重定向重新检查 origin；
+- 限制超时、响应大小和并发；
+- 从 header 或 JSON pointer 捕获登录值，只返回保存后的 handle。
+
+如果插件必须读取原始密码/token、自行加密凭据或绕过 broker，它就不兼容本平台。
+
+## 设置
+
+使用 `ExtensionSettingSchema` 描述设置，不要为宿主配置另做 Activity。手机和 TV 支持布尔、单选、文本、数字和 secret 字段。
+
+设置 key 按 `section/field` 隔离。`SECRET` 字段不能有明文默认值。宿主使用 Android Keystore 支持的加密存储，hook 调用中只出现 handle。UI 只提供“已配置”、替换和清除，不会把已保存 secret 回填到输入框。
+
+改变 section 的 schema version 会清除该 section 的旧值和 secret。插件必须把值缺失当作正常情况。
+
+## 让 Hook 经得住真实故障
+
+- invocation ID 是唯一值；收到取消后及时停止工作。
+- refresh、retry、close 和 cleanup 必须幂等。
+- 调用可能并发；不要依赖全局可变的请求状态。
+- 请求和结果不得超出约定 schema 与大小限制。
+- refresh/close reason 是开放字符串，不是穷尽枚举。
+- 返回标准错误 envelope；错误和日志里不能出现凭据或响应 body。
+
+## 分享 APK 前
+
+先用参考插件和一致性测试验证发现、handshake、manifest 解码、调用、取消和健康检查，还要测试：
+
+- 不兼容 API 与 hook 版本；
+- 进程/Binder death、超时、超大输出和连续失败；
+- 未批准 origin 与跨域重定向；
+- 日志和诊断中没有密码、token、认证 header 或捕获的 secret；
+- 同签名升级和不同签名升级；
+- 手机与 TV 的授权、设置、禁用、重新授权、清除数据和诊断。
+
+外部插件仍受开发者开关保护期间，不要把 APK 描述为面向所有用户的正式支持插件。

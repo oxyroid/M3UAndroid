@@ -1,99 +1,154 @@
-# Extension system maintainer guide
+# Maintain the extension system
 
 [简体中文](README.zh-CN.md)
 
-This document records the extension-specific architecture and release invariants for M3UAndroid maintainers. It does not define unrelated app architecture.
+This guide is for M3UAndroid maintainers changing the extension platform. It covers extension code only.
 
-## Architecture boundary
+## The architecture in one minute
 
-The extension stack is intentionally layered:
+All extensions, built-in or external, pass through one runtime:
 
-- `:extension:api` owns KMP-compatible, `kotlinx.serialization` contracts, hook specs, manifests, settings models, errors, credential handles, and broker contracts. It must not depend on Android.
-- `:extension:runtime` owns catalog registration, compatibility negotiation, capability and invocation policy, typed serialization, limits, health, and fault isolation.
-- `:extension:transport-android` owns service discovery, explicit binding, AIDL control, `ParcelFileDescriptor` JSON transfer, Binder death, and Android transport errors.
-- `:extension:sdk-android` is the external APK-facing service and network-broker adapter.
-- `data` owns host adapters: built-in provider registration, plugin trust persistence, credential vault, network broker implementation, Room migration, workers, session recovery, and repositories that invoke hooks.
-- phone and TV app modules own permission/trust presentation and plugin management UI.
-- `:testing:extension-reference` is the external process reference fixture.
+```text
+built-in Kotlin adapter ----\
+                            > ExtensionRuntime -> typed hook -> host importer -> Room/UI/player
+external APK -> Android IPC /
+```
 
-Built-in extensions and external APK transports must enter the same runtime and obey the same typed hook, capability, timeout, payload, concurrency, cancellation, health, and error rules. Do not add a direct app-to-plugin shortcut.
+This shape enforces two rules:
 
-## Contract evolution
+1. transport changes how a request reaches an extension, not what the request means;
+2. an extension returns a proposal; host code validates and applies it.
 
-Every hook has a `HookSpec<Request, Result>` and an independent positive schema version. Add serializable optional fields with defaults for compatible evolution. Use extensible strings for open-ended wire values such as refresh and close reasons. Do not introduce runtime casts to an arbitrary payload.
+Never add an app-to-plugin shortcut or let a plugin call a DAO. If a feature cannot fit this flow, change the typed contract and host importer deliberately.
 
-An API major mismatch is incompatible. Within one major, negotiate the hook schema declared in the manifest. Reject unknown required capabilities and unsupported required hook versions. Ignore unknown optional JSON fields.
+## Where code belongs
 
-Before freezing or changing a contract:
+| Module | Owns | Must not own |
+| --- | --- | --- |
+| `:extension:api` | Serializable models, manifests, hook specs, settings, errors, credential/broker contracts | Android APIs or host persistence |
+| `:extension:runtime` | Registration, negotiation, policy, invocation limits, health, isolation | APK discovery or UI |
+| `:extension:transport-android` | Discovery, explicit bind, AIDL, PFD streams, Binder death | Hook meaning or data import |
+| `:extension:sdk-android` | The service base and APK-side broker adapter | Host credentials or database access |
+| `data` | Built-in registration, trust store, vault, broker, workers, Room, host importers | Permission presentation |
+| phone / TV apps | Trust, permission details, management and declarative settings UI | Transport or DAO logic |
+| `:testing:extension-reference` | Executable external fixture | Production-only behavior |
 
-1. update the API catalog and typed serializers;
-2. add or update golden JSON fixtures and version-negotiation tests;
-3. run the same behavior through built-in and Android transports;
-4. update both developer-language documents and both maintainer-language documents in this directory tree;
-5. describe whether the contract is merely defined or has a production host call site.
+`:extension:api` stays Android-free and KMP-compatible. Built-in and APK extensions must use the same `HookSpec`, capability checks, timeouts, size/concurrency limits, cancellation, health, and error envelope.
 
-## Runtime policy and isolation
+## Follow one invocation
 
-Callers request an extension and typed hook; they do not supply an ad-hoc set of granted capabilities. `CapabilityPolicy` computes grants from host support, manifest declarations, hook requirements, trust, and user approval. `InvocationPolicy` supplies timeout, concurrency, and payload limits.
+When diagnosing a hook, follow this order:
 
-Cancellation must propagate to the runtime and Android transport. Ordinary extension failure must remain local to that extension. Multi-extension contribution points use supervisor semantics, preserve cancellation, and convert other per-extension exceptions into an empty/failure contribution. Repeated failures update health and can quarantine the extension as `UNHEALTHY`; valid lifecycle states are `ENABLED`, `DISABLED`, `INCOMPATIBLE`, and `UNHEALTHY`.
+1. The host chooses a typed `HookSpec<Request, Result>`.
+2. `ExtensionCatalog` finds enabled implementations compatible with its schema version.
+3. `CapabilityPolicy` checks host support, manifest declarations, and user grants.
+4. `InvocationPolicy` applies timeout, payload, and concurrency limits.
+5. The built-in adapter or Android transport executes the request.
+6. The runtime decodes the typed result and records success/failure health.
+7. A host-owned importer validates references, sizes, and allowed fields before persistence.
 
-Never log serialized payloads blindly. Runtime and transport diagnostics must redact credentials, authorization headers, secret settings, captured values, and other known sensitive fields.
+Callers must not pass an ad-hoc “granted capabilities” set. Plugins must not return Room entities, `DataSource`, player objects, or raw credentials.
 
-Management diagnostics use a positive field whitelist: host API version, package/service identity, pinned certificate digest, extension version/state, capability and hook identifiers, failure count, and aggregate setting counts. Do not add free-form manifest metadata, setting keys/values, envelopes, response bodies, or exception messages. Clearing extension data removes settings, secret handles, and only EPG sources under `m3u-extension-epg://<extension-id>/`; it must preserve provider playlists and all user-owned channel state.
+## Changing a contract safely
 
-## External APK lifecycle
+Each hook has its own positive schema version. The extension API also has a major version.
 
-Discovery uses an intent query for `com.m3u.extension.action.BIND_EXTENSION`; do not add `QUERY_ALL_PACKAGES`. Bind explicitly to the resolved component and require `com.m3u.permission.BIND_EXTENSION_HOST`. Never load APK code into the host process.
+Compatible changes usually add an optional serialized field with a default. Breaking field changes require a new hook schema; a platform-wide break requires a new API major. Open-ended values such as refresh and close reasons remain strings so newer values do not break older plugins.
 
-External extensions remain behind `PreferencesKeys.EXTERNAL_EXTENSIONS`. Turning the feature off unregisters and closes external transports but preserves trust records. Turning it back on restores eligible enabled plugins. The repository serializes lifecycle changes so a settings observer, worker, refresh, and UI action cannot race registration.
+For every contract change:
 
-First enable is a security decision. Phone and TV must show package, developer, certificate SHA-256, version, and requested capabilities before accepting. Trust is keyed to package/component identity and pinned signer. A signer change disables the plugin and requires explicit reauthorization. “Forget trust” removes the persisted decision; it is not equivalent to merely disabling the extension.
+1. update the API model, catalog, and serializers;
+2. add/update golden JSON and negotiation tests;
+3. test the same behavior through built-in and Android transports;
+4. add or update the host importer/call site;
+5. state clearly whether the hook is only defined or actually connected;
+6. update both developer guides and both maintainer guides.
 
-Restore must never call the user-authorization path. Reconcile saved grants against the current manifest: drop removed capabilities, leave new optional capabilities ungranted, and disable restoration when any new required capability is missing. A component that changes its extension ID also requires explicit reauthorization.
+Reject an API major mismatch, unknown required capability, or unsupported required hook schema. Ignore unknown optional JSON fields. Do not restore arbitrary runtime payload casts.
 
-Explicit reauthorization may grant the currently requested supported capabilities only after the UI shows required/optional status, current grant state, and each reason. It must recheck the pinned certificate and extension ID. For an already registered same-signer extension, update the trust grants in place so reauthorization does not race a duplicate runtime registration; preserve a disabled plugin's disabled state.
+## External plugin lifecycle
+
+The normal lifecycle is:
+
+```text
+installed -> discovered -> inspected -> user trusts -> enabled
+                                      \-> rejected / incompatible
+enabled -> disabled -> enabled
+enabled -> repeated failures -> unhealthy
+signer or stable ID changes -> disabled -> new trust decision
+```
+
+Discovery queries only `com.m3u.extension.action.BIND_EXTENSION`. It explicitly binds the resolved component, which must require `com.m3u.permission.BIND_EXTENSION_HOST`. Never add `QUERY_ALL_PACKAGES`, `DexClassLoader`, or in-process APK loading.
+
+External plugins remain behind `PreferencesKeys.EXTERNAL_EXTENSIONS`. Turning the switch off closes and unregisters external transports but preserves trust. Lifecycle changes are serialized in the repository so UI, restoration, refresh, and workers cannot register the same plugin concurrently.
+
+Trust is pinned to package/component identity and signing certificate. First enable shows identity and every requested capability. On restore, intersect old grants with the new manifest: new optional capabilities stay ungranted; a new required capability blocks restore. A changed signer or extension ID requires a new trust decision.
+
+Explicit reauthorization first rechecks signer and extension ID, then updates only currently requested, host-supported capabilities. It does not duplicate runtime registration and must leave an already disabled plugin disabled. Phone authorization content scrolls; TV uses a dedicated DPad screen so no capability reason is truncated. Rejection must be visible to the user.
+
+## Failure isolation and diagnostics
+
+Cancellation propagates through runtime and transport. Multi-plugin contribution points use supervisor behavior: preserve cancellation, but turn an ordinary single-plugin failure into an empty/failed contribution. Repeated failures can move only that plugin to `UNHEALTHY`.
+
+Valid states are `ENABLED`, `DISABLED`, `INCOMPATIBLE`, and `UNHEALTHY`.
+
+Never log complete envelopes or response bodies. Diagnostic export uses a positive whitelist: host API, package/service identity, pinned certificate, version/state, capability and hook IDs, failure count, and aggregate settings counts. It excludes free-form metadata, setting keys/values, payloads, broker traffic, response bodies, and exception text.
+
+**Clear data** removes extension settings, encrypted secret handles, and only EPG sources under `m3u-extension-epg://<extension-id>/`. It preserves subscriptions, channels, favorites, hidden state, and playback history.
 
 ## Credentials and network
 
-The host owns secrets. `CredentialVault` stores AES-GCM ciphertext protected by Android Keystore and exposes opaque handles. Database and backup payloads must never contain plaintext tokens. If a key is missing or restored ciphertext cannot be decrypted, remove the unusable credential and mark the provider for reauthentication.
+`CredentialVault` encrypts secrets with Android Keystore-backed AES-GCM and exposes opaque handles. Database rows and backups never contain plaintext tokens. If a key is lost or restored ciphertext cannot be decrypted, delete the unusable credential and require reauthentication.
 
-External network activity goes through `HostNetworkBroker`. Preserve these invariants:
+Every external network request goes through `HostNetworkBroker`. Preserve all of these checks:
 
-- target origin is the account base origin or an explicitly user-approved additional origin;
-- extension-provided authentication headers are stripped;
-- host-held secrets are injected by reference;
-- redirects are revalidated by origin;
-- time, response size, and concurrency are bounded;
-- login capture stores a header/JSON-pointer secret in the vault and returns only redacted content plus a handle.
+- target is the account origin or a user-approved additional origin;
+- plugin-supplied authentication headers are stripped;
+- a host-held secret is injected by reference;
+- every redirect target is checked again;
+- timeout, response size, and concurrency are bounded;
+- login capture writes a header/JSON-pointer value to the vault and returns redacted data plus a handle.
 
-Do not add a raw-secret escape hatch for compatibility.
+Do not add a raw-secret escape hatch.
 
-## Host call-site rule
+## Host-owned importers
 
-An extension returns declarative results; a host importer validates and persists them. UI, business logic, and plugins must not manipulate DAOs or construct provider-specific `DataSource` branches.
+The importer is the security boundary after decoding. It checks stable references, result counts/sizes, allowed fields, and ownership before writing anything.
 
-For provider subscriptions, persist generic provider/account identity and credential handles. Resolve `providerId` and `providerKind` from the provider account rather than hard-coding Emby IDs. Backups include account metadata and stable playback references, never tokens; restored provider playlists require reauthentication.
+- Provider subscriptions store generic provider/account identity and credential handles. Never hard-code Emby IDs in UI/repositories.
+- Search maps opaque references to existing, non-hidden channels. Unknown references are dropped.
+- Metadata can update only host-approved fields such as title/category through narrow data methods.
+- EPG validates references and time/size bounds, then writes an extension-isolated source.
+- Settings are namespaced by section; changing its schema version removes stale values and secrets.
+- Provider refresh runs in WorkManager with network constraints, retry, progress, cancellation, and quotas.
+- Playback sessions are persisted immediately, deleted on normal close, and cleaned idempotently after restart.
 
-For search, the host invokes enabled contributors concurrently and maps opaque stable references back to existing, non-hidden host channels. Unmapped plugin items are not converted into playable objects. Apply the same ownership rule to future settings, EPG, metadata, and background contributions: the corresponding host renderer/importer remains authoritative.
+Backups may contain account metadata and stable playback references, never tokens. Restored provider playlists require reauthentication.
 
-Provider refresh belongs in WorkManager with network constraints, cancellation, retries, progress, and bounded quotas. Playback sessions are persisted immediately after opening, deleted after normal close, and cleaned idempotently after process restart.
+## What is connected today
 
-## Current integration status
+| Area | Status |
+| --- | --- |
+| Built-in Emby/Jellyfin subscribe, refresh, playback, close | Connected |
+| Generic provider persistence, WorkManager refresh, session recovery | Connected |
+| APK discovery, trust, IPC, cancellation, health, broker, restore | Connected behind developer switch |
+| Phone/TV plugin management and declarative settings | Connected |
+| Smartphone search contribution | Connected |
+| Metadata and EPG during generic provider refresh | Connected |
+| Metadata/EPG in every legacy M3U/Xtream ingestion path | Not yet complete |
+| External provider flow as a generally supported public feature | Not yet released |
 
-Production host paths currently exist for built-in Emby/Jellyfin discovery, validation, refresh, playback resolution, close, provider persistence, background refresh, and playback-session recovery. External APK discovery, trust, enable/disable, signer pinning, handshake, invocation, cancellation, health, broker mediation, process restoration, and background tasks are implemented behind the developer feature. Smartphone search contributions use host-owned stable-reference resolution. Generic provider refresh invokes metadata and EPG contributors in bounded batches; metadata can update only title/category through a narrow DAO query, and EPG is replaced in extension-specific host sources after reference/time/size validation.
+Keep this table honest. A serialized type in `:extension:api` is not proof of a production host call site.
 
-Metadata and EPG importers are not yet connected to every legacy M3U/Xtream ingestion path. Typed settings persistence and invocation context are connected: values are namespaced by section, schema-version reconciliation removes stale data, and secret fields are encrypted while only opaque handles enter invocation envelopes. Declarative phone and TV settings renderers are connected for boolean, single-choice, text, number, and secret fields. Opening settings is restricted to an actually `ENABLED` runtime entry; disabling, revoking, or turning off external extensions closes stale settings state. Secret fields expose only configured/replace/clear actions, and TV initial focus plus saved-value focus retention have been verified with DPad input on the emulator. Phone and TV plugin cards expose confirmed data clearing and host share-sheet diagnostic export; the TV action row wraps while preserving individual DPad targets.
+## Release gate
 
-## Release gates
+Before removing the developer switch, require evidence for:
 
-At minimum, validate:
+- golden serialization, negotiation, bad types, size/time/concurrency limits, cancellation, capability denial, quarantine, and redaction;
+- Room migrations, credential loss, backup/restore reauthentication, idempotent imports, background refresh, and restart cleanup;
+- denied origins/redirects, stripped auth headers, signer mismatch, and denied capabilities;
+- installed reference APK discovery, binding, handshake, large PFD result, cancellation, Binder death, crash, and incompatible version;
+- phone and TV discovery, authorization details, DPad/full-row interaction, enable/disable, reauthorization, restore, and visible errors;
+- M3U, EPG, Xtream, ordinary playback, and DLNA regressions.
 
-- API/runtime golden serialization, negotiation, wrong types, size limits, timeout, cancellation, concurrency, capability denial, quarantine, and redaction;
-- Room migrations, credential loss, backup/restore reauthentication, idempotent import, background refresh, and restart session cleanup;
-- cross-origin and redirect denial, auth-header stripping, signer mismatch, and unavailable capabilities;
-- installed reference discovery, binding, handshake, large PFD result, cancellation, Binder death, process crash, and incompatible versions;
-- phone and TV discovery, full-row/DPad interaction, trust detail, enable/disable, reauthorization, feature-toggle restoration, and error states;
-- M3U, EPG, Xtream, normal playback, and DLNA regression paths.
-
-The platform is not ready to leave the developer switch until an independently installed compatible APK can be safely discovered and enabled, all exposed hooks have host-owned importers, and plugin crash, malicious requests, or credential failure cannot corrupt host data or terminate the host process.
+The platform is ready only when an independently installed compatible APK can be safely discovered and enabled, every exposed hook has a host-owned importer, and plugin crash, malicious requests, or credential failure cannot corrupt host data or terminate the host process.

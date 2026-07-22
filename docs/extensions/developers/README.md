@@ -1,102 +1,151 @@
-# Android extension developer guide
+# Build an Android extension
 
 [简体中文](README.zh-CN.md)
 
-This guide describes the implemented local Android extension contract. External extensions are a developer feature today: users install an APK with the Android package installer, enable **External Extensions**, inspect its identity and requested capabilities, and explicitly trust it.
+This guide is for people building an extension APK for M3UAndroid. External extensions are still a developer feature, so the contract may change before the feature is opened to all users.
 
-## Execution and trust model
+## The short version
 
-An extension runs in its own APK process. The host discovers an exported bound service with action `com.m3u.extension.action.BIND_EXTENSION`; it never loads extension bytecode with `DexClassLoader`. The service must require `com.m3u.permission.BIND_EXTENSION_HOST`.
+An extension is a separate Android app with one bound service. M3UAndroid finds that service, asks for a manifest, and invokes the hooks declared in the manifest.
 
-On first enable, the host shows the package, extension name, developer metadata, semantic version, requested capabilities, and signing-certificate SHA-256. The accepted certificate is pinned. A later certificate mismatch disables the extension until the user explicitly trusts it again.
+The important boundary is simple:
 
-A same-signer upgrade does not silently expand authority. Previously granted capabilities are intersected with the new manifest. Adding a required capability disables automatic restoration and requires a new user confirmation; adding an optional capability leaves it ungranted until the user reauthorizes the extension.
-
-The authorization confirmation lists every capability identifier, whether it is required or optional, its current grant state, and the extension-provided reason. Reauthorization rechecks the pinned signer and stable extension identity, then updates grants without replacing or loading plugin code in the host process.
-
-The host and extension exchange a small AIDL control plane and JSON through `ParcelFileDescriptor`. The stream carries a `SerializedExtensionEnvelope` or `SerializedExtensionResult`, avoiding Binder's transaction-size ceiling. Handshake, manifest, invoke, cancel, and health are transport operations.
-
-## Modules and a minimal service
-
-Use the contracts in `:extension:api` and the Android service base in `:extension:sdk-android`. `:testing:extension-reference` is the executable reference implementation and conformance fixture.
-
-Declare the service as follows:
-
-```xml
-<service
-    android:name=".MyExtensionService"
-    android:exported="true"
-    android:permission="com.m3u.permission.BIND_EXTENSION_HOST">
-    <intent-filter>
-        <action android:name="com.m3u.extension.action.BIND_EXTENSION" />
-    </intent-filter>
-</service>
+```text
+your APK                         M3UAndroid
+--------                         ----------
+declare hooks  -- typed JSON --> validate result
+return data    <-- request ----  save data / build playback
+use handles    -- broker call -> hold credentials / perform network I/O
 ```
 
-Subclass `ExtensionService` and provide an `ExtensionTransport`. The transport exposes the manifest and handles typed envelopes. Override the SDK service's broker-aware `invoke` only when a hook needs host-mediated networking.
+Your APK never runs inside the M3UAndroid process. It does not receive Room entities, player objects, passwords, or tokens. It returns plain contract data; the host decides what is safe to import.
 
-## Manifest and compatibility
+## Start from the reference extension
 
-An `ExtensionManifest` contains:
+The fastest working example is [`:testing:extension-reference`](../../../testing/extension-reference). It already contains a valid service, manifest, typed hook dispatch, cancellation handling, settings, search, metadata, EPG, and a background task.
 
-- a lowercase stable `ExtensionId`;
-- display name and semantic extension version;
-- supported extension API range;
-- one declaration per hook, including its schema version and required capabilities;
-- required or optional capability requests with a user-facing reason;
-- optional declarative settings schema and diagnostic metadata such as `developer`.
+The SDK is not published as a stable Maven artifact yet. For now, build the reference extension inside this checkout or include the extension modules from the same source revision. A public artifact and compatibility policy are required before third-party distribution is considered stable.
 
-The current extension API is `1.0`, and the implemented hook schemas are version `1`. A different API major is rejected. Within the same major, the host negotiates each declared hook schema. Unknown required capabilities or unsupported required hook schemas make the extension incompatible. JSON decoders ignore unknown optional fields, but extensions must not depend on the host preserving them.
+To create a minimal extension:
 
-Use the published `HookSpec<Request, Result>` serializers. Do not cast arbitrary payload objects or define an alternative wire representation.
+1. Depend on `:extension:sdk-android` while developing in this repository. It exposes the API and transport types used by the service.
+2. Add an exported service to `AndroidManifest.xml`:
 
-## Hooks
+   ```xml
+   <service
+       android:name=".MyExtensionService"
+       android:exported="true"
+       android:permission="com.m3u.permission.BIND_EXTENSION_HOST">
+       <intent-filter>
+           <action android:name="com.m3u.extension.action.BIND_EXTENSION" />
+       </intent-filter>
+   </service>
+   ```
 
-The typed catalog currently defines:
+3. Extend `ExtensionService` and provide an `ExtensionTransport`:
 
-- subscription provider discovery, validation, content refresh, playback resolution, and playback-session close;
-- settings schema contribution;
-- EPG refresh;
-- channel metadata enrichment;
-- search provider query;
-- background task execution.
+   ```kotlin
+   class MyExtensionService : ExtensionService() {
+       override val transport: ExtensionTransport = MyExtensionTransport
+   }
+   ```
 
-Host integration is intentionally narrower than the catalog. Subscription and playback hooks have production host call sites for the built-in Emby/Jellyfin provider. External plugin lifecycle, transport, cancellation, health, and background task execution are connected. Search contributions are connected on the smartphone surface: an item is displayed only when its opaque `stableReference` resolves to an existing, non-hidden host channel. Provider refresh also invokes metadata and EPG contributors: metadata patches can update only host-approved title/category fields, while EPG results are validated and imported into isolated host-owned sources. These two importers currently run for generic provider playlists; integration with every legacy M3U/Xtream import path is still in progress. Settings contracts, persistence, invocation context, and declarative phone/TV renderers are connected. Both renderers support boolean, single-choice, text, number, and secret fields; the TV renderer is DPad-first and retains focus when a saved value refreshes the configuration.
+4. Give the transport an `ExtensionManifest` and implement only the hooks declared there.
+5. Install the APK with Android's package installer, enable **External Extensions** in M3UAndroid, inspect the certificate and requested permissions, then enable it.
 
-Never return a database entity, player object, `DataSource`, password, or token. Return declarative data and stable opaque references; the host owns validation, persistence, import, and playback construction.
+The host uses the service action for discovery. Do not request `QUERY_ALL_PACKAGES`, and do not expect the host to load your classes with `DexClassLoader`.
 
-## Capabilities and credentials
+## What goes in the manifest
 
-Capabilities are requested in the manifest and granted by host policy plus user approval. Declaring a capability does not grant it. A hook can run only with the capabilities declared for it and approved by the host.
+Think of `ExtensionManifest` as the extension's ID card and permission request:
 
-External extensions must not receive plaintext credentials. Credentials are represented by opaque handles. Network access goes through the host broker, which restricts requests to the account base origin or separately approved origins, strips extension-supplied authentication headers, injects host-held secrets, limits redirects, time, response size, and concurrency, and returns redacted data. Login capture rules may store a header or JSON-pointer value in the host vault and return only a handle.
+| Field | What to provide |
+| --- | --- |
+| `id` | A lowercase ID that never changes for this extension |
+| `displayName` | The name shown to users |
+| `extensionVersion` | Your semantic version |
+| `apiRange` | Host extension API versions you support |
+| `hooks` | Every hook you implement and its schema version |
+| `capabilities` | Required/optional permissions, each with a clear reason |
+| `settingsSchema` | Optional declarative settings |
+| `metadata["developer"]` | Developer name shown during authorization |
 
-Settings use qualified `section/field` keys. A `SECRET` field must not declare a plaintext default. The host encrypts its value with Android Keystore-backed AES-GCM storage and includes only its `CredentialHandle` in `ExtensionSettingsSnapshot`. Schema-version changes discard values in that section and delete its stored secrets. Plugins must treat missing values and handles as normal and apply manifest defaults only through the host-provided snapshot.
+The current API is `1.0`; current hook schemas are version `1`. A different API major is rejected. An unsupported required hook or unknown required capability makes the extension incompatible.
 
-The settings UI never reads a stored secret back into an input. It shows only a configured marker, accepts a replacement value, or lets the user clear the handle. Labels and descriptions come from the negotiated settings schema, so extensions should provide concise phone- and TV-readable copy for the requested locale.
+Use the published `HookSpec<Request, Result>` serializers. They are the wire contract. Do not invent another JSON shape or cast arbitrary payload objects.
 
-The host's **Clear data** operation removes the extension's settings, encrypted secret handles, and isolated EPG cache. It deliberately preserves host-owned subscriptions, channels, favorites, hidden state, and playback history. A diagnostic export contains only a host-defined identity/status whitelist and aggregate setting counts; manifest metadata, setting keys and values, invocation payloads, and broker traffic are excluded.
+## Choose a hook
 
-An extension that must read raw passwords or tokens, manage its own credential encryption, or bypass the broker is incompatible with this platform.
+| Goal | Hook family | Current host support |
+| --- | --- | --- |
+| Add a subscription provider | discover, validate, refresh | Built-in Emby/Jellyfin use the full path; external provider work is still being completed |
+| Resolve playback and close a server session | playback resolve/close | Production path exists for built-in providers |
+| Add settings | settings schema | Rendered on phone and TV |
+| Add search results | search provider | Connected on phone; results must point to an existing host channel |
+| Improve channel title/category | metadata enrichment | Connected during generic provider refresh |
+| Add programmes | EPG refresh | Connected during generic provider refresh |
+| Run scheduled work | background task | Connected with host quotas and cancellation |
 
-## Invocation rules
+“Contract exists” does not always mean “every old M3U/Xtream path calls it.” Check the last column before depending on a hook.
 
-- Treat invocation IDs as unique and propagate cancellation promptly.
-- Keep request and response data within the declared schema and host size limits.
-- Use extensible string values for reasons such as refresh or session close; tolerate values introduced by newer compatible hosts.
-- Make close, cleanup, refresh, and retry behavior idempotent.
-- Return the stable error envelope rather than leaking exceptions or secrets.
-- Do not assume invocations are serial; the host applies bounded concurrency and timeouts.
+Search, metadata, and EPG results use a `stableReference`. This is an opaque bridge back to data the host already owns. An unknown reference is ignored; it is never turned directly into a database row or playable item.
 
-## Development checklist
+## Permissions, upgrades, and reauthorization
 
-Before distributing a test APK:
+Declaring a capability only asks for it. The hook can use it only after host policy and the user grant it.
 
-1. Verify discovery, handshake, manifest decoding, invoke, cancellation, and health against the reference/conformance fixtures.
-2. Test an incompatible API range and an unsupported hook schema.
-3. Test process death, Binder death, timeout, oversized output, and repeated failures.
-4. Confirm logs and errors contain no password, token, authorization header, or captured secret.
-5. Confirm every network origin and redirect is rejected unless host-approved.
-6. Install an upgraded APK and verify the same signer remains trusted; verify a different signer is disabled.
+On first enable, M3UAndroid shows the package, developer, version, signing-certificate SHA-256, and every requested capability with its reason. The accepted certificate is pinned.
 
-Do not market an APK as generally supported while the host feature remains behind the developer switch.
+For later upgrades:
+
+- same signer, no new capabilities: existing trust can be restored;
+- new optional capability: it stays ungranted until the user reauthorizes;
+- new required capability: automatic restore stops until the user reauthorizes;
+- different signer or changed extension ID: the extension is disabled and requires a new trust decision.
+
+Write permission reasons for users, not for the runtime. “Read programme data from your configured server” is useful; “needs `epg.read`” is not.
+
+## Credentials and network requests
+
+The host owns all secrets. Your extension receives an opaque `CredentialHandle`, never the underlying password or token.
+
+Network calls go through `HostNetworkBroker`. The broker:
+
+- allows only the account origin and separately approved origins;
+- removes authentication headers supplied by the extension;
+- injects a host-held secret by reference;
+- checks every redirect again;
+- limits time, response size, and concurrency;
+- can capture a login value from a header or JSON pointer and return only its handle.
+
+A plugin that must read a raw password/token, encrypt credentials itself, or bypass the broker is not compatible with this platform.
+
+## Settings
+
+Describe settings with `ExtensionSettingSchema`; do not build your own settings Activity for host configuration. Phone and TV support boolean, single-choice, text, number, and secret fields.
+
+Keys are scoped as `section/field`. A `SECRET` field cannot have a plaintext default. The host stores it with Android Keystore-backed encryption and gives hook calls only its handle. The UI shows “configured,” replace, and clear actions; it never fills an input with the saved secret.
+
+Changing a section's schema version clears that section's old values and secrets. Treat missing values as normal.
+
+## Write hooks that survive real failures
+
+- Treat invocation IDs as unique and stop work promptly on cancellation.
+- Make refresh, retry, close, and cleanup idempotent.
+- Expect concurrent calls; do not rely on global mutable request state.
+- Keep requests and results inside the declared schema and size limits.
+- Treat refresh/close reasons as open strings, not exhaustive enums.
+- Return the standard error envelope; never put credentials or response bodies in errors or logs.
+
+## Before sharing an APK
+
+Use the reference extension and conformance tests to verify discovery, handshake, manifest decoding, invocation, cancellation, and health. Also test:
+
+- incompatible API and hook versions;
+- process/Binder death, timeout, oversized output, and repeated failure;
+- denied origins and cross-origin redirects;
+- logs and diagnostics containing no password, token, auth header, or captured secret;
+- same-signer and different-signer upgrades;
+- phone and TV authorization, settings, disable, reauthorize, clear data, and diagnostics.
+
+Do not describe an APK as generally supported while external extensions remain behind the developer switch.
