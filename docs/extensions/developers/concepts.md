@@ -11,7 +11,7 @@ You only need four pieces to understand an M3UAndroid extension:
 
 ## The service is the entry point
 
-Declare one service in the extension APK:
+Declare one service in the extension APK's `AndroidManifest.xml`:
 
 ```xml
 <service
@@ -34,7 +34,7 @@ class ExampleExtensionService : ExtensionService() {
 
 Use [`ReferenceExtensionService.kt`](../../../testing/extension-reference/src/main/java/com/m3u/testing/extension/reference/ReferenceExtensionService.kt) as the complete executable example.
 
-## The manifest describes one stable extension
+## `ExtensionManifest` describes one stable extension
 
 `ExtensionManifest` is read before any hook runs.
 
@@ -82,7 +82,7 @@ Hook results are contributions, not direct database or player commands. For exam
 - search returns stable references that the host resolves to existing channels;
 - metadata returns a narrow patch that the host validates;
 - EPG returns programme descriptions that the host imports;
-- playback returns a source description that the host checks before use.
+- playback returns a source description; this product path is currently connected only for the built-in provider.
 
 This keeps extension code independent from M3UAndroid's Room entities and UI models. Check [Choose a hook](hooks.md) before relying on a contribution path; several are still partial in the developer preview.
 
@@ -102,7 +102,7 @@ A manifest capability request contains:
 - a reason written for the person enabling the extension;
 - whether the capability is required.
 
-The host may grant a requested capability, leave an optional one ungranted, or reject an incompatible extension. A hook runs only with its granted capabilities. A later APK that adds capabilities may require reauthorization.
+The host may grant a requested capability, leave an optional one ungranted, or reject an incompatible extension. The preview runtime checks the capabilities listed by the extension in `requiredCapabilities`; a host-defined minimum for every hook has not been frozen yet. A later APK that adds capabilities may require reauthorization.
 
 ## Network access and credentials
 

@@ -18,7 +18,7 @@ This page separates the contract that exists in `:extension:api` from the host p
 | `settings.schema.contribute` | Add declarative settings sections | **Preview usable** on phone and TV |
 | `search.provider.query` | Return channel references for a search | **Partial**; smartphone only |
 | `metadata.channel.enrich` | Suggest channel title/category changes | **Partial**; generic provider refresh only |
-| `epg.content.refresh` | Return programmes for existing channels | **Partial**; generic provider refresh only, failure replacement still being hardened |
+| `epg.content.refresh` | Return programmes for existing channels | **Partial**; generic provider refresh only |
 | `subscription.provider.discover` | Advertise subscription providers | **Partial**; discovery does not yet lead to a complete external subscription |
 | `subscription.provider.validate` | Validate login settings and create an account description | **Built-in only** |
 | `subscription.content.refresh` | Return a provider channel snapshot | **Built-in only** |
@@ -48,9 +48,9 @@ The current importer can apply approved title and category changes after a gener
 
 ## EPG
 
-`epg.content.refresh` receives host channel references and a time window. Return programmes whose `channelReference` came from the request and whose times fall inside the requested range.
+`epg.content.refresh` receives host channel references and a time window. Return programmes whose `channelReference` came from the request and whose time interval overlaps the requested window.
 
-The hook currently runs after a generic provider refresh. It does not run for every M3U/Xtream path. Production EPG use remains blocked until per-extension failure replacement is hardened.
+The hook currently runs after a generic provider refresh. It does not run for every M3U/Xtream path. A failed extension refresh now preserves its previous EPG, while a successful empty result clears only that extension's source.
 
 ## Subscription provider
 
@@ -60,13 +60,13 @@ The provider family is a five-hook lifecycle:
 discover -> validate -> refresh -> resolve playback -> close session
 ```
 
-The built-in Emby/Jellyfin extension completes this lifecycle. External APK support is not ready because pre-account login credentials, broker authorization, provider result validation, and end-to-end reference coverage are still being completed.
+The built-in Emby/Jellyfin extension completes this lifecycle. External APKs can advertise a descriptor for testing, but users cannot complete an external provider subscription yet.
 
 The reference APK declares only `subscription.provider.discover`. Its provider descriptor is an IPC fixture, not a subscribable provider.
 
 ## Background task
 
-`background.task.run` has typed requests, runtime policy, a Worker implementation, and transport-level cancellation coverage. No production code currently schedules that Worker, and the manifest has no public task schedule declaration. The hook remains unavailable until a host trigger and conformance tests are added.
+The contract and transport fixture for `background.task.run` exist, but M3UAndroid has no product action or schedule that invokes this hook. Treat it as unavailable.
 
 ## Contract source
 

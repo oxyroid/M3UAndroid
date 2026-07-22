@@ -10,19 +10,19 @@ This page is the current support matrix for the extension platform. Update it wh
 | --- | --- | --- |
 | Built-in Emby/Jellyfin validate, refresh, playback, and close | Strict mock-server device integration tests cover both kinds and repository persistence | Connected |
 | Generic provider Room model, encrypted credential, WorkManager refresh, open-session recovery | Data integration paths exist | Connected for built-in provider flow |
-| APK discovery, handshake, PFD payload, typed invocation, settings, and cancellation | Installed reference APK instrumentation fixture | Developer preview |
+| APK discovery, handshake, PFD payload, typed invocation, settings, and cancellation | Fixture and instrumentation case exist; a reliable clean-device pass is still missing | Developer preview |
 | Phone plugin authorization, enable/disable, settings, reauthorization, diagnostics, and clear data | Product UI exists; manual device path works | Developer preview; UI automation incomplete |
 | TV plugin management and declarative settings | Product UI exists | Developer preview; DPad automation absent |
 | Declarative extension settings | Phone, TV, repository, encrypted secret storage, reference fixture | Most complete external hook |
 | Smartphone extension search | Maps stable references to existing visible channels | Partial |
-| Metadata and EPG contributions | Run after generic provider refresh | Partial; not connected to M3U/Xtream ingestion |
+| Metadata and EPG contributions | Run after generic provider refresh; EPG replacement is isolated per successful extension | Partial; not connected to M3U/Xtream ingestion |
 | External provider discovery | Smartphone can show returned descriptors | Partial; reference provider cannot subscribe |
 | External provider validate/refresh/playback/close | No complete reference APK or broker/login path | Not connected |
 | Dynamic provider subscription on TV | No provider list or form state | Not connected |
 | Provider reauthentication after restore/key loss | State exists, but no user repair flow | Not connected |
 | Background task | Contract, Worker, and direct transport test exist; nothing schedules the Worker | Contract only |
 
-The smartphone Emby/Jellyfin selector is manually usable after the full-width row fix. Its UIAutomator test currently ends with an instrumentation process crash, so it is not yet reliable release evidence.
+The smartphone Emby/Jellyfin selector is manually usable after the full-width row fix. The UIAutomator case has not completed reliably and is not release evidence yet.
 
 ## Release blockers
 
@@ -44,7 +44,6 @@ The smartphone Emby/Jellyfin selector is manually usable after the full-width ro
 
 ### 3. Make every importer preserve ownership and valid data
 
-- Replace EPG per successful extension; one plugin failure must preserve all previously valid sources.
 - Validate contributor/provider identity, kind, remote IDs, result counts, field lengths, maps, URLs, schemes, headers, and playback sessions.
 - Isolate provider discovery failures so one plugin cannot hide built-in providers.
 - Persist or remove currently unused sync metadata, diagnostics, expiry, continuation, and retry fields before wire freeze.

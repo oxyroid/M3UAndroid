@@ -34,7 +34,7 @@ In M3UAndroid on the device:
 3. Open **Settings → Playlist management** and move to the **Extension plugins** page.
 4. Refresh the list if needed.
 
-You should see a plugin card named **Reference Provider**, with its service and package identity underneath.
+You should see a plugin card named **Reference Provider**. Its state, service name, and certificate appear below the title.
 
 ## 3. Enable the extension
 
@@ -67,7 +67,7 @@ Until the SDK is published, keep your first extension in the same checkout:
 1. Create an Android application module modeled on `:testing:extension-reference`.
 2. Depend on `project(":extension:sdk-android")`.
 3. Give the module its own `applicationId` and service class.
-4. Give the manifest a stable extension ID, display name, developer name, and semantic version.
+4. Give the `ExtensionManifest` a stable extension ID, display name, developer name, and semantic version.
 5. Start with one hook and declare only the capabilities it uses.
 
 Read [Understand the extension model](concepts.md) before changing the service or manifest.

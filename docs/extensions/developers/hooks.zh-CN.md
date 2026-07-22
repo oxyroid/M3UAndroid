@@ -18,7 +18,7 @@
 | `settings.schema.contribute` | 增加声明式设置分组 | 手机和 TV **预览可用** |
 | `search.provider.query` | 为搜索返回频道引用 | **部分接通**，仅手机端 |
 | `metadata.channel.enrich` | 建议修改频道标题或分类 | **部分接通**，仅通用 provider 刷新链路 |
-| `epg.content.refresh` | 为已有频道返回节目 | **部分接通**，仅通用 provider 刷新链路，失败替换逻辑仍在加固 |
+| `epg.content.refresh` | 为已有频道返回节目 | **部分接通**，仅通用 provider 刷新链路 |
 | `subscription.provider.discover` | 声明可用的订阅 provider | **部分接通**，发现后还不能完成外部订阅 |
 | `subscription.provider.validate` | 校验登录设置并返回账号描述 | **仅内置插件** |
 | `subscription.content.refresh` | 返回 provider 的频道快照 | **仅内置插件** |
@@ -48,9 +48,9 @@
 
 ## EPG
 
-`epg.content.refresh` 接收宿主频道引用和时间范围。返回节目的 `channelReference` 必须来自本次请求，节目时间也应位于请求范围内。
+`epg.content.refresh` 接收宿主频道引用和时间范围。返回节目的 `channelReference` 必须来自本次请求，节目时间段必须与请求范围有交集。
 
-当前 Hook 只在通用 provider 刷新后运行，并没有覆盖所有 M3U/Xtream 链路。在按插件隔离失败和替换旧数据的逻辑加固完成前，它还不能承担生产 EPG 链路。
+当前 Hook 只在通用 provider 刷新后运行，并没有覆盖所有 M3U/Xtream 链路。插件刷新失败时会保留它此前的 EPG；成功返回空结果时，只清除该插件自己的 source。
 
 ## Subscription provider
 
@@ -60,13 +60,13 @@ Provider 由五个 Hook 组成完整生命周期：
 discover -> validate -> refresh -> resolve playback -> close session
 ```
 
-内置 Emby/Jellyfin 插件已经完成这条链路。外部 APK 仍缺少账号创建前的登录凭据链路、完整 broker 授权、provider 结果校验和端到端参考实现，因此目前不能用于第三方产品。
+内置 Emby/Jellyfin 插件已经完成这条链路。外部 APK 可以返回 descriptor 用于测试，但用户目前还不能完成外部 provider 订阅。
 
 参考 APK 只声明了 `subscription.provider.discover`。它返回的 provider descriptor 用于验证 IPC，不是可完成订阅的 provider。
 
 ## 后台任务
 
-`background.task.run` 已有类型化请求、runtime 策略、Worker 实现和传输层取消测试。但生产代码没有调度该 Worker，manifest 也没有公开的任务调度声明。在增加宿主触发入口和一致性测试前，这个 Hook 仍不可用。
+`background.task.run` 已有契约和 transport fixture，但 M3UAndroid 中没有调用它的产品操作或调度入口，因此目前不可用。
 
 ## 契约源码
 

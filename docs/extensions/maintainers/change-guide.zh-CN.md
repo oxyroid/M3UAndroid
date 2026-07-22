@@ -21,7 +21,7 @@
 
 兼容性新增字段使用带默认值的可选序列化字段。旧实现无法安全解码或回答新格式时，提高该 Hook 的 schema version。只有平台整体不兼容时才提高 extension API major。
 
-Refresh、close 等 reason 使用经过格式校验的开放字符串。未知可选 JSON 字段应忽略；API major 不兼容、不支持必要 Hook schema、未知必要 capability 时应拒绝。
+Refresh、close 等 reason 使用经过格式校验的开放字符串。未知可选 JSON 字段应忽略；API major 不兼容、声明的 Hook schema 不受支持、存在未知必要 capability 时应拒绝。
 
 冻结 wire 字段前先找到对应的宿主消费端。Continuation、diagnostics、expiry、retry delay、sync metadata 等字段必须具备经过测试的行为，否则不要进入公开 1.0 契约。
 

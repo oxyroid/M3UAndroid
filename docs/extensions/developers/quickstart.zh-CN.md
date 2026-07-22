@@ -34,7 +34,7 @@ JAVA_HOME=/path/to/jdk-17 ./gradlew \
 3. 打开 **设置 → 订阅管理**，切换到 **扩展插件** 页面。
 4. 如列表没有立即更新，点击刷新。
 
-此时应能看到名为 **Reference Provider** 的插件卡片，下方显示 service 与 package 身份。
+此时应看到名为 **Reference Provider** 的插件卡片，标题下方显示状态、service 名称和证书。
 
 ## 3. 启用插件
 
@@ -67,7 +67,7 @@ JAVA_HOME=/path/to/jdk-17 ./gradlew :testing:extension-reference:installDebug
 1. 参考 `:testing:extension-reference` 创建 Android application 模块。
 2. 添加 `project(":extension:sdk-android")` 依赖。
 3. 使用自己的 `applicationId` 和 service 类。
-4. 在 manifest 中填写稳定的插件 ID、展示名称、开发者名称和语义化版本。
+4. 在 `ExtensionManifest` 中填写稳定的插件 ID、展示名称、开发者名称和语义化版本。
 5. 先实现一个 Hook，并且只声明它真正需要的能力。
 
 修改 service 或 manifest 前，请先阅读 [理解插件模型](concepts.zh-CN.md)。

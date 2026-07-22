@@ -10,19 +10,19 @@
 | --- | --- | --- |
 | 内置 Emby/Jellyfin validate、refresh、playback 和 close | 严格 mock server 设备集成测试覆盖两种 kind 与 repository 持久化 | 已接通 |
 | 通用 provider Room model、加密凭据、WorkManager 刷新、open-session 恢复 | 已有 data 集成链路 | 已接内置 provider 流程 |
-| APK 发现、handshake、PFD payload、类型化调用、设置和取消 | 独立安装参考 APK 的 instrumentation fixture | 开发者预览 |
+| APK 发现、handshake、PFD payload、类型化调用、设置和取消 | 已有 fixture 与 instrumentation 用例，但还缺少稳定的干净设备通过记录 | 开发者预览 |
 | 手机插件授权、启停、设置、重新授权、诊断和清除数据 | 产品 UI 已有，手工设备链路可用 | 开发者预览，UI 自动化不完整 |
 | TV 插件管理与声明式设置 | 产品 UI 已有 | 开发者预览，没有 DPad 自动化 |
 | 声明式插件设置 | 手机、TV、repository、加密密码存储和参考 fixture | 外部 Hook 中最完整 |
 | 手机端插件搜索 | 把 stable reference 映射到已有可见频道 | 部分接通 |
-| 元数据与 EPG 贡献 | 通用 provider 刷新后运行 | 部分接通，未覆盖 M3U/Xtream 导入 |
+| 元数据与 EPG 贡献 | 通用 provider 刷新后运行；EPG 只替换调用成功的插件数据 | 部分接通，未覆盖 M3U/Xtream 导入 |
 | 外部 provider discovery | 手机能展示返回的 descriptor | 部分接通，参考 provider 无法订阅 |
 | 外部 provider validate/refresh/playback/close | 没有完整参考 APK，也没有可用 broker/login 链路 | 未接通 |
 | TV 动态 provider 订阅 | 没有 provider 列表或表单 state | 未接通 |
 | 恢复或密钥丢失后的 provider 重新认证 | 已有状态字段，但没有用户修复流程 | 未接通 |
 | 后台任务 | 已有契约、Worker 和直接 transport 测试，但没有代码调度 Worker | 仅有契约 |
 
-手机端 Emby/Jellyfin 选择器在全宽行修复后可以手工操作。对应 UIAutomator 用例目前会因 instrumentation 进程崩溃而结束，因此还不能作为稳定发布证据。
+手机端 Emby/Jellyfin 选择器在全宽行修复后可以手工操作。UIAutomator 用例尚不能稳定完成，因此不能作为发布证据。
 
 ## 发布阻塞项
 
@@ -44,7 +44,6 @@
 
 ### 3. 让每个 importer 保护所有权与有效旧数据
 
-- 按调用成功的 extension 替换 EPG；一个插件失败时，所有此前有效 source 都必须保留。
 - 校验贡献者/provider 身份、kind、remote ID、结果数量、字段长度、map、URL、scheme、header 和播放 session。
 - 隔离 provider discovery 失败，单个插件不能让内置 provider 一起消失。
 - Wire 冻结前，对当前未使用的 sync metadata、diagnostics、expiry、continuation 和 retry 字段选择“持久化/消费”或“移除”。

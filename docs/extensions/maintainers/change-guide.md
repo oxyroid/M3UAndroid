@@ -21,7 +21,7 @@ If steps 6 and 7 are absent, mark the hook as contract-only rather than connecte
 
 Use an optional serialized field with a default for a compatible addition. Change the hook schema version when an old implementation cannot safely decode or answer the new shape. Change the extension API major only for a platform-wide break.
 
-Keep refresh, close, and similar reason values as validated open strings. Ignore unknown optional JSON fields. Reject an incompatible API major, an unsupported required hook schema, or an unknown required capability.
+Keep refresh, close, and similar reason values as validated open strings. Ignore unknown optional JSON fields. Reject an incompatible API major, an unsupported declared hook schema, or an unknown required capability.
 
 Before freezing a wire field, identify its host consumer. A field such as continuation, diagnostics, expiry, retry delay, or sync metadata should either have tested behavior or stay out of the public 1.0 contract.
 

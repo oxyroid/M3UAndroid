@@ -11,7 +11,7 @@
 
 ## Service 是插件入口
 
-在插件 APK 中声明一个 service：
+在插件 APK 的 `AndroidManifest.xml` 中声明一个 service：
 
 ```xml
 <service
@@ -34,7 +34,7 @@ class ExampleExtensionService : ExtensionService() {
 
 完整可运行写法请参考 [`ReferenceExtensionService.kt`](../../../testing/extension-reference/src/main/java/com/m3u/testing/extension/reference/ReferenceExtensionService.kt)。
 
-## Manifest 描述一个稳定的插件
+## `ExtensionManifest` 描述一个稳定的插件
 
 宿主会在调用任何 Hook 之前读取 `ExtensionManifest`。
 
@@ -82,7 +82,7 @@ Hook 返回的是“贡献结果”，不是直接操作数据库或播放器的
 - 搜索返回 stable reference，由宿主映射到已有频道；
 - 元数据返回范围受限的 patch，由宿主校验；
 - EPG 返回节目信息，由宿主导入；
-- 播放 Hook 返回播放源描述，由宿主检查后使用。
+- 播放 Hook 返回播放源描述；当前只有内置 provider 接通了这条产品链路。
 
 因此插件无需依赖 M3UAndroid 的 Room 实体或 UI model。开发前请查看 [选择 Hook](hooks.zh-CN.md)；当前预览版本仍有多条贡献链路没有完整接通。
 
@@ -102,7 +102,7 @@ Manifest 中的每项 capability 申请包括：
 - 写给启用插件的用户看的申请理由；
 - 该能力是否为必要能力。
 
-宿主可以授予能力、让可选能力保持未授予，或拒绝不兼容插件。Hook 只能使用已经授予的能力。后续 APK 新增能力时，用户可能需要重新授权。
+宿主可以授予能力、让可选能力保持未授予，或拒绝不兼容插件。预览版 runtime 会检查插件在 `requiredCapabilities` 中列出的能力；每个 Hook 的宿主最低能力尚未冻结。后续 APK 新增能力时，用户可能需要重新授权。
 
 ## 网络与凭据
 

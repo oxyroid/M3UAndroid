@@ -22,7 +22,7 @@ external APK -> Android transport -----/         |
                                         Room / UI / player
 ```
 
-Emby and Jellyfin are a **built-in extension**. Their adapter is registered directly by the host and runs in the host process. An external extension is a separately installed APK reached through Android IPC. Transport changes how a call crosses the boundary; the hook meaning stays the same.
+Emby/Jellyfin support is implemented by one **built-in extension**. Its adapter is registered directly by the host and runs in the host process. An external extension is a separately installed APK reached through Android IPC. Transport changes how a call crosses the boundary; the hook meaning stays the same.
 
 ## Vocabulary
 
@@ -30,8 +30,8 @@ Emby and Jellyfin are a **built-in extension**. Their adapter is registered dire
 | --- | --- |
 | Extension manifest | Stable identity, version range, hooks, capability requests, settings, and diagnostics metadata |
 | Hook spec | One typed request/result pair with an independent schema version |
-| Catalog | The enabled implementations available for a hook |
-| Runtime | Negotiation, serialization, invocation limits, cancellation, health, and failure tracking |
+| Catalog | Registered implementations that declare support for a hook |
+| Runtime | API/schema compatibility validation, serialization, invocation limits, cancellation, health, and failure tracking |
 | Transport | Built-in call adapter or Android process-boundary adapter |
 | Importer/renderer | Host code that validates and applies a returned contribution |
 
@@ -40,11 +40,11 @@ Emby and Jellyfin are a **built-in extension**. Their adapter is registered dire
 | Module | Owns |
 | --- | --- |
 | `:extension:api` | Android-free serializable contracts, manifests, hook specs, settings, errors, credential and broker types |
-| `:extension:runtime` | Catalog, registration, API/schema negotiation, invocation policy, concurrency, cancellation, and health |
+| `:extension:runtime` | Catalog, registration, API/schema compatibility validation, invocation policy, concurrency, cancellation, and health |
 | `:extension:transport-android` | APK discovery, explicit service binding, AIDL, PFD payloads, package identity, and trust persistence |
 | `:extension:sdk-android` | APK-side `ExtensionService` and host bridge adapter |
 | `data` | Built-in registration, plugin lifecycle repository, vaults, broker, workers, Room, and host importers |
-| phone and TV apps | Preview switch, authorization, management, settings, and provider presentation |
+| phone and TV apps | Preview switch, plugin authorization, management, and settings; smartphone currently owns the dynamic provider form |
 | `:testing:extension-reference` | Installed APK fixture used to exercise the external boundary |
 
 `:extension:api` stays Kotlin Multiplatform-compatible. Android discovery, Binder, Keystore, WorkManager, and Room remain in Android-facing modules.
@@ -52,7 +52,7 @@ Emby and Jellyfin are a **built-in extension**. Their adapter is registered dire
 ## One invocation
 
 1. Host code selects a `HookSpec<Request, Result>` and creates a typed request.
-2. `ExtensionCatalog` selects enabled implementations with a compatible hook schema.
+2. Host code queries `ExtensionCatalog` and selects registered implementations; the runtime rejects disabled, unhealthy, or incompatible entries.
 3. `CapabilityPolicy` supplies the currently granted manifest capabilities.
 4. `InvocationPolicy` applies request/result size, logical timeout, and per-extension concurrency limits.
 5. The built-in adapter or Android transport invokes the extension.
@@ -63,7 +63,7 @@ The runtime currently enforces the capabilities named by each extension's hook d
 
 ## Built-in extensions
 
-`EmbyCompatibleProvider` publishes two provider descriptors, Emby and Jellyfin, from one built-in extension. It implements the five provider hooks and uses the same contract models as an external extension. Built-in code can use host services through adapters, but it still returns public contract results rather than Room entities or player objects.
+`EmbyCompatibleProvider` publishes one **Emby Compatible** descriptor whose supported kinds are Emby, Jellyfin, and automatic detection. It implements the five provider hooks and uses the same contract models as an external extension. Built-in code can use host services through adapters, but it still returns public contract results rather than Room entities or player objects.
 
 This is the reference path for provider semantics, not proof that the external provider lifecycle is complete.
 
@@ -79,7 +79,7 @@ enabled -> repeated failures -> unhealthy
 identity change -> new trust decision
 ```
 
-The runtime states are `ENABLED`, `DISABLED`, `INCOMPATIBLE`, and `UNHEALTHY`.
+The platform-visible extension states are `ENABLED`, `DISABLED`, `INCOMPATIBLE`, and `UNHEALTHY`.
 
 The present trust implementation pins the inspected signer for a package/service. Grants, settings, and provider ownership are not yet consistently keyed by the complete package/service/certificate identity; the status page tracks this as a release blocker.
 
