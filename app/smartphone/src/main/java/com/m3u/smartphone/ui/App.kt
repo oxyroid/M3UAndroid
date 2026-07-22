@@ -35,10 +35,12 @@ import androidx.compose.material3.TopSearchBar
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -54,6 +56,7 @@ import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
 import com.m3u.core.foundation.architecture.preferences.preferenceOf
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.tv.model.RemoteDirection
+import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.business.channel.PlayerActivity
 import com.m3u.smartphone.ui.business.playlist.components.ChannelGallery
 import com.m3u.smartphone.ui.common.AppNavHost
@@ -76,6 +79,7 @@ fun App(
     AppImpl(
         navController = navController,
         channels = viewModel.channels,
+        onSearchQuery = { query -> viewModel.searchQuery.value = query },
         isRemoteControlSheetVisible = viewModel.isConnectSheetVisible,
         remoteControlSheetValue = viewModel.remoteControlSheetValue,
         openRemoteControlSheet = { viewModel.isConnectSheetVisible = true },
@@ -95,6 +99,7 @@ fun App(
 private fun AppImpl(
     navController: NavHostController,
     channels: Flow<PagingData<ChannelWithProgramme>>,
+    onSearchQuery: (String) -> Unit,
     isRemoteControlSheetVisible: Boolean,
     remoteControlSheetValue: RemoteControlSheetValue,
     openRemoteControlSheet: () -> Unit,
@@ -171,12 +176,15 @@ private fun AppImpl(
             val coroutineScope = rememberCoroutineScope()
             val searchBarState = rememberSearchBarState()
             val textFieldState = rememberTextFieldState()
+            LaunchedEffect(textFieldState) {
+                snapshotFlow { textFieldState.text.toString() }.collect(onSearchQuery)
+            }
             val inputField = @Composable {
                 SearchBarDefaults.InputField(
                     searchBarState = searchBarState,
                     textFieldState = textFieldState,
                     onSearch = { coroutineScope.launch { searchBarState.animateToCollapsed() } },
-                    placeholder = { Text("Search...") },
+                    placeholder = { Text(stringResource(string.ui_search_placeholder)) },
                     leadingIcon = {
                         if (searchBarState.currentValue == SearchBarValue.Expanded) {
                             IconButton(
@@ -184,7 +192,7 @@ private fun AppImpl(
                             ) {
                                 Icon(
                                     Icons.AutoMirrored.Default.ArrowBack,
-                                    contentDescription = "Back"
+                                    contentDescription = stringResource(string.ui_cd_top_bar_on_back_pressed)
                                 )
                             }
                         } else {

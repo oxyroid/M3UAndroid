@@ -61,6 +61,9 @@ internal class ChannelRepositoryImpl @Inject constructor(
 
     override suspend fun getByPlaylistUrl(playlistUrl: String): List<Channel> = channelDao.getByPlaylistUrl(playlistUrl)
 
+    override suspend fun getByRelationIds(relationIds: List<String>): List<Channel> =
+        if (relationIds.isEmpty()) emptyList() else channelDao.getByRelationIds(relationIds)
+
     override suspend fun favouriteOrUnfavourite(id: Int) {
         val current = channelDao.get(id)?.favourite ?: return
         channelDao.favouriteOrUnfavourite(id, !current)

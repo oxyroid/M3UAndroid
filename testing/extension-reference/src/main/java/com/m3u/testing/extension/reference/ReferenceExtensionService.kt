@@ -90,18 +90,28 @@ private object ReferenceTransport : ExtensionTransport {
                     )
                 )
             )
-            HostHookSpecs.SearchProvider.hook -> json.encodeToJsonElement(
-                HostHookSpecs.SearchProvider.responseSerializer,
-                SearchProviderResult(
-                    items = listOf(
-                        SearchProviderItem(
-                            stableReference = "reference://large-result",
-                            title = "Large reference result",
-                            subtitle = "x".repeat(LARGE_RESULT_SIZE),
+            HostHookSpecs.SearchProvider.hook -> {
+                val input = json.decodeFromJsonElement(
+                    HostHookSpecs.SearchProvider.requestSerializer,
+                    request.payload,
+                )
+                json.encodeToJsonElement(
+                    HostHookSpecs.SearchProvider.responseSerializer,
+                    SearchProviderResult(
+                        items = listOf(
+                            SearchProviderItem(
+                                stableReference = input.query,
+                                title = "Reference result for ${input.query}",
+                                subtitle = if (input.query == "large") {
+                                    "x".repeat(LARGE_RESULT_SIZE)
+                                } else {
+                                    "Reference extension search result"
+                                },
+                            )
                         )
                     )
                 )
-            )
+            }
             HostHookSpecs.BackgroundTask.hook -> {
                 val input = json.decodeFromJsonElement(
                     HostHookSpecs.BackgroundTask.requestSerializer,

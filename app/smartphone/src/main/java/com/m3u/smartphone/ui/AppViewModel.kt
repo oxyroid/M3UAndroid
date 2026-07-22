@@ -9,11 +9,15 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import androidx.paging.filter
+import androidx.paging.insertHeaderItem
 import androidx.paging.map as pagingMap
 import androidx.work.WorkManager
 import com.m3u.business.playlist.ChannelWithProgramme
 import com.m3u.data.api.TvApiDelegate
 import com.m3u.data.repository.channel.ChannelRepository
+import com.m3u.data.repository.extension.ExtensionContributionRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.tv.ConnectionToTvValue
 import com.m3u.data.repository.tv.TvRepository
@@ -22,29 +26,48 @@ import com.m3u.data.tv.model.TvInfo
 import com.m3u.data.worker.SubscriptionWorker
 import com.m3u.smartphone.ui.common.connect.RemoteControlSheetValue
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
+@OptIn(FlowPreview::class)
 class AppViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val channelRepository: ChannelRepository,
+    private val extensionContributionRepository: ExtensionContributionRepository,
     private val workManager: WorkManager,
     private val tvRepository: TvRepository,
     private val tvApi: TvApiDelegate,
 ) : ViewModel() {
-    val channels: Flow<PagingData<ChannelWithProgramme>> = snapshotFlow { searchQuery.value }
+    var searchQuery = mutableStateOf("")
+
+    private val searchQueries = snapshotFlow { searchQuery.value }
+        .map(String::trim)
+        .debounce(SEARCH_DEBOUNCE_MILLIS)
+        .distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "")
+
+    private val localSearchResults: Flow<PagingData<ChannelWithProgramme>> = searchQueries
         .flatMapLatest { query ->
             if (query.isBlank()) {
-                emptyFlow()
+                flowOf(PagingData.empty())
             } else {
                 Pager(
                     config = PagingConfig(
@@ -66,7 +89,33 @@ class AppViewModel @Inject constructor(
             }
         }
 
-    var searchQuery = mutableStateOf("")
+    private val extensionSearchResults = searchQueries
+        .mapLatest { query ->
+            if (query.isBlank()) return@mapLatest emptyList()
+            val contributions = extensionContributionRepository.search(query, SEARCH_RESULT_LIMIT)
+            val references = contributions.map { contribution -> contribution.item.stableReference }
+            val channelsByReference = channelRepository.getByRelationIds(references)
+                .groupBy { channel -> channel.relationId }
+            contributions.mapNotNull { contribution ->
+                channelsByReference[contribution.item.stableReference]?.firstOrNull()
+            }.distinctBy { channel -> channel.id }
+        }
+        .flowOn(Dispatchers.IO)
+
+    val channels: Flow<PagingData<ChannelWithProgramme>> = combine(
+        localSearchResults,
+        extensionSearchResults,
+    ) { local, promotedChannels ->
+        val promotedIds = promotedChannels.mapTo(mutableSetOf()) { channel -> channel.id }
+        promotedChannels.asReversed().fold(
+            local.filter { item -> item.channel.id !in promotedIds }
+        ) { paging, channel ->
+            paging.insertHeaderItem(
+                item = ChannelWithProgramme(channel = channel, programme = null)
+            )
+        }
+    }.cachedIn(viewModelScope)
+
     private fun refreshProgrammes() {
         viewModelScope.launch {
             val playlists = playlistRepository.getAllAutoRefresh()
@@ -133,5 +182,10 @@ class AppViewModel @Inject constructor(
     fun onRemoteDirection(direction: RemoteDirection) {
         timber.d("remote direction: $direction")
         viewModelScope.launch { tvApi.remoteDirection(direction.value) }
+    }
+
+    private companion object {
+        const val SEARCH_DEBOUNCE_MILLIS = 300L
+        const val SEARCH_RESULT_LIMIT = 50
     }
 }

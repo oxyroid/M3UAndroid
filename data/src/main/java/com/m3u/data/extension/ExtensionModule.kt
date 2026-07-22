@@ -6,15 +6,17 @@ import com.m3u.data.extension.emby.OkHttpEmbyCompatibleClient
 import com.m3u.data.extension.security.AndroidKeystoreCredentialVault
 import com.m3u.data.extension.security.CredentialVault
 import com.m3u.data.extension.security.HostNetworkBrokerImpl
-import com.m3u.extension.api.security.HostNetworkBroker
-import com.m3u.data.repository.provider.SubscriptionProviderRepository
-import com.m3u.data.repository.provider.SubscriptionProviderRepositoryImpl
+import com.m3u.data.repository.extension.ExtensionContributionRepository
+import com.m3u.data.repository.extension.ExtensionContributionRepositoryImpl
 import com.m3u.data.repository.plugin.ExtensionPluginRepository
 import com.m3u.data.repository.plugin.ExtensionPluginRepositoryImpl
+import com.m3u.data.repository.provider.SubscriptionProviderRepository
+import com.m3u.data.repository.provider.SubscriptionProviderRepositoryImpl
 import com.m3u.extension.api.ExtensionApiVersions
+import com.m3u.extension.api.security.HostNetworkBroker
+import com.m3u.extension.runtime.CapabilityPolicy
 import com.m3u.extension.runtime.ExtensionRegistrationResult
 import com.m3u.extension.runtime.ExtensionRuntime
-import com.m3u.extension.runtime.CapabilityPolicy
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -27,9 +29,16 @@ import javax.inject.Singleton
 internal abstract class ExtensionBindingsModule {
     @Binds
     @Singleton
+    abstract fun bindExtensionContributionRepository(
+        repository: ExtensionContributionRepositoryImpl,
+    ): ExtensionContributionRepository
+
+    @Binds
+    @Singleton
     abstract fun bindExtensionPluginRepository(
         repository: ExtensionPluginRepositoryImpl,
     ): ExtensionPluginRepository
+
     @Binds
     @Singleton
     abstract fun bindCredentialVault(

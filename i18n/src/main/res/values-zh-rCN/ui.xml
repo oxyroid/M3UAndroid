@@ -11,6 +11,7 @@
     <string name="tv_extensions_disable_developer_mode">停用开发者扩展</string>
     <string name="ui_error_unknown">未知错误</string>
     <string name="ui_cd_top_bar_on_back_pressed">返回</string>
+    <string name="ui_search_placeholder">搜索频道和提供方</string>
     <string name="ui_theme_card_left">你知道吗？</string>
     <string name="ui_theme_card_right">我们会记录您的**观看进度**，并在下次播放时恢复进度</string>
     <string name="ui_sort">排序</string>
