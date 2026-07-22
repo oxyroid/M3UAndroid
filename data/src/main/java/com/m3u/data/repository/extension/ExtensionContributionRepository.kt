@@ -17,7 +17,7 @@ interface ExtensionContributionRepository {
         channelReferences: List<String>,
         fromEpochMillis: Long,
         toEpochMillis: Long,
-    ): List<ExtensionEpgContribution>
+    ): List<ExtensionEpgRefreshContribution>
 }
 
 data class ExtensionSearchContribution(
@@ -30,7 +30,7 @@ data class ExtensionMetadataContribution(
     val patch: ChannelMetadataPatch,
 )
 
-data class ExtensionEpgContribution(
+data class ExtensionEpgRefreshContribution(
     val extensionId: ExtensionId,
-    val programme: ExtensionProgramme,
+    val programmes: List<ExtensionProgramme>,
 )

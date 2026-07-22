@@ -111,22 +111,25 @@ internal class ExtensionContributionRepositoryImpl @Inject constructor(
         channelReferences: List<String>,
         fromEpochMillis: Long,
         toEpochMillis: Long,
-    ): List<ExtensionEpgContribution> {
+    ): List<ExtensionEpgRefreshContribution> {
         if (fromEpochMillis >= toEpochMillis) return emptyList()
         val acceptedReferences = channelReferences
             .asSequence()
             .filter(String::isNotBlank)
             .distinct()
-            .take(MAX_CHANNELS_PER_ENRICHMENT)
+            .take(MAX_CHANNELS_PER_ENRICHMENT + 1)
             .toList()
         if (acceptedReferences.isEmpty()) return emptyList()
+        if (acceptedReferences.size > MAX_CHANNELS_PER_ENRICHMENT) return emptyList()
         return supervisorScope {
             runtime.extensionsSupporting(HostHookSpecs.EpgRefresh.hook)
                 .filter { extension -> extension.state == ExtensionState.ENABLED }
                 .map { extension ->
-                    async {
+                    async<ExtensionEpgRefreshContribution?> {
                         try {
-                            acceptedReferences.chunked(CHANNEL_ENRICHMENT_BATCH_SIZE).flatMap { batch ->
+                            val programmes = mutableListOf<ExtensionProgramme>()
+                            var receivedProgrammeCount = 0
+                            for (batch in acceptedReferences.chunked(CHANNEL_ENRICHMENT_BATCH_SIZE)) {
                                 val batchReferences = batch.toSet()
                                 when (
                                     val outcome = runtime.invoke(
@@ -135,44 +138,55 @@ internal class ExtensionContributionRepositoryImpl @Inject constructor(
                                         EpgRefreshRequest(batch, fromEpochMillis, toEpochMillis),
                                     ).outcome
                                 ) {
-                                    is HookResult.Success -> outcome.payload.programmes
-                                        .asSequence()
-                                        .filter { programme ->
-                                            programme.isValidFor(
-                                                batchReferences,
-                                                fromEpochMillis,
-                                                toEpochMillis,
-                                            )
+                                    is HookResult.Success -> {
+                                        val returnedProgrammes = outcome.payload.programmes
+                                        val exceedsExtensionLimit = returnedProgrammes.size >
+                                            MAX_PROGRAMMES_PER_EXTENSION - receivedProgrammeCount
+                                        if (
+                                            returnedProgrammes.size > MAX_PROGRAMMES_PER_BATCH ||
+                                            exceedsExtensionLimit
+                                        ) {
+                                            return@async null
                                         }
-                                        .take(MAX_PROGRAMMES_PER_BATCH)
-                                        .map { programme ->
-                                            ExtensionEpgContribution(extension.manifest.id, programme)
-                                        }
-                                        .toList()
-                                    is HookResult.Failure -> emptyList()
+                                        receivedProgrammeCount += returnedProgrammes.size
+                                        programmes += returnedProgrammes
+                                            .asSequence()
+                                            .filter { programme ->
+                                                programme.isValidFor(
+                                                    batchReferences,
+                                                    fromEpochMillis,
+                                                    toEpochMillis,
+                                                )
+                                            }
+                                            .toList()
+                                    }
+                                    is HookResult.Failure -> return@async null
                                 }
                             }
+                            ExtensionEpgRefreshContribution(
+                                extensionId = extension.manifest.id,
+                                programmes = programmes
+                                    .distinctBy { programme ->
+                                        with(programme) {
+                                            listOf(
+                                                channelReference,
+                                                startEpochMillis.toString(),
+                                                endEpochMillis.toString(),
+                                                title,
+                                            )
+                                        }
+                                    }
+                                    .toList(),
+                            )
                         } catch (cancelled: CancellationException) {
                             throw cancelled
                         } catch (_: Exception) {
-                            emptyList()
+                            null
                         }
                     }
                 }
                 .awaitAll()
-                .flatten()
-                .distinctBy { contribution ->
-                    with(contribution.programme) {
-                        listOf(
-                            contribution.extensionId.value,
-                            channelReference,
-                            startEpochMillis.toString(),
-                            endEpochMillis.toString(),
-                            title,
-                        )
-                    }
-                }
-                .take(MAX_PROGRAMMES_TOTAL)
+                .filterNotNull()
         }
     }
 
@@ -200,6 +214,6 @@ internal class ExtensionContributionRepositoryImpl @Inject constructor(
         const val MAX_DISPLAY_LENGTH = 512
         const val MAX_DESCRIPTION_LENGTH = 16_384
         const val MAX_PROGRAMMES_PER_BATCH = 10_000
-        const val MAX_PROGRAMMES_TOTAL = 50_000
+        const val MAX_PROGRAMMES_PER_EXTENSION = 50_000
     }
 }

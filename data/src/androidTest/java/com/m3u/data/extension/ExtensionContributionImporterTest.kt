@@ -10,7 +10,7 @@ import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.ProviderCredentialEntity
 import com.m3u.data.extension.security.CredentialVault
-import com.m3u.data.repository.extension.ExtensionEpgContribution
+import com.m3u.data.repository.extension.ExtensionEpgRefreshContribution
 import com.m3u.data.repository.extension.ExtensionMetadataContribution
 import com.m3u.extension.api.ChannelMetadataPatch
 import com.m3u.extension.api.ExtensionId
@@ -107,22 +107,21 @@ class ExtensionContributionImporterTest {
         val count = importer.replaceExtensionEpg(
             PLAYLIST_URL,
             listOf(
-                ExtensionEpgContribution(
+                ExtensionEpgRefreshContribution(
                     EXTENSION_ID,
-                    ExtensionProgramme(
-                        channelReference = CHANNEL_REFERENCE,
-                        title = "Reference programme",
-                        startEpochMillis = 1_000,
-                        endEpochMillis = 2_000,
-                    ),
-                ),
-                ExtensionEpgContribution(
-                    EXTENSION_ID,
-                    ExtensionProgramme(
-                        channelReference = "unknown",
-                        title = "Injected programme",
-                        startEpochMillis = 1_000,
-                        endEpochMillis = 2_000,
+                    listOf(
+                        ExtensionProgramme(
+                            channelReference = CHANNEL_REFERENCE,
+                            title = "Reference programme",
+                            startEpochMillis = 1_000,
+                            endEpochMillis = 2_000,
+                        ),
+                        ExtensionProgramme(
+                            channelReference = "unknown",
+                            title = "Injected programme",
+                            startEpochMillis = 1_000,
+                            endEpochMillis = 2_000,
+                        ),
                     ),
                 ),
             ),
@@ -137,7 +136,10 @@ class ExtensionContributionImporterTest {
         assertEquals(CHANNEL_REFERENCE, programmes.single().channelId)
         assertEquals(extensionSource, programmes.single().epgUrl)
 
-        importer.replaceExtensionEpg(PLAYLIST_URL, emptyList())
+        importer.replaceExtensionEpg(
+            PLAYLIST_URL,
+            listOf(ExtensionEpgRefreshContribution(EXTENSION_ID, emptyList())),
+        )
 
         val cleanedPlaylist = database.playlistDao().get(PLAYLIST_URL)
         assertEquals(listOf(NORMAL_EPG_URL), cleanedPlaylist?.epgUrls)
@@ -147,18 +149,73 @@ class ExtensionContributionImporterTest {
     }
 
     @Test
+    fun epgRefreshOnlyReplacesSuccessfulExtensionAndEmptySuccessClearsItsOwner() = runBlocking {
+        val otherExtensionId = ExtensionId("com.m3u.other.provider")
+        importer.replaceExtensionEpg(
+            PLAYLIST_URL,
+            listOf(
+                ExtensionEpgRefreshContribution(
+                    EXTENSION_ID,
+                    listOf(ExtensionProgramme(CHANNEL_REFERENCE, "Reference old", 1_000, 2_000)),
+                ),
+                ExtensionEpgRefreshContribution(
+                    otherExtensionId,
+                    listOf(ExtensionProgramme(CHANNEL_REFERENCE, "Other old", 2_000, 3_000)),
+                ),
+            ),
+        )
+
+        importer.replaceExtensionEpg(PLAYLIST_URL, emptyList())
+        assertEquals(
+            setOf("Reference old", "Other old"),
+            database.programmeDao().observeAll().first()
+                .mapTo(mutableSetOf()) { programme -> programme.title },
+        )
+
+        importer.replaceExtensionEpg(
+            PLAYLIST_URL,
+            listOf(
+                ExtensionEpgRefreshContribution(
+                    otherExtensionId,
+                    listOf(ExtensionProgramme(CHANNEL_REFERENCE, "Other new", 3_000, 4_000)),
+                )
+            ),
+        )
+        assertEquals(
+            setOf("Reference old", "Other new"),
+            database.programmeDao().observeAll().first()
+                .mapTo(mutableSetOf()) { programme -> programme.title },
+        )
+
+        importer.replaceExtensionEpg(
+            PLAYLIST_URL,
+            listOf(ExtensionEpgRefreshContribution(EXTENSION_ID, emptyList())),
+        )
+
+        val playlist = database.playlistDao().get(PLAYLIST_URL)
+        val programmes = database.programmeDao().observeAll().first()
+        assertEquals(listOf("Other new"), programmes.map { programme -> programme.title })
+        assertFalse(playlist?.epgUrls.orEmpty().any { source ->
+            source.startsWith("m3u-extension-epg://${EXTENSION_ID.value}/")
+        })
+        assertTrue(playlist?.epgUrls.orEmpty().any { source ->
+            source.startsWith("m3u-extension-epg://${otherExtensionId.value}/")
+        })
+    }
+
+    @Test
     fun clearingOneExtensionEpgPreservesHostAndOtherExtensionSources() = runBlocking {
         val otherExtensionId = ExtensionId("com.m3u.other.provider")
         importer.replaceExtensionEpg(
             PLAYLIST_URL,
             listOf(
-                ExtensionEpgContribution(
+                ExtensionEpgRefreshContribution(
                     EXTENSION_ID,
-                    ExtensionProgramme(CHANNEL_REFERENCE, "Reference", 1_000, 2_000),
+                    listOf(ExtensionProgramme(CHANNEL_REFERENCE, "Reference", 1_000, 2_000)),
                 ),
-                ExtensionEpgContribution(
+                ExtensionEpgRefreshContribution(
                     otherExtensionId,
-                    ExtensionProgramme(CHANNEL_REFERENCE, "Other", 2_000, 3_000),
+                    listOf(ExtensionProgramme(CHANNEL_REFERENCE, "Other", 2_000, 3_000)),
                 ),
             ),
         )
