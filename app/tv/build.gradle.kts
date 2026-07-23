@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.com.android.application)
-    alias(libs.plugins.org.jetbrains.kotlin.android)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.com.google.dagger.hilt.android)
     alias(libs.plugins.com.google.devtools.ksp)
@@ -12,7 +11,7 @@ val m3uMockServerUrl = providers.gradleProperty("m3uMockServerUrl").orElse("http
 
 android {
     namespace = "com.m3u.tv"
-    compileSdk = 36
+    compileSdk = 37
     defaultConfig {
         applicationId = "com.m3u.tv"
         minSdk = 26
@@ -37,7 +36,6 @@ android {
             )
         }
     }
-    aaptOptions.cruncherEnabled = false
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -48,13 +46,6 @@ android {
     }
     packaging {
         resources.excludes += "META-INF/**"
-    }
-    applicationVariants.all {
-        outputs
-            .map { it as com.android.build.gradle.internal.api.ApkVariantOutputImpl }
-            .forEach { output ->
-                output.outputFileName = "tv-${versionName}.apk"
-            }
     }
 }
 

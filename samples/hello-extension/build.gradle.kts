@@ -1,11 +1,10 @@
 plugins {
     alias(libs.plugins.com.android.application)
-    alias(libs.plugins.org.jetbrains.kotlin.android)
 }
 
 android {
     namespace = "com.m3u.samples.hello.extension"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.m3u.samples.hello.extension"

@@ -13,6 +13,7 @@ import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -66,6 +67,7 @@ import kotlinx.coroutines.launch
 fun SettingRoute(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
+    onDetailVisibilityChanged: (Boolean) -> Unit = {},
     viewModel: SettingViewModel = hiltViewModel()
 ) {
     val controller = LocalSoftwareKeyboardController.current
@@ -172,6 +174,7 @@ fun SettingRoute(
             onUpdateExtensionSetting = { sectionId, fieldKey, value ->
                 viewModel.updateExtensionSetting(sectionId, fieldKey, value, localeTag)
             },
+            onDetailVisibilityChanged = onDetailVisibilityChanged,
             modifier = modifier.fillMaxSize(),
             contentPadding = contentPadding,
         )
@@ -232,6 +235,7 @@ private fun SettingScreen(
     onOpenExtensionSettings: (String) -> Unit,
     onCloseExtensionSettings: () -> Unit,
     onUpdateExtensionSetting: (String, String, String?) -> Unit,
+    onDetailVisibilityChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
 ) {
@@ -247,6 +251,13 @@ private fun SettingScreen(
 
     val navigator = rememberListDetailPaneScaffoldNavigator<SettingDestination>()
     val destination = navigator.currentDestination?.contentKey ?: SettingDestination.Default
+
+    LaunchedEffect(destination, onDetailVisibilityChanged) {
+        onDetailVisibilityChanged(destination != SettingDestination.Default)
+    }
+    DisposableEffect(onDetailVisibilityChanged) {
+        onDispose { onDetailVisibilityChanged(false) }
+    }
 
     EventHandler(Events.settingDestination) {
         navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, it)

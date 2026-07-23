@@ -20,9 +20,10 @@ auto-annotations = "1.1.1"
 auto-ksp = "1.2.0"
 glance = "1.1.1"
 google-accompanist = "0.37.3"
-google-dagger = "2.58" # 2.59 requires AGP9+
+google-dagger = "2.59.2"
 
 haze = "1.7.2"
+backdrop = "2.0.0"
 io-coil = "2.7.0"
 kotlinpoet = "2.2.0"
 kotlinx-serialization-json = "1.10.0"
@@ -41,9 +42,9 @@ squareup-retrofit2 = "3.0.0"
 squareup-leakcanary = "2.14"
 squareup-wire = "5.5.0"
 
-kotlin = "2.3.0"
-android-gradle-plugin = "8.9.3"
-kotlin-symbol-processor = "2.3.6"
+kotlin = "2.4.10"
+android-gradle-plugin = "9.1.1"
+kotlin-symbol-processor = "2.3.10"
 
 androidx-test-ext-junit = "1.3.0"
 androidx-test-core = "1.7.0"
@@ -51,7 +52,7 @@ androidx-test-runner = "1.7.0"
 espresso-core = "3.7.0"
 com-google-android-material = "1.13.0"
 androidx-test-uiautomator = "2.3.0"
-androidx-benchmark = "1.4.1"
+androidx-benchmark = "1.5.0-alpha07"
 androidx-graphics-shapes = "1.1.0"
 
 minabox = "1.10.0"
@@ -158,6 +159,7 @@ kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime",
 
 haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 haze-materials = { module = "dev.chrisbanes.haze:haze-materials", version.ref = "haze" }
+backdrop = { module = "io.github.kyant0:backdrop", version.ref = "backdrop" }
 io-coil-kt = { group = "io.coil-kt", name = "coil", version.ref = "io-coil" }
 io-coil-kt-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "io-coil" }
 
@@ -196,7 +198,6 @@ com-android-library = { id = "com.android.library", version.ref = "android-gradl
 com-android-test = { id = "com.android.test", version.ref = "android-gradle-plugin" }
 org-jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 org-jetbrains-kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
-org-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 org-jetbrains-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 androidx-baselineprofile = { id = "androidx.baselineprofile", version.ref = "androidx-benchmark" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.com.android.application)
-    alias(libs.plugins.org.jetbrains.kotlin.android)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.com.google.dagger.hilt.android)
     alias(libs.plugins.com.google.devtools.ksp)
@@ -13,7 +12,7 @@ val m3uMockServerUrl = providers.gradleProperty("m3uMockServerUrl").orElse("http
 
 android {
     namespace = "com.m3u.smartphone"
-    compileSdk = 36
+    compileSdk = 37
     defaultConfig {
         applicationId = "com.m3u.smartphone"
         minSdk = 26
@@ -43,7 +42,6 @@ android {
             )
         }
     }
-    aaptOptions.cruncherEnabled = false
     splits {
         abi {
             val benchmark = project
@@ -78,18 +76,6 @@ android {
     }
     packaging {
         resources.excludes += "META-INF/**"
-    }
-    applicationVariants.all {
-        outputs
-            .map { it as com.android.build.gradle.internal.api.ApkVariantOutputImpl }
-            .forEach { output ->
-                val abi = output.getFilter("ABI")
-                output.outputFileName = if (abi == null) {
-                    "$versionName.apk"
-                } else {
-                    "${versionName}_$abi.apk"
-                }
-            }
     }
 }
 
@@ -185,9 +171,11 @@ dependencies {
     implementation(libs.net.mm2d.mmupnp.mmupnp)
     implementation(libs.haze)
     implementation(libs.haze.materials)
+    implementation(libs.backdrop)
     implementation(libs.acra.notification)
     implementation(libs.acra.mail)
 
+    testImplementation(kotlin("test-junit"))
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.core)
     androidTestImplementation(libs.androidx.test.runner)

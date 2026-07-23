@@ -32,6 +32,8 @@ fun AppNavHost(
     navigateToChannel: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
+    showBottomEdgeBlur: Boolean = true,
+    onNestedDetailVisibilityChanged: (Boolean) -> Unit = {},
     startDestination: String = Destination.Foryou.name
 ) {
     val context = LocalContext.current
@@ -57,7 +59,9 @@ fun AppNavHost(
             },
             navigateToPlaylistConfiguration = {
                 navController.navigateToPlaylistConfiguration(it.url)
-            }
+            },
+            showBottomEdgeBlur = showBottomEdgeBlur,
+            onNestedDetailVisibilityChanged = onNestedDetailVisibilityChanged,
         )
         playlistScreen(
             navigateToChannel = {

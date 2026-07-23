@@ -2,7 +2,6 @@ plugins {
     alias(libs.plugins.com.android.library)
     alias(libs.plugins.com.google.dagger.hilt.android)
     alias(libs.plugins.com.google.devtools.ksp)
-    alias(libs.plugins.org.jetbrains.kotlin.android)
     alias(libs.plugins.org.jetbrains.kotlin.serialization)
     alias(libs.plugins.compose.compiler)
     id("dev.oxyroid.native-load")

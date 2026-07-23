@@ -91,6 +91,7 @@ import com.m3u.smartphone.ui.material.components.HorizontalPagerIndicator
 import com.m3u.smartphone.ui.material.components.PlaceholderField
 import com.m3u.smartphone.ui.material.components.SelectionsDefaults
 import com.m3u.smartphone.ui.material.ktx.checkPermissionOrRationale
+import com.m3u.smartphone.ui.material.ktx.plus
 import com.m3u.smartphone.ui.material.ktx.textHorizontalLabel
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 
@@ -137,12 +138,14 @@ internal fun SubscriptionsFragment(
 ) {
     val spacing = LocalSpacing.current
     val pagerState = rememberPagerState(initialPage = 0) { SubscriptionsFragmentPage.entries.size }
+    val pageContentPadding = contentPadding + PaddingValues(
+        bottom = PAGER_INDICATOR_HEIGHT + spacing.small,
+    )
 
     Box {
         HorizontalPager(
             state = pagerState,
             verticalAlignment = Alignment.Top,
-            contentPadding = contentPadding,
             modifier = modifier,
             key = { SubscriptionsFragmentPage.entries[it] },
             pageSize = PageSize.Fill,
@@ -164,7 +167,8 @@ internal fun SubscriptionsFragment(
                         onReauthenticateProviderAccount = onReauthenticateProviderAccount,
                         backup = backup,
                         restore = restore,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = pageContentPadding,
                     )
                 }
 
@@ -172,7 +176,8 @@ internal fun SubscriptionsFragment(
                     EpgsContentImpl(
                         epgs = epgs,
                         onDeleteEpgPlaylist = onDeleteEpgPlaylist,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = pageContentPadding,
                     )
                 }
 
@@ -180,7 +185,8 @@ internal fun SubscriptionsFragment(
                     HiddenStreamContentImpl(
                         hiddenChannels = hiddenChannels,
                         onUnhideChannel = onUnhideChannel,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = pageContentPadding,
                     )
                 }
 
@@ -188,7 +194,8 @@ internal fun SubscriptionsFragment(
                     HiddenPlaylistCategoriesContentImpl(
                         hiddenCategoriesWithPlaylists = hiddenCategoriesWithPlaylists,
                         onUnhidePlaylistCategory = onUnhidePlaylistCategory,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = pageContentPadding,
                     )
                 }
 
@@ -207,19 +214,28 @@ internal fun SubscriptionsFragment(
                         onCloseSettings = onCloseExtensionSettings,
                         onUpdateSetting = onUpdateExtensionSetting,
                         modifier = Modifier.fillMaxSize(),
+                        contentPadding = pageContentPadding,
                     )
                 }
             }
         }
         HorizontalPagerIndicator(
             pagerState = pagerState,
+            indicatorHeight = PAGER_INDICATOR_HEIGHT,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(contentPadding)
-                .padding(spacing.medium)
+                .padding(
+                    PaddingValues(
+                        start = spacing.medium,
+                        end = spacing.medium,
+                        bottom = contentPadding.calculateBottomPadding() + spacing.medium,
+                    )
+                )
         )
     }
 }
+
+private val PAGER_INDICATOR_HEIGHT = 8.dp
 
 @Composable
 private fun ExtensionPluginsContent(
@@ -236,6 +252,7 @@ private fun ExtensionPluginsContent(
     onCloseSettings: () -> Unit,
     onUpdateSetting: (String, String, String?) -> Unit,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
 ) {
     var pendingTrust by remember { mutableStateOf<InstalledPlugin?>(null) }
     var pendingReauthorization by remember { mutableStateOf(false) }
@@ -243,7 +260,7 @@ private fun ExtensionPluginsContent(
     var pendingClear by remember { mutableStateOf<InstalledPlugin?>(null) }
     LazyColumn(
         modifier = modifier,
-        contentPadding = PaddingValues(LocalSpacing.current.medium),
+        contentPadding = contentPadding + PaddingValues(LocalSpacing.current.medium),
         verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.medium),
     ) {
         item {
@@ -485,7 +502,8 @@ private fun MainContentImpl(
     onReauthenticateProviderAccount: (String) -> Unit,
     backup: () -> Unit,
     restore: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
 ) {
     val spacing = LocalSpacing.current
     val clipboardManager = LocalClipboardManager.current
@@ -494,7 +512,7 @@ private fun MainContentImpl(
 
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(spacing.small),
-        contentPadding = PaddingValues(spacing.medium),
+        contentPadding = contentPadding + PaddingValues(spacing.medium),
         modifier = modifier
     ) {
         item {
@@ -705,18 +723,24 @@ private fun ProviderReauthenticationCard(
 private fun EpgsContentImpl(
     epgs: List<Playlist>,
     onDeleteEpgPlaylist: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
 ) {
-    Column(
-        modifier = modifier.fillMaxWidth()
+    val spacing = LocalSpacing.current
+    LazyColumn(
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = contentPadding + PaddingValues(spacing.medium),
     ) {
-        Text(
-            text = stringResource(string.feat_setting_label_epg_playlists),
-            color = MaterialTheme.colorScheme.onPrimary,
-            style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.textHorizontalLabel()
-        )
-        epgs.forEach { epgPlaylist ->
+        item {
+            Text(
+                text = stringResource(string.feat_setting_label_epg_playlists),
+                color = MaterialTheme.colorScheme.onPrimary,
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.textHorizontalLabel()
+            )
+        }
+        items(epgs.size) { index ->
+            val epgPlaylist = epgs[index]
             EpgPlaylistItem(
                 epgPlaylist = epgPlaylist,
                 onDeleteEpgPlaylist = { onDeleteEpgPlaylist(epgPlaylist.url) }
@@ -729,18 +753,24 @@ private fun EpgsContentImpl(
 private fun HiddenStreamContentImpl(
     hiddenChannels: List<Channel>,
     onUnhideChannel: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
 ) {
-    Column(
-        modifier = modifier.fillMaxWidth()
+    val spacing = LocalSpacing.current
+    LazyColumn(
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = contentPadding + PaddingValues(spacing.medium),
     ) {
-        Text(
-            text = stringResource(string.feat_setting_label_hidden_channels),
-            color = MaterialTheme.colorScheme.onPrimary,
-            style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.textHorizontalLabel()
-        )
-        hiddenChannels.forEach { channel ->
+        item {
+            Text(
+                text = stringResource(string.feat_setting_label_hidden_channels),
+                color = MaterialTheme.colorScheme.onPrimary,
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.textHorizontalLabel()
+            )
+        }
+        items(hiddenChannels.size) { index ->
+            val channel = hiddenChannels[index]
             HiddenChannelItem(
                 channel = channel,
                 onHidden = { onUnhideChannel(channel.id) }
@@ -753,16 +783,24 @@ private fun HiddenStreamContentImpl(
 private fun HiddenPlaylistCategoriesContentImpl(
     hiddenCategoriesWithPlaylists: List<Pair<Playlist, String>>,
     onUnhidePlaylistCategory: (playlistUrl: String, category: String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
 ) {
-    Column(modifier.fillMaxWidth()) {
-        Text(
-            text = stringResource(string.feat_setting_label_hidden_playlist_groups),
-            color = MaterialTheme.colorScheme.onPrimary,
-            style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.textHorizontalLabel()
-        )
-        hiddenCategoriesWithPlaylists.forEach { (playlist, category) ->
+    val spacing = LocalSpacing.current
+    LazyColumn(
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = contentPadding + PaddingValues(spacing.medium),
+    ) {
+        item {
+            Text(
+                text = stringResource(string.feat_setting_label_hidden_playlist_groups),
+                color = MaterialTheme.colorScheme.onPrimary,
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.textHorizontalLabel()
+            )
+        }
+        items(hiddenCategoriesWithPlaylists.size) { index ->
+            val (playlist, category) = hiddenCategoriesWithPlaylists[index]
             HiddenPlaylistGroupItem(
                 playlist = playlist,
                 group = category,

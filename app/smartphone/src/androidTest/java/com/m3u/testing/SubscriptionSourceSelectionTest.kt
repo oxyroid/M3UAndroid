@@ -1,5 +1,7 @@
 package com.m3u.testing
 
+import android.graphics.Rect
+import android.os.SystemClock
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
@@ -78,9 +80,15 @@ class SubscriptionSourceSelectionTest {
         val selectorBounds = selected.clickableAncestor().visibleBounds
         selected.click()
 
-        val option = device.findRequiredObject(By.text(context.getString(targetResId)))
-        val optionBounds = option.clickableAncestor().visibleBounds
-        assertTrue("Dropdown option must match selector width", optionBounds.width() >= selectorBounds.width())
+        val (option, optionBounds) = waitForFullWidthOption(
+            selector = By.text(context.getString(targetResId)),
+            minimumWidth = selectorBounds.width() - ROW_WIDTH_ROUNDING_TOLERANCE_PX,
+        )
+        assertTrue(
+            "Dropdown option width ${optionBounds.width()} must match selector width " +
+                selectorBounds.width(),
+            optionBounds.width() + ROW_WIDTH_ROUNDING_TOLERANCE_PX >= selectorBounds.width(),
+        )
         assertTrue(device.click(selectorBounds.right - ROW_END_INSET_PX, optionBounds.centerY()))
 
         assertTrue(
@@ -110,6 +118,29 @@ class SubscriptionSourceSelectionTest {
         wait(Until.findObject(selector), UI_TIMEOUT_MILLIS)
             ?: error("Required UI object was not found: $selector")
 
+    private fun waitForFullWidthOption(
+        selector: BySelector,
+        minimumWidth: Int,
+    ): Pair<UiObject2, Rect> {
+        val deadline = SystemClock.uptimeMillis() + UI_TIMEOUT_MILLIS
+        var lastWidth = 0
+        while (SystemClock.uptimeMillis() < deadline) {
+            val option = device.findObject(selector)
+            if (option != null) {
+                val bounds = option.clickableAncestor().visibleBounds
+                lastWidth = bounds.width()
+                if (lastWidth >= minimumWidth) {
+                    return option to bounds
+                }
+            }
+            SystemClock.sleep(MENU_ANIMATION_POLL_MILLIS)
+        }
+        error(
+            "Dropdown option did not settle to selector width: " +
+                "lastWidth=$lastWidth, minimumWidth=$minimumWidth",
+        )
+    }
+
     private fun caseInsensitive(value: String): Pattern = Pattern.compile(
         Pattern.quote(value),
         Pattern.CASE_INSENSITIVE,
@@ -125,6 +156,8 @@ class SubscriptionSourceSelectionTest {
 
     private companion object {
         const val UI_TIMEOUT_MILLIS = 5_000L
+        const val MENU_ANIMATION_POLL_MILLIS = 16L
+        const val ROW_WIDTH_ROUNDING_TOLERANCE_PX = 1
         const val ROW_END_INSET_PX = 24
     }
 }
