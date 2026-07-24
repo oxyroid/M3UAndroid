@@ -6,6 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,18 +20,21 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ContentPaste
+import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material.icons.rounded.Warning
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -40,6 +44,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SecondaryScrollableTabRow
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -48,6 +55,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,6 +63,9 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -63,6 +74,7 @@ import androidx.compose.ui.unit.dp
 import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.business.setting.BackingUpAndRestoringState
 import com.m3u.business.setting.ProviderDiscoveryState
+import com.m3u.business.setting.ProviderOperationState
 import com.m3u.business.setting.ProviderSettingFieldError
 import com.m3u.business.setting.ProviderSubscriptionForm
 import com.m3u.business.setting.ProviderSubscriptionFormField
@@ -72,8 +84,10 @@ import com.m3u.core.foundation.architecture.preferences.preferenceOf
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
+import com.m3u.data.repository.extension.ExtensionSettingEditToken
 import com.m3u.data.repository.extension.ExtensionSettingsConfiguration
 import com.m3u.data.repository.plugin.InstalledPlugin
+import com.m3u.data.repository.plugin.PluginAuthorizationToken
 import com.m3u.data.repository.provider.ProviderAccountSummary
 import com.m3u.extension.api.ExtensionSettingType
 import com.m3u.extension.api.ExtensionState
@@ -87,17 +101,29 @@ import com.m3u.smartphone.ui.business.setting.components.LocalStorageButton
 import com.m3u.smartphone.ui.business.setting.components.LocalStorageSwitch
 import com.m3u.smartphone.ui.business.setting.components.RemoteControlSubscribeSwitch
 import com.m3u.smartphone.ui.common.helper.LocalHelper
-import com.m3u.smartphone.ui.material.components.HorizontalPagerIndicator
 import com.m3u.smartphone.ui.material.components.PlaceholderField
 import com.m3u.smartphone.ui.material.components.SelectionsDefaults
 import com.m3u.smartphone.ui.material.ktx.checkPermissionOrRationale
 import com.m3u.smartphone.ui.material.ktx.plus
 import com.m3u.smartphone.ui.material.ktx.textHorizontalLabel
 import com.m3u.smartphone.ui.material.model.LocalSpacing
+import kotlinx.coroutines.launch
 
 private enum class SubscriptionsFragmentPage {
-    MAIN, EPG_PLAYLISTS, HIDDEN_STREAMS, HIDDEN_PLAYLIST_CATEGORIES, EXTENSION_PLUGINS
+    MAIN, EXTENSION_PLUGINS, EPG_PLAYLISTS, HIDDEN_STREAMS, HIDDEN_PLAYLIST_CATEGORIES
 }
+
+@Composable
+private fun SubscriptionsFragmentPage.label(): String = stringResource(
+    when (this) {
+        SubscriptionsFragmentPage.MAIN -> string.feat_setting_label_add_playlist
+        SubscriptionsFragmentPage.EXTENSION_PLUGINS -> string.feat_setting_extension_plugins
+        SubscriptionsFragmentPage.EPG_PLAYLISTS -> string.feat_setting_label_epg_playlists
+        SubscriptionsFragmentPage.HIDDEN_STREAMS -> string.feat_setting_label_hidden_channels
+        SubscriptionsFragmentPage.HIDDEN_PLAYLIST_CATEGORIES ->
+            string.feat_setting_label_hidden_playlist_groups
+    }
+)
 
 @Composable
 context(_: SettingProperties)
@@ -118,139 +144,160 @@ internal fun SubscriptionsFragment(
     providerDiscoveryState: ProviderDiscoveryState,
     providerAccountSummaries: List<ProviderAccountSummary>,
     providerSubscriptionForm: ProviderSubscriptionForm?,
+    providerOperationState: ProviderOperationState,
     onSelectSubscriptionProvider: (String) -> Unit,
     onSelectSubscriptionProviderKind: (String) -> Unit,
     onUpdateSubscriptionProviderSetting: (String, String?) -> Unit,
     onRetryProviderDiscovery: () -> Unit,
     onReauthenticateProviderAccount: (String) -> Unit,
     onRefreshExtensionPlugins: () -> Unit,
-    onEnableExtensionPlugin: (String, String) -> Unit,
-    onReauthorizeExtensionPlugin: (String, String) -> Unit,
+    onEnableExtensionPlugin: (String, String, PluginAuthorizationToken) -> Unit,
+    onReauthorizeExtensionPlugin: (String, String, PluginAuthorizationToken) -> Unit,
     onDisableExtensionPlugin: (String) -> Unit,
-    onRevokeExtensionPlugin: (String, String) -> Unit,
-    onClearExtensionData: (String, String) -> Unit,
+    onRevokeExtensionPlugin: (String, String, String?) -> Unit,
+    onClearExtensionData: (String, String, String?) -> Unit,
     onExportExtensionDiagnostics: (String) -> Unit,
     onOpenExtensionSettings: (String) -> Unit,
     onCloseExtensionSettings: () -> Unit,
-    onUpdateExtensionSetting: (String, String, String?) -> Unit,
+    onUpdateExtensionSetting: (String, String, ExtensionSettingEditToken, String?) -> Unit,
+    entryGeneration: Int,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
 ) {
     val spacing = LocalSpacing.current
+    val coroutineScope = rememberCoroutineScope()
+    val externalExtensionsEnabled by preferenceOf(PreferencesKeys.EXTERNAL_EXTENSIONS)
     val pagerState = rememberPagerState(initialPage = 0) { SubscriptionsFragmentPage.entries.size }
-    val pageContentPadding = contentPadding + PaddingValues(
-        bottom = PAGER_INDICATOR_HEIGHT + spacing.small,
-    )
+    val tabScrollState = remember { ScrollState(initial = 0) }
 
-    Box {
-        HorizontalPager(
-            state = pagerState,
-            verticalAlignment = Alignment.Top,
-            modifier = modifier,
-            key = { SubscriptionsFragmentPage.entries[it] },
-            pageSize = PageSize.Fill,
-            pageSpacing = 1.dp
-        ) { page ->
-            when (SubscriptionsFragmentPage.entries[page]) {
-                SubscriptionsFragmentPage.MAIN -> {
-                    MainContentImpl(
-                        backingUpOrRestoring = backingUpOrRestoring,
-                        onClipboard = onClipboard,
-                        onSubscribe = onSubscribe,
-                        providerDiscoveryState = providerDiscoveryState,
-                        providerAccountSummaries = providerAccountSummaries,
-                        providerSubscriptionForm = providerSubscriptionForm,
-                        onSelectSubscriptionProvider = onSelectSubscriptionProvider,
-                        onSelectSubscriptionProviderKind = onSelectSubscriptionProviderKind,
-                        onUpdateSubscriptionProviderSetting = onUpdateSubscriptionProviderSetting,
-                        onRetryProviderDiscovery = onRetryProviderDiscovery,
-                        onReauthenticateProviderAccount = onReauthenticateProviderAccount,
-                        backup = backup,
-                        restore = restore,
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = pageContentPadding,
-                    )
-                }
+    LaunchedEffect(entryGeneration, pagerState.settledPage) {
+        if (pagerState.settledPage == SubscriptionsFragmentPage.MAIN.ordinal) {
+            tabScrollState.scrollTo(0)
+        }
+    }
 
-                SubscriptionsFragmentPage.EPG_PLAYLISTS -> {
-                    EpgsContentImpl(
-                        epgs = epgs,
-                        onDeleteEpgPlaylist = onDeleteEpgPlaylist,
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = pageContentPadding,
-                    )
-                }
+    Column(modifier = modifier) {
+        SecondaryScrollableTabRow(
+            selectedTabIndex = pagerState.currentPage,
+            scrollState = tabScrollState,
+            edgePadding = spacing.medium,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            SubscriptionsFragmentPage.entries.forEachIndexed { index, page ->
+                Tab(
+                    selected = pagerState.currentPage == index,
+                    onClick = {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(index)
+                        }
+                    },
+                    text = { Text(page.label()) },
+                    modifier = Modifier.testTag("subscriptions-page-${page.name.lowercase()}"),
+                )
+            }
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+        ) {
+            HorizontalPager(
+                state = pagerState,
+                verticalAlignment = Alignment.Top,
+                modifier = Modifier.fillMaxSize(),
+                key = { SubscriptionsFragmentPage.entries[it] },
+                pageSize = PageSize.Fill,
+                pageSpacing = 1.dp
+            ) { page ->
+                when (SubscriptionsFragmentPage.entries[page]) {
+                    SubscriptionsFragmentPage.MAIN -> {
+                        MainContentImpl(
+                            backingUpOrRestoring = backingUpOrRestoring,
+                            onClipboard = onClipboard,
+                            onSubscribe = onSubscribe,
+                            providerDiscoveryState = providerDiscoveryState,
+                            providerAccountSummaries = providerAccountSummaries,
+                            providerSubscriptionForm = providerSubscriptionForm,
+                            providerOperationState = providerOperationState,
+                            onSelectSubscriptionProvider = onSelectSubscriptionProvider,
+                            onSelectSubscriptionProviderKind = onSelectSubscriptionProviderKind,
+                            onUpdateSubscriptionProviderSetting = onUpdateSubscriptionProviderSetting,
+                            onRetryProviderDiscovery = onRetryProviderDiscovery,
+                            onReauthenticateProviderAccount = onReauthenticateProviderAccount,
+                            backup = backup,
+                            restore = restore,
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = contentPadding,
+                        )
+                    }
 
-                SubscriptionsFragmentPage.HIDDEN_STREAMS -> {
-                    HiddenStreamContentImpl(
-                        hiddenChannels = hiddenChannels,
-                        onUnhideChannel = onUnhideChannel,
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = pageContentPadding,
-                    )
-                }
+                    SubscriptionsFragmentPage.EPG_PLAYLISTS -> {
+                        EpgsContentImpl(
+                            epgs = epgs,
+                            onDeleteEpgPlaylist = onDeleteEpgPlaylist,
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = contentPadding,
+                        )
+                    }
 
-                SubscriptionsFragmentPage.HIDDEN_PLAYLIST_CATEGORIES -> {
-                    HiddenPlaylistCategoriesContentImpl(
-                        hiddenCategoriesWithPlaylists = hiddenCategoriesWithPlaylists,
-                        onUnhidePlaylistCategory = onUnhidePlaylistCategory,
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = pageContentPadding,
-                    )
-                }
+                    SubscriptionsFragmentPage.HIDDEN_STREAMS -> {
+                        HiddenStreamContentImpl(
+                            hiddenChannels = hiddenChannels,
+                            onUnhideChannel = onUnhideChannel,
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = contentPadding,
+                        )
+                    }
 
-                SubscriptionsFragmentPage.EXTENSION_PLUGINS -> {
-                    ExtensionPluginsContent(
-                        plugins = extensionPlugins,
-                        settings = extensionSettings,
-                        onRefresh = onRefreshExtensionPlugins,
-                        onEnable = onEnableExtensionPlugin,
-                        onReauthorize = onReauthorizeExtensionPlugin,
-                        onDisable = onDisableExtensionPlugin,
-                        onRevoke = onRevokeExtensionPlugin,
-                        onClearData = onClearExtensionData,
-                        onExportDiagnostics = onExportExtensionDiagnostics,
-                        onOpenSettings = onOpenExtensionSettings,
-                        onCloseSettings = onCloseExtensionSettings,
-                        onUpdateSetting = onUpdateExtensionSetting,
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = pageContentPadding,
-                    )
+                    SubscriptionsFragmentPage.HIDDEN_PLAYLIST_CATEGORIES -> {
+                        HiddenPlaylistCategoriesContentImpl(
+                            hiddenCategoriesWithPlaylists = hiddenCategoriesWithPlaylists,
+                            onUnhidePlaylistCategory = onUnhidePlaylistCategory,
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = contentPadding,
+                        )
+                    }
+
+                    SubscriptionsFragmentPage.EXTENSION_PLUGINS -> {
+                        ExtensionPluginsContent(
+                            plugins = extensionPlugins,
+                            settings = extensionSettings,
+                            externalExtensionsEnabled = externalExtensionsEnabled,
+                            onRefresh = onRefreshExtensionPlugins,
+                            onEnable = onEnableExtensionPlugin,
+                            onReauthorize = onReauthorizeExtensionPlugin,
+                            onDisable = onDisableExtensionPlugin,
+                            onRevoke = onRevokeExtensionPlugin,
+                            onClearData = onClearExtensionData,
+                            onExportDiagnostics = onExportExtensionDiagnostics,
+                            onOpenSettings = onOpenExtensionSettings,
+                            onCloseSettings = onCloseExtensionSettings,
+                            onUpdateSetting = onUpdateExtensionSetting,
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = contentPadding,
+                        )
+                    }
                 }
             }
         }
-        HorizontalPagerIndicator(
-            pagerState = pagerState,
-            indicatorHeight = PAGER_INDICATOR_HEIGHT,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(
-                    PaddingValues(
-                        start = spacing.medium,
-                        end = spacing.medium,
-                        bottom = contentPadding.calculateBottomPadding() + spacing.medium,
-                    )
-                )
-        )
     }
 }
-
-private val PAGER_INDICATOR_HEIGHT = 8.dp
 
 @Composable
 private fun ExtensionPluginsContent(
     plugins: List<InstalledPlugin>,
     settings: ExtensionSettingsConfiguration?,
+    externalExtensionsEnabled: Boolean,
     onRefresh: () -> Unit,
-    onEnable: (String, String) -> Unit,
-    onReauthorize: (String, String) -> Unit,
+    onEnable: (String, String, PluginAuthorizationToken) -> Unit,
+    onReauthorize: (String, String, PluginAuthorizationToken) -> Unit,
     onDisable: (String) -> Unit,
-    onRevoke: (String, String) -> Unit,
-    onClearData: (String, String) -> Unit,
+    onRevoke: (String, String, String?) -> Unit,
+    onClearData: (String, String, String?) -> Unit,
     onExportDiagnostics: (String) -> Unit,
     onOpenSettings: (String) -> Unit,
     onCloseSettings: () -> Unit,
-    onUpdateSetting: (String, String, String?) -> Unit,
+    onUpdateSetting: (String, String, ExtensionSettingEditToken, String?) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
@@ -273,83 +320,115 @@ private fun ExtensionPluginsContent(
                     text = stringResource(string.feat_setting_extension_plugins),
                     style = MaterialTheme.typography.titleLarge,
                 )
-                TextButton(onClick = onRefresh) {
+                TextButton(
+                    onClick = onRefresh,
+                    enabled = externalExtensionsEnabled,
+                ) {
                     Text(stringResource(string.feat_setting_codec_pack_refresh))
                 }
             }
         }
-        if (plugins.isEmpty()) {
+        if (!externalExtensionsEnabled) {
+            item { Text(stringResource(string.feat_setting_extension_enable_external_hint)) }
+        } else if (plugins.isEmpty()) {
             item { Text(stringResource(string.feat_setting_extension_no_plugins)) }
         }
-        items(plugins.size, key = { index -> "${plugins[index].packageName}/${plugins[index].serviceName}" }) { index ->
-            val plugin = plugins[index]
-            val extensionId = plugin.extensionId
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(plugin.displayName ?: plugin.packageName, style = MaterialTheme.typography.titleMedium)
-                plugin.developer?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
-                plugin.version?.let { Text("v$it", style = MaterialTheme.typography.bodySmall) }
-                Text(extensionStateLabel(plugin.state), style = MaterialTheme.typography.labelMedium)
-                Text(plugin.serviceName, style = MaterialTheme.typography.bodySmall)
-                Text(plugin.certificateSha256, style = MaterialTheme.typography.labelSmall)
-                if (plugin.grantedCapabilities.isNotEmpty()) {
+        if (externalExtensionsEnabled) {
+            items(
+                count = plugins.size,
+                key = { index -> "${plugins[index].packageName}/${plugins[index].serviceName}" },
+            ) { index ->
+                val plugin = plugins[index]
+                val extensionId = plugin.extensionId
+                val actions = plugin.actionAvailability()
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        plugin.grantedCapabilities.sorted().joinToString(),
-                        style = MaterialTheme.typography.labelSmall,
+                        plugin.displayName ?: plugin.packageName,
+                        style = MaterialTheme.typography.titleMedium,
                     )
-                }
-                plugin.inspectionError?.let { error ->
-                    Text(error, color = MaterialTheme.colorScheme.error)
-                }
-                if (!plugin.installed) {
-                    Text(
-                        stringResource(string.feat_setting_extension_not_installed),
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
-                if (plugin.signatureChanged) {
-                    Text(
-                        stringResource(string.feat_setting_extension_signature_changed),
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (plugin.enabled && plugin.state == ExtensionState.ENABLED && extensionId != null) {
-                        FilledTonalButton(onClick = { onOpenSettings(extensionId) }) {
-                            Text(stringResource(string.feat_setting_extension_settings))
-                        }
-                        FilledTonalButton(onClick = { onDisable(extensionId) }) {
-                            Text(stringResource(string.feat_setting_extension_disable))
-                        }
-                    } else if (
-                        plugin.installed &&
-                        !plugin.signatureChanged &&
-                        plugin.inspectionError == null
-                    ) {
-                        Button(onClick = { pendingTrust = plugin }) {
-                            Text(stringResource(string.feat_setting_extension_enable))
-                        }
+                    plugin.developer?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                    plugin.version?.let { Text("v$it", style = MaterialTheme.typography.bodySmall) }
+                    Text(extensionStateLabel(plugin.state), style = MaterialTheme.typography.labelMedium)
+                    Text(plugin.serviceName, style = MaterialTheme.typography.bodySmall)
+                    Text(plugin.certificateSha256, style = MaterialTheme.typography.labelSmall)
+                    if (plugin.grantedCapabilities.isNotEmpty()) {
+                        Text(
+                            plugin.grantedCapabilities.sorted().joinToString(),
+                            style = MaterialTheme.typography.labelSmall,
+                        )
                     }
-                    if (plugin.trusted || plugin.signatureChanged) {
-                        TextButton(onClick = { pendingRevoke = plugin }) {
-                            Text(stringResource(string.feat_setting_extension_revoke))
-                        }
+                    val unapprovedNetworkOrigins =
+                        plugin.networkOrigins - plugin.approvedNetworkOrigins
+                    if (plugin.trusted && unapprovedNetworkOrigins.isNotEmpty()) {
+                        Text(
+                            text = stringResource(
+                                string.feat_setting_extension_network_reauthorization_required,
+                                unapprovedNetworkOrigins.sorted().joinToString(),
+                            ),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
                     }
-                    if (plugin.installed && plugin.trusted && !plugin.signatureChanged) {
-                        TextButton(onClick = {
-                            pendingReauthorization = true
-                            pendingTrust = plugin
-                        }) {
-                            Text(stringResource(string.feat_setting_extension_reauthorize))
-                        }
+                    plugin.inspectionError?.let {
+                        Text(
+                            stringResource(string.feat_setting_extension_inspection_failed),
+                            color = MaterialTheme.colorScheme.error,
+                        )
                     }
-                    if (plugin.installed && extensionId != null) {
-                        TextButton(onClick = { onExportDiagnostics(extensionId) }) {
-                            Text(stringResource(string.feat_setting_extension_export_diagnostics))
-                        }
+                    if (!plugin.installed) {
+                        Text(
+                            stringResource(string.feat_setting_extension_not_installed),
+                            color = MaterialTheme.colorScheme.error,
+                        )
                     }
-                    if (plugin.canClearData) {
-                        TextButton(onClick = { pendingClear = plugin }) {
-                            Text(stringResource(string.feat_setting_extension_clear_data))
+                    if (plugin.signatureChanged) {
+                        Text(
+                            stringResource(string.feat_setting_extension_signature_changed),
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (actions.settings && extensionId != null) {
+                            FilledTonalButton(onClick = { onOpenSettings(extensionId) }) {
+                                Text(stringResource(string.feat_setting_extension_settings))
+                            }
+                        }
+                        if (actions.disable && extensionId != null) {
+                            FilledTonalButton(onClick = { onDisable(extensionId) }) {
+                                Text(stringResource(string.feat_setting_extension_disable))
+                            }
+                        }
+                        if (actions.enable) {
+                            Button(onClick = { pendingTrust = plugin }) {
+                                Text(stringResource(string.feat_setting_extension_enable))
+                            }
+                        }
+                        if (actions.revoke) {
+                            TextButton(onClick = { pendingRevoke = plugin }) {
+                                Text(stringResource(string.feat_setting_extension_revoke))
+                            }
+                        }
+                        if (actions.reauthorize) {
+                            TextButton(onClick = {
+                                pendingReauthorization = true
+                                pendingTrust = plugin
+                            }) {
+                                Text(stringResource(string.feat_setting_extension_reauthorize))
+                            }
+                        }
+                        if (actions.exportDiagnostics && extensionId != null) {
+                            TextButton(onClick = { onExportDiagnostics(extensionId) }) {
+                                Text(
+                                    stringResource(
+                                        string.feat_setting_extension_export_diagnostics
+                                    )
+                                )
+                            }
+                        }
+                        if (actions.clearData) {
+                            TextButton(onClick = { pendingClear = plugin }) {
+                                Text(stringResource(string.feat_setting_extension_clear_data))
+                            }
                         }
                     }
                 }
@@ -378,11 +457,34 @@ private fun ExtensionPluginsContent(
                             plugin.version.orEmpty(),
                         )
                     )
+                    plugin.previousCertificateSha256?.let { previousCertificate ->
+                        Text(
+                            text = stringResource(
+                                string.feat_setting_extension_certificate_repin,
+                                previousCertificate.chunked(16).joinToString(" "),
+                                plugin.certificateSha256.chunked(16).joinToString(" "),
+                            ),
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
                     Text(
                         stringResource(string.feat_setting_extension_requested_capabilities),
                         style = MaterialTheme.typography.titleSmall,
                     )
                     Text(extensionCapabilitySummary(plugin))
+                    Text(
+                        stringResource(string.feat_setting_extension_network_origins),
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                    Text(plugin.networkOrigins.sorted().joinToString("\n").ifEmpty { "—" })
+                    if (plugin.networkOriginSettingFields.isNotEmpty()) {
+                        Text(
+                            stringResource(
+                                string.feat_setting_extension_network_origin_settings,
+                                plugin.networkOriginSettingFields.sorted().joinToString(),
+                            )
+                        )
+                    }
                 }
             },
             confirmButton = {
@@ -391,10 +493,20 @@ private fun ExtensionPluginsContent(
                         val reauthorize = pendingReauthorization
                         pendingTrust = null
                         pendingReauthorization = false
-                        if (reauthorize) {
-                            onReauthorize(plugin.packageName, plugin.serviceName)
-                        } else {
-                            onEnable(plugin.packageName, plugin.serviceName)
+                        plugin.authorizationToken?.let { authorizationToken ->
+                            if (reauthorize) {
+                                onReauthorize(
+                                    plugin.packageName,
+                                    plugin.serviceName,
+                                    authorizationToken,
+                                )
+                            } else {
+                                onEnable(
+                                    plugin.packageName,
+                                    plugin.serviceName,
+                                    authorizationToken,
+                                )
+                            }
                         }
                     }
                 ) {
@@ -427,7 +539,7 @@ private fun ExtensionPluginsContent(
             confirmButton = {
                 TextButton(onClick = {
                     pendingRevoke = null
-                    onRevoke(plugin.packageName, plugin.serviceName)
+                    onRevoke(plugin.packageName, plugin.serviceName, plugin.extensionId)
                 }) {
                     Text(stringResource(string.feat_setting_extension_revoke))
                 }
@@ -454,7 +566,7 @@ private fun ExtensionPluginsContent(
             confirmButton = {
                 TextButton(onClick = {
                     pendingClear = null
-                    onClearData(plugin.packageName, plugin.serviceName)
+                    onClearData(plugin.packageName, plugin.serviceName, plugin.extensionId)
                 }) { Text(stringResource(string.feat_setting_extension_clear_data)) }
             },
             dismissButton = {
@@ -495,6 +607,7 @@ private fun MainContentImpl(
     providerDiscoveryState: ProviderDiscoveryState,
     providerAccountSummaries: List<ProviderAccountSummary>,
     providerSubscriptionForm: ProviderSubscriptionForm?,
+    providerOperationState: ProviderOperationState,
     onSelectSubscriptionProvider: (String) -> Unit,
     onSelectSubscriptionProviderKind: (String) -> Unit,
     onUpdateSubscriptionProviderSetting: (String, String?) -> Unit,
@@ -509,11 +622,13 @@ private fun MainContentImpl(
     val clipboardManager = LocalClipboardManager.current
     val helper = LocalHelper.current
     val remoteControl by preferenceOf(PreferencesKeys.REMOTE_CONTROL)
+    val providerOperationInProgress = providerOperationState.isBusy
+    val providerSubmissionInProgress = providerOperationState.isSubmitting
 
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(spacing.small),
         contentPadding = contentPadding + PaddingValues(spacing.medium),
-        modifier = modifier
+        modifier = modifier.imePadding()
     ) {
         item {
             DataSourceSelection(
@@ -525,7 +640,8 @@ private fun MainContentImpl(
                     DataSource.Emby,
                     DataSource.Jellyfin,
                     DataSource.Provider,
-                )
+                ),
+                enabled = !providerOperationInProgress,
             )
         }
 
@@ -538,6 +654,10 @@ private fun MainContentImpl(
                     reauthenticationAccounts.forEach { account ->
                         ProviderReauthenticationCard(
                             account = account,
+                            inProgress = providerOperationState.isReauthenticating(
+                                account.playlistUrl
+                            ),
+                            enabled = !providerOperationInProgress,
                             onReauthenticate = {
                                 onReauthenticateProviderAccount(account.playlistUrl)
                             },
@@ -552,7 +672,9 @@ private fun MainContentImpl(
                 DataSource.M3U -> M3UInputContent()
                 DataSource.EPG -> EPGInputContent()
                 DataSource.Xtream -> XtreamInputContent()
-                DataSource.Emby, DataSource.Jellyfin -> EmbyCompatibleInputContent()
+                DataSource.Emby, DataSource.Jellyfin -> EmbyCompatibleInputContent(
+                    enabled = !providerOperationInProgress,
+                )
                 DataSource.Provider -> DynamicProviderInputContent(
                     discoveryState = providerDiscoveryState,
                     form = providerSubscriptionForm,
@@ -560,6 +682,7 @@ private fun MainContentImpl(
                     onSelectKind = onSelectSubscriptionProviderKind,
                     onUpdateField = onUpdateSubscriptionProviderSetting,
                     onRetry = onRetryProviderDiscovery,
+                    enabled = !providerOperationInProgress,
                 )
                 DataSource.Dropbox -> {}
             }
@@ -573,14 +696,18 @@ private fun MainContentImpl(
                 LocalStorageSwitch(
                     checked = properties.localStorageState.value,
                     onChanged = { properties.localStorageState.value = it },
-                    enabled = !properties.forTvState.value
+                    enabled = !properties.forTvState.value && !providerOperationInProgress,
                 )
             }
-            if (remoteControl) {
+            if (
+                remoteControl &&
+                properties.selectedState.value in REMOTE_TV_SUBSCRIPTION_SOURCES
+            ) {
                 RemoteControlSubscribeSwitch(
                     checked = properties.forTvState.value,
                     onChanged = { properties.forTvState.value = !properties.forTvState.value },
-                    enabled = !properties.localStorageState.value
+                    enabled = !properties.localStorageState.value &&
+                        !providerOperationInProgress,
                 )
             }
         }
@@ -592,11 +719,16 @@ private fun MainContentImpl(
             Column {
                 Row {
                     Button(
-                        modifier = Modifier.weight(1f),
-                        enabled = properties.selectedState.value != DataSource.Provider ||
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("subscription-submit-action"),
+                        enabled = !providerOperationInProgress &&
                             (
-                                providerDiscoveryState is ProviderDiscoveryState.Ready &&
-                                    providerSubscriptionForm != null
+                                properties.selectedState.value != DataSource.Provider ||
+                                    (
+                                        providerDiscoveryState is ProviderDiscoveryState.Ready &&
+                                            providerSubscriptionForm != null
+                                    )
                             ),
                         onClick = {
                             postNotificationPermission.checkPermissionOrRationale(
@@ -616,6 +748,16 @@ private fun MainContentImpl(
                             )
                         }
                     ) {
+                        if (providerSubmissionInProgress) {
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .size(18.dp)
+                                    .testTag("provider-subscription-progress"),
+                                color = LocalContentColor.current,
+                                strokeWidth = 2.dp,
+                            )
+                            Spacer(Modifier.size(8.dp))
+                        }
                         Text(stringResource(string.feat_setting_label_subscribe).uppercase())
                     }
                     when (properties.selectedState.value) {
@@ -660,16 +802,14 @@ private fun MainContentImpl(
             }
 
         }
-
-        item {
-            Spacer(Modifier.imePadding())
-        }
     }
 }
 
 @Composable
 private fun ProviderReauthenticationCard(
     account: ProviderAccountSummary,
+    inProgress: Boolean,
+    enabled: Boolean,
     onReauthenticate: () -> Unit,
 ) {
     val spacing = LocalSpacing.current
@@ -708,10 +848,29 @@ private fun ProviderReauthenticationCard(
                 ),
                 style = MaterialTheme.typography.bodySmall,
             )
+            if (account.requiresExtensionOwnerConfirmation) {
+                Text(
+                    text = stringResource(
+                        string.feat_setting_provider_owner_claim_notice
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
             FilledTonalButton(
                 onClick = onReauthenticate,
+                enabled = enabled && !inProgress,
                 modifier = Modifier.testTag("provider-reauthenticate-action"),
             ) {
+                if (inProgress) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .size(18.dp)
+                            .testTag("provider-reauthentication-progress"),
+                        color = LocalContentColor.current,
+                        strokeWidth = 2.dp,
+                    )
+                    Spacer(Modifier.size(8.dp))
+                }
                 Text(stringResource(string.feat_setting_provider_reauthenticate))
             }
         }
@@ -925,7 +1084,10 @@ private fun XtreamInputContent(modifier: Modifier = Modifier) {
 
 @Composable
 context(properties: SettingProperties)
-private fun EmbyCompatibleInputContent(modifier: Modifier = Modifier) {
+private fun EmbyCompatibleInputContent(
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+) {
     val spacing = LocalSpacing.current
 
     Column(
@@ -937,6 +1099,7 @@ private fun EmbyCompatibleInputContent(modifier: Modifier = Modifier) {
             placeholder = stringResource(string.feat_setting_placeholder_title).uppercase(),
             onValueChange = { properties.titleState.value = Uri.decode(it) },
             imeAction = ImeAction.Next,
+            enabled = enabled,
             modifier = Modifier.fillMaxWidth()
         )
         PlaceholderField(
@@ -944,6 +1107,7 @@ private fun EmbyCompatibleInputContent(modifier: Modifier = Modifier) {
             placeholder = stringResource(string.feat_setting_placeholder_basic_url).uppercase(),
             onValueChange = { properties.basicUrlState.value = it },
             imeAction = ImeAction.Next,
+            enabled = enabled,
             modifier = Modifier.fillMaxWidth()
         )
         PlaceholderField(
@@ -951,6 +1115,7 @@ private fun EmbyCompatibleInputContent(modifier: Modifier = Modifier) {
             placeholder = stringResource(string.feat_setting_placeholder_username).uppercase(),
             onValueChange = { properties.usernameState.value = it },
             imeAction = ImeAction.Next,
+            enabled = enabled,
             modifier = Modifier.fillMaxWidth()
         )
         PlaceholderField(
@@ -959,6 +1124,7 @@ private fun EmbyCompatibleInputContent(modifier: Modifier = Modifier) {
             onValueChange = { properties.passwordState.value = it },
             keyboardType = KeyboardType.Password,
             visualTransformation = PasswordVisualTransformation(),
+            enabled = enabled,
             modifier = Modifier.fillMaxWidth()
         )
     }
@@ -973,6 +1139,7 @@ private fun DynamicProviderInputContent(
     onSelectKind: (String) -> Unit,
     onUpdateField: (String, String?) -> Unit,
     onRetry: () -> Unit,
+    enabled: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val spacing = LocalSpacing.current
@@ -980,8 +1147,8 @@ private fun DynamicProviderInputContent(
         ?.providers
         .orEmpty()
         .map { provider -> provider.descriptor }
-    LaunchedEffect(providers, form?.providerId) {
-        if (providers.none { provider -> provider.providerId == form?.providerId }) {
+    LaunchedEffect(providers, form?.providerId, enabled) {
+        if (enabled && providers.none { provider -> provider.providerId == form?.providerId }) {
             providers.firstOrNull()?.let { provider ->
                 onSelectProvider(provider.providerId.value)
             }
@@ -998,6 +1165,7 @@ private fun DynamicProviderInputContent(
             text = properties.titleState.value,
             placeholder = stringResource(string.feat_setting_placeholder_title).uppercase(),
             onValueChange = { properties.titleState.value = Uri.decode(it) },
+            enabled = enabled,
             modifier = Modifier.fillMaxWidth(),
         )
         when (discoveryState) {
@@ -1029,6 +1197,7 @@ private fun DynamicProviderInputContent(
                     Text(stringResource(string.feat_setting_provider_discovery_failed))
                     FilledTonalButton(
                         onClick = onRetry,
+                        enabled = enabled,
                         modifier = Modifier.testTag("provider-discovery-retry"),
                     ) {
                         Text(stringResource(string.feat_setting_provider_discovery_retry))
@@ -1039,11 +1208,15 @@ private fun DynamicProviderInputContent(
 
             is ProviderDiscoveryState.Ready -> Unit
         }
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(spacing.small)) {
+        FlowRow(
+            modifier = Modifier.selectableGroup(),
+            horizontalArrangement = Arrangement.spacedBy(spacing.small),
+        ) {
             providers.forEach { provider ->
                 val active = provider.providerId == selected?.providerId
                 ProviderChoiceButton(
                     selected = active,
+                    enabled = enabled,
                     onClick = {
                         onSelectProvider(provider.providerId.value)
                     },
@@ -1052,10 +1225,14 @@ private fun DynamicProviderInputContent(
             }
         }
         selected?.let { provider ->
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(spacing.small)) {
+            FlowRow(
+                modifier = Modifier.selectableGroup(),
+                horizontalArrangement = Arrangement.spacedBy(spacing.small),
+            ) {
                 provider.variants.forEach { variant ->
                     ProviderChoiceButton(
                         selected = variant.kind == form?.providerKind,
+                        enabled = enabled,
                         onClick = { onSelectKind(variant.kind.value) },
                         text = variant.displayName,
                     )
@@ -1064,6 +1241,7 @@ private fun DynamicProviderInputContent(
             form?.fields?.forEach { field ->
                 ProviderFormField(
                     field = field,
+                    enabled = enabled,
                     onUpdate = { value -> onUpdateField(field.definition.key, value) },
                 )
             }
@@ -1074,6 +1252,7 @@ private fun DynamicProviderInputContent(
 @Composable
 private fun ProviderFormField(
     field: ProviderSubscriptionFormField,
+    enabled: Boolean,
     onUpdate: (String?) -> Unit,
 ) {
     val definition = field.definition
@@ -1093,6 +1272,7 @@ private fun ProviderFormField(
                 text = field.value.orEmpty(),
                 placeholder = definition.label,
                 onValueChange = onUpdate,
+                enabled = enabled,
                 contentColor = if (field.error == null) {
                     MaterialTheme.colorScheme.onSurface
                 } else {
@@ -1112,28 +1292,33 @@ private fun ProviderFormField(
             )
 
             ExtensionSettingType.BOOLEAN -> FlowRow(
+                modifier = Modifier.selectableGroup(),
                 horizontalArrangement = Arrangement.spacedBy(spacing.small),
             ) {
-                ProviderResetChoice(field, onUpdate)
+                ProviderResetChoice(field, enabled, onUpdate)
                 ProviderChoiceButton(
                     selected = field.value == "true" && !field.isUsingDefault,
+                    enabled = enabled,
                     onClick = { onUpdate("true") },
                     text = stringResource(string.feat_setting_provider_value_true),
                 )
                 ProviderChoiceButton(
                     selected = field.value == "false" && !field.isUsingDefault,
+                    enabled = enabled,
                     onClick = { onUpdate("false") },
                     text = stringResource(string.feat_setting_provider_value_false),
                 )
             }
 
             ExtensionSettingType.SINGLE_CHOICE -> FlowRow(
+                modifier = Modifier.selectableGroup(),
                 horizontalArrangement = Arrangement.spacedBy(spacing.small),
             ) {
-                ProviderResetChoice(field, onUpdate)
+                ProviderResetChoice(field, enabled, onUpdate)
                 definition.choices.forEach { choice ->
                     ProviderChoiceButton(
                         selected = field.value == choice.value && !field.isUsingDefault,
+                        enabled = enabled,
                         onClick = { onUpdate(choice.value) },
                         text = choice.label,
                     )
@@ -1162,11 +1347,13 @@ private fun ProviderFormField(
 @Composable
 private fun ProviderResetChoice(
     field: ProviderSubscriptionFormField,
+    enabled: Boolean,
     onUpdate: (String?) -> Unit,
 ) {
     if (field.definition.defaultValue != null || !field.definition.required) {
         ProviderChoiceButton(
             selected = field.isUsingDefault || field.value == null,
+            enabled = enabled,
             onClick = { onUpdate(null) },
             text = stringResource(
                 if (field.definition.defaultValue == null) {
@@ -1182,21 +1369,45 @@ private fun ProviderResetChoice(
 @Composable
 private fun ProviderChoiceButton(
     selected: Boolean,
+    enabled: Boolean = true,
     onClick: () -> Unit,
     text: String,
 ) {
-    FilledTonalButton(
+    val containerColor = if (selected) {
+        MaterialTheme.colorScheme.secondaryContainer
+    } else {
+        MaterialTheme.colorScheme.surfaceContainer
+    }
+    val contentColor = if (selected) {
+        MaterialTheme.colorScheme.onSecondaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    Surface(
+        selected = selected,
         onClick = onClick,
-        colors = if (selected) {
-            ButtonDefaults.filledTonalButtonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-            )
-        } else {
-            ButtonDefaults.filledTonalButtonColors()
-        },
+        enabled = enabled,
+        shape = CircleShape,
+        color = containerColor,
+        contentColor = contentColor,
+        modifier = Modifier.semantics { role = Role.RadioButton },
     ) {
-        Text(text)
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = if (selected) {
+                    Icons.Rounded.CheckCircle
+                } else {
+                    Icons.Rounded.RadioButtonUnchecked
+                },
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+            )
+            Text(text)
+        }
     }
 }
 
@@ -1207,6 +1418,12 @@ private fun ProviderSettingFieldError.messageResource(): Int = when (this) {
     ProviderSettingFieldError.INVALID_BOOLEAN -> string.feat_setting_provider_error_boolean
     ProviderSettingFieldError.INVALID_CHOICE -> string.feat_setting_provider_error_choice
 }
+
+private val REMOTE_TV_SUBSCRIPTION_SOURCES = setOf(
+    DataSource.M3U,
+    DataSource.EPG,
+    DataSource.Xtream,
+)
 
 @Composable
 private fun Warning(

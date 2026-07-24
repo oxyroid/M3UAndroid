@@ -1,3 +1,7 @@
+import java.io.ByteArrayInputStream
+import java.security.MessageDigest
+import java.util.zip.ZipInputStream
+
 plugins {
     alias(libs.plugins.com.android.library)
     alias(libs.plugins.com.google.dagger.hilt.android)
@@ -6,6 +10,62 @@ plugins {
     alias(libs.plugins.compose.compiler)
     id("dev.oxyroid.native-load")
 }
+
+fun ByteArray.sha256Hex(): String {
+    return MessageDigest.getInstance("SHA-256")
+        .digest(this)
+        .joinToString("") { byte -> "%02x".format(byte) }
+}
+
+fun String.asBuildConfigString(): String {
+    return "\"${replace("\\", "\\\\").replace("\"", "\\\"")}\""
+}
+
+val nativePackIdForIntegrity = "nextlib-${libs.versions.nextLib.get()}"
+val nativePackDirectoryForIntegrity = rootProject.layout.projectDirectory.dir(
+    "native-packs/$nativePackIdForIntegrity"
+)
+val nativePackManifestForIntegrity = nativePackDirectoryForIntegrity.file(
+    "m3u-codec-$nativePackIdForIntegrity.json"
+)
+val nativePackManifestBytesForIntegrity = providers
+    .fileContents(nativePackManifestForIntegrity)
+    .asBytes
+    .get()
+val nativePackAssetNamesForIntegrity = Regex(
+    """"fileName"\s*:\s*"([^"]+\.zip)""""
+).findAll(nativePackManifestBytesForIntegrity.decodeToString())
+    .map { match -> match.groupValues[1] }
+    .distinct()
+    .sorted()
+    .toList()
+require(nativePackAssetNamesForIntegrity.isNotEmpty()) {
+    "No codec pack assets are declared by ${nativePackManifestForIntegrity.asFile}."
+}
+
+val nativePackAssetBytesForIntegrity = nativePackAssetNamesForIntegrity.associateWith { fileName ->
+    providers.fileContents(nativePackDirectoryForIntegrity.file(fileName)).asBytes.get()
+}
+val nativePackAssetSha256ForIntegrity = nativePackAssetBytesForIntegrity
+    .mapValues { (_, bytes) -> bytes.sha256Hex() }
+    .entries
+    .joinToString(";") { (fileName, digest) -> "$fileName=$digest" }
+val nativePackLibrarySha256ForIntegrity = nativePackAssetBytesForIntegrity
+    .flatMap { (fileName, bytes) ->
+        buildList {
+            ZipInputStream(ByteArrayInputStream(bytes)).use { zip ->
+                while (true) {
+                    val entry = zip.nextEntry ?: break
+                    if (!entry.isDirectory) {
+                        add("$fileName/${entry.name}" to zip.readBytes().sha256Hex())
+                    }
+                    zip.closeEntry()
+                }
+            }
+        }
+    }
+    .sortedBy { (key, _) -> key }
+    .joinToString(";") { (key, digest) -> "$key=$digest" }
 
 val m3uMockServerUrl = providers.gradleProperty("m3uMockServerUrl").orElse("http://10.0.2.2:8080")
 
@@ -21,6 +81,21 @@ android {
     }
     defaultConfig {
         buildConfigField("String", "NEXTLIB_CODEC_VERSION", "\"${libs.versions.nextLib.get()}\"")
+        buildConfigField(
+            "String",
+            "NATIVE_PACK_EXPECTED_MANIFEST_SHA256",
+            nativePackManifestBytesForIntegrity.sha256Hex().asBuildConfigString()
+        )
+        buildConfigField(
+            "String",
+            "NATIVE_PACK_EXPECTED_ASSET_SHA256",
+            nativePackAssetSha256ForIntegrity.asBuildConfigString()
+        )
+        buildConfigField(
+            "String",
+            "NATIVE_PACK_EXPECTED_LIBRARY_SHA256",
+            nativePackLibrarySha256ForIntegrity.asBuildConfigString()
+        )
         testInstrumentationRunnerArguments["m3uMockServerUrl"] = m3uMockServerUrl.get()
     }
     sourceSets.getByName("androidTest").assets.srcDir("$projectDir/schemas")
@@ -65,7 +140,10 @@ dependencies {
     implementation(libs.androidx.media3.exoplayer.workmanager)
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.media3.container)
-    implementation(libs.androidx.media3.datasource.rtmp)
+    implementation(libs.androidx.media3.datasource.rtmp) {
+        exclude(group = "io.antmedia", module = "rtmp-client")
+    }
+    implementation(libs.rtmp.client.page16k)
     implementation(libs.androidx.media3.datasource.okhttp)
     implementation(libs.androidx.media3.extractor)
     implementation(libs.androidx.media3.common.ktx)
@@ -95,6 +173,7 @@ dependencies {
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.core)
     androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.squareup.okhttp3.mockwebserver)
 }
 
 tasks.matching { task ->
@@ -102,4 +181,9 @@ tasks.matching { task ->
 }.configureEach {
     dependsOn(":testing:mock-server:startMockServer")
     finalizedBy(":testing:mock-server:stopMockServer")
+}
+
+tasks.matching { task -> task.name == "connectedDebugAndroidTest" }.configureEach {
+    dependsOn(":testing:extension-reference:installDebug")
+    finalizedBy(":testing:extension-reference:uninstallDebug")
 }

@@ -33,8 +33,6 @@ data class ProviderPlaybackSessionEntity(
     val mediaSourceId: String?,
     @ColumnInfo(name = "source_type")
     val sourceType: String,
-    @ColumnInfo(name = "fallback_direct_url")
-    val fallbackDirectUrl: String?,
     @ColumnInfo(name = "play_session_id")
     val playSessionId: String?,
     @ColumnInfo(name = "live_stream_id")

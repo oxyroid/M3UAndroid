@@ -62,6 +62,7 @@ import com.m3u.data.database.model.copyXtreamEpisode
 import com.m3u.data.database.model.copyXtreamSeries
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
+import com.m3u.data.repository.providerAccountIdOrNull
 import com.m3u.data.repository.provider.ProviderOperationException
 import com.m3u.data.repository.provider.ProviderPlaybackCloseReason
 import com.m3u.data.repository.provider.ProviderPlaybackSession
@@ -73,6 +74,7 @@ import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
@@ -89,8 +91,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -113,7 +113,7 @@ class PlayerManagerImpl @Inject constructor(
     private val cache: Cache,
     private val settings: Settings,
     publisher: Publisher,
-) : PlayerManager, Player.Listener, MediaSession.Callback {
+) : PlayerManager, MediaSession.Callback {
     private val timber = Timber.tag("PlayerManagerImpl")
     private val mainCoroutineScope = CoroutineScope(Dispatchers.Main)
     private val ioCoroutineScope = CoroutineScope(Dispatchers.IO)
@@ -129,10 +129,15 @@ class PlayerManagerImpl @Inject constructor(
     override val size = MutableStateFlow(Rect())
 
     private val mediaCommand = MutableStateFlow<MediaCommand?>(null)
-    private val providerSessionMutex = Mutex()
-    private var activeProviderSession: ProviderPlaybackSession? = null
+    private val playbackLifecycleMutex = Mutex()
+    private val providerSessionState = ProviderPlaybackSessionState()
+    private val providerSessionCloseQueue = ProviderSessionCloseQueue(ioCoroutineScope)
+    private val playerLifecycleLock = Any()
+    private var activePlayerListener: Player.Listener? = null
+    private var activePlayerGeneration: Long? = null
     private var activeRequestHeaders: Map<String, String> = emptyMap()
     private var activeProviderPlayback = false
+    private var activeProviderPlaybackAllowsCrossOrigin = false
 
     override val playlist: StateFlow<Playlist?> = mediaCommand.flatMapLatest { command ->
         when (command) {
@@ -183,16 +188,23 @@ class PlayerManagerImpl @Inject constructor(
     override val tracksGroups = MutableStateFlow<List<Tracks.Group>>(emptyList())
 
     private val playbackPosition = MutableStateFlow(-1L)
+    private val playbackStateEvent = MutableStateFlow(
+        PlaybackStateEvent(
+            generation = 0L,
+            state = Player.STATE_IDLE,
+        )
+    )
 
     init {
         mainCoroutineScope.launch {
-            playbackState.collectLatest { state ->
-                timber.d("onPlaybackStateChanged: $state")
-                when (state) {
+            playbackStateEvent.collectLatest { event ->
+                if (!providerSessionState.isCurrent(event.generation)) return@collectLatest
+                timber.d("onPlaybackStateChanged: ${event.state}")
+                when (event.state) {
                     Player.STATE_IDLE -> onPlaybackIdle()
                     Player.STATE_BUFFERING -> onPlaybackBuffering()
-                    Player.STATE_READY -> onPlaybackReady()
-                    Player.STATE_ENDED -> onPlaybackEnded()
+                    Player.STATE_READY -> onPlaybackReady(event.generation)
+                    Player.STATE_ENDED -> onPlaybackEnded(event.generation)
                 }
             }
         }
@@ -209,43 +221,99 @@ class PlayerManagerImpl @Inject constructor(
         command: MediaCommand,
         applyContinueWatching: Boolean
     ) {
+        val generation = providerSessionState.beginGeneration()
+        playbackStateEvent.value = PlaybackStateEvent(
+            generation = generation.value,
+            state = Player.STATE_IDLE,
+        )
+        closeProviderSessionAsync(
+            session = generation.detachedSession,
+            reason = ProviderPlaybackCloseReason.CHANNEL_CHANGED,
+        )
+        playbackLifecycleMutex.withLock {
+            startPlayback(
+                generation = generation.value,
+                command = command,
+                applyContinueWatching = applyContinueWatching,
+            )
+        }
+    }
+
+    private suspend fun startPlayback(
+        generation: Long,
+        command: MediaCommand,
+        applyContinueWatching: Boolean,
+    ) {
         timber.d("play")
-        closeActiveProviderSession(ProviderPlaybackCloseReason.CHANNEL_CHANGED)
+        if (!providerSessionState.isCurrent(generation)) return
         releasePlayer()
-        mediaCommand.value = command
+        val commandAccepted = providerSessionState.runIfCurrent(generation) {
+            mediaCommand.value = command
+        }
+        if (!commandAccepted) return
         val channel = when (command) {
             is MediaCommand.Common -> channelRepository.get(command.channelId)
             is MediaCommand.XtreamEpisode -> channelRepository
                 .get(command.channelId)
                 ?.copyXtreamEpisode(command.episode)
         }
+        if (!providerSessionState.isCurrent(generation)) return
         if (channel != null) {
+            channel.playlistUrl.providerAccountIdOrNull()?.let { accountId ->
+                providerSessionCloseQueue.awaitDrained(accountId)
+                if (!providerSessionState.isCurrent(generation)) return
+            }
             val providerSource = subscriptionProviderRepository.resolvePlayback(channel.id)
+            if (!providerSessionState.isCurrent(generation)) {
+                closeProviderSessionAsync(
+                    session = providerSource?.session,
+                    reason = ProviderPlaybackCloseReason.CHANNEL_CHANGED,
+                )
+                return
+            }
             val channelUrl = providerSource?.url
                 ?: channel.url.takeUnless { url -> url == Channel.URL_DYNAMIC }
                 ?: throw ProviderOperationException("Dynamic playback reference was not found")
-            activeRequestHeaders = providerSource?.headers.orEmpty()
-            activeProviderPlayback = providerSource != null
-            providerSessionMutex.withLock {
-                activeProviderSession = providerSource?.session
+            val attachment = providerSessionState.attach(
+                generation = generation,
+                session = providerSource?.session,
+            )
+            closeProviderSessionAsync(
+                session = attachment.sessionToClose,
+                reason = ProviderPlaybackCloseReason.CHANNEL_CHANGED,
+            )
+            if (!attachment.accepted) return
+            val sourceAccepted = providerSessionState.runIfCurrent(generation) {
+                activeRequestHeaders = providerSource?.headers.orEmpty()
+                activeProviderPlayback = providerSource != null
+                activeProviderPlaybackAllowsCrossOrigin =
+                    providerSource?.allowCrossOriginRequests == true
             }
+            if (!sourceAccepted) return
             try {
                 val channelPreference = getChannelPreference(channelUrl)
+                if (!providerSessionState.isCurrent(generation)) return
                 val licenseType = channel.licenseType.orEmpty()
                 val licenseKey = channel.licenseKey.orEmpty()
 
                 channelRepository.reportPlayed(channel.id)
+                if (!providerSessionState.isCurrent(generation)) return
 
                 val playlist = playlistRepository.get(channel.playlistUrl)
+                if (!providerSessionState.isCurrent(generation)) return
                 val userAgent = getUserAgent(channelUrl, playlist)
 
-                this.chain = channelPreference?.mineType
-                    ?.let { MimetypeChain.Remembered(channelUrl, it) }
-                    ?: MimetypeChain.Unspecified(channelUrl)
+                val chainAccepted = providerSessionState.runIfCurrent(generation) {
+                    this.chain = channelPreference?.mineType
+                        ?.let { MimetypeChain.Remembered(channelUrl, it) }
+                        ?: MimetypeChain.Unspecified(channelUrl)
+                }
+                if (!chainAccepted) return
 
                 timber.d("init mimetype chain: ${chain::class.simpleName}")
 
                 tryPlay(
+                    generation = generation,
                     url = channelUrl,
                     userAgent = userAgent,
                     requestHeaders = activeRequestHeaders,
@@ -254,8 +322,16 @@ class PlayerManagerImpl @Inject constructor(
                     applyContinueWatching = applyContinueWatching
                 )
             } catch (exception: Exception) {
-                closeActiveProviderSession(ProviderPlaybackCloseReason.PLAYBACK_FAILED)
-                releasePlayer()
+                val failedSession = providerSessionState.detach(generation)
+                withContext(NonCancellable) {
+                    closeProviderSession(
+                        session = failedSession,
+                        reason = ProviderPlaybackCloseReason.PLAYBACK_FAILED,
+                    )
+                }
+                if (providerSessionState.isCurrent(generation)) {
+                    releasePlayer()
+                }
                 throw exception
             }
         }
@@ -263,14 +339,17 @@ class PlayerManagerImpl @Inject constructor(
 
     private var extractor: MediaExtractorCompat? = null
     private suspend fun tryPlay(
+        generation: Long,
         url: String = chain.url,
         userAgent: String? = getUserAgent(chain.url, playlist.value),
         requestHeaders: Map<String, String> = activeRequestHeaders,
         providerPlayback: Boolean = activeProviderPlayback,
+        providerPlaybackAllowsCrossOrigin: Boolean = activeProviderPlaybackAllowsCrossOrigin,
         licenseType: String = channel.value?.licenseType.orEmpty(),
         licenseKey: String = channel.value?.licenseKey.orEmpty(),
         applyContinueWatching: Boolean
     ) {
+        if (!providerSessionState.isCurrent(generation)) return
         val rtmp: Boolean = Url(url).protocol.name == "rtmp"
         val tunneling = settings[PreferencesKeys.TUNNELING]
 
@@ -278,12 +357,17 @@ class PlayerManagerImpl @Inject constructor(
             is MimetypeChain.Remembered -> chain.mimeType
             is MimetypeChain.Trying -> chain.mimetype
             is MimetypeChain.Unspecified -> {
-                this.chain = chain.next()
+                val nextAccepted = providerSessionState.runIfCurrent(generation) {
+                    this.chain = chain.next()
+                }
+                if (!nextAccepted) return
                 return tryPlay(
+                    generation = generation,
                     url = url,
                     userAgent = userAgent,
                     requestHeaders = requestHeaders,
                     providerPlayback = providerPlayback,
+                    providerPlaybackAllowsCrossOrigin = providerPlaybackAllowsCrossOrigin,
                     licenseType = licenseType,
                     licenseKey = licenseKey,
                     applyContinueWatching = applyContinueWatching,
@@ -297,12 +381,18 @@ class PlayerManagerImpl @Inject constructor(
         val dataSourceFactory = if (rtmp) {
             RtmpDataSource.Factory()
         } else {
-            createHttpDataSourceFactory(url, userAgent, requestHeaders, providerPlayback)
+            createHttpDataSourceFactory(
+                url = url,
+                userAgent = userAgent,
+                requestHeaders = requestHeaders,
+                providerPlayback = providerPlayback,
+                providerPlaybackAllowsCrossOrigin = providerPlaybackAllowsCrossOrigin,
+            )
         }
         val extractorsFactory = DefaultExtractorsFactory().setTsExtractorFlags(
             FLAG_ALLOW_NON_IDR_KEYFRAMES and FLAG_DETECT_ACCESS_UNITS
         )
-        extractor = MediaExtractorCompat(extractorsFactory, dataSourceFactory)
+        val mediaExtractor = MediaExtractorCompat(extractorsFactory, dataSourceFactory)
         val mediaSourceFactory = when (mimeType) {
             MimeTypes.APPLICATION_M3U8 -> HlsMediaSource.Factory(dataSourceFactory)
                 .setAllowChunklessPreparation(false)
@@ -352,17 +442,19 @@ class PlayerManagerImpl @Inject constructor(
                 mediaSourceFactory.setDrmSessionManagerProvider { drmSessionManager }
             }
         }
-        val player = player.updateAndGet { prev ->
-            timber.d("player instance updated")
-            prev ?: createPlayer(mediaSourceFactory, tunneling)
-        }!!
         val mediaItem = MediaItem.fromUri(url)
         val mediaSource: MediaSource = mediaSourceFactory.createMediaSource(mediaItem)
-        player.setMediaSource(mediaSource)
-        player.prepare()
+        val preparedPlayer = preparePlayer(
+            generation = generation,
+            mediaSourceFactory = mediaSourceFactory,
+            mediaSource = mediaSource,
+            mediaExtractor = mediaExtractor,
+            tunneling = tunneling,
+        ) ?: return
         mainCoroutineScope.launch {
+            if (!providerSessionState.isCurrent(generation)) return@launch
             if (applyContinueWatching) {
-                restoreContinueWatching(player, url)
+                restoreContinueWatching(preparedPlayer, url)
             } else {
                 cwPosition.emit(-1L)
             }
@@ -371,35 +463,75 @@ class PlayerManagerImpl @Inject constructor(
 
     override suspend fun replay() {
         val prev = mediaCommand.value
-        closeActiveProviderSession(ProviderPlaybackCloseReason.STOPPED)
-        releasePlayer()
-        prev?.let { play(it, applyContinueWatching = false) }
+        val generation = providerSessionState.beginGeneration()
+        replay(
+            generation = generation,
+            command = prev,
+        )
+    }
+
+    private suspend fun replay(
+        generation: ProviderPlaybackGeneration,
+        command: MediaCommand?,
+    ) {
+        playbackStateEvent.value = PlaybackStateEvent(
+            generation = generation.value,
+            state = Player.STATE_IDLE,
+        )
+        closeProviderSessionAsync(
+            session = generation.detachedSession,
+            reason = ProviderPlaybackCloseReason.STOPPED,
+        )
+        playbackLifecycleMutex.withLock {
+            if (command == null) {
+                if (providerSessionState.isCurrent(generation.value)) {
+                    releasePlayer()
+                }
+            } else {
+                startPlayback(
+                    generation = generation.value,
+                    command = command,
+                    applyContinueWatching = false,
+                )
+            }
+        }
     }
 
     override fun release() {
         timber.d("release")
-        ioCoroutineScope.launch {
-            closeActiveProviderSession(ProviderPlaybackCloseReason.STOPPED)
-        }
+        val generation = providerSessionState.beginGeneration()
+        playbackStateEvent.value = PlaybackStateEvent(
+            generation = generation.value,
+            state = Player.STATE_IDLE,
+        )
+        closeProviderSessionAsync(
+            session = generation.detachedSession,
+            reason = ProviderPlaybackCloseReason.STOPPED,
+        )
         releasePlayer()
     }
 
     private fun releasePlayer() {
-        extractor = null
-        activeRequestHeaders = emptyMap()
-        activeProviderPlayback = false
-        mediaCommand.value = null
-        size.value = Rect()
-        playbackState.value = Player.STATE_IDLE
-        playbackException.value = null
-        tracksGroups.value = emptyList()
-        chain = MimetypeChain.Unsupported("")
-        player.update {
-            it ?: return@update null
-            it.stop()
-            it.release()
-            it.removeListener(this)
-            null
+        synchronized(playerLifecycleLock) {
+            extractor = null
+            activeRequestHeaders = emptyMap()
+            activeProviderPlayback = false
+            activeProviderPlaybackAllowsCrossOrigin = false
+            mediaCommand.value = null
+            size.value = Rect()
+            playbackState.value = Player.STATE_IDLE
+            isPlaying.value = false
+            playbackException.value = null
+            tracksGroups.value = emptyList()
+            chain = MimetypeChain.Unsupported("")
+            player.value?.let { activePlayer ->
+                activePlayerListener?.let(activePlayer::removeListener)
+                activePlayer.stop()
+                activePlayer.release()
+            }
+            activePlayerListener = null
+            activePlayerGeneration = null
+            player.value = null
         }
     }
 
@@ -479,7 +611,8 @@ class PlayerManagerImpl @Inject constructor(
 
     private fun createPlayer(
         mediaSourceFactory: MediaSource.Factory,
-        tunneling: Boolean
+        tunneling: Boolean,
+        listener: Player.Listener,
     ): ExoPlayer = ExoPlayer.Builder(context)
         .setMediaSourceFactory(mediaSourceFactory)
         .setRenderersFactory(renderersFactory)
@@ -493,7 +626,64 @@ class PlayerManagerImpl @Inject constructor(
                 .build()
             setAudioAttributes(attributes, true)
             playWhenReady = true
-            addListener(this@PlayerManagerImpl)
+            addListener(listener)
+        }
+
+    private fun preparePlayer(
+        generation: Long,
+        mediaSourceFactory: MediaSource.Factory,
+        mediaSource: MediaSource,
+        mediaExtractor: MediaExtractorCompat,
+        tunneling: Boolean,
+    ): ExoPlayer? {
+        var result: ExoPlayer? = null
+        providerSessionState.runIfCurrent(generation) {
+            synchronized(playerLifecycleLock) {
+                val preparedPlayer = player.value ?: run {
+                    val listener = createPlayerListener(generation)
+                    createPlayer(
+                        mediaSourceFactory = mediaSourceFactory,
+                        tunneling = tunneling,
+                        listener = listener,
+                    ).also { createdPlayer ->
+                        timber.d("player instance updated")
+                        activePlayerListener = listener
+                        activePlayerGeneration = generation
+                        player.value = createdPlayer
+                    }
+                }
+                if (activePlayerGeneration == generation) {
+                    extractor = mediaExtractor
+                    preparedPlayer.setMediaSource(mediaSource)
+                    preparedPlayer.prepare()
+                    result = preparedPlayer
+                }
+            }
+        }
+        return result
+    }
+
+    private fun createPlayerListener(generation: Long): Player.Listener =
+        object : Player.Listener {
+            override fun onVideoSizeChanged(videoSize: VideoSize) {
+                handleVideoSizeChanged(generation, videoSize)
+            }
+
+            override fun onPlaybackStateChanged(state: Int) {
+                handlePlaybackStateChanged(generation, state)
+            }
+
+            override fun onPlayerErrorChanged(exception: PlaybackException?) {
+                handlePlayerErrorChanged(generation, exception)
+            }
+
+            override fun onTracksChanged(tracks: Tracks) {
+                handleTracksChanged(generation, tracks)
+            }
+
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                handleIsPlayingChanged(generation, isPlaying)
+            }
         }
 
     private val renderersFactory: RenderersFactory by lazy {
@@ -515,11 +705,13 @@ class PlayerManagerImpl @Inject constructor(
         userAgent: String?,
         requestHeaders: Map<String, String>,
         providerPlayback: Boolean,
+        providerPlaybackAllowsCrossOrigin: Boolean,
     ): DataSource.Factory {
         val client = if (providerPlayback) {
             providerOkHttpClient.withProviderPlaybackHeaders(
                 entryUrl = url,
                 headers = requestHeaders,
+                allowCrossOriginRequests = providerPlaybackAllowsCrossOrigin,
             )
         } else {
             okHttpClient
@@ -538,86 +730,137 @@ class PlayerManagerImpl @Inject constructor(
         return upstream
     }
 
-    override fun onVideoSizeChanged(videoSize: VideoSize) {
-        super.onVideoSizeChanged(videoSize)
-        timber.d("onVideoSizeChanged, [${videoSize.toRect()}]")
-        size.value = videoSize.toRect()
+    private fun handleVideoSizeChanged(
+        generation: Long,
+        videoSize: VideoSize,
+    ) {
+        providerSessionState.runIfCurrent(generation) {
+            timber.d("onVideoSizeChanged, [${videoSize.toRect()}]")
+            size.value = videoSize.toRect()
+        }
     }
 
-    override fun onPlaybackStateChanged(state: Int) {
-        super.onPlaybackStateChanged(state)
-        playbackState.value = state
-    }
-
-    override fun onPlayerErrorChanged(exception: PlaybackException?) {
-        super.onPlayerErrorChanged(exception)
-        when (val errorCode = exception?.errorCode) {
-            PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW -> {
-                timber.w("onPlayerErrorChanged, ERROR_CODE_BEHIND_LIVE_WINDOW, trying to replay")
-                player.value?.let {
-                    it.seekToDefaultPosition()
-                    it.prepare()
-                }
+    private fun handlePlaybackStateChanged(
+        generation: Long,
+        state: Int,
+    ) {
+        providerSessionState.runIfCurrent(generation) {
+            playbackState.value = state
+            if (state == Player.STATE_ENDED) {
+                closeProviderSessionAsync(
+                    session = providerSessionState.detach(generation),
+                    reason = ProviderPlaybackCloseReason.ENDED,
+                )
             }
+            playbackStateEvent.value = PlaybackStateEvent(
+                generation = generation,
+                state = state,
+            )
+        }
+    }
 
-            PlaybackException.ERROR_CODE_PARSING_CONTAINER_MALFORMED,
-            PlaybackException.ERROR_CODE_PARSING_MANIFEST_MALFORMED,
-            PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED,
-            PlaybackException.ERROR_CODE_PARSING_MANIFEST_UNSUPPORTED -> {
-                timber.w("onPlayerErrorChanged, ${PlaybackException.getErrorCodeName(errorCode)}")
-                when (val chain = chain) {
-                    is MimetypeChain.Remembered -> {
-                        ioCoroutineScope.launch {
-                            val channelPreference = getChannelPreference(chain.url)
-                            if (channelPreference != null) {
-                                addChannelPreference(
-                                    chain.url,
-                                    channelPreference.copy(mineType = null)
+    private fun handlePlayerErrorChanged(
+        generation: Long,
+        exception: PlaybackException?,
+    ) {
+        providerSessionState.runIfCurrent(generation) {
+            when (val errorCode = exception?.errorCode) {
+                PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW -> {
+                    timber.w("onPlayerErrorChanged, ERROR_CODE_BEHIND_LIVE_WINDOW, trying to replay")
+                    playerForGeneration(generation)?.let {
+                        it.seekToDefaultPosition()
+                        it.prepare()
+                    }
+                }
+
+                PlaybackException.ERROR_CODE_PARSING_CONTAINER_MALFORMED,
+                PlaybackException.ERROR_CODE_PARSING_MANIFEST_MALFORMED,
+                PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED,
+                PlaybackException.ERROR_CODE_PARSING_MANIFEST_UNSUPPORTED -> {
+                    timber.w(
+                        "onPlayerErrorChanged, ${PlaybackException.getErrorCodeName(errorCode)}"
+                    )
+                    when (val chain = chain) {
+                        is MimetypeChain.Remembered -> {
+                            ioCoroutineScope.launch {
+                                val channelPreference = getChannelPreference(chain.url)
+                                if (channelPreference != null) {
+                                    addChannelPreference(
+                                        chain.url,
+                                        channelPreference.copy(mineType = null)
+                                    )
+                                }
+                            }
+                        }
+
+                        else -> {}
+                    }
+                    if (chain.hasNext()) {
+                        val next = chain.next()
+                        chain = next
+                        when (next) {
+                            is MimetypeChain.Unsupported -> {
+                                playbackException.value = exception
+                                closeProviderSessionForGenerationAsync(
+                                    generation = generation,
+                                    reason = ProviderPlaybackCloseReason.PLAYBACK_FAILED,
+                                )
+                            }
+
+                            else -> mainCoroutineScope.launch {
+                                tryPlay(
+                                    generation = generation,
+                                    applyContinueWatching = false,
                                 )
                             }
                         }
                     }
-
-                    else -> {}
                 }
-                if (chain.hasNext()) {
-                    val next = chain.next()
-                    chain = next
-                    when (next) {
-                        is MimetypeChain.Unsupported -> {
-                            playbackException.value = exception
-                            closeActiveProviderSessionAsync(ProviderPlaybackCloseReason.PLAYBACK_FAILED)
-                        }
 
-                        else -> mainCoroutineScope.launch { tryPlay(applyContinueWatching = false) }
+                PlaybackException.ERROR_CODE_IO_UNSPECIFIED -> {
+                    playbackException.value = exception
+                    closeProviderSessionForGenerationAsync(
+                        generation = generation,
+                        reason = ProviderPlaybackCloseReason.PLAYBACK_FAILED,
+                    )
+                }
+
+                else -> {
+                    if (exception != null) {
+                        timber.e(exception, PlaybackException.getErrorCodeName(exception.errorCode))
+                        closeProviderSessionForGenerationAsync(
+                            generation = generation,
+                            reason = ProviderPlaybackCloseReason.PLAYBACK_FAILED,
+                        )
                     }
+                    playbackException.value = exception
                 }
-            }
-
-            PlaybackException.ERROR_CODE_IO_UNSPECIFIED -> {
-                playbackException.value = exception
-                closeActiveProviderSessionAsync(ProviderPlaybackCloseReason.PLAYBACK_FAILED)
-            }
-
-            else -> {
-                if (exception != null) {
-                    timber.e(exception, PlaybackException.getErrorCodeName(exception.errorCode))
-                    closeActiveProviderSessionAsync(ProviderPlaybackCloseReason.PLAYBACK_FAILED)
-                }
-                playbackException.value = exception
             }
         }
     }
 
-    override fun onTracksChanged(tracks: Tracks) {
-        super.onTracksChanged(tracks)
-        player.value?.isPlaying
-        tracksGroups.value = tracks.groups
+    private fun handleTracksChanged(
+        generation: Long,
+        tracks: Tracks,
+    ) {
+        providerSessionState.runIfCurrent(generation) {
+            tracksGroups.value = tracks.groups
+        }
     }
 
-    override fun onIsPlayingChanged(isPlaying: Boolean) {
-        this.isPlaying.value = isPlaying
+    private fun handleIsPlayingChanged(
+        generation: Long,
+        isPlaying: Boolean,
+    ) {
+        providerSessionState.runIfCurrent(generation) {
+            this.isPlaying.value = isPlaying
+        }
     }
+
+    private fun playerForGeneration(generation: Long): ExoPlayer? =
+        synchronized(playerLifecycleLock) {
+            player.value.takeIf { activePlayerGeneration == generation }
+        }
 
     override fun pauseOrContinue(value: Boolean) {
         player.value?.apply {
@@ -744,7 +987,8 @@ class PlayerManagerImpl @Inject constructor(
     private suspend fun onPlaybackIdle() {}
     private suspend fun onPlaybackBuffering() {}
 
-    private suspend fun onPlaybackReady() {
+    private suspend fun onPlaybackReady(generation: Long) {
+        if (!providerSessionState.isCurrent(generation)) return
         timber.d("onPlaybackReady, trying the playChain $chain")
         when (val chain = chain) {
             is MimetypeChain.Remembered -> {
@@ -753,6 +997,7 @@ class PlayerManagerImpl @Inject constructor(
 
             is MimetypeChain.Trying -> {
                 val channelPreference = getChannelPreference(chain.url)
+                if (!providerSessionState.isCurrent(generation)) return
                 addChannelPreference(
                     chain.url,
                     channelPreference?.copy(mineType = chain.mimetype)
@@ -765,27 +1010,56 @@ class PlayerManagerImpl @Inject constructor(
         }
     }
 
-    private suspend fun onPlaybackEnded() {
-        closeActiveProviderSession(ProviderPlaybackCloseReason.STOPPED)
-        if (settings[PreferencesKeys.RECONNECT_MODE] == ReconnectMode.RECONNECT) {
-            mainCoroutineScope.launch { replay() }
-        }
+    private suspend fun onPlaybackEnded(generation: Long) {
+        if (!providerSessionState.isCurrent(generation)) return
         val channelUrl = chain.url
-        if (channelUrl.isNotEmpty()) {
+        if (
+            settings[PreferencesKeys.RECONNECT_MODE] == ReconnectMode.RECONNECT &&
+            providerSessionState.isCurrent(generation)
+        ) {
+            val command = mediaCommand.value
+            mainCoroutineScope.launch {
+                val replayGeneration = providerSessionState.beginGenerationIfCurrent(generation)
+                    ?: return@launch
+                replay(
+                    generation = replayGeneration,
+                    command = command,
+                )
+            }
+        }
+        if (
+            channelUrl.isNotEmpty() &&
+            providerSessionState.isCurrent(generation)
+        ) {
             resetContinueWatching(channelUrl)
         }
     }
 
-    private fun closeActiveProviderSessionAsync(reason: ProviderPlaybackCloseReason) {
-        ioCoroutineScope.launch {
-            closeActiveProviderSession(reason)
+    private fun closeProviderSessionForGenerationAsync(
+        generation: Long,
+        reason: ProviderPlaybackCloseReason,
+    ) {
+        closeProviderSessionAsync(
+            session = providerSessionState.detach(generation),
+            reason = reason,
+        )
+    }
+
+    private fun closeProviderSessionAsync(
+        session: ProviderPlaybackSession?,
+        reason: ProviderPlaybackCloseReason,
+    ) {
+        if (session == null) return
+        providerSessionCloseQueue.enqueue(session.accountId) {
+            closeProviderSession(session, reason)
         }
     }
 
-    private suspend fun closeActiveProviderSession(reason: ProviderPlaybackCloseReason) {
-        val session = providerSessionMutex.withLock {
-            activeProviderSession.also { activeProviderSession = null }
-        } ?: return
+    private suspend fun closeProviderSession(
+        session: ProviderPlaybackSession?,
+        reason: ProviderPlaybackCloseReason,
+    ) {
+        if (session == null) return
         runCatching {
             subscriptionProviderRepository.closePlayback(session, reason)
         }.onFailure { exception ->
@@ -906,6 +1180,11 @@ class PlayerManagerImpl @Inject constructor(
 fun VideoSize.toRect(): Rect {
     return Rect(0, 0, width, height)
 }
+
+private data class PlaybackStateEvent(
+    val generation: Long,
+    val state: @Player.State Int,
+)
 
 private sealed class MimetypeChain(val url: String) {
     class Remembered(

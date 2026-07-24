@@ -6,26 +6,100 @@ import com.m3u.data.api.ProviderOkhttpClient
 import com.m3u.extension.api.subscription.EmbyCompatibleProviderKinds
 import com.m3u.extension.api.subscription.PlaybackPreferences
 import com.m3u.extension.api.subscription.PlaybackReference
-import com.m3u.extension.api.subscription.PlaybackSessionDescriptor
 import com.m3u.extension.api.subscription.ProviderKind
 import com.m3u.extension.api.subscription.SubscriptionChannelDescriptor
 import com.m3u.extension.api.subscription.ValidatedProviderAccount
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.util.concurrent.Semaphore as JavaSemaphore
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import okhttp3.Call
+import okhttp3.Callback
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
 import okhttp3.RequestBody.Companion.toRequestBody
+import okio.Buffer
 import java.io.IOException
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import javax.inject.Singleton
+
+@Singleton
+internal class EmbyPlaybackCleanupScheduler @Inject constructor() {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val admissionPermits = JavaSemaphore(MAX_PENDING_CLEANUPS, true)
+    private val executionPermits = Semaphore(MAX_CONCURRENT_CLEANUPS)
+
+    fun tryReserve(): EmbyPlaybackCleanupAdmission? {
+        if (!admissionPermits.tryAcquire()) return null
+        return EmbyPlaybackCleanupAdmission(this)
+    }
+
+    internal fun launchReserved(close: suspend () -> Unit) {
+        scope.launch {
+            try {
+                withTimeout(CLEANUP_TIMEOUT_MILLIS) {
+                    executionPermits.withPermit {
+                        close()
+                    }
+                }
+            } catch (_: Exception) {
+                // This is the last-resort path after the owning invocation has already failed.
+            } finally {
+                admissionPermits.release()
+            }
+        }
+    }
+
+    internal fun releaseReserved() {
+        admissionPermits.release()
+    }
+
+    companion object {
+        internal const val MAX_PENDING_CLEANUPS = 64
+        private const val MAX_CONCURRENT_CLEANUPS = 4
+        const val CLEANUP_TIMEOUT_MILLIS = 30_000L
+    }
+}
+
+internal class EmbyPlaybackCleanupAdmission(
+    private val scheduler: EmbyPlaybackCleanupScheduler,
+) {
+    private val consumed = AtomicBoolean()
+
+    fun schedule(close: suspend () -> Unit) {
+        if (consumed.compareAndSet(false, true)) {
+            scheduler.launchReserved(close)
+        }
+    }
+
+    fun release() {
+        if (consumed.compareAndSet(false, true)) {
+            scheduler.releaseReserved()
+        }
+    }
+}
 
 internal interface EmbyCompatibleClient {
     suspend fun validate(
@@ -47,11 +121,25 @@ internal interface EmbyCompatibleClient {
         preferences: PlaybackPreferences,
     ): EmbyPlaybackSource
 
-    suspend fun closePlayback(
+    suspend fun resolvePlaybackWithCleanupAdmission(
         account: ValidatedProviderAccount,
         accessToken: String,
         reference: PlaybackReference,
-        session: PlaybackSessionDescriptor,
+        preferences: PlaybackPreferences,
+        cleanupAdmission: EmbyPlaybackCleanupAdmission,
+    ): EmbyPlaybackSource = resolvePlayback(
+        account = account,
+        accessToken = accessToken,
+        reference = reference,
+        preferences = preferences,
+    )
+
+    suspend fun closePlayback(
+        account: ValidatedProviderAccount,
+        accessToken: String,
+        itemId: String,
+        mediaSourceId: String?,
+        session: EmbyPlaybackSession,
     ): Boolean
 }
 
@@ -69,23 +157,70 @@ internal data class EmbyPlaybackSource(
     val url: String,
     val headers: Map<String, String>,
     val mediaSourceId: String?,
-    val session: PlaybackSessionDescriptor?,
+    val session: EmbyPlaybackSession?,
 )
 
-internal class OkHttpEmbyCompatibleClient @Inject constructor(
-    @ApplicationContext context: Context,
-    publisher: Publisher,
-    @param:ProviderOkhttpClient private val okHttpClient: OkHttpClient,
+internal data class EmbyPlaybackSession(
+    val playSessionId: String?,
+    val liveStreamId: String?,
+)
+
+internal class OkHttpEmbyCompatibleClient private constructor(
+    device: String,
+    deviceId: String,
+    version: String,
+    okHttpClient: OkHttpClient,
+    controlCallTimeoutMillis: Long,
+    private val cleanupScheduler: EmbyPlaybackCleanupScheduler,
 ) : EmbyCompatibleClient {
+    @Inject
+    constructor(
+        @ApplicationContext context: Context,
+        publisher: Publisher,
+        @ProviderOkhttpClient okHttpClient: OkHttpClient,
+        cleanupScheduler: EmbyPlaybackCleanupScheduler = EmbyPlaybackCleanupScheduler(),
+    ) : this(
+        device = publisher.model.ifBlank { "Android" },
+        deviceId = context.providerDeviceId(),
+        version = publisher.versionName,
+        okHttpClient = okHttpClient,
+        controlCallTimeoutMillis = CONTROL_CALL_TIMEOUT_MILLIS,
+        cleanupScheduler = cleanupScheduler,
+    )
+
+    internal constructor(
+        okHttpClient: OkHttpClient,
+        controlCallTimeoutMillis: Long = CONTROL_CALL_TIMEOUT_MILLIS,
+        cleanupScheduler: EmbyPlaybackCleanupScheduler = EmbyPlaybackCleanupScheduler(),
+    ) : this(
+        device = "Android test",
+        deviceId = "test-device",
+        version = "test",
+        okHttpClient = okHttpClient,
+        controlCallTimeoutMillis = controlCallTimeoutMillis,
+        cleanupScheduler = cleanupScheduler,
+    )
+
     private val json = Json {
         ignoreUnknownKeys = true
         explicitNulls = false
     }
     private val clientIdentity = ClientIdentity(
-        device = publisher.model.ifBlank { "Android" },
-        deviceId = context.providerDeviceId(),
-        version = publisher.versionName,
+        device = device,
+        deviceId = deviceId,
+        version = version,
     )
+    private val controlClient = okHttpClient.newBuilder()
+        .followRedirects(false)
+        .followSslRedirects(false)
+        .addInterceptor(SameOriginRedirectInterceptor)
+        .callTimeout(
+            controlCallTimeoutMillis.also { timeout ->
+                require(timeout > 0) { "Provider control call timeout must be positive" }
+            },
+            TimeUnit.MILLISECONDS,
+        )
+        .build()
 
     override suspend fun validate(
         baseUrl: String,
@@ -145,57 +280,102 @@ internal class OkHttpEmbyCompatibleClient @Inject constructor(
         account: ValidatedProviderAccount,
         accessToken: String,
     ): EmbyChannelRefresh = withContext(Dispatchers.IO) {
-        val request = requestBuilder(
-            baseUrl = account.normalizedBaseUrl,
-            path = "LiveTv/Channels",
-            accessToken = accessToken,
-            providerKind = account.detectedKind,
-            userId = account.userId,
-        )
-            .url(
-                url(account.normalizedBaseUrl, "LiveTv/Channels")
-                    .newBuilder()
-                    .addQueryParameter("UserId", account.userId)
-                    .addQueryParameter("StartIndex", "0")
-                    .addQueryParameter("EnableImages", "true")
-                    .build()
-            )
-            .get()
-            .build()
-        val response: LiveTvChannelsResponse = executeJson(request)
         val providerId = EmbyCompatibleProvider.ID
-        val channels = response.items.orEmpty().mapNotNull { item ->
-            val itemId = item.id?.takeIf(String::isNotBlank) ?: return@mapNotNull null
-            val title = item.name?.takeIf(String::isNotBlank) ?: return@mapNotNull null
-            val imageUrl = item.primaryImageTag?.takeIf(String::isNotBlank)?.let { tag ->
-                url(account.normalizedBaseUrl, "Items/$itemId/Images/Primary")
-                    .newBuilder()
-                    .addQueryParameter("tag", tag)
-                    .build()
-                    .toString()
+        val channels = mutableListOf<SubscriptionChannelDescriptor>()
+        val seenChannelIds = mutableSetOf<String>()
+        var expectedTotal: Int? = null
+        var startIndex = 0
+        var requestCount = 0
+        while (true) {
+            if (requestCount >= MAX_CHANNEL_PAGE_REQUESTS) {
+                throw EmbyProtocolException("Provider channel pagination exceeded the host limit")
             }
-            SubscriptionChannelDescriptor(
-                remoteId = itemId,
-                title = title,
-                logoUrl = imageUrl,
-                category = item.channelType
-                    ?.takeIf(String::isNotBlank)
-                    ?: item.mediaType?.takeIf(String::isNotBlank)
-                    ?: DEFAULT_CHANNEL_CATEGORY,
-                playbackReference = PlaybackReference(
-                    providerId = providerId,
-                    itemId = itemId,
-                    sourceType = PLAYBACK_SOURCE_TYPE,
-                ),
-                epgReference = itemId,
-                metadata = buildMap {
-                    item.channelNumber?.takeIf(String::isNotBlank)?.let { put("channelNumber", it) }
-                },
+            val remainingCapacity = MAX_CHANNELS_PER_REFRESH - channels.size
+            val pageLimit = minOf(CHANNEL_PAGE_SIZE, maxOf(remainingCapacity, 1))
+            val request = requestBuilder(
+                baseUrl = account.normalizedBaseUrl,
+                path = "LiveTv/Channels",
+                accessToken = accessToken,
+                providerKind = account.detectedKind,
+                userId = account.userId,
             )
+                .url(
+                    url(account.normalizedBaseUrl, "LiveTv/Channels")
+                        .newBuilder()
+                        .addQueryParameter("UserId", account.userId)
+                        .addQueryParameter("StartIndex", startIndex.toString())
+                        .addQueryParameter("Limit", pageLimit.toString())
+                        .addQueryParameter("EnableImages", "true")
+                        .build()
+                )
+                .get()
+                .build()
+            requestCount++
+            val response: LiveTvChannelsResponse = executeJson(request)
+            val pageItems = response.items.orEmpty()
+            if (pageItems.size > pageLimit) {
+                throw EmbyProtocolException("Provider returned more channels than requested")
+            }
+            val pageTotal = response.totalRecordCount
+            if (pageTotal != null && pageTotal !in 0..MAX_CHANNELS_PER_REFRESH) {
+                throw EmbyProtocolException("Provider channel count exceeds the host limit")
+            }
+            if (expectedTotal != null && pageTotal != expectedTotal) {
+                throw EmbyProtocolException("Provider channel count changed during pagination")
+            }
+            if (expectedTotal == null && pageTotal != null) {
+                expectedTotal = pageTotal
+            }
+            val completeCount = channels.size + pageItems.size
+            if (completeCount > MAX_CHANNELS_PER_REFRESH) {
+                throw EmbyProtocolException("Provider channel count exceeds the host limit")
+            }
+            if (expectedTotal != null && completeCount > expectedTotal) {
+                throw EmbyProtocolException("Provider returned more channels than its reported count")
+            }
+            pageItems.forEach { item ->
+                val itemId = item.id?.trim()?.takeIf(String::isNotEmpty)
+                    ?: throw EmbyProtocolException("Provider channel did not contain an identifier")
+                val title = item.name?.trim()?.takeIf(String::isNotEmpty)
+                    ?: throw EmbyProtocolException("Provider channel did not contain a title")
+                if (!seenChannelIds.add(itemId)) {
+                    throw EmbyProtocolException("Provider returned a duplicate channel identifier")
+                }
+                val imageUrl = item.primaryImageTag?.takeIf(String::isNotBlank)?.let {
+                    url(account.normalizedBaseUrl, "Items/$itemId/Images/Primary").toString()
+                }
+                channels += SubscriptionChannelDescriptor(
+                    remoteId = itemId,
+                    title = title,
+                    logoUrl = imageUrl,
+                    category = item.channelType
+                        ?.takeIf(String::isNotBlank)
+                        ?: item.mediaType?.takeIf(String::isNotBlank)
+                        ?: DEFAULT_CHANNEL_CATEGORY,
+                    playbackReference = PlaybackReference(
+                        providerId = providerId,
+                        itemId = itemId,
+                        sourceType = PLAYBACK_SOURCE_TYPE,
+                    ),
+                )
+            }
+            startIndex = completeCount
+
+            val reportedTotal = expectedTotal
+            if (reportedTotal != null) {
+                if (channels.size == reportedTotal) break
+                if (pageItems.isEmpty()) {
+                    throw EmbyProtocolException(
+                        "Provider channel pagination ended before the reported count"
+                    )
+                }
+            } else {
+                if (pageItems.size < pageLimit) break
+            }
         }
         EmbyChannelRefresh(
             channels = channels,
-            totalRecordCount = response.totalRecordCount ?: channels.size,
+            totalRecordCount = expectedTotal ?: channels.size,
         )
     }
 
@@ -204,138 +384,313 @@ internal class OkHttpEmbyCompatibleClient @Inject constructor(
         accessToken: String,
         reference: PlaybackReference,
         preferences: PlaybackPreferences,
-    ): EmbyPlaybackSource = withContext(Dispatchers.IO) {
-        val playbackInfoUrl = url(
-            account.normalizedBaseUrl,
-            "Items/${reference.itemId}/PlaybackInfo",
-        )
-            .newBuilder()
-            .addQueryParameter("UserId", account.userId)
-            .addQueryParameter("IsPlayback", "true")
-            .addQueryParameter("AutoOpenLiveStream", "true")
-            .apply {
-                preferences.maxStreamingBitrate?.let { bitrate ->
-                    addQueryParameter("MaxStreamingBitrate", bitrate.toString())
-                }
-            }
-            .build()
-        val response: PlaybackInfoResponse = executeJson(
-            requestBuilder(
-                baseUrl = account.normalizedBaseUrl,
-                path = "Items/${reference.itemId}/PlaybackInfo",
-                accessToken = accessToken,
-                providerKind = account.detectedKind,
-                userId = account.userId,
-            )
-                .url(playbackInfoUrl)
-                .get()
-                .build()
-        )
-        val mediaSource = response.mediaSources.orEmpty()
-            .firstOrNull { source -> reference.mediaSourceId != null && source.id == reference.mediaSourceId }
-            ?: response.mediaSources.orEmpty().firstOrNull()
-            ?: throw EmbyProtocolException("Playback response did not contain a media source")
-        val resolvedUrl = sequenceOf(
-            mediaSource.directStreamUrl,
-            mediaSource.transcodingUrl.takeIf { preferences.allowTranscoding },
-            mediaSource.path,
-            reference.fallbackDirectUrl,
-        )
-            .filterNotNull()
-            .map(String::trim)
-            .firstOrNull(String::isNotEmpty)
-            ?.let { candidate -> absoluteUrl(account.normalizedBaseUrl, candidate) }
-            ?: throw EmbyProtocolException("Playback response did not contain a usable URL")
-        val headers = buildMap {
-            putAll(mediaSource.requiredHttpHeaders.orEmpty())
-            putAll(
-                clientIdentity.authenticationHeaders(
-                    providerKind = account.detectedKind,
-                    accessToken = accessToken,
-                    userId = account.userId,
-                )
-            )
-        }
-        val session = PlaybackSessionDescriptor(
-            playSessionId = response.playSessionId?.takeIf(String::isNotBlank),
-            liveStreamId = mediaSource.liveStreamId?.takeIf(String::isNotBlank),
-        ).takeIf { it.playSessionId != null || it.liveStreamId != null }
+    ): EmbyPlaybackSource = resolvePlaybackInternal(
+        account = account,
+        accessToken = accessToken,
+        reference = reference,
+        preferences = preferences,
+        cleanupAdmission = null,
+    )
 
-        EmbyPlaybackSource(
-            url = resolvedUrl,
-            headers = headers,
-            mediaSourceId = mediaSource.id,
-            session = session,
-        )
+    override suspend fun resolvePlaybackWithCleanupAdmission(
+        account: ValidatedProviderAccount,
+        accessToken: String,
+        reference: PlaybackReference,
+        preferences: PlaybackPreferences,
+        cleanupAdmission: EmbyPlaybackCleanupAdmission,
+    ): EmbyPlaybackSource = resolvePlaybackInternal(
+        account = account,
+        accessToken = accessToken,
+        reference = reference,
+        preferences = preferences,
+        cleanupAdmission = cleanupAdmission,
+    )
+
+    private suspend fun resolvePlaybackInternal(
+        account: ValidatedProviderAccount,
+        accessToken: String,
+        reference: PlaybackReference,
+        preferences: PlaybackPreferences,
+        cleanupAdmission: EmbyPlaybackCleanupAdmission?,
+    ): EmbyPlaybackSource {
+        val admission = cleanupAdmission
+            ?: cleanupScheduler.tryReserve()
+            ?: throw EmbyProtocolException("Provider playback cleanup capacity is exhausted")
+        val releaseOnSuccess = cleanupAdmission == null
+        var acquiredSession: EmbyPlaybackSession? = null
+        var resolvedMediaSourceId: String? = reference.mediaSourceId
+        try {
+            val source = withContext(Dispatchers.IO) {
+                val playbackInfoUrl = url(
+                    account.normalizedBaseUrl,
+                    "Items/${reference.itemId}/PlaybackInfo",
+                )
+                    .newBuilder()
+                    .addQueryParameter("UserId", account.userId)
+                    .addQueryParameter("IsPlayback", "true")
+                    .addQueryParameter("AutoOpenLiveStream", "true")
+                    .apply {
+                        preferences.maxStreamingBitrate?.let { bitrate ->
+                            addQueryParameter("MaxStreamingBitrate", bitrate.toString())
+                        }
+                    }
+                    .build()
+                val response: PlaybackInfoResponse = executeJson(
+                    requestBuilder(
+                        baseUrl = account.normalizedBaseUrl,
+                        path = "Items/${reference.itemId}/PlaybackInfo",
+                        accessToken = accessToken,
+                        providerKind = account.detectedKind,
+                        userId = account.userId,
+                    )
+                        .url(playbackInfoUrl)
+                        .get()
+                        .build()
+                )
+                acquiredSession = response.playSessionId
+                    ?.takeIf(String::isNotBlank)
+                    ?.let { playSessionId ->
+                        EmbyPlaybackSession(
+                            playSessionId = playSessionId,
+                            liveStreamId = null,
+                        )
+                    }
+                val mediaSource = response.mediaSources.orEmpty()
+                    .firstOrNull { source ->
+                        reference.mediaSourceId != null &&
+                            source.id == reference.mediaSourceId
+                    }
+                    ?: response.mediaSources.orEmpty().firstOrNull()
+                    ?: throw EmbyProtocolException(
+                        "Playback response did not contain a media source"
+                    )
+                resolvedMediaSourceId = mediaSource.id
+                val playSessionId = response.playSessionId?.takeIf(String::isNotBlank)
+                val liveStreamId = mediaSource.liveStreamId?.takeIf(String::isNotBlank)
+                acquiredSession = if (playSessionId != null || liveStreamId != null) {
+                    EmbyPlaybackSession(
+                        playSessionId = playSessionId,
+                        liveStreamId = liveStreamId,
+                    )
+                } else {
+                    null
+                }
+                val resolvedUrl = sequenceOf(
+                    mediaSource.directStreamUrl,
+                    mediaSource.transcodingUrl.takeIf { preferences.allowTranscoding },
+                    mediaSource.path,
+                )
+                    .filterNotNull()
+                    .map(String::trim)
+                    .firstOrNull(String::isNotEmpty)
+                    ?.let { candidate -> absoluteUrl(account.normalizedBaseUrl, candidate) }
+                    ?: throw EmbyProtocolException(
+                        "Playback response did not contain a usable URL"
+                    )
+                val sameOrigin = account.normalizedBaseUrl.toHttpUrl()
+                    .hasSameOrigin(resolvedUrl.toHttpUrl())
+                val headers = buildMap {
+                    mediaSource.requiredHttpHeaders.orEmpty().forEach { (name, value) ->
+                        if (sameOrigin || name.lowercase() !in SENSITIVE_PLAYBACK_HEADERS) {
+                            put(name, value)
+                        }
+                    }
+                    if (sameOrigin) {
+                        putAll(
+                            clientIdentity.authenticationHeaders(
+                                providerKind = account.detectedKind,
+                                accessToken = accessToken,
+                                userId = account.userId,
+                            )
+                        )
+                    }
+                }
+
+                EmbyPlaybackSource(
+                    url = resolvedUrl,
+                    headers = headers,
+                    mediaSourceId = mediaSource.id,
+                    session = acquiredSession,
+                )
+            }
+            if (releaseOnSuccess) {
+                admission.release()
+            }
+            return source
+        } catch (failure: Exception) {
+            acquiredSession?.let { session ->
+                scheduleCloseAfterResolveFailure(
+                    admission = admission,
+                    account = account,
+                    accessToken = accessToken,
+                    itemId = reference.itemId,
+                    mediaSourceId = resolvedMediaSourceId,
+                    session = session,
+                )
+            } ?: admission.release()
+            throw failure
+        }
     }
 
     override suspend fun closePlayback(
         account: ValidatedProviderAccount,
         accessToken: String,
-        reference: PlaybackReference,
-        session: PlaybackSessionDescriptor,
+        itemId: String,
+        mediaSourceId: String?,
+        session: EmbyPlaybackSession,
     ): Boolean = withContext(Dispatchers.IO) {
-        val stoppedBody = json.encodeToString(
-            PlaybackStoppedRequest(
-                itemId = reference.itemId,
-                mediaSourceId = reference.mediaSourceId,
-                playSessionId = session.playSessionId,
-                liveStreamId = session.liveStreamId,
-            )
-        )
-        executeNoContent(
-            requestBuilder(
-                baseUrl = account.normalizedBaseUrl,
-                path = "Sessions/Playing/Stopped",
-                accessToken = accessToken,
-                providerKind = account.detectedKind,
-                userId = account.userId,
-            )
-                .post(stoppedBody.toRequestBody(JSON_MEDIA_TYPE))
-                .build(),
-            allowNotFound = true,
-        )
-        session.liveStreamId?.let { liveStreamId ->
-            val closeUrl = url(account.normalizedBaseUrl, "LiveStreams/Close")
-                .newBuilder()
-                .addQueryParameter("LiveStreamId", liveStreamId)
-                .build()
-            executeNoContent(
-                requestBuilder(
-                    baseUrl = account.normalizedBaseUrl,
-                    path = "LiveStreams/Close",
-                    accessToken = accessToken,
-                    providerKind = account.detectedKind,
-                    userId = account.userId,
+        supervisorScope {
+            val stoppedClose = async {
+                val stoppedBody = json.encodeToString(
+                    PlaybackStoppedRequest(
+                        itemId = itemId,
+                        mediaSourceId = mediaSourceId,
+                        playSessionId = session.playSessionId,
+                        liveStreamId = session.liveStreamId,
+                    )
                 )
-                    .url(closeUrl)
-                    .post(ByteArray(0).toRequestBody(null))
-                    .build(),
-                allowNotFound = true,
-            )
+                executeNoContent(
+                    requestBuilder(
+                        baseUrl = account.normalizedBaseUrl,
+                        path = "Sessions/Playing/Stopped",
+                        accessToken = accessToken,
+                        providerKind = account.detectedKind,
+                        userId = account.userId,
+                    )
+                        .post(stoppedBody.toRequestBody(JSON_MEDIA_TYPE))
+                        .build(),
+                    allowNotFound = true,
+                )
+            }
+            val liveStreamClose = session.liveStreamId?.let { liveStreamId ->
+                async {
+                    val closeUrl = url(account.normalizedBaseUrl, "LiveStreams/Close")
+                        .newBuilder()
+                        .addQueryParameter("LiveStreamId", liveStreamId)
+                        .build()
+                    executeNoContent(
+                        requestBuilder(
+                            baseUrl = account.normalizedBaseUrl,
+                            path = "LiveStreams/Close",
+                            accessToken = accessToken,
+                            providerKind = account.detectedKind,
+                            userId = account.userId,
+                        )
+                            .url(closeUrl)
+                            .post(ByteArray(0).toRequestBody(null))
+                            .build(),
+                        allowNotFound = true,
+                    )
+                }
+            }
+            val stoppedFailure = stoppedClose.failureOrNull()
+            val liveStreamFailure = liveStreamClose?.failureOrNull()
+            val firstFailure = stoppedFailure ?: liveStreamFailure
+            if (firstFailure != null) {
+                liveStreamFailure
+                    ?.takeUnless { failure -> failure === firstFailure }
+                    ?.let(firstFailure::addSuppressed)
+                throw firstFailure
+            }
+            true
         }
-        true
     }
 
-    private inline fun <reified T> executeJson(request: Request): T {
-        okHttpClient.newCall(request).execute().use { response ->
+    private suspend fun Deferred<Unit>.failureOrNull(): Exception? =
+        try {
+            await()
+            null
+        } catch (failure: Exception) {
+            failure
+        }
+
+    private fun scheduleCloseAfterResolveFailure(
+        admission: EmbyPlaybackCleanupAdmission,
+        account: ValidatedProviderAccount,
+        accessToken: String,
+        itemId: String,
+        mediaSourceId: String?,
+        session: EmbyPlaybackSession,
+    ) {
+        admission.schedule {
+            closePlayback(
+                account = account,
+                accessToken = accessToken,
+                itemId = itemId,
+                mediaSourceId = mediaSourceId,
+                session = session,
+            )
+        }
+    }
+
+    private suspend inline fun <reified T> executeJson(request: Request): T =
+        execute(request) { response ->
             if (!response.isSuccessful) {
                 throw EmbyHttpException(response.code, "Provider request failed with HTTP ${response.code}")
             }
-            val body = response.body.string()
+            val body = response.readBodyWithinLimit()
             if (body.isEmpty()) {
                 throw EmbyProtocolException("Provider response body was empty")
             }
-            return json.decodeFromString(body)
+            json.decodeFromString(body)
+        }
+
+    private suspend fun executeNoContent(request: Request, allowNotFound: Boolean) {
+        execute(request) { response ->
+            if (!response.isSuccessful && !(allowNotFound && response.code == 404)) {
+                throw EmbyHttpException(
+                    response.code,
+                    "Provider request failed with HTTP ${response.code}",
+                )
+            }
         }
     }
 
-    private fun executeNoContent(request: Request, allowNotFound: Boolean) {
-        okHttpClient.newCall(request).execute().use { response ->
-            if (response.isSuccessful || allowNotFound && response.code == 404) return
-            throw EmbyHttpException(response.code, "Provider request failed with HTTP ${response.code}")
-        }
+    private suspend fun <T> execute(
+        request: Request,
+        transform: (Response) -> T,
+    ): T = suspendCancellableCoroutine { continuation ->
+        val call = controlClient.newCall(request)
+        continuation.invokeOnCancellation { call.cancel() }
+        call.enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                if (continuation.isActive) {
+                    continuation.resumeWith(Result.failure(e))
+                }
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val result = runCatching {
+                    response.use(transform)
+                }
+                if (continuation.isActive) {
+                    continuation.resumeWith(result)
+                }
+            }
+        })
     }
+
+    private fun Response.readBodyWithinLimit(): String {
+        val contentLength = body.contentLength()
+        if (contentLength > MAX_JSON_RESPONSE_BYTES) {
+            throw responseTooLarge()
+        }
+        val source = body.source()
+        val buffer = Buffer()
+        val limit = MAX_JSON_RESPONSE_BYTES.toLong() + 1
+        while (buffer.size < limit) {
+            val read = source.read(buffer, minOf(8_192L, limit - buffer.size))
+            if (read == -1L) break
+        }
+        if (buffer.size > MAX_JSON_RESPONSE_BYTES) {
+            throw responseTooLarge()
+        }
+        return buffer.readUtf8()
+    }
+
+    private fun responseTooLarge() = EmbyProtocolException(
+        "Provider response body exceeds the host limit"
+    )
 
     private fun requestBuilder(
         baseUrl: String,
@@ -355,6 +710,12 @@ internal class OkHttpEmbyCompatibleClient @Inject constructor(
         val url = value.trim().toHttpUrl()
         require(url.scheme == "http" || url.scheme == "https") {
             "Provider base URL must use HTTP or HTTPS"
+        }
+        require(url.username.isEmpty() && url.password.isEmpty()) {
+            "Provider base URL must not contain user information"
+        }
+        require(url.query == null && url.fragment == null) {
+            "Provider base URL must not contain a query or fragment"
         }
         return url.toString().removeSuffix("/")
     }
@@ -444,14 +805,65 @@ internal class OkHttpEmbyCompatibleClient @Inject constructor(
         }
     }
 
-    private companion object {
-        val JSON_MEDIA_TYPE = "application/json".toMediaType()
-        const val CLIENT_NAME = "M3UAndroid"
-        const val AUTHORIZATION_HEADER = "Authorization"
-        const val EMBY_TOKEN_HEADER = "X-Emby-Token"
-        const val DEFAULT_CHANNEL_CATEGORY = "Live TV"
-        const val PLAYBACK_SOURCE_TYPE = "live_tv"
+    companion object {
+        internal const val MAX_JSON_RESPONSE_BYTES = 4 * 1024 * 1024
+        internal const val CHANNEL_PAGE_SIZE = 500
+        private const val MAX_CHANNELS_PER_REFRESH = 50_000
+        private const val MAX_CHANNEL_PAGE_REQUESTS = 512
+        private const val CONTROL_CALL_TIMEOUT_MILLIS = 25_000L
+        private val JSON_MEDIA_TYPE = "application/json".toMediaType()
+        private const val CLIENT_NAME = "M3UAndroid"
+        private const val AUTHORIZATION_HEADER = "Authorization"
+        private const val EMBY_TOKEN_HEADER = "X-Emby-Token"
+        private val SENSITIVE_PLAYBACK_HEADERS = setOf(
+            "authorization",
+            "cookie",
+            "proxy-authorization",
+            "x-emby-token",
+        )
+        private const val DEFAULT_CHANNEL_CATEGORY = "Live TV"
+        private const val PLAYBACK_SOURCE_TYPE = "live_tv"
     }
+}
+
+private fun HttpUrl.hasSameOrigin(other: HttpUrl): Boolean =
+    scheme == other.scheme && host == other.host && port == other.port
+
+private object SameOriginRedirectInterceptor : Interceptor {
+    override fun intercept(chain: Interceptor.Chain): Response {
+        var request = chain.request()
+        repeat(MAX_REDIRECTS + 1) { redirectCount ->
+            val response = chain.proceed(request)
+            val location = response.header("Location")
+            if (response.code !in REDIRECT_STATUS_CODES || location == null) return response
+            val target = response.request.url.resolve(location) ?: return response
+            if (!response.request.url.hasSameOrigin(target)) return response
+            if (redirectCount == MAX_REDIRECTS) return response
+            response.close()
+            request = request.redirectedTo(target, response.code)
+        }
+        error("Unreachable")
+    }
+
+    private fun Request.redirectedTo(target: HttpUrl, statusCode: Int): Request {
+        val switchToGet = statusCode in setOf(301, 302, 303) &&
+            method != "GET" &&
+            method != "HEAD"
+        return newBuilder()
+            .url(target)
+            .apply {
+                if (switchToGet) {
+                    method("GET", null)
+                    removeHeader("Content-Length")
+                    removeHeader("Content-Type")
+                    removeHeader("Transfer-Encoding")
+                }
+            }
+            .build()
+    }
+
+    private const val MAX_REDIRECTS = 5
+    private val REDIRECT_STATUS_CODES = setOf(301, 302, 303, 307, 308)
 }
 
 private fun Context.providerDeviceId(): String {

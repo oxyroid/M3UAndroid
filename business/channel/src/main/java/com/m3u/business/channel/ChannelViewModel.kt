@@ -191,6 +191,7 @@ class ChannelViewModel @Inject constructor(
     private var dlnaSearchJob: Job? = null
 
     fun openDlnaDevices() {
+        if (channel.value?.url == Channel.URL_DYNAMIC) return
         dlnaSearchJob?.cancel()
         dlnaSearchJob = viewModelScope.launch {
             delay(800.milliseconds)
@@ -211,6 +212,7 @@ class ChannelViewModel @Inject constructor(
 
     fun connectDlnaDevice(device: Device) {
         val channel = channel.value ?: return
+        if (channel.url == Channel.URL_DYNAMIC) return
         dlnaController.play(device, channel)
     }
 

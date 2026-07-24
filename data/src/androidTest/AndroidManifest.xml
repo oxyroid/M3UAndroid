@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <permission
+        android:name="com.m3u.permission.BIND_EXTENSION_HOST"
+        android:protectionLevel="signature" />
+    <uses-permission android:name="com.m3u.permission.BIND_EXTENSION_HOST" />
+
+    <queries>
+        <intent>
+            <action android:name="com.m3u.extension.action.BIND_EXTENSION" />
+        </intent>
+    </queries>
+
+    <application android:usesCleartextTraffic="true" />
+</manifest>

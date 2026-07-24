@@ -1,7 +1,13 @@
 package com.m3u.extension.transport.android.ipc;
 
 import android.os.ParcelFileDescriptor;
+import com.m3u.extension.transport.android.ipc.IExtensionResultCallback;
 
-interface IExtensionHostBridge {
-    ParcelFileDescriptor executeHttp(in ParcelFileDescriptor request);
+oneway interface IExtensionHostBridge {
+    void executeHttp(
+        @nullable String requestId,
+        in @nullable ParcelFileDescriptor request,
+        @nullable IExtensionResultCallback callback
+    );
+    void cancelHttp(@nullable String requestId);
 }

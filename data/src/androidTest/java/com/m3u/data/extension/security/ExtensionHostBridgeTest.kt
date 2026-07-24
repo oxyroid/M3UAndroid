@@ -9,6 +9,7 @@ import com.m3u.extension.api.ExtensionApiRange
 import com.m3u.extension.api.ExtensionApiVersion
 import com.m3u.extension.api.ExtensionCapabilityIds
 import com.m3u.extension.api.ExtensionCapabilityRequest
+import com.m3u.extension.api.ExtensionContractCatalog
 import com.m3u.extension.api.ExtensionHookDeclaration
 import com.m3u.extension.api.ExtensionHookIds
 import com.m3u.extension.api.ExtensionId
@@ -34,10 +35,14 @@ import com.m3u.extension.api.security.CredentialHandle
 import com.m3u.extension.api.security.ResponseValueSource
 import com.m3u.extension.api.security.SecretReference
 import com.m3u.extension.transport.android.ParcelFileCodec
+import com.m3u.extension.transport.android.ExtensionResultDispatcher
+import java.io.IOException
+import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.decodeFromString
@@ -46,6 +51,8 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -77,24 +84,30 @@ class ExtensionHostBridgeTest {
     fun credentialReadAndWriteUseSeparateHostCapabilities() {
         val fixture = scopeFixture()
         val broker = RecordingBroker(fixture.store)
-        val networkOnly = bridge(
+        val writeOnly = bridge(
             broker = broker,
-            granted = setOf(ExtensionCapabilityIds.Network),
+            granted = setOf(
+                ExtensionCapabilityIds.Network,
+                ExtensionCapabilityIds.CredentialWrite,
+            ),
             scope = fixture.scope,
         )
-        val secretRequest = BrokeredHttpRequest(
-            method = "GET",
-            url = "$BASE_URL/items",
-            headers = mapOf(
-                "Authorization" to BrokerValue.Secret(
-                    SecretReference(CredentialHandle("extension-secret:test"))
-                )
+        val credentialLoginRequest = BrokerAuthenticationRequest(
+            exchange = BrokerHttpExchange(
+                method = "POST",
+                url = "$BASE_URL/login",
+                body = listOf(
+                    BrokerValue.Secret(
+                        SecretReference(CredentialHandle("extension-secret:test"))
+                    )
+                ),
             ),
+            primaryCredentialSource = ResponseValueSource.JsonPointer("/token"),
         )
 
         assertEquals(
             BrokerErrorCodes.CapabilityDenied,
-            executeFailure(networkOnly, secretRequest).code,
+            executeAuthenticationFailure(writeOnly, credentialLoginRequest).code,
         )
 
         val readOnly = bridge(
@@ -118,6 +131,55 @@ class ExtensionHostBridgeTest {
             executeAuthenticationFailure(readOnly, captureRequest).code,
         )
         assertEquals(0, broker.calls)
+    }
+
+    @Test
+    fun ordinaryHttpRequiresCredentialReadBeforeDelegatingCredentialReferences() {
+        val fixture = scopeFixture()
+        val broker = RecordingBroker(fixture.store)
+        val request =
+            """
+            {
+              "brokerProtocolVersion": 4,
+              "operation": {
+                "type": "http",
+                "request": {
+                  "method": "GET",
+                  "url": {"type": "literal", "value": "$BASE_URL/items"},
+                  "headers": {
+                    "Authorization": {
+                      "type": "secret",
+                      "reference": {"handle": "extension-secret:test"}
+                    }
+                  }
+                }
+              }
+            }
+            """.trimIndent()
+        val networkOnly = bridge(
+            broker = broker,
+            granted = setOf(ExtensionCapabilityIds.Network),
+            scope = fixture.scope,
+        )
+
+        val denied = executeRaw(networkOnly, request) as BrokerInvocationResult.Failure
+
+        assertEquals(BrokerErrorCodes.CapabilityDenied, denied.error.code)
+        assertEquals(0, broker.calls)
+
+        val credentialReader = bridge(
+            broker = broker,
+            granted = setOf(
+                ExtensionCapabilityIds.Network,
+                ExtensionCapabilityIds.CredentialRead,
+            ),
+            scope = fixture.scope,
+        )
+
+        val result = executeRaw(credentialReader, request)
+
+        assertTrue(result is BrokerInvocationResult.Success)
+        assertEquals(1, broker.calls)
     }
 
     @Test
@@ -150,6 +212,27 @@ class ExtensionHostBridgeTest {
             broker = broker,
             granted = setOf(ExtensionCapabilityIds.Network),
             scope = null,
+        )
+
+        val error = executeFailure(
+            bridge,
+            BrokeredHttpRequest(method = "GET", url = "$BASE_URL/items"),
+        )
+
+        assertEquals(BrokerErrorCodes.ScopeDenied, error.code)
+        assertEquals(0, broker.calls)
+    }
+
+    @Test
+    fun hookWithoutExplicitNetworkRequirementCannotUseBrokerWithForgedScope() {
+        val fixture = scopeFixture()
+        val broker = RecordingBroker(fixture.store)
+        val bridge = bridge(
+            broker = broker,
+            granted = setOf(ExtensionCapabilityIds.Network),
+            scope = fixture.scope,
+            hook = ExtensionHookIds.BackgroundTaskRun,
+            hookRequiresNetwork = false,
         )
 
         val error = executeFailure(
@@ -255,6 +338,84 @@ class ExtensionHostBridgeTest {
     }
 
     @Test
+    fun cancellingOneBrokerRequestPropagatesToItsHostExecution() = runBlocking {
+        val fixture = scopeFixture()
+        val started = CompletableDeferred<Unit>()
+        val requestId = CompletableDeferred<String>()
+        val broker = object : ProviderHostNetworkBroker {
+            override suspend fun execute(
+                scope: BrokerScopeHandle,
+                principal: ExtensionPrincipal,
+                hook: Hook,
+                request: BrokeredHttpRequest,
+            ): BrokeredHttpResponse {
+                fixture.store.authorize(scope, principal, hook)
+                started.complete(Unit)
+                awaitCancellation()
+            }
+        }
+        val bridge = bridge(
+            broker = broker,
+            granted = setOf(ExtensionCapabilityIds.Network),
+            scope = fixture.scope,
+        )
+        val execution = async(Dispatchers.IO) {
+            ExtensionResultDispatcher().use { dispatcher ->
+                val input = ParcelFileCodec.write(
+                    context,
+                    json.encodeToString(
+                        BrokerInvocation(
+                            brokerProtocolVersion = BrokerProtocolVersions.Current,
+                            operation = BrokerOperation.Http(
+                                BrokeredHttpRequest(
+                                    method = "GET",
+                                    url = "$BASE_URL/items",
+                                )
+                            ),
+                        )
+                    ),
+                )
+                input.use { request ->
+                    dispatcher.await { id, callback ->
+                        requestId.complete(id)
+                        bridge.executeHttp(id, request, callback)
+                    }
+                }.use { output ->
+                    json.decodeFromString<BrokerInvocationResult>(
+                        ParcelFileCodec.read(output, 64 * 1024)
+                    )
+                }
+            }
+        }
+        started.await()
+
+        bridge.cancelHttp(requestId.await())
+
+        val result = withTimeout(5_000) { execution.await() }
+        val error = (result as BrokerInvocationResult.Failure).error
+        assertEquals(BrokerErrorCodes.Cancelled, error.code)
+        bridge.close()
+    }
+
+    @Test
+    fun invalidNullableBrokerRequestClosesItsDescriptor() {
+        val fixture = scopeFixture()
+        val bridge = bridge(
+            broker = RecordingBroker(fixture.store),
+            granted = setOf(ExtensionCapabilityIds.Network),
+            scope = fixture.scope,
+        )
+        val request = ParcelFileCodec.write(context, "{}")
+        ExtensionResultDispatcher().use { dispatcher ->
+            bridge.executeHttp(null, request, dispatcher.callback)
+        }
+
+        assertThrows(IOException::class.java) {
+            ParcelFileCodec.read(request, 16)
+        }
+    }
+
+    @Test
     fun brokerFailuresUseTypedCodesAndNeverExposeExceptionMessages() {
         val fixture = scopeFixture()
         val expected = listOf(
@@ -294,6 +455,36 @@ class ExtensionHostBridgeTest {
     }
 
     @Test
+    fun oversizedEncodedBrokerEnvelopeBecomesTypedSizeFailure() {
+        val fixture = scopeFixture()
+        val bridge = bridge(
+            broker = object : ProviderHostNetworkBroker {
+                override suspend fun execute(
+                    scope: BrokerScopeHandle,
+                    principal: ExtensionPrincipal,
+                    hook: Hook,
+                    request: BrokeredHttpRequest,
+                ): BrokeredHttpResponse = BrokeredHttpResponse(
+                    statusCode = 200,
+                    headers = emptyMap(),
+                    body = "\u0000".repeat(1024 * 1024),
+                )
+            },
+            granted = setOf(ExtensionCapabilityIds.Network),
+            scope = fixture.scope,
+        )
+
+        val error = executeFailure(
+            bridge,
+            BrokeredHttpRequest(method = "GET", url = "$BASE_URL/items"),
+        )
+
+        assertEquals(BrokerErrorCodes.ResponseTooLarge, error.code)
+        assertFalse(error.recoverable)
+        bridge.close()
+    }
+
+    @Test
     fun malformedInvocationReturnsSanitizedInvalidRequestEnvelope() {
         val fixture = scopeFixture()
         val bridge = bridge(
@@ -311,17 +502,104 @@ class ExtensionHostBridgeTest {
         assertFalse(result.error.message.contains(SECRET_FAILURE_MESSAGE))
     }
 
+    @Test
+    fun excessiveJsonNestingIsRejectedBeforeBrokerInvocationDecode() {
+        val fixture = scopeFixture()
+        val broker = RecordingBroker(fixture.store)
+        val bridge = bridge(
+            broker = broker,
+            granted = setOf(ExtensionCapabilityIds.Network),
+            scope = fixture.scope,
+        )
+        val deeplyEncodedUrl = (0 until 80).fold(
+            """{"type":"literal","value":"$BASE_URL/items"}"""
+        ) { value, _ ->
+            """{"type":"encoded","value":$value,"encoding":"base64"}"""
+        }
+        val result = executeRaw(
+            bridge,
+            """
+            {
+              "brokerProtocolVersion": 4,
+              "operation": {
+                "type": "http",
+                "request": {
+                  "method": "GET",
+                  "url": $deeplyEncodedUrl
+                }
+              }
+            }
+            """.trimIndent(),
+        ) as BrokerInvocationResult.Failure
+
+        assertEquals(BrokerErrorCodes.InvalidRequest, result.error.code)
+        assertEquals(0, broker.calls)
+    }
+
+    @Test
+    fun brokerRequestQueueIsBoundedPerInvocation() = runBlocking {
+        val fixture = scopeFixture()
+        val startedCount = AtomicInteger()
+        val allStarted = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val broker = object : ProviderHostNetworkBroker {
+            override suspend fun execute(
+                scope: BrokerScopeHandle,
+                principal: ExtensionPrincipal,
+                hook: Hook,
+                request: BrokeredHttpRequest,
+            ): BrokeredHttpResponse {
+                fixture.store.authorize(scope, principal, hook)
+                if (startedCount.incrementAndGet() == 4) allStarted.complete(Unit)
+                release.await()
+                return BrokeredHttpResponse(200, emptyMap(), "ok")
+            }
+        }
+        val bridge = bridge(
+            broker = broker,
+            granted = setOf(ExtensionCapabilityIds.Network),
+            scope = fixture.scope,
+        )
+        val activeRequests = (0 until 4).map { index ->
+            async(Dispatchers.IO) {
+                execute(
+                    bridge,
+                    BrokeredHttpRequest(method = "GET", url = "$BASE_URL/items/$index"),
+                )
+            }
+        }
+        withTimeout(5_000) { allStarted.await() }
+
+        val overflow = withTimeout(5_000) {
+            async(Dispatchers.IO) {
+                execute(
+                    bridge,
+                    BrokeredHttpRequest(method = "GET", url = "$BASE_URL/items/overflow"),
+                )
+            }.await()
+        } as BrokerInvocationResult.Failure
+
+        assertEquals(BrokerErrorCodes.InvalidRequest, overflow.error.code)
+        assertEquals(4, startedCount.get())
+        release.complete(Unit)
+        assertTrue(activeRequests.awaitAll().all { result ->
+            result is BrokerInvocationResult.Success
+        })
+        bridge.close()
+    }
+
     private fun bridge(
         broker: ProviderHostNetworkBroker,
         granted: Set<Capability>,
         scope: BrokerScopeHandle?,
         principal: ExtensionPrincipal = PRINCIPAL,
         hook: Hook = HOOK,
+        hookRequiresNetwork: Boolean = true,
     ): ExtensionHostBridge = ExtensionHostBridge(
         context = context,
         broker = broker,
         principal = principal,
-        manifest = manifest(hook),
+        manifest = manifest(hook, hookRequiresNetwork),
         envelope = envelope(granted, scope, hook),
     )
 
@@ -384,13 +662,19 @@ class ExtensionHostBridgeTest {
     private fun executeRaw(
         bridge: ExtensionHostBridge,
         content: String,
-    ): BrokerInvocationResult {
-        val input = ParcelFileCodec.write(
-            context,
-            content,
-        )
-        return bridge.executeHttp(input).use { output ->
-            json.decodeFromString(ParcelFileCodec.read(output, 64 * 1024))
+    ): BrokerInvocationResult = runBlocking {
+        ExtensionResultDispatcher().use { dispatcher ->
+            val input = ParcelFileCodec.write(
+                context,
+                content,
+            )
+            input.use { request ->
+                dispatcher.await { requestId, callback ->
+                    bridge.executeHttp(requestId, request, callback)
+                }
+            }.use { output ->
+                json.decodeFromString(ParcelFileCodec.read(output, 64 * 1024))
+            }
         }
     }
 
@@ -486,16 +770,18 @@ class ExtensionHostBridgeTest {
             uid = 10_002,
         )
 
-        fun manifest(hook: Hook) = ExtensionManifest(
-            id = EXTENSION_ID,
-            displayName = "Bridge test",
-            extensionVersion = ExtensionSemanticVersion(1, 0, 0),
-            apiRange = ExtensionApiRange(
-                minimum = ExtensionApiVersion(1, 0),
-                maximum = ExtensionApiVersion(1, 0),
-            ),
-            hooks = setOf(ExtensionHookDeclaration(hook, schemaVersion = 1)),
-            capabilities = setOf(
+        fun manifest(
+            hook: Hook,
+            hookRequiresNetwork: Boolean = true,
+        ): ExtensionManifest {
+            val baseCapabilities =
+                ExtensionContractCatalog.RequiredCapabilitiesByHook[hook].orEmpty()
+            val requiredCapabilities = baseCapabilities + if (hookRequiresNetwork) {
+                setOf(ExtensionCapabilityIds.Network)
+            } else {
+                emptySet()
+            }
+            val capabilities = mutableSetOf(
                 ExtensionCapabilityRequest(ExtensionCapabilityIds.Network, "Fetch provider data"),
                 ExtensionCapabilityRequest(
                     ExtensionCapabilityIds.CredentialRead,
@@ -505,7 +791,32 @@ class ExtensionHostBridgeTest {
                     ExtensionCapabilityIds.CredentialWrite,
                     "Store login results",
                 ),
-            ),
-        )
+            )
+            baseCapabilities.forEach { capability ->
+                if (capabilities.none { request -> request.capability == capability }) {
+                    capabilities += ExtensionCapabilityRequest(
+                        capability,
+                        "Exercise ${capability.id}",
+                    )
+                }
+            }
+            return ExtensionManifest(
+                id = EXTENSION_ID,
+                displayName = "Bridge test",
+                extensionVersion = ExtensionSemanticVersion(1, 0, 0),
+                apiRange = ExtensionApiRange(
+                    minimum = ExtensionApiVersion(1, 0),
+                    maximum = ExtensionApiVersion(1, 0),
+                ),
+                hooks = setOf(
+                    ExtensionHookDeclaration(
+                        hook,
+                        schemaVersion = 1,
+                        requiredCapabilities = requiredCapabilities,
+                    )
+                ),
+                capabilities = capabilities,
+            )
+        }
     }
 }

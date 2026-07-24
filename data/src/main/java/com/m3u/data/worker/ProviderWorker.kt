@@ -4,19 +4,26 @@ import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
+import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
+import androidx.work.ListenableWorker
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.BackoffPolicy
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import com.m3u.data.repository.BackupStagingFiles
 import com.m3u.data.repository.provider.ProviderOperationException
 import com.m3u.data.repository.provider.ProviderSessionCleanupResult
 import com.m3u.data.repository.provider.SubscriptionProviderRepository
 import com.m3u.data.repository.plugin.ExtensionPluginRepository
 import com.m3u.data.extension.SubscriptionProviderImporter
 import com.m3u.data.repository.extension.ExtensionContributionRepository
+import com.m3u.data.repository.extension.ExtensionContributionRunCoordinator
+import com.m3u.data.repository.extension.EXTENSION_CONTRIBUTION_INPUT_WORK_KEY
+import com.m3u.data.repository.extension.extensionContributionWorkKey
+import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.extension.api.subscription.SubscriptionRefreshReason
 import com.m3u.extension.api.BackgroundTaskRequest
 import com.m3u.extension.api.BackgroundTaskResult
@@ -28,9 +35,6 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CancellationException
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 
 @HiltWorker
 class ProviderRefreshWorker @AssistedInject constructor(
@@ -41,12 +45,13 @@ class ProviderRefreshWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val playlistUrl = inputData.getString(INPUT_PLAYLIST_URL) ?: return Result.failure()
+        val reason = inputData.providerRefreshReasonOrNull() ?: return Result.failure()
         return try {
             setProgress(workDataOf(OUTPUT_PROGRESS to 0))
             pluginRepository.restoreEnabled()
             val refreshed = repository.refresh(
                 playlistUrl,
-                reason = SubscriptionRefreshReason.Background,
+                reason = reason,
             )
             setProgress(workDataOf(OUTPUT_PROGRESS to 100))
             Result.success(workDataOf(OUTPUT_CHANNEL_COUNT to refreshed.channelCount))
@@ -67,15 +72,20 @@ class ProviderRefreshWorker @AssistedInject constructor(
     }
 
     companion object {
-        private const val INPUT_PLAYLIST_URL = "playlist-url"
+        internal const val INPUT_PLAYLIST_URL = "playlist-url"
+        internal const val INPUT_REFRESH_REASON = "refresh-reason"
         private const val OUTPUT_CHANNEL_COUNT = "channel-count"
         private const val OUTPUT_PROGRESS = "progress"
         private const val OUTPUT_ERROR_CODE = "error-code"
         private const val MAX_ATTEMPTS = 3
 
-        fun enqueue(workManager: WorkManager, playlistUrl: String) {
+        fun enqueue(
+            workManager: WorkManager,
+            playlistUrl: String,
+            reason: SubscriptionRefreshReason,
+        ) {
             val request = OneTimeWorkRequestBuilder<ProviderRefreshWorker>()
-                .setInputData(workDataOf(INPUT_PLAYLIST_URL to playlistUrl))
+                .setInputData(providerRefreshInputData(playlistUrl, reason))
                 .setConstraints(
                     Constraints.Builder()
                         .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -93,6 +103,19 @@ class ProviderRefreshWorker @AssistedInject constructor(
     }
 }
 
+internal fun providerRefreshInputData(
+    playlistUrl: String,
+    reason: SubscriptionRefreshReason,
+): Data = workDataOf(
+    ProviderRefreshWorker.INPUT_PLAYLIST_URL to playlistUrl,
+    ProviderRefreshWorker.INPUT_REFRESH_REASON to reason.value,
+)
+
+internal fun Data.providerRefreshReasonOrNull(): SubscriptionRefreshReason? =
+    getString(ProviderRefreshWorker.INPUT_REFRESH_REASON)?.let { value ->
+        runCatching { SubscriptionRefreshReason(value) }.getOrNull()
+    }
+
 @HiltWorker
 class ProviderSessionCleanupWorker @AssistedInject constructor(
     @Assisted context: Context,
@@ -100,48 +123,158 @@ class ProviderSessionCleanupWorker @AssistedInject constructor(
     private val repository: SubscriptionProviderRepository,
     private val pluginRepository: ExtensionPluginRepository,
 ) : CoroutineWorker(context, params) {
+    override suspend fun doWork(): Result {
+        val afterCreatedAtEpochMillis = inputData
+            .getLong(INPUT_AFTER_CREATED_AT_EPOCH_MILLIS, INVALID_CURSOR)
+            .takeIf { value -> value >= 0L }
+        val afterSessionId = inputData.getString(INPUT_AFTER_SESSION_ID)
+        if ((afterCreatedAtEpochMillis == null) != (afterSessionId == null)) {
+            return Result.failure()
+        }
+        return try {
+            pluginRepository.restoreEnabled()
+            val cleanup = repository.closeOrphanedPlaybackSessions(
+                afterCreatedAtEpochMillis = afterCreatedAtEpochMillis,
+                afterSessionId = afterSessionId,
+            )
+            if (cleanup.recoverablePendingCount > 0 && runAttemptCount < MAX_ATTEMPTS) {
+                return Result.retry()
+            }
+            cleanup.enqueueContinuationIfPresent(
+                workManager = WorkManager.getInstance(applicationContext),
+            )
+            cleanup.toTerminalWorkerResult()
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (exception: ProviderOperationException) {
+            if (exception.recoverable && runAttemptCount < MAX_ATTEMPTS) {
+                Result.retry()
+            } else {
+                Result.failure()
+            }
+        } catch (_: Exception) {
+            if (runAttemptCount < MAX_ATTEMPTS) Result.retry() else Result.failure()
+        }
+    }
+
+    companion object {
+        private const val INPUT_AFTER_CREATED_AT_EPOCH_MILLIS =
+            "after-created-at-epoch-millis"
+        private const val INPUT_AFTER_SESSION_ID = "after-session-id"
+        private const val INVALID_CURSOR = -1L
+        private const val MAX_ATTEMPTS = 3
+        private const val OUTPUT_CLOSED_SESSION_COUNT = "closed-session-count"
+        private const val OUTPUT_PENDING_SESSION_COUNT = "pending-session-count"
+
+        fun enqueue(workManager: WorkManager) {
+            val request = request()
+            workManager.enqueueUniqueWork(
+                WORK_NAME,
+                ExistingWorkPolicy.REPLACE,
+                request,
+            )
+        }
+
+        fun enqueueRetry(workManager: WorkManager) {
+            // Failed close acknowledgement can happen while startup cleanup is running.
+            // Keep the retry independent so a newly retained tombstone gets another scan.
+            workManager.enqueue(request())
+        }
+
+        private fun enqueueContinuation(
+            workManager: WorkManager,
+            afterCreatedAtEpochMillis: Long,
+            afterSessionId: String,
+        ) {
+            // A page must not depend on the previous page: permanent failures in an older
+            // session must not starve newer sessions.
+            workManager.enqueue(
+                request(
+                    afterCreatedAtEpochMillis = afterCreatedAtEpochMillis,
+                    afterSessionId = afterSessionId,
+                ),
+            )
+        }
+
+        private fun request(
+            afterCreatedAtEpochMillis: Long? = null,
+            afterSessionId: String? = null,
+        ) = run {
+            require((afterCreatedAtEpochMillis == null) == (afterSessionId == null))
+            val input = Data.Builder()
+                .apply {
+                    if (afterCreatedAtEpochMillis != null && afterSessionId != null) {
+                        putLong(
+                            INPUT_AFTER_CREATED_AT_EPOCH_MILLIS,
+                            afterCreatedAtEpochMillis,
+                        )
+                        putString(INPUT_AFTER_SESSION_ID, afterSessionId)
+                    }
+                }
+                .build()
+            OneTimeWorkRequestBuilder<ProviderSessionCleanupWorker>()
+                .setInputData(input)
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .build()
+                )
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 10, TimeUnit.SECONDS)
+                .addTag(WORK_TAG)
+                .build()
+        }
+
+        internal const val WORK_TAG = "provider-session-cleanup"
+        private const val WORK_NAME = WORK_TAG
+    }
+
+    private fun ProviderSessionCleanupResult.toTerminalWorkerResult(): Result = when {
+        pendingCount == 0 -> Result.success(
+            workDataOf(OUTPUT_CLOSED_SESSION_COUNT to closedCount)
+        )
+        else -> Result.failure(workDataOf(OUTPUT_PENDING_SESSION_COUNT to pendingCount))
+    }
+
+    private fun ProviderSessionCleanupResult.enqueueContinuationIfPresent(
+        workManager: WorkManager,
+    ) {
+        val afterCreatedAt = continuationCreatedAtEpochMillis ?: return
+        val afterSession = checkNotNull(continuationSessionId)
+        enqueueContinuation(
+            workManager = workManager,
+            afterCreatedAtEpochMillis = afterCreatedAt,
+            afterSessionId = afterSession,
+        )
+    }
+}
+
+@HiltWorker
+class ProviderCredentialRecoveryWorker @AssistedInject constructor(
+    @Assisted context: Context,
+    @Assisted params: WorkerParameters,
+    private val repository: SubscriptionProviderRepository,
+) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result = try {
-        pluginRepository.restoreEnabled()
-        repository.closeOrphanedPlaybackSessions().toWorkerResult(runAttemptCount)
+        BackupStagingFiles.cleanup(applicationContext.cacheDir)
+        val invalidatedCount = repository.invalidateUndecryptableCredentials()
+        Result.success(workDataOf(OUTPUT_INVALIDATED_ACCOUNT_COUNT to invalidatedCount))
     } catch (cancelled: CancellationException) {
         throw cancelled
-    } catch (exception: ProviderOperationException) {
-        if (exception.recoverable && runAttemptCount < MAX_ATTEMPTS) {
-            Result.retry()
-        } else {
-            Result.failure()
-        }
     } catch (_: Exception) {
         if (runAttemptCount < MAX_ATTEMPTS) Result.retry() else Result.failure()
     }
 
     companion object {
         private const val MAX_ATTEMPTS = 3
-        private const val OUTPUT_CLOSED_SESSION_COUNT = "closed-session-count"
-        private const val OUTPUT_PENDING_SESSION_COUNT = "pending-session-count"
+        private const val OUTPUT_INVALIDATED_ACCOUNT_COUNT = "invalidated-account-count"
 
         fun enqueue(workManager: WorkManager) {
-            val request = OneTimeWorkRequestBuilder<ProviderSessionCleanupWorker>()
-                .setConstraints(
-                    Constraints.Builder()
-                        .setRequiredNetworkType(NetworkType.CONNECTED)
-                        .build()
-                )
-                .build()
             workManager.enqueueUniqueWork(
-                "provider-session-cleanup",
+                "provider-credential-recovery",
                 ExistingWorkPolicy.KEEP,
-                request,
+                OneTimeWorkRequestBuilder<ProviderCredentialRecoveryWorker>().build(),
             )
         }
-    }
-
-    private fun ProviderSessionCleanupResult.toWorkerResult(runAttemptCount: Int): Result = when {
-        pendingCount == 0 -> Result.success(
-            workDataOf(OUTPUT_CLOSED_SESSION_COUNT to closedCount)
-        )
-        recoverablePendingCount > 0 && runAttemptCount < MAX_ATTEMPTS -> Result.retry()
-        else -> Result.failure(workDataOf(OUTPUT_PENDING_SESSION_COUNT to pendingCount))
     }
 }
 
@@ -151,8 +284,14 @@ class ExtensionPluginBootstrapWorker @AssistedInject constructor(
     @Assisted params: WorkerParameters,
     private val repository: ExtensionPluginRepository,
 ) : CoroutineWorker(context, params) {
-    override suspend fun doWork(): Result = runCatching { repository.restoreEnabled() }
-        .fold(onSuccess = { Result.success() }, onFailure = { Result.retry() })
+    override suspend fun doWork(): Result = try {
+        repository.restoreEnabled()
+        Result.success()
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (_: Exception) {
+        Result.retry()
+    }
 
     companion object {
         fun enqueue(workManager: WorkManager) {
@@ -172,70 +311,88 @@ internal class ExtensionContributionRefreshWorker @AssistedInject constructor(
     private val pluginRepository: ExtensionPluginRepository,
     private val contributions: ExtensionContributionRepository,
     private val importer: SubscriptionProviderImporter,
+    private val runCoordinator: ExtensionContributionRunCoordinator,
+    private val playlistDao: PlaylistDao,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
-        val playlistUrl = inputData.getString(INPUT_PLAYLIST_URL) ?: return Result.failure()
+        val workKey = inputData.getString(EXTENSION_CONTRIBUTION_INPUT_WORK_KEY)
+            ?.takeIf { key -> key.length == SHA_256_HEX_LENGTH && key.all(Char::isLowerHexDigit) }
+            ?: return Result.failure()
+        val playlistUrl = playlistDao.getAll()
+            .asSequence()
+            .map { playlist -> playlist.url }
+            .filter(String::isNotBlank)
+            .singleOrNull { url -> extensionContributionWorkKey(url) == workKey }
+            ?: return Result.success()
         return try {
-            pluginRepository.restoreEnabled()
-            setProgress(workDataOf(OUTPUT_PROGRESS to 10))
-            val snapshots = importer.metadataSnapshots(playlistUrl)
-            val metadata = contributions.enrichChannels(snapshots)
-            importer.applyMetadataEnrichment(playlistUrl, metadata)
-            setProgress(workDataOf(OUTPUT_PROGRESS to 50))
-
-            val now = System.currentTimeMillis()
-            val epgRefreshGeneration = importer.captureExtensionEpgRefreshGeneration()
-            val epgRefreshes = contributions.refreshEpg(
-                channelReferences = snapshots.map { snapshot -> snapshot.stableReference },
-                fromEpochMillis = now - EPG_HISTORY_MILLIS,
-                toEpochMillis = now + EPG_FUTURE_MILLIS,
-            )
-            val importedProgrammeCount = importer.replaceExtensionEpg(
-                playlistUrl = playlistUrl,
-                refreshes = epgRefreshes,
-                refreshGeneration = epgRefreshGeneration,
-            )
-            setProgress(workDataOf(OUTPUT_PROGRESS to 100))
-            Result.success(
-                workDataOf(
-                    OUTPUT_METADATA_COUNT to metadata.size,
-                    OUTPUT_PROGRAMME_COUNT to importedProgrammeCount,
+            runCoordinator.withPlaylist(playlistUrl) {
+                pluginRepository.restoreEnabled()
+                setProgress(workDataOf(OUTPUT_PROGRESS to 10))
+                val snapshots = importer.metadataSnapshots(playlistUrl)
+                val metadataRefreshGeneration =
+                    importer.captureExtensionMetadataRefreshGeneration()
+                val metadata = contributions.enrichChannels(
+                    channels = snapshots,
+                    playlistUrl = playlistUrl,
                 )
-            )
+                val importedMetadataCount = importer.applyMetadataEnrichment(
+                    playlistUrl = playlistUrl,
+                    refreshes = metadata,
+                    refreshGeneration = metadataRefreshGeneration,
+                )
+                setProgress(workDataOf(OUTPUT_PROGRESS to 50))
+
+                val now = System.currentTimeMillis()
+                val epgRefreshGeneration = importer.captureExtensionEpgRefreshGeneration()
+                val epgRefreshes = contributions.refreshEpg(
+                    channelReferences = snapshots.map { snapshot -> snapshot.stableReference },
+                    fromEpochMillis = now - EPG_HISTORY_MILLIS,
+                    toEpochMillis = now + EPG_FUTURE_MILLIS,
+                    playlistUrl = playlistUrl,
+                )
+                val importedProgrammeCount = importer.replaceExtensionEpg(
+                    playlistUrl = playlistUrl,
+                    refreshes = epgRefreshes,
+                    refreshGeneration = epgRefreshGeneration,
+                )
+                setProgress(workDataOf(OUTPUT_PROGRESS to 100))
+                Result.success(
+                    workDataOf(
+                        OUTPUT_METADATA_COUNT to importedMetadataCount,
+                        OUTPUT_PROGRAMME_COUNT to importedProgrammeCount,
+                    )
+                )
+            }
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Exception) {
-            if (runAttemptCount < MAX_ATTEMPTS) Result.retry() else Result.failure()
+            extensionContributionFailureResult(runAttemptCount)
         }
     }
 
     companion object {
-        private const val INPUT_PLAYLIST_URL = "playlist-url"
         private const val OUTPUT_PROGRESS = "progress"
         private const val OUTPUT_METADATA_COUNT = "metadata-count"
         private const val OUTPUT_PROGRAMME_COUNT = "programme-count"
-        private const val MAX_ATTEMPTS = 3
         private const val EPG_HISTORY_MILLIS = 24L * 60 * 60 * 1_000
         private const val EPG_FUTURE_MILLIS = 7L * 24 * 60 * 60 * 1_000
+        private const val SHA_256_HEX_LENGTH = 64
 
-        fun enqueue(workManager: WorkManager, playlistUrl: String) {
-            val request = OneTimeWorkRequestBuilder<ExtensionContributionRefreshWorker>()
-                .setInputData(workDataOf(INPUT_PLAYLIST_URL to playlistUrl))
-                .setConstraints(
-                    Constraints.Builder()
-                        .setRequiredNetworkType(NetworkType.CONNECTED)
-                        .build()
-                )
-                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 10, TimeUnit.SECONDS)
-                .build()
-            workManager.enqueueUniqueWork(
-                "extension-contributions:$playlistUrl",
-                ExistingWorkPolicy.REPLACE,
-                request,
-            )
-        }
     }
 }
+
+internal fun extensionContributionFailureResult(
+    runAttemptCount: Int,
+): ListenableWorker.Result =
+    if (runAttemptCount < EXTENSION_CONTRIBUTION_MAX_ATTEMPTS) {
+        ListenableWorker.Result.retry()
+    } else {
+        ListenableWorker.Result.failure()
+    }
+
+private const val EXTENSION_CONTRIBUTION_MAX_ATTEMPTS = 3
+
+private fun Char.isLowerHexDigit(): Boolean = this in '0'..'9' || this in 'a'..'f'
 
 @HiltWorker
 class ExtensionBackgroundTaskWorker @AssistedInject constructor(
@@ -245,86 +402,53 @@ class ExtensionBackgroundTaskWorker @AssistedInject constructor(
     private val pluginRepository: ExtensionPluginRepository,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
-        val extensionId = inputData.getString(INPUT_EXTENSION_ID)?.let(::ExtensionId)
+        val extensionId = inputData.getString(INPUT_EXTENSION_ID)
+            ?.let { value -> runCatching { ExtensionId(value) }.getOrNull() }
             ?: return Result.failure()
-        val taskId = inputData.getString(INPUT_TASK_ID) ?: return Result.failure()
-        val input = inputData.getString(INPUT_JSON)?.let { encoded ->
-            runCatching { json.decodeFromString<Map<String, String>>(encoded) }.getOrNull()
-        } ?: emptyMap()
+        val taskId = inputData.getString(INPUT_TASK_ID)?.takeIf(String::isNotBlank)
+            ?: return Result.failure()
         return try {
             pluginRepository.restoreEnabled()
-            when (
-                val outcome = runtime.invoke(
+            backgroundTaskWorkResult(
+                outcome = runtime.invoke(
                     extensionId,
                     HostHookSpecs.BackgroundTask,
-                    BackgroundTaskRequest(taskId, input, runAttemptCount),
-                ).outcome
-            ) {
-                is HookResult.Success -> outcome.payload.toWorkResult()
-                is HookResult.Failure -> if (
-                    outcome.error.recoverable && runAttemptCount < MAX_ATTEMPTS
-                ) {
-                    Result.retry()
-                } else {
-                    Result.failure(workDataOf(OUTPUT_ERROR_CODE to outcome.error.code.value))
-                }
-            }
+                    BackgroundTaskRequest(taskId = taskId, runAttempt = runAttemptCount),
+                ).outcome,
+                runAttemptCount = runAttemptCount,
+            )
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Exception) {
-            if (runAttemptCount < MAX_ATTEMPTS) Result.retry() else Result.failure()
-        }
-    }
-
-    private fun BackgroundTaskResult.toWorkResult(): Result {
-        if (retryAfterMillis != null && runAttemptCount < MAX_ATTEMPTS) return Result.retry()
-        val encoded = json.encodeToString(output)
-        return if (encoded.encodeToByteArray().size <= MAX_OUTPUT_BYTES) {
-            Result.success(workDataOf(OUTPUT_JSON to encoded))
-        } else {
-            Result.failure(workDataOf(OUTPUT_ERROR_CODE to "background.output_too_large"))
+            if (runAttemptCount < MAX_BACKGROUND_TASK_ATTEMPTS) {
+                Result.retry()
+            } else {
+                Result.failure()
+            }
         }
     }
 
     companion object {
-        private val json = Json { ignoreUnknownKeys = true }
-        private const val INPUT_EXTENSION_ID = "extension-id"
-        private const val INPUT_TASK_ID = "task-id"
-        private const val INPUT_JSON = "input-json"
-        private const val OUTPUT_JSON = "output-json"
-        private const val OUTPUT_ERROR_CODE = "error-code"
-        private const val MAX_ATTEMPTS = 3
-        private const val MAX_OUTPUT_BYTES = 8 * 1024
-
-        fun enqueue(
-            workManager: WorkManager,
-            extensionId: ExtensionId,
-            taskId: String,
-            input: Map<String, String> = emptyMap(),
-            requiresNetwork: Boolean = false,
-        ) {
-            val request = OneTimeWorkRequestBuilder<ExtensionBackgroundTaskWorker>()
-                .setInputData(
-                    workDataOf(
-                        INPUT_EXTENSION_ID to extensionId.value,
-                        INPUT_TASK_ID to taskId,
-                        INPUT_JSON to json.encodeToString(input),
-                    )
-                )
-                .setConstraints(
-                    Constraints.Builder()
-                        .setRequiredNetworkType(
-                            if (requiresNetwork) NetworkType.CONNECTED else NetworkType.NOT_REQUIRED
-                        )
-                        .build()
-                )
-                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 10, TimeUnit.SECONDS)
-                .build()
-            workManager.enqueueUniqueWork(
-                "extension-background:${extensionId.value}:$taskId",
-                ExistingWorkPolicy.REPLACE,
-                request,
-            )
-        }
+        internal const val INPUT_EXTENSION_ID = "extension-id"
+        internal const val INPUT_TASK_ID = "task-id"
     }
 }
+
+internal fun backgroundTaskWorkResult(
+    outcome: HookResult<BackgroundTaskResult>,
+    runAttemptCount: Int,
+): ListenableWorker.Result = when (outcome) {
+    is HookResult.Success -> ListenableWorker.Result.success()
+    is HookResult.Failure -> if (
+        outcome.error.recoverable && runAttemptCount < MAX_BACKGROUND_TASK_ATTEMPTS
+    ) {
+        ListenableWorker.Result.retry()
+    } else {
+        ListenableWorker.Result.failure(
+            workDataOf(BACKGROUND_TASK_OUTPUT_ERROR_CODE to outcome.error.code.value)
+        )
+    }
+}
+
+private const val BACKGROUND_TASK_OUTPUT_ERROR_CODE = "error-code"
+private const val MAX_BACKGROUND_TASK_ATTEMPTS = 3

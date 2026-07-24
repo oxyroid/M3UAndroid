@@ -66,7 +66,7 @@ SubscriptionProviderRepositoryImpl -> SubscriptionProviderImporter
 
 设置 schema 和普通值由 [`ExtensionSettingsRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/extension/ExtensionSettingsRepositoryImpl.kt) 管理；密码设置和 provider token 由宿主 vault 加密。插件契约只能携带凭据句柄，不能携带明文 secret。
 
-修改 broker 时，从 [`HostNetworkBrokerSecurityTest`](../../../data/src/androidTest/java/com/m3u/data/extension/security/HostNetworkBrokerSecurityTest.kt) 增加拒绝场景，再实现行为。涉及 owner、origin、redirect、认证 header、响应大小或凭据 capture 的改动也必须检查[剩余发布门槛](status-and-release.zh-CN.md#剩余发布门槛)。
+修改 broker 时，从 [`HostNetworkBrokerSecurityTest`](../../../data/src/androidTest/java/com/m3u/data/extension/security/HostNetworkBrokerSecurityTest.kt) 增加拒绝场景，再实现行为。涉及 owner、origin、redirect、认证 header、响应大小或凭据 capture 的改动也必须检查[外部插件发布门槛](status-and-release.zh-CN.md#开放外部插件之前)。
 
 ## 修改手机或 TV 界面
 

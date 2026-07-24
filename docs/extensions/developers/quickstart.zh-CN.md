@@ -2,14 +2,15 @@
 
 [English](quickstart.md) · [插件开发指南](README.zh-CN.md)
 
-成功标准是：M3UAndroid 的插件列表出现 **Hello Extension**，其设置页包含 **Greeting** 与 **Phone name**。
+这项检查只需要一条构建命令和一次设置页操作。成功标准是：插件列表出现
+**Hello Extension**，其设置页包含 **Greeting** 与 **Phone name**。
 
-## 1. 构建示例
+## 1. 安装 Hello 示例
 
 在项目根目录执行：
 
 ```bash
-./gradlew :samples:hello-extension:assembleDebug
+./gradlew :samples:hello-extension:installDebug
 ```
 
 ## 2. 在 M3UAndroid 中检查结果
@@ -25,7 +26,7 @@ Hello 设置页应显示：
 - **Greeting**，内容为 `Hello from my extension`；
 - **Phone name**，内容为 `My phone`。
 
-`Greeting` 在插件 manifest 中声明；`Phone name` 由设置 Hook 返回。
+这同时验证了两条链路：`Greeting` 来自 Manifest，`Phone name` 来自一次 Hook 调用。
 
 ## 3. 修改 Hook 返回结果
 
@@ -41,6 +42,6 @@ Hello 设置页应显示：
 "phone" -> "Handset name" to "My phone"
 ```
 
-重新构建模块，刷新插件列表并打开 Hello 设置，字段名称应变为 **Handset name**。
+再次执行 `./gradlew :samples:hello-extension:installDebug`，刷新插件列表并打开 Hello 设置，字段名称应变为 **Handset name**。
 
-下一步：[声明插件 manifest](concepts.zh-CN.md)。
+下一步：[定义插件 Manifest](concepts.zh-CN.md)。

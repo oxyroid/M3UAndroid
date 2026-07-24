@@ -14,11 +14,17 @@ import com.m3u.data.database.model.ProviderCredentialEntity
 import com.m3u.data.database.model.ProviderPlaybackSessionEntity
 import com.m3u.data.extension.security.CredentialVault
 import com.m3u.data.repository.extension.ExtensionEpgRefreshContribution
-import com.m3u.data.repository.extension.ExtensionMetadataContribution
+import com.m3u.data.repository.extension.ExtensionMetadataRefreshContribution
 import com.m3u.extension.api.ChannelMetadataPatch
+import com.m3u.extension.api.ChannelMetadataSnapshot
 import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.ExtensionProgramme
 import com.m3u.extension.api.security.CredentialHandle
+import com.m3u.extension.api.subscription.PlaybackReference
+import com.m3u.extension.api.subscription.ProviderKind
+import com.m3u.extension.api.subscription.SubscriptionChannelDescriptor
+import com.m3u.extension.api.subscription.SubscriptionContentRefreshResult
+import com.m3u.extension.api.subscription.SubscriptionSourceDescriptor
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -100,7 +106,6 @@ class ExtensionContributionImporterTest {
                     itemId = PLAYBACK_ITEM_ID,
                     mediaSourceId = null,
                     sourceType = "live",
-                    fallbackDirectUrl = null,
                 )
             )
             database.providerDao().insertOrReplace(
@@ -111,7 +116,6 @@ class ExtensionContributionImporterTest {
                     itemId = PLAYBACK_ITEM_ID,
                     mediaSourceId = null,
                     sourceType = "live",
-                    fallbackDirectUrl = null,
                     playSessionId = "remote-session-1",
                     liveStreamId = "live-stream-1",
                     createdAtEpochMillis = 1_000,
@@ -130,17 +134,16 @@ class ExtensionContributionImporterTest {
         val count = importer.applyMetadataEnrichment(
             PLAYLIST_URL,
             listOf(
-                ExtensionMetadataContribution(
+                ExtensionMetadataRefreshContribution(
                     EXTENSION_ID,
-                    ChannelMetadataPatch(
-                        stableReference = CHANNEL_REFERENCE,
-                        title = "Enriched title",
-                        category = "Enriched category",
+                    listOf(
+                        ChannelMetadataPatch(
+                            stableReference = CHANNEL_REFERENCE,
+                            title = "Enriched title",
+                            category = "Enriched category",
+                        ),
+                        ChannelMetadataPatch(stableReference = "unknown", title = "Injected"),
                     ),
-                ),
-                ExtensionMetadataContribution(
-                    EXTENSION_ID,
-                    ChannelMetadataPatch(stableReference = "unknown", title = "Injected"),
                 ),
             ),
         )
@@ -152,6 +155,185 @@ class ExtensionContributionImporterTest {
         assertEquals("Enriched category", channel?.category)
         assertTrue(channel?.favourite == true)
         assertTrue(channel?.hidden == true)
+        val sourceChannel = database.channelDao().getAllWithSourceMetadata()
+            .single { item ->
+                item.playlistUrl == PLAYLIST_URL && item.relationId == CHANNEL_REFERENCE
+            }
+        assertEquals("Original title", sourceChannel.title)
+        assertEquals("Original category", sourceChannel.category)
+    }
+
+    @Test
+    fun metadataOverlaysUseDeterministicPriorityAndEmptySuccessClearsOnlyItsOwner() =
+        runBlocking {
+            val firstExtension = ExtensionId("com.m3u.a-metadata")
+            val secondExtension = ExtensionId("com.m3u.z-metadata")
+            importer.applyMetadataEnrichment(
+                PLAYLIST_URL,
+                listOf(
+                    metadataRefresh(
+                        extensionId = secondExtension,
+                        title = "Second title",
+                        category = "Second category",
+                    ),
+                    metadataRefresh(
+                        extensionId = firstExtension,
+                        title = "First title",
+                        category = null,
+                    ),
+                ),
+            )
+
+            var channel = database.channelDao()
+                .getByPlaylistUrlAndRelationId(PLAYLIST_URL, CHANNEL_REFERENCE)
+            assertEquals("First title", channel?.title)
+            assertEquals("Second category", channel?.category)
+
+            importer.applyMetadataEnrichment(
+                PLAYLIST_URL,
+                listOf(ExtensionMetadataRefreshContribution(firstExtension, emptyList())),
+            )
+
+            channel = database.channelDao()
+                .getByPlaylistUrlAndRelationId(PLAYLIST_URL, CHANNEL_REFERENCE)
+            assertEquals("Second title", channel?.title)
+            assertEquals("Second category", channel?.category)
+
+            assertEquals(1, importer.clearExtensionMetadata(secondExtension))
+            channel = database.channelDao()
+                .getByPlaylistUrlAndRelationId(PLAYLIST_URL, CHANNEL_REFERENCE)
+            assertEquals("Original title", channel?.title)
+            assertEquals("Original category", channel?.category)
+        }
+
+    @Test
+    fun providerRefreshUpdatesSourceBaseWithoutDiscardingOrSolidifyingOverlay() = runBlocking {
+        importer.applyMetadataEnrichment(
+            PLAYLIST_URL,
+            listOf(
+                metadataRefresh(
+                    extensionId = EXTENSION_ID,
+                    title = "Overlay title",
+                    category = "Overlay category",
+                )
+            ),
+        )
+
+        val account = requireNotNull(database.providerDao().getAccount(PROVIDER_ACCOUNT_ID))
+        importer.refresh(
+            account = account,
+            refresh = providerRefresh(
+                title = "Updated source title",
+                category = "Updated source category",
+            ),
+        )
+
+        var channel = database.channelDao()
+            .getByPlaylistUrlAndRelationId(PLAYLIST_URL, CHANNEL_REFERENCE)
+        assertEquals("Overlay title", channel?.title)
+        assertEquals("Overlay category", channel?.category)
+        assertEquals(
+            ChannelMetadataSnapshot(
+                stableReference = CHANNEL_REFERENCE,
+                title = "Updated source title",
+                category = "Updated source category",
+            ),
+            importer.metadataSnapshots(PLAYLIST_URL).single(),
+        )
+
+        importer.clearExtensionMetadata(EXTENSION_ID)
+        channel = database.channelDao()
+            .getByPlaylistUrlAndRelationId(PLAYLIST_URL, CHANNEL_REFERENCE)
+        assertEquals("Updated source title", channel?.title)
+        assertEquals("Updated source category", channel?.category)
+    }
+
+    @Test
+    fun playlistUpsertDoesNotCascadeAwayMetadataOwnership() = runBlocking {
+        importer.applyMetadataEnrichment(
+            PLAYLIST_URL,
+            listOf(metadataRefresh(EXTENSION_ID, "Overlay title", "Overlay category")),
+        )
+
+        val playlist = requireNotNull(database.playlistDao().get(PLAYLIST_URL))
+        database.playlistDao().insertOrReplace(playlist.copy(title = "Renamed provider"))
+
+        assertEquals(1, importer.clearExtensionMetadata(EXTENSION_ID))
+        val channel = database.channelDao()
+            .getByPlaylistUrlAndRelationId(PLAYLIST_URL, CHANNEL_REFERENCE)
+        assertEquals("Original title", channel?.title)
+        assertEquals("Original category", channel?.category)
+        assertEquals(
+            PROVIDER_ACCOUNT_ID,
+            database.providerDao().getAccount(PROVIDER_ACCOUNT_ID)?.id,
+        )
+    }
+
+    @Test
+    fun playlistUrlMigrationMovesSourceBaseAndOverlayTogether() = runBlocking {
+        importer.applyMetadataEnrichment(
+            PLAYLIST_URL,
+            listOf(metadataRefresh(EXTENSION_ID, "Overlay title", "Overlay category")),
+        )
+
+        database.playlistDao().updateUrl(PLAYLIST_URL, MIGRATED_PLAYLIST_URL)
+
+        var channel = database.channelDao()
+            .getByPlaylistUrlAndRelationId(MIGRATED_PLAYLIST_URL, CHANNEL_REFERENCE)
+        assertEquals("Overlay title", channel?.title)
+        assertEquals(
+            MIGRATED_PLAYLIST_URL,
+            database.providerDao().getAccount(PROVIDER_ACCOUNT_ID)?.playlistUrl,
+        )
+
+        assertEquals(1, importer.clearExtensionMetadata(EXTENSION_ID))
+        channel = database.channelDao()
+            .getByPlaylistUrlAndRelationId(MIGRATED_PLAYLIST_URL, CHANNEL_REFERENCE)
+        assertEquals("Original title", channel?.title)
+        assertEquals("Original category", channel?.category)
+    }
+
+    @Test
+    fun deleteThenReimportKeepsOverlayButOrphanCleanupPreventsLaterResurrection() = runBlocking {
+        importer.applyMetadataEnrichment(
+            PLAYLIST_URL,
+            listOf(metadataRefresh(EXTENSION_ID, "Overlay title", "Overlay category")),
+        )
+
+        database.channelDao().deleteByPlaylistUrl(PLAYLIST_URL)
+        channelId = database.channelDao().insertOrReplace(
+            Channel(
+                url = Channel.URL_DYNAMIC,
+                category = "Reimported category",
+                title = "Reimported title",
+                playlistUrl = PLAYLIST_URL,
+                relationId = CHANNEL_REFERENCE,
+            )
+        ).toInt()
+        database.channelDao().deleteOrphanedMetadata(PLAYLIST_URL)
+
+        var channel = database.channelDao()
+            .getByPlaylistUrlAndRelationId(PLAYLIST_URL, CHANNEL_REFERENCE)
+        assertEquals("Overlay title", channel?.title)
+        assertEquals("Overlay category", channel?.category)
+
+        database.channelDao().deleteByPlaylistUrl(PLAYLIST_URL)
+        assertEquals(1, database.channelDao().deleteOrphanedMetadata(PLAYLIST_URL))
+        channelId = database.channelDao().insertOrReplace(
+            Channel(
+                url = Channel.URL_DYNAMIC,
+                category = "Returned category",
+                title = "Returned title",
+                playlistUrl = PLAYLIST_URL,
+                relationId = CHANNEL_REFERENCE,
+            )
+        ).toInt()
+
+        channel = database.channelDao()
+            .getByPlaylistUrlAndRelationId(PLAYLIST_URL, CHANNEL_REFERENCE)
+        assertEquals("Returned title", channel?.title)
+        assertEquals("Returned category", channel?.category)
+        assertEquals(0, importer.clearExtensionMetadata(EXTENSION_ID))
     }
 
     @Test
@@ -319,6 +501,43 @@ class ExtensionContributionImporterTest {
         )
     }
 
+    private fun metadataRefresh(
+        extensionId: ExtensionId,
+        title: String?,
+        category: String?,
+    ) = ExtensionMetadataRefreshContribution(
+        extensionId = extensionId,
+        patches = listOf(
+            ChannelMetadataPatch(
+                stableReference = CHANNEL_REFERENCE,
+                title = title,
+                category = category,
+            )
+        ),
+    )
+
+    private fun providerRefresh(
+        title: String,
+        category: String,
+    ) = SubscriptionContentRefreshResult(
+        source = SubscriptionSourceDescriptor(
+            remoteId = "server-1",
+            providerKind = ProviderKind("reference"),
+        ),
+        channels = listOf(
+            SubscriptionChannelDescriptor(
+                remoteId = CHANNEL_REFERENCE,
+                title = title,
+                category = category,
+                playbackReference = PlaybackReference(
+                    providerId = EXTENSION_ID,
+                    itemId = PLAYBACK_ITEM_ID,
+                    sourceType = "live",
+                ),
+            )
+        ),
+    )
+
     private object UnusedCredentialVault : CredentialVault {
         override fun encrypt(
             accountId: String,
@@ -333,6 +552,7 @@ class ExtensionContributionImporterTest {
 
     private companion object {
         const val PLAYLIST_URL = "m3u-provider://account/test/live"
+        const val MIGRATED_PLAYLIST_URL = "m3u-provider://account/test/migrated"
         const val PROVIDER_ACCOUNT_ID = "provider-account-1"
         const val CREDENTIAL_HANDLE = "credential-handle-1"
         const val PLAYBACK_ITEM_ID = "item-1"

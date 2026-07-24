@@ -38,6 +38,7 @@ class FloatingNavigationBehaviorTest {
             val forYou = navigationSelector(string.ui_destination_foryou)
             val favorite = navigationSelector(string.ui_destination_favourite)
             val setting = navigationSelector(string.ui_destination_setting)
+            val destinations = listOf(forYou, favorite, setting)
 
             val selectedForYou = device.findRequiredObject(forYou)
             assertFalse(
@@ -51,6 +52,10 @@ class FloatingNavigationBehaviorTest {
             assertTrue(
                 "The compact navigation unexpectedly rendered destination labels",
                 selectedForYou.text.isNullOrEmpty(),
+            )
+            device.assertSingleSelectedDestination(
+                destinations = destinations,
+                expected = forYou,
             )
             scenario.onActivity {
                 Metadata.fob = Fob(
@@ -105,6 +110,10 @@ class FloatingNavigationBehaviorTest {
                 "Dragging the glass indicator did not select the favorite destination",
                 device.findRequiredObject(favorite).isSelected,
             )
+            device.assertSingleSelectedDestination(
+                destinations = destinations,
+                expected = favorite,
+            )
             device.findRequiredObject(setting).run {
                 assertTrue(
                     "The named navigation destination did not expose a click action",
@@ -115,6 +124,10 @@ class FloatingNavigationBehaviorTest {
             assertTrue(
                 "The clicked settings destination did not expose selected semantics",
                 device.findRequiredObject(setting).isSelected,
+            )
+            device.assertSingleSelectedDestination(
+                destinations = destinations,
+                expected = setting,
             )
 
             val playlistManagement = By.text(
@@ -133,12 +146,86 @@ class FloatingNavigationBehaviorTest {
         }
     }
 
+    @Test
+    fun settingsDetailSurvivesCompactAndRailLayoutChanges() {
+        device.setOrientationNatural()
+        try {
+            device.waitForIdle()
+            val density = context.resources.displayMetrics.density
+            assumeTrue(device.displayWidth / density < COMPACT_WIDTH_DP)
+            assumeTrue(device.displayHeight / density >= COMPACT_WIDTH_DP)
+
+            ActivityScenario.launch(MainActivity::class.java).use {
+                device.waitForIdle()
+                val setting = navigationSelector(string.ui_destination_setting)
+                val subscriptionTab = By.text(
+                    caseInsensitive(
+                        context.getString(string.feat_setting_label_add_playlist),
+                    )
+                )
+
+                device.findRequiredObject(setting).click()
+                device.findRequiredObject(
+                    By.text(
+                        caseInsensitive(
+                            context.getString(string.feat_setting_playlist_management),
+                        )
+                    )
+                ).click()
+                device.findRequiredObject(subscriptionTab)
+
+                device.setOrientationLeft()
+                device.waitForWindowUpdate(context.packageName, UI_TIMEOUT_MILLIS)
+                device.waitForIdle()
+                assertTrue(
+                    "The rotated window did not cross into the side-rail layout",
+                    device.displayWidth / density >= COMPACT_WIDTH_DP,
+                )
+                device.findRequiredObject(subscriptionTab)
+                device.findRequiredObject(
+                    By.text(
+                        caseInsensitive(
+                            context.getString(string.ui_destination_setting),
+                        )
+                    )
+                )
+
+                device.setOrientationNatural()
+                device.waitForWindowUpdate(context.packageName, UI_TIMEOUT_MILLIS)
+                device.waitForIdle()
+                device.findRequiredObject(subscriptionTab)
+                assertTrue(
+                    "The compact navigation reappeared after the detail state moved back",
+                    device.wait(Until.gone(setting), UI_TIMEOUT_MILLIS),
+                )
+            }
+        } finally {
+            device.setOrientationNatural()
+            device.unfreezeRotation()
+        }
+    }
+
     private fun navigationSelector(stringResId: Int): BySelector =
         By.desc(caseInsensitive(context.getString(stringResId)))
 
     private fun UiDevice.findRequiredObject(selector: BySelector): UiObject2 =
         wait(Until.findObject(selector), UI_TIMEOUT_MILLIS)
             ?: error("Required UI object was not found: $selector")
+
+    private fun UiDevice.assertSingleSelectedDestination(
+        destinations: List<BySelector>,
+        expected: BySelector,
+    ) {
+        val destinationNodes = destinations.map { findRequiredObject(it) }
+        assertTrue(
+            "Navigation should expose exactly one selected tab",
+            destinationNodes.count { it.isSelected } == 1,
+        )
+        assertTrue(
+            "The expected tab was not the selected member of the navigation group",
+            findRequiredObject(expected).isSelected,
+        )
+    }
 
     private fun UiObject2.clickableAncestor(): UiObject2 {
         var current = this

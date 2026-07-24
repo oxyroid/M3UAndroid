@@ -41,6 +41,7 @@ data class ProviderSubscriptionForm(
     val providerKind: ProviderKind,
     val schemaVersion: Int?,
     val fields: List<ProviderSubscriptionFormField>,
+    val reauthenticationPlaylistUrl: String? = null,
     val validationRequested: Boolean = false,
 ) {
     fun update(fieldKey: String, value: String?): ProviderSubscriptionForm {
@@ -83,6 +84,7 @@ data class ProviderSubscriptionForm(
                 providerKind = providerKind,
                 settingValues = settingValues,
                 credentialHandles = credentialHandles,
+                reauthenticationPlaylistUrl = reauthenticationPlaylistUrl,
             )
         )
     }
@@ -129,6 +131,7 @@ data class ProviderSubscriptionForm(
             return create(descriptor, account.providerKind)
                 .update(SubscriptionProviderSettingKeys.BaseUrl, account.baseUrl)
                 .update(SubscriptionProviderSettingKeys.Username, account.username)
+                .copy(reauthenticationPlaylistUrl = account.playlistUrl)
         }
     }
 }

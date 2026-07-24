@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- API 26-27 do not support conditional D2D rules, so keep this backup intentionally small. -->
+    <include domain="file" path="datastore/settings.preferences_pb" />
+    <include domain="sharedpref" path="." />
+
+    <exclude domain="sharedpref" path="extension-settings.xml" />
+    <exclude domain="sharedpref" path="extension-setting-secrets.xml" />
+    <exclude domain="sharedpref" path="extension-trust.xml" />
+    <exclude domain="sharedpref" path="subscription_provider.xml" />
+</full-backup-content>

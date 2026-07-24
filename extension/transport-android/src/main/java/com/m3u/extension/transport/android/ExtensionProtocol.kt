@@ -8,7 +8,7 @@ object ExtensionProtocol {
     const val SERVICE_ACTION = "com.m3u.extension.action.BIND_EXTENSION"
     const val HOST_BIND_PERMISSION = "com.m3u.permission.BIND_EXTENSION_HOST"
     const val METADATA_API_MAJOR = "com.m3u.extension.API_MAJOR"
-    const val TRANSPORT_VERSION = 2
+    const val TRANSPORT_VERSION = 4
 }
 
 @Serializable

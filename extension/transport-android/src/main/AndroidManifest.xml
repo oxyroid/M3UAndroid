@@ -1,7 +1,1 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <queries>
-        <intent>
-            <action android:name="com.m3u.extension.action.BIND_EXTENSION" />
-        </intent>
-    </queries>
-</manifest>
+<manifest />

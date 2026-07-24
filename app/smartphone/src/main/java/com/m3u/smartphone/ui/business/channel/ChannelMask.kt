@@ -124,6 +124,7 @@ fun ChannelMask(
     maskState: MaskState,
     favourite: Boolean,
     isSeriesPlaylist: Boolean,
+    supportsDirectSharing: Boolean,
     isPanelExpanded: Boolean,
     useVertical: Boolean,
     hasTrack: Boolean,
@@ -329,7 +330,7 @@ fun ChannelMask(
                     )
                 }
 
-                if (screencast) {
+                if (screencast && supportsDirectSharing) {
                     MaskButton(
                         state = maskState,
                         icon = Icons.Rounded.Cast,

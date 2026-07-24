@@ -2,8 +2,10 @@ package com.m3u.smartphone.ui
 
 import android.app.ActivityOptions
 import android.content.Intent
+import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -57,6 +59,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -98,6 +101,8 @@ import com.m3u.smartphone.ui.navigation.FloatingAppNavigationBar
 import com.m3u.smartphone.ui.navigation.calculateContentBottomPadding
 import com.m3u.smartphone.ui.navigation.calculateLayoutPadding
 import com.m3u.smartphone.ui.navigation.resolveAppNavigationMode
+import com.m3u.smartphone.ui.navigation.shouldCaptureNavigationBackdrop
+import com.m3u.smartphone.ui.navigation.shouldReserveBottomNavigationSpace
 import com.m3u.smartphone.ui.navigation.shouldShowBottomEdgeBlur
 import com.m3u.smartphone.ui.navigation.shouldShowBottomNavigation
 import com.kyant.backdrop.backdrops.layerBackdrop
@@ -184,6 +189,24 @@ private fun AppImpl(
         isSearchActive = searchActive,
         isImeVisible = imeVisible,
     )
+    val bottomNavigationVisibility = remember(navigationMode) {
+        MutableTransitionState(showBottomNavigation)
+    }
+    LaunchedEffect(showBottomNavigation, bottomNavigationVisibility) {
+        bottomNavigationVisibility.targetState = showBottomNavigation
+    }
+    val supportsBackdropEffects = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    val captureNavigationBackdrop = shouldCaptureNavigationBackdrop(
+        mode = navigationMode,
+        supportsBackdropEffects = supportsBackdropEffects,
+        isNavigationCurrentlyVisible = bottomNavigationVisibility.currentState,
+        isNavigationTargetVisible = bottomNavigationVisibility.targetState,
+    )
+    val bottomNavigationOccupiesSpace = shouldReserveBottomNavigationSpace(
+        mode = navigationMode,
+        isNavigationCurrentlyVisible = bottomNavigationVisibility.currentState,
+        isNavigationTargetVisible = bottomNavigationVisibility.targetState,
+    )
     val remoteControlVisible = remoteControl && !searchActive && !imeVisible
 
     var measuredNavigationHeight by remember { mutableStateOf(64.dp) }
@@ -196,7 +219,7 @@ private fun AppImpl(
     )
     val contentBottomPadding = calculateContentBottomPadding(
         mode = navigationMode,
-        isTopLevelRoute = showBottomNavigation,
+        isTopLevelRoute = bottomNavigationOccupiesSpace,
         safeBottomInset = safeBottomInset,
         measuredNavigationHeight = measuredNavigationHeight,
         floatingUtilityHeight = if (remoteControlVisible) {
@@ -209,7 +232,7 @@ private fun AppImpl(
     val contentInsets = AppContentInsets(
         layoutPadding = layoutPadding,
         contentPadding = PaddingValues(bottom = contentBottomPadding),
-        navigationClearance = if (showBottomNavigation) {
+        navigationClearance = if (bottomNavigationOccupiesSpace) {
             safeBottomInset + FLOATING_NAVIGATION_BOTTOM_GAP + measuredNavigationHeight
         } else {
             safeBottomInset
@@ -236,6 +259,33 @@ private fun AppImpl(
             )
         }
     }
+    val movableAppContent = remember {
+        movableContentOf<AppContentArguments> { arguments ->
+            AppContent(
+                navController = arguments.navController,
+                channels = arguments.channels,
+                searchBarState = arguments.searchBarState,
+                textFieldState = arguments.textFieldState,
+                navigateToDestination = arguments.navigateToDestination,
+                navigateToChannel = arguments.navigateToChannel,
+                contentPadding = arguments.contentPadding,
+                showBottomEdgeBlur = arguments.showBottomEdgeBlur,
+                onNestedDetailVisibilityChanged =
+                    arguments.onNestedDetailVisibilityChanged,
+            )
+        }
+    }
+    val appContentArguments = AppContentArguments(
+        navController = navController,
+        channels = channels,
+        searchBarState = searchBarState,
+        textFieldState = textFieldState,
+        navigateToDestination = { navController.navigate(it.name) },
+        navigateToChannel = navigateToChannel,
+        contentPadding = contentInsets.contentPadding,
+        showBottomEdgeBlur = shouldShowBottomEdgeBlur(navigationMode),
+        onNestedDetailVisibilityChanged = onNestedDetailVisibilityChanged,
+    )
 
     Box(
         modifier = modifier.fillMaxSize(),
@@ -247,24 +297,20 @@ private fun AppImpl(
                     contentColor = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier
                         .fillMaxSize()
-                        .layerBackdrop(navigationBackdrop),
+                        .then(
+                            if (captureNavigationBackdrop) {
+                                Modifier.layerBackdrop(navigationBackdrop)
+                            } else {
+                                Modifier
+                            },
+                        ),
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(contentInsets.layoutPadding),
                     ) {
-                        AppContent(
-                            navController = navController,
-                            channels = channels,
-                            searchBarState = searchBarState,
-                            textFieldState = textFieldState,
-                            navigateToDestination = { navController.navigate(it.name) },
-                            navigateToChannel = navigateToChannel,
-                            contentPadding = contentInsets.contentPadding,
-                            showBottomEdgeBlur = shouldShowBottomEdgeBlur(navigationMode),
-                            onNestedDetailVisibilityChanged = onNestedDetailVisibilityChanged,
-                        )
+                        movableAppContent(appContentArguments)
                     }
                 }
             }
@@ -302,17 +348,7 @@ private fun AppImpl(
                             .fillMaxSize()
                             .padding(contentInsets.layoutPadding),
                     ) {
-                        AppContent(
-                            navController = navController,
-                            channels = channels,
-                            searchBarState = searchBarState,
-                            textFieldState = textFieldState,
-                            navigateToDestination = { navController.navigate(it.name) },
-                            navigateToChannel = navigateToChannel,
-                            contentPadding = contentInsets.contentPadding,
-                            showBottomEdgeBlur = shouldShowBottomEdgeBlur(navigationMode),
-                            onNestedDetailVisibilityChanged = onNestedDetailVisibilityChanged,
-                        )
+                        movableAppContent(appContentArguments)
                         AppUtilityLayer(
                             remoteControlVisible = remoteControlVisible,
                             bottomNavigationVisible = false,
@@ -332,7 +368,7 @@ private fun AppImpl(
         if (navigationMode == AppNavigationMode.BottomOverlay) {
             AppUtilityLayer(
                 remoteControlVisible = remoteControlVisible,
-                bottomNavigationVisible = showBottomNavigation,
+                bottomNavigationVisible = bottomNavigationOccupiesSpace,
                 navigationClearance = contentInsets.navigationClearance,
                 safeBottomInset = safeBottomInset,
                 imeBottomInset = WindowInsets.ime.asPaddingValues().calculateBottomPadding(),
@@ -345,7 +381,7 @@ private fun AppImpl(
 
         if (navigationMode == AppNavigationMode.BottomOverlay) {
             AnimatedVisibility(
-                visible = showBottomNavigation,
+                visibleState = bottomNavigationVisibility,
                 enter = slideInVertically(initialOffsetY = { it / 3 }) +
                     fadeIn() +
                     scaleIn(initialScale = 0.94f),
@@ -363,6 +399,8 @@ private fun AppImpl(
                 FloatingAppNavigationBar(
                     selectedDestination = currentDestination,
                     backdrop = navigationBackdrop,
+                    useBackdropEffects = supportsBackdropEffects,
+                    enabled = showBottomNavigation,
                     onDestinationSelected = navigateToDestination,
                     onHeightChanged = { measuredNavigationHeight = it },
                 )
@@ -380,6 +418,18 @@ private fun AppImpl(
         )
     }
 }
+
+private class AppContentArguments(
+    val navController: NavHostController,
+    val channels: Flow<PagingData<ChannelWithProgramme>>,
+    val searchBarState: SearchBarState,
+    val textFieldState: TextFieldState,
+    val navigateToDestination: (Destination) -> Unit,
+    val navigateToChannel: () -> Unit,
+    val contentPadding: PaddingValues,
+    val showBottomEdgeBlur: Boolean,
+    val onNestedDetailVisibilityChanged: (Boolean) -> Unit,
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

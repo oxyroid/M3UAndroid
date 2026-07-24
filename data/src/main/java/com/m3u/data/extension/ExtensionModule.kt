@@ -7,6 +7,7 @@ import com.m3u.data.extension.emby.OkHttpEmbyCompatibleClient
 import com.m3u.data.extension.security.AndroidKeystoreCredentialVault
 import com.m3u.data.extension.security.CredentialVault
 import com.m3u.data.extension.security.ExtensionSecretStore
+import com.m3u.data.extension.security.ExtensionHookBrokerScopeProvider
 import com.m3u.data.extension.security.HostNetworkBrokerImpl
 import com.m3u.data.extension.security.ProviderHostNetworkBroker
 import com.m3u.data.repository.extension.ExtensionContributionRepository
@@ -27,8 +28,10 @@ import com.m3u.data.repository.provider.SubscriptionProviderRepositoryImpl
 import com.m3u.extension.api.ExtensionApiVersions
 import com.m3u.extension.runtime.CapabilityPolicy
 import com.m3u.extension.runtime.ExtensionRegistrationResult
+import com.m3u.extension.runtime.ExtensionBrokerScopeProvider
 import com.m3u.extension.runtime.ExtensionRuntime
 import com.m3u.extension.runtime.ExtensionSettingsProvider
+import com.m3u.extension.runtime.InvocationPolicy
 import com.m3u.extension.transport.android.AndroidExtensionDiscovery
 import com.m3u.extension.transport.android.ExtensionTrustStore
 import dagger.Binds
@@ -104,6 +107,12 @@ internal abstract class ExtensionBindingsModule {
 
     @Binds
     @Singleton
+    abstract fun bindExtensionBrokerScopeProvider(
+        provider: ExtensionHookBrokerScopeProvider,
+    ): ExtensionBrokerScopeProvider
+
+    @Binds
+    @Singleton
     abstract fun bindEmbyCompatibleClient(
         client: OkHttpEmbyCompatibleClient,
     ): EmbyCompatibleClient
@@ -132,10 +141,16 @@ internal object ExtensionRuntimeModule {
 
     @Provides
     @Singleton
+    fun provideExtensionInvocationPolicy(): InvocationPolicy = InvocationPolicy()
+
+    @Provides
+    @Singleton
     fun provideExtensionRuntime(
         provider: EmbyCompatibleProvider,
         trustStore: ExtensionTrustStore,
         settingsProvider: ExtensionSettingsProvider,
+        brokerScopeProvider: ExtensionBrokerScopeProvider,
+        invocationPolicy: InvocationPolicy,
     ): ExtensionRuntime = ExtensionRuntime(
         hostApiVersion = ExtensionApiVersions.Current,
         capabilityPolicy = CapabilityPolicy { manifest, _ ->
@@ -149,6 +164,8 @@ internal object ExtensionRuntimeModule {
             }
         },
         settingsProvider = settingsProvider,
+        brokerScopeProvider = brokerScopeProvider,
+        invocationPolicy = invocationPolicy,
     ).apply {
         val registration = register(provider)
         check(registration is ExtensionRegistrationResult.Registered) {

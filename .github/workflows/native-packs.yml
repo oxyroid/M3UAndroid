@@ -53,24 +53,70 @@ jobs:
             exit 1
           fi
 
-      - name: Verify native load source protocol
+      - name: Verify 16 KB native compatibility
         run: |
           set -euo pipefail
-          if git grep -n 'm3u\.native-load-instrumentation\|NATIVE_PACK_COMMIT\|nativeLoadCommit' -- \
-            native-load-gradle-plugin/src \
-            app \
-            data/src \
-            data/build.gradle.kts \
-            docs \
-            native-load.yml \
-            .github \
-            ':!.github/workflows/native-packs.yml'; then
-            exit 1
-          fi
-          if find native-packs -name '*.json' -print0 \
-            | xargs -0 grep -n 'sourceCommit\|snapshotPath\|https://raw.githubusercontent.com\|native-packs/.*/release/'; then
-            exit 1
-          fi
+          pack_id="$(awk '$1 == "id:" { print $2; exit }' native-load.yml)"
+          testing/bin/verify-android-16kb.sh "native-packs/$pack_id"/*.zip
+
+      - name: Verify native pack identity pinning
+        run: |
+          set -euo pipefail
+          ./gradlew :data:generateReleaseBuildConfig --no-configuration-cache
+          python3 - <<'PY'
+          import hashlib
+          import re
+          import zipfile
+          from pathlib import Path
+
+          config = Path(
+              "data/build/generated/source/buildConfig/release/com/m3u/data/BuildConfig.java"
+          ).read_text()
+
+          def constant(name):
+              match = re.search(
+                  rf'public static final String {name} = "([^"]*)";',
+                  config,
+              )
+              if not match:
+                  raise SystemExit(f"Missing release identity constant: {name}")
+              return match.group(1)
+
+          def entries(name):
+              encoded = constant(name)
+              return dict(entry.split("=", 1) for entry in encoded.split(";") if entry)
+
+          pack_id = constant("NATIVE_PACK_ID")
+          pack_dir = Path("native-packs") / pack_id
+          manifest = pack_dir / f"m3u-codec-{pack_id}.json"
+          expected_manifest = hashlib.sha256(manifest.read_bytes()).hexdigest()
+          if constant("NATIVE_PACK_EXPECTED_MANIFEST_SHA256") != expected_manifest:
+              raise SystemExit("Release manifest identity is stale")
+
+          expected_assets = entries("NATIVE_PACK_EXPECTED_ASSET_SHA256")
+          actual_assets = {
+              archive.name: hashlib.sha256(archive.read_bytes()).hexdigest()
+              for archive in sorted(pack_dir.glob("*.zip"))
+          }
+          if expected_assets != actual_assets:
+              raise SystemExit("Release asset identities are stale")
+
+          actual_libraries = {}
+          for archive in sorted(pack_dir.glob("*.zip")):
+              with zipfile.ZipFile(archive) as zipped:
+                  for name in sorted(zipped.namelist()):
+                      if not name.endswith("/"):
+                          actual_libraries[f"{archive.name}/{name}"] = hashlib.sha256(
+                              zipped.read(name)
+                          ).hexdigest()
+          if entries("NATIVE_PACK_EXPECTED_LIBRARY_SHA256") != actual_libraries:
+              raise SystemExit("Release library identities are stale")
+          PY
+          git grep -q 'expectedManifestSha256' -- data/src/main/java/com/m3u/data/codec/CodecPackRepository.kt
+          git grep -q 'expectedAssetSha256' -- data/src/main/java/com/m3u/data/codec/CodecPackRepository.kt
+          git grep -q 'expectedLibrarySha256' -- \
+            data/src/main/java/com/m3u/data/codec/CodecPackRepository.kt \
+            data/src/main/java/com/m3u/data/codec/CodecNativeLoader.kt
 
       - name: Verify committed native packs
         run: |

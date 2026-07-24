@@ -6,10 +6,8 @@ on:
     paths-ignore:
       - '**.md'
       - '**.txt'
-      - '.github/**'
       - '.idea/**'
       - 'fastlane/**'
-      - '!.github/workflows/**'
   pull_request:
     branches: [ "master" ]
   workflow_dispatch:
@@ -44,23 +42,29 @@ jobs:
       - name: Clean GMD
         run: ./gradlew cleanManagedDevices --unused-only
 
-      - name: Build production app
+      - name: Build smartphone release APK
         run: ./gradlew :app:smartphone:assembleRelease
 
-      - name: Build production TV app
+      - name: Build TV release APK
         run: ./gradlew :app:tv:assembleRelease
+
+      - name: Verify 16 KB native compatibility
+        run: |
+          testing/bin/verify-android-16kb.sh \
+            app/smartphone/build/outputs/published-apk/release/*.apk \
+            app/tv/build/outputs/published-apk/release/*.apk
 
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
           path: |
-            app/smartphone/build/outputs/apk/release/*.apk
-            app/tv/build/outputs/apk/release/*.apk
+            app/smartphone/build/outputs/published-apk/release/*.apk
+            app/tv/build/outputs/published-apk/release/*.apk
 
       - name: Upload To Telegram
         if: github.event_name != 'pull_request'
-        uses: xireiki/channel-post@v1.0.10
+        uses: xireiki/channel-post@890c1d09635ae629aeffbed4f9716a5473eac896 # v1.0.10
         with:
           bot_token: ${{ secrets.BOT_TOKEN }}
           chat_id: ${{ secrets.CHAT_ID }}
@@ -69,5 +73,5 @@ jobs:
           large_file: true
           method: sendFile
           path: |
-            app/smartphone/build/outputs/apk/release/*.apk
-            app/tv/build/outputs/apk/release/*.apk
+            app/smartphone/build/outputs/published-apk/release/*.apk
+            app/tv/build/outputs/published-apk/release/*.apk

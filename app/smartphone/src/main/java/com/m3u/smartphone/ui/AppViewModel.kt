@@ -35,11 +35,11 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -90,22 +90,20 @@ class AppViewModel @Inject constructor(
         }
 
     private val extensionSearchResults = searchQueries
-        .mapLatest { query ->
-            if (query.isBlank()) return@mapLatest emptyList()
+        .mapLatestSearchResults { query ->
             val contributions = extensionContributionRepository.search(query, SEARCH_RESULT_LIMIT)
-            val references = contributions.map { contribution -> contribution.item.stableReference }
-            val channelsByReference = channelRepository.getByRelationIds(references)
-                .groupBy { channel -> channel.relationId }
-            contributions.mapNotNull { contribution ->
-                channelsByReference[contribution.item.stableReference]?.firstOrNull()
-            }.distinctBy { channel -> channel.id }
+            contributions
+                .map { contribution -> contribution.channel }
+                .distinctBy { channel -> channel.id }
         }
         .flowOn(Dispatchers.IO)
 
     val channels: Flow<PagingData<ChannelWithProgramme>> = combine(
+        searchQueries,
         localSearchResults,
         extensionSearchResults,
-    ) { local, promotedChannels ->
+    ) { query, local, extensionResults ->
+        val promotedChannels = extensionResults.itemsFor(query)
         val promotedIds = promotedChannels.mapTo(mutableSetOf()) { channel -> channel.id }
         promotedChannels.asReversed().fold(
             local.filter { item -> item.channel.id !in promotedIds }
@@ -189,3 +187,22 @@ class AppViewModel @Inject constructor(
         const val SEARCH_RESULT_LIMIT = 50
     }
 }
+
+internal fun <T> Flow<String>.mapLatestSearchResults(
+    search: suspend (query: String) -> List<T>,
+): Flow<QuerySearchResults<T>> = flatMapLatest { query ->
+    flow {
+        emit(QuerySearchResults(query, emptyList()))
+        if (query.isNotBlank()) {
+            emit(QuerySearchResults(query, search(query)))
+        }
+    }
+}
+
+internal data class QuerySearchResults<T>(
+    val query: String,
+    val items: List<T>,
+)
+
+internal fun <T> QuerySearchResults<T>.itemsFor(query: String): List<T> =
+    items.takeIf { this.query == query }.orEmpty()

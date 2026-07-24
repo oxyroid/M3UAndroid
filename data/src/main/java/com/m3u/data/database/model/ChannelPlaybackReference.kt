@@ -42,6 +42,4 @@ data class ChannelPlaybackReference(
     val mediaSourceId: String?,
     @ColumnInfo(name = "source_type")
     val sourceType: String,
-    @ColumnInfo(name = "fallback_direct_url")
-    val fallbackDirectUrl: String?,
 )

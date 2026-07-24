@@ -1,6 +1,7 @@
 package com.m3u.extension.transport.android
 
 import android.Manifest
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -9,9 +10,80 @@ import android.content.pm.Signature
 import android.os.Build
 import java.security.MessageDigest
 
-class AndroidExtensionDiscovery(private val context: Context) {
-    fun discover(): List<InstalledExtensionService> {
-        val packageManager = context.packageManager
+class AndroidExtensionDiscovery private constructor(
+    private val packageAccess: ExtensionDiscoveryPackageAccess,
+) {
+    constructor(context: Context) : this(AndroidExtensionDiscoveryPackageAccess(context))
+
+    fun discover(): List<InstalledExtensionService> =
+        packageAccess.queryExtensionServices().mapNotNull { service ->
+            try {
+                service.toInstalledExtensionService()
+            } catch (_: PackageManager.NameNotFoundException) {
+                null
+            }
+        }.sortedWith(compareBy(InstalledExtensionService::packageName, InstalledExtensionService::serviceName))
+
+    fun resolve(component: ComponentName): InstalledExtensionService? = try {
+        val service = packageAccess.getServiceInfo(component)
+        if (service.packageName != component.packageName || service.name != component.className) {
+            null
+        } else {
+            service.toInstalledExtensionService()
+        }
+    } catch (_: PackageManager.NameNotFoundException) {
+        null
+    }
+
+    private fun ServiceInfo.toInstalledExtensionService(): InstalledExtensionService? {
+        if (!exported || permission != ExtensionProtocol.HOST_BIND_PERMISSION) return null
+        val processIdentityIncompatible =
+            flags and ServiceInfo.FLAG_ISOLATED_PROCESS != 0 ||
+                flags and ServiceInfo.FLAG_EXTERNAL_SERVICE != 0
+        val uid = applicationInfo?.uid ?: return null
+        val usesSharedUserId = packageAccess.packageUsesSharedUserId(packageName)
+        val hasDirectNetworkAccess = packageAccess.hasDirectNetworkAccess(uid)
+        val incompatibilityReason = extensionIdentityIncompatibilityReason(
+            processIdentityIncompatible = processIdentityIncompatible,
+            usesSharedUserId = usesSharedUserId,
+            hasDirectNetworkAccess = hasDirectNetworkAccess,
+        )
+        return InstalledExtensionService(
+            packageName = packageName,
+            serviceName = name,
+            certificateSha256 = packageAccess.packageCertificateSha256(packageName),
+            uid = uid,
+            incompatibilityReason = incompatibilityReason,
+        )
+    }
+
+    companion object {
+        internal fun forTesting(packageAccess: ExtensionDiscoveryPackageAccess) =
+            AndroidExtensionDiscovery(packageAccess)
+    }
+}
+
+internal interface ExtensionDiscoveryPackageAccess {
+    fun queryExtensionServices(): List<ServiceInfo>
+
+    @Throws(PackageManager.NameNotFoundException::class)
+    fun getServiceInfo(component: ComponentName): ServiceInfo
+
+    @Throws(PackageManager.NameNotFoundException::class)
+    fun packageUsesSharedUserId(packageName: String): Boolean
+
+    fun hasDirectNetworkAccess(uid: Int): Boolean
+
+    @Throws(PackageManager.NameNotFoundException::class)
+    fun packageCertificateSha256(packageName: String): String
+}
+
+private class AndroidExtensionDiscoveryPackageAccess(
+    private val context: Context,
+) : ExtensionDiscoveryPackageAccess {
+    private val packageManager = context.packageManager
+
+    override fun queryExtensionServices(): List<ServiceInfo> {
         val flags = if (Build.VERSION.SDK_INT >= 33) {
             PackageManager.ResolveInfoFlags.of(PackageManager.MATCH_ALL.toLong())
         } else {
@@ -24,49 +96,41 @@ class AndroidExtensionDiscovery(private val context: Context) {
             @Suppress("DEPRECATION")
             packageManager.queryIntentServices(Intent(ExtensionProtocol.SERVICE_ACTION), flags as Int)
         }
-        return services.mapNotNull { resolveInfo ->
-            val service = resolveInfo.serviceInfo ?: return@mapNotNull null
-            if (!service.exported || service.permission != ExtensionProtocol.HOST_BIND_PERMISSION) return@mapNotNull null
-            val processIdentityIncompatible =
-                service.flags and ServiceInfo.FLAG_ISOLATED_PROCESS != 0 ||
-                service.flags and ServiceInfo.FLAG_EXTERNAL_SERVICE != 0
-            val uid = service.applicationInfo?.uid ?: return@mapNotNull null
-            val usesSharedUserId = packageUsesSharedUserId(service.packageName)
-            val hasDirectNetworkAccess = context.checkPermission(
-                Manifest.permission.INTERNET,
-                -1,
-                uid,
-            ) == PackageManager.PERMISSION_GRANTED
-            val incompatibilityReason = extensionIdentityIncompatibilityReason(
-                processIdentityIncompatible = processIdentityIncompatible,
-                usesSharedUserId = usesSharedUserId,
-                hasDirectNetworkAccess = hasDirectNetworkAccess,
-            )
-            InstalledExtensionService(
-                packageName = service.packageName,
-                serviceName = service.name,
-                certificateSha256 = packageCertificateSha256(service.packageName),
-                uid = uid,
-                incompatibilityReason = incompatibilityReason,
-            )
-        }.sortedWith(compareBy(InstalledExtensionService::packageName, InstalledExtensionService::serviceName))
+        return services.mapNotNull { resolveInfo -> resolveInfo.serviceInfo }
     }
 
+    override fun getServiceInfo(component: ComponentName): ServiceInfo =
+        if (Build.VERSION.SDK_INT >= 33) {
+            packageManager.getServiceInfo(
+                component,
+                PackageManager.ComponentInfoFlags.of(0),
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            packageManager.getServiceInfo(component, 0)
+        }
+
     @Suppress("DEPRECATION")
-    private fun packageUsesSharedUserId(packageName: String): Boolean {
+    override fun packageUsesSharedUserId(packageName: String): Boolean {
         val packageInfo = if (Build.VERSION.SDK_INT >= 33) {
-            context.packageManager.getPackageInfo(
+            packageManager.getPackageInfo(
                 packageName,
                 PackageManager.PackageInfoFlags.of(0),
             )
         } else {
-            context.packageManager.getPackageInfo(packageName, 0)
+            packageManager.getPackageInfo(packageName, 0)
         }
         return packageInfo.sharedUserId != null
     }
 
-    private fun packageCertificateSha256(packageName: String): String {
-        val packageManager = context.packageManager
+    override fun hasDirectNetworkAccess(uid: Int): Boolean =
+        context.checkPermission(
+            Manifest.permission.INTERNET,
+            -1,
+            uid,
+        ) == PackageManager.PERMISSION_GRANTED
+
+    override fun packageCertificateSha256(packageName: String): String {
         val certificates = if (Build.VERSION.SDK_INT >= 28) {
             val packageInfo = if (Build.VERSION.SDK_INT >= 33) {
                 packageManager.getPackageInfo(

@@ -1,11 +1,11 @@
 package com.m3u.smartphone.ui.navigation
 
-import android.os.Build
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.EaseOut
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitHorizontalTouchSlopOrCancellation
@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -39,13 +40,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -76,7 +80,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
-import kotlin.math.sign
 
 internal const val FLOATING_NAVIGATION_TEST_TAG = "floating-app-navigation"
 
@@ -99,6 +102,8 @@ internal class FloatingNavigationSettleController {
 internal fun FloatingAppNavigationBar(
     selectedDestination: Destination?,
     backdrop: Backdrop,
+    useBackdropEffects: Boolean,
+    enabled: Boolean,
     onDestinationSelected: (Destination) -> Unit,
     onHeightChanged: (Dp) -> Unit,
     modifier: Modifier = Modifier,
@@ -106,10 +111,12 @@ internal fun FloatingAppNavigationBar(
     val destinations = Destination.entries
     val selectedIndex = destinations.indexOf(selectedDestination).coerceAtLeast(0)
     val density = LocalDensity.current
+    val hapticFeedback = LocalHapticFeedback.current
     val layoutDirection = LocalLayoutDirection.current
     val animationScope = rememberCoroutineScope()
     val currentOnDestinationSelected by rememberUpdatedState(onDestinationSelected)
     val currentSelectedIndex by rememberUpdatedState(selectedIndex)
+    val currentEnabled by rememberUpdatedState(enabled)
     val settleController = remember { FloatingNavigationSettleController() }
     val navigationContentBackdrop = rememberLayerBackdrop()
     val indicatorBackdrop = rememberCombinedBackdrop(
@@ -119,11 +126,11 @@ internal fun FloatingAppNavigationBar(
     val indicatorPosition = remember(destinations.size) {
         Animatable(selectedIndex.toFloat(), visibilityThreshold = 0.001f)
     }
-    val deformationVelocity = remember {
+    val flowVelocity = remember {
         Animatable(0f, visibilityThreshold = 0.01f)
     }
     val panelDragDistance = remember { Animatable(0f) }
-    val interactionProgress = remember {
+    val pressureProgress = remember {
         Animatable(0f, visibilityThreshold = 0.001f)
     }
     val interactionSources = remember(destinations.size) {
@@ -139,7 +146,7 @@ internal fun FloatingAppNavigationBar(
     fun startVisualSettle(
         targetIndex: Int,
         startPosition: Float? = null,
-        startVelocityItemsPerSecond: Float? = null,
+        startFlowVelocityItemsPerSecond: Float? = null,
         startPanelDistancePx: Float? = null,
         onPositionSettled: (() -> Unit)? = null,
     ) {
@@ -148,25 +155,25 @@ internal fun FloatingAppNavigationBar(
         val job = animationScope.launch {
             try {
                 startPosition?.let { indicatorPosition.snapTo(it) }
-                startVelocityItemsPerSecond?.let { deformationVelocity.snapTo(it) }
+                startFlowVelocityItemsPerSecond?.let { flowVelocity.snapTo(it) }
                 startPanelDistancePx?.let { panelDragDistance.snapTo(it) }
                 coroutineScope {
                     val positionJob = launch {
                         indicatorPosition.animateTo(
                             targetValue = targetIndex.toFloat(),
                             animationSpec = spring(
-                                dampingRatio = 1f,
-                                stiffness = 1000f,
+                                dampingRatio = 0.82f,
+                                stiffness = 720f,
                                 visibilityThreshold = 0.001f,
                             ),
                         )
                     }
                     launch {
-                        deformationVelocity.animateTo(
+                        flowVelocity.animateTo(
                             targetValue = 0f,
                             animationSpec = spring(
-                                dampingRatio = 0.5f,
-                                stiffness = 300f,
+                                dampingRatio = 0.72f,
+                                stiffness = 420f,
                                 visibilityThreshold = 0.01f,
                             ),
                         )
@@ -175,8 +182,8 @@ internal fun FloatingAppNavigationBar(
                         panelDragDistance.animateTo(
                             targetValue = 0f,
                             animationSpec = spring(
-                                dampingRatio = 1f,
-                                stiffness = 300f,
+                                dampingRatio = 0.86f,
+                                stiffness = 380f,
                                 visibilityThreshold = 0.5f,
                             ),
                         )
@@ -198,9 +205,9 @@ internal fun FloatingAppNavigationBar(
         }
     }
 
-    LaunchedEffect(isAnyItemPressed, isDragging, isSettling) {
-        val interacting = isAnyItemPressed || isDragging || isSettling
-        interactionProgress.animateTo(
+    LaunchedEffect(enabled, isAnyItemPressed, isDragging, isSettling) {
+        val interacting = enabled && (isAnyItemPressed || isDragging || isSettling)
+        pressureProgress.animateTo(
             targetValue = if (interacting) 1f else 0f,
             animationSpec = tween(
                 durationMillis = if (interacting) {
@@ -208,16 +215,24 @@ internal fun FloatingAppNavigationBar(
                 } else {
                     INDICATOR_COLLAPSE_DURATION_MILLIS
                 },
-                easing = if (interacting) EaseOut else FastOutSlowInEasing,
+                easing = FastOutSlowInEasing,
             ),
         )
     }
 
-    LaunchedEffect(selectedIndex) {
+    LaunchedEffect(selectedIndex, enabled) {
         isDragging = false
+        if (!enabled) {
+            settleController.invalidate()
+            isSettling = false
+            indicatorPosition.snapTo(selectedIndex.toFloat())
+            flowVelocity.snapTo(0f)
+            panelDragDistance.snapTo(0f)
+            return@LaunchedEffect
+        }
         val needsVisualSettle =
             abs(indicatorPosition.value - selectedIndex.toFloat()) > 0.001f ||
-                abs(deformationVelocity.value) > 0.01f ||
+                abs(flowVelocity.value) > 0.01f ||
                 abs(panelDragDistance.value) > 0.5f
         if (needsVisualSettle) {
             startVisualSettle(targetIndex = selectedIndex)
@@ -229,8 +244,12 @@ internal fun FloatingAppNavigationBar(
 
     val isDarkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val shellSurfaceColor = MaterialTheme.colorScheme.surfaceContainer.copy(
-        alpha = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) 0.40f else 0.92f,
+        alpha = if (useBackdropEffects) 0.40f else 0.94f,
     )
+    val shellOutlineColor = MaterialTheme.colorScheme.outlineVariant.copy(
+        alpha = if (isDarkTheme) 0.72f else 0.86f,
+    )
+    val shellHighlightAlpha = if (isDarkTheme) 0.38f else 0.54f
     val idleIndicatorColor = if (isDarkTheme) {
         Color.White.copy(alpha = 0.10f)
     } else {
@@ -249,33 +268,37 @@ internal fun FloatingAppNavigationBar(
             destinations.size
         val itemWidthPx = with(density) { itemWidth.toPx() }
         val navigationWidthPx = with(density) { navigationWidth.toPx() }
+        val navigationHeightPx = with(density) { FLOATING_NAVIGATION_HEIGHT.toPx() }
+        val indicatorHeightPx = with(density) {
+            FLOATING_NAVIGATION_INDICATOR_HEIGHT.toPx()
+        }
         val innerPaddingPx = with(density) { FLOATING_NAVIGATION_INNER_PADDING.toPx() }
         LaunchedEffect(itemWidthPx, layoutDirection) {
             settleController.invalidate()
             isDragging = false
             isSettling = false
             indicatorPosition.snapTo(currentSelectedIndex.toFloat())
-            deformationVelocity.snapTo(0f)
+            flowVelocity.snapTo(0f)
             panelDragDistance.snapTo(0f)
         }
-        val indicatorTopPx = with(density) {
-            ((FLOATING_NAVIGATION_HEIGHT - FLOATING_NAVIGATION_INDICATOR_HEIGHT) / 2).toPx()
-        }
-        val panelOffsetPx = with(density) {
-            val fraction = (panelDragDistance.value / navigationWidthPx)
-                .coerceIn(-1f, 1f)
-            PANEL_TRANSLATION_LIMIT.toPx() *
-                fraction.sign *
-                EaseOut.transform(abs(fraction))
-        }
-        val indicatorTransform = resolveFloatingNavigationIndicatorTransform(
-            interactionProgress = interactionProgress.value,
-            velocityItemsPerSecond = deformationVelocity.value,
+        val indicatorTopPx = (navigationHeightPx - indicatorHeightPx) / 2f
+        val normalizedPanelDrag = (panelDragDistance.value / navigationWidthPx)
+            .coerceIn(-1f, 1f)
+        val panelTranslationLimitPx = (navigationHeightPx - indicatorHeightPx) / 2f
+        val panelOffsetPx = panelTranslationLimitPx *
+            normalizedPanelDrag *
+            (1f - PANEL_DRAG_DECELERATION * abs(normalizedPanelDrag))
+        val indicatorMorph = resolveFloatingNavigationIndicatorMorph(
+            interactionProgress = pressureProgress.value,
+            velocityItemsPerSecond = flowVelocity.value,
         )
-        val shellScale = 1f +
-            with(density) { SHELL_INTERACTION_EXPANSION.toPx() } /
-            navigationWidthPx *
-            interactionProgress.value
+        val shellScaleX = 1f +
+            innerPaddingPx * 2f / navigationWidthPx * indicatorMorph.pressureProgress
+        val shellScaleY = 1f +
+            innerPaddingPx / navigationHeightPx * indicatorMorph.pressureProgress
+        val physicalLeadDirection = if (layoutDirection == LayoutDirection.Ltr) 1f else -1f
+        val indicatorLeadOffsetPx =
+            indicatorMorph.leadOffsetFraction * itemWidthPx * physicalLeadDirection
         val indicatorX = resolveFloatingNavigationIndicatorPhysicalX(
             position = indicatorPosition.value,
             itemWidthPx = itemWidthPx,
@@ -283,6 +306,122 @@ internal fun FloatingAppNavigationBar(
             innerPaddingPx = innerPaddingPx,
             isRtl = layoutDirection == LayoutDirection.Rtl,
         )
+        val highlightedIndex = indicatorPosition.value
+            .roundToInt()
+            .coerceIn(destinations.indices)
+        val selectedIconScale = 1f +
+            (indicatorMorph.scaleY - 1f) * SELECTED_ICON_MORPH_SHARE
+        val blurRadiusPx = innerPaddingPx * 2f
+        val shellRefractionHeightPx = indicatorHeightPx * SHELL_REFRACTION_HEIGHT_SHARE
+        val shellRefractionAmountPx = itemWidthPx * SHELL_REFRACTION_AMOUNT_SHARE
+        val indicatorRefractionHeightPx = indicatorHeightPx *
+            INDICATOR_REFRACTION_HEIGHT_SHARE *
+            indicatorMorph.refractionProgress
+        val indicatorRefractionAmountPx = itemWidthPx *
+            INDICATOR_REFRACTION_AMOUNT_SHARE *
+            indicatorMorph.refractionProgress
+        val shellSurfaceModifier = if (useBackdropEffects) {
+            Modifier.drawBackdrop(
+                backdrop = backdrop,
+                shape = { CircleShape },
+                effects = {
+                    vibrancy()
+                    blur(blurRadiusPx)
+                    lens(
+                        refractionHeight = shellRefractionHeightPx,
+                        refractionAmount = shellRefractionAmountPx,
+                        depthEffect = true,
+                    )
+                },
+                highlight = {
+                    Highlight.Default.copy(alpha = shellHighlightAlpha)
+                },
+                layerBlock = {
+                    translationX = panelOffsetPx
+                    scaleX = shellScaleX
+                    scaleY = shellScaleY
+                },
+                onDrawSurface = {
+                    drawRect(shellSurfaceColor)
+                },
+            )
+        } else {
+            Modifier.background(shellSurfaceColor, CircleShape)
+        }
+        val indicatorSurfaceModifier = if (useBackdropEffects) {
+            Modifier.drawBackdrop(
+                backdrop = indicatorBackdrop,
+                shape = { CircleShape },
+                effects = {
+                    lens(
+                        refractionHeight = indicatorRefractionHeightPx,
+                        refractionAmount = indicatorRefractionAmountPx,
+                        depthEffect = true,
+                        chromaticAberration = true,
+                    )
+                },
+                highlight = {
+                    Highlight.Default.copy(alpha = indicatorMorph.refractionProgress)
+                },
+                shadow = {
+                    Shadow(alpha = indicatorMorph.refractionProgress)
+                },
+                innerShadow = {
+                    InnerShadow(
+                        radius = FLOATING_NAVIGATION_INNER_PADDING * 2 *
+                            indicatorMorph.refractionProgress,
+                        alpha = indicatorMorph.refractionProgress,
+                    )
+                },
+                layerBlock = {
+                    scaleX = indicatorMorph.scaleX
+                    scaleY = indicatorMorph.scaleY
+                },
+                onDrawSurface = {
+                    drawRect(
+                        color = idleIndicatorColor,
+                        alpha = 1f - indicatorMorph.pressureProgress,
+                    )
+                    drawRect(
+                        color = Color.Black.copy(
+                            alpha = INDICATOR_DEPTH_OVERLAY_ALPHA *
+                                indicatorMorph.refractionProgress,
+                        ),
+                    )
+                },
+            )
+        } else {
+            Modifier
+                .background(idleIndicatorColor, CircleShape)
+                .border(
+                    width = 1.dp,
+                    color = shellOutlineColor.copy(alpha = FALLBACK_INDICATOR_BORDER_ALPHA),
+                    shape = CircleShape,
+                )
+        }
+        val shellFallbackTransformModifier = if (useBackdropEffects) {
+            Modifier
+        } else {
+            Modifier
+                .graphicsLayer {
+                    translationX = panelOffsetPx
+                    scaleX = shellScaleX
+                    scaleY = shellScaleY
+                }
+                .shadow(
+                    elevation = 8.dp,
+                    shape = CircleShape,
+                    clip = false,
+                )
+        }
+        val indicatorFallbackTransformModifier = if (useBackdropEffects) {
+            Modifier
+        } else {
+            Modifier.graphicsLayer {
+                scaleX = indicatorMorph.scaleX
+                scaleY = indicatorMorph.scaleY
+            }
+        }
 
         Box(
             modifier = Modifier
@@ -298,135 +437,115 @@ internal fun FloatingAppNavigationBar(
                 itemWidth = itemWidth,
                 iconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 useSelectedIcons = false,
-                iconScale = 1f + 0.20f * interactionProgress.value,
+                iconScale = 1f,
                 modifier = Modifier
                     .fillMaxSize()
-                    .graphicsLayer {
-                        translationX = panelOffsetPx
-                    }
-                    .drawBackdrop(
-                        backdrop = backdrop,
-                        shape = { CircleShape },
-                        effects = {
-                            vibrancy()
-                            blur(8.dp.toPx())
-                            lens(
-                                refractionHeight = 24.dp.toPx(),
-                                refractionAmount = 24.dp.toPx(),
-                                depthEffect = true,
-                            )
-                        },
-                        layerBlock = {
-                            scaleX = shellScale
-                            scaleY = shellScale
-                        },
-                        onDrawSurface = {
-                            drawRect(shellSurfaceColor)
-                        },
+                    .then(shellFallbackTransformModifier)
+                    .then(shellSurfaceModifier)
+                    .border(
+                        width = 1.dp,
+                        color = shellOutlineColor,
+                        shape = CircleShape,
                     )
                     .padding(FLOATING_NAVIGATION_INNER_PADDING),
             )
 
-            NavigationGlassContent(
-                destinations = destinations,
-                itemWidth = itemWidth,
-                iconColor = MaterialTheme.colorScheme.primary,
-                useSelectedIcons = true,
-                iconScale = 1f + 0.20f * interactionProgress.value,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .clearAndSetSemantics {}
-                    .alpha(0f)
-                    .layerBackdrop(navigationContentBackdrop)
-                    .graphicsLayer {
-                        translationX = panelOffsetPx
-                    }
-                    .drawBackdrop(
-                        backdrop = backdrop,
-                        shape = { CircleShape },
-                        effects = {
-                            vibrancy()
-                            blur(8.dp.toPx())
-                            lens(
-                                refractionHeight = 24.dp.toPx() * interactionProgress.value,
-                                refractionAmount = 24.dp.toPx() * interactionProgress.value,
-                                depthEffect = true,
-                            )
-                        },
-                        highlight = {
-                            Highlight.Default.copy(alpha = interactionProgress.value)
-                        },
-                        onDrawSurface = {
-                            drawRect(shellSurfaceColor)
-                        },
-                    )
-                    .height(FLOATING_NAVIGATION_INDICATOR_HEIGHT)
-                    .fillMaxWidth()
-                    .padding(horizontal = FLOATING_NAVIGATION_INNER_PADDING),
-            )
+            if (useBackdropEffects) {
+                NavigationGlassContent(
+                    destinations = destinations,
+                    itemWidth = itemWidth,
+                    iconColor = MaterialTheme.colorScheme.primary,
+                    useSelectedIcons = true,
+                    iconScale = selectedIconScale,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .clearAndSetSemantics {}
+                        .alpha(0f)
+                        .layerBackdrop(navigationContentBackdrop)
+                        .drawBackdrop(
+                            backdrop = backdrop,
+                            shape = { CircleShape },
+                            effects = {
+                                vibrancy()
+                                blur(blurRadiusPx)
+                                lens(
+                                    refractionHeight = shellRefractionHeightPx *
+                                        indicatorMorph.refractionProgress,
+                                    refractionAmount = shellRefractionAmountPx *
+                                        indicatorMorph.refractionProgress,
+                                    depthEffect = true,
+                                )
+                            },
+                            highlight = {
+                                Highlight.Default.copy(
+                                    alpha = indicatorMorph.refractionProgress,
+                                )
+                            },
+                            layerBlock = {
+                                translationX = panelOffsetPx
+                            },
+                            onDrawSurface = {
+                                drawRect(shellSurfaceColor)
+                            },
+                        )
+                        .height(FLOATING_NAVIGATION_INDICATOR_HEIGHT)
+                        .fillMaxWidth()
+                        .padding(horizontal = FLOATING_NAVIGATION_INNER_PADDING),
+                )
+            }
 
             Box(
+                contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .absoluteOffset {
                         IntOffset(
-                            x = (indicatorX + panelOffsetPx).roundToInt(),
+                            x = (
+                                indicatorX +
+                                    panelOffsetPx +
+                                    indicatorLeadOffsetPx
+                                ).roundToInt(),
                             y = indicatorTopPx.roundToInt(),
                         )
                     }
                     .width(itemWidth)
                     .height(FLOATING_NAVIGATION_INDICATOR_HEIGHT)
-                    .drawBackdrop(
-                        backdrop = indicatorBackdrop,
-                        shape = { CircleShape },
-                        effects = {
-                            lens(
-                                refractionHeight = 10.dp.toPx() *
-                                    interactionProgress.value,
-                                refractionAmount = 14.dp.toPx() *
-                                    interactionProgress.value,
-                                depthEffect = true,
-                                chromaticAberration = true,
-                            )
-                        },
-                        highlight = {
-                            Highlight.Default.copy(alpha = interactionProgress.value)
-                        },
-                        shadow = {
-                            Shadow(alpha = interactionProgress.value)
-                        },
-                        innerShadow = {
-                            InnerShadow(
-                                radius = 8.dp * interactionProgress.value,
-                                alpha = interactionProgress.value,
-                            )
-                        },
-                        layerBlock = {
-                            scaleX = indicatorTransform.scaleX
-                            scaleY = indicatorTransform.scaleY
-                        },
-                        onDrawSurface = {
-                            drawRect(
-                                color = idleIndicatorColor,
-                                alpha = 1f - interactionProgress.value,
-                            )
-                            drawRect(
-                                color = Color.Black.copy(
-                                    alpha = 0.03f * interactionProgress.value,
-                                ),
-                            )
-                        },
-                    ),
-            )
+                    .then(indicatorFallbackTransformModifier)
+                    .then(indicatorSurfaceModifier),
+            ) {
+                if (!useBackdropEffects) {
+                    Icon(
+                        imageVector = destinations[highlightedIndex].selectedIcon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .size(NAVIGATION_ICON_SIZE)
+                            .graphicsLayer {
+                                scaleX = selectedIconScale
+                                scaleY = selectedIconScale
+                            },
+                    )
+                }
+            }
 
             Row(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(FLOATING_NAVIGATION_INNER_PADDING)
+                    .then(
+                        if (enabled) {
+                            Modifier.selectableGroup()
+                        } else {
+                            Modifier.clearAndSetSemantics {}
+                        },
+                    )
                     .pointerInput(
                         destinations.size,
                         itemWidthPx,
                         layoutDirection,
+                        enabled,
                     ) {
+                        if (!enabled) return@pointerInput
+
                         var dragUpdateJob: Job? = null
                         try {
                             coroutineScope {
@@ -517,7 +636,7 @@ internal fun FloatingAppNavigationBar(
                                             ) {
                                                 return@launch
                                             }
-                                            deformationVelocity.snapTo(visualVelocity)
+                                            flowVelocity.snapTo(visualVelocity)
                                             if (
                                                 !settleController.isCurrent(
                                                     gestureGeneration,
@@ -568,16 +687,24 @@ internal fun FloatingAppNavigationBar(
                                         itemWidthPx = itemWidthPx,
                                         itemCount = destinations.size,
                                     )
+                                    if (targetIndex != currentSelectedIndex) {
+                                        hapticFeedback.performHapticFeedback(
+                                            HapticFeedbackType.SegmentTick,
+                                        )
+                                    }
 
                                     isDragging = false
                                     startVisualSettle(
                                         targetIndex = targetIndex,
                                         startPosition = visualPosition,
-                                        startVelocityItemsPerSecond =
+                                        startFlowVelocityItemsPerSecond =
                                             logicalVelocity / itemWidthPx,
                                         startPanelDistancePx = accumulatedPanelDistance,
                                         onPositionSettled = {
-                                            if (targetIndex != currentSelectedIndex) {
+                                            if (
+                                                currentEnabled &&
+                                                targetIndex != currentSelectedIndex
+                                            ) {
                                                 currentOnDestinationSelected(
                                                     destinations[targetIndex],
                                                 )
@@ -597,15 +724,17 @@ internal fun FloatingAppNavigationBar(
                 destinations.forEachIndexed { index, destination ->
                     val label = stringResource(destination.iconTextId)
                     val selectDestination = {
-                        isDragging = false
-                        startVisualSettle(targetIndex = index)
-                        currentOnDestinationSelected(destination)
+                        if (currentEnabled) {
+                            hapticFeedback.performHapticFeedback(
+                                HapticFeedbackType.SegmentTick,
+                            )
+                            isDragging = false
+                            startVisualSettle(targetIndex = index)
+                            currentOnDestinationSelected(destination)
+                        }
                     }
-                    Box(
-                        modifier = Modifier
-                            .width(itemWidth)
-                            .fillMaxHeight()
-                            .clip(CircleShape)
+                    val destinationInteractionModifier = if (enabled) {
+                        Modifier
                             .clearAndSetSemantics {
                                 contentDescription = label
                                 role = Role.Tab
@@ -621,7 +750,16 @@ internal fun FloatingAppNavigationBar(
                                 indication = null,
                                 role = Role.Tab,
                                 onClick = selectDestination,
-                            ),
+                            )
+                    } else {
+                        Modifier.clearAndSetSemantics {}
+                    }
+                    Box(
+                        modifier = Modifier
+                            .width(itemWidth)
+                            .fillMaxHeight()
+                            .clip(CircleShape)
+                            .then(destinationInteractionModifier),
                     )
                 }
             }
@@ -667,10 +805,17 @@ private fun NavigationGlassContent(
 }
 
 private val FLOATING_NAVIGATION_HEIGHT = 64.dp
-private val FLOATING_NAVIGATION_INDICATOR_HEIGHT = 56.dp
 private val FLOATING_NAVIGATION_INNER_PADDING = 4.dp
+private val FLOATING_NAVIGATION_INDICATOR_HEIGHT =
+    FLOATING_NAVIGATION_HEIGHT - FLOATING_NAVIGATION_INNER_PADDING * 2
 private val NAVIGATION_ICON_SIZE = 24.dp
-private val PANEL_TRANSLATION_LIMIT = 4.dp
-private val SHELL_INTERACTION_EXPANSION = 16.dp
-private const val INDICATOR_EXPAND_DURATION_MILLIS = 90
-private const val INDICATOR_COLLAPSE_DURATION_MILLIS = 220
+private const val PANEL_DRAG_DECELERATION = 0.36f
+private const val SELECTED_ICON_MORPH_SHARE = 0.32f
+private const val SHELL_REFRACTION_HEIGHT_SHARE = 0.34f
+private const val SHELL_REFRACTION_AMOUNT_SHARE = 0.28f
+private const val INDICATOR_REFRACTION_HEIGHT_SHARE = 0.22f
+private const val INDICATOR_REFRACTION_AMOUNT_SHARE = 0.18f
+private const val INDICATOR_DEPTH_OVERLAY_ALPHA = 0.025f
+private const val FALLBACK_INDICATOR_BORDER_ALPHA = 0.52f
+private const val INDICATOR_EXPAND_DURATION_MILLIS = 110
+private const val INDICATOR_COLLAPSE_DURATION_MILLIS = 190

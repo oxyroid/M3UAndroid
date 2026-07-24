@@ -2,14 +2,15 @@
 
 [简体中文](quickstart.zh-CN.md) · [Developer guide](README.md)
 
-Success means that M3UAndroid lists **Hello Extension** and its settings page contains **Greeting** and **Phone name**.
+This check takes one build command and one pass through M3UAndroid settings. Success means that
+**Hello Extension** appears and its settings page contains **Greeting** and **Phone name**.
 
-## 1. Build the sample
+## 1. Install the Hello sample
 
 From the repository root:
 
 ```bash
-./gradlew :samples:hello-extension:assembleDebug
+./gradlew :samples:hello-extension:installDebug
 ```
 
 ## 2. Check the result in M3UAndroid
@@ -25,7 +26,8 @@ The Hello settings page should contain:
 - **Greeting** with `Hello from my extension`;
 - **Phone name** with `My phone`.
 
-`Greeting` is declared in the extension manifest. `Phone name` is returned by the settings Hook.
+This proves both paths: `Greeting` comes from the manifest, while `Phone name` comes from a Hook
+call.
 
 ## 3. Change the Hook result
 
@@ -41,6 +43,6 @@ to:
 "phone" -> "Handset name" to "My phone"
 ```
 
-Build the module again, refresh the extension list, and reopen Hello settings. The field should now be named **Handset name**.
+Run `./gradlew :samples:hello-extension:installDebug` again, refresh the extension list, and reopen Hello settings. The field should now be named **Handset name**.
 
 Next: [declare the extension manifest](concepts.md).

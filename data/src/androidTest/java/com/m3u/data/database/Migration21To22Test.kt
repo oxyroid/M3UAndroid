@@ -48,6 +48,8 @@ class Migration21To22Test {
         val database = Room.databaseBuilder(context, M3UDatabase::class.java, DATABASE_NAME)
             .allowMainThreadQueries()
             .addMigrations(DatabaseMigrations.migration22To23(TestCredentialVault))
+            .addMigrations(DatabaseMigrations.MIGRATION_24_25)
+            .addMigrations(DatabaseMigrations.MIGRATION_25_26)
             .build()
         val migrated = database.openHelper.writableDatabase
 

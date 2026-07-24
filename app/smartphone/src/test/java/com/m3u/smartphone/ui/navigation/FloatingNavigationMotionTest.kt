@@ -63,7 +63,7 @@ class FloatingNavigationMotionTest {
     @Test
     fun `drag follows the pointer with resistance and bounded overscroll`() {
         assertEquals(
-            1.51f,
+            1.485f,
             applyFloatingNavigationDrag(
                 desiredPosition = 1f,
                 deltaItems = 0.5f,
@@ -72,7 +72,7 @@ class FloatingNavigationMotionTest {
             absoluteTolerance = 0.0001f,
         )
         assertEquals(
-            2.34f,
+            2.285f,
             applyFloatingNavigationDrag(
                 desiredPosition = 2.17f,
                 deltaItems = 0.5f,
@@ -81,7 +81,7 @@ class FloatingNavigationMotionTest {
             absoluteTolerance = 0.0001f,
         )
         assertEquals(
-            2.5f,
+            2.38f,
             applyFloatingNavigationDrag(
                 desiredPosition = 2.4f,
                 deltaItems = 2f,
@@ -113,55 +113,83 @@ class FloatingNavigationMotionTest {
     }
 
     @Test
-    fun `indicator keeps the reference layer scale and signed velocity deformation`() {
+    fun `idle morph is the identity regardless of residual velocity`() {
         assertEquals(
-            FloatingNavigationIndicatorTransform(scaleX = 1f, scaleY = 1f),
-            resolveFloatingNavigationIndicatorTransform(
+            FloatingNavigationIndicatorMorph(
+                scaleX = 1f,
+                scaleY = 1f,
+                leadOffsetFraction = 0f,
+                refractionProgress = 0f,
+                pressureProgress = 0f,
+            ),
+            resolveFloatingNavigationIndicatorMorph(
                 interactionProgress = 0f,
-                velocityItemsPerSecond = 0f,
+                velocityItemsPerSecond = 100f,
             ),
         )
+    }
 
-        val expandedScale = 88f / 56f
+    @Test
+    fun `stationary press expands evenly and enables refraction`() {
+        val morph = resolveFloatingNavigationIndicatorMorph(
+            interactionProgress = 1f,
+            velocityItemsPerSecond = 0f,
+        )
+
+        assertTrue(morph.scaleX > 1f)
+        assertEquals(morph.scaleX, morph.scaleY, absoluteTolerance = 0.0001f)
+        assertEquals(0f, morph.leadOffsetFraction)
+        assertTrue(morph.refractionProgress in 0f..1f)
+        assertEquals(1f, morph.pressureProgress)
+    }
+
+    @Test
+    fun `mid gesture stretches with speed and reverses only the optical lead`() {
+        val forward = resolveFloatingNavigationIndicatorMorph(
+            interactionProgress = 0.5f,
+            velocityItemsPerSecond = 3.25f,
+        )
+        val reverse = resolveFloatingNavigationIndicatorMorph(
+            interactionProgress = 0.5f,
+            velocityItemsPerSecond = -3.25f,
+        )
+
+        assertTrue(forward.scaleX > forward.scaleY)
+        assertEquals(forward.scaleX, reverse.scaleX, absoluteTolerance = 0.0001f)
+        assertEquals(forward.scaleY, reverse.scaleY, absoluteTolerance = 0.0001f)
         assertEquals(
-            expandedScale,
-            resolveFloatingNavigationIndicatorTransform(
-                interactionProgress = 1f,
-                velocityItemsPerSecond = 0f,
-            ).scaleX,
+            forward.refractionProgress,
+            reverse.refractionProgress,
             absoluteTolerance = 0.0001f,
         )
         assertEquals(
-            expandedScale / 0.8f,
-            resolveFloatingNavigationIndicatorTransform(
-                interactionProgress = 1f,
-                velocityItemsPerSecond = 10f,
-            ).scaleX,
+            forward.leadOffsetFraction,
+            -reverse.leadOffsetFraction,
             absoluteTolerance = 0.0001f,
         )
-        assertEquals(
-            expandedScale * 0.8f,
-            resolveFloatingNavigationIndicatorTransform(
-                interactionProgress = 1f,
-                velocityItemsPerSecond = 10f,
-            ).scaleY,
-            absoluteTolerance = 0.0001f,
+        assertEquals(0.5f, forward.pressureProgress, absoluteTolerance = 0.0001f)
+    }
+
+    @Test
+    fun `out of range and non finite motion inputs remain bounded and finite`() {
+        val overflow = resolveFloatingNavigationIndicatorMorph(
+            interactionProgress = Float.POSITIVE_INFINITY,
+            velocityItemsPerSecond = Float.NEGATIVE_INFINITY,
         )
-        assertEquals(
-            expandedScale / 1.2f,
-            resolveFloatingNavigationIndicatorTransform(
-                interactionProgress = 1f,
-                velocityItemsPerSecond = -10f,
-            ).scaleX,
-            absoluteTolerance = 0.0001f,
+        val invalid = resolveFloatingNavigationIndicatorMorph(
+            interactionProgress = Float.NaN,
+            velocityItemsPerSecond = Float.NaN,
         )
-        assertEquals(
-            expandedScale * 1.2f,
-            resolveFloatingNavigationIndicatorTransform(
-                interactionProgress = 1f,
-                velocityItemsPerSecond = -10f,
-            ).scaleY,
-            absoluteTolerance = 0.0001f,
-        )
+
+        assertTrue(overflow.scaleX.isFinite())
+        assertTrue(overflow.scaleY.isFinite())
+        assertTrue(overflow.scaleX in 1f..2f)
+        assertTrue(overflow.scaleY in 1f..2f)
+        assertTrue(overflow.leadOffsetFraction in -0.1f..0.1f)
+        assertTrue(overflow.refractionProgress in 0f..1f)
+        assertEquals(1f, overflow.pressureProgress)
+        assertEquals(1f, invalid.scaleX)
+        assertEquals(1f, invalid.scaleY)
+        assertEquals(0f, invalid.pressureProgress)
     }
 }

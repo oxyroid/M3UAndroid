@@ -129,6 +129,7 @@
     <string name="feat_setting_provider_reauthentication_required">%1$s 需要重新登录</string>
     <string name="feat_setting_provider_account_summary">%1$s · %2$s\n%3$s</string>
     <string name="feat_setting_provider_reauthenticate">重新登录</string>
+    <string name="feat_setting_provider_owner_claim_notice">重新登录会将此订阅交由当前已启用的插件管理。请确认你信任该插件后再继续。</string>
     <string name="feat_setting_provider_default_value">默认值：%1$s</string>
     <string name="feat_setting_provider_value_default">使用默认值</string>
     <string name="feat_setting_provider_value_not_set">不设置</string>
@@ -141,6 +142,7 @@
     <string name="feat_setting_provider_error_choice">请选择可用选项</string>
     <string name="feat_setting_data_source_provider">订阅服务</string>
     <string name="feat_setting_extension_plugins">扩展插件</string>
+    <string name="feat_setting_extension_enable_external_hint">请先在“可选功能”中开启“外部扩展”，再管理已安装的插件。</string>
     <string name="feat_setting_extension_no_plugins">未安装兼容的扩展插件</string>
     <string name="feat_setting_extension_enable">启用</string>
     <string name="feat_setting_extension_disable">停用</string>
@@ -150,12 +152,17 @@
     <string name="feat_setting_extension_confirm_title">信任这个扩展？</string>
     <string name="feat_setting_extension_confirm_identity">包名：%1$s\n证书 SHA-256：%2$s\n名称：%3$s\n开发者：%4$s\n版本：%5$s</string>
     <string name="feat_setting_extension_requested_capabilities">请求的能力</string>
+    <string name="feat_setting_extension_network_origins">请求访问的网络源站</string>
+    <string name="feat_setting_extension_network_origin_settings">在以下设置中保存值时，将批准访问所填入的精确 HTTP(S) 源站：%1$s</string>
+    <string name="feat_setting_extension_network_origin_save_notice">保存此设置将批准扩展访问这里填入的精确 HTTP(S) 源站。不允许路径、通配符、查询参数或片段。</string>
+    <string name="feat_setting_extension_network_reauthorization_required">新请求源站的网络访问已被阻止，请重新授权：%1$s</string>
     <string name="feat_setting_extension_signature_changed">签名证书已改变，扩展已被停用</string>
     <string name="feat_setting_extension_not_installed">这个扩展已从设备移除。取消信任会同时删除它保存的数据。</string>
     <string name="feat_setting_extension_state_enabled">已启用</string>
     <string name="feat_setting_extension_state_disabled">已停用</string>
     <string name="feat_setting_extension_state_incompatible">不兼容</string>
     <string name="feat_setting_extension_state_unhealthy">异常（已隔离）</string>
+    <string name="feat_setting_extension_inspection_failed">无法检查此扩展。</string>
     <string name="feat_setting_extension_settings">设置</string>
     <string name="feat_setting_extension_settings_empty">此扩展没有可配置的设置项</string>
     <string name="feat_setting_extension_secret_configured">已配置；输入新值可替换</string>
@@ -165,9 +172,11 @@
     <string name="feat_setting_extension_clear_data_title">清除插件数据？</string>
     <string name="feat_setting_extension_clear_data_body">将删除设置、加密凭据和插件 EPG 缓存；订阅与频道状态会保留。</string>
     <string name="feat_setting_extension_data_cleared">插件数据已清除</string>
+    <string name="feat_setting_extension_operation_failed">插件操作失败，请重试。</string>
     <string name="feat_setting_extension_export_diagnostics">导出诊断</string>
     <string name="feat_setting_extension_diagnostics_share_title">分享插件诊断</string>
     <string name="feat_setting_extension_reauthorize">重新授权</string>
+    <string name="feat_setting_extension_certificate_repin">签名身份已变化。\n原 SHA-256：%1$s\n新 SHA-256：%2$s\n继续操作会删除已保存凭据，并要求 Provider 账号重新登录。</string>
     <string name="feat_setting_extension_capability_required">必要</string>
     <string name="feat_setting_extension_capability_optional">可选</string>
     <string name="feat_setting_extension_capability_granted">已授予</string>

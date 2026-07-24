@@ -1,4 +1,4 @@
-@file:Suppress("INVISIBLE_REFERENCE", "UNCHECKED_CAST")
+@file:Suppress("UNCHECKED_CAST")
 @file:OptIn(ExperimentalAtomicApi::class)
 
 package com.m3u.core.foundation.architecture.preferences
@@ -39,8 +39,8 @@ private val settingsDataStore: ReadOnlyProperty<Context, Settings> =
         private var instance: Settings? = null
         override fun getValue(
             thisRef: Context,
-            ignored: KProperty<*>
-        ): Settings = instance ?: property.getValue(thisRef, ignored).apply {
+            property: KProperty<*>
+        ): Settings = instance ?: this.property.getValue(thisRef, property).apply {
             runBlocking {
                 applyDefaultValues()
             }
@@ -98,44 +98,42 @@ suspend operator fun <T> Settings.set(key: Preferences.Key<T>, value: T) {
     edit { it[key] = value }
 }
 
-private val PREFERENCES: Map<Preferences.Key<*>, *> = listOf(
-    PreferencesKeys.PLAYLIST_STRATEGY to PlaylistStrategy.ALL,
-    PreferencesKeys.ROW_COUNT to 1,
-    PreferencesKeys.CONNECT_TIMEOUT to ConnectTimeout.SHORT,
-    PreferencesKeys.GOD_MODE to false,
-    PreferencesKeys.CLIP_MODE to ClipMode.ADAPTIVE,
-    PreferencesKeys.AUTO_REFRESH_CHANNELS to false,
-    PreferencesKeys.FULL_INFO_PLAYER to false,
-    PreferencesKeys.NO_PICTURE_MODE to false,
-    PreferencesKeys.DARK_MODE to true,
-    PreferencesKeys.USE_DYNAMIC_COLORS to false,
-    PreferencesKeys.FOLLOW_SYSTEM_THEME to false,
-    PreferencesKeys.ZAPPING_MODE to false,
-    PreferencesKeys.BRIGHTNESS_GESTURE to true,
-    PreferencesKeys.VOLUME_GESTURE to true,
-    PreferencesKeys.SCREENCAST to true,
-    PreferencesKeys.SCREEN_ROTATING to false,
-    PreferencesKeys.UNSEENS_MILLISECONDS to UnseensMilliseconds.DAYS_3,
-    PreferencesKeys.RECONNECT_MODE to ReconnectMode.NO,
-    PreferencesKeys.COLOR_ARGB to 0x5E6738,
-    PreferencesKeys.TUNNELING to false,
-    PreferencesKeys.CLOCK_MODE to false,
-    PreferencesKeys.REMOTE_CONTROL to false,
-    PreferencesKeys.SLIDER to true,
-    PreferencesKeys.ALWAYS_SHOW_REPLAY to false,
-    PreferencesKeys.PLAYER_PANEL to true,
-    PreferencesKeys.COMPACT_DIMENSION to false,
-    PreferencesKeys.EXTERNAL_EXTENSIONS to false,
-)
-    .associateBy { it.key }
-    .mapValues { it.value.value }
+private val PREFERENCES: Map<Preferences.Key<*>, Any> = buildMap {
+    put(PreferencesKeys.PLAYLIST_STRATEGY, PlaylistStrategy.ALL)
+    put(PreferencesKeys.ROW_COUNT, 1)
+    put(PreferencesKeys.CONNECT_TIMEOUT, ConnectTimeout.SHORT)
+    put(PreferencesKeys.GOD_MODE, false)
+    put(PreferencesKeys.CLIP_MODE, ClipMode.ADAPTIVE)
+    put(PreferencesKeys.AUTO_REFRESH_CHANNELS, false)
+    put(PreferencesKeys.FULL_INFO_PLAYER, false)
+    put(PreferencesKeys.NO_PICTURE_MODE, false)
+    put(PreferencesKeys.DARK_MODE, true)
+    put(PreferencesKeys.USE_DYNAMIC_COLORS, false)
+    put(PreferencesKeys.FOLLOW_SYSTEM_THEME, false)
+    put(PreferencesKeys.ZAPPING_MODE, false)
+    put(PreferencesKeys.BRIGHTNESS_GESTURE, true)
+    put(PreferencesKeys.VOLUME_GESTURE, true)
+    put(PreferencesKeys.SCREENCAST, true)
+    put(PreferencesKeys.SCREEN_ROTATING, false)
+    put(PreferencesKeys.UNSEENS_MILLISECONDS, UnseensMilliseconds.DAYS_3)
+    put(PreferencesKeys.RECONNECT_MODE, ReconnectMode.NO)
+    put(PreferencesKeys.COLOR_ARGB, 0x5E6738)
+    put(PreferencesKeys.TUNNELING, false)
+    put(PreferencesKeys.CLOCK_MODE, false)
+    put(PreferencesKeys.REMOTE_CONTROL, false)
+    put(PreferencesKeys.SLIDER, true)
+    put(PreferencesKeys.ALWAYS_SHOW_REPLAY, false)
+    put(PreferencesKeys.PLAYER_PANEL, true)
+    put(PreferencesKeys.COMPACT_DIMENSION, false)
+    put(PreferencesKeys.EXTERNAL_EXTENSIONS, false)
+}
 
 suspend fun Settings.applyDefaultValues() {
     if (applied.compareAndSet(expectedValue = false, newValue = true)) {
         edit { pref ->
             PREFERENCES.forEach { (key, defaultValue) ->
                 if (key !in pref) {
-                    pref.set<Any>(key as Preferences.Key<Any>, defaultValue as Any)
+                    pref.set<Any>(key as Preferences.Key<Any>, defaultValue)
                 }
             }
         }

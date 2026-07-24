@@ -11,6 +11,7 @@ import com.m3u.extension.api.HookSpec
 import com.m3u.extension.api.InvocationId
 import com.m3u.extension.api.SerializedExtensionEnvelope
 import com.m3u.extension.api.SerializedExtensionResult
+import com.m3u.extension.api.security.HostNetworkBrokerHooks
 import com.m3u.extension.runtime.ExtensionTransport
 import com.m3u.extension.runtime.ExtensionTransportHealth
 import java.util.concurrent.CancellationException
@@ -65,7 +66,7 @@ abstract class TypedExtensionService : ExtensionService() {
         registry.handle(spec, handler)
     }
 
-    /** Register a typed handler that can make requests through the invocation-scoped host broker. */
+    /** Register a supported Hook handler that uses a short-lived host network broker scope. */
     protected fun <Request : ExtensionPayload, Response : ExtensionPayload> handleWithBroker(
         spec: HookSpec<Request, Response>,
         handler: suspend (
@@ -82,7 +83,7 @@ abstract class TypedExtensionService : ExtensionService() {
         }
     }
 
-    /** Register a broker-backed typed handler that can return a contract error without throwing. */
+    /** Register a supported broker-backed handler that can return a contract error. */
     protected fun <Request : ExtensionPayload, Response : ExtensionPayload> handleResultWithBroker(
         spec: HookSpec<Request, Response>,
         handler: suspend (
@@ -135,6 +136,9 @@ internal class TypedHookRegistry {
     ) {
         check(!sealed) { "Hooks cannot be registered after the transport is created" }
         check(spec.hook !in bindings) { "Hook ${spec.hook} is already registered" }
+        require(!requiresBroker || HostNetworkBrokerHooks.supports(spec.hook)) {
+            "Host network broker is not available to Hook ${spec.hook.id}"
+        }
         bindings[spec.hook] = TypedHookBindingImpl(spec, requiresBroker, handler)
     }
 

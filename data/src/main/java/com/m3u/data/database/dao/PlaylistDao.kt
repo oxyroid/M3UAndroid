@@ -2,10 +2,9 @@ package com.m3u.data.database.dao
 
 import androidx.room.Dao
 import androidx.room.Delete
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Upsert
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithChannels
@@ -14,10 +13,10 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PlaylistDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertOrReplace(playlist: Playlist): Long
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertOrReplaceAll(vararg playlists: Playlist)
 
     @Delete
@@ -84,19 +83,20 @@ interface PlaylistDao {
     @Query("UPDATE playlists SET title = :title, source = :source WHERE url = :url")
     suspend fun updateProviderPlaylist(url: String, title: String, source: DataSource)
 
+    @Query("UPDATE playlists SET url = :newUrl WHERE url = :oldUrl")
+    suspend fun updatePlaylistUrl(oldUrl: String, newUrl: String)
+
+    @Query("UPDATE streams SET playlist_url = :newUrl WHERE playlist_url = :oldUrl")
+    suspend fun updateChannelPlaylistUrl(oldUrl: String, newUrl: String)
+
     @Query("UPDATE playlists SET epg_urls = :epgUrls WHERE url = :url")
     suspend fun replaceEpgUrls(url: String, epgUrls: List<String>): Int
 
     @Transaction
     suspend fun updateUrl(oldUrl: String, newUrl: String) {
-        val playlist = get(oldUrl) ?: return
-        insertOrReplace(
-            playlist.copy(
-                url = newUrl
-            )
-        )
-        // because the url is the primary key so we should delete it manual.
-        deleteByUrl(oldUrl)
+        if (oldUrl == newUrl || get(oldUrl) == null) return
+        updatePlaylistUrl(oldUrl, newUrl)
+        updateChannelPlaylistUrl(oldUrl, newUrl)
     }
 
     @Transaction

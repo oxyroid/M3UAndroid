@@ -48,6 +48,8 @@ internal object DatabaseModule {
         .addMigrations(DatabaseMigrations.MIGRATION_7_8)
         .addMigrations(DatabaseMigrations.MIGRATION_10_11)
         .addMigrations(DatabaseMigrations.migration22To23(credentialVault))
+        .addMigrations(DatabaseMigrations.MIGRATION_24_25)
+        .addMigrations(DatabaseMigrations.MIGRATION_25_26)
         .build()
 
     @Provides

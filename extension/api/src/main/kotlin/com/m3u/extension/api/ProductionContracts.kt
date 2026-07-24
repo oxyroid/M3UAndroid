@@ -21,23 +21,69 @@ data class ExtensionSemanticVersion(
         require(major >= 0 && minor >= 0 && patch >= 0) {
             "Extension version components must not be negative"
         }
-        require(preRelease == null || preRelease.isNotBlank()) {
-            "Pre-release version must not be blank"
+        require(preRelease == null || preRelease.isValidSemanticVersionPreRelease()) {
+            "Pre-release version is invalid"
         }
     }
 
-    override fun compareTo(other: ExtensionSemanticVersion): Int = compareValuesBy(
-        this,
-        other,
-        ExtensionSemanticVersion::major,
-        ExtensionSemanticVersion::minor,
-        ExtensionSemanticVersion::patch,
-    )
+    override fun compareTo(other: ExtensionSemanticVersion): Int {
+        compareValuesBy(
+            this,
+            other,
+            ExtensionSemanticVersion::major,
+            ExtensionSemanticVersion::minor,
+            ExtensionSemanticVersion::patch,
+        ).takeIf { comparison -> comparison != 0 }?.let { return it }
+        return compareSemanticVersionPreRelease(preRelease, other.preRelease)
+    }
 
     override fun toString(): String = buildString {
         append("$major.$minor.$patch")
         preRelease?.let { append("-$it") }
     }
+}
+
+private fun String.isValidSemanticVersionPreRelease(): Boolean =
+    isNotEmpty() &&
+        length <= 128 &&
+        split('.').all { identifier ->
+            identifier.isNotEmpty() &&
+                identifier.all { character ->
+                    character in '0'..'9' ||
+                        character in 'A'..'Z' ||
+                        character in 'a'..'z' ||
+                        character == '-'
+                } &&
+                (identifier.any { character -> character !in '0'..'9' } ||
+                    identifier == "0" ||
+                    !identifier.startsWith('0'))
+        }
+
+private fun compareSemanticVersionPreRelease(left: String?, right: String?): Int {
+    if (left == right) return 0
+    if (left == null) return 1
+    if (right == null) return -1
+    val leftParts = left.split('.')
+    val rightParts = right.split('.')
+    repeat(minOf(leftParts.size, rightParts.size)) { index ->
+        val leftPart = leftParts[index]
+        val rightPart = rightParts[index]
+        if (leftPart == rightPart) return@repeat
+        val leftNumeric = leftPart.all { character -> character in '0'..'9' }
+        val rightNumeric = rightPart.all { character -> character in '0'..'9' }
+        return when {
+            leftNumeric && rightNumeric -> compareValuesBy(
+                leftPart,
+                rightPart,
+                String::length,
+                { value -> value },
+            )
+            leftNumeric -> -1
+            rightNumeric -> 1
+            else -> leftPart.compareTo(rightPart)
+        }
+    }
+    return leftParts.size.compareTo(rightParts.size)
 }
 
 @Serializable
@@ -72,6 +118,7 @@ data class ExtensionSettingField(
     val description: String? = null,
     val choices: List<ExtensionSettingChoice> = emptyList(),
     val defaultValue: JsonElement? = null,
+    val networkOrigin: Boolean = false,
 ) {
     init {
         require(key.matches(Regex("[a-z][a-z0-9._-]*"))) { "Invalid setting key: $key" }
@@ -91,6 +138,12 @@ data class ExtensionSettingField(
         require(defaultValue == null || defaultValue.isValidDefaultFor(type, choices)) {
             "Setting default does not match its declared type"
         }
+        require(!networkOrigin || type == ExtensionSettingType.TEXT) {
+            "Network origin settings must be text fields"
+        }
+        require(!networkOrigin || defaultValue == null) {
+            "Network origin settings require an explicit user value"
+        }
     }
 }
 
@@ -103,7 +156,7 @@ private fun JsonElement.isValidDefaultFor(
         ExtensionSettingType.TEXT -> primitive.isString
         ExtensionSettingType.SECRET -> false
         ExtensionSettingType.BOOLEAN -> primitive.booleanOrNull != null
-        ExtensionSettingType.NUMBER -> primitive.doubleOrNull != null
+        ExtensionSettingType.NUMBER -> primitive.doubleOrNull?.isFinite() == true
         ExtensionSettingType.SINGLE_CHOICE -> primitive.contentOrNull in
             choices.map(ExtensionSettingChoice::value)
     }

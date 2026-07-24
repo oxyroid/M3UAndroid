@@ -106,4 +106,10 @@ sealed class SettingMessage(
         type = TYPE_SNACK,
         resId = string.feat_setting_extension_data_cleared,
     )
+
+    data object ExtensionOperationFailed : SettingMessage(
+        level = LEVEL_ERROR,
+        type = TYPE_SNACK,
+        resId = string.feat_setting_extension_operation_failed,
+    )
 }

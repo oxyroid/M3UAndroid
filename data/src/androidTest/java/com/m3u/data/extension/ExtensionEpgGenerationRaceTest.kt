@@ -11,6 +11,8 @@ import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.ProviderCredentialEntity
 import com.m3u.data.extension.security.CredentialVault
 import com.m3u.data.repository.extension.ExtensionEpgRefreshContribution
+import com.m3u.data.repository.extension.ExtensionMetadataRefreshContribution
+import com.m3u.extension.api.ChannelMetadataPatch
 import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.ExtensionProgramme
 import com.m3u.extension.api.security.CredentialHandle
@@ -128,6 +130,55 @@ class ExtensionEpgGenerationRaceTest {
         )
     }
 
+    @Test
+    fun metadataResultCapturedBeforeClearCannotRestoreClearedOverlay() = runBlocking {
+        val staleGeneration = importer.captureExtensionMetadataRefreshGeneration()
+
+        importer.clearExtensionMetadata(EXTENSION_ID)
+
+        assertEquals(
+            0,
+            importer.applyMetadataEnrichment(
+                playlistUrl = PLAYLIST_URL,
+                refreshes = listOf(metadataContribution(EXTENSION_ID, "Stale title")),
+                refreshGeneration = staleGeneration,
+            ),
+        )
+        assertEquals("Channel", channelTitle())
+
+        val freshGeneration = importer.captureExtensionMetadataRefreshGeneration()
+        assertEquals(
+            1,
+            importer.applyMetadataEnrichment(
+                playlistUrl = PLAYLIST_URL,
+                refreshes = listOf(metadataContribution(EXTENSION_ID, "Fresh title")),
+                refreshGeneration = freshGeneration,
+            ),
+        )
+        assertEquals("Fresh title", channelTitle())
+    }
+
+    @Test
+    fun metadataClearInvalidatesOnlyTheClearedExtensionGeneration() = runBlocking {
+        val otherExtensionId = ExtensionId("com.m3u.other.provider")
+        val generation = importer.captureExtensionMetadataRefreshGeneration()
+
+        importer.clearExtensionMetadata(EXTENSION_ID)
+
+        assertEquals(
+            1,
+            importer.applyMetadataEnrichment(
+                playlistUrl = PLAYLIST_URL,
+                refreshes = listOf(
+                    metadataContribution(EXTENSION_ID, "Stale title"),
+                    metadataContribution(otherExtensionId, "Other title"),
+                ),
+                refreshGeneration = generation,
+            ),
+        )
+        assertEquals("Other title", channelTitle())
+    }
+
     private suspend fun extensionSources(): List<String> = database.playlistDao()
         .get(PLAYLIST_URL)
         ?.epgUrls
@@ -148,6 +199,23 @@ class ExtensionEpgGenerationRaceTest {
             )
         ),
     )
+
+    private fun metadataContribution(
+        extensionId: ExtensionId,
+        title: String,
+    ) = ExtensionMetadataRefreshContribution(
+        extensionId = extensionId,
+        patches = listOf(
+            ChannelMetadataPatch(
+                stableReference = CHANNEL_REFERENCE,
+                title = title,
+            )
+        ),
+    )
+
+    private suspend fun channelTitle(): String? = database.channelDao()
+        .getByPlaylistUrlAndRelationId(PLAYLIST_URL, CHANNEL_REFERENCE)
+        ?.title
 
     private object UnusedCredentialVault : CredentialVault {
         override fun encrypt(

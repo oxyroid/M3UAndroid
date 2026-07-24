@@ -74,6 +74,82 @@ class AppNavigationPolicyTest {
     }
 
     @Test
+    fun `backdrop capture follows glass support and the full visibility transition`() {
+        assertFalse(
+            shouldCaptureNavigationBackdrop(
+                mode = AppNavigationMode.BottomOverlay,
+                supportsBackdropEffects = false,
+                isNavigationCurrentlyVisible = true,
+                isNavigationTargetVisible = true,
+            )
+        )
+        assertTrue(
+            shouldCaptureNavigationBackdrop(
+                mode = AppNavigationMode.BottomOverlay,
+                supportsBackdropEffects = true,
+                isNavigationCurrentlyVisible = false,
+                isNavigationTargetVisible = true,
+            )
+        )
+        assertTrue(
+            shouldCaptureNavigationBackdrop(
+                mode = AppNavigationMode.BottomOverlay,
+                supportsBackdropEffects = true,
+                isNavigationCurrentlyVisible = true,
+                isNavigationTargetVisible = false,
+            )
+        )
+        assertFalse(
+            shouldCaptureNavigationBackdrop(
+                mode = AppNavigationMode.BottomOverlay,
+                supportsBackdropEffects = true,
+                isNavigationCurrentlyVisible = false,
+                isNavigationTargetVisible = false,
+            )
+        )
+        assertFalse(
+            shouldCaptureNavigationBackdrop(
+                mode = AppNavigationMode.SideRail,
+                supportsBackdropEffects = true,
+                isNavigationCurrentlyVisible = true,
+                isNavigationTargetVisible = true,
+            )
+        )
+    }
+
+    @Test
+    fun `bottom navigation keeps its clearance through the complete exit transition`() {
+        assertTrue(
+            shouldReserveBottomNavigationSpace(
+                mode = AppNavigationMode.BottomOverlay,
+                isNavigationCurrentlyVisible = true,
+                isNavigationTargetVisible = false,
+            )
+        )
+        assertTrue(
+            shouldReserveBottomNavigationSpace(
+                mode = AppNavigationMode.BottomOverlay,
+                isNavigationCurrentlyVisible = false,
+                isNavigationTargetVisible = true,
+            )
+        )
+        assertFalse(
+            shouldReserveBottomNavigationSpace(
+                mode = AppNavigationMode.BottomOverlay,
+                isNavigationCurrentlyVisible = false,
+                isNavigationTargetVisible = false,
+            )
+        )
+        assertFalse(
+            shouldReserveBottomNavigationSpace(
+                mode = AppNavigationMode.SideRail,
+                isNavigationCurrentlyVisible = true,
+                isNavigationTargetVisible = true,
+            )
+        )
+    }
+
+    @Test
     fun `floating navigation width follows its item count instead of filling the phone`() {
         assertEquals(
             236.dp,
@@ -137,7 +213,7 @@ class AppNavigationPolicyTest {
     }
 
     @Test
-    fun `rail content passes through only the safe bottom inset`() {
+    fun `rail content clears a visible floating utility`() {
         assertEquals(
             24.dp,
             calculateContentBottomPadding(
@@ -148,7 +224,7 @@ class AppNavigationPolicyTest {
             )
         )
         assertEquals(
-            24.dp,
+            108.dp,
             calculateContentBottomPadding(
                 mode = AppNavigationMode.SideRail,
                 isTopLevelRoute = true,

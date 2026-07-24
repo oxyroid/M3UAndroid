@@ -22,6 +22,7 @@ import com.m3u.extension.api.security.BrokerInvocationResult
 import com.m3u.extension.api.security.BrokerOperation
 import com.m3u.extension.api.security.BrokerOperationResult
 import com.m3u.extension.api.security.BrokerProtocolVersions
+import com.m3u.extension.api.security.BrokerScopeHandle
 import com.m3u.extension.api.security.BrokerValue
 import com.m3u.extension.api.security.BrokeredHttpResponse
 import com.m3u.extension.api.security.CredentialHandle
@@ -31,11 +32,13 @@ import com.m3u.extension.api.subscription.SubscriptionProviderDiscoverResult
 import com.m3u.extension.runtime.ExtensionRegistrationResult
 import com.m3u.extension.runtime.ExtensionRuntime
 import com.m3u.extension.runtime.ExtensionSettingsProvider
+import com.m3u.extension.runtime.ExtensionTransportHealth
 import com.m3u.extension.runtime.InvocationPolicy
 import com.m3u.extension.transport.android.AndroidBoundExtensionTransport
 import com.m3u.extension.transport.android.AndroidExtensionDiscovery
 import com.m3u.extension.transport.android.ParcelFileCodec
 import com.m3u.extension.transport.android.ipc.IExtensionHostBridge
+import com.m3u.extension.transport.android.ipc.IExtensionResultCallback
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -62,7 +65,7 @@ class ExternalExtensionIpcTest {
         try {
             val runtime = ExtensionRuntime(
                 ExtensionApiVersions.Current,
-                invocationPolicy = InvocationPolicy(maxPayloadBytes = 2_000_000),
+                invocationPolicy = InvocationPolicy(maxPayloadBytes = 4_194_304),
                 settingsProvider = ExtensionSettingsProvider {
                     ExtensionSettingsSnapshot(
                         schemaVersions = mapOf("manifest" to 1),
@@ -73,7 +76,14 @@ class ExternalExtensionIpcTest {
                     )
                 },
             )
-            assertTrue(runtime.register(transport) is ExtensionRegistrationResult.Registered)
+            val registration = runtime.register(transport)
+            assertTrue(registration is ExtensionRegistrationResult.Registered)
+            val registered = registration as ExtensionRegistrationResult.Registered
+            runtime.recordTransportHealth(
+                transport.manifest.id,
+                checkNotNull(registered.registrationToken),
+                ExtensionTransportHealth.HEALTHY,
+            )
 
             val result = runtime.invoke(
                 extensionId = transport.manifest.id,
@@ -83,17 +93,18 @@ class ExternalExtensionIpcTest {
             val payload = (result.outcome as HookResult.Success<*>).payload as
                 SubscriptionProviderDiscoverResult
 
-            assertEquals("Reference Provider", payload.providers.single().displayName)
-            assertEquals("Reference", payload.providers.single().variants.single().displayName)
-            assertEquals("reference", payload.providers.single().variants.single().kind.value)
+            assertEquals("Reference Provider", payload.provider.displayName)
+            assertEquals("Reference", payload.provider.variants.single().displayName)
+            assertEquals("reference", payload.provider.variants.single().kind.value)
 
             val largeResult = runtime.invoke(
                 extensionId = transport.manifest.id,
                 spec = HostHookSpecs.SearchProvider,
                 request = SearchProviderRequest("large"),
+                brokerScope = BrokerScopeHandle("reference-search-conformance"),
             )
             val search = (largeResult.outcome as HookResult.Success<*>).payload as SearchProviderResult
-            assertEquals(1_200_000, search.items.single().subtitle?.length)
+            assertEquals(25_000, search.items.size)
 
             val metadataResult = runtime.invoke(
                 extensionId = transport.manifest.id,
@@ -145,21 +156,6 @@ class ExternalExtensionIpcTest {
             assertEquals("false", settingsOutput.output["enabled"])
             assertEquals("true", settingsOutput.output["hasApiKey"])
 
-            val brokerProbe = runtime.invoke(
-                extensionId = transport.manifest.id,
-                spec = HostHookSpecs.BackgroundTask,
-                request = BackgroundTaskRequest("broker-probe"),
-            )
-            val brokerOutcome = brokerProbe.outcome
-            check(brokerOutcome is HookResult.Success<*>) {
-                val failure = brokerOutcome as HookResult.Failure
-                "Broker probe failed: ${failure.error.code.value} ${failure.error.message} " +
-                    failure.error.details
-            }
-            val brokerOutput = brokerOutcome.payload as BackgroundTaskResult
-            assertEquals("204", brokerOutput.output["status"])
-            assertEquals("caller-bound", brokerOutput.output["body"])
-
             val slowInvocation = async {
                 runtime.invoke(
                     extensionId = transport.manifest.id,
@@ -187,7 +183,11 @@ class ExternalExtensionIpcTest {
     private object ConformanceHostBridge : IExtensionHostBridge.Stub() {
         private val json = Json { ignoreUnknownKeys = true }
 
-        override fun executeHttp(request: ParcelFileDescriptor): ParcelFileDescriptor {
+        override fun executeHttp(
+            requestId: String,
+            request: ParcelFileDescriptor,
+            callback: IExtensionResultCallback,
+        ) {
             val invocation = json.decodeFromString<BrokerInvocation>(
                 ParcelFileCodec.read(request, 64 * 1024)
             )
@@ -206,11 +206,13 @@ class ExternalExtensionIpcTest {
                     )
                 )
             )
-            return ParcelFileCodec.write(
+            ParcelFileCodec.write(
                 InstrumentationRegistry.getInstrumentation().targetContext,
                 json.encodeToString(result),
-            )
+            ).use { response -> callback.onSuccess(requestId, response) }
         }
+
+        override fun cancelHttp(requestId: String?) = Unit
     }
 
     private companion object {

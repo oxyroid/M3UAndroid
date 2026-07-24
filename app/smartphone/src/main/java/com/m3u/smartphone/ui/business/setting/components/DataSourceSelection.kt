@@ -15,6 +15,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,9 +32,13 @@ import com.m3u.smartphone.ui.material.components.SelectionsDefaults
 internal fun DataSourceSelection(
     selectedState: MutableState<DataSource>,
     supported: List<DataSource>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    LaunchedEffect(enabled) {
+        if (!enabled) expanded = false
+    }
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
@@ -41,6 +46,7 @@ internal fun DataSourceSelection(
     ) {
         ClickableSelection(
             onClick = { expanded = true },
+            enabled = enabled,
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxWidth(),
         ) {
@@ -70,7 +76,7 @@ internal fun DataSourceSelection(
                             )
                         }
                     },
-                    enabled = current.supported,
+                    enabled = enabled && current.supported,
                     onClick = {
                         selectedState.value = current
                         expanded = false

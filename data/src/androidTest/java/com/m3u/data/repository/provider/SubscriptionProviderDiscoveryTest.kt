@@ -1,6 +1,7 @@
 package com.m3u.data.repository.provider
 
 import android.content.Context
+import android.content.res.Configuration
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -13,6 +14,7 @@ import com.m3u.data.extension.security.ActiveExtensionPrincipalRegistry
 import com.m3u.data.extension.security.AndroidKeystoreCredentialVault
 import com.m3u.data.extension.security.ProviderBrokerScopeStore
 import com.m3u.data.repository.extension.ExtensionContributionScheduler
+import com.m3u.data.repository.extension.ExtensionContributionRunCoordinator
 import com.m3u.extension.api.ExtensionApiRange
 import com.m3u.extension.api.ExtensionApiVersions
 import com.m3u.extension.api.ExtensionCallContext
@@ -37,6 +39,7 @@ import com.m3u.extension.api.subscription.SubscriptionProviderSettingKeys
 import com.m3u.extension.api.subscription.SubscriptionProviderVariant
 import com.m3u.extension.runtime.ExtensionRegistrationResult
 import com.m3u.extension.runtime.ExtensionRuntime
+import java.util.Locale
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -96,6 +99,27 @@ class SubscriptionProviderDiscoveryTest {
         }
 
     @Test
+    fun discoverForwardsCurrentLocaleTag() =
+        withRepository(localeTag = "zh-CN") { repository, runtime, _ ->
+            var receivedLocaleTag: String? = null
+            register(
+                runtime,
+                entrypoint(VALID_PROVIDER_ID) { _, request ->
+                    receivedLocaleTag = request.localeTag
+                    HookResult.Success(
+                        SubscriptionProviderDiscoverResult(
+                            validDescriptor(VALID_PROVIDER_ID),
+                        )
+                    )
+                },
+            )
+
+            repository.discoverProviders()
+
+            assertEquals("zh-CN", receivedLocaleTag)
+        }
+
+    @Test
     fun accountSummaryContainsReauthenticationFieldsButNoCredential() =
         withRepository { repository, _, database ->
             val playlistUrl = "m3u-provider://account/summary/live"
@@ -135,6 +159,7 @@ class SubscriptionProviderDiscoveryTest {
         }
 
     private fun withRepository(
+        localeTag: String? = null,
         block: suspend (
             SubscriptionProviderRepositoryImpl,
             ExtensionRuntime,
@@ -142,6 +167,12 @@ class SubscriptionProviderDiscoveryTest {
         ) -> Unit,
     ) = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()
+        val repositoryContext = localeTag?.let { requestedLocaleTag ->
+            val configuration = Configuration(context.resources.configuration).apply {
+                setLocale(Locale.forLanguageTag(requestedLocaleTag))
+            }
+            context.createConfigurationContext(configuration)
+        } ?: context
         val database = Room.inMemoryDatabaseBuilder(context, M3UDatabase::class.java)
             .allowMainThreadQueries()
             .build()
@@ -153,6 +184,7 @@ class SubscriptionProviderDiscoveryTest {
             )
             val principalRegistry = ActiveExtensionPrincipalRegistry()
             val repository = SubscriptionProviderRepositoryImpl(
+                context = repositoryContext,
                 runtime = runtime,
                 providerDao = database.providerDao(),
                 playlistDao = database.playlistDao(),
@@ -166,11 +198,13 @@ class SubscriptionProviderDiscoveryTest {
                 ),
                 credentialVault = credentialVault,
                 extensionContributionScheduler = NoOpExtensionContributionScheduler,
+                extensionContributionRunCoordinator = ExtensionContributionRunCoordinator(),
                 activePrincipalRegistry = principalRegistry,
                 providerBrokerScopeStore = ProviderBrokerScopeStore(
                     credentialVault = credentialVault,
                     principalRegistry = principalRegistry,
                 ),
+                lifecycleCoordinator = ProviderLifecycleCoordinator(),
             )
             block(repository, runtime, database)
         } finally {
@@ -186,7 +220,7 @@ class SubscriptionProviderDiscoveryTest {
         id: ExtensionId,
         descriptor: SubscriptionProviderDescriptor,
     ): ExtensionEntrypoint = entrypoint(id) { _, _ ->
-        HookResult.Success(SubscriptionProviderDiscoverResult(listOf(descriptor)))
+        HookResult.Success(SubscriptionProviderDiscoverResult(descriptor))
     }
 
     private fun failingProviderEntrypoint(id: ExtensionId): ExtensionEntrypoint = entrypoint(id) { _, _ ->
@@ -252,7 +286,9 @@ class SubscriptionProviderDiscoveryTest {
     )
 
     private data object NoOpExtensionContributionScheduler : ExtensionContributionScheduler {
-        override fun enqueue(playlistUrl: String) = Unit
+        override suspend fun enqueue(playlistUrl: String) = Unit
+
+        override suspend fun cancel(playlistUrl: String) = Unit
     }
 
     private companion object {

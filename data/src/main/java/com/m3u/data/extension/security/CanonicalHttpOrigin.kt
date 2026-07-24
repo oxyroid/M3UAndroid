@@ -1,5 +1,6 @@
 package com.m3u.data.extension.security
 
+import com.m3u.extension.api.ExtensionNetworkOrigin
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
 internal fun String.toCanonicalHttpOrigin(): String {
@@ -13,3 +14,6 @@ internal fun String.toCanonicalHttpOrigin(): String {
     val host = url.host.let { value -> if (':' in value) "[$value]" else value }
     return "${url.scheme}://$host:${url.port}"
 }
+
+internal fun String.toCanonicalExactHttpOrigin(): String =
+    ExtensionNetworkOrigin(this).canonicalValue

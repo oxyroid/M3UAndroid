@@ -4,10 +4,12 @@ import androidx.datastore.preferences.core.edit
 import androidx.test.platform.app.InstrumentationRegistry
 import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
 import com.m3u.core.foundation.architecture.preferences.settings
+import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.repository.plugin.PluginEnableResult
 import com.m3u.data.repository.provider.ProviderOperationException
 import com.m3u.data.repository.provider.ProviderPlaybackCloseReason
+import com.m3u.data.repository.provider.ProviderPlaybackSession
 import com.m3u.data.repository.provider.ProviderSubscriptionRequest
 import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.ExtensionState
@@ -22,12 +24,13 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ExternalProviderEndToEndTest {
     @Test
-    fun referenceProviderCompletesSubscriptionPlaybackAndSessionCloseAcrossBinder() = runBlocking {
+    fun referenceProviderCompletesCredentialBackedPlaybackSessionAcrossBinder() = runBlocking {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val context = instrumentation.targetContext.applicationContext
         val entryPoint = EntryPointAccessors.fromApplication(
@@ -37,9 +40,10 @@ class ExternalProviderEndToEndTest {
         val pluginRepository = entryPoint.pluginRepository()
         val providerRepository = entryPoint.providerRepository()
         val playlistRepository = entryPoint.playlistRepository()
-        var playlistUrl: String? = null
         var pluginPackage: String? = null
         var pluginService: String? = null
+        var providerPlaylistUrl: String? = null
+        var activeSession: ProviderPlaybackSession? = null
 
         try {
             context.settings.edit { preferences ->
@@ -50,7 +54,11 @@ class ExternalProviderEndToEndTest {
             }
             pluginPackage = plugin.packageName
             pluginService = plugin.serviceName
-            val enableResult = pluginRepository.enable(plugin.packageName, plugin.serviceName)
+            val enableResult = pluginRepository.enable(
+                plugin.packageName,
+                plugin.serviceName,
+                checkNotNull(plugin.authorizationToken),
+            )
             assertTrue(
                 "Reference provider could not be enabled: $enableResult",
                 enableResult is PluginEnableResult.Enabled,
@@ -86,68 +94,86 @@ class ExternalProviderEndToEndTest {
                     )
                 }.exceptionOrNull()
                 assertTrue(failure is ProviderOperationException)
-                assertEquals("provider.authentication_failed", (failure as ProviderOperationException).code)
+                assertEquals(
+                    "provider.authentication_failed",
+                    (failure as ProviderOperationException).code,
+                )
             }
             val pluginAfterRejectedLogins = pluginRepository.installedPlugins().single { installed ->
                 installed.packageName == REFERENCE_PACKAGE
             }
             assertEquals(ExtensionState.ENABLED, pluginAfterRejectedLogins.state)
 
-            val subscription = try {
-                providerRepository.subscribe(
-                    ProviderSubscriptionRequest(
-                        title = PLAYLIST_TITLE,
-                        providerId = REFERENCE_EXTENSION_ID,
-                        providerKind = REFERENCE_PROVIDER_KIND,
-                        settingValues = mapOf(
-                            SubscriptionProviderSettingKeys.BaseUrl to serverUrl,
-                            SubscriptionProviderSettingKeys.Username to "m3u",
-                        ),
-                        credentialHandles = mapOf(
-                            SubscriptionProviderSettingKeys.Password to
-                                providerRepository.stageCredential("reference-password"),
-                        ),
-                    )
+            val subscription = providerRepository.subscribe(
+                ProviderSubscriptionRequest(
+                    title = PLAYLIST_TITLE,
+                    providerId = REFERENCE_EXTENSION_ID,
+                    providerKind = REFERENCE_PROVIDER_KIND,
+                    settingValues = mapOf(
+                        SubscriptionProviderSettingKeys.BaseUrl to serverUrl,
+                        SubscriptionProviderSettingKeys.Username to "m3u",
+                    ),
+                    credentialHandles = mapOf(
+                        SubscriptionProviderSettingKeys.Password to
+                            providerRepository.stageCredential("reference-password"),
+                    ),
                 )
-            } catch (error: ProviderOperationException) {
-                throw AssertionError(
-                    "Provider subscription failed: ${error.code} ${error.details}",
-                    error,
-                )
-            }
-            playlistUrl = subscription.playlistUrl
+            )
+            providerPlaylistUrl = subscription.playlistUrl
             assertEquals(2, subscription.channelCount)
-
-            val playlist = requireNotNull(
-                playlistRepository.getPlaylistWithChannels(subscription.playlistUrl)
-            )
-            assertEquals(DataSource.Provider, playlist.playlist.source)
             assertEquals(
-                setOf("reference.news", "reference.sports"),
-                playlist.channels.mapTo(mutableSetOf()) { channel -> channel.relationId },
+                2,
+                requireNotNull(
+                    playlistRepository.getPlaylistWithChannels(subscription.playlistUrl)
+                ).channels.size,
             )
 
-            val news = playlist.channels.single { channel ->
-                channel.relationId == "reference.news"
-            }
-            val playback = requireNotNull(providerRepository.resolvePlayback(news.id))
-            val session = requireNotNull(playback.session)
-            val manifest = get(playback.url, playback.headers)
-            assertEquals(200, manifest.statusCode)
-            assertTrue(manifest.body.startsWith("#EXTM3U"))
+            val refresh = providerRepository.refresh(subscription.playlistUrl)
+            assertEquals(2, refresh.channelCount)
+            val channels = requireNotNull(
+                playlistRepository.getPlaylistWithChannels(subscription.playlistUrl)
+            ).channels
+            assertEquals(2, channels.size)
+            val news = channels.single { channel -> channel.relationId == REFERENCE_NEWS_ID }
+            assertEquals(Channel.URL_DYNAMIC, news.url)
 
-            val stateUrl = "$serverUrl/reference-provider/sessions/${session.playSessionId}"
-            assertEquals("open", get(stateUrl, playback.headers).jsonField("state"))
+            val source = requireNotNull(providerRepository.resolvePlayback(news.id))
+            assertNotEquals(Channel.URL_DYNAMIC, source.url)
+            assertEquals(
+                "$serverUrl/reference-provider/stream/$REFERENCE_NEWS_ID/index.m3u8",
+                source.url,
+            )
+            assertEquals(REFERENCE_ACCESS_TOKEN, source.headers["X-Emby-Token"])
+            assertEquals(REFERENCE_USER_ID, source.headers["X-Reference-User"])
+            val session = requireNotNull(source.session)
+            activeSession = session
+            val playSessionId = requireNotNull(session.playSessionId)
+            assertEquals("open", referenceSessionState(serverUrl, playSessionId))
+
             assertTrue(
                 providerRepository.closePlayback(
                     session = session,
                     reason = ProviderPlaybackCloseReason.STOPPED,
                 )
             )
-            assertEquals("closed", get(stateUrl, playback.headers).jsonField("state"))
+            activeSession = null
+            assertEquals("closed", referenceSessionState(serverUrl, playSessionId))
+
+            val pluginAfterPlayback = pluginRepository.installedPlugins().single { installed ->
+                installed.packageName == REFERENCE_PACKAGE
+            }
+            assertEquals(ExtensionState.ENABLED, pluginAfterPlayback.state)
         } finally {
-            playlistUrl?.let { value ->
-                runCatching { playlistRepository.unsubscribe(value) }
+            activeSession?.let { session ->
+                runCatching {
+                    providerRepository.closePlayback(
+                        session = session,
+                        reason = ProviderPlaybackCloseReason.STOPPED,
+                    )
+                }
+            }
+            providerPlaylistUrl?.let { playlistUrl ->
+                runCatching { playlistRepository.unsubscribe(playlistUrl) }
             }
             if (pluginPackage != null && pluginService != null) {
                 runCatching {
@@ -163,34 +189,34 @@ class ExternalProviderEndToEndTest {
         }
     }
 
-    private fun get(url: String, headers: Map<String, String>): HttpResult {
-        val connection = URL(url).openConnection() as HttpURLConnection
+    private fun referenceSessionState(
+        serverUrl: String,
+        playSessionId: String,
+    ): String {
+        val connection = URL(
+            "$serverUrl/reference-provider/sessions/$playSessionId"
+        ).openConnection() as HttpURLConnection
         return try {
-            connection.connectTimeout = 5_000
-            connection.readTimeout = 5_000
-            headers.forEach(connection::setRequestProperty)
-            val statusCode = connection.responseCode
-            val stream = if (statusCode in 200..299) connection.inputStream else connection.errorStream
-            HttpResult(statusCode, stream?.bufferedReader()?.use { it.readText() }.orEmpty())
+            connection.connectTimeout = 2_000
+            connection.readTimeout = 2_000
+            connection.setRequestProperty("X-Emby-Token", REFERENCE_ACCESS_TOKEN)
+            assertEquals(200, connection.responseCode)
+            val payload = connection.inputStream.bufferedReader().use { reader ->
+                Json.parseToJsonElement(reader.readText()).jsonObject
+            }
+            payload.getValue("state").jsonPrimitive.content
         } finally {
             connection.disconnect()
         }
     }
 
-    private fun HttpResult.jsonField(name: String): String {
-        assertEquals(200, statusCode)
-        return Json.parseToJsonElement(body).jsonObject.getValue(name).jsonPrimitive.content
-    }
-
-    private data class HttpResult(
-        val statusCode: Int,
-        val body: String,
-    )
-
     private companion object {
         const val REFERENCE_PACKAGE = "com.m3u.testing.extension.reference"
         const val PLAYLIST_TITLE = "Reference Provider E2E"
         const val DEFAULT_SERVER_URL = "http://10.0.2.2:8080"
+        const val REFERENCE_ACCESS_TOKEN = "mock-reference-access-token"
+        const val REFERENCE_USER_ID = "reference-user-id"
+        const val REFERENCE_NEWS_ID = "reference.news"
         val REFERENCE_EXTENSION_ID = ExtensionId("com.m3u.reference.provider")
         val REFERENCE_PROVIDER_KIND = ProviderKind("reference")
     }

@@ -83,6 +83,24 @@ internal class ExtensionInvocationRegistry<T>(
         }
     }
 
+    fun fail(cause: Throwable) {
+        require(cause !is CancellationException) {
+            "Transport failures must not use coroutine cancellation"
+        }
+        val failed = synchronized(lock) {
+            if (closed) return
+            closed = true
+            val failedRecords = records.values
+                .filter { record -> record.markCompleted() }
+            records.clear()
+            failedRecords.forEach { record -> record.finishTransportFailure(cause) }
+            failedRecords
+        }
+        failed.forEach { record ->
+            requestRemoteCancel(record.invocationId)
+        }
+    }
+
     private fun cancel(
         invocationId: InvocationId,
         expected: ExtensionInvocationRecord<T>?,
@@ -123,8 +141,11 @@ internal class ExtensionInvocationRecord<T>(
 
     fun attachJob(job: Job) {
         check(binderJob.compareAndSet(null, job)) { "Invocation Binder job is already attached" }
-        if (state.get() == State.CANCELLED) {
-            job.cancel(cancellationCause.get() ?: CancellationException("Extension invocation was cancelled"))
+        if (state.get() != State.ACTIVE) {
+            job.cancel(
+                cancellationCause.get()
+                    ?: CancellationException("Extension invocation is no longer active")
+            )
         }
     }
 
@@ -158,6 +179,17 @@ internal class ExtensionInvocationRecord<T>(
         bridgeLease.close()
         binderJob.get()?.cancel(cause)
         deliverCancellation(cause)
+    }
+
+    internal fun finishTransportFailure(cause: Throwable) {
+        bridgeLease.close()
+        val internalCancellation =
+            CancellationException("Extension transport became unavailable").also { cancellation ->
+                cancellation.initCause(cause)
+            }
+        cancellationCause.compareAndSet(null, internalCancellation)
+        binderJob.get()?.cancel(internalCancellation)
+        deliverCompletion(Result.failure(cause))
     }
 
     fun closeBridge() {

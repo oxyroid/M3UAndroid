@@ -1,6 +1,7 @@
 package com.m3u.extension.transport.android
 
 import android.content.Context
+import com.m3u.extension.api.ExtensionNetworkOrigin
 
 class ExtensionTrustStore(context: Context) {
     private val preferences = context.getSharedPreferences("extension-trust", Context.MODE_PRIVATE)
@@ -12,15 +13,24 @@ class ExtensionTrustStore(context: Context) {
         displayName: String,
         version: String,
         developer: String?,
+        networkOrigins: Set<String> = emptySet(),
+        enabled: Boolean = true,
     ) {
+        val canonicalOrigins = networkOrigins.mapTo(mutableSetOf()) { origin ->
+            ExtensionNetworkOrigin(origin).canonicalValue
+        }
+        require(canonicalOrigins.size == networkOrigins.size) {
+            "Approved extension network origins must be unique"
+        }
         preferences.edit()
             .putString("${service.key}:certificate", service.certificateSha256)
             .putString("${service.key}:extension-id", extensionId)
-            .putBoolean("${service.key}:enabled", true)
+            .putBoolean("${service.key}:enabled", enabled)
             .putStringSet("${service.key}:capabilities", capabilities)
             .putString("${service.key}:display-name", displayName)
             .putString("${service.key}:version", version)
             .putString("${service.key}:developer", developer)
+            .putStringSet("${service.key}:network-origins", canonicalOrigins)
             .apply()
     }
 
@@ -57,6 +67,7 @@ class ExtensionTrustStore(context: Context) {
             .remove("$serviceKey$DISPLAY_NAME_SUFFIX")
             .remove("$serviceKey$VERSION_SUFFIX")
             .remove("$serviceKey$DEVELOPER_SUFFIX")
+            .remove("$serviceKey$NETWORK_ORIGINS_SUFFIX")
             .apply()
     }
 
@@ -83,6 +94,15 @@ class ExtensionTrustStore(context: Context) {
         val serviceKeys = trustedServiceKeys(extensionId)
         if (serviceKeys.size != 1) return emptySet()
         return capabilities(serviceKeys.single())
+    }
+
+    fun approvedNetworkOrigins(service: InstalledExtensionService): Set<String> =
+        if (isTrusted(service)) networkOrigins(service.key) else emptySet()
+
+    fun approvedNetworkOrigins(extensionId: String): Set<String> {
+        val serviceKeys = trustedServiceKeys(extensionId)
+        if (serviceKeys.size != 1) return emptySet()
+        return networkOrigins(serviceKeys.single())
     }
 
     fun isExtensionIdClaimedByAnotherService(
@@ -121,6 +141,7 @@ class ExtensionTrustStore(context: Context) {
                 displayName = preferences.getString("$storedServiceKey$DISPLAY_NAME_SUFFIX", null),
                 version = preferences.getString("$storedServiceKey$VERSION_SUFFIX", null),
                 developer = preferences.getString("$storedServiceKey$DEVELOPER_SUFFIX", null),
+                networkOrigins = networkOrigins(storedServiceKey),
             )
         }
         .sortedWith(
@@ -147,6 +168,9 @@ class ExtensionTrustStore(context: Context) {
     private fun capabilities(serviceKey: String): Set<String> =
         preferences.getStringSet("$serviceKey$CAPABILITIES_SUFFIX", emptySet()).orEmpty().toSet()
 
+    private fun networkOrigins(serviceKey: String): Set<String> =
+        preferences.getStringSet("$serviceKey$NETWORK_ORIGINS_SUFFIX", emptySet()).orEmpty().toSet()
+
     private val InstalledExtensionService.key: String
         get() = serviceKey(packageName, serviceName)
 
@@ -162,6 +186,7 @@ class ExtensionTrustStore(context: Context) {
         const val DISPLAY_NAME_SUFFIX = ":display-name"
         const val VERSION_SUFFIX = ":version"
         const val DEVELOPER_SUFFIX = ":developer"
+        const val NETWORK_ORIGINS_SUFFIX = ":network-origins"
     }
 }
 
@@ -175,4 +200,5 @@ data class TrustedExtensionService(
     val displayName: String?,
     val version: String?,
     val developer: String?,
+    val networkOrigins: Set<String> = emptySet(),
 )

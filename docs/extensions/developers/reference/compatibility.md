@@ -22,15 +22,28 @@ Change one only when you intend to create a different extension identity.
 | `extensionVersion` | Increase it for every released feature or fix. |
 | `apiRange` | Set it to the host API range supported by this build. |
 | Hook `schemaVersion` | Copy it from the selected `HookSpec`; the declaration and handler must match exactly. |
-| `settingsSchema.version` | Increase it when saved values are no longer compatible, such as after a field is removed, renamed, or changes type or meaning. |
+| `ExtensionSettingSchema.version` | Version each manifest or dynamic settings section independently. Increase the affected section when a field is removed, renamed, or changes type or meaning. |
 
-For a compatible field addition, keep the schema version and existing keys. M3UAndroid applies the new field's default. If you increase the schema version, M3UAndroid clears saved values and credential handles for that schema before applying defaults.
+Fixed settings use `manifest.settingsSchema.version`; dynamic settings use each returned
+`section.schema.version`. For a compatible field addition, keep that section's version and
+existing keys. M3UAndroid applies the new field's default. If you increase a section version,
+M3UAndroid clears saved values and credential handles for that section before applying defaults.
 
 ## Review capability changes
 
-Adding a required capability changes what the user authorizes. Add the capability to both the Hook declaration and `manifest.capabilities`, and give it a concrete reason. Verify the authorization prompt as part of the update test.
+Adding a required capability changes what the user authorizes. Add the capability to both the Hook
+declaration and `manifest.capabilities`, and give it a concrete reason. Verify the authorization
+prompt as part of the update test.
 
 When removing a capability, also remove every handler operation that uses it.
+
+## Review network origin changes
+
+Adding an origin to `manifest.networkOrigins` does not add it to an existing approval. Verify the
+reauthorization flow before relying on the new origin.
+
+A field marked `networkOrigin` has no default. Increasing its settings section version clears the
+saved value and approval, so the user must save that origin again.
 
 ## Release checklist
 
@@ -38,9 +51,11 @@ When removing a capability, also remove every handler operation that uses it.
 - Trigger every declared Hook from its host feature.
 - Test both a first enable and an update over the previous version.
 - Confirm existing settings reconcile as intended.
+- Confirm every broker-backed Hook works only with its intended origins.
 - Confirm the extension keeps the same identity.
 - Confirm results and diagnostics contain no secrets or user-identifying request data.
 
-The most common incompatible update is renaming a setting key without increasing `settingsSchema.version`. The second is copying an old Hook schema version instead of using the current `HookSpec.schemaVersion`.
+If a setting key is renamed, increase its section schema version. Always take the Hook schema
+version from the current `HookSpec`.
 
 For the names used here, see [Contract terms](glossary.md).

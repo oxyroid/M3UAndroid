@@ -22,6 +22,7 @@ import com.m3u.extension.api.subscription.EmbyCompatibleProviderKinds
 import com.m3u.extension.api.subscription.PlaybackSessionCloseRequest
 import com.m3u.extension.api.subscription.PlaybackSessionCloseResult
 import com.m3u.extension.api.subscription.PlaybackHeaderValue
+import com.m3u.extension.api.subscription.PlaybackSessionDescriptor
 import com.m3u.extension.api.subscription.PlaybackSourceResolveRequest
 import com.m3u.extension.api.subscription.PlaybackSourceResolveResult
 import com.m3u.extension.api.subscription.ProviderAccountReference
@@ -31,6 +32,7 @@ import com.m3u.extension.api.subscription.SubscriptionContentRefreshResult
 import com.m3u.extension.api.subscription.SubscriptionProviderDescriptor
 import com.m3u.extension.api.subscription.SubscriptionProviderDiscoverRequest
 import com.m3u.extension.api.subscription.SubscriptionProviderDiscoverResult
+import com.m3u.extension.api.subscription.SubscriptionProviderErrorCodes
 import com.m3u.extension.api.subscription.SubscriptionProviderSettingKeys
 import com.m3u.extension.api.subscription.SubscriptionProviderVariant
 import com.m3u.extension.api.subscription.SubscriptionProviderValidateRequest
@@ -39,16 +41,24 @@ import com.m3u.extension.api.subscription.SubscriptionHookSpecs
 import com.m3u.extension.api.subscription.SubscriptionSourceDescriptor
 import com.m3u.extension.api.subscription.ValidatedProviderAccount
 import com.m3u.data.extension.security.CredentialResolver
+import com.m3u.extension.runtime.InvocationPolicy
 import java.util.concurrent.CancellationException
 import javax.inject.Inject
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 internal class EmbyCompatibleProvider @Inject constructor(
     private val client: EmbyCompatibleClient,
     private val credentialResolver: CredentialResolver,
+    private val invocationPolicy: InvocationPolicy = InvocationPolicy(),
+    private val cleanupScheduler: EmbyPlaybackCleanupScheduler =
+        EmbyPlaybackCleanupScheduler(),
 ) : ExtensionEntrypoint {
     override val manifest = ExtensionManifest(
         id = ID,
-        displayName = DISPLAY_NAME,
+        displayName = MANIFEST_DISPLAY_NAME,
         extensionVersion = ExtensionSemanticVersion(1, 0, 0),
         apiRange = ExtensionApiRange(
             minimum = ExtensionApiVersions.Current,
@@ -133,27 +143,7 @@ internal class EmbyCompatibleProvider @Inject constructor(
     ): HookResult<SubscriptionProviderDiscoverResult> {
         return HookResult.Success(
             payload = SubscriptionProviderDiscoverResult(
-                providers = listOf(
-                    SubscriptionProviderDescriptor(
-                        providerId = ID,
-                        displayName = DISPLAY_NAME,
-                        variants = listOf(
-                            SubscriptionProviderVariant(
-                                kind = EmbyCompatibleProviderKinds.Emby,
-                                displayName = "Emby",
-                            ),
-                            SubscriptionProviderVariant(
-                                kind = EmbyCompatibleProviderKinds.Jellyfin,
-                                displayName = "Jellyfin",
-                            ),
-                            SubscriptionProviderVariant(
-                                kind = EmbyCompatibleProviderKinds.Auto,
-                                displayName = "Automatic",
-                            ),
-                        ),
-                        settingsSchema = SETTINGS_SCHEMA,
-                    )
-                )
+                provider = descriptorForLocale(request.localeTag),
             )
         )
     }
@@ -174,7 +164,7 @@ internal class EmbyCompatibleProvider @Inject constructor(
                 requestedKind = request.providerKind,
                 username = username,
                 password = credentialResolver.resolve(password)
-                    ?: error("Provider credential must be entered again"),
+                    ?: throw CredentialUnavailableException(),
             )
             SubscriptionProviderValidateResult(
                 evidence = ProviderValidationEvidence.TrustedDirect(
@@ -192,16 +182,14 @@ internal class EmbyCompatibleProvider @Inject constructor(
         return providerCall {
             val account = request.account.toValidatedAccount()
             val accessToken = credentialResolver.resolve(request.credential.handle)
-                ?: error("Provider credential must be entered again")
+                ?: throw CredentialUnavailableException()
             val result = client.refreshChannels(account, accessToken)
             SubscriptionContentRefreshResult(
                 source = SubscriptionSourceDescriptor(
                     remoteId = request.account.serverId,
-                    title = account.serverName,
                     providerKind = request.account.providerKind,
                 ),
                 channels = result.channels,
-                syncMetadata = mapOf("totalRecordCount" to result.totalRecordCount.toString()),
             )
         }
     }
@@ -211,21 +199,65 @@ internal class EmbyCompatibleProvider @Inject constructor(
         request: PlaybackSourceResolveRequest,
     ): HookResult<PlaybackSourceResolveResult> {
         return providerCall {
-            val source = client.resolvePlayback(
-                account = request.account.toValidatedAccount(),
-                accessToken = credentialResolver.resolve(request.credential.handle)
-                    ?: error("Provider credential must be entered again"),
-                reference = request.reference,
-                preferences = request.preferences,
-            )
-            PlaybackSourceResolveResult(
-                url = source.url,
-                headers = source.headers.mapValues { (_, value) ->
-                    PlaybackHeaderValue.literal(value)
-                },
-                mediaSourceId = source.mediaSourceId,
-                session = source.session,
-            )
+            val account = request.account.toValidatedAccount()
+            val accessToken = credentialResolver.resolve(request.credential.handle)
+                ?: throw CredentialUnavailableException()
+            val cleanupAdmission = cleanupScheduler.tryReserve()
+                ?: throw EmbyProtocolException(
+                    "Provider playback cleanup capacity is exhausted"
+                )
+            val source = try {
+                client.resolvePlaybackWithCleanupAdmission(
+                    account = account,
+                    accessToken = accessToken,
+                    reference = request.reference,
+                    preferences = request.preferences,
+                    cleanupAdmission = cleanupAdmission,
+                )
+            } catch (failure: Exception) {
+                cleanupAdmission.release()
+                throw failure
+            }
+            try {
+                currentCoroutineContext().ensureActive()
+                val result = PlaybackSourceResolveResult(
+                    url = source.url,
+                    headers = source.headers.mapValues { (_, value) ->
+                        PlaybackHeaderValue.literal(value)
+                    },
+                    mediaSourceId = source.mediaSourceId,
+                    session = source.session?.let { session ->
+                        PlaybackSessionDescriptor(
+                            playSessionId = session.playSessionId,
+                            liveStreamId = session.liveStreamId,
+                        )
+                    },
+                )
+                val responseSize = WIRE_JSON
+                    .encodeToString(PlaybackSourceResolveResult.serializer(), result)
+                    .encodeToByteArray()
+                    .size
+                if (responseSize > invocationPolicy.maxPayloadBytes) {
+                    throw EmbyProtocolException(
+                        "Provider playback response exceeds the host limit"
+                    )
+                }
+                currentCoroutineContext().ensureActive()
+                cleanupAdmission.release()
+                result
+            } catch (failure: Exception) {
+                source.session?.let { session ->
+                    scheduleCloseAfterResolveFailure(
+                        cleanupAdmission = cleanupAdmission,
+                        account = account,
+                        accessToken = accessToken,
+                        itemId = request.reference.itemId,
+                        mediaSourceId = source.mediaSourceId,
+                        session = session,
+                    )
+                } ?: cleanupAdmission.release()
+                throw failure
+            }
         }
     }
 
@@ -238,10 +270,33 @@ internal class EmbyCompatibleProvider @Inject constructor(
                 closed = client.closePlayback(
                     account = request.account.toValidatedAccount(),
                     accessToken = credentialResolver.resolve(request.credential.handle)
-                        ?: error("Provider credential must be entered again"),
-                    reference = request.reference,
-                    session = request.session,
+                        ?: throw CredentialUnavailableException(),
+                    itemId = request.reference.itemId,
+                    mediaSourceId = request.reference.mediaSourceId,
+                    session = EmbyPlaybackSession(
+                        playSessionId = request.session.playSessionId,
+                        liveStreamId = request.session.liveStreamId,
+                    ),
                 )
+            )
+        }
+    }
+
+    private fun scheduleCloseAfterResolveFailure(
+        cleanupAdmission: EmbyPlaybackCleanupAdmission,
+        account: ValidatedProviderAccount,
+        accessToken: String,
+        itemId: String,
+        mediaSourceId: String?,
+        session: EmbyPlaybackSession,
+    ) {
+        cleanupAdmission.schedule {
+            client.closePlayback(
+                account = account,
+                accessToken = accessToken,
+                itemId = itemId,
+                mediaSourceId = mediaSourceId,
+                session = session,
             )
         }
     }
@@ -256,13 +311,18 @@ internal class EmbyCompatibleProvider @Inject constructor(
         } catch (exception: EmbyHttpException) {
             failure(
                 code = if (exception.statusCode == 401 || exception.statusCode == 403) {
-                    AUTHENTICATION_FAILED
+                    SubscriptionProviderErrorCodes.AuthenticationFailed
                 } else {
                     PROVIDER_REQUEST_FAILED
                 },
                 message = exception.message ?: "Provider request failed",
                 recoverable = exception.statusCode >= 500,
                 details = mapOf("statusCode" to exception.statusCode.toString()),
+            )
+        } catch (exception: CredentialUnavailableException) {
+            failure(
+                code = SubscriptionProviderErrorCodes.AuthenticationFailed,
+                message = exception.message.orEmpty(),
             )
         } catch (exception: Exception) {
             failure(
@@ -311,32 +371,103 @@ internal class EmbyCompatibleProvider @Inject constructor(
 
     companion object {
         val ID = ExtensionId("com.m3u.provider.emby-compatible")
-        val SETTINGS_SCHEMA = ExtensionSettingSchema(
-            version = 1,
-            fields = listOf(
-                ExtensionSettingField(
-                    key = SubscriptionProviderSettingKeys.BaseUrl,
-                    label = "Server URL",
-                    type = ExtensionSettingType.TEXT,
-                    required = true,
+
+        internal fun descriptorForLocale(localeTag: String?): SubscriptionProviderDescriptor {
+            val labels = if (localeTag.isSimplifiedChinese()) {
+                SIMPLIFIED_CHINESE_LABELS
+            } else {
+                ENGLISH_LABELS
+            }
+            return SubscriptionProviderDescriptor(
+                providerId = ID,
+                displayName = labels.displayName,
+                variants = listOf(
+                    SubscriptionProviderVariant(
+                        kind = EmbyCompatibleProviderKinds.Emby,
+                        displayName = "Emby",
+                    ),
+                    SubscriptionProviderVariant(
+                        kind = EmbyCompatibleProviderKinds.Jellyfin,
+                        displayName = "Jellyfin",
+                    ),
+                    SubscriptionProviderVariant(
+                        kind = EmbyCompatibleProviderKinds.Auto,
+                        displayName = labels.automatic,
+                    ),
                 ),
-                ExtensionSettingField(
-                    key = SubscriptionProviderSettingKeys.Username,
-                    label = "Username",
-                    type = ExtensionSettingType.TEXT,
-                    required = true,
+                settingsSchema = ExtensionSettingSchema(
+                    version = 1,
+                    fields = listOf(
+                        ExtensionSettingField(
+                            key = SubscriptionProviderSettingKeys.BaseUrl,
+                            label = labels.serverUrl,
+                            type = ExtensionSettingType.TEXT,
+                            required = true,
+                        ),
+                        ExtensionSettingField(
+                            key = SubscriptionProviderSettingKeys.Username,
+                            label = labels.username,
+                            type = ExtensionSettingType.TEXT,
+                            required = true,
+                        ),
+                        ExtensionSettingField(
+                            key = SubscriptionProviderSettingKeys.Password,
+                            label = labels.password,
+                            type = ExtensionSettingType.SECRET,
+                            required = true,
+                        ),
+                    ),
                 ),
-                ExtensionSettingField(
-                    key = SubscriptionProviderSettingKeys.Password,
-                    label = "Password",
-                    type = ExtensionSettingType.SECRET,
-                    required = true,
-                ),
-            ),
+            )
+        }
+
+        private fun String?.isSimplifiedChinese(): Boolean {
+            val subtags = this
+                ?.trim()
+                ?.replace('_', '-')
+                ?.lowercase()
+                ?.split('-')
+                ?.filter { it.isNotBlank() }
+                .orEmpty()
+            if (subtags.firstOrNull() != "zh") return false
+            return when {
+                "hant" in subtags -> false
+                "hans" in subtags -> true
+                else -> subtags.none { it == "tw" || it == "hk" || it == "mo" }
+            }
+        }
+
+        private data class ProviderLabels(
+            val displayName: String,
+            val automatic: String,
+            val serverUrl: String,
+            val username: String,
+            val password: String,
         )
-        private const val DISPLAY_NAME = "Emby Compatible"
+
+        private val ENGLISH_LABELS = ProviderLabels(
+            displayName = "Emby / Jellyfin server",
+            automatic = "Automatic",
+            serverUrl = "Server URL",
+            username = "Username",
+            password = "Password",
+        )
+        private val SIMPLIFIED_CHINESE_LABELS = ProviderLabels(
+            displayName = "Emby / Jellyfin 服务器",
+            automatic = "自动检测",
+            serverUrl = "服务器地址",
+            username = "用户名",
+            password = "密码",
+        )
+        private const val MANIFEST_DISPLAY_NAME = "Emby Compatible"
         private val INVALID_PAYLOAD = ExtensionErrorCode("provider.invalid_payload")
-        private val AUTHENTICATION_FAILED = ExtensionErrorCode("provider.authentication_failed")
         private val PROVIDER_REQUEST_FAILED = ExtensionErrorCode("provider.request_failed")
+        private val WIRE_JSON = Json {
+            ignoreUnknownKeys = true
+            explicitNulls = false
+        }
     }
 }
+
+private class CredentialUnavailableException :
+    IllegalStateException("Provider credential must be entered again")

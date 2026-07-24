@@ -40,6 +40,7 @@ import com.m3u.data.parser.xtream.XtreamEpisodeInfo
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.media.MediaRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
+import com.m3u.data.repository.playlist.PlaylistRefreshReason
 import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.Messager
@@ -139,10 +140,17 @@ class PlaylistViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5000)
         )
 
-    fun refresh() {
+    fun refresh(background: Boolean = false) {
         val url = playlistUrl.value
         viewModelScope.launch {
-            playlistRepository.refresh(url)
+            playlistRepository.refresh(
+                url = url,
+                reason = if (background) {
+                    PlaylistRefreshReason.BACKGROUND
+                } else {
+                    PlaylistRefreshReason.USER
+                },
+            )
         }
     }
 

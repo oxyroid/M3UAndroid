@@ -160,7 +160,7 @@ internal fun PlaylistRoute(
 
     LaunchedEffect(autoRefreshChannels, playlistUrl) {
         if (playlistUrl.isNotEmpty() && autoRefreshChannels) {
-            viewModel.refresh()
+            viewModel.refresh(background = true)
         }
     }
 

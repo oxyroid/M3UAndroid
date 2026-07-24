@@ -40,7 +40,10 @@ interface PlaylistRepository {
 
     suspend fun insertEpgAsPlaylist(title: String, epg: String)
 
-    suspend fun refresh(url: String)
+    suspend fun refresh(
+        url: String,
+        reason: PlaylistRefreshReason = PlaylistRefreshReason.USER,
+    )
 
     suspend fun unsubscribe(url: String): Playlist?
 
@@ -77,4 +80,9 @@ interface PlaylistRepository {
             val epgUrl: String
         ): EpgPlaylistUseCase
     }
+}
+
+enum class PlaylistRefreshReason {
+    USER,
+    BACKGROUND,
 }

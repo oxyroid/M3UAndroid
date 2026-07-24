@@ -1,3 +1,113 @@
+import org.gradle.api.DefaultTask
+import org.gradle.api.file.ConfigurableFileCollection
+import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Classpath
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.UntrackedTask
+import org.gradle.jvm.toolchain.JavaLauncher
+
+@UntrackedTask(because = "Starts an external process whose lifetime is tracked by a PID file")
+abstract class StartMockServer : DefaultTask() {
+    @get:Classpath
+    abstract val runtimeClasspath: ConfigurableFileCollection
+
+    @get:Nested
+    abstract val javaLauncher: Property<JavaLauncher>
+
+    @get:Input
+    abstract val serverMainClass: Property<String>
+
+    @get:Input
+    abstract val host: Property<String>
+
+    @get:Input
+    abstract val port: Property<String>
+
+    @get:Internal
+    abstract val pidFile: RegularFileProperty
+
+    @get:Internal
+    abstract val logFile: RegularFileProperty
+
+    @TaskAction
+    fun start() {
+        val pidFile = pidFile.get().asFile
+        val runningPid = pidFile
+            .takeIf { it.exists() }
+            ?.readText()
+            ?.trim()
+            ?.toLongOrNull()
+            ?.takeIf { pid -> ProcessHandle.of(pid).map(ProcessHandle::isAlive).orElse(false) }
+
+        if (runningPid != null) {
+            logger.lifecycle("M3U mock server is already running with pid $runningPid")
+            return
+        }
+
+        val logFile = logFile.get().asFile
+        logFile.parentFile.mkdirs()
+        val process = ProcessBuilder(
+            javaLauncher.get().executablePath.asFile.absolutePath,
+            "-cp",
+            runtimeClasspath.asPath,
+            serverMainClass.get(),
+            "--host",
+            host.get(),
+            "--port",
+            port.get(),
+        )
+            .redirectOutput(ProcessBuilder.Redirect.appendTo(logFile))
+            .redirectErrorStream(true)
+            .start()
+
+        pidFile.parentFile.mkdirs()
+        pidFile.writeText(process.pid().toString())
+        Thread.sleep(750)
+        if (!process.isAlive) {
+            pidFile.delete()
+            error("M3U mock server exited during startup. See ${logFile.absolutePath}")
+        }
+        logger.lifecycle(
+            "M3U mock server started on ${host.get()}:${port.get()} with pid ${process.pid()}",
+        )
+    }
+}
+
+@UntrackedTask(because = "Stops the external process identified by a PID file")
+abstract class StopMockServer : DefaultTask() {
+    @get:Internal
+    abstract val pidFile: RegularFileProperty
+
+    @TaskAction
+    fun stop() {
+        val pidFile = pidFile.get().asFile
+        val pid = pidFile
+            .takeIf { it.exists() }
+            ?.readText()
+            ?.trim()
+            ?.toLongOrNull()
+
+        if (pid == null) {
+            pidFile.delete()
+            logger.lifecycle("M3U mock server is not running")
+            return
+        }
+
+        ProcessHandle.of(pid).ifPresent { handle ->
+            if (handle.isAlive) {
+                handle.destroy()
+                handle.onExit().get()
+            }
+        }
+        pidFile.delete()
+        logger.lifecycle("M3U mock server stopped")
+    }
+}
+
 plugins {
     alias(libs.plugins.org.jetbrains.kotlin.jvm)
     application
@@ -16,85 +126,27 @@ java {
 val mockServerPidFile = layout.buildDirectory.file("mock-server/mock-server.pid")
 val mockServerLogFile = layout.buildDirectory.file("mock-server/mock-server.log")
 
-tasks.register("startMockServer") {
+tasks.register<StartMockServer>("startMockServer") {
     group = "verification"
     description = "Starts the M3U mock server in the background for app tests."
-    notCompatibleWithConfigurationCache("Starts an external mock server process.")
     dependsOn(tasks.named("classes"))
-
-    doLast {
-        val pidFile = mockServerPidFile.get().asFile
-        val runningPid = pidFile
-            .takeIf { it.exists() }
-            ?.readText()
-            ?.trim()
-            ?.toLongOrNull()
-            ?.takeIf { pid -> ProcessHandle.of(pid).map(ProcessHandle::isAlive).orElse(false) }
-
-        if (runningPid != null) {
-            logger.lifecycle("M3U mock server is already running with pid $runningPid")
-            return@doLast
-        }
-
-        val logFile = mockServerLogFile.get().asFile
-        logFile.parentFile.mkdirs()
-        val launcher = javaToolchains.launcherFor {
+    runtimeClasspath.from(sourceSets.main.get().runtimeClasspath)
+    javaLauncher.set(
+        javaToolchains.launcherFor {
             languageVersion = JavaLanguageVersion.of(17)
-        }.get()
-        val port = providers.gradleProperty("m3uMockServerPort").orElse("8080").get()
-        val host = providers.gradleProperty("m3uMockServerHost").orElse("0.0.0.0").get()
-        val classpath = sourceSets.main.get().runtimeClasspath.asPath
-        val process = ProcessBuilder(
-            launcher.executablePath.asFile.absolutePath,
-            "-cp",
-            classpath,
-            "com.m3u.testing.mockserver.MainKt",
-            "--host",
-            host,
-            "--port",
-            port
-        )
-            .redirectOutput(ProcessBuilder.Redirect.appendTo(logFile))
-            .redirectErrorStream(true)
-            .start()
-
-        pidFile.writeText(process.pid().toString())
-        Thread.sleep(750)
-        if (!process.isAlive) {
-            pidFile.delete()
-            error("M3U mock server exited during startup. See ${logFile.absolutePath}")
-        }
-        logger.lifecycle("M3U mock server started on $host:$port with pid ${process.pid()}")
-    }
+        },
+    )
+    serverMainClass.set("com.m3u.testing.mockserver.MainKt")
+    host.set(providers.gradleProperty("m3uMockServerHost").orElse("0.0.0.0"))
+    port.set(providers.gradleProperty("m3uMockServerPort").orElse("8080"))
+    pidFile.set(mockServerPidFile)
+    logFile.set(mockServerLogFile)
 }
 
-tasks.register("stopMockServer") {
+tasks.register<StopMockServer>("stopMockServer") {
     group = "verification"
     description = "Stops the background M3U mock server started by startMockServer."
-    notCompatibleWithConfigurationCache("Stops an external mock server process.")
-
-    doLast {
-        val pidFile = mockServerPidFile.get().asFile
-        val pid = pidFile
-            .takeIf { it.exists() }
-            ?.readText()
-            ?.trim()
-            ?.toLongOrNull()
-
-        if (pid == null) {
-            logger.lifecycle("M3U mock server is not running")
-            return@doLast
-        }
-
-        ProcessHandle.of(pid).ifPresent { handle ->
-            if (handle.isAlive) {
-                handle.destroy()
-                handle.onExit().get()
-            }
-        }
-        pidFile.delete()
-        logger.lifecycle("M3U mock server stopped")
-    }
+    pidFile.set(mockServerPidFile)
 }
 
 dependencies {

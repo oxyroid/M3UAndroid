@@ -69,7 +69,7 @@ class ProviderPersistenceLifecycleGateTest {
             allowImport.await()
             runCatching {
                 registry.commit(lease) {
-                    importer.import(
+                    importer.importSubscription(
                         title = "Stale provider",
                         source = DataSource.Provider,
                         account = account(),
@@ -95,7 +95,7 @@ class ProviderPersistenceLifecycleGateTest {
     @Test
     fun revokedExistingAccountCannotBeReauthenticatedByAStaleRefreshWriteback() = runBlocking {
         val account = account()
-        importer.import(
+        importer.importSubscription(
             title = "Original provider",
             source = DataSource.Provider,
             account = account,
@@ -110,7 +110,6 @@ class ProviderPersistenceLifecycleGateTest {
                 itemId = ITEM_ID,
                 mediaSourceId = null,
                 sourceType = "live",
-                fallbackDirectUrl = null,
                 playSessionId = "remote-session",
                 liveStreamId = "remote-stream",
                 createdAtEpochMillis = 1_000L,
@@ -124,7 +123,7 @@ class ProviderPersistenceLifecycleGateTest {
             allowImport.await()
             runCatching {
                 registry.commit(staleLease) {
-                    importer.import(
+                    importer.importSubscription(
                         title = "Stale refreshed provider",
                         source = DataSource.Provider,
                         account = account.copy(
@@ -157,6 +156,51 @@ class ProviderPersistenceLifecycleGateTest {
         )
     }
 
+    @Test
+    fun externalProviderLogoUrlIsIgnoredWithoutFailingImport() = runBlocking {
+        assertEquals(
+            1,
+            importer.importSubscription(
+                title = "External provider",
+                source = DataSource.Provider,
+                account = account(),
+                accessToken = "external-token",
+                refresh = refresh(
+                    channelTitle = "External channel",
+                    logoUrl = "https://arbitrary.example/logo.png?tracking=secret",
+                ),
+            ),
+        )
+
+        assertNull(database.channelDao().getByPlaylistUrl(PLAYLIST_URL).single().cover)
+        assertEquals(ACCOUNT_ID, database.providerDao().getAccount(ACCOUNT_ID)?.id)
+        assertEquals(ACCOUNT_ID, database.providerDao().getCredential(ACCOUNT_ID)?.accountId)
+    }
+
+    @Test
+    fun builtInProviderLogoUrlRemainsPersisted() = runBlocking {
+        val logoUrl = "https://provider.example.test/logo.png"
+        importer.importSubscription(
+            title = "Built-in provider",
+            source = DataSource.Provider,
+            account = account().copy(
+                ownerPackageName = null,
+                ownerServiceName = null,
+                ownerCertificateSha256 = null,
+            ),
+            accessToken = "built-in-token",
+            refresh = refresh(
+                channelTitle = "Built-in channel",
+                logoUrl = logoUrl,
+            ),
+        )
+
+        assertEquals(
+            logoUrl,
+            database.channelDao().getByPlaylistUrl(PLAYLIST_URL).single().cover,
+        )
+    }
+
     private suspend fun deactivateAndRevoke() {
         assertEquals(
             PRINCIPAL,
@@ -186,10 +230,12 @@ class ProviderPersistenceLifecycleGateTest {
         ownerCertificateSha256 = PRINCIPAL.certificateSha256,
     )
 
-    private fun refresh(channelTitle: String) = SubscriptionContentRefreshResult(
+    private fun refresh(
+        channelTitle: String,
+        logoUrl: String? = null,
+    ) = SubscriptionContentRefreshResult(
         source = SubscriptionSourceDescriptor(
             remoteId = SERVER_ID,
-            title = "Reference server",
             providerKind = PROVIDER_KIND,
         ),
         channels = listOf(
@@ -197,6 +243,7 @@ class ProviderPersistenceLifecycleGateTest {
                 remoteId = CHANNEL_ID,
                 title = channelTitle,
                 category = "News",
+                logoUrl = logoUrl,
                 playbackReference = PlaybackReference(
                     providerId = EXTENSION_ID,
                     itemId = ITEM_ID,

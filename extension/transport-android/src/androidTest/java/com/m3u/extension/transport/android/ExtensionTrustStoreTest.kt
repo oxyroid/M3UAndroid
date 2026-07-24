@@ -34,7 +34,7 @@ class ExtensionTrustStoreTest {
     }
 
     @Test
-    fun explicitGrantUpdateCanPreserveDisabledState() {
+    fun explicitGrantUpdatePersistsDisabledStateInTheSameTrustWrite() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         context.getSharedPreferences("extension-trust", Context.MODE_PRIVATE).edit().clear().commit()
         val store = ExtensionTrustStore(context)
@@ -46,8 +46,8 @@ class ExtensionTrustStoreTest {
             displayName = "Example",
             version = "1.0.0",
             developer = null,
+            enabled = false,
         )
-        store.setEnabled(service, false)
 
         store.trust(
             service = service,
@@ -56,8 +56,8 @@ class ExtensionTrustStoreTest {
             displayName = "Example",
             version = "1.1.0",
             developer = null,
+            enabled = false,
         )
-        store.setEnabled(service, false)
 
         assertTrue(store.isTrusted(service))
         assertFalse(store.isEnabled(service))

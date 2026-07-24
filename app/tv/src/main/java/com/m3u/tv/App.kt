@@ -38,7 +38,6 @@ import com.m3u.i18n.R.string
 
 @Composable
 fun App(
-    onBackPressed: () -> Unit,
     viewModel: TvHomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -58,12 +57,17 @@ fun App(
         surface = TvSurface.Browse
     }
 
-    BackHandler {
-        when {
-            surface == TvSurface.Player -> closePlayer()
-            state.providerSubscriptionForm != null -> viewModel.closeProviderSubscription()
-            state.extensionSettings != null -> viewModel.closeExtensionSettings()
-            else -> onBackPressed()
+    val backTarget = tvAppBackTarget(
+        playerVisible = surface == TvSurface.Player,
+        providerSubscriptionVisible = state.providerSubscriptionForm != null,
+        extensionSettingsVisible = state.extensionSettings != null,
+    )
+    BackHandler(enabled = backTarget != TvAppBackTarget.ACTIVITY) {
+        when (backTarget) {
+            TvAppBackTarget.PLAYER -> closePlayer()
+            TvAppBackTarget.PROVIDER_SUBSCRIPTION -> viewModel.closeProviderSubscription()
+            TvAppBackTarget.EXTENSION_SETTINGS -> viewModel.closeExtensionSettings()
+            TvAppBackTarget.ACTIVITY -> Unit
         }
     }
 
@@ -127,8 +131,14 @@ fun App(
                     viewModel.openExtensionSettings(extensionId, localeTag)
                 },
                 onCloseExtensionSettings = viewModel::closeExtensionSettings,
-                onUpdateExtensionSetting = { sectionId, fieldKey, value ->
-                    viewModel.updateExtensionSetting(sectionId, fieldKey, value, localeTag)
+                onUpdateExtensionSetting = { sectionId, fieldKey, editToken, value ->
+                    viewModel.updateExtensionSetting(
+                        sectionId,
+                        fieldKey,
+                        editToken,
+                        value,
+                        localeTag,
+                    )
                 },
                 onRefreshProviders = viewModel::refreshSubscriptionProviders,
                 onOpenProviderSubscription = viewModel::openProviderSubscription,

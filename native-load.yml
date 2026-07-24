@@ -13,12 +13,12 @@ distribution:
   producerProject: :app:smartphone
   runtimeConfigProject: :data
 pack:
-  id: nextlib-0.8.5
+  id: nextlib-1.9.1-0.10.1
   assetPrefix: m3u-codec
   manifestPrefix: m3u-codec
   artifacts:
-    - com.github.sintrs.nextlib:nextlib-media3ext:0.8.5
-    - com.github.sintrs.nextlib:nextlib-mediainfo:0.8.5
+    - io.github.anilbeesetti:nextlib-media3ext:1.9.1-0.10.1
+    - io.github.anilbeesetti:nextlib-mediainfo:1.9.1-0.10.1
   libraries:
     - avutil
     - swresample

@@ -2,21 +2,24 @@
 
 [简体中文](host-broker.zh-CN.md) · [Developer guide](README.md)
 
-A subscription provider supplies one form and five typed Hooks. M3UAndroid owns the form UI, account storage, refresh scheduling, channel import, and playback session recovery.
+A subscription provider supplies a connection form and five typed Hooks. M3UAndroid displays the
+form, stores the account, schedules refreshes, imports channels, and recovers playback sessions.
 
 The complete example is [`ReferenceExtensionService`](../../../testing/extension-reference/src/main/java/com/m3u/testing/extension/reference/ReferenceExtensionService.kt).
 
 ## The five Hooks
 
-| HookSpec | Request | Result |
-| --- | --- | --- |
-| `SubscriptionHookSpecs.Discover` | Locale | Provider name, variants, and form schema |
-| `SubscriptionHookSpecs.Validate` | Selected variant and submitted values | A successful host authentication receipt |
-| `SubscriptionHookSpecs.Refresh` | Account, credential handle, refresh reason, and previous sync metadata | Source and complete channel snapshot |
-| `SubscriptionHookSpecs.ResolvePlayback` | Account, credential handle, playback reference, and preferences | Playable URL, headers, and optional session |
-| `SubscriptionHookSpecs.ClosePlayback` | Account, credential handle, playback reference, session, and close reason | Close result |
+| HookSpec | Schema | Base capability | Request and result |
+| --- | --- | --- | --- |
+| `SubscriptionHookSpecs.Discover` | 3 | None | Locale → one Provider descriptor |
+| `SubscriptionHookSpecs.Validate` | 2 | `credential.write` | Submitted values → host authentication receipt |
+| `SubscriptionHookSpecs.Refresh` | 4 | `subscription.read` | Account and refresh reason → source and complete channel snapshot |
+| `SubscriptionHookSpecs.ResolvePlayback` | 4 | `playback.resolve` | Account and playback reference → URL, headers, and optional session |
+| `SubscriptionHookSpecs.ClosePlayback` | 3 | `playback.resolve` | Account, playback reference, and session → close result |
 
-Register each implemented `HookSpec` with `TypedExtensionService` and declare the same Hook and schema version in `ExtensionManifest`.
+Register every `HookSpec` with `TypedExtensionService`, then declare the same Hook and schema
+version in `ExtensionManifest`. Four Hooks make server requests and therefore use broker-backed
+handlers:
 
 ```kotlin
 init {
@@ -36,29 +39,40 @@ init {
 }
 ```
 
+`Discover` is offline. The other four Hooks declare `network`. Add `credential.read` when a broker
+request uses a submitted or saved credential handle.
+
 ## 1. Describe the provider and its form
 
-`Discover` returns `SubscriptionProviderDescriptor`. Keep `providerId` and each `ProviderKind` stable across releases. List variants in display order and declare every field used during validation.
+`Discover` returns one `SubscriptionProviderDescriptor`. Keep `providerId` and every
+`ProviderKind` stable between releases. List variants in display order and include every field
+needed for login.
 
 ```kotlin
-SubscriptionProviderDescriptor(
-    providerId = extensionManifest.id,
-    displayName = "Example Media Server",
-    variants = listOf(
-        SubscriptionProviderVariant(
-            kind = ProviderKind("example"),
-            displayName = "Example",
-        )
-    ),
-    settingsSchema = providerSettings,
+SubscriptionProviderDiscoverResult(
+    provider = SubscriptionProviderDescriptor(
+        providerId = extensionManifest.id,
+        displayName = "Example Media Server",
+        variants = listOf(
+            SubscriptionProviderVariant(
+                kind = ProviderKind("example"),
+                displayName = "Example",
+            )
+        ),
+        settingsSchema = providerSettings,
+    )
 )
 ```
 
-The schema must contain the required `base_url` text field. Use a `SECRET` field for a password or token. Submitted text is available in `request.settingValues`; secret fields are available in `request.credentialHandles`.
+The schema must contain the required `base_url` text field. Use a `SECRET` field for a password or
+token. Submitted text is available in `request.settingValues`; secret fields are available in
+`request.credentialHandles`.
 
 ## 2. Authenticate the account
 
-`Validate` sends the login exchange through `broker.authenticate(...)`. Tell the broker where the returned access credential is located and, when needed by later calls, which provider values to keep as opaque contexts.
+`Validate` sends the login exchange through `broker.authenticate(...)`. Tell the broker where the
+returned access credential is located and which server or user IDs M3UAndroid should keep to
+identify the account.
 
 ```kotlin
 val response = broker.authenticate(
@@ -91,30 +105,45 @@ return HookResult.Success(
 )
 ```
 
-The response contains only the status code and receipt. M3UAndroid consumes that receipt to create the account and store the credential. The plugin never parses or returns the login response body.
+The response contains only the status code and receipt. M3UAndroid consumes that receipt to create
+the account and store the credential. The plugin never parses or returns the login response body.
 
-See [Use the provider broker](reference/provider-broker.md) for request values, contexts, capabilities, and errors.
+See [Use the host network broker](reference/provider-broker.md) for request values, contexts,
+capabilities, and errors.
 
 ## 3. Return a complete refresh snapshot
 
-`Refresh` returns one `SubscriptionSourceDescriptor` and the complete current list of `SubscriptionChannelDescriptor` values. Every channel needs a stable `remoteId` and `PlaybackReference`.
+Return one `SubscriptionSourceDescriptor` and the complete channel snapshot. In schema 4 the source
+contains only `remoteId` and `providerKind`; it has no title.
 
-M3UAndroid compares this snapshot with stored provider data and preserves host-owned local channel state. Put only data understood by the next refresh in `syncMetadata`.
+```kotlin
+SubscriptionSourceDescriptor(
+    remoteId = request.account.serverId,
+    providerKind = request.account.providerKind,
+)
+```
+
+Every channel needs a stable `remoteId` and `PlaybackReference`. Keep only stable IDs in the
+reference. Resolve URLs, tokens, and cookies in `ResolvePlayback`.
+
+M3UAndroid compares this snapshot with stored provider data and preserves host-owned local channel state.
 
 ## 4. Resolve and close playback
 
-`ResolvePlayback` turns the supplied `PlaybackReference` into `PlaybackSourceResolveResult`. Return the playable URL, required headers, the selected media source ID when applicable, and a `PlaybackSessionDescriptor` when the server opens a session.
+`ResolvePlayback` returns the playable URL, required headers, selected media source ID, and an
+optional `PlaybackSessionDescriptor`. Use `BrokerValue` references for saved credentials and
+captured account values; M3UAndroid resolves them when making the request or opening the media.
 
-When a session is returned, `ClosePlayback` receives the same descriptor. Closing must be idempotent: an already-closed remote session is a successful result.
+When a session is returned, `ClosePlayback` receives the same descriptor and its own account-scoped
+broker. Closing must be idempotent. Return success when the remote session is already closed.
 
 ## Acceptance
 
-A provider is complete when:
+1. `Discover` returns one descriptor and every variant opens its form.
+2. Valid values complete host-managed authentication.
+3. Initial refresh imports one complete snapshot and creates the account.
+4. A channel resolves and plays with host-resolved headers.
+5. Stopping playback closes the remote session. Repeated close also succeeds.
 
-1. every declared variant opens the declared form;
-2. valid values create one account and import channels;
-3. refresh replaces the remote snapshot without losing local channel state;
-4. a channel resolves and plays with the required headers;
-5. stopping playback closes the remote session.
-
-Use [Test an extension](testing.md) for failure and update checks.
+Next: [send authenticated requests through the host broker](reference/provider-broker.md), then
+[test the extension](testing.md).

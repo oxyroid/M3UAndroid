@@ -1,5 +1,7 @@
 package com.m3u.extension.api
 
+import com.m3u.extension.api.subscription.ProviderAccountReference
+import com.m3u.extension.api.subscription.ProviderCredential
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -30,7 +32,15 @@ data class EpgRefreshRequest(
     val sourceIds: List<String>,
     val fromEpochMillis: Long,
     val toEpochMillis: Long,
-) : ExtensionPayload
+    val account: ProviderAccountReference? = null,
+    val credential: ProviderCredential? = null,
+) : ExtensionPayload {
+    init {
+        require((account == null) == (credential == null)) {
+            "Account-scoped EPG requests require both an account and credential"
+        }
+    }
+}
 
 @Serializable
 data class ExtensionProgramme(
@@ -39,13 +49,12 @@ data class ExtensionProgramme(
     val startEpochMillis: Long,
     val endEpochMillis: Long,
     val description: String? = null,
-    val metadata: Map<String, String> = emptyMap(),
+    val categories: List<String> = emptyList(),
 )
 
 @Serializable
 data class EpgRefreshResult(
     val programmes: List<ExtensionProgramme>,
-    val syncMetadata: Map<String, String> = emptyMap(),
 ) : ExtensionPayload
 
 @Serializable
@@ -53,20 +62,26 @@ data class ChannelMetadataSnapshot(
     val stableReference: String,
     val title: String,
     val category: String,
-    val metadata: Map<String, String> = emptyMap(),
 )
 
 @Serializable
 data class MetadataEnrichmentRequest(
     val channels: List<ChannelMetadataSnapshot>,
-) : ExtensionPayload
+    val account: ProviderAccountReference? = null,
+    val credential: ProviderCredential? = null,
+) : ExtensionPayload {
+    init {
+        require((account == null) == (credential == null)) {
+            "Account-scoped metadata requests require both an account and credential"
+        }
+    }
+}
 
 @Serializable
 data class ChannelMetadataPatch(
     val stableReference: String,
     val title: String? = null,
     val category: String? = null,
-    val metadata: Map<String, String> = emptyMap(),
 )
 
 @Serializable
@@ -77,23 +92,33 @@ data class MetadataEnrichmentResult(
 @Serializable
 data class SearchProviderRequest(
     val query: String,
+    val account: ProviderAccountReference? = null,
+    val credential: ProviderCredential? = null,
     val limit: Int = 50,
-    val continuationToken: String? = null,
-) : ExtensionPayload
+) : ExtensionPayload {
+    init {
+        require(query.isNotBlank() && query.encodeToByteArray().size <= 512)
+        require(limit in 1..100)
+        require((account == null) == (credential == null)) {
+            "Account-scoped search requests require both an account and credential"
+        }
+    }
+}
 
 @Serializable
 data class SearchProviderItem(
-    val stableReference: String,
-    val title: String,
-    val subtitle: String? = null,
-    val artworkUrl: String? = null,
-    val metadata: Map<String, String> = emptyMap(),
-)
+    val accountId: String,
+    val remoteId: String,
+) {
+    init {
+        require(accountId.isNotBlank() && accountId.encodeToByteArray().size <= 512)
+        require(remoteId.isNotBlank() && remoteId.encodeToByteArray().size <= 512)
+    }
+}
 
 @Serializable
 data class SearchProviderResult(
     val items: List<SearchProviderItem>,
-    val continuationToken: String? = null,
 ) : ExtensionPayload
 
 @Serializable
@@ -106,7 +131,6 @@ data class BackgroundTaskRequest(
 @Serializable
 data class BackgroundTaskResult(
     val output: Map<String, String> = emptyMap(),
-    val retryAfterMillis: Long? = null,
 ) : ExtensionPayload
 
 object HostHookSpecs {
@@ -118,25 +142,25 @@ object HostHookSpecs {
     )
     val EpgRefresh = HookSpec(
         ExtensionHookIds.EpgContentRefresh,
-        1,
+        4,
         EpgRefreshRequest.serializer(),
         EpgRefreshResult.serializer(),
     )
     val MetadataEnrichment = HookSpec(
         ExtensionHookIds.MetadataChannelEnrich,
-        1,
+        3,
         MetadataEnrichmentRequest.serializer(),
         MetadataEnrichmentResult.serializer(),
     )
     val SearchProvider = HookSpec(
         ExtensionHookIds.SearchProviderQuery,
-        1,
+        4,
         SearchProviderRequest.serializer(),
         SearchProviderResult.serializer(),
     )
     val BackgroundTask = HookSpec(
         ExtensionHookIds.BackgroundTaskRun,
-        1,
+        2,
         BackgroundTaskRequest.serializer(),
         BackgroundTaskResult.serializer(),
     )

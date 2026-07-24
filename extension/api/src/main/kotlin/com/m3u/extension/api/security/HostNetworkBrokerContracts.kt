@@ -1,6 +1,8 @@
 package com.m3u.extension.api.security
 
+import com.m3u.extension.api.ExtensionHookIds
 import com.m3u.extension.api.ExtensionPayload
+import com.m3u.extension.api.Hook
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -26,6 +28,23 @@ object BrokerProtocolVersions {
 
     fun negotiate(peerSupported: Set<Int>): Int? =
         Supported.intersect(peerSupported).maxOrNull()
+}
+
+/** Hooks that can receive a short-lived host network broker scope in the current API. */
+object HostNetworkBrokerHooks {
+    private val supported = setOf(
+        ExtensionHookIds.SubscriptionProviderValidate,
+        ExtensionHookIds.SubscriptionContentRefresh,
+        ExtensionHookIds.PlaybackSourceResolve,
+        ExtensionHookIds.PlaybackSessionClose,
+        ExtensionHookIds.MetadataChannelEnrich,
+        ExtensionHookIds.EpgContentRefresh,
+        ExtensionHookIds.SettingsSchemaContribute,
+        ExtensionHookIds.SearchProviderQuery,
+        ExtensionHookIds.BackgroundTaskRun,
+    )
+
+    fun supports(hook: Hook): Boolean = hook in supported
 }
 
 @Serializable
@@ -144,6 +163,12 @@ data class BrokeredHttpRequest(
     val body: List<BrokerValue> = emptyList(),
     val maximumResponseBytes: Int = 1_048_576,
 ) : ExtensionPayload {
+    init {
+        require(!url.referencesCredential()) {
+            "Ordinary broker request URLs cannot reference credentials"
+        }
+    }
+
     constructor(
         method: String,
         url: String,
@@ -159,6 +184,40 @@ data class BrokeredHttpRequest(
     )
 }
 
+object BrokerResponseRedaction {
+    const val RedactedValue = "***"
+
+    val AuthenticationFields: Set<String> = setOf(
+        "token",
+        "accessToken",
+        "refreshToken",
+        "idToken",
+        "authToken",
+        "bearerToken",
+        "sessionToken",
+        "password",
+        "secret",
+        "clientSecret",
+        "authorization",
+        "credential",
+        "apiKey",
+    )
+
+    fun isAuthenticationField(name: String): Boolean =
+        normalize(name) in NormalizedAuthenticationFields
+
+    private val NormalizedAuthenticationFields =
+        AuthenticationFields.mapTo(mutableSetOf(), ::normalize)
+
+    private fun normalize(name: String): String =
+        name.filter(Char::isLetterOrDigit).lowercase()
+}
+
+/**
+ * The host preserves [body] when no redaction is needed. It replaces values that echo
+ * host-resolved secrets or opaque contexts, and JSON values under fields recognized by
+ * [BrokerResponseRedaction], with [BrokerResponseRedaction.RedactedValue].
+ */
 @Serializable
 data class BrokeredHttpResponse(
     val statusCode: Int,
@@ -183,9 +242,10 @@ sealed interface ResponseValueSource {
     @SerialName("json_pointer")
     data class JsonPointer(val pointer: String) : ResponseValueSource {
         init {
-            require(pointer.startsWith('/') && pointer.length <= 512) {
-                "Authentication response JSON pointer must be absolute and bounded"
+            require(pointer.length <= 512 && (pointer.isEmpty() || pointer.startsWith('/'))) {
+                "Authentication response JSON pointer must be RFC 6901 and bounded"
             }
+            pointer.decodedPointerSegments()
         }
     }
 }
@@ -353,7 +413,30 @@ private fun ResponseValueSource.overlaps(other: ResponseValueSource): Boolean = 
 
 private fun String.decodedPointerSegments(): List<String> = split('/')
     .drop(1)
-    .map { segment -> segment.replace("~1", "/").replace("~0", "~") }
+    .map(String::decodePointerSegment)
+
+private fun String.decodePointerSegment(): String = buildString(length) {
+    var index = 0
+    while (index < this@decodePointerSegment.length) {
+        when (val character = this@decodePointerSegment[index++]) {
+            '~' -> {
+                require(index < this@decodePointerSegment.length) {
+                    "JSON pointer contains an incomplete escape"
+                }
+                append(
+                    when (this@decodePointerSegment[index++]) {
+                        '0' -> '~'
+                        '1' -> '/'
+                        else -> throw IllegalArgumentException(
+                            "JSON pointer contains an invalid escape"
+                        )
+                    }
+                )
+            }
+            else -> append(character)
+        }
+    }
+}
 
 private fun List<String>.isPrefixOf(other: List<String>): Boolean =
     size <= other.size && indices.all { index -> this[index] == other[index] }

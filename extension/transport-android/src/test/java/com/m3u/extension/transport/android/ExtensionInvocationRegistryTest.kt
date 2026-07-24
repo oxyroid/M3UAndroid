@@ -48,6 +48,57 @@ class ExtensionInvocationRegistryTest {
     }
 
     @Test
+    fun `transport failure completes exceptionally without reporting caller cancellation`() {
+        val remoteCancellations = ConcurrentLinkedQueue<InvocationId>()
+        val delivered = AtomicReference<Result<String>?>()
+        val localCancellations = AtomicInteger()
+        val bridge = RecordingCloseable()
+        val binderJob = Job()
+        val registry = ExtensionInvocationRegistry<String>(remoteCancellations::add)
+        val record = ExtensionInvocationRecord(
+            invocationId = INVOCATION_ID,
+            deliverCompletion = delivered::set,
+            deliverCancellation = { localCancellations.incrementAndGet() },
+        )
+        assertEquals(TransportInvocationRegistration.REGISTERED, registry.register(record))
+        record.attachJob(binderJob)
+        assertTrue(record.attachBridge(bridge))
+        val failure = ExtensionTransportUnavailableException("Binder connection was lost")
+
+        registry.fail(failure)
+        val lateResultAccepted = registry.complete(record, Result.success("late success"))
+        registry.release(record)
+
+        assertFalse(lateResultAccepted)
+        assertEquals(failure, delivered.get()?.exceptionOrNull())
+        assertEquals(0, localCancellations.get())
+        assertEquals(listOf(INVOCATION_ID), remoteCancellations.toList())
+        assertTrue(binderJob.isCancelled)
+        assertTrue(bridge.closed.get())
+    }
+
+    @Test
+    fun `job attached after transport failure is cancelled immediately`() {
+        val delivered = AtomicReference<Result<String>?>()
+        val registry = ExtensionInvocationRegistry<String> { }
+        val record = ExtensionInvocationRecord(
+            invocationId = INVOCATION_ID,
+            deliverCompletion = delivered::set,
+            deliverCancellation = { error("Transport failure must not report caller cancellation") },
+        )
+        assertEquals(TransportInvocationRegistration.REGISTERED, registry.register(record))
+        val failure = ExtensionTransportUnavailableException("Binder connection was lost")
+
+        registry.fail(failure)
+        val lateBinderJob = Job()
+        record.attachJob(lateBinderJob)
+
+        assertEquals(failure, delivered.get()?.exceptionOrNull())
+        assertTrue(lateBinderJob.isCancelled)
+        registry.release(record)
+    }
+
+    @Test
     fun `concurrent cancel paths share one terminal transition`() {
         repeat(100) { iteration ->
             val remoteCancellations = AtomicInteger()

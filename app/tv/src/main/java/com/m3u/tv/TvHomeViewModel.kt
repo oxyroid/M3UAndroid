@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.Player
+import com.m3u.business.setting.ExtensionSettingsOperationQueue
 import com.m3u.business.setting.ProviderDiscoveryState
 import com.m3u.business.setting.ProviderSubscriptionForm
 import com.m3u.business.setting.ProviderSubscriptionFormBuildResult
@@ -14,12 +15,14 @@ import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.repository.channel.ChannelRepository
+import com.m3u.data.repository.extension.ExtensionSettingEditToken
 import com.m3u.data.repository.extension.ExtensionSettingUpdateResult
 import com.m3u.data.repository.extension.ExtensionSettingsConfiguration
 import com.m3u.data.repository.extension.ExtensionSettingsRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.plugin.ExtensionPluginRepository
 import com.m3u.data.repository.plugin.InstalledPlugin
+import com.m3u.data.repository.plugin.PluginAuthorizationToken
 import com.m3u.data.repository.plugin.PluginDataClearResult
 import com.m3u.data.repository.plugin.PluginEnableResult
 import com.m3u.data.repository.provider.DiscoveredSubscriptionProvider
@@ -59,7 +62,7 @@ data class TvUiState(
     val externalExtensionsEnabled: Boolean = false,
     val extensionPlugins: List<InstalledPlugin> = emptyList(),
     val extensionSettings: ExtensionSettingsConfiguration? = null,
-    val extensionPluginError: String? = null,
+    val extensionPluginOperationFailed: Boolean = false,
     val providerDiscoveryState: ProviderDiscoveryState = ProviderDiscoveryState.Loading,
     val providerAccounts: List<ProviderAccountSummary> = emptyList(),
     val providerSubscriptionForm: ProviderSubscriptionForm? = null,
@@ -103,6 +106,20 @@ class TvHomeViewModel @Inject constructor(
     private var loadChannelsJob: Job? = null
     private var providerDiscoveryJob: Job? = null
     private var providerSubscriptionJob: Job? = null
+    private var extensionSettingsLoadJob: Job? = null
+    private var extensionSettingsRequestedId: ExtensionId? = null
+    private var extensionSettingsGeneration = 0L
+    private var extensionSettingsUpdateGeneration = 0L
+    private val extensionSettingsOperationQueue = ExtensionSettingsOperationQueue(
+        scope = viewModelScope,
+        onFailure = {
+            _state.update {
+                it.copy(
+                    extensionPluginOperationFailed = true,
+                )
+            }
+        },
+    )
 
     init {
         observePlaylists()
@@ -156,72 +173,140 @@ class TvHomeViewModel @Inject constructor(
         viewModelScope.launch { settings[PreferencesKeys.EXTERNAL_EXTENSIONS] = enabled }
     }
 
-    fun enableExtensionPlugin(packageName: String, serviceName: String) {
+    fun enableExtensionPlugin(
+        packageName: String,
+        serviceName: String,
+        authorizationToken: PluginAuthorizationToken,
+    ) {
         viewModelScope.launch {
-            updateExtensionPluginResult(extensionPluginRepository.enable(packageName, serviceName))
+            updateExtensionPluginResult(
+                extensionPluginRepository.enable(
+                    packageName,
+                    serviceName,
+                    authorizationToken,
+                )
+            )
             refreshExtensionPlugins()
         }
     }
 
-    fun reauthorizeExtensionPlugin(packageName: String, serviceName: String) {
+    fun reauthorizeExtensionPlugin(
+        packageName: String,
+        serviceName: String,
+        authorizationToken: PluginAuthorizationToken,
+    ) {
         viewModelScope.launch {
-            updateExtensionPluginResult(extensionPluginRepository.reauthorize(packageName, serviceName))
+            updateExtensionPluginResult(
+                extensionPluginRepository.reauthorize(
+                    packageName,
+                    serviceName,
+                    authorizationToken,
+                )
+            )
             refreshExtensionPlugins()
         }
     }
 
     fun disableExtensionPlugin(extensionId: String) {
-        if (state.value.extensionSettings?.extensionId?.value == extensionId) {
-            closeExtensionSettings()
-        }
+        closeExtensionSettingsIfActive(extensionId)
         viewModelScope.launch {
             extensionPluginRepository.disable(extensionId)
             refreshExtensionPlugins()
         }
     }
 
-    fun revokeExtensionPlugin(packageName: String, serviceName: String) {
-        val revokedExtensionId = state.value.extensionPlugins
-            .firstOrNull { it.packageName == packageName && it.serviceName == serviceName }
-            ?.extensionId
-        if (state.value.extensionSettings?.extensionId?.value == revokedExtensionId) {
-            closeExtensionSettings()
+    fun revokeExtensionPlugin(
+        packageName: String,
+        serviceName: String,
+        extensionId: String?,
+    ) {
+        if (extensionId == null) {
+            reportExtensionOperationFailure()
+            return
         }
-        viewModelScope.launch {
+        closeExtensionSettingsIfActive(extensionId)
+        extensionSettingsOperationQueue.launchDestructive(extensionId) {
             extensionPluginRepository.revoke(packageName, serviceName)
+            _state.update {
+                it.copy(
+                    extensionPluginOperationFailed = false,
+                )
+            }
             refreshExtensionPlugins()
         }
     }
 
     fun openExtensionSettings(extensionId: String, localeTag: String?) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val configuration = extensionSettingsRepository.configuration(
-                ExtensionId(extensionId),
-                localeTag,
-                TV_SETTINGS_SURFACE,
-            )
-            _state.update { it.copy(extensionSettings = configuration) }
+        val requestedExtensionId = ExtensionId(extensionId)
+        val generation = ++extensionSettingsGeneration
+        extensionSettingsLoadJob?.cancel()
+        extensionSettingsRequestedId = requestedExtensionId
+        _state.update { it.copy(extensionSettings = null) }
+        extensionSettingsLoadJob = extensionSettingsOperationQueue.launchOperation(extensionId) {
+            val configuration = withContext(Dispatchers.IO) {
+                extensionSettingsRepository.configuration(
+                    requestedExtensionId,
+                    localeTag,
+                    TV_SETTINGS_SURFACE,
+                )
+            }
+            if (generation == extensionSettingsGeneration) {
+                _state.update {
+                    it.copy(
+                        extensionSettings = configuration,
+                        extensionPluginOperationFailed = false,
+                    )
+                }
+            }
         }
     }
 
     fun closeExtensionSettings() {
+        extensionSettingsGeneration++
+        extensionSettingsLoadJob?.cancel()
+        extensionSettingsLoadJob = null
+        extensionSettingsRequestedId = null
         _state.update { it.copy(extensionSettings = null) }
     }
 
-    fun clearExtensionData(packageName: String, serviceName: String) {
-        val extensionId = state.value.extensionPlugins
-            .firstOrNull { plugin ->
-                plugin.packageName == packageName && plugin.serviceName == serviceName
-            }
-            ?.extensionId
-        if (state.value.extensionSettings?.extensionId?.value == extensionId) {
+    private fun closeExtensionSettingsIfActive(extensionId: String) {
+        if (
+            state.value.extensionSettings?.extensionId?.value == extensionId ||
+            extensionSettingsRequestedId?.value == extensionId
+        ) {
             closeExtensionSettings()
         }
-        viewModelScope.launch(Dispatchers.IO) {
-            when (val result = extensionPluginRepository.clearData(packageName, serviceName)) {
-                is PluginDataClearResult.Cleared -> Unit
+    }
+
+    fun clearExtensionData(
+        packageName: String,
+        serviceName: String,
+        extensionId: String?,
+    ) {
+        if (extensionId == null) {
+            reportExtensionOperationFailure()
+            return
+        }
+        closeExtensionSettingsIfActive(extensionId)
+        extensionSettingsOperationQueue.launchDestructive(extensionId) {
+            when (
+                val result = withContext(Dispatchers.IO) {
+                    extensionPluginRepository.clearData(packageName, serviceName)
+                }
+            ) {
+                is PluginDataClearResult.Cleared -> {
+                    _state.update {
+                        it.copy(
+                            extensionPluginOperationFailed = false,
+                        )
+                    }
+                }
                 is PluginDataClearResult.Rejected -> {
-                    _state.update { it.copy(extensionPluginError = result.reason) }
+                    _state.update {
+                        it.copy(
+                            extensionPluginOperationFailed = true,
+                        )
+                    }
                 }
             }
         }
@@ -238,26 +323,43 @@ class TvHomeViewModel @Inject constructor(
     fun updateExtensionSetting(
         sectionId: String,
         fieldKey: String,
+        editToken: ExtensionSettingEditToken,
         rawValue: String?,
         localeTag: String?,
     ) {
         val extensionId = state.value.extensionSettings?.extensionId ?: return
-        viewModelScope.launch(Dispatchers.IO) {
-            val result = extensionSettingsRepository.update(
-                extensionId,
-                sectionId,
-                fieldKey,
-                rawValue,
-                localeTag,
-                TV_SETTINGS_SURFACE,
-            )
-            if (result is ExtensionSettingUpdateResult.Updated) {
-                val configuration = extensionSettingsRepository.configuration(
+        val generation = extensionSettingsGeneration
+        val updateGeneration = ++extensionSettingsUpdateGeneration
+        extensionSettingsOperationQueue.launchUpdate(extensionId.value) update@{
+            val result = withContext(Dispatchers.IO) {
+                val update = extensionSettingsRepository.update(
                     extensionId,
-                    localeTag,
-                    TV_SETTINGS_SURFACE,
+                    sectionId,
+                    fieldKey,
+                    editToken,
+                    rawValue,
                 )
-                _state.update { it.copy(extensionSettings = configuration) }
+                TvExtensionSettingsRefreshResult(
+                    configuration = extensionSettingsRepository.configuration(
+                        extensionId,
+                        localeTag,
+                        TV_SETTINGS_SURFACE,
+                    ),
+                    rejected = update is ExtensionSettingUpdateResult.Rejected,
+                )
+            }
+            if (
+                generation != extensionSettingsGeneration ||
+                updateGeneration != extensionSettingsUpdateGeneration ||
+                state.value.extensionSettings?.extensionId != extensionId
+            ) {
+                return@update
+            }
+            _state.update {
+                it.copy(
+                    extensionSettings = result.configuration,
+                    extensionPluginOperationFailed = result.rejected,
+                )
             }
         }
     }
@@ -534,10 +636,15 @@ class TvHomeViewModel @Inject constructor(
     private fun updateExtensionPluginResult(result: PluginEnableResult) {
         _state.update { state ->
             state.copy(
-                extensionPluginError = when (result) {
-                    is PluginEnableResult.Enabled -> null
-                    is PluginEnableResult.Rejected -> result.reason
-                }
+                extensionPluginOperationFailed = result is PluginEnableResult.Rejected,
+            )
+        }
+    }
+
+    private fun reportExtensionOperationFailure() {
+        _state.update {
+            it.copy(
+                extensionPluginOperationFailed = true,
             )
         }
     }
@@ -621,3 +728,8 @@ class TvHomeViewModel @Inject constructor(
         const val TV_SETTINGS_SURFACE = "tv"
     }
 }
+
+private data class TvExtensionSettingsRefreshResult(
+    val configuration: ExtensionSettingsConfiguration?,
+    val rejected: Boolean,
+)

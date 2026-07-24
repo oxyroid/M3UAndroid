@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
+
 plugins {
     alias(libs.plugins.com.android.application)
     alias(libs.plugins.compose.compiler)
@@ -6,6 +8,17 @@ plugins {
     alias(libs.plugins.androidx.baselineprofile)
     id("kotlin-parcelize")
     id("dev.oxyroid.native-load")
+}
+
+extensions.configure<KotlinAndroidProjectExtension> {
+    compilerOptions {
+        optIn.addAll(
+            "androidx.compose.material3.ExperimentalMaterial3Api",
+            "androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi",
+            "androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi",
+            "com.google.accompanist.permissions.ExperimentalPermissionsApi",
+        )
+    }
 }
 
 val m3uMockServerUrl = providers.gradleProperty("m3uMockServerUrl").orElse("http://10.0.2.2:8080")

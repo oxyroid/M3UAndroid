@@ -8,6 +8,7 @@ import com.m3u.extension.api.Hook
 import com.m3u.extension.api.security.BrokerScopeHandle
 import com.m3u.extension.api.security.ContextReference
 import com.m3u.extension.api.security.CredentialHandle
+import com.m3u.extension.api.security.HostNetworkBrokerHooks
 import com.m3u.extension.api.security.ProviderAuthenticationReceipt
 import java.util.UUID
 import javax.inject.Inject
@@ -106,7 +107,7 @@ internal class ProviderBrokerScopeStore private constructor(
             principal = principal,
             kind = ProviderBrokerScopeKind.AUTHENTICATION,
             allowedHook = ExtensionHookIds.SubscriptionProviderValidate,
-            approvedOrigin = approvedOrigin,
+            approvedOrigins = setOf(approvedOrigin),
             accountId = null,
             credentials = credentials,
             capturedHandles = emptySet(),
@@ -122,6 +123,7 @@ internal class ProviderBrokerScopeStore private constructor(
         allowedHook: Hook,
         account: ProviderAccount,
         credential: ProviderCredentialEntity,
+        additionalCredentials: Map<CredentialHandle, String> = emptyMap(),
         ttlMillis: Long = defaultTtlMillis,
     ): BrokerScopeHandle = synchronized(lock) {
         requireActive(principal)
@@ -130,6 +132,9 @@ internal class ProviderBrokerScopeStore private constructor(
         }
         require(credential.accountId == account.id) {
             "Provider credential does not belong to the provider account"
+        }
+        require(additionalCredentials.size < maximumCredentialsPerScope) {
+            "Account scope contains too many extension credentials"
         }
         val now = clock()
         purgeExpiredLocked(now)
@@ -140,18 +145,96 @@ internal class ProviderBrokerScopeStore private constructor(
             ?: error("Provider credential is unavailable")
         val material = ProviderCredentialMaterial.decode(encryptedMaterial)
         val handle = CredentialHandle(credential.credentialHandle)
+        require(handle !in additionalCredentials) {
+            "Provider and extension credential handles must be distinct"
+        }
         val scopeHandle = nextScopeHandleLocked()
         scopes[scopeHandle] = ScopeRecord(
             principal = principal,
             kind = ProviderBrokerScopeKind.ACCOUNT,
             allowedHook = allowedHook,
-            approvedOrigin = approvedOrigin,
+            approvedOrigins = setOf(approvedOrigin),
             accountId = account.id,
-            credentials = mapOf(handle to material.primaryCredential),
+            credentials = additionalCredentials + (handle to material.primaryCredential),
             capturedHandles = emptySet(),
             opaqueContexts = material.opaqueContexts,
             authenticationReceipts = emptyMap(),
             expiresAtEpochMillis = expiresAt,
+        )
+        scopeHandle
+    }
+
+    fun mintAccountNetworkScope(
+        principal: ExtensionPrincipal,
+        allowedHook: Hook,
+        account: ProviderAccount,
+        ttlMillis: Long = defaultTtlMillis,
+    ): BrokerScopeHandle = synchronized(lock) {
+        requireActive(principal)
+        require(principal.owns(account)) {
+            "Extension principal does not own the provider account"
+        }
+        val now = clock()
+        purgeExpiredLocked(now)
+        requireCapacityLocked()
+        val scopeHandle = nextScopeHandleLocked()
+        scopes[scopeHandle] = ScopeRecord(
+            principal = principal,
+            kind = ProviderBrokerScopeKind.ACCOUNT,
+            allowedHook = allowedHook,
+            approvedOrigins = setOf(account.baseUrl.toCanonicalHttpOrigin()),
+            accountId = account.id,
+            credentials = emptyMap(),
+            capturedHandles = emptySet(),
+            opaqueContexts = emptyMap(),
+            authenticationReceipts = emptyMap(),
+            expiresAtEpochMillis = expiresAt(now, ttlMillis),
+        )
+        scopeHandle
+    }
+
+    fun mintHookScope(
+        principal: ExtensionPrincipal,
+        allowedHook: Hook,
+        approvedOrigins: Set<String>,
+        credentials: Map<CredentialHandle, String>,
+        ttlMillis: Long = defaultTtlMillis,
+    ): BrokerScopeHandle = synchronized(lock) {
+        require(HostNetworkBrokerHooks.supports(allowedHook)) {
+            "Hook does not support the host network broker"
+        }
+        require(approvedOrigins.isNotEmpty()) {
+            "Hook broker scope requires at least one approved origin"
+        }
+        require(approvedOrigins.size <= DEFAULT_MAXIMUM_ORIGINS_PER_SCOPE) {
+            "Hook broker scope contains too many approved origins"
+        }
+        require(credentials.size <= maximumCredentialsPerScope) {
+            "Hook broker scope contains too many credentials"
+        }
+        requireActive(principal)
+        val canonicalOrigins = approvedOrigins.mapTo(
+            linkedSetOf(),
+            String::toCanonicalExactHttpOrigin,
+        )
+        require(canonicalOrigins.size == approvedOrigins.size) {
+            "Hook broker scope origins must be unique"
+        }
+        val now = clock()
+        purgeExpiredLocked(now)
+        requireCapacityLocked()
+        val scopeHandle = nextScopeHandleLocked()
+        scopes[scopeHandle] = ScopeRecord(
+            principal = principal,
+            kind = ProviderBrokerScopeKind.HOOK,
+            allowedHook = allowedHook,
+            approvedOrigins = canonicalOrigins,
+            accountId = null,
+            credentials = credentials.toMap(),
+            capturedHandles = emptySet(),
+            opaqueContexts = emptyMap(),
+            authenticationReceipts = emptyMap(),
+            expiresAtEpochMillis = expiresAt(now, ttlMillis),
         )
         scopeHandle
     }
@@ -241,7 +324,7 @@ internal class ProviderBrokerScopeStore private constructor(
         scopes[scope] = record.copy(authenticationReceipts = emptyMap())
         CapturedProviderAuthentication(
             credentialHandle = credentialHandle,
-            approvedOrigin = record.approvedOrigin,
+            approvedOrigin = record.approvedOrigins.single(),
             opaqueContexts = record.opaqueContexts,
         )
     }
@@ -271,7 +354,7 @@ internal class ProviderBrokerScopeStore private constructor(
             principal = principal,
             kind = ProviderBrokerScopeKind.INITIAL_REFRESH,
             allowedHook = ExtensionHookIds.SubscriptionContentRefresh,
-            approvedOrigin = record.approvedOrigin,
+            approvedOrigins = record.approvedOrigins,
             accountId = null,
             credentials = mapOf(capturedHandle to capturedSecret),
             capturedHandles = setOf(capturedHandle),
@@ -390,7 +473,7 @@ internal class ProviderBrokerScopeStore private constructor(
         scope = handle,
         kind = kind,
         allowedHook = allowedHook,
-        approvedOrigin = approvedOrigin,
+        approvedOrigins = approvedOrigins,
         accountId = accountId,
         credentialHandles = credentials.keys.toSet(),
         opaqueContextKeys = opaqueContexts.keys,
@@ -401,7 +484,7 @@ internal class ProviderBrokerScopeStore private constructor(
         val principal: ExtensionPrincipal,
         val kind: ProviderBrokerScopeKind,
         val allowedHook: Hook,
-        val approvedOrigin: String,
+        val approvedOrigins: Set<String>,
         val accountId: String?,
         val credentials: Map<CredentialHandle, String>,
         val capturedHandles: Set<CredentialHandle>,
@@ -414,6 +497,7 @@ internal class ProviderBrokerScopeStore private constructor(
         const val DEFAULT_TTL_MILLIS = 60_000L
         const val DEFAULT_MAXIMUM_SCOPES = 128
         const val DEFAULT_MAXIMUM_CREDENTIALS_PER_SCOPE = 16
+        const val DEFAULT_MAXIMUM_ORIGINS_PER_SCOPE = 16
         const val MAXIMUM_CONTEXTS_PER_SCOPE = 16
         const val MAXIMUM_CONTEXT_VALUE_BYTES = 4 * 1024
         const val MAXIMUM_HANDLE_GENERATION_ATTEMPTS = 16
@@ -424,12 +508,15 @@ internal data class ProviderBrokerScopeAccess(
     val scope: BrokerScopeHandle,
     val kind: ProviderBrokerScopeKind,
     val allowedHook: Hook,
-    val approvedOrigin: String,
+    val approvedOrigins: Set<String>,
     val accountId: String?,
     val credentialHandles: Set<CredentialHandle>,
     val opaqueContextKeys: Set<String>,
     val expiresAtEpochMillis: Long,
-)
+) {
+    val approvedOrigin: String
+        get() = approvedOrigins.single()
+}
 
 internal data class CapturedProviderAuthentication(
     val credentialHandle: CredentialHandle,
@@ -441,6 +528,7 @@ internal enum class ProviderBrokerScopeKind {
     AUTHENTICATION,
     INITIAL_REFRESH,
     ACCOUNT,
+    HOOK,
 }
 
 private data class ProviderBrokerScopeConfiguration(

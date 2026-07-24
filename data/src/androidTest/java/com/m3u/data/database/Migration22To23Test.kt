@@ -10,6 +10,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.m3u.data.database.model.ProviderCredentialEntity
 import com.m3u.data.extension.security.CredentialVault
 import com.m3u.extension.api.security.CredentialHandle
+import java.nio.charset.StandardCharsets
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -37,7 +38,10 @@ class Migration22To23Test {
                     "(id, provider_id, provider_kind, base_url, server_id, server_name, server_version, user_id, username, playlist_url) " +
                     "VALUES ('a', 'com.example', 'emby', 'https://example.test', 's', 'Server', '1', 'u', 'user', 'm3u-provider://account/a/live')"
             )
-            execSQL("INSERT INTO provider_credentials (account_id, access_token) VALUES ('a', 'plain-token')")
+            execSQL(
+                "INSERT INTO provider_credentials (account_id, access_token) " +
+                    "VALUES ('a', '$PLAINTEXT_TOKEN')"
+            )
             close()
         }
 
@@ -45,6 +49,8 @@ class Migration22To23Test {
         val database = Room.databaseBuilder(context, M3UDatabase::class.java, DATABASE_NAME)
             .allowMainThreadQueries()
             .addMigrations(DatabaseMigrations.migration22To23(TestCredentialVault))
+            .addMigrations(DatabaseMigrations.MIGRATION_24_25)
+            .addMigrations(DatabaseMigrations.MIGRATION_25_26)
             .build()
         val migrated = database.openHelper.writableDatabase
 
@@ -56,7 +62,7 @@ class Migration22To23Test {
         migrated.query("SELECT credential_handle, ciphertext, nonce, key_version FROM provider_credentials").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals("handle-a", cursor.getString(0))
-            assertEquals("encrypted-plain-token", cursor.getString(1))
+            assertEquals("encrypted-value", cursor.getString(1))
             assertEquals("nonce", cursor.getString(2))
             assertEquals(1, cursor.getInt(3))
         }
@@ -68,6 +74,13 @@ class Migration22To23Test {
             assertFalse("access_token" in columns)
         }
         database.close()
+        context.getDatabasePath(DATABASE_NAME).parentFile
+            ?.listFiles { file -> file.name.startsWith(DATABASE_NAME) }
+            .orEmpty()
+            .forEach { file ->
+                val physicalContents = String(file.readBytes(), StandardCharsets.ISO_8859_1)
+                assertFalse(physicalContents.contains(PLAINTEXT_TOKEN))
+            }
     }
 
     @Test
@@ -96,6 +109,8 @@ class Migration22To23Test {
         )
             .allowMainThreadQueries()
             .addMigrations(DatabaseMigrations.migration22To23(FailingCredentialVault))
+            .addMigrations(DatabaseMigrations.MIGRATION_24_25)
+            .addMigrations(DatabaseMigrations.MIGRATION_25_26)
             .build()
         val migrated = database.openHelper.writableDatabase
 
@@ -124,7 +139,7 @@ class Migration22To23Test {
             ProviderCredentialEntity(
                 accountId = accountId,
                 credentialHandle = credentialHandle ?: "handle-$accountId",
-                ciphertext = "encrypted-$secret",
+                ciphertext = "encrypted-value",
                 nonce = "nonce",
                 keyVersion = 1,
             )
@@ -153,5 +168,6 @@ class Migration22To23Test {
     private companion object {
         const val DATABASE_NAME = "migration-22-23"
         const val FAILED_DATABASE_NAME = "migration-22-23-encryption-failure"
+        const val PLAINTEXT_TOKEN = "unique-legacy-plaintext-token"
     }
 }

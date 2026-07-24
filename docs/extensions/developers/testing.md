@@ -30,7 +30,7 @@ Use the corresponding task for your extension module.
 
 ## 3. Trigger the Hook from M3UAndroid
 
-Refresh the extension list after updating the extension, then use the matching M3UAndroid feature.
+Run the current extension build with M3UAndroid, then use the feature that owns the Hook.
 
 | Hook | Acceptance result |
 | --- | --- |
@@ -38,9 +38,13 @@ Refresh the extension list after updating the extension, then use the matching M
 | `search.provider.query` | Returned stable references promote matching visible channels in phone search. |
 | `metadata.channel.enrich` | A generic provider refresh applies patches only to channels in the request. |
 | `epg.content.refresh` | A refresh imports returned programmes; a failed call preserves the previous contribution. |
-| Provider discover and validate | The subscription form shows the descriptor schema, and valid credentials create the account. |
-| Provider refresh | The imported playlist contains the returned channel snapshot. |
-| Provider playback and close | The resolved source plays with its returned headers, and stopping playback closes its remote session. |
+| `background.task.run` | Enabling the extension schedules each declaration. Disabling it cancels the work. A network task waits for a connection. |
+| Provider discover and validate | Discover returns one descriptor. The form uses its schema. Valid input completes host-managed authentication. |
+| Provider refresh | The account is saved only after initial refresh succeeds. The imported playlist contains the complete snapshot. |
+| Provider playback and close | A same-origin source plays with host-resolved headers. Stopping playback closes the remote session. |
+
+The reference provider test covers discovery, rejected and successful login, initial and later
+refresh, playback resolution, header resolution, and session close through the external transport.
 
 ## 4. Check failure behavior
 
@@ -51,7 +55,12 @@ For each Hook, trigger one expected failure and confirm:
 - no partly valid result is applied;
 - cancellation stops long-running work.
 
-Provider tests should also cover rejected credentials, a failed refresh that preserves stored data, an invalid playback result, and repeated session close.
+For a broker-backed Hook, also confirm that an approved origin works, an unapproved origin and
+cross-origin redirect fail. Missing `network` must be rejected; when a request uses a credential
+handle, missing `credential.read` must also be rejected.
+
+Provider tests should also cover rejected credentials, a failed refresh that preserves stored data,
+an invalid playback result, and repeated session close.
 
 ## 5. Verify an update
 

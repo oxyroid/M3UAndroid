@@ -23,9 +23,19 @@ import com.m3u.extension.api.InvocationId
 import com.m3u.extension.api.SerializedExtensionEnvelope
 import com.m3u.extension.api.SettingsSchemaRequest
 import com.m3u.extension.api.SettingsSchemaResult
-import com.m3u.extension.api.security.BrokeredHttpRequest
-import com.m3u.extension.api.security.BrokeredHttpResponse
-import com.m3u.extension.api.security.BrokerValue
+import com.m3u.extension.api.security.BrokerAuthenticationRequest
+import com.m3u.extension.api.security.BrokerAuthenticationResponse
+import com.m3u.extension.api.security.BrokerHttpExchange
+import com.m3u.extension.api.security.BrokerOperation
+import com.m3u.extension.api.security.BrokerOperationResult
+import com.m3u.extension.api.security.BrokerScopeHandle
+import com.m3u.extension.api.security.ProviderAuthenticationReceipt
+import com.m3u.extension.api.security.ResponseValueSource
+import com.m3u.extension.api.subscription.ProviderKind
+import com.m3u.extension.api.subscription.ProviderValidationEvidence
+import com.m3u.extension.api.subscription.SubscriptionHookSpecs
+import com.m3u.extension.api.subscription.SubscriptionProviderValidateRequest
+import com.m3u.extension.api.subscription.SubscriptionProviderValidateResult
 import com.m3u.extension.runtime.ExtensionTransportHealth
 import java.util.concurrent.CancellationException
 import kotlin.test.Test
@@ -45,6 +55,17 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 
 class TypedExtensionServiceTest {
+    @Test
+    fun `handshake compatibility follows API major and hook schema separately`() {
+        val range = ExtensionApiRange(
+            minimum = ExtensionApiVersion(major = 1, minor = 0),
+            maximum = ExtensionApiVersion(major = 1, minor = 0),
+        )
+
+        assertTrue(range.supportsHostApiMajor(1))
+        assertFalse(range.supportsHostApiMajor(2))
+    }
+
     private val json = Json { ignoreUnknownKeys = true; explicitNulls = false }
 
     @Test
@@ -91,43 +112,60 @@ class TypedExtensionServiceTest {
     }
 
     @Test
-    fun `broker-backed typed handler receives the invocation-scoped broker`() = runBlocking {
-        lateinit var receivedBrokerRequest: BrokeredHttpRequest
+    fun `offline hook cannot register a broker-backed handler`() {
         val registry = TypedHookRegistry().apply {
-            handleWithBroker(HostHookSpecs.SettingsSchema) { _, _, broker ->
-                val response = broker.execute(
-                    BrokeredHttpRequest(
-                        method = "GET",
-                        url = "https://media.example.test/system/info",
-                    )
-                )
-                assertEquals(204, response.statusCode)
-                HookResult.Success(SETTINGS_RESULT)
+            assertFailsWith<IllegalArgumentException> {
+                handleWithBroker(SubscriptionHookSpecs.Discover) { _, _, _ ->
+                    error("Discovery must remain offline")
+                }
             }
         }
-        val transport = registry.createTransport(manifest(), json)
-        val broker = ExtensionHostNetworkBroker.forHttpTesting { request ->
-            receivedBrokerRequest = request
-            BrokeredHttpResponse(
-                statusCode = 204,
-                headers = emptyMap(),
-                body = "",
+        registry.handle(HostHookSpecs.SettingsSchema) { _, _ -> HookResult.Success(SETTINGS_RESULT) }
+    }
+
+    @Test
+    fun `provider handler receives broker only with a host scope`() = runBlocking {
+        val registry = TypedHookRegistry().apply {
+            handleWithBroker(SubscriptionHookSpecs.Validate) { _, _, broker ->
+                val response = broker.authenticate(
+                    BrokerAuthenticationRequest(
+                        exchange = BrokerHttpExchange(
+                            method = "POST",
+                            url = "https://media.example.test/login",
+                        ),
+                        primaryCredentialSource = ResponseValueSource.JsonPointer("/token"),
+                    )
+                )
+                HookResult.Success(
+                    SubscriptionProviderValidateResult(
+                        ProviderValidationEvidence.HostBrokerReceipt(
+                            requireNotNull(response.receipt)
+                        )
+                    )
+                )
+            }
+        }
+        val transport = registry.createTransport(providerManifest(), json)
+        val broker = ExtensionHostNetworkBroker.forTesting { operation ->
+            assertTrue(operation is BrokerOperation.Authenticate)
+            BrokerOperationResult.Authentication(
+                BrokerAuthenticationResponse(
+                    statusCode = 200,
+                    receipt = ProviderAuthenticationReceipt("receipt-1"),
+                )
             )
         }
 
-        val result = transport.invoke(envelope(), broker)
+        val result = transport.invoke(providerEnvelope(BrokerScopeHandle("scope-1")), broker)
 
-        assertEquals("GET", receivedBrokerRequest.method)
         assertEquals(
-            BrokerValue.Literal(
-                "https://media.example.test/system/info"
+            SubscriptionProviderValidateResult(
+                ProviderValidationEvidence.HostBrokerReceipt(
+                    ProviderAuthenticationReceipt("receipt-1")
+                )
             ),
-            receivedBrokerRequest.url,
-        )
-        assertEquals(
-            SETTINGS_RESULT,
             json.decodeFromJsonElement(
-                HostHookSpecs.SettingsSchema.responseSerializer,
+                SubscriptionHookSpecs.Validate.responseSerializer,
                 requireNotNull(result.payload),
             ),
         )
@@ -137,14 +175,20 @@ class TypedExtensionServiceTest {
     fun `broker-backed typed handler fails safely when invoked without a host broker`() = runBlocking {
         var invoked = false
         val registry = TypedHookRegistry().apply {
-            handleWithBroker(HostHookSpecs.SettingsSchema) { _, _, _ ->
+            handleWithBroker(SubscriptionHookSpecs.Validate) { _, _, _ ->
                 invoked = true
-                HookResult.Success(SETTINGS_RESULT)
+                HookResult.Success(
+                    SubscriptionProviderValidateResult(
+                        ProviderValidationEvidence.HostBrokerReceipt(
+                            ProviderAuthenticationReceipt("receipt-1")
+                        )
+                    )
+                )
             }
         }
-        val transport = registry.createTransport(manifest(), json)
+        val transport = registry.createTransport(providerManifest(), json)
 
-        val result = transport.invoke(envelope())
+        val result = transport.invoke(providerEnvelope(brokerScope = null))
 
         assertFalse(invoked)
         assertEquals(ExtensionErrorCodes.InvocationFailed, result.error?.code)
@@ -277,6 +321,25 @@ class TypedExtensionServiceTest {
         grantedCapabilities = grantedCapabilities,
     )
 
+    private fun providerEnvelope(
+        brokerScope: BrokerScopeHandle?,
+    ) = SerializedExtensionEnvelope(
+        apiVersion = ExtensionApiVersions.Current,
+        invocationId = InvocationId("provider-call-1"),
+        extensionId = EXTENSION_ID,
+        hook = SubscriptionHookSpecs.Validate.hook,
+        schemaVersion = SubscriptionHookSpecs.Validate.schemaVersion,
+        payload = json.encodeToJsonElement(
+            SubscriptionHookSpecs.Validate.requestSerializer,
+            SubscriptionProviderValidateRequest(ProviderKind("test")),
+        ),
+        grantedCapabilities = setOf(
+            ExtensionCapabilityIds.Network,
+            ExtensionCapabilityIds.CredentialWrite,
+        ),
+        brokerScope = brokerScope,
+    )
+
     private fun manifest(
         apiRange: ExtensionApiRange = ExtensionApiRange(
             minimum = ExtensionApiVersions.Current,
@@ -299,6 +362,36 @@ class TypedExtensionServiceTest {
                 capability = ExtensionCapabilityIds.SettingsContribute,
                 reason = "Contribute settings",
             )
+        ),
+    )
+
+    private fun providerManifest() = ExtensionManifest(
+        id = EXTENSION_ID,
+        displayName = "Typed provider SDK test",
+        extensionVersion = ExtensionSemanticVersion(1, 0, 0),
+        apiRange = ExtensionApiRange(
+            minimum = ExtensionApiVersions.Current,
+            maximum = ExtensionApiVersions.Current,
+        ),
+        hooks = setOf(
+            ExtensionHookDeclaration(
+                hook = SubscriptionHookSpecs.Validate.hook,
+                schemaVersion = SubscriptionHookSpecs.Validate.schemaVersion,
+                requiredCapabilities = setOf(
+                    ExtensionCapabilityIds.Network,
+                    ExtensionCapabilityIds.CredentialWrite,
+                ),
+            )
+        ),
+        capabilities = setOf(
+            ExtensionCapabilityRequest(
+                capability = ExtensionCapabilityIds.Network,
+                reason = "Connect to the provider",
+            ),
+            ExtensionCapabilityRequest(
+                capability = ExtensionCapabilityIds.CredentialWrite,
+                reason = "Capture provider login",
+            ),
         ),
     )
 

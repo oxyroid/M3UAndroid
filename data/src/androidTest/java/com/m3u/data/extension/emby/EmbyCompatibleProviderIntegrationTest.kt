@@ -95,7 +95,8 @@ class EmbyCompatibleProviderIntegrationTest {
             client.closePlayback(
                 account = validation.account,
                 accessToken = validation.accessToken,
-                reference = reference.copy(mediaSourceId = playback.mediaSourceId),
+                itemId = reference.itemId,
+                mediaSourceId = playback.mediaSourceId,
                 session = requireNotNull(playback.session),
             )
         )

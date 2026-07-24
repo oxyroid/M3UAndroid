@@ -4,8 +4,9 @@ import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import androidx.work.WorkManager
-import com.m3u.data.worker.ProviderSessionCleanupWorker
 import com.m3u.data.worker.ExtensionPluginBootstrapWorker
+import com.m3u.data.worker.ProviderCredentialRecoveryWorker
+import com.m3u.data.worker.ProviderSessionCleanupWorker
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
@@ -16,7 +17,10 @@ class M3UApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
-        ProviderSessionCleanupWorker.enqueue(WorkManager.getInstance(this))
+        ProviderCredentialRecoveryWorker.enqueue(WorkManager.getInstance(this))
+        ProviderSessionCleanupWorker.enqueue(
+            workManager = WorkManager.getInstance(this),
+        )
         ExtensionPluginBootstrapWorker.enqueue(WorkManager.getInstance(this))
     }
 

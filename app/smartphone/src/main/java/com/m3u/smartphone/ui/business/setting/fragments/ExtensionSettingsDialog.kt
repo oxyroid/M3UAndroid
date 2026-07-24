@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -17,15 +19,19 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.m3u.data.repository.extension.ExtensionSettingEditToken
 import com.m3u.data.repository.extension.ExtensionSettingsConfiguration
 import com.m3u.extension.api.ExtensionSettingField
 import com.m3u.extension.api.ExtensionSettingKeys
@@ -39,9 +45,14 @@ import kotlinx.serialization.json.contentOrNull
 internal fun ExtensionSettingsDialog(
     configuration: ExtensionSettingsConfiguration,
     onDismiss: () -> Unit,
-    onUpdate: (sectionId: String, fieldKey: String, rawValue: String?) -> Unit,
+    onUpdate: (
+        sectionId: String,
+        fieldKey: String,
+        editToken: ExtensionSettingEditToken,
+        rawValue: String?,
+    ) -> Unit,
 ) {
-    val draftValues = remember(configuration) {
+    val draftValues = remember(configuration.extensionId) {
         mutableStateMapOf<String, String>().apply {
             configuration.sections.forEach { section ->
                 section.schema.fields.forEach { field ->
@@ -52,6 +63,21 @@ internal fun ExtensionSettingsDialog(
                 }
             }
         }
+    }
+    LaunchedEffect(configuration) {
+        val activeKeys = mutableSetOf<String>()
+        configuration.sections.forEach { section ->
+            section.schema.fields.forEach { field ->
+                val key = ExtensionSettingKeys.qualified(section.id, field.key)
+                activeKeys += key
+                draftValues[key] = if (field.type == ExtensionSettingType.SECRET) {
+                    ""
+                } else {
+                    configuration.snapshot.values[key].primitiveContent()
+                }
+            }
+        }
+        draftValues.keys.retainAll(activeKeys)
     }
 
     AlertDialog(
@@ -72,12 +98,24 @@ internal fun ExtensionSettingsDialog(
                     Text(section.title, style = MaterialTheme.typography.titleMedium)
                     section.schema.fields.forEach { field ->
                         val key = ExtensionSettingKeys.qualified(section.id, field.key)
+                        val editToken = checkNotNull(
+                            configuration.editToken(section.id, field.key)
+                        )
                         ExtensionSettingControl(
                             field = field,
                             rawValue = draftValues[key].orEmpty(),
                             secretConfigured = key in configuration.snapshot.credentialHandles,
                             onDraftChange = { value -> draftValues[key] = value },
-                            onUpdate = { value -> onUpdate(section.id, field.key, value) },
+                            onUpdate = { value ->
+                                draftValues[key] = if (
+                                    field.type == ExtensionSettingType.SECRET
+                                ) {
+                                    ""
+                                } else {
+                                    value.orEmpty()
+                                }
+                                onUpdate(section.id, field.key, editToken, value)
+                            },
                         )
                     }
                 }
@@ -102,15 +140,29 @@ private fun ExtensionSettingControl(
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         when (field.type) {
             ExtensionSettingType.BOOLEAN -> {
+                val checked = rawValue.toBooleanStrictOrNull() ?: false
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .toggleable(
+                            value = checked,
+                            role = Role.Switch,
+                            onValueChange = { value -> onUpdate(value.toString()) },
+                        )
+                        .padding(vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    SettingLabel(field)
+                    SettingLabel(
+                        field = field,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = 16.dp),
+                    )
                     Switch(
-                        checked = rawValue.toBooleanStrictOrNull() ?: false,
-                        onCheckedChange = { checked -> onUpdate(checked.toString()) },
+                        checked = checked,
+                        onCheckedChange = null,
+                        modifier = Modifier.clearAndSetSemantics {},
                     )
                 }
             }
@@ -168,6 +220,15 @@ private fun ExtensionSettingControl(
                         }
                     }
                 }
+                if (field.networkOrigin) {
+                    Text(
+                        text = stringResource(
+                            string.feat_setting_extension_network_origin_save_notice
+                        ),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
             }
         }
         field.description?.let { description ->
@@ -177,8 +238,14 @@ private fun ExtensionSettingControl(
 }
 
 @Composable
-private fun SettingLabel(field: ExtensionSettingField) {
-    Text(if (field.required) "${field.label} *" else field.label)
+private fun SettingLabel(
+    field: ExtensionSettingField,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = if (field.required) "${field.label} *" else field.label,
+        modifier = modifier,
+    )
 }
 
 private fun Any?.primitiveContent(): String = when (this) {

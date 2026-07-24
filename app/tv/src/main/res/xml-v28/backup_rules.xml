@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <include domain="file" path="datastore/settings.preferences_pb" />
+    <include domain="database" path="." requireFlags="deviceToDeviceTransfer" />
+    <include domain="file" path="." requireFlags="deviceToDeviceTransfer" />
+    <include domain="sharedpref" path="." />
+
+    <exclude domain="sharedpref" path="extension-settings.xml" />
+    <exclude domain="sharedpref" path="extension-setting-secrets.xml" />
+    <exclude domain="sharedpref" path="extension-trust.xml" />
+    <exclude domain="sharedpref" path="subscription_provider.xml" />
+</full-backup-content>

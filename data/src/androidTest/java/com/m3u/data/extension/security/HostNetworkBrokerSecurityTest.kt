@@ -23,6 +23,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.OkHttpClient
@@ -43,9 +44,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class HostNetworkBrokerSecurityTest {
     @Test
     fun brokerEnforcesScopeOriginAndAuthenticationBoundaries() = runBlocking {
-        var observedAuthorization: String? = null
         val client = OkHttpClient.Builder().addInterceptor { chain ->
-            observedAuthorization = chain.request().header("Authorization")
             Response.Builder()
                 .request(chain.request())
                 .protocol(Protocol.HTTP_1_1)
@@ -54,7 +53,17 @@ class HostNetworkBrokerSecurityTest {
                 .header("Set-Cookie", "session=must-not-leak")
                 .header("X-Auth-Token", "must-not-leak")
                 .header("ETag", "safe-etag")
-                .body("""{"value":"safe","accessToken":"must-not-leak"}""".toResponseBody())
+                .body(
+                    """
+                    {
+                      "value": "safe",
+                      "accessToken": "must-not-leak",
+                      "nextPageToken": "page-token",
+                      "continuationToken": "continuation-token",
+                      "tokenType": "Bearer"
+                    }
+                    """.trimIndent().toResponseBody()
+                )
                 .build()
         }.build()
         val fixture = accountFixture(client)
@@ -116,26 +125,410 @@ class HostNetworkBrokerSecurityTest {
             scope = fixture.scope,
             principal = PRINCIPAL,
             hook = ACCOUNT_HOOK,
-            request = request(
-                "$BASE_URL/items",
-                headers = mapOf(
-                    "Authorization" to BrokerValue.Secret(
-                        SecretReference(fixture.credentialHandle)
-                    )
-                ),
-            ),
+            request = request("$BASE_URL/items"),
         )
 
-        assertEquals("secret-token", observedAuthorization)
-        assertTrue(response.body.contains("safe"))
-        assertFalse(response.body.contains("must-not-leak"))
+        val responseBody = Json.parseToJsonElement(response.body).jsonObject
+        assertEquals("safe", responseBody.getValue("value").jsonPrimitive.content)
+        assertEquals("***", responseBody.getValue("accessToken").jsonPrimitive.content)
+        assertEquals("page-token", responseBody.getValue("nextPageToken").jsonPrimitive.content)
+        assertEquals(
+            "continuation-token",
+            responseBody.getValue("continuationToken").jsonPrimitive.content,
+        )
+        assertEquals("Bearer", responseBody.getValue("tokenType").jsonPrimitive.content)
         assertFalse(response.headers.keys.any { it.equals("Set-Cookie", ignoreCase = true) })
         assertFalse(response.headers.keys.any { it.equals("X-Auth-Token", ignoreCase = true) })
         assertEquals("safe-etag", response.headers["ETag"])
     }
 
     @Test
-    fun brokerEncodesComposedCredentialValuesInsideHost() = runBlocking {
+    fun brokerPreservesOriginalJsonWhenNoSensitiveFieldOrValueNeedsRedaction() = runBlocking {
+        val serverBody =
+            """
+            {
+              "nextPageToken": "page-token",
+              "continuationToken": "continuation-token",
+              "tokenType": "Bearer",
+              "tokenExpiry": 3600,
+              "credentialType": "opaque",
+              "secretary": "Ada"
+            }
+            """.trimIndent()
+        val fixture = accountFixture(
+            OkHttpClient.Builder().addInterceptor { chain ->
+                Response.Builder()
+                    .request(chain.request())
+                    .protocol(Protocol.HTTP_1_1)
+                    .code(200)
+                    .message("OK")
+                    .body(serverBody.toResponseBody())
+                    .build()
+            }.build()
+        )
+
+        val response = fixture.broker.execute(
+            scope = fixture.scope,
+            principal = PRINCIPAL,
+            hook = ACCOUNT_HOOK,
+            request = request("$BASE_URL/items"),
+        )
+
+        assertEquals(serverBody, response.body)
+    }
+
+    @Test
+    fun brokerRedactsAuthenticationFieldsAfterUtf8Bom() = runBlocking {
+        val fixture = accountFixture(
+            OkHttpClient.Builder().addInterceptor { chain ->
+                Response.Builder()
+                    .request(chain.request())
+                    .protocol(Protocol.HTTP_1_1)
+                    .code(200)
+                    .message("OK")
+                    .body(
+                        (
+                            "\uFEFF" +
+                                """{"accessToken":"fresh-token","nextPageToken":"page-token"}"""
+                        ).toResponseBody()
+                    )
+                    .build()
+            }.build()
+        )
+
+        val response = fixture.broker.execute(
+            scope = fixture.scope,
+            principal = PRINCIPAL,
+            hook = ACCOUNT_HOOK,
+            request = request("$BASE_URL/items"),
+        )
+
+        val responseBody = Json.parseToJsonElement(response.body).jsonObject
+        assertEquals("***", responseBody.getValue("accessToken").jsonPrimitive.content)
+        assertEquals("page-token", responseBody.getValue("nextPageToken").jsonPrimitive.content)
+    }
+
+    @Test
+    fun brokerPreservesUtf8BomWhenJsonNeedsNoRedaction() = runBlocking {
+        val serverBody = "\uFEFF" + """{"nextPageToken":"page-token"}"""
+        val fixture = accountFixture(
+            OkHttpClient.Builder().addInterceptor { chain ->
+                Response.Builder()
+                    .request(chain.request())
+                    .protocol(Protocol.HTTP_1_1)
+                    .code(200)
+                    .message("OK")
+                    .body(serverBody.toResponseBody())
+                    .build()
+            }.build()
+        )
+
+        val response = fixture.broker.execute(
+            scope = fixture.scope,
+            principal = PRINCIPAL,
+            hook = ACCOUNT_HOOK,
+            request = request("$BASE_URL/items"),
+        )
+
+        assertEquals(serverBody, response.body)
+    }
+
+    @Test
+    fun brokerRedactsOnlyTheClosedAuthenticationFieldSet() = runBlocking {
+        val fixture = accountFixture(
+            OkHttpClient.Builder().addInterceptor { chain ->
+                Response.Builder()
+                    .request(chain.request())
+                    .protocol(Protocol.HTTP_1_1)
+                    .code(200)
+                    .message("OK")
+                    .body(
+                        """
+                        {
+                          "access_token": "access",
+                          "refreshToken": "refresh",
+                          "client-secret": "client",
+                          "apiKey": "api",
+                          "password": "password",
+                          "nextPageToken": "page",
+                          "continuationToken": "continuation",
+                          "credentialType": "opaque",
+                          "secretary": "Ada"
+                        }
+                        """.trimIndent().toResponseBody()
+                    )
+                    .build()
+            }.build()
+        )
+
+        val response = fixture.broker.execute(
+            scope = fixture.scope,
+            principal = PRINCIPAL,
+            hook = ACCOUNT_HOOK,
+            request = request("$BASE_URL/items"),
+        )
+
+        val responseBody = Json.parseToJsonElement(response.body).jsonObject
+        listOf(
+            "access_token",
+            "refreshToken",
+            "client-secret",
+            "apiKey",
+            "password",
+        ).forEach { key ->
+            assertEquals("***", responseBody.getValue(key).jsonPrimitive.content)
+        }
+        assertEquals("page", responseBody.getValue("nextPageToken").jsonPrimitive.content)
+        assertEquals(
+            "continuation",
+            responseBody.getValue("continuationToken").jsonPrimitive.content,
+        )
+        assertEquals("opaque", responseBody.getValue("credentialType").jsonPrimitive.content)
+        assertEquals("Ada", responseBody.getValue("secretary").jsonPrimitive.content)
+    }
+
+    @Test
+    fun accountBrokerInjectsScopedCredentialAndContextWithoutReturningTheirValues() = runBlocking {
+        var observedPath: String? = null
+        var observedAuthorization: String? = null
+        var observedBody: String? = null
+        val client = OkHttpClient.Builder().addInterceptor { chain ->
+            observedPath = chain.request().url.encodedPath
+            observedAuthorization = chain.request().header("Authorization")
+            observedBody = chain.request().body?.let { body ->
+                Buffer().also(body::writeTo).readUtf8()
+            }
+            Response.Builder()
+                .request(chain.request())
+                .protocol(Protocol.HTTP_1_1)
+                .code(200)
+                .message("OK")
+                .header("ETag", "secret-token")
+                .body(
+                    """{"token":"secret-token","user":"opaque-user","value":"safe"}"""
+                        .toResponseBody()
+                )
+                .build()
+        }.build()
+        val fixture = accountFixture(client)
+        val credential = BrokerValue.Secret(
+            SecretReference(CredentialHandle("persistent:account-token"))
+        )
+        val user = BrokerValue.Context(ContextReference("user_id"))
+
+        val response = fixture.broker.execute(
+            scope = fixture.scope,
+            principal = PRINCIPAL,
+            hook = ACCOUNT_HOOK,
+            request = BrokeredHttpRequest(
+                method = "POST",
+                url = BrokerValue.Concatenated(
+                    listOf(
+                        BrokerValue.Literal("$BASE_URL/users/"),
+                        BrokerValue.Encoded(user, BrokerValueEncoding.FormUrlComponent),
+                        BrokerValue.Literal("/items"),
+                    )
+                ),
+                headers = mapOf(
+                    "Authorization" to BrokerValue.Concatenated(
+                        listOf(BrokerValue.Literal("Bearer "), credential)
+                    ),
+                    "Content-Type" to BrokerValue.Literal("application/json"),
+                ),
+                body = listOf(
+                    BrokerValue.Literal("""{"user":"""),
+                    BrokerValue.Encoded(user, BrokerValueEncoding.JsonString),
+                    BrokerValue.Literal(""","token":"""),
+                    BrokerValue.Encoded(credential, BrokerValueEncoding.JsonString),
+                    BrokerValue.Literal("}"),
+                ),
+            ),
+        )
+
+        assertEquals("/users/opaque-user/items", observedPath)
+        assertEquals("Bearer secret-token", observedAuthorization)
+        assertEquals(
+            """{"user":"opaque-user","token":"secret-token"}""",
+            observedBody,
+        )
+        val responseBody = Json.parseToJsonElement(response.body).jsonObject
+        assertEquals("***", responseBody.getValue("token").jsonPrimitive.content)
+        assertEquals("***", responseBody.getValue("user").jsonPrimitive.content)
+        assertEquals("safe", responseBody.getValue("value").jsonPrimitive.content)
+        assertFalse(response.body.contains("secret-token"))
+        assertFalse(response.body.contains("opaque-user"))
+        assertNull(response.headers["ETag"])
+    }
+
+    @Test
+    fun brokerRedactsResolvedValuesUsedAsJsonObjectKeys() = runBlocking {
+        val fixture = accountFixture(
+            OkHttpClient.Builder().addInterceptor { chain ->
+                Response.Builder()
+                    .request(chain.request())
+                    .protocol(Protocol.HTTP_1_1)
+                    .code(200)
+                    .message("OK")
+                    .body("""{"secret-token":"value"}""".toResponseBody())
+                    .build()
+            }.build()
+        )
+
+        val response = fixture.broker.execute(
+            scope = fixture.scope,
+            principal = PRINCIPAL,
+            hook = ACCOUNT_HOOK,
+            request = BrokeredHttpRequest(
+                method = "GET",
+                url = "$BASE_URL/items",
+                headers = mapOf(
+                    "Authorization" to BrokerValue.Secret(
+                        SecretReference(CredentialHandle("persistent:account-token"))
+                    )
+                ),
+            ),
+        )
+
+        assertEquals(
+            "value",
+            Json.parseToJsonElement(response.body)
+                .jsonObject
+                .getValue("***")
+                .jsonPrimitive
+                .content,
+        )
+        assertFalse(response.body.contains("secret-token"))
+    }
+
+    @Test
+    fun brokerKeepsRootAndArrayJsonValidWhileRedactingResolvedValues() = runBlocking {
+        val responseBodies = ArrayDeque(
+            listOf(
+                "\"prefix-secret-token-suffix\"",
+                """["opaque-user","safe"]""",
+            )
+        )
+        val fixture = accountFixture(
+            OkHttpClient.Builder().addInterceptor { chain ->
+                Response.Builder()
+                    .request(chain.request())
+                    .protocol(Protocol.HTTP_1_1)
+                    .code(200)
+                    .message("OK")
+                    .body(responseBodies.removeFirst().toResponseBody())
+                    .build()
+            }.build()
+        )
+        val request = BrokeredHttpRequest(
+            method = "GET",
+            url = "$BASE_URL/items",
+            headers = mapOf(
+                "Authorization" to BrokerValue.Secret(
+                    SecretReference(CredentialHandle("persistent:account-token"))
+                ),
+                "X-Provider-User" to BrokerValue.Context(ContextReference("user_id")),
+            ),
+        )
+
+        val root = fixture.broker.execute(
+            scope = fixture.scope,
+            principal = PRINCIPAL,
+            hook = ACCOUNT_HOOK,
+            request = request,
+        )
+        val array = fixture.broker.execute(
+            scope = fixture.scope,
+            principal = PRINCIPAL,
+            hook = ACCOUNT_HOOK,
+            request = request,
+        )
+
+        assertEquals(
+            "prefix-***-suffix",
+            Json.parseToJsonElement(root.body).jsonPrimitive.content,
+        )
+        assertEquals(
+            "***",
+            Json.parseToJsonElement(array.body).jsonArray.first().jsonPrimitive.content,
+        )
+        assertEquals(
+            "safe",
+            Json.parseToJsonElement(array.body).jsonArray.last().jsonPrimitive.content,
+        )
+    }
+
+    @Test
+    fun brokerRejectsJsonKeyCollisionsCreatedBySensitiveValueRedaction() = runBlocking {
+        val fixture = accountFixture(
+            OkHttpClient.Builder().addInterceptor { chain ->
+                Response.Builder()
+                    .request(chain.request())
+                    .protocol(Protocol.HTTP_1_1)
+                    .code(200)
+                    .message("OK")
+                    .body("""{"secret-token":"first","***":"second"}""".toResponseBody())
+                    .build()
+            }.build()
+        )
+
+        val failure = brokerFailure {
+            fixture.broker.execute(
+                scope = fixture.scope,
+                principal = PRINCIPAL,
+                hook = ACCOUNT_HOOK,
+                request = BrokeredHttpRequest(
+                    method = "GET",
+                    url = "$BASE_URL/items",
+                    headers = mapOf(
+                        "Authorization" to BrokerValue.Secret(
+                            SecretReference(CredentialHandle("persistent:account-token"))
+                        )
+                    ),
+                ),
+            )
+        }
+
+        assertEquals(BrokerErrorCodes.InvalidRequest, failure.code)
+        assertFalse(failure.recoverable)
+    }
+
+    @Test
+    fun brokerRedactsTheUnionOfOverlappingSensitiveValues() = runBlocking {
+        val fixture = accountFixture(
+            client = OkHttpClient.Builder().addInterceptor { chain ->
+                Response.Builder()
+                    .request(chain.request())
+                    .protocol(Protocol.HTTP_1_1)
+                    .code(200)
+                    .message("OK")
+                    .body("abcde".toResponseBody())
+                    .build()
+            }.build(),
+            primaryCredential = "ab",
+            userId = "bcde",
+        )
+
+        val response = fixture.broker.execute(
+            scope = fixture.scope,
+            principal = PRINCIPAL,
+            hook = ACCOUNT_HOOK,
+            request = BrokeredHttpRequest(
+                method = "GET",
+                url = "$BASE_URL/items",
+                headers = mapOf(
+                    "X-Primary" to BrokerValue.Secret(
+                        SecretReference(CredentialHandle("persistent:account-token"))
+                    ),
+                    "X-Context" to BrokerValue.Context(ContextReference("user_id")),
+                ),
+            ),
+        )
+
+        assertEquals("***", response.body)
+    }
+
+    @Test
+    fun authenticationHandlesUtf8BomWhileEncodingCredentialsAndReturningOnlyAReceipt() = runBlocking {
         val secret = "p\"a\\ss\n& +"
         var observedAuthorization: String? = null
         var observedFormValue: String? = null
@@ -151,45 +544,56 @@ class HostNetworkBrokerSecurityTest {
                 .protocol(Protocol.HTTP_1_1)
                 .code(200)
                 .message("OK")
-                .body("{}".toResponseBody())
+                .body(("\uFEFF" + """{"accessToken":"captured-token"}""").toResponseBody())
                 .build()
         }.build()
-        val fixture = accountFixture(client, secret)
-        val secretValue = BrokerValue.Secret(SecretReference(fixture.credentialHandle))
-
-        fixture.broker.execute(
-            scope = fixture.scope,
+        val vault = FakeCredentialVault()
+        val registry = ActiveExtensionPrincipalRegistry().apply { activate(PRINCIPAL) }
+        val store = scopeStore(vault, registry)
+        val password = vault.stage(secret)
+        val scope = store.mintAuthenticationScope(
             principal = PRINCIPAL,
-            hook = ACCOUNT_HOOK,
-            request = BrokeredHttpRequest(
-                method = "POST",
-                url = "$BASE_URL/items",
-                headers = mapOf(
-                    "Content-Type" to BrokerValue.Literal("application/json"),
-                    "Authorization" to BrokerValue.Concatenated(
-                        listOf(
-                            BrokerValue.Literal("Basic "),
-                            BrokerValue.Encoded(
-                                value = BrokerValue.Concatenated(
-                                    listOf(BrokerValue.Literal("user:"), secretValue)
+            approvedBaseUrl = BASE_URL,
+            transientCredentials = mapOf("password" to password),
+        )
+        val secretValue = BrokerValue.Secret(SecretReference(password))
+
+        val response = HostNetworkBrokerImpl(client, store).authenticate(
+            scope = scope,
+            principal = PRINCIPAL,
+            hook = ExtensionHookIds.SubscriptionProviderValidate,
+            request = BrokerAuthenticationRequest(
+                exchange = BrokerHttpExchange(
+                    method = "POST",
+                    url = "$BASE_URL/login",
+                    headers = mapOf(
+                        "Content-Type" to BrokerValue.Literal("application/json"),
+                        "Authorization" to BrokerValue.Concatenated(
+                            listOf(
+                                BrokerValue.Literal("Basic "),
+                                BrokerValue.Encoded(
+                                    value = BrokerValue.Concatenated(
+                                        listOf(BrokerValue.Literal("user:"), secretValue)
+                                    ),
+                                    encoding = BrokerValueEncoding.Base64,
                                 ),
-                                encoding = BrokerValueEncoding.Base64,
-                            ),
-                        )
+                            )
+                        ),
+                        "X-Form-Value" to BrokerValue.Encoded(
+                            value = secretValue,
+                            encoding = BrokerValueEncoding.FormUrlComponent,
+                        ),
                     ),
-                    "X-Form-Value" to BrokerValue.Encoded(
-                        value = secretValue,
-                        encoding = BrokerValueEncoding.FormUrlComponent,
+                    body = listOf(
+                        BrokerValue.Literal("{\"password\":"),
+                        BrokerValue.Encoded(
+                            value = secretValue,
+                            encoding = BrokerValueEncoding.JsonString,
+                        ),
+                        BrokerValue.Literal("}"),
                     ),
                 ),
-                body = listOf(
-                    BrokerValue.Literal("{\"password\":"),
-                    BrokerValue.Encoded(
-                        value = secretValue,
-                        encoding = BrokerValueEncoding.JsonString,
-                    ),
-                    BrokerValue.Literal("}"),
-                ),
+                primaryCredentialSource = ResponseValueSource.JsonPointer("/accessToken"),
             ),
         )
 
@@ -201,6 +605,9 @@ class HostNetworkBrokerSecurityTest {
         assertEquals("p%22a%5Css%0A%26+%2B", observedFormValue)
         assertEquals(secret, Json.parseToJsonElement(checkNotNull(observedBody))
             .jsonObject.getValue("password").jsonPrimitive.content)
+        assertEquals(200, response.statusCode)
+        assertTrue(response.receipt != null)
+        assertFalse(Json.encodeToString(response).contains("captured-token"))
     }
 
     @Test
@@ -304,6 +711,172 @@ class HostNetworkBrokerSecurityTest {
     }
 
     @Test
+    fun brokerRejectsResponseBeyondWireSafeBodyLimit() = runBlocking {
+        val fixture = accountFixture(
+            OkHttpClient.Builder().addInterceptor { chain ->
+                Response.Builder()
+                    .request(chain.request())
+                    .protocol(Protocol.HTTP_1_1)
+                    .code(200)
+                    .message("OK")
+                    .body("x".repeat(721 * 1024).toResponseBody())
+                    .build()
+            }.build()
+        )
+
+        val failure = brokerFailure {
+            fixture.broker.execute(
+                scope = fixture.scope,
+                principal = PRINCIPAL,
+                hook = ACCOUNT_HOOK,
+                request = request("$BASE_URL/items").copy(
+                    maximumResponseBytes = 4 * 1024 * 1024
+                ),
+            )
+        }
+
+        assertEquals(BrokerErrorCodes.ResponseTooLarge, failure.code)
+        assertFalse(failure.recoverable)
+    }
+
+    @Test
+    fun deeplyNestedServerJsonIsRejectedBeforeTreeParsing() = runBlocking {
+        val deeplyNestedBody = nestedArrays(depth = 65, value = "\"captured\"")
+        val accountFixture = accountFixture(
+            OkHttpClient.Builder().addInterceptor { chain ->
+                Response.Builder()
+                    .request(chain.request())
+                    .protocol(Protocol.HTTP_1_1)
+                    .code(200)
+                    .message("OK")
+                    .body(deeplyNestedBody.toResponseBody())
+                    .build()
+            }.build()
+        )
+        val ordinaryFailure = brokerFailure {
+            accountFixture.broker.execute(
+                scope = accountFixture.scope,
+                principal = PRINCIPAL,
+                hook = ACCOUNT_HOOK,
+                request = request("$BASE_URL/items"),
+            )
+        }
+        assertEquals(BrokerErrorCodes.ResponseTooLarge, ordinaryFailure.code)
+
+        val vault = FakeCredentialVault()
+        val registry = ActiveExtensionPrincipalRegistry().apply { activate(PRINCIPAL) }
+        val store = scopeStore(vault, registry)
+        val authenticationScope = store.mintAuthenticationScope(
+            principal = PRINCIPAL,
+            approvedBaseUrl = BASE_URL,
+            transientCredentials = emptyMap(),
+        )
+        val authenticationFailure = brokerFailure {
+            HostNetworkBrokerImpl(
+                OkHttpClient.Builder().addInterceptor { chain ->
+                    Response.Builder()
+                        .request(chain.request())
+                        .protocol(Protocol.HTTP_1_1)
+                        .code(200)
+                        .message("OK")
+                        .body(deeplyNestedBody.toResponseBody())
+                        .build()
+                }.build(),
+                store,
+            ).authenticate(
+                scope = authenticationScope,
+                principal = PRINCIPAL,
+                hook = ExtensionHookIds.SubscriptionProviderValidate,
+                request = BrokerAuthenticationRequest(
+                    exchange = BrokerHttpExchange(method = "GET", url = "$BASE_URL/login"),
+                    primaryCredentialSource = ResponseValueSource.JsonPointer(""),
+                ),
+            )
+        }
+        assertEquals(BrokerErrorCodes.ResponseTooLarge, authenticationFailure.code)
+    }
+
+    @Test
+    fun brokerBoundsSensitiveRedactionVariantsBeforeSendingRequest() = runBlocking {
+        var requestReachedServer = false
+        val fixture = accountFixture(
+            OkHttpClient.Builder().addInterceptor { chain ->
+                requestReachedServer = true
+                Response.Builder()
+                    .request(chain.request())
+                    .protocol(Protocol.HTTP_1_1)
+                    .code(200)
+                    .message("OK")
+                    .body("{}".toResponseBody())
+                    .build()
+            }.build()
+        )
+        val secret = BrokerValue.Secret(
+            SecretReference(CredentialHandle("persistent:account-token"))
+        )
+        val failure = brokerFailure {
+            fixture.broker.execute(
+                scope = fixture.scope,
+                principal = PRINCIPAL,
+                hook = ACCOUNT_HOOK,
+                request = BrokeredHttpRequest(
+                    method = "POST",
+                    url = "$BASE_URL/items",
+                    body = List(33) { index ->
+                        BrokerValue.Concatenated(
+                            listOf(BrokerValue.Literal("$index:"), secret)
+                        )
+                    },
+                ),
+            )
+        }
+
+        assertEquals(BrokerErrorCodes.InvalidRequest, failure.code)
+        assertFalse(requestReachedServer)
+    }
+
+    @Test
+    fun brokerRedactsManyLongSharedPrefixesInOneBoundedPass() = runBlocking {
+        val responseBody = "a".repeat(720 * 1024)
+        val fixture = accountFixture(
+            OkHttpClient.Builder().addInterceptor { chain ->
+                Response.Builder()
+                    .request(chain.request())
+                    .protocol(Protocol.HTTP_1_1)
+                    .code(200)
+                    .message("OK")
+                    .body(responseBody.toResponseBody())
+                    .build()
+            }.build()
+        )
+        val secret = BrokerValue.Secret(
+            SecretReference(CredentialHandle("persistent:account-token"))
+        )
+
+        val response = withTimeout(5_000L) {
+            fixture.broker.execute(
+                scope = fixture.scope,
+                principal = PRINCIPAL,
+                hook = ACCOUNT_HOOK,
+                request = BrokeredHttpRequest(
+                    method = "POST",
+                    url = "$BASE_URL/items",
+                    body = List(31) { index ->
+                        BrokerValue.Concatenated(
+                            listOf(
+                                BrokerValue.Literal("a".repeat(2_000 + index)),
+                                secret,
+                            )
+                        )
+                    },
+                ),
+            )
+        }
+
+        assertEquals(responseBody.length, response.body.length)
+    }
+
+    @Test
     fun authenticationReturnsOnlyOpaqueReceiptAndStoresCredentialAndContexts() = runBlocking {
         val client = OkHttpClient.Builder().addInterceptor { chain ->
             Response.Builder()
@@ -400,6 +973,141 @@ class HostNetworkBrokerSecurityTest {
             )
         }
     }
+
+    @Test
+    fun authenticationJsonPointerTraversesArraysAndEscapedObjectKeys() = runBlocking {
+        val client = OkHttpClient.Builder().addInterceptor { chain ->
+            Response.Builder()
+                .request(chain.request())
+                .protocol(Protocol.HTTP_1_1)
+                .code(200)
+                .message("OK")
+                .body(
+                    """
+                    {
+                      "accounts": [
+                        {"id": "first-user"},
+                        {"credentials": {"access/token": "array-token"}}
+                      ],
+                      "~meta": {"user/id": "escaped-user"}
+                    }
+                    """.trimIndent().toResponseBody()
+                )
+                .build()
+        }.build()
+        val vault = FakeCredentialVault()
+        val registry = ActiveExtensionPrincipalRegistry().apply { activate(PRINCIPAL) }
+        val store = scopeStore(vault, registry)
+        val scope = store.mintAuthenticationScope(
+            principal = PRINCIPAL,
+            approvedBaseUrl = BASE_URL,
+            transientCredentials = emptyMap(),
+        )
+
+        val response = HostNetworkBrokerImpl(client, store).authenticate(
+            scope = scope,
+            principal = PRINCIPAL,
+            hook = ExtensionHookIds.SubscriptionProviderValidate,
+            request = BrokerAuthenticationRequest(
+                exchange = BrokerHttpExchange(method = "GET", url = "$BASE_URL/login"),
+                primaryCredentialSource = ResponseValueSource.JsonPointer(
+                    "/accounts/1/credentials/access~1token"
+                ),
+                opaqueContexts = listOf(
+                    OpaqueContextCapture(
+                        key = "first_user",
+                        source = ResponseValueSource.JsonPointer("/accounts/0/id"),
+                    ),
+                    OpaqueContextCapture(
+                        key = "escaped_user",
+                        source = ResponseValueSource.JsonPointer("/~0meta/user~1id"),
+                    ),
+                ),
+            ),
+        )
+
+        val authentication = store.consumeAuthenticationReceipt(
+            scope = scope,
+            principal = PRINCIPAL,
+            receipt = checkNotNull(response.receipt),
+        )
+        assertEquals(
+            "array-token",
+            store.resolveCredential(
+                scope = scope,
+                principal = PRINCIPAL,
+                hook = ExtensionHookIds.SubscriptionProviderValidate,
+                handle = authentication.credentialHandle,
+            ),
+        )
+        assertEquals("first-user", authentication.opaqueContexts["first_user"])
+        assertEquals("escaped-user", authentication.opaqueContexts["escaped_user"])
+    }
+
+    @Test
+    fun authenticationJsonPointerSupportsRootPrimitiveAndRejectsInvalidArrayIndices() =
+        runBlocking {
+            val responseBodies = ArrayDeque(
+                listOf(
+                    "\"root-token\"",
+                    """{"accounts":["token"]}""",
+                    """{"accounts":["token"]}""",
+                    """{"accounts":["token"]}""",
+                )
+            )
+            val client = OkHttpClient.Builder().addInterceptor { chain ->
+                Response.Builder()
+                    .request(chain.request())
+                    .protocol(Protocol.HTTP_1_1)
+                    .code(200)
+                    .message("OK")
+                    .body(responseBodies.removeFirst().toResponseBody())
+                    .build()
+            }.build()
+            val vault = FakeCredentialVault()
+            val registry = ActiveExtensionPrincipalRegistry().apply { activate(PRINCIPAL) }
+            val store = scopeStore(vault, registry)
+            val broker = HostNetworkBrokerImpl(client, store)
+
+            val rootScope = store.mintAuthenticationScope(
+                principal = PRINCIPAL,
+                approvedBaseUrl = BASE_URL,
+                transientCredentials = emptyMap(),
+            )
+            val rootResponse = broker.authenticate(
+                scope = rootScope,
+                principal = PRINCIPAL,
+                hook = ExtensionHookIds.SubscriptionProviderValidate,
+                request = BrokerAuthenticationRequest(
+                    exchange = BrokerHttpExchange(method = "GET", url = "$BASE_URL/login"),
+                    primaryCredentialSource = ResponseValueSource.JsonPointer(""),
+                ),
+            )
+            assertTrue(rootResponse.receipt != null)
+
+            listOf("/accounts/01", "/accounts/-", "/accounts/1").forEach { pointer ->
+                val scope = store.mintAuthenticationScope(
+                    principal = PRINCIPAL,
+                    approvedBaseUrl = BASE_URL,
+                    transientCredentials = emptyMap(),
+                )
+                val failure = brokerFailure {
+                    broker.authenticate(
+                        scope = scope,
+                        principal = PRINCIPAL,
+                        hook = ExtensionHookIds.SubscriptionProviderValidate,
+                        request = BrokerAuthenticationRequest(
+                            exchange = BrokerHttpExchange(
+                                method = "GET",
+                                url = "$BASE_URL/login",
+                            ),
+                            primaryCredentialSource = ResponseValueSource.JsonPointer(pointer),
+                        ),
+                    )
+                }
+                assertEquals(BrokerErrorCodes.InvalidRequest, failure.code)
+            }
+        }
 
     @Test
     fun ordinaryHttpCannotRunInsideAuthenticationScope() = runBlocking {
@@ -523,7 +1231,8 @@ class HostNetworkBrokerSecurityTest {
 
     private fun accountFixture(
         client: OkHttpClient,
-        secret: String = "secret-token",
+        primaryCredential: String = "secret-token",
+        userId: String = "opaque-user",
     ): AccountFixture {
         val vault = FakeCredentialVault()
         val registry = ActiveExtensionPrincipalRegistry().apply { activate(PRINCIPAL) }
@@ -545,7 +1254,10 @@ class HostNetworkBrokerSecurityTest {
         )
         val credential = vault.encrypt(
             accountId = account.id,
-            secret = secret,
+            secret = ProviderCredentialMaterial(
+                primaryCredential = primaryCredential,
+                opaqueContexts = mapOf("user_id" to userId),
+            ).encode(),
             credentialHandle = "persistent:account-token",
         )
         val scope = store.mintAccountScope(
@@ -557,7 +1269,6 @@ class HostNetworkBrokerSecurityTest {
         return AccountFixture(
             broker = HostNetworkBrokerImpl(client, store),
             scope = scope,
-            credentialHandle = CredentialHandle(credential.credentialHandle),
         )
     }
 
@@ -593,10 +1304,12 @@ class HostNetworkBrokerSecurityTest {
         failure
     }
 
+    private fun nestedArrays(depth: Int, value: String): String =
+        "[".repeat(depth) + value + "]".repeat(depth)
+
     private data class AccountFixture(
         val broker: HostNetworkBrokerImpl,
         val scope: BrokerScopeHandle,
-        val credentialHandle: CredentialHandle,
     )
 
     private class FakeCredentialVault : CredentialVault {

@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
                 )
             ) {
                 Box(Modifier.background(MaterialTheme.colorScheme.background)) {
-                    App(onBackPressed = onBackPressedDispatcher::onBackPressed)
+                    App()
                 }
             }
         }

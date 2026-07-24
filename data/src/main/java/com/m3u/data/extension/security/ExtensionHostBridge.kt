@@ -18,20 +18,24 @@ import com.m3u.extension.api.security.BrokerOperation
 import com.m3u.extension.api.security.BrokerOperationResult
 import com.m3u.extension.api.security.BrokeredHttpRequest
 import com.m3u.extension.api.security.BrokeredHttpResponse
+import com.m3u.extension.api.security.HostNetworkBrokerHooks
 import com.m3u.extension.api.security.referencesCredential
 import com.m3u.extension.transport.android.ParcelFileCodec
 import com.m3u.extension.transport.android.ipc.IExtensionHostBridge
+import com.m3u.extension.transport.android.ipc.IExtensionResultCallback
+import com.m3u.extension.transport.android.requireSafeExtensionJsonDepth
 import java.io.Closeable
 import java.util.concurrent.CancellationException
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -44,10 +48,15 @@ internal class ExtensionHostBridge(
 ) : IExtensionHostBridge.Stub(), Closeable {
     private val json = Json { ignoreUnknownKeys = true; explicitNulls = false }
     private val active = AtomicBoolean(true)
-    private val activeRequests = ConcurrentHashMap.newKeySet<Job>()
+    private val bridgeScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val requestLock = Any()
+    private val activeRequests = mutableMapOf<String, ActiveBrokerRequest>()
     private val hook = envelope.hook
     private val brokerScope = envelope.brokerScope
     private val grantedCapabilities = envelope.grantedCapabilities.toSet()
+    private val hookDeclaration = manifest.hooks.singleOrNull { candidate ->
+        candidate.hook == envelope.hook
+    } ?: error("Invocation hook is not declared by the connected extension")
 
     init {
         require(envelope.extensionId == manifest.id) {
@@ -56,10 +65,7 @@ internal class ExtensionHostBridge(
         require(principal.extensionId == manifest.id) {
             "Connected Android service does not own the extension manifest"
         }
-        val declaration = manifest.hooks.singleOrNull { candidate ->
-            candidate.hook == envelope.hook
-        } ?: error("Invocation hook is not declared by the connected extension")
-        require(declaration.schemaVersion == envelope.schemaVersion) {
+        require(hookDeclaration.schemaVersion == envelope.schemaVersion) {
             "Invocation hook schema does not match the connected extension"
         }
         val declaredCapabilities = manifest.capabilities.mapTo(mutableSetOf()) { request ->
@@ -70,37 +76,95 @@ internal class ExtensionHostBridge(
         }
     }
 
-    override fun executeHttp(request: ParcelFileDescriptor): ParcelFileDescriptor = try {
-        runBlocking {
-            supervisorScope {
-                val execution = async(start = CoroutineStart.LAZY) {
-                    executeOperation(invocationRequest = request)
+    override fun executeHttp(
+        requestId: String?,
+        request: ParcelFileDescriptor?,
+        callback: IExtensionResultCallback?,
+    ) {
+        val ownedRequest = request ?: return
+        val safeRequestId = requestId?.takeIf { it.isValidBrokerRequestId() }
+        if (safeRequestId == null || callback == null) {
+            runCatching { ownedRequest.close() }
+            return
+        }
+        lateinit var activeRequest: ActiveBrokerRequest
+        val execution = bridgeScope.launch(start = CoroutineStart.LAZY) {
+            val result: BrokerInvocationResult = try {
+                BrokerInvocationResult.Success(executeOperation(invocationRequest = ownedRequest))
+            } catch (failure: Exception) {
+                val error = if (active.get() && !activeRequest.cancelled.get()) {
+                    failure.toBrokerError()
+                } else {
+                    brokerError(BrokerErrorCodes.Cancelled, recoverable = true)
                 }
-                var registered = false
-                val result: BrokerInvocationResult = try {
-                    register(execution)
-                    registered = true
-                    execution.start()
-                    BrokerInvocationResult.Success(execution.await())
-                } catch (failure: Exception) {
-                    BrokerInvocationResult.Failure(failure.toBrokerError())
-                } finally {
-                    if (registered) activeRequests.remove(execution)
-                    execution.cancel()
+                BrokerInvocationResult.Failure(error)
+            }
+            respond(safeRequestId, callback, result)
+        }
+        activeRequest = ActiveBrokerRequest(
+            job = execution,
+            descriptor = ownedRequest,
+        )
+        val registration = synchronized(requestLock) {
+            when {
+                !active.get() -> BrokerRequestRegistration.CLOSED
+                safeRequestId in activeRequests ->
+                    BrokerRequestRegistration.DUPLICATE
+                activeRequests.size >= MAX_ACTIVE_BROKER_REQUESTS ->
+                    BrokerRequestRegistration.LIMIT_EXCEEDED
+                else -> {
+                    activeRequests[safeRequestId] = activeRequest
+                    BrokerRequestRegistration.REGISTERED
                 }
-                ParcelFileCodec.write(context, json.encodeToString(result))
             }
         }
-    } finally {
-        runCatching { request.close() }
+        if (registration != BrokerRequestRegistration.REGISTERED) {
+            execution.cancel()
+            runCatching { ownedRequest.close() }
+            respond(
+                safeRequestId,
+                callback,
+                BrokerInvocationResult.Failure(
+                    when (registration) {
+                        BrokerRequestRegistration.CLOSED ->
+                            brokerError(BrokerErrorCodes.Cancelled, recoverable = true)
+                        BrokerRequestRegistration.DUPLICATE ->
+                            brokerError(BrokerErrorCodes.InvalidRequest, recoverable = false)
+                        BrokerRequestRegistration.LIMIT_EXCEEDED ->
+                            brokerError(BrokerErrorCodes.InvalidRequest, recoverable = false)
+                        BrokerRequestRegistration.REGISTERED ->
+                            error("Broker request registration already succeeded")
+                    }
+                ),
+            )
+            return
+        }
+        execution.invokeOnCompletion {
+            synchronized(requestLock) {
+                activeRequests.remove(safeRequestId, activeRequest)
+            }
+            runCatching { ownedRequest.close() }
+        }
+        execution.start()
+    }
+
+    override fun cancelHttp(requestId: String?) {
+        val safeRequestId = requestId?.takeIf { it.isValidBrokerRequestId() } ?: return
+        val request = synchronized(requestLock) {
+            activeRequests.remove(safeRequestId)
+        } ?: return
+        request.cancelled.set(true)
+        runCatching { request.descriptor.close() }
+        request.job.cancel(CancellationException("Broker request was cancelled by the extension"))
     }
 
     private suspend fun executeOperation(
         invocationRequest: ParcelFileDescriptor,
     ): BrokerOperationResult {
-        val invocation = json.decodeFromString<BrokerInvocation>(
-            ParcelFileCodec.read(invocationRequest, MAX_REQUEST_BYTES)
-        )
+        val invocationPayload =
+            ParcelFileCodec.readInterruptibly(invocationRequest, MAX_REQUEST_BYTES)
+        invocationPayload.requireSafeExtensionJsonDepth()
+        val invocation = json.decodeFromString<BrokerInvocation>(invocationPayload)
         return when (val operation = invocation.operation) {
             is BrokerOperation.Http -> BrokerOperationResult.Http(
                 executeHttp(operation.request)
@@ -112,6 +176,7 @@ internal class ExtensionHostBridge(
     }
 
     private suspend fun executeHttp(request: BrokeredHttpRequest): BrokeredHttpResponse {
+        requireBrokerSupportedHook()
         requireCapability(ExtensionCapabilityIds.Network)
         if (request.usesCredential()) {
             requireCapability(ExtensionCapabilityIds.CredentialRead)
@@ -131,6 +196,7 @@ internal class ExtensionHostBridge(
     private suspend fun authenticate(
         request: BrokerAuthenticationRequest,
     ): BrokerAuthenticationResponse {
+        requireBrokerSupportedHook()
         requireCapability(ExtensionCapabilityIds.Network)
         requireCapability(ExtensionCapabilityIds.CredentialWrite)
         if (request.exchange.url.referencesCredential()) {
@@ -153,6 +219,18 @@ internal class ExtensionHostBridge(
         return response
     }
 
+    private fun requireBrokerSupportedHook() {
+        if (
+            !HostNetworkBrokerHooks.supports(hook) ||
+            ExtensionCapabilityIds.Network !in hookDeclaration.requiredCapabilities
+        ) {
+            throw ProviderBrokerException(
+                BrokerErrorCodes.ScopeDenied,
+                recoverable = false,
+            )
+        }
+    }
+
     private fun requireBrokerScope() = brokerScope ?: throw ProviderBrokerException(
         BrokerErrorCodes.ScopeDenied,
         recoverable = false,
@@ -161,25 +239,55 @@ internal class ExtensionHostBridge(
     override fun close() {
         if (active.compareAndSet(true, false)) {
             val cancellation = CancellationException("Extension invocation is no longer active")
-            activeRequests.forEach { job -> job.cancel(cancellation) }
-            activeRequests.clear()
-        }
-    }
-
-    private fun register(job: Job) {
-        if (!active.get()) throw CancellationException("Extension invocation was cancelled")
-        activeRequests += job
-        if (!active.get()) {
-            activeRequests.remove(job)
-            val cancellation = CancellationException("Extension invocation was cancelled")
-            job.cancel(cancellation)
-            throw cancellation
+            val requests = synchronized(requestLock) {
+                activeRequests.values.toList().also { activeRequests.clear() }
+            }
+            requests.forEach { request ->
+                request.cancelled.set(true)
+                runCatching { request.descriptor.close() }
+                request.job.cancel(cancellation)
+            }
+            bridgeScope.cancel(cancellation)
         }
     }
 
     private suspend fun ensureInvocationActive() {
         currentCoroutineContext().ensureActive()
         if (!active.get()) throw CancellationException("Extension invocation was cancelled")
+    }
+
+    private fun respond(
+        requestId: String,
+        callback: IExtensionResultCallback,
+        result: BrokerInvocationResult,
+    ) {
+        try {
+            val encoded = encodeResponseWithinLimit(result)
+            ParcelFileCodec.write(
+                context = context,
+                content = encoded,
+                maximumBytes = MAX_RESPONSE_ENVELOPE_BYTES,
+            ).use { response ->
+                callback.onSuccess(requestId, response)
+            }
+        } catch (_: Exception) {
+            runCatching {
+                callback.onFailure(requestId, "broker.failed", "Host broker request failed")
+            }
+        }
+    }
+
+    private fun encodeResponseWithinLimit(result: BrokerInvocationResult): String {
+        val encoded = json.encodeToString(result)
+        if (encoded.encodeToByteArray().size <= MAX_RESPONSE_ENVELOPE_BYTES) {
+            return encoded
+        }
+        return json.encodeToString(
+            BrokerInvocationResult.serializer(),
+            BrokerInvocationResult.Failure(
+                brokerError(BrokerErrorCodes.ResponseTooLarge, recoverable = false)
+            )
+        )
     }
 
     private fun requireCapability(capability: Capability) {
@@ -221,8 +329,27 @@ internal class ExtensionHostBridge(
             body.any { value -> value.referencesCredential() } ||
             url.referencesCredential()
 
+    private fun String.isValidBrokerRequestId(): Boolean =
+        isNotBlank() && length <= MAX_BROKER_REQUEST_ID_LENGTH
+
+    private data class ActiveBrokerRequest(
+        val job: Job,
+        val descriptor: ParcelFileDescriptor,
+        val cancelled: AtomicBoolean = AtomicBoolean(false),
+    )
+
+    private enum class BrokerRequestRegistration {
+        REGISTERED,
+        DUPLICATE,
+        LIMIT_EXCEEDED,
+        CLOSED,
+    }
+
     private companion object {
         const val MAX_REQUEST_BYTES = 2 * 1024 * 1024
+        const val MAX_RESPONSE_ENVELOPE_BYTES = 5 * 1024 * 1024
+        const val MAX_BROKER_REQUEST_ID_LENGTH = 64
+        const val MAX_ACTIVE_BROKER_REQUESTS = 4
         val SAFE_ERROR_MESSAGES = mapOf(
             BrokerErrorCodes.InvalidRequest to "The broker request is invalid",
             BrokerErrorCodes.CapabilityDenied to "The broker capability is not granted",

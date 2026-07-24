@@ -6,6 +6,7 @@ import com.m3u.extension.api.ChannelMetadataPatch
 import com.m3u.extension.api.EpgRefreshResult
 import com.m3u.extension.api.ExtensionApiRange
 import com.m3u.extension.api.ExtensionApiVersions
+import com.m3u.extension.api.ExtensionBackgroundTaskDeclaration
 import com.m3u.extension.api.ExtensionCapabilityIds
 import com.m3u.extension.api.ExtensionCapabilityRequest
 import com.m3u.extension.api.ExtensionError
@@ -13,6 +14,7 @@ import com.m3u.extension.api.ExtensionErrorCode
 import com.m3u.extension.api.ExtensionHookDeclaration
 import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.ExtensionManifest
+import com.m3u.extension.api.ExtensionNetworkOrigin
 import com.m3u.extension.api.ExtensionProgramme
 import com.m3u.extension.api.ExtensionPayload
 import com.m3u.extension.api.ExtensionSemanticVersion
@@ -27,19 +29,20 @@ import com.m3u.extension.api.HookResult
 import com.m3u.extension.api.InvocationId
 import com.m3u.extension.api.MetadataEnrichmentResult
 import com.m3u.extension.api.SearchProviderItem
+import com.m3u.extension.api.SearchProviderRequest
 import com.m3u.extension.api.SearchProviderResult
 import com.m3u.extension.api.SettingsSchemaResult
 import com.m3u.extension.api.security.BrokerAuthenticationRequest
 import com.m3u.extension.api.security.BrokerAuthenticationResponse
 import com.m3u.extension.api.security.BrokerHttpExchange
-import com.m3u.extension.api.security.OpaqueContextCapture
-import com.m3u.extension.api.security.ResponseValueSource
-import com.m3u.extension.api.security.BrokerValue
-import com.m3u.extension.api.security.BrokerValueEncoding
 import com.m3u.extension.api.security.BrokeredHttpRequest
 import com.m3u.extension.api.security.BrokeredHttpResponse
-import com.m3u.extension.api.security.CredentialHandle
+import com.m3u.extension.api.security.BrokerValue
+import com.m3u.extension.api.security.BrokerValueEncoding
 import com.m3u.extension.api.security.ContextReference
+import com.m3u.extension.api.security.CredentialHandle
+import com.m3u.extension.api.security.OpaqueContextCapture
+import com.m3u.extension.api.security.ResponseValueSource
 import com.m3u.extension.api.security.SecretReference
 import com.m3u.extension.api.subscription.PlaybackHeaderValue
 import com.m3u.extension.api.subscription.PlaybackReference
@@ -58,23 +61,24 @@ import com.m3u.extension.api.subscription.SubscriptionContentRefreshResult
 import com.m3u.extension.api.subscription.SubscriptionHookSpecs
 import com.m3u.extension.api.subscription.SubscriptionProviderDescriptor
 import com.m3u.extension.api.subscription.SubscriptionProviderDiscoverResult
+import com.m3u.extension.api.subscription.SubscriptionProviderErrorCodes
 import com.m3u.extension.api.subscription.SubscriptionProviderSettingKeys
 import com.m3u.extension.api.subscription.SubscriptionProviderVariant
 import com.m3u.extension.api.subscription.SubscriptionProviderValidateRequest
 import com.m3u.extension.api.subscription.SubscriptionProviderValidateResult
 import com.m3u.extension.api.subscription.SubscriptionSourceDescriptor
-import com.m3u.extension.sdk.android.ExtensionHostNetworkBroker
 import com.m3u.extension.sdk.android.BrokerException
+import com.m3u.extension.sdk.android.ExtensionHostNetworkBroker
 import com.m3u.extension.sdk.android.TypedExtensionService
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
-import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.CancellationException
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -82,6 +86,7 @@ import kotlinx.serialization.json.JsonPrimitive
 
 class ReferenceExtensionService : TypedExtensionService() {
     override val extensionManifest: ExtensionManifest = REFERENCE_MANIFEST
+    private val invocationGateProbeCount = AtomicInteger()
 
     init {
         handle(SubscriptionHookSpecs.Discover) { _, _ ->
@@ -94,37 +99,37 @@ class ReferenceExtensionService : TypedExtensionService() {
             providerBrokerResult("refresh") { refreshProvider(request, broker) }
         }
         handleResultWithBroker(SubscriptionHookSpecs.ResolvePlayback) { request, _, broker ->
-            providerBrokerResult("playback resolution") { resolvePlayback(request, broker) }
+            providerBrokerResult("playback resolution") {
+                resolveProviderPlayback(request, broker)
+            }
         }
         handleResultWithBroker(SubscriptionHookSpecs.ClosePlayback) { request, _, broker ->
-            providerBrokerResult("playback close") { closePlayback(request, broker) }
+            providerBrokerResult("playback close") {
+                closeProviderPlayback(request, broker)
+            }
         }
-        handle(HostHookSpecs.SearchProvider) { request, _ ->
-            SearchProviderResult(
-                items = listOf(
-                    SearchProviderItem(
-                        stableReference = request.query,
-                        title = "Reference result for ${request.query}",
-                        subtitle = if (request.query == "large") {
-                            "x".repeat(LARGE_RESULT_SIZE)
-                        } else {
-                            "Reference extension search result"
-                        },
-                    )
-                )
-            )
+        handleResultWithBroker(HostHookSpecs.SearchProvider) { request, _, broker ->
+            providerBrokerResult("search") { searchProvider(request, broker) }
         }
-        handleWithBroker(HostHookSpecs.BackgroundTask) { request, context, broker ->
-            runBackgroundTask(context.invocationId, request, context.settings, broker)
+        handle(HostHookSpecs.BackgroundTask) { request, context ->
+            runBackgroundTask(context.invocationId, request, context.settings)
         }
         handle(HostHookSpecs.MetadataEnrichment) { request, _ ->
             MetadataEnrichmentResult(
                 patches = request.channels.map { channel ->
                     ChannelMetadataPatch(
                         stableReference = channel.stableReference,
-                        title = channel.title.takeIf { it.startsWith("unenriched:") }
-                            ?.removePrefix("unenriched:"),
-                        metadata = mapOf("reference-extension" to "true"),
+                        title = when (channel.stableReference) {
+                            INVOCATION_GATE_RESET_REFERENCE -> {
+                                invocationGateProbeCount.set(0)
+                                INVOCATION_GATE_COUNT_TITLE_PREFIX + "0"
+                            }
+                            INVOCATION_GATE_COUNT_REFERENCE ->
+                                INVOCATION_GATE_COUNT_TITLE_PREFIX +
+                                    invocationGateProbeCount.incrementAndGet()
+                            else -> channel.title.takeIf { it.startsWith("unenriched:") }
+                                ?.removePrefix("unenriched:")
+                        },
                     )
                 }
             )
@@ -137,7 +142,7 @@ class ReferenceExtensionService : TypedExtensionService() {
                         title = "Reference programme",
                         startEpochMillis = request.fromEpochMillis,
                         endEpochMillis = request.toEpochMillis,
-                        metadata = mapOf("categories" to "Reference,Conformance"),
+                        categories = listOf("Reference", "Conformance"),
                     )
                 }
             )
@@ -170,20 +175,84 @@ class ReferenceExtensionService : TypedExtensionService() {
     }
 }
 
+private suspend fun searchProvider(
+    request: SearchProviderRequest,
+    broker: ExtensionHostNetworkBroker,
+): HookResult<SearchProviderResult> {
+    val account = request.account
+    if (account == null) {
+        val response = broker.execute(
+            BrokeredHttpRequest(method = "GET", url = REFERENCE_SEARCH_PROBE_ORIGIN + "/probe")
+        )
+        response.providerFailure("search")?.let { return it }
+        return HookResult.Success(
+            SearchProviderResult(
+                items = if (request.query == "large") {
+                    List(LARGE_RESULT_ITEM_COUNT) { index ->
+                        SearchProviderItem(
+                            accountId = "fixture-account",
+                            remoteId = "large-$index-${"x".repeat(48)}",
+                        )
+                    }
+                } else {
+                    listOf(
+                        SearchProviderItem(
+                            accountId = "fixture-account",
+                            remoteId = request.query,
+                        )
+                    )
+                }
+            )
+        )
+    }
+    val response = broker.execute(request.referenceSearchRequest())
+    return response.providerResponseResult("search") {
+        val payload = response.body.decodeReferencePayload<ReferenceChannelsPayload>()
+        val query = request.query.trim()
+        SearchProviderResult(
+            items = payload.channels
+                .filter { channel ->
+                    channel.id.contains(query, ignoreCase = true) ||
+                        channel.title.contains(query, ignoreCase = true)
+                }
+                .map { channel ->
+                    SearchProviderItem(
+                        accountId = account.accountId,
+                        remoteId = channel.id,
+                    )
+                }
+        )
+    }
+}
+
+internal fun SearchProviderRequest.referenceSearchRequest(): BrokeredHttpRequest {
+    val selectedAccount = requireNotNull(account) {
+        "Reference provider search requires a selected account"
+    }
+    selectedAccount.requireReferenceAccount()
+    val selectedCredential = requireNotNull(credential) {
+        "Reference provider search requires the selected account credential"
+    }
+    return BrokeredHttpRequest(
+        method = "GET",
+        url = selectedAccount.baseUrl.referenceEndpoint("channels"),
+        headers = selectedCredential.handle.referenceRequestHeaders(),
+        maximumResponseBytes = MAX_REFRESH_RESPONSE_BYTES,
+    )
+}
+
 private fun discoverProvider(): SubscriptionProviderDiscoverResult =
     SubscriptionProviderDiscoverResult(
-        providers = listOf(
-            SubscriptionProviderDescriptor(
-                providerId = REFERENCE_EXTENSION_ID,
-                displayName = "Reference Provider",
-                variants = listOf(
-                    SubscriptionProviderVariant(
-                        kind = REFERENCE_PROVIDER_KIND,
-                        displayName = "Reference",
-                    )
-                ),
-                settingsSchema = REFERENCE_PROVIDER_SETTINGS,
-            )
+        provider = SubscriptionProviderDescriptor(
+            providerId = REFERENCE_EXTENSION_ID,
+            displayName = "Reference Provider",
+            variants = listOf(
+                SubscriptionProviderVariant(
+                    kind = REFERENCE_PROVIDER_KIND,
+                    displayName = "Reference",
+                )
+            ),
+            settingsSchema = REFERENCE_PROVIDER_SETTINGS,
         )
     )
 
@@ -208,96 +277,154 @@ private suspend fun validateProvider(
 private suspend fun refreshProvider(
     request: SubscriptionContentRefreshRequest,
     broker: ExtensionHostNetworkBroker,
-): HookResult<SubscriptionContentRefreshResult> {
-    request.requireReferenceAccount()
-    val response = broker.execute(request.referenceRefreshCall())
-    response.providerFailure("channel_refresh")?.let { return it }
-    val payload = response.decodeSuccess<ReferenceChannelsResponse>("channel refresh")
-    return HookResult.Success(
+): HookResult<SubscriptionContentRefreshResult> =
+    broker.execute(request.referenceRefreshRequest()).referenceRefreshResult(request)
+
+internal fun SubscriptionContentRefreshRequest.referenceRefreshRequest(): BrokeredHttpRequest {
+    account.requireReferenceAccount()
+    return BrokeredHttpRequest(
+        method = "GET",
+        url = account.baseUrl.referenceEndpoint("channels"),
+        headers = credential.handle.referenceRequestHeaders(),
+        maximumResponseBytes = MAX_REFRESH_RESPONSE_BYTES,
+    )
+}
+
+internal fun BrokeredHttpResponse.referenceRefreshResult(
+    request: SubscriptionContentRefreshRequest,
+): HookResult<SubscriptionContentRefreshResult> =
+    providerResponseResult("refresh") {
+        val payload = body.decodeReferencePayload<ReferenceChannelsPayload>()
+        requireReferencePayload(payload.sourceId.matches(REFERENCE_ID_PATTERN))
+        requireReferencePayload(payload.sourceTitle.isValidProviderText())
+        requireReferencePayload(payload.revision.matches(REFERENCE_REVISION_PATTERN))
+        requireReferencePayload(payload.channels.isNotEmpty())
+        requireReferencePayload(payload.channels.size <= MAX_REFERENCE_CHANNELS)
+        requireReferencePayload(
+            payload.channels.map(ReferenceChannelPayload::id).distinct().size ==
+                payload.channels.size
+        )
         SubscriptionContentRefreshResult(
             source = SubscriptionSourceDescriptor(
                 remoteId = request.account.serverId,
-                title = payload.sourceTitle,
                 providerKind = REFERENCE_PROVIDER_KIND,
             ),
             channels = payload.channels.map { channel ->
+                requireReferencePayload(channel.id.matches(REFERENCE_ID_PATTERN))
+                requireReferencePayload(channel.title.isValidProviderText())
+                requireReferencePayload(channel.category.isValidProviderText())
+                requireReferencePayload(channel.epgReference == channel.id)
                 SubscriptionChannelDescriptor(
                     remoteId = channel.id,
                     title = channel.title,
-                    logoUrl = channel.logoUrl,
                     category = channel.category,
                     playbackReference = PlaybackReference(
                         providerId = REFERENCE_EXTENSION_ID,
                         itemId = channel.id,
-                        sourceType = "live",
+                        sourceType = REFERENCE_SOURCE_TYPE,
                     ),
-                    epgReference = channel.epgReference,
-                    metadata = mapOf("reference-fixture" to "true"),
                 )
             },
-            syncMetadata = mapOf("revision" to payload.revision),
         )
+    }
+
+private suspend fun resolveProviderPlayback(
+    request: PlaybackSourceResolveRequest,
+    broker: ExtensionHostNetworkBroker,
+): HookResult<PlaybackSourceResolveResult> =
+    broker.execute(request.referencePlaybackRequest()).referencePlaybackResult(request)
+
+internal fun PlaybackSourceResolveRequest.referencePlaybackRequest(): BrokeredHttpRequest {
+    account.requireReferenceAccount()
+    reference.requireReferencePlayback()
+    return BrokeredHttpRequest(
+        method = "GET",
+        url = account.baseUrl.referenceEndpoint("playback/${reference.itemId}"),
+        headers = credential.handle.referenceRequestHeaders(),
+        maximumResponseBytes = MAX_PLAYBACK_RESPONSE_BYTES,
     )
 }
 
-private suspend fun resolvePlayback(
+internal fun BrokeredHttpResponse.referencePlaybackResult(
     request: PlaybackSourceResolveRequest,
-    broker: ExtensionHostNetworkBroker,
-): HookResult<PlaybackSourceResolveResult> {
-    request.account.requireReferenceAccount()
-    require(request.reference.providerId == REFERENCE_EXTENSION_ID) {
-        "Playback reference belongs to another provider"
-    }
-    val response = broker.execute(request.referencePlaybackCall())
-    response.providerFailure("playback_resolution")?.let { return it }
-    val payload = response.decodeSuccess<ReferencePlaybackResponse>("playback resolution")
-    return HookResult.Success(
+): HookResult<PlaybackSourceResolveResult> =
+    providerResponseResult("playback resolution") {
+        val payload = body.decodeReferencePayload<ReferencePlaybackPayload>()
+        val expectedStreamUrl = request.account.baseUrl.referenceEndpoint(
+            "stream/${request.reference.itemId}/index.m3u8"
+        )
+        requireReferencePayload(payload.url == expectedStreamUrl)
+        requireReferencePayload(
+            payload.mediaSourceId == "reference-media-${request.reference.itemId}"
+        )
+        requireReferencePayload(
+            payload.playSessionId == "reference-play-session-${request.reference.itemId}"
+        )
+        requireReferencePayload(
+            payload.liveStreamId == "reference-live-stream-${request.reference.itemId}"
+        )
+        requireReferencePayload(payload.playSessionId.isValidSessionIdentifier())
+        requireReferencePayload(payload.liveStreamId.isValidSessionIdentifier())
         PlaybackSourceResolveResult(
             url = payload.url,
-            headers = referencePlaybackHeaders(request.credential.handle),
+            headers = request.credential.handle.referencePlaybackHeaders(),
             mediaSourceId = payload.mediaSourceId,
             session = PlaybackSessionDescriptor(
                 playSessionId = payload.playSessionId,
                 liveStreamId = payload.liveStreamId,
             ),
         )
+    }
+
+private suspend fun closeProviderPlayback(
+    request: PlaybackSessionCloseRequest,
+    broker: ExtensionHostNetworkBroker,
+): HookResult<PlaybackSessionCloseResult> =
+    broker.execute(request.referenceCloseRequest()).referenceCloseResult()
+
+internal fun PlaybackSessionCloseRequest.referenceCloseRequest(): BrokeredHttpRequest {
+    account.requireReferenceAccount()
+    reference.requireReferencePlayback()
+    val playSessionId = requireNotNull(session.playSessionId) {
+        "Reference playback close requires a play session ID"
+    }
+    val liveStreamId = requireNotNull(session.liveStreamId) {
+        "Reference playback close requires a live stream ID"
+    }
+    require(playSessionId.isValidSessionIdentifier())
+    require(liveStreamId.isValidSessionIdentifier())
+    return BrokeredHttpRequest(
+        method = "POST",
+        url = account.baseUrl.referenceEndpoint("sessions/close"),
+        headers = credential.handle.referenceRequestHeaders() +
+            ("Content-Type" to BrokerValue.Literal("application/json")),
+        body = listOf(
+            BrokerValue.Literal(
+                referenceJson.encodeToString(
+                    ReferenceClosePayload(
+                        itemId = reference.itemId,
+                        playSessionId = playSessionId,
+                        liveStreamId = liveStreamId,
+                        reason = reason.value,
+                    )
+                )
+            )
+        ),
+        maximumResponseBytes = MAX_CLOSE_RESPONSE_BYTES,
     )
 }
 
-private suspend fun closePlayback(
-    request: PlaybackSessionCloseRequest,
-    broker: ExtensionHostNetworkBroker,
-): HookResult<PlaybackSessionCloseResult> {
-    request.account.requireReferenceAccount()
-    require(request.reference.providerId == REFERENCE_EXTENSION_ID) {
-        "Playback reference belongs to another provider"
+internal fun BrokeredHttpResponse.referenceCloseResult(): HookResult<PlaybackSessionCloseResult> =
+    providerResponseResult("playback close") {
+        val payload = body.decodeReferencePayload<ReferenceCloseResultPayload>()
+        PlaybackSessionCloseResult(closed = payload.closed)
     }
-    val response = broker.execute(request.referenceCloseCall())
-    response.providerFailure("playback_close")?.let { return it }
-    val payload = response.decodeSuccess<ReferenceCloseResponse>("playback close")
-    return HookResult.Success(PlaybackSessionCloseResult(closed = payload.closed))
-}
 
 private suspend fun runBackgroundTask(
     invocationId: InvocationId,
     request: BackgroundTaskRequest,
     settings: ExtensionSettingsSnapshot,
-    broker: ExtensionHostNetworkBroker,
 ): BackgroundTaskResult {
-    if (request.taskId == BROKER_PROBE_REASON) {
-        val response = broker.execute(
-            BrokeredHttpRequest(
-                method = "GET",
-                url = "https://reference.invalid/probe",
-            )
-        )
-        return BackgroundTaskResult(
-            output = mapOf(
-                "status" to response.statusCode.toString(),
-                "body" to response.body,
-            )
-        )
-    }
     if (request.taskId == "settings-status") {
         return BackgroundTaskResult(
             mapOf(
@@ -321,10 +448,6 @@ private suspend fun runBackgroundTask(
             lastCancelled.set(invocationId.value)
         }
     }
-}
-
-private fun SubscriptionContentRefreshRequest.requireReferenceAccount() {
-    account.requireReferenceAccount()
 }
 
 internal data class ReferenceLoginCall(
@@ -379,63 +502,6 @@ internal fun SubscriptionProviderValidateRequest.referenceLoginCall(): Reference
     )
 }
 
-internal fun SubscriptionContentRefreshRequest.referenceRefreshCall(): BrokeredHttpRequest =
-    BrokeredHttpRequest(
-        method = "GET",
-        url = account.baseUrl.referenceEndpoint("channels"),
-        headers = referenceTokenHeader(credential.handle) + mapOf(
-            REFERENCE_USER_HEADER to BrokerValue.Context(
-                ContextReference(ProviderAuthenticationContextKeys.UserId)
-            )
-        ),
-    )
-
-internal fun PlaybackSourceResolveRequest.referencePlaybackCall(): BrokeredHttpRequest =
-    BrokeredHttpRequest(
-        method = "GET",
-        url = account.baseUrl.referenceEndpoint(
-            "playback/${reference.itemId.pathSegment()}"
-        ),
-        headers = referenceTokenHeader(credential.handle),
-    )
-
-internal fun PlaybackSessionCloseRequest.referenceCloseCall(): BrokeredHttpRequest {
-    val body = referenceJson.encodeToString(
-        ReferenceCloseRequest(
-            itemId = reference.itemId,
-            playSessionId = requireNotNull(session.playSessionId) {
-                "Reference playback session id is required"
-            },
-            liveStreamId = requireNotNull(session.liveStreamId) {
-                "Reference live stream id is required"
-            },
-            reason = reason.value,
-        )
-    )
-    return BrokeredHttpRequest(
-        method = "POST",
-        url = account.baseUrl.referenceEndpoint("sessions/close"),
-        headers = mapOf(
-            "Content-Type" to BrokerValue.Literal("application/json"),
-        ) + referenceTokenHeader(credential.handle),
-        body = listOf(BrokerValue.Literal(body)),
-    )
-}
-
-internal fun referencePlaybackHeaders(
-    credential: CredentialHandle,
-): Map<String, PlaybackHeaderValue> = mapOf(
-    REFERENCE_TOKEN_HEADER to PlaybackHeaderValue(
-        parts = listOf(BrokerValue.Secret(SecretReference(credential)))
-    )
-)
-
-private fun referenceTokenHeader(
-    credential: CredentialHandle,
-): Map<String, BrokerValue> = mapOf(
-    REFERENCE_TOKEN_HEADER to BrokerValue.Secret(SecretReference(credential))
-)
-
 private fun ProviderAccountReference.requireReferenceAccount() {
     require(providerId == REFERENCE_EXTENSION_ID) {
         "Provider account belongs to another extension"
@@ -445,23 +511,60 @@ private fun ProviderAccountReference.requireReferenceAccount() {
     }
 }
 
-private inline fun <reified T> BrokeredHttpResponse.decodeSuccess(operation: String): T {
-    check(statusCode in 200..299) {
-        "Reference provider $operation failed with HTTP $statusCode"
+private fun PlaybackReference.requireReferencePlayback() {
+    require(providerId == REFERENCE_EXTENSION_ID) {
+        "Playback reference belongs to another provider"
     }
-    return referenceJson.decodeFromString(body)
+    require(sourceType == REFERENCE_SOURCE_TYPE) {
+        "Reference provider supports only live playback"
+    }
+    require(itemId.matches(REFERENCE_ID_PATTERN)) {
+        "Reference playback item ID is invalid"
+    }
 }
 
-private fun BrokeredHttpResponse.providerFailure(operation: String): HookResult.Failure? =
-    statusCode.providerFailure(operation)
+private fun CredentialHandle.referenceRequestHeaders(): Map<String, BrokerValue> = mapOf(
+    REFERENCE_TOKEN_HEADER to BrokerValue.Secret(SecretReference(this)),
+    REFERENCE_USER_HEADER to BrokerValue.Context(
+        ContextReference(ProviderAuthenticationContextKeys.UserId)
+    ),
+)
+
+private fun CredentialHandle.referencePlaybackHeaders(): Map<String, PlaybackHeaderValue> = mapOf(
+    REFERENCE_TOKEN_HEADER to PlaybackHeaderValue(
+        parts = listOf(BrokerValue.Secret(SecretReference(this))),
+    ),
+    REFERENCE_USER_HEADER to PlaybackHeaderValue(
+        parts = listOf(
+            BrokerValue.Context(ContextReference(ProviderAuthenticationContextKeys.UserId))
+        ),
+    ),
+)
 
 private fun BrokerAuthenticationResponse.providerFailure(operation: String): HookResult.Failure? =
     statusCode.providerFailure(operation)
 
+private fun BrokeredHttpResponse.providerFailure(operation: String): HookResult.Failure? =
+    statusCode.providerFailure(operation)
+
+private inline fun <Response : ExtensionPayload> BrokeredHttpResponse.providerResponseResult(
+    operation: String,
+    decode: () -> Response,
+): HookResult<Response> {
+    providerFailure(operation)?.let { return it }
+    return try {
+        HookResult.Success(decode())
+    } catch (_: ReferenceProviderPayloadException) {
+        invalidProviderResponse(operation)
+    }
+}
+
 private fun Int.providerFailure(operation: String): HookResult.Failure? {
     if (this in 200..299) return null
     val (code, message) = when (this) {
-        401, 403 -> "provider.authentication_failed" to "Provider credentials were rejected"
+        401, 403 ->
+            SubscriptionProviderErrorCodes.AuthenticationFailed.value to
+                "Provider credentials were rejected"
         408, 429 -> "provider.temporarily_unavailable" to "Provider is temporarily unavailable"
         in 500..599 -> "provider.remote_unavailable" to "Provider service is unavailable"
         else -> "provider.request_failed" to "Provider request was rejected"
@@ -479,6 +582,16 @@ private fun Int.providerFailure(operation: String): HookResult.Failure? {
         )
     )
 }
+
+private fun invalidProviderResponse(operation: String): HookResult.Failure =
+    HookResult.Failure(
+        ExtensionError(
+            code = ExtensionErrorCode("provider.invalid_response"),
+            message = "Provider returned an invalid $operation response",
+            recoverable = false,
+            details = mapOf("operation" to operation),
+        )
+    )
 
 internal suspend fun <Response : ExtensionPayload> providerBrokerResult(
     operation: String,
@@ -498,6 +611,26 @@ internal suspend fun <Response : ExtensionPayload> providerBrokerResult(
     )
 }
 
+private inline fun <reified Payload> String.decodeReferencePayload(): Payload = try {
+    referenceJson.decodeFromString(this)
+} catch (_: SerializationException) {
+    throw ReferenceProviderPayloadException()
+}
+
+private fun requireReferencePayload(condition: Boolean) {
+    if (!condition) throw ReferenceProviderPayloadException()
+}
+
+private fun String.isValidProviderText(): Boolean =
+    isNotBlank() && length <= MAX_REFERENCE_TEXT_LENGTH && none(Char::isISOControl)
+
+private fun String.isValidSessionIdentifier(): Boolean =
+    isNotBlank() &&
+        encodeToByteArray().size <= PlaybackSessionDescriptor.MAX_IDENTIFIER_UTF8_BYTES &&
+        none(Char::isISOControl)
+
+private class ReferenceProviderPayloadException : IllegalArgumentException()
+
 private fun Map<String, String>.required(key: String): String =
     get(key)?.takeIf(String::isNotBlank)
         ?: error("Reference provider setting $key is required")
@@ -511,59 +644,76 @@ private fun String.normalizeBaseUrl(): String = trim().trimEnd('/').also { value
 private fun String.referenceEndpoint(path: String): String =
     "${normalizeBaseUrl()}/reference-provider/$path"
 
-private fun String.pathSegment(): String =
-    URLEncoder.encode(this, StandardCharsets.UTF_8.name()).replace("+", "%20")
-
 @Serializable
-private data class ReferenceChannelsResponse(
-    @SerialName("source_id") val sourceId: String,
-    @SerialName("source_title") val sourceTitle: String,
+private data class ReferenceChannelsPayload(
+    @SerialName("source_id")
+    val sourceId: String,
+    @SerialName("source_title")
+    val sourceTitle: String,
     val revision: String,
-    val channels: List<ReferenceChannel>,
+    val channels: List<ReferenceChannelPayload>,
 )
 
 @Serializable
-private data class ReferenceChannel(
+private data class ReferenceChannelPayload(
     val id: String,
     val title: String,
     val category: String,
-    @SerialName("logo_url") val logoUrl: String? = null,
-    @SerialName("epg_reference") val epgReference: String? = null,
+    @SerialName("epg_reference")
+    val epgReference: String,
 )
 
 @Serializable
-private data class ReferencePlaybackResponse(
+private data class ReferencePlaybackPayload(
     val url: String,
-    @SerialName("media_source_id") val mediaSourceId: String,
-    @SerialName("play_session_id") val playSessionId: String,
-    @SerialName("live_stream_id") val liveStreamId: String,
+    @SerialName("media_source_id")
+    val mediaSourceId: String,
+    @SerialName("play_session_id")
+    val playSessionId: String,
+    @SerialName("live_stream_id")
+    val liveStreamId: String,
 )
 
 @Serializable
-private data class ReferenceCloseRequest(
-    @SerialName("item_id") val itemId: String,
-    @SerialName("play_session_id") val playSessionId: String,
-    @SerialName("live_stream_id") val liveStreamId: String,
+private data class ReferenceClosePayload(
+    @SerialName("item_id")
+    val itemId: String,
+    @SerialName("play_session_id")
+    val playSessionId: String,
+    @SerialName("live_stream_id")
+    val liveStreamId: String,
     val reason: String,
 )
 
 @Serializable
-private data class ReferenceCloseResponse(
+private data class ReferenceCloseResultPayload(
     val closed: Boolean,
 )
 
-private val referenceJson = Json {
-    ignoreUnknownKeys = false
-    explicitNulls = false
-}
-
 internal val REFERENCE_EXTENSION_ID = ExtensionId("com.m3u.reference.provider")
 internal val REFERENCE_PROVIDER_KIND = ProviderKind("reference")
+const val LARGE_RESULT_ITEM_COUNT = 25_000
+private val lastCancelled = AtomicReference<String?>(null)
+private val referenceJson = Json {
+    ignoreUnknownKeys = false
+    isLenient = false
+    coerceInputValues = false
+    explicitNulls = true
+}
+private val REFERENCE_ID_PATTERN = Regex("[a-z0-9]+(?:[._-][a-z0-9]+)*")
+private val REFERENCE_REVISION_PATTERN = Regex("[0-9]{1,18}")
+private const val REFERENCE_SOURCE_TYPE = "live"
 private const val REFERENCE_TOKEN_HEADER = "X-Emby-Token"
 private const val REFERENCE_USER_HEADER = "X-Reference-User"
-private const val BROKER_PROBE_REASON = "broker-probe"
-private const val LARGE_RESULT_SIZE = 1_200_000
-private val lastCancelled = AtomicReference<String?>(null)
+private const val MAX_REFERENCE_TEXT_LENGTH = 256
+private const val MAX_REFERENCE_CHANNELS = 1_000
+private const val MAX_REFRESH_RESPONSE_BYTES = 512 * 1_024
+private const val MAX_PLAYBACK_RESPONSE_BYTES = 32 * 1_024
+private const val MAX_CLOSE_RESPONSE_BYTES = 8 * 1_024
+private const val REFERENCE_SEARCH_PROBE_ORIGIN = "https://reference.invalid"
+private const val INVOCATION_GATE_RESET_REFERENCE = "test.invocation-gate.reset"
+private const val INVOCATION_GATE_COUNT_REFERENCE = "test.invocation-gate.count"
+private const val INVOCATION_GATE_COUNT_TITLE_PREFIX = "invocation-count:"
 
 internal val REFERENCE_PROVIDER_SETTINGS = ExtensionSettingSchema(
     version = 1,
@@ -613,33 +763,37 @@ internal val REFERENCE_MANIFEST = ExtensionManifest(
             hook = SubscriptionHookSpecs.Refresh.hook,
             schemaVersion = SubscriptionHookSpecs.Refresh.schemaVersion,
             requiredCapabilities = setOf(
+                ExtensionCapabilityIds.SubscriptionRead,
                 ExtensionCapabilityIds.Network,
                 ExtensionCapabilityIds.CredentialRead,
-                ExtensionCapabilityIds.SubscriptionRead,
             ),
         ),
         ExtensionHookDeclaration(
             hook = SubscriptionHookSpecs.ResolvePlayback.hook,
             schemaVersion = SubscriptionHookSpecs.ResolvePlayback.schemaVersion,
             requiredCapabilities = setOf(
+                ExtensionCapabilityIds.PlaybackResolve,
                 ExtensionCapabilityIds.Network,
                 ExtensionCapabilityIds.CredentialRead,
-                ExtensionCapabilityIds.PlaybackResolve,
             ),
         ),
         ExtensionHookDeclaration(
             hook = SubscriptionHookSpecs.ClosePlayback.hook,
             schemaVersion = SubscriptionHookSpecs.ClosePlayback.schemaVersion,
             requiredCapabilities = setOf(
+                ExtensionCapabilityIds.PlaybackResolve,
                 ExtensionCapabilityIds.Network,
                 ExtensionCapabilityIds.CredentialRead,
-                ExtensionCapabilityIds.PlaybackResolve,
             ),
         ),
         ExtensionHookDeclaration(
             hook = HostHookSpecs.SearchProvider.hook,
             schemaVersion = HostHookSpecs.SearchProvider.schemaVersion,
-            requiredCapabilities = setOf(ExtensionCapabilityIds.SearchRead),
+            requiredCapabilities = setOf(
+                ExtensionCapabilityIds.SearchRead,
+                ExtensionCapabilityIds.Network,
+                ExtensionCapabilityIds.CredentialRead,
+            ),
         ),
         ExtensionHookDeclaration(
             hook = HostHookSpecs.BackgroundTask.hook,
@@ -669,7 +823,7 @@ internal val REFERENCE_MANIFEST = ExtensionManifest(
         ),
         ExtensionCapabilityRequest(
             ExtensionCapabilityIds.CredentialRead,
-            "Authenticate reference provider requests",
+            "Use provider credentials through host-managed requests",
         ),
         ExtensionCapabilityRequest(
             ExtensionCapabilityIds.CredentialWrite,
@@ -721,4 +875,11 @@ internal val REFERENCE_MANIFEST = ExtensionManifest(
         ),
     ),
     metadata = mapOf("developer" to "M3U Conformance Suite"),
+    networkOrigins = setOf(ExtensionNetworkOrigin(REFERENCE_SEARCH_PROBE_ORIGIN)),
+    backgroundTasks = listOf(
+        ExtensionBackgroundTaskDeclaration(
+            taskId = "settings-status",
+            repeatIntervalHours = 24,
+        )
+    ),
 )

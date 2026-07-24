@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "packId": "nextlib-1.9.1-0.10.1",
+  "loadOrder": ["avutil", "swresample", "swscale", "avcodec", "avformat", "media3ext", "mediainfo"],
+  "artifacts": [
+    { "group": "io.github.anilbeesetti", "name": "nextlib-media3ext", "version": "1.9.1-0.10.1" },
+    { "group": "io.github.anilbeesetti", "name": "nextlib-mediainfo", "version": "1.9.1-0.10.1" }
+  ],
+  "assets": {
+    "arm64-v8a": {
+      "path": "native-packs/nextlib-1.9.1-0.10.1/m3u-codec-nextlib-1.9.1-0.10.1-arm64-v8a.zip",
+      "fileName": "m3u-codec-nextlib-1.9.1-0.10.1-arm64-v8a.zip",
+      "size": 3620060,
+      "md5": "28a8f10e2c4a883fd9535598fa2e18bf",
+      "libraries": [
+        { "name": "libavcodec.so", "size": 4025264, "md5": "e5a1ce7c33f3d6d71e8e35e01109baef" },
+        { "name": "libavformat.so", "size": 2515232, "md5": "a775b9207bda0365092e9dab8591d37c" },
+        { "name": "libavutil.so", "size": 593336, "md5": "9abeb5179c01505a054178d6df00ce7d" },
+        { "name": "libmedia3ext.so", "size": 230720, "md5": "df309228b189c587b38f86551f783238" },
+        { "name": "libmediainfo.so", "size": 18072, "md5": "61370f822e2ebee210eb2bee865f9dda" },
+        { "name": "libswresample.so", "size": 89232, "md5": "1627c13816cff1a1b78fad46e8a761c7" },
+        { "name": "libswscale.so", "size": 602744, "md5": "fb58d8be23d95f26f3bb34bba2ab002f" }
+      ]
+    },
+    "armeabi-v7a": {
+      "path": "native-packs/nextlib-1.9.1-0.10.1/m3u-codec-nextlib-1.9.1-0.10.1-armeabi-v7a.zip",
+      "fileName": "m3u-codec-nextlib-1.9.1-0.10.1-armeabi-v7a.zip",
+      "size": 3530731,
+      "md5": "fe47b9fc8663d31c460cc9b8d835b88f",
+      "libraries": [
+        { "name": "libavcodec.so", "size": 3795872, "md5": "26bb6e6e7bbd9c220c91c69e68ae08db" },
+        { "name": "libavformat.so", "size": 2050488, "md5": "8d7d14c2d10e8faa38c6eba25b763078" },
+        { "name": "libavutil.so", "size": 588504, "md5": "0cb10e7a0f1a7ce4111fa9cf97eb390f" },
+        { "name": "libmedia3ext.so", "size": 117580, "md5": "b8fb2a12dae903c2c364c1496f5f8f02" },
+        { "name": "libmediainfo.so", "size": 14624, "md5": "3c76b726f0b4dd691786e24b373afe1e" },
+        { "name": "libswresample.so", "size": 83036, "md5": "d582deaa88cb6d710c551fa42e33c6be" },
+        { "name": "libswscale.so", "size": 533048, "md5": "bfc810350cde5067439cbddf6a93387a" }
+      ]
+    },
+    "x86": {
+      "path": "native-packs/nextlib-1.9.1-0.10.1/m3u-codec-nextlib-1.9.1-0.10.1-x86.zip",
+      "fileName": "m3u-codec-nextlib-1.9.1-0.10.1-x86.zip",
+      "size": 3770087,
+      "md5": "aab13ead84443250468449d115430953",
+      "libraries": [
+        { "name": "libavcodec.so", "size": 4749352, "md5": "37ef837545b183e8d948a5fbfdd6fd80" },
+        { "name": "libavformat.so", "size": 2615932, "md5": "1fb9790d174e6eb72285cd14f8342c42" },
+        { "name": "libavutil.so", "size": 668148, "md5": "61db04faabbc3a0e271b4b4cb1f5873a" },
+        { "name": "libmedia3ext.so", "size": 208768, "md5": "af0b316dce35b231f2626d14004ebc71" },
+        { "name": "libmediainfo.so", "size": 16312, "md5": "0d9c374588e8ff6eeb4264e77a3a571e" },
+        { "name": "libswresample.so", "size": 98388, "md5": "9f09083c141323876dbb6a4212fa36ef" },
+        { "name": "libswscale.so", "size": 788364, "md5": "bf77c4e52a89f499fdbecbc4bb80825d" }
+      ]
+    },
+    "x86_64": {
+      "path": "native-packs/nextlib-1.9.1-0.10.1/m3u-codec-nextlib-1.9.1-0.10.1-x86_64.zip",
+      "fileName": "m3u-codec-nextlib-1.9.1-0.10.1-x86_64.zip",
+      "size": 3770386,
+      "md5": "afa71008579530d8c388512753765cf0",
+      "libraries": [
+        { "name": "libavcodec.so", "size": 4708696, "md5": "3b84143495664991dd676bbc6bb94d52" },
+        { "name": "libavformat.so", "size": 2613432, "md5": "b08fc9b5b85cf8d1087cff7fb1d63538" },
+        { "name": "libavutil.so", "size": 667816, "md5": "ba95b9990eb9e66d772567d63723dbfd" },
+        { "name": "libmedia3ext.so", "size": 235320, "md5": "a9b86eb628fe88e63308928f74b110bc" },
+        { "name": "libmediainfo.so", "size": 18520, "md5": "0eb45bdffc6351cceb3daef209a2a2aa" },
+        { "name": "libswresample.so", "size": 111880, "md5": "8c06d24636539ebcd8c4f249e2912e44" },
+        { "name": "libswscale.so", "size": 801800, "md5": "ce8179cabf24de0f36ee023e455d5e75" }
+      ]
+    }
+  }
+}

@@ -15,13 +15,13 @@ hooks = setOf(
         schemaVersion = HostHookSpecs.SettingsSchema.schemaVersion,
         requiredCapabilities = setOf(ExtensionCapabilityIds.SettingsContribute),
     )
-)
+),
 capabilities = setOf(
     ExtensionCapabilityRequest(
         capability = ExtensionCapabilityIds.SettingsContribute,
         reason = "Add settings for the current device type",
     )
-)
+),
 ```
 
 Use `HostHookSpecs.SettingsSchema.hook` and `.schemaVersion` directly so the declaration follows the selected contract.
@@ -70,11 +70,22 @@ The second handler argument is `ExtensionCallContext`:
 | Property | Use |
 | --- | --- |
 | `invocationId` | Correlate diagnostics for one call. |
-| `grantedCapabilities` | Check the capabilities granted for this call. |
+| `grantedCapabilities` | Capabilities declared by this Hook and approved for this call. Capabilities from other Hooks are absent. |
 | `settings.values` | Read non-secret settings saved by the host. |
 | `settings.credentialHandles` | Read opaque handles for secret settings. |
 
-Use `handleResult(...)` if the Hook can return an expected validation or domain failure. Return `HookResult.Failure(ExtensionError(...))` for that case. Do not catch coroutine cancellation.
+If the second handler argument is named `context`, read a setting with its qualified key:
+
+```kotlin
+val key = ExtensionSettingKeys.qualified("manifest", "greeting")
+val greeting = context.settings.values[key]
+```
+
+Use the section ID returned by a dynamic settings Hook instead of `manifest`. Secret settings use
+the same qualified key in `credentialHandles`; their plaintext is not available to the extension.
+
+Use `handleResult(...)` if the Hook can return an expected validation or domain failure. Return
+`HookResult.Failure(ExtensionError(...))` for that case. Do not catch coroutine cancellation.
 
 ## Common contract errors
 

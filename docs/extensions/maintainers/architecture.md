@@ -2,108 +2,185 @@
 
 [简体中文](architecture.zh-CN.md) · [Maintainer guide](README.md)
 
-This page answers one question: where does an extension call travel in the current code? Incomplete capabilities are kept in the [status page](status-and-release.md).
+Use this page to find the owner of an extension bug. Current release gaps are listed separately in
+[Status and release gates](status-and-release.md).
 
-## Shared path
+## Start with the main path
 
 ```text
 user action or Worker
-  -> product repository
-  -> ExtensionRuntime
-  -> extension implementation
-  -> product repository receives and applies result
+  -> feature repository creates a typed request
+  -> ExtensionRuntime invokes one Hook
+  -> built-in handler or external transport
+  -> feature repository validates the typed result
   -> Room, UI, or player
 ```
 
-There are two extension implementations:
+The runtime completes one call. The feature repository decides what the result means and whether it
+may change product state. Keeping these jobs separate prevents a generic Hook runner from writing
+search, EPG, channel, or playback data without feature-specific checks.
 
-- **Built-in:** the handler runs in the host process, such as Emby/Jellyfin.
-- **External:** the runtime calls the extension process through `AndroidBoundExtensionTransport`.
+There are two implementations:
 
-Both paths meet at `ExtensionRuntime` and use the same `HookSpec<Request, Result>`.
+- A **built-in extension** runs its handler in the M3UAndroid process. Emby/Jellyfin uses this path.
+- An **external extension** runs in another process through `AndroidBoundExtensionTransport`.
+
+Both use the same `HookSpec<Request, Result>` and runtime policy.
 
 ## Ownership by layer
 
-| Layer | Owns | First code to open |
+| Owner | Responsibility | Start here |
 | --- | --- | --- |
-| Contract | Extension identity, settings, and Hook request/result types | [`:extension:api`](../../../extension/api/src/main/kotlin/com/m3u/extension/api) |
-| Runtime | Registration, versions, capabilities, size, concurrency, timeout, health | [`ExtensionRuntime`](../../../extension/runtime/src/main/kotlin/com/m3u/extension/runtime/ExtensionRuntime.kt) |
-| Android discovery | Installed extension Services and signing identity | [`AndroidExtensionDiscovery`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android/AndroidExtensionDiscovery.kt) |
-| Android invocation | Service binding, handshake, invocation, and cancellation | [`AndroidBoundExtensionTransport`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android/AndroidBoundExtensionTransport.kt) |
-| External SDK | Receive a call in the extension process and run a typed handler | [`ExtensionService`](../../../extension/sdk-android/src/main/java/com/m3u/extension/sdk/android/ExtensionService.kt) |
-| Plugin lifecycle | Trust, enable, disable, reconnect, reauthorize, diagnostics | [`ExtensionPluginRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/plugin/ExtensionPluginRepositoryImpl.kt) |
-| Provider product flow | Discover, validate, refresh, playback, close session | [`SubscriptionProviderRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/provider/SubscriptionProviderRepositoryImpl.kt) |
-| Result application | Validate and write host data, or map to UI/player | [`data/extension`](../../../data/src/main/java/com/m3u/data/extension), [`data/repository/extension`](../../../data/src/main/java/com/m3u/data/repository/extension) |
+| API contract | Extension identity, manifest, settings, Hook request/result, wire fields | [`:extension:api`](../../../extension/api/src/main/kotlin/com/m3u/extension/api) |
+| Runtime | Registration, API/schema negotiation, per-Hook capabilities, payload limits, concurrency, timeout, cancellation, health | [`ExtensionRuntime`](../../../extension/runtime/src/main/kotlin/com/m3u/extension/runtime/ExtensionRuntime.kt) |
+| Android transport | Service discovery, identity, binding, handshake, streamed payloads, Binder death | [`:extension:transport-android`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android) |
+| External SDK | Decode a call and run the registered typed handler | [`TypedExtensionService`](../../../extension/sdk-android/src/main/java/com/m3u/extension/sdk/android/TypedExtensionService.kt) |
+| Plugin lifecycle | Trust, certificate pin, enablement, grants, reconnect, reauthorization, diagnostics | [`ExtensionPluginRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/plugin/ExtensionPluginRepositoryImpl.kt) |
+| Settings lifecycle | Rendered schema, saved values, secret handles, and edit authorization | [`ExtensionSettingsRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/extension/ExtensionSettingsRepositoryImpl.kt) |
+| Network scope | Choose approved origins and credentials for one external Hook call | [`ExtensionHookBrokerScopeProvider`](../../../data/src/main/java/com/m3u/data/extension/security/ExtensionHookBrokerScopeProvider.kt) |
+| Network execution | Validate scope, URL, redirect, values, size, and timeout; then send HTTP | [`HostNetworkBrokerImpl`](../../../data/src/main/java/com/m3u/data/extension/security/HostNetworkBrokerImpl.kt) |
+| Provider flow | Discover, validate, refresh, playback resolve, and session close | [`SubscriptionProviderRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/provider/SubscriptionProviderRepositoryImpl.kt) |
+| Result application | Validate ownership and write host data, or map a result to UI/player | [`data/extension`](../../../data/src/main/java/com/m3u/data/extension), [`data/repository/extension`](../../../data/src/main/java/com/m3u/data/repository/extension) |
+| Background tasks | Reconcile periodic declarations and invoke the task Hook from WorkManager | [`ExtensionBackgroundTaskScheduler`](../../../data/src/main/java/com/m3u/data/worker/ExtensionBackgroundTaskScheduler.kt), [`ExtensionBackgroundTaskWorker`](../../../data/src/main/java/com/m3u/data/worker/ProviderWorker.kt) |
 
-## One Hook call
+## What happens during one Hook call
 
-For any typed Hook:
+1. A feature repository chooses a `HookSpec`, extension ID, and request.
+2. The runtime confirms that the extension is enabled and declares that Hook.
+3. The runtime checks API and Hook schema versions.
+4. `CapabilityPolicy` computes the user's grants. The runtime keeps only capabilities declared by
+   this Hook. Capabilities declared by another Hook never enter the call.
+5. The runtime applies payload, concurrency, and timeout limits.
+6. If an external Hook declares and receives `network`, the broker scope provider may open one
+   short-lived scope.
+7. A built-in handler runs directly, or the external request crosses the Android transport.
+8. The runtime decodes the result, closes the broker scope, and records health.
+9. The feature repository checks ownership and applies the result.
 
-1. A repository selects a `HookSpec` and creates a request.
-2. The runtime loads the extension ID selected by the caller and confirms that it is enabled and declares the Hook.
-3. The runtime checks API/schema, granted capabilities, payload, concurrency, and timeout.
-4. A built-in handler runs directly; an external handler crosses the Android transport.
-5. The runtime decodes the result and records success or failure.
-6. The repository validates the result against the current request and applies it to the product flow.
+A missing broker scope does not grant a fallback network path. The Hook can still return an offline
+result, but broker operations fail.
 
-Step 6 cannot live in the generic runtime. Search results, EPG entries, channel snapshots, and playback URLs each have different ownership and validity rules.
+## How network scope is chosen
 
-## Real example: Emby/Jellyfin refresh
+The external broker supports provider Validate/Refresh/Resolve/Close, settings, search, metadata,
+EPG, and background tasks. Provider `Discover` is always offline.
+
+| Request | Scope source |
+| --- | --- |
+| Provider `Validate` | Authentication scope created from the submitted provider origin. |
+| Provider `Refresh`, `ResolvePlayback`, `ClosePlayback` | Account scope created by the provider repository. |
+| Search, metadata, or EPG with `account + credential` | Account scope created from the matching stored provider account. |
+| Settings, background, or search/metadata/EPG without an account | Hook scope created from approved manifest and setting origins. |
+
+For a general Hook scope, the host combines:
+
+- fixed `manifest.networkOrigins` that were approved for the trusted extension; and
+- current text settings marked `networkOrigin` that the user explicitly saved.
+
+The trust store keeps only approved fixed origins. Reconnecting an extension does not approve a new
+origin. A certificate repin keeps the intersection of old and current origins. A network-origin
+setting has no default; saving it grants the current value, clearing it revokes the value, and a
+settings schema change requires another save.
+
+Every scope binds the external principal, Hook, approved origins, and a short lifetime. Account
+scopes also bind the account. The scope closes after normal return, failure, timeout, or
+cancellation. `HostNetworkBrokerImpl` checks the first URL and every redirect against the exact
+scheme, host, and port.
+
+Credential handles enter a scope only when the current Hook declares `credential.read` and the user
+approved it. The broker resolves `SecretReference` and `ContextReference` only while constructing a
+request. It never serializes their resolved value directly back to the extension.
+
+## Provider authentication and refresh
+
+External provider authentication uses a separate one-time flow:
+
+```text
+Validate Hook
+  -> broker.authenticate sends the login exchange
+  -> broker captures the credential and selected account fields
+  -> extension receives a one-time receipt
+  -> provider repository consumes the receipt
+  -> vault stores encrypted credential material
+```
+
+The extension does not receive the login response body. The built-in Emby/Jellyfin implementation
+is trusted host code, so it returns `ProviderValidationEvidence.TrustedDirect`. An external provider
+must return `ProviderValidationEvidence.HostBrokerReceipt`.
+
+Refresh then follows the normal product path:
 
 ```text
 ProviderWorker or user refresh
   -> SubscriptionProviderRepositoryImpl
   -> SubscriptionHookSpecs.Refresh
   -> ExtensionRuntime
-  -> EmbyCompatibleProvider
+  -> provider handler
   -> SubscriptionProviderImporter
   -> Room
+  -> metadata and EPG contribution Hooks
 ```
 
-This path is connected today: the repository reads the account and credentials, the built-in provider returns a channel snapshot, and the importer updates that account in one transaction before metadata and EPG contributions run.
+The importer updates only the current account and preserves host-owned local channel state. An
+external provider uses the same repository and importer as Emby/Jellyfin; only the handler call
+crosses Android IPC.
 
-An external provider uses the same repository and importer. Its handler runs through the Android transport instead of `EmbyCompatibleProvider`.
+The broker prevents direct host-side credential disclosure. It cannot stop a malicious extension
+from colluding with an origin that the user approved. That remaining threat is one reason external
+extensions stay behind the developer switch.
 
-## Provider authentication
+## Background task path
+
+An extension declares periodic jobs in `manifest.backgroundTasks`.
 
 ```text
-Validate Hook
-  -> broker.authenticate(login exchange + capture locations)
-  -> host sends the request
-  -> host keeps the credential and opaque account contexts
-  -> extension receives a one-time receipt
-  -> repository consumes the receipt
-  -> vault stores one encrypted provider credential material record
+enable, reauthorize, or restore extension
+  -> ExtensionBackgroundTaskScheduler.reconcile
+  -> WorkManager stores or updates periodic work
+  -> ExtensionBackgroundTaskWorker restores enabled plugins
+  -> ExtensionRuntime invokes HostHookSpecs.BackgroundTask
 ```
 
-An external provider never receives the login response body. The repository derives stable account identities from the approved origin and captured contexts. Refresh and playback calls receive short-lived handles; `HostNetworkBrokerImpl` resolves those handles only for the active extension principal, Hook, account, and origin.
+The scheduler removes stale declarations and cancels all jobs when the extension is disabled or
+loses a required capability. A declaration with `requiresNetwork = true` receives a connected
+network constraint. The Worker retries only recoverable failures and stops after the bounded retry
+count.
 
-The built-in Emby/Jellyfin extension uses `ProviderValidationEvidence.TrustedDirect` because it is host code. External extensions must return `ProviderValidationEvidence.HostBrokerReceipt`.
-
-## External Service registration
+## External extension lifecycle
 
 ```text
-discovery finds Service
-  -> host verifies one package owns the process and network stays brokered
-  -> host reads manifest
-  -> user confirms identity and capabilities
-  -> repository registers transport
-  -> runtime can invoke Hooks
+discover service
+  -> inspect manifest and identity; issue a short-lived review token
+  -> user approves identity, capabilities, and fixed origins
+  -> repository consumes that token and records trust
+  -> transport registers with the runtime
 ```
 
-These terms refer to distinct states:
+Enable and reauthorization must consume the token created for the details shown to the user. The
+token is single-use, expires after five minutes, and is bound to the discovered service and
+certificate. If it is missing, expired, or belongs to different details, the user must review the
+extension again.
 
-- **Discovered:** a Service with the expected entry declaration exists on the device.
-- **Enabled:** the user allows the host to call it.
-- **Registered:** the current host process has a usable transport.
+Settings use the same boundary at field level. Rendering a configuration issues a short-lived,
+single-use edit token for each field. Saving succeeds only against that displayed section schema;
+if the schema changed, the host rejects the edit and reloads the form.
 
-After an app restart, the bootstrap worker restores extensions that are still trusted and enabled. After an extension update or Binder disconnect, the next plugin-list refresh or restore run makes the repository rebuild registration; the runtime does not own Android Service lifecycle.
+Keep these states separate:
 
-## Most important ownership rules
+- **Discovered:** the service is visible to the host.
+- **Enabled:** the user allows calls and required grants are present.
+- **Registered:** this host process currently has a working transport.
 
-- The runtime safely completes one call; it does not write Room or update UI.
-- Repositories/importers decide whether a result belongs to the request and may replace old data.
-- The plugin repository owns external extension trust, enablement, and grants.
-- The credential vault and Android Keystore own secrets; extension contracts carry handles and one-time receipts.
+After process restart, the repository restores trusted, enabled extensions. After an update or
+Binder disconnect, a restore or plugin-list refresh rebuilds registration. The runtime does not own
+Android Service lifecycle.
 
-Continue with [Change by task](change-guide.md) before editing code.
+## Rules that should remain true
+
+- The runtime does not write Room and does not update UI.
+- A result importer changes data only inside the current request and owner scope.
+- One extension's failure does not remove another extension's data or its own last valid result.
+- The plugin repository owns trust, enablement, and grants.
+- The vault owns secrets. Contracts carry opaque handles and one-time receipts.
+
+Before editing, continue with [Change by task](change-guide.md).

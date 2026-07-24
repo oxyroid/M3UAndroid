@@ -7,14 +7,17 @@ import com.m3u.extension.api.security.BrokerAuthenticationResponse
 import com.m3u.extension.api.security.BrokerErrorCode
 import com.m3u.extension.api.security.BrokerErrorCodes
 import com.m3u.extension.api.security.BrokerHttpExchange
+import com.m3u.extension.api.security.BrokerResponseRedaction
 import com.m3u.extension.api.security.BrokerScopeHandle
 import com.m3u.extension.api.security.BrokerValue
 import com.m3u.extension.api.security.BrokeredHttpRequest
 import com.m3u.extension.api.security.BrokeredHttpResponse
 import com.m3u.extension.api.security.ResponseValueSource
 import com.m3u.extension.api.security.referencesCredential
+import com.m3u.extension.transport.android.requireSafeExtensionJsonDepth
 import java.io.IOException
 import java.io.InterruptedIOException
+import java.util.ArrayDeque
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -29,7 +32,6 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.jsonObject
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.HttpUrl
@@ -158,22 +160,23 @@ internal class HostNetworkBrokerImpl @Inject constructor(
             "Extension request body has too many parts"
         }
         if (request.url.referencesCredential()) invalidRequest()
+        val resolvedSecrets = SensitiveValueCollector()
+        val resolutionBudget = BrokerValueResolutionBudget()
         var url = request.url.renderForHost(
             maximumOutputLength = MAX_URL_LENGTH,
-            budget = BrokerValueResolutionBudget(),
+            budget = resolutionBudget,
             resolveSecret = { invalidRequest() },
             resolveContext = { reference ->
                 scopeStore.resolveContext(scope, principal, hook, reference)
             },
+            observeSensitiveValue = resolvedSecrets::observe,
         ).toHttpUrlOrThrow()
-        if (url.origin != access.approvedOrigin) {
+        if (url.origin !in access.approvedOrigins) {
             throw ProviderBrokerException(
                 BrokerErrorCodes.ScopeDenied,
                 recoverable = false,
             )
         }
-        val resolvedSecrets = linkedSetOf<String>()
-        val resolutionBudget = BrokerValueResolutionBudget()
         val requestBodyValue = buildString {
             request.body.forEach { value ->
                 append(
@@ -191,7 +194,7 @@ internal class HostNetworkBrokerImpl @Inject constructor(
                         resolveContext = { reference ->
                             scopeStore.resolveContext(scope, principal, hook, reference)
                         },
-                        observeSensitiveValue = resolvedSecrets::add,
+                        observeSensitiveValue = resolvedSecrets::observe,
                     )
                 )
                 require(length <= MAX_REQUEST_BODY_BYTES) {
@@ -235,7 +238,7 @@ internal class HostNetworkBrokerImpl @Inject constructor(
                     resolveContext = { reference ->
                         scopeStore.resolveContext(scope, principal, hook, reference)
                     },
-                    observeSensitiveValue = resolvedSecrets::add,
+                    observeSensitiveValue = resolvedSecrets::observe,
                 )
                 require(
                     resolved.length <= MAX_HEADER_VALUE_LENGTH &&
@@ -251,7 +254,7 @@ internal class HostNetworkBrokerImpl @Inject constructor(
                     require(redirects++ < MAX_REDIRECTS) { "Too many extension redirects" }
                     url = response.header("Location")?.let(url::resolve)
                         ?: throw IOException("Redirect response has no location")
-                    if (url.origin != access.approvedOrigin) {
+                    if (url.origin !in access.approvedOrigins) {
                         throw ProviderBrokerException(
                             BrokerErrorCodes.ScopeDenied,
                             recoverable = false,
@@ -261,12 +264,16 @@ internal class HostNetworkBrokerImpl @Inject constructor(
                 }
                 val body = response.body.source().let { source ->
                     val buffer = Buffer()
-                    val limit = request.maximumResponseBytes.toLong() + 1
+                    val responseLimit = minOf(
+                        request.maximumResponseBytes,
+                        MAX_SAFE_RESPONSE_BODY_BYTES,
+                    )
+                    val limit = responseLimit.toLong() + 1
                     while (buffer.size < limit) {
                         val read = source.read(buffer, minOf(8_192L, limit - buffer.size))
                         if (read == -1L) break
                     }
-                    if (buffer.size > request.maximumResponseBytes) {
+                    if (buffer.size > responseLimit) {
                         throw ProviderBrokerException(
                             BrokerErrorCodes.ResponseTooLarge,
                             recoverable = false,
@@ -276,11 +283,8 @@ internal class HostNetworkBrokerImpl @Inject constructor(
                 }
                 return BrokeredHttpResponse(
                     statusCode = response.code,
-                    headers = response.headers.toMap().filter { (name, value) ->
-                        SAFE_RESPONSE_HEADERS.any { it.equals(name, true) } &&
-                            resolvedSecrets.none { secret -> secret.isNotEmpty() && secret in value }
-                    },
-                    body = redactResponseBody(body, resolvedSecrets),
+                    headers = safeResponseHeaders(response, resolvedSecrets.values),
+                    body = redactResponseBody(body, resolvedSecrets.values),
                 )
             }
         }
@@ -309,7 +313,7 @@ internal class HostNetworkBrokerImpl @Inject constructor(
             "Extension request body has too many parts"
         }
         if (exchange.url.referencesCredential()) invalidRequest()
-        val resolvedSensitiveValues = linkedSetOf<String>()
+        val resolvedSensitiveValues = SensitiveValueCollector()
         val resolutionBudget = BrokerValueResolutionBudget()
         var url = exchange.url.renderForHost(
             maximumOutputLength = MAX_URL_LENGTH,
@@ -318,9 +322,9 @@ internal class HostNetworkBrokerImpl @Inject constructor(
             resolveContext = { reference ->
                 scopeStore.resolveContext(scope, principal, hook, reference)
             },
-            observeSensitiveValue = resolvedSensitiveValues::add,
+            observeSensitiveValue = resolvedSensitiveValues::observe,
         ).toHttpUrlOrThrow()
-        if (url.origin != access.approvedOrigin) {
+        if (url.origin !in access.approvedOrigins) {
             throw ProviderBrokerException(BrokerErrorCodes.ScopeDenied, recoverable = false)
         }
         val requestBodyValue = buildString {
@@ -340,7 +344,7 @@ internal class HostNetworkBrokerImpl @Inject constructor(
                         resolveContext = { reference ->
                             scopeStore.resolveContext(scope, principal, hook, reference)
                         },
-                        observeSensitiveValue = resolvedSensitiveValues::add,
+                        observeSensitiveValue = resolvedSensitiveValues::observe,
                     )
                 )
                 require(length <= MAX_REQUEST_BODY_BYTES) {
@@ -386,7 +390,7 @@ internal class HostNetworkBrokerImpl @Inject constructor(
                     resolveContext = { reference ->
                         scopeStore.resolveContext(scope, principal, hook, reference)
                     },
-                    observeSensitiveValue = resolvedSensitiveValues::add,
+                    observeSensitiveValue = resolvedSensitiveValues::observe,
                 )
                 require(
                     resolved.length <= MAX_HEADER_VALUE_LENGTH &&
@@ -403,7 +407,7 @@ internal class HostNetworkBrokerImpl @Inject constructor(
                     }
                     url = response.header("Location")?.let(url::resolve)
                         ?: throw IOException("Redirect response has no location")
-                    if (url.origin != access.approvedOrigin) {
+                    if (url.origin !in access.approvedOrigins) {
                         throw ProviderBrokerException(
                             BrokerErrorCodes.ScopeDenied,
                             recoverable = false,
@@ -413,12 +417,16 @@ internal class HostNetworkBrokerImpl @Inject constructor(
                 }
                 val body = response.body.source().let { source ->
                     val buffer = Buffer()
-                    val limit = exchange.maximumResponseBytes.toLong() + 1
+                    val responseLimit = minOf(
+                        exchange.maximumResponseBytes,
+                        MAX_SAFE_RESPONSE_BODY_BYTES,
+                    )
+                    val limit = responseLimit.toLong() + 1
                     while (buffer.size < limit) {
                         val read = source.read(buffer, minOf(8_192L, limit - buffer.size))
                         if (read == -1L) break
                     }
-                    if (buffer.size > exchange.maximumResponseBytes) {
+                    if (buffer.size > responseLimit) {
                         throw ProviderBrokerException(
                             BrokerErrorCodes.ResponseTooLarge,
                             recoverable = false,
@@ -490,7 +498,7 @@ internal class HostNetworkBrokerImpl @Inject constructor(
             ?.singleOrNull()
             ?: invalidRequest()
 
-        is ResponseValueSource.JsonPointer -> json.parseToJsonElement(body)
+        is ResponseValueSource.JsonPointer -> parseBoundedJson(body)
             .atJsonPointer(source.pointer)
             .let { value -> value as? JsonPrimitive ?: invalidRequest() }
             .content
@@ -498,21 +506,248 @@ internal class HostNetworkBrokerImpl @Inject constructor(
         require(value.isNotEmpty()) { "Authentication capture is empty" }
     }
 
-    private fun redactResponseBody(body: String, sensitiveValues: Set<String>): String {
-        val exactRedacted = sensitiveValues
+    private suspend fun redactResponseBody(
+        body: String,
+        sensitiveValues: Set<String>,
+    ): String {
+        val patterns = sensitiveValues
+            .asSequence()
             .filter(String::isNotEmpty)
-            .fold(body) { current, secret -> current.replace(secret, "***") }
-        return redactSensitiveJson(exactRedacted)
+            .sortedByDescending(String::length)
+            .toList()
+        val matcher = patterns
+            .takeIf(List<String>::isNotEmpty)
+            ?.let(::SensitivePatternMatcher)
+        val jsonBody = body.removePrefix(UTF_8_BOM)
+        val firstContentCharacter = jsonBody.firstOrNull { character -> !character.isWhitespace() }
+        if (firstContentCharacter?.canStartJsonValue() != true) {
+            return matcher?.redact(body) ?: body
+        }
+        requireSafeBrokerJsonDepth(jsonBody)
+        val parsed = try {
+            json.parseToJsonElement(jsonBody)
+        } catch (_: Exception) {
+            return matcher?.redact(body) ?: body
+        } catch (failure: StackOverflowError) {
+            invalidRequest(failure)
+        }
+        val redacted = parsed.redacted(
+            matcher = matcher,
+            budget = JsonRedactionBudget(),
+        )
+        if (!redacted.changed) return body
+        return try {
+            json.encodeToString(JsonElement.serializer(), redacted.element).also { encoded ->
+                if (encoded.length > MAX_REDACTED_RESPONSE_CHARS) {
+                    throw ProviderBrokerException(
+                        BrokerErrorCodes.ResponseTooLarge,
+                        recoverable = false,
+                    )
+                }
+            }
+        } catch (failure: StackOverflowError) {
+            invalidRequest(failure)
+        }
+    }
+
+    private suspend fun SensitivePatternMatcher.redact(value: String): String {
+        val longestMatchAt = findLongestMatches(value)
+        if (longestMatchAt.none { length -> length > 0 }) return value
+        return buildString(minOf(value.length, MAX_REDACTED_RESPONSE_CHARS)) {
+            var index = 0
+            while (index < value.length) {
+                if (index % REDACTION_CANCELLATION_CHECK_INTERVAL == 0) {
+                    currentCoroutineContext().ensureActive()
+                }
+                val matchLength = longestMatchAt[index]
+                if (matchLength == 0) {
+                    append(value[index++])
+                } else {
+                    var matchEnd = index + matchLength
+                    var overlappingStart = index + 1
+                    while (overlappingStart < matchEnd) {
+                        if (
+                            overlappingStart % REDACTION_CANCELLATION_CHECK_INTERVAL == 0
+                        ) {
+                            currentCoroutineContext().ensureActive()
+                        }
+                        val overlappingLength = longestMatchAt[overlappingStart]
+                        if (overlappingLength > 0) {
+                            matchEnd = maxOf(
+                                matchEnd,
+                                overlappingStart + overlappingLength,
+                            )
+                        }
+                        overlappingStart++
+                    }
+                    append(BrokerResponseRedaction.RedactedValue)
+                    index = matchEnd
+                }
+                if (length > MAX_REDACTED_RESPONSE_CHARS) {
+                    throw ProviderBrokerException(
+                        BrokerErrorCodes.ResponseTooLarge,
+                        recoverable = false,
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * Aho-Corasick matcher used to redact every resolved secret in one bounded pass.
+     *
+     * Recording only the longest match for each start position preserves the previous
+     * longest-secret-first behavior without rescanning the response once per secret.
+     */
+    private class SensitivePatternMatcher(patterns: List<String>) {
+        private val nodes = mutableListOf(Node())
+
+        init {
+            patterns.forEach(::insert)
+            buildFailureLinks()
+        }
+
+        suspend fun findLongestMatches(input: String): IntArray {
+            val longestMatchAt = IntArray(input.length)
+            var state = 0
+            input.forEachIndexed { index, character ->
+                if (index % REDACTION_CANCELLATION_CHECK_INTERVAL == 0) {
+                    currentCoroutineContext().ensureActive()
+                }
+                while (state != 0 && character !in nodes[state].transitions) {
+                    state = nodes[state].failure
+                }
+                state = nodes[state].transitions[character] ?: 0
+                nodes[state].outputLengths.forEach { length ->
+                    val start = index - length + 1
+                    if (start >= 0 && length > longestMatchAt[start]) {
+                        longestMatchAt[start] = length
+                    }
+                }
+            }
+            return longestMatchAt
+        }
+
+        private fun insert(pattern: String) {
+            var state = 0
+            pattern.forEach { character ->
+                state = nodes[state].transitions.getOrPut(character) {
+                    nodes.add(Node())
+                    nodes.lastIndex
+                }
+            }
+            nodes[state].outputLengths += pattern.length
+        }
+
+        private fun buildFailureLinks() {
+            val pending = ArrayDeque<Int>()
+            nodes[0].transitions.values.forEach { state ->
+                pending.addLast(state)
+            }
+            while (pending.isNotEmpty()) {
+                val state = pending.removeFirst()
+                nodes[state].transitions.forEach { (character, child) ->
+                    var fallback = nodes[state].failure
+                    while (fallback != 0 && character !in nodes[fallback].transitions) {
+                        fallback = nodes[fallback].failure
+                    }
+                    nodes[child].failure = nodes[fallback].transitions[character]
+                        ?.takeUnless { candidate -> candidate == child }
+                        ?: 0
+                    nodes[child].outputLengths +=
+                        nodes[nodes[child].failure].outputLengths
+                    pending.addLast(child)
+                }
+            }
+        }
+
+        private data class Node(
+            val transitions: MutableMap<Char, Int> = mutableMapOf(),
+            val outputLengths: MutableList<Int> = mutableListOf(),
+            var failure: Int = 0,
+        )
+    }
+
+    private fun safeResponseHeaders(
+        response: Response,
+        sensitiveValues: Set<String>,
+    ): Map<String, String> {
+        val safe = linkedMapOf<String, String>()
+        var totalBytes = 0
+        response.headers.forEach { (name, value) ->
+            if (SAFE_RESPONSE_HEADERS.none { allowed -> allowed.equals(name, true) }) {
+                return@forEach
+            }
+            if (
+                value.length > MAX_RESPONSE_HEADER_VALUE_CHARS ||
+                sensitiveValues.any { secret -> secret.isNotEmpty() && secret in value }
+            ) {
+                return@forEach
+            }
+            val entryBytes = name.encodeToByteArray().size + value.encodeToByteArray().size
+            if (
+                safe.size >= MAX_RESPONSE_HEADERS ||
+                totalBytes + entryBytes > MAX_RESPONSE_HEADER_BYTES
+            ) {
+                return@forEach
+            }
+            safe[name] = value
+            totalBytes += entryBytes
+        }
+        return safe
     }
 
     private fun JsonElement.atJsonPointer(pointer: String): JsonElement {
-        require(pointer.startsWith('/') && pointer.length <= MAX_JSON_POINTER_LENGTH) {
-            "JSON pointer must be absolute and bounded"
+        require(
+            pointer.length <= MAX_JSON_POINTER_LENGTH &&
+                (pointer.isEmpty() || pointer.startsWith('/'))
+        ) {
+            "JSON pointer must be RFC 6901 and bounded"
         }
-        return pointer.split('/').drop(1).fold(this) { current, segment ->
-            current.jsonObject[segment.replace("~1", "/").replace("~0", "~")]
-                ?: invalidRequest()
+        return pointer.decodeJsonPointerSegments().fold(this) { current, segment ->
+            when (current) {
+                is JsonObject -> current[segment] ?: invalidRequest()
+                is JsonArray -> current[segment.toJsonArrayIndex(current.size)]
+                else -> invalidRequest()
+            }
         }
+    }
+
+    private fun String.decodeJsonPointerSegments(): List<String> = split('/')
+        .drop(1)
+        .map { segment ->
+            buildString(segment.length) {
+                var index = 0
+                while (index < segment.length) {
+                    when (val character = segment[index++]) {
+                        '~' -> {
+                            if (index >= segment.length) invalidRequest()
+                            append(
+                                when (segment[index++]) {
+                                    '0' -> '~'
+                                    '1' -> '/'
+                                    else -> invalidRequest()
+                                }
+                            )
+                        }
+                        else -> append(character)
+                    }
+                }
+            }
+        }
+
+    private fun String.toJsonArrayIndex(arraySize: Int): Int {
+        if (
+            this == "-" ||
+            isEmpty() ||
+            (length > 1 && first() == '0') ||
+            any { character -> character !in '0'..'9' }
+        ) {
+            invalidRequest()
+        }
+        val index = toIntOrNull() ?: invalidRequest()
+        if (index !in 0 until arraySize) invalidRequest()
+        return index
     }
 
     private fun invalidRequest(cause: Throwable? = null): Nothing =
@@ -525,21 +760,100 @@ internal class HostNetworkBrokerImpl @Inject constructor(
     private fun String.isSensitiveRequestHeader(): Boolean =
         SENSITIVE_HEADER_NAME_PARTS.any { keyword -> contains(keyword, ignoreCase = true) }
 
-    private fun redactSensitiveJson(body: String): String = runCatching {
-        json.encodeToString(JsonElement.serializer(), json.parseToJsonElement(body).redacted())
-    }.getOrDefault(body)
-
-    private fun JsonElement.redacted(): JsonElement = when (this) {
-        is JsonObject -> JsonObject(mapValues { (key, value) ->
-            if (SENSITIVE_JSON_KEYS.any { key.contains(it, ignoreCase = true) }) {
-                JsonPrimitive("***")
-            } else {
-                value.redacted()
-            }
-        })
-        is JsonArray -> JsonArray(map { element -> element.redacted() })
-        else -> this
+    private fun parseBoundedJson(body: String): JsonElement {
+        val jsonBody = body.removePrefix(UTF_8_BOM)
+        requireSafeBrokerJsonDepth(jsonBody)
+        return try {
+            json.parseToJsonElement(jsonBody)
+        } catch (failure: StackOverflowError) {
+            invalidRequest(failure)
+        }
     }
+
+    private fun requireSafeBrokerJsonDepth(body: String) {
+        try {
+            body.requireSafeExtensionJsonDepth(MAX_BROKER_JSON_DEPTH)
+        } catch (failure: IllegalArgumentException) {
+            throw ProviderBrokerException(
+                BrokerErrorCodes.ResponseTooLarge,
+                recoverable = false,
+                cause = failure,
+            )
+        }
+    }
+
+    private suspend fun JsonElement.redacted(
+        matcher: SensitivePatternMatcher?,
+        budget: JsonRedactionBudget,
+    ): RedactedJson {
+        budget.visit()
+        return when (this) {
+            is JsonObject -> {
+                var changed = false
+                val values = linkedMapOf<String, JsonElement>()
+                for ((key, value) in this) {
+                    val redactedKey = matcher?.redact(key) ?: key
+                    val redactedValue = if (key.isAuthenticationResponseField()) {
+                        RedactedJson(
+                            element = JsonPrimitive(BrokerResponseRedaction.RedactedValue),
+                            changed = value !=
+                                JsonPrimitive(BrokerResponseRedaction.RedactedValue),
+                        )
+                    } else {
+                        value.redacted(matcher, budget)
+                    }
+                    if (redactedKey in values) {
+                        invalidRequest()
+                    }
+                    values[redactedKey] = redactedValue.element
+                    changed = changed ||
+                        redactedKey != key ||
+                        redactedValue.changed
+                }
+                RedactedJson(
+                    element = if (changed) JsonObject(values) else this,
+                    changed = changed,
+                )
+            }
+            is JsonArray -> {
+                var changed = false
+                val values = ArrayList<JsonElement>(size)
+                for (value in this) {
+                    val redactedValue = value.redacted(matcher, budget)
+                    values += redactedValue.element
+                    changed = changed || redactedValue.changed
+                }
+                RedactedJson(
+                    element = if (changed) JsonArray(values) else this,
+                    changed = changed,
+                )
+            }
+            is JsonPrimitive -> {
+                val redactedValue = matcher?.redact(content) ?: content
+                RedactedJson(
+                    element = if (redactedValue != content) {
+                        JsonPrimitive(redactedValue)
+                    } else {
+                        this
+                    },
+                    changed = redactedValue != content,
+                )
+            }
+        }
+    }
+
+    private fun String.isAuthenticationResponseField(): Boolean =
+        BrokerResponseRedaction.isAuthenticationField(this)
+
+    private fun Char.canStartJsonValue(): Boolean =
+        this == '{' ||
+            this == '[' ||
+            this == '"' ||
+            this == '-' ||
+            this in '0'..'9' ||
+            this == 't' ||
+            this == 'f' ||
+            this == 'n'
 
     private fun String.toHttpUrlOrThrow(): HttpUrl = toHttpUrl()
     private val HttpUrl.origin: String
@@ -548,6 +862,47 @@ internal class HostNetworkBrokerImpl @Inject constructor(
             return "$scheme://$canonicalHost:$port"
         }
     private fun BrokerValue?.literalOrNull(): String? = (this as? BrokerValue.Literal)?.value
+
+    private class SensitiveValueCollector {
+        private val collected = linkedSetOf<String>()
+        private var totalBytes = 0
+
+        val values: Set<String>
+            get() = collected
+
+        fun observe(value: String) {
+            if (value.isEmpty() || value in collected) return
+            require(value.length <= MAX_SENSITIVE_VALUE_CHARS) {
+                "Resolved sensitive broker value exceeds limit"
+            }
+            val byteCount = value.encodeToByteArray().size
+            require(
+                collected.size < MAX_SENSITIVE_VALUES &&
+                    totalBytes + byteCount <= MAX_SENSITIVE_VALUE_BYTES
+            ) {
+                "Broker request contains too many sensitive value variants"
+            }
+            collected += value
+            totalBytes += byteCount
+        }
+    }
+
+    private class JsonRedactionBudget {
+        private var visitedNodes = 0
+
+        suspend fun visit() {
+            if (
+                visitedNodes++ % REDACTION_CANCELLATION_CHECK_INTERVAL == 0
+            ) {
+                currentCoroutineContext().ensureActive()
+            }
+        }
+    }
+
+    private data class RedactedJson(
+        val element: JsonElement,
+        val changed: Boolean,
+    )
 
     private companion object {
         val ALLOWED_METHODS = setOf("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD")
@@ -574,22 +929,26 @@ internal class HostNetworkBrokerImpl @Inject constructor(
             "X-RateLimit-Remaining",
             "X-RateLimit-Reset",
         )
-        val SENSITIVE_JSON_KEYS = setOf(
-            "token",
-            "password",
-            "secret",
-            "authorization",
-            "credential",
-        )
         val HTTP_HEADER_NAME = Regex("[!#$%&'*+.^_`|~0-9A-Za-z-]+")
         const val MAX_REDIRECTS = 5
         const val MAX_RESPONSE_BYTES = 4 * 1024 * 1024
+        const val MAX_SAFE_RESPONSE_BODY_BYTES = 720 * 1024
+        const val MAX_REDACTED_RESPONSE_CHARS = MAX_SAFE_RESPONSE_BODY_BYTES * 3
         const val MAX_REQUEST_BODY_BYTES = 512 * 1024
         const val MAX_REQUEST_HEADERS = 64
         const val MAX_BODY_PARTS = 64
         const val MAX_HEADER_VALUE_LENGTH = 16 * 1024
+        const val MAX_RESPONSE_HEADERS = 16
+        const val MAX_RESPONSE_HEADER_VALUE_CHARS = 8 * 1024
+        const val MAX_RESPONSE_HEADER_BYTES = 32 * 1024
         const val MAX_URL_LENGTH = 8 * 1024
         const val MAX_JSON_POINTER_LENGTH = 512
+        const val MAX_BROKER_JSON_DEPTH = 64
+        const val MAX_SENSITIVE_VALUES = 32
+        const val MAX_SENSITIVE_VALUE_CHARS = 16 * 1024
+        const val MAX_SENSITIVE_VALUE_BYTES = 64 * 1024
+        const val REDACTION_CANCELLATION_CHECK_INTERVAL = 4 * 1024
+        const val UTF_8_BOM = "\uFEFF"
         const val MAX_CONCURRENT_BROKER_REQUESTS = 8
         const val BROKER_REQUEST_TIMEOUT_MILLIS = 25_000L
     }

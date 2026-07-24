@@ -23,7 +23,11 @@ interface SubscriptionProviderRepository {
     ): Boolean
 
     suspend fun removeAccount(playlistUrl: String)
-    suspend fun closeOrphanedPlaybackSessions(): ProviderSessionCleanupResult
+    suspend fun invalidateUndecryptableCredentials(): Int
+    suspend fun closeOrphanedPlaybackSessions(
+        afterCreatedAtEpochMillis: Long? = null,
+        afterSessionId: String? = null,
+    ): ProviderSessionCleanupResult
 }
 
 data class DiscoveredSubscriptionProvider(
@@ -45,6 +49,7 @@ data class ProviderAccountSummary(
     val username: String,
     val serverName: String,
     val requiresReauthentication: Boolean,
+    val requiresExtensionOwnerConfirmation: Boolean = false,
 )
 
 class ProviderDiscoveryException(
@@ -63,6 +68,11 @@ data class ProviderSubscriptionRequest(
     val providerKind: ProviderKind,
     val settingValues: Map<String, String> = emptyMap(),
     val credentialHandles: Map<String, CredentialHandle> = emptyMap(),
+    /**
+     * Host-selected account being explicitly reauthenticated. Plugins never control this value.
+     * It also authorizes rebinding a restored account to the currently trusted plugin identity.
+     */
+    val reauthenticationPlaylistUrl: String? = null,
 )
 
 data class ProviderSubscriptionResult(
@@ -74,11 +84,19 @@ data class ProviderSessionCleanupResult(
     val closedCount: Int,
     val pendingCount: Int,
     val recoverablePendingCount: Int,
+    val continuationCreatedAtEpochMillis: Long? = null,
+    val continuationSessionId: String? = null,
 ) {
     init {
         require(closedCount >= 0)
         require(pendingCount >= 0)
         require(recoverablePendingCount in 0..pendingCount)
+        require(
+            (continuationCreatedAtEpochMillis == null) ==
+                (continuationSessionId == null)
+        )
+        require(continuationCreatedAtEpochMillis == null || continuationCreatedAtEpochMillis >= 0L)
+        require(continuationSessionId == null || continuationSessionId.isNotBlank())
     }
 }
 
@@ -86,6 +104,7 @@ data class ProviderPlaybackSource(
     val url: String,
     val headers: Map<String, String>,
     val session: ProviderPlaybackSession?,
+    val allowCrossOriginRequests: Boolean,
 )
 
 data class ProviderPlaybackSession(
@@ -95,13 +114,31 @@ data class ProviderPlaybackSession(
     val itemId: String,
     val mediaSourceId: String?,
     val sourceType: String,
-    val fallbackDirectUrl: String?,
     val playSessionId: String?,
     val liveStreamId: String?,
-)
+) {
+    init {
+        require(itemId.isNotBlank() && itemId.encodeToByteArray().size <= 512)
+        require(
+            mediaSourceId == null ||
+                mediaSourceId.isNotBlank() && mediaSourceId.encodeToByteArray().size <= 512
+        )
+        require(sourceType.isNotBlank() && sourceType.encodeToByteArray().size <= 128)
+        require(playSessionId != null || liveStreamId != null)
+        require(
+            playSessionId == null ||
+                playSessionId.isNotBlank() && playSessionId.encodeToByteArray().size <= 512
+        )
+        require(
+            liveStreamId == null ||
+                liveStreamId.isNotBlank() && liveStreamId.encodeToByteArray().size <= 512
+        )
+    }
+}
 
 enum class ProviderPlaybackCloseReason {
     STOPPED,
+    ENDED,
     CHANNEL_CHANGED,
     PLAYBACK_FAILED,
     RECOVERY,

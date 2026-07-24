@@ -18,11 +18,15 @@ import com.m3u.data.extension.security.ActiveExtensionPrincipalRegistry
 import com.m3u.data.extension.security.CredentialResolver
 import com.m3u.data.extension.security.ProviderBrokerScopeStore
 import com.m3u.data.repository.extension.ExtensionContributionScheduler
+import com.m3u.data.repository.extension.ExtensionContributionRunCoordinator
 import com.m3u.extension.api.ExtensionApiVersions
 import com.m3u.extension.api.subscription.EmbyCompatibleProviderKinds
 import com.m3u.extension.api.subscription.SubscriptionProviderSettingKeys
 import com.m3u.extension.runtime.ExtensionRegistrationResult
 import com.m3u.extension.runtime.ExtensionRuntime
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
@@ -60,6 +64,7 @@ class SubscriptionProviderRepositoryIntegrationTest {
             val runtime = ExtensionRuntime(ExtensionApiVersions.Current)
             assertTrue(runtime.register(provider) is ExtensionRegistrationResult.Registered)
             val repository = SubscriptionProviderRepositoryImpl(
+                context = context,
                 runtime = runtime,
                 providerDao = providerDao,
                 playlistDao = playlistDao,
@@ -73,31 +78,44 @@ class SubscriptionProviderRepositoryIntegrationTest {
                 ),
                 credentialVault = credentialVault,
                 extensionContributionScheduler = NoOpExtensionContributionScheduler,
+                extensionContributionRunCoordinator = ExtensionContributionRunCoordinator(),
                 activePrincipalRegistry = principalRegistry,
                 providerBrokerScopeStore = ProviderBrokerScopeStore(
                     credentialVault = credentialVault,
                     principalRegistry = principalRegistry,
                 ),
+                lifecycleCoordinator = ProviderLifecycleCoordinator(),
             )
             val serverUrl = InstrumentationRegistry.getArguments()
                 .getString("m3uMockServerUrl")
                 .orEmpty()
                 .ifBlank { "http://10.0.2.2:8080" }
 
-            val subscription = repository.subscribe(
-                ProviderSubscriptionRequest(
-                    title = "Living Room Emby",
-                    providerId = EmbyCompatibleProvider.ID,
-                    providerKind = EmbyCompatibleProviderKinds.Emby,
-                    settingValues = mapOf(
-                        SubscriptionProviderSettingKeys.BaseUrl to serverUrl,
-                        SubscriptionProviderSettingKeys.Username to "m3u",
-                    ),
-                    credentialHandles = mapOf(
-                        SubscriptionProviderSettingKeys.Password to repository.stageCredential("m3u"),
-                    ),
-                )
+            val concurrentSubscriptions = List(2) {
+                async(Dispatchers.Default) {
+                    repository.subscribe(
+                        ProviderSubscriptionRequest(
+                            title = "Living Room Emby",
+                            providerId = EmbyCompatibleProvider.ID,
+                            providerKind = EmbyCompatibleProviderKinds.Emby,
+                            settingValues = mapOf(
+                                SubscriptionProviderSettingKeys.BaseUrl to serverUrl,
+                                SubscriptionProviderSettingKeys.Username to "m3u",
+                            ),
+                            credentialHandles = mapOf(
+                                SubscriptionProviderSettingKeys.Password to
+                                    repository.stageCredential("m3u"),
+                            ),
+                        )
+                    )
+                }
+            }.awaitAll()
+            assertEquals(
+                1,
+                concurrentSubscriptions.map { result -> result.playlistUrl }.distinct().size,
             )
+            assertEquals(1, providerDao.getAccounts().size)
+            val subscription = concurrentSubscriptions.first()
 
             assertEquals(2, subscription.channelCount)
             assertEquals(DataSource.Provider, playlistDao.get(subscription.playlistUrl)?.source)
@@ -177,6 +195,8 @@ class SubscriptionProviderRepositoryIntegrationTest {
     }
 
     private data object NoOpExtensionContributionScheduler : ExtensionContributionScheduler {
-        override fun enqueue(playlistUrl: String) = Unit
+        override suspend fun enqueue(playlistUrl: String) = Unit
+
+        override suspend fun cancel(playlistUrl: String) = Unit
     }
 }

@@ -11,9 +11,11 @@ import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.ProgrammeDao
 import com.m3u.data.database.dao.ProviderDao
 import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.ChannelMetadataBase
 import com.m3u.data.database.model.ChannelPlaybackReference
 import com.m3u.data.database.model.ColorScheme
 import com.m3u.data.database.model.Episode
+import com.m3u.data.database.model.ExtensionChannelMetadataOverlay
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.ProviderAccount
@@ -31,8 +33,10 @@ import com.m3u.data.database.model.ProviderPlaybackSessionEntity
         ProviderCredentialEntity::class,
         ChannelPlaybackReference::class,
         ProviderPlaybackSessionEntity::class,
+        ChannelMetadataBase::class,
+        ExtensionChannelMetadataOverlay::class,
     ],
-    version = 24,
+    version = 26,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(

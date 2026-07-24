@@ -59,6 +59,7 @@ internal class DlnaController : ControlPoint.DiscoveryListener {
     }
 
     fun play(device: Device, channel: Channel) {
+        if (channel.url == Channel.URL_DYNAMIC) return
         val setUri = device.findAction(ACTION_SET_AV_TRANSPORT_URI) ?: return
         setUri.invoke(
             argumentValues = mapOf(

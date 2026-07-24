@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -34,6 +35,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.business.setting.BackingUpAndRestoringState
 import com.m3u.business.setting.CodecPackState
 import com.m3u.business.setting.ProviderDiscoveryState
+import com.m3u.business.setting.ProviderOperationState
 import com.m3u.business.setting.ProviderSubscriptionForm
 import com.m3u.business.setting.SettingProperties
 import com.m3u.business.setting.SettingViewModel
@@ -43,8 +45,10 @@ import com.m3u.core.foundation.util.basic.title
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.ColorScheme
 import com.m3u.data.database.model.Playlist
+import com.m3u.data.repository.extension.ExtensionSettingEditToken
 import com.m3u.data.repository.extension.ExtensionSettingsConfiguration
 import com.m3u.data.repository.plugin.InstalledPlugin
+import com.m3u.data.repository.plugin.PluginAuthorizationToken
 import com.m3u.data.repository.provider.ProviderAccountSummary
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.business.setting.components.CanvasBottomSheet
@@ -83,6 +87,7 @@ fun SettingRoute(
     val providerDiscoveryState by viewModel.providerDiscoveryState.collectAsStateWithLifecycle()
     val providerAccountSummaries by viewModel.providerAccountSummaries.collectAsStateWithLifecycle()
     val providerSubscriptionForm by viewModel.providerSubscriptionForm.collectAsStateWithLifecycle()
+    val providerOperationState by viewModel.providerOperationState.collectAsStateWithLifecycle()
     val localeTag = LocalConfiguration.current.locales[0].toLanguageTag()
     val context = LocalContext.current
     val diagnosticsShareTitle = stringResource(string.feat_setting_extension_diagnostics_share_title)
@@ -155,6 +160,7 @@ fun SettingRoute(
             providerDiscoveryState = providerDiscoveryState,
             providerAccountSummaries = providerAccountSummaries,
             providerSubscriptionForm = providerSubscriptionForm,
+            providerOperationState = providerOperationState,
             onSelectSubscriptionProvider = viewModel::selectSubscriptionProvider,
             onSelectSubscriptionProviderKind = viewModel::selectSubscriptionProviderKind,
             onUpdateSubscriptionProviderSetting = viewModel::updateSubscriptionProviderSetting,
@@ -171,8 +177,14 @@ fun SettingRoute(
                 viewModel.openExtensionSettings(extensionId, localeTag)
             },
             onCloseExtensionSettings = viewModel::closeExtensionSettings,
-            onUpdateExtensionSetting = { sectionId, fieldKey, value ->
-                viewModel.updateExtensionSetting(sectionId, fieldKey, value, localeTag)
+            onUpdateExtensionSetting = { sectionId, fieldKey, editToken, value ->
+                viewModel.updateExtensionSetting(
+                    sectionId,
+                    fieldKey,
+                    editToken,
+                    value,
+                    localeTag,
+                )
             },
             onDetailVisibilityChanged = onDetailVisibilityChanged,
             modifier = modifier.fillMaxSize(),
@@ -220,21 +232,22 @@ private fun SettingScreen(
     providerDiscoveryState: ProviderDiscoveryState,
     providerAccountSummaries: List<ProviderAccountSummary>,
     providerSubscriptionForm: ProviderSubscriptionForm?,
+    providerOperationState: ProviderOperationState,
     onSelectSubscriptionProvider: (String) -> Unit,
     onSelectSubscriptionProviderKind: (String) -> Unit,
     onUpdateSubscriptionProviderSetting: (String, String?) -> Unit,
     onRetryProviderDiscovery: () -> Unit,
     onReauthenticateProviderAccount: (String) -> Unit,
     onRefreshExtensionPlugins: () -> Unit,
-    onEnableExtensionPlugin: (String, String) -> Unit,
-    onReauthorizeExtensionPlugin: (String, String) -> Unit,
+    onEnableExtensionPlugin: (String, String, PluginAuthorizationToken) -> Unit,
+    onReauthorizeExtensionPlugin: (String, String, PluginAuthorizationToken) -> Unit,
     onDisableExtensionPlugin: (String) -> Unit,
-    onRevokeExtensionPlugin: (String, String) -> Unit,
-    onClearExtensionData: (String, String) -> Unit,
+    onRevokeExtensionPlugin: (String, String, String?) -> Unit,
+    onClearExtensionData: (String, String, String?) -> Unit,
     onExportExtensionDiagnostics: (String) -> Unit,
     onOpenExtensionSettings: (String) -> Unit,
     onCloseExtensionSettings: () -> Unit,
-    onUpdateExtensionSetting: (String, String, String?) -> Unit,
+    onUpdateExtensionSetting: (String, String, ExtensionSettingEditToken, String?) -> Unit,
     onDetailVisibilityChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
@@ -251,6 +264,13 @@ private fun SettingScreen(
 
     val navigator = rememberListDetailPaneScaffoldNavigator<SettingDestination>()
     val destination = navigator.currentDestination?.contentKey ?: SettingDestination.Default
+    var subscriptionsEntryGeneration by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(destination) {
+        if (destination == SettingDestination.Playlists) {
+            subscriptionsEntryGeneration++
+        }
+    }
 
     LaunchedEffect(destination, onDetailVisibilityChanged) {
         onDetailVisibilityChanged(destination != SettingDestination.Default)
@@ -356,6 +376,7 @@ private fun SettingScreen(
                         providerDiscoveryState = providerDiscoveryState,
                         providerAccountSummaries = providerAccountSummaries,
                         providerSubscriptionForm = providerSubscriptionForm,
+                        providerOperationState = providerOperationState,
                         onSelectSubscriptionProvider = onSelectSubscriptionProvider,
                         onSelectSubscriptionProviderKind = onSelectSubscriptionProviderKind,
                         onUpdateSubscriptionProviderSetting = onUpdateSubscriptionProviderSetting,
@@ -371,6 +392,7 @@ private fun SettingScreen(
                         onOpenExtensionSettings = onOpenExtensionSettings,
                         onCloseExtensionSettings = onCloseExtensionSettings,
                         onUpdateExtensionSetting = onUpdateExtensionSetting,
+                        entryGeneration = subscriptionsEntryGeneration,
                         contentPadding = contentPadding,
                         modifier = Modifier.fillMaxSize()
                     )

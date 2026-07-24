@@ -2,7 +2,8 @@
 
 [简体中文](concepts.zh-CN.md) · [Developer guide](README.md)
 
-You need one `TypedExtensionService` and one `ExtensionManifest`. Copy the Hello files first, then replace the example identity and features with your own.
+An extension consists of a `TypedExtensionService` and an `ExtensionManifest`. Start from the
+Hello sample, then replace its identity and features with your own.
 
 ## 1. Add the SDK
 
@@ -26,6 +27,8 @@ Add this Service entry to the extension's [`AndroidManifest.xml`](../../../sampl
     </intent-filter>
 </service>
 ```
+
+External extensions use the host broker for network access. An extension that declares `android.permission.INTERNET` is listed as incompatible.
 
 The declared class must extend `TypedExtensionService`:
 
@@ -58,25 +61,9 @@ Replace these values:
 
 ## 3. Declare each Hook you implement
 
-For example, a settings Hook needs this manifest declaration:
-
-```kotlin
-hooks = setOf(
-    ExtensionHookDeclaration(
-        hook = HostHookSpecs.SettingsSchema.hook,
-        schemaVersion = HostHookSpecs.SettingsSchema.schemaVersion,
-        requiredCapabilities = setOf(ExtensionCapabilityIds.SettingsContribute),
-    )
-)
-capabilities = setOf(
-    ExtensionCapabilityRequest(
-        capability = ExtensionCapabilityIds.SettingsContribute,
-        reason = "Add settings for the current device type",
-    )
-)
-```
-
-The handler and declaration must use the same `HookSpec`. Every item in `requiredCapabilities` must also have an `ExtensionCapabilityRequest` with a concrete user-facing reason.
+The handler and manifest declaration use the same `HookSpec`. Every item in
+`requiredCapabilities` also needs an `ExtensionCapabilityRequest` with a concrete user-facing
+reason. The next page adds a complete settings Hook declaration and handler.
 
 ## 4. Declare fixed settings, if any
 

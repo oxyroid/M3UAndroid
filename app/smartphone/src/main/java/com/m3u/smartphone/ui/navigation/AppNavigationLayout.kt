@@ -34,6 +34,25 @@ internal fun shouldShowBottomNavigation(
     !isSearchActive &&
     !isImeVisible
 
+internal fun shouldReserveBottomNavigationSpace(
+    mode: AppNavigationMode,
+    isNavigationCurrentlyVisible: Boolean,
+    isNavigationTargetVisible: Boolean,
+): Boolean = mode == AppNavigationMode.BottomOverlay &&
+    (isNavigationCurrentlyVisible || isNavigationTargetVisible)
+
+internal fun shouldCaptureNavigationBackdrop(
+    mode: AppNavigationMode,
+    supportsBackdropEffects: Boolean,
+    isNavigationCurrentlyVisible: Boolean,
+    isNavigationTargetVisible: Boolean,
+): Boolean = supportsBackdropEffects &&
+    shouldReserveBottomNavigationSpace(
+        mode = mode,
+        isNavigationCurrentlyVisible = isNavigationCurrentlyVisible,
+        isNavigationTargetVisible = isNavigationTargetVisible,
+    )
+
 internal fun shouldShowBottomEdgeBlur(mode: AppNavigationMode): Boolean =
     mode == AppNavigationMode.SideRail
 
@@ -80,7 +99,13 @@ internal fun calculateContentBottomPadding(
     contentGap: Dp = 12.dp,
     regularContentSpacing: Dp = 16.dp,
 ): Dp {
-    if (mode == AppNavigationMode.SideRail) return safeBottomInset
+    if (mode == AppNavigationMode.SideRail) {
+        return if (floatingUtilityHeight > 0.dp) {
+            safeBottomInset + regularContentSpacing + floatingUtilityHeight + contentGap
+        } else {
+            safeBottomInset
+        }
+    }
 
     val navigationPadding = when {
         isTopLevelRoute -> {

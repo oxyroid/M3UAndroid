@@ -1,5 +1,6 @@
 package com.m3u.tv
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.text.BasicTextField
@@ -74,9 +75,11 @@ import com.m3u.business.setting.ProviderSubscriptionForm
 import com.m3u.core.foundation.util.basic.title
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
+import com.m3u.data.repository.extension.ExtensionSettingEditToken
+import com.m3u.data.repository.extension.ExtensionSettingsConfiguration
 import com.m3u.data.repository.provider.ProviderAccountSummary
 import com.m3u.data.repository.plugin.InstalledPlugin
-import com.m3u.data.repository.extension.ExtensionSettingsConfiguration
+import com.m3u.data.repository.plugin.PluginAuthorizationToken
 import com.m3u.extension.api.ExtensionSettingField
 import com.m3u.extension.api.ExtensionSettingKeys
 import com.m3u.extension.api.ExtensionSettingType
@@ -97,15 +100,15 @@ fun TvBrowsePane(
     onPlay: (Channel) -> Unit,
     onPlayRecent: () -> Unit,
     onExternalExtensionsEnabled: (Boolean) -> Unit,
-    onEnableExtension: (String, String) -> Unit,
-    onReauthorizeExtension: (String, String) -> Unit,
+    onEnableExtension: (String, String, PluginAuthorizationToken) -> Unit,
+    onReauthorizeExtension: (String, String, PluginAuthorizationToken) -> Unit,
     onDisableExtension: (String) -> Unit,
-    onRevokeExtension: (String, String) -> Unit,
-    onClearExtensionData: (String, String) -> Unit,
+    onRevokeExtension: (String, String, String?) -> Unit,
+    onClearExtensionData: (String, String, String?) -> Unit,
     onExportExtensionDiagnostics: (String) -> Unit,
     onOpenExtensionSettings: (String) -> Unit,
     onCloseExtensionSettings: () -> Unit,
-    onUpdateExtensionSetting: (String, String, String?) -> Unit,
+    onUpdateExtensionSetting: (String, String, ExtensionSettingEditToken, String?) -> Unit,
     onRefreshProviders: () -> Unit,
     onOpenProviderSubscription: (String, String) -> Unit,
     onReauthenticateProvider: (String) -> Unit,
@@ -583,15 +586,15 @@ private fun ChannelGridScreen(
 private fun StatusScreen(
     state: TvUiState,
     onExternalExtensionsEnabled: (Boolean) -> Unit,
-    onEnableExtension: (String, String) -> Unit,
-    onReauthorizeExtension: (String, String) -> Unit,
+    onEnableExtension: (String, String, PluginAuthorizationToken) -> Unit,
+    onReauthorizeExtension: (String, String, PluginAuthorizationToken) -> Unit,
     onDisableExtension: (String) -> Unit,
-    onRevokeExtension: (String, String) -> Unit,
-    onClearExtensionData: (String, String) -> Unit,
+    onRevokeExtension: (String, String, String?) -> Unit,
+    onClearExtensionData: (String, String, String?) -> Unit,
     onExportExtensionDiagnostics: (String) -> Unit,
     onOpenExtensionSettings: (String) -> Unit,
     onCloseExtensionSettings: () -> Unit,
-    onUpdateExtensionSetting: (String, String, String?) -> Unit,
+    onUpdateExtensionSetting: (String, String, ExtensionSettingEditToken, String?) -> Unit,
     onRefreshProviders: () -> Unit,
     onOpenProviderSubscription: (String, String) -> Unit,
     onReauthenticateProvider: (String) -> Unit,
@@ -605,12 +608,12 @@ private fun StatusScreen(
     var pendingReauthorization by remember { mutableStateOf(false) }
     var pendingRevoke by remember { mutableStateOf<InstalledPlugin?>(null) }
     var pendingClear by remember { mutableStateOf<InstalledPlugin?>(null) }
-    val trustConfirmationFocusRequester = remember { FocusRequester() }
+    val trustCancellationFocusRequester = remember { FocusRequester() }
 
     LaunchedEffect(pendingTrust) {
         if (pendingTrust != null) {
             yield()
-            trustConfirmationFocusRequester.requestFocus()
+            trustCancellationFocusRequester.requestFocus()
         }
     }
     LaunchedEffect(state.externalExtensionsEnabled) {
@@ -628,7 +631,11 @@ private fun StatusScreen(
             plugin = plugin,
             onConfirm = {
                 pendingRevoke = null
-                onRevokeExtension(plugin.packageName, plugin.serviceName)
+                onRevokeExtension(
+                    plugin.packageName,
+                    plugin.serviceName,
+                    plugin.extensionId,
+                )
             },
             onCancel = { pendingRevoke = null },
         )
@@ -640,7 +647,11 @@ private fun StatusScreen(
             plugin = plugin,
             onConfirm = {
                 pendingClear = null
-                onClearExtensionData(plugin.packageName, plugin.serviceName)
+                onClearExtensionData(
+                    plugin.packageName,
+                    plugin.serviceName,
+                    plugin.extensionId,
+                )
             },
             onCancel = { pendingClear = null },
         )
@@ -700,15 +711,25 @@ private fun StatusScreen(
         ExtensionAuthorizationConfirmation(
             plugin = plugin,
             reauthorization = pendingReauthorization,
-            confirmFocusRequester = trustConfirmationFocusRequester,
+            cancelFocusRequester = trustCancellationFocusRequester,
             onConfirm = {
                 val reauthorize = pendingReauthorization
                 pendingTrust = null
                 pendingReauthorization = false
-                if (reauthorize) {
-                    onReauthorizeExtension(plugin.packageName, plugin.serviceName)
-                } else {
-                    onEnableExtension(plugin.packageName, plugin.serviceName)
+                plugin.authorizationToken?.let { authorizationToken ->
+                    if (reauthorize) {
+                        onReauthorizeExtension(
+                            plugin.packageName,
+                            plugin.serviceName,
+                            authorizationToken,
+                        )
+                    } else {
+                        onEnableExtension(
+                            plugin.packageName,
+                            plugin.serviceName,
+                            authorizationToken,
+                        )
+                    }
                 }
             },
             onCancel = {
@@ -719,6 +740,8 @@ private fun StatusScreen(
         return
     }
 
+    val extensionOperationFailedMessage =
+        stringResource(string.feat_setting_extension_operation_failed)
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(24.dp),
         contentPadding = PaddingValues(start = 48.dp, top = 48.dp, end = 64.dp, bottom = 48.dp),
@@ -841,8 +864,14 @@ private fun StatusScreen(
                 subtitle = stringResource(string.tv_extensions_subtitle),
             )
         }
-        state.extensionPluginError?.let { error ->
-            item { Text(error, color = TvColors.Danger, fontSize = 16.sp) }
+        if (state.extensionPluginOperationFailed) {
+            item {
+                Text(
+                    extensionOperationFailedMessage,
+                    color = TvColors.Danger,
+                    fontSize = 16.sp,
+                )
+            }
         }
         item {
             TvActionButton(
@@ -1036,6 +1065,13 @@ private fun ProviderReauthenticationCard(
             color = TvColors.TextSecondary,
             fontSize = 14.sp,
         )
+        if (account.requiresExtensionOwnerConfirmation) {
+            Text(
+                text = stringResource(string.feat_setting_provider_owner_claim_notice),
+                color = TvColors.TextSecondary,
+                fontSize = 14.sp,
+            )
+        }
         TvActionButton(
             text = stringResource(string.feat_setting_provider_reauthenticate),
             icon = Icons.Rounded.Refresh,
@@ -1077,10 +1113,11 @@ private fun ProviderFieldError(error: ProviderSettingFieldError) {
 private fun ExtensionAuthorizationConfirmation(
     plugin: InstalledPlugin,
     reauthorization: Boolean,
-    confirmFocusRequester: FocusRequester,
+    cancelFocusRequester: FocusRequester,
     onConfirm: () -> Unit,
     onCancel: () -> Unit,
 ) {
+    BackHandler(onBack = onCancel)
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(20.dp),
         contentPadding = PaddingValues(start = 48.dp, top = 48.dp, end = 64.dp, bottom = 48.dp),
@@ -1108,8 +1145,27 @@ private fun ExtensionAuthorizationConfirmation(
                 fontSize = 16.sp,
             )
         }
+        plugin.previousCertificateSha256?.let { previousCertificate ->
+            item {
+                Text(
+                    text = stringResource(
+                        string.feat_setting_extension_certificate_repin,
+                        previousCertificate.chunked(16).joinToString(" "),
+                        plugin.certificateSha256.chunked(16).joinToString(" "),
+                    ),
+                    color = TvColors.Danger,
+                    fontSize = 14.sp,
+                )
+            }
+        }
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                TvActionButton(
+                    text = stringResource(android.R.string.cancel),
+                    icon = Icons.Rounded.Block,
+                    focusRequester = cancelFocusRequester,
+                    onClick = onCancel,
+                )
                 TvActionButton(
                     text = stringResource(
                         if (reauthorization) {
@@ -1119,13 +1175,7 @@ private fun ExtensionAuthorizationConfirmation(
                         }
                     ),
                     icon = Icons.Rounded.CheckCircle,
-                    focusRequester = confirmFocusRequester,
                     onClick = onConfirm,
-                )
-                TvActionButton(
-                    text = stringResource(android.R.string.cancel),
-                    icon = Icons.Rounded.Block,
-                    onClick = onCancel,
                 )
             }
         }
@@ -1162,6 +1212,36 @@ private fun ExtensionAuthorizationConfirmation(
                 }
             }
         }
+        item {
+            Text(
+                text = stringResource(string.feat_setting_extension_network_origins),
+                color = TvColors.TextPrimary,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+        if (plugin.networkOrigins.isEmpty()) {
+            item { Text("—", color = TvColors.TextSecondary, fontSize = 16.sp) }
+        } else {
+            items(
+                items = plugin.networkOrigins.sorted(),
+                key = { origin -> origin },
+            ) { origin ->
+                Text(origin, color = TvColors.TextSecondary, fontSize = 16.sp)
+            }
+        }
+        if (plugin.networkOriginSettingFields.isNotEmpty()) {
+            item {
+                Text(
+                    text = stringResource(
+                        string.feat_setting_extension_network_origin_settings,
+                        plugin.networkOriginSettingFields.sorted().joinToString(),
+                    ),
+                    color = TvColors.TextSecondary,
+                    fontSize = 14.sp,
+                )
+            }
+        }
     }
 }
 
@@ -1176,6 +1256,17 @@ private fun ExtensionPluginCard(
     onClearData: () -> Unit,
     onExportDiagnostics: () -> Unit,
 ) {
+    val actions = extensionPluginActionAvailability(
+        enabled = plugin.enabled,
+        state = plugin.state,
+        hasExtensionId = plugin.extensionId != null,
+        installed = plugin.installed,
+        signatureChanged = plugin.signatureChanged,
+        hasInspectionError = plugin.inspectionError != null,
+        hasAuthorizationToken = plugin.authorizationToken != null,
+        trusted = plugin.trusted,
+        canClearData = plugin.canClearData,
+    )
     Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
         Text(
             text = plugin.displayName ?: plugin.packageName,
@@ -1189,7 +1280,24 @@ private fun ExtensionPluginCard(
             fontSize = 14.sp,
         )
         Text(plugin.certificateSha256, color = TvColors.TextMuted, fontSize = 12.sp)
-        plugin.inspectionError?.let { Text(it, color = TvColors.Danger, fontSize = 14.sp) }
+        val unapprovedNetworkOrigins = plugin.networkOrigins - plugin.approvedNetworkOrigins
+        if (plugin.trusted && unapprovedNetworkOrigins.isNotEmpty()) {
+            Text(
+                text = stringResource(
+                    string.feat_setting_extension_network_reauthorization_required,
+                    unapprovedNetworkOrigins.sorted().joinToString(),
+                ),
+                color = TvColors.Danger,
+                fontSize = 14.sp,
+            )
+        }
+        plugin.inspectionError?.let {
+            Text(
+                stringResource(string.feat_setting_extension_inspection_failed),
+                color = TvColors.Danger,
+                fontSize = 14.sp,
+            )
+        }
         if (!plugin.installed) {
             Text(
                 stringResource(string.feat_setting_extension_not_installed),
@@ -1201,50 +1309,49 @@ private fun ExtensionPluginCard(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            if (plugin.enabled && plugin.state == ExtensionState.ENABLED && plugin.extensionId != null) {
+            if (actions.settings) {
                 TvActionButton(
                     text = stringResource(string.feat_setting_extension_settings),
                     icon = Icons.Rounded.Extension,
                     onClick = onOpenSettings,
                 )
+            }
+            if (actions.disable) {
                 TvActionButton(
                     text = stringResource(string.feat_setting_extension_disable),
                     icon = Icons.Rounded.Block,
                     onClick = onDisable,
                 )
-            } else if (
-                plugin.installed &&
-                !plugin.signatureChanged &&
-                plugin.inspectionError == null
-            ) {
+            }
+            if (actions.enable) {
                 TvActionButton(
                     text = stringResource(string.feat_setting_extension_enable),
                     icon = Icons.Rounded.CheckCircle,
                     onClick = onEnable,
                 )
             }
-            if (plugin.trusted || plugin.signatureChanged) {
+            if (actions.revoke) {
                 TvActionButton(
                     text = stringResource(string.feat_setting_extension_revoke),
                     icon = Icons.Rounded.Block,
                     onClick = onRevoke,
                 )
             }
-            if (plugin.installed && plugin.trusted && !plugin.signatureChanged) {
+            if (actions.reauthorize) {
                 TvActionButton(
                     text = stringResource(string.feat_setting_extension_reauthorize),
                     icon = Icons.Rounded.CheckCircle,
                     onClick = onReauthorize,
                 )
             }
-            if (plugin.installed && plugin.extensionId != null) {
+            if (actions.exportDiagnostics) {
                 TvActionButton(
                     text = stringResource(string.feat_setting_extension_export_diagnostics),
                     icon = Icons.Rounded.Refresh,
                     onClick = onExportDiagnostics,
                 )
             }
-            if (plugin.canClearData) {
+            if (actions.clearData) {
                 TvActionButton(
                     text = stringResource(string.feat_setting_extension_clear_data),
                     icon = Icons.Rounded.Block,
@@ -1296,10 +1403,11 @@ private fun ExtensionDataRemovalConfirmation(
     onConfirm: () -> Unit,
     onCancel: () -> Unit,
 ) {
-    val confirmFocusRequester = remember { FocusRequester() }
+    BackHandler(onBack = onCancel)
+    val cancelFocusRequester = remember { FocusRequester() }
     LaunchedEffect(plugin.packageName, plugin.serviceName) {
         repeat(2) { withFrameNanos { } }
-        confirmFocusRequester.requestFocus()
+        cancelFocusRequester.requestFocus()
     }
     Column(
         modifier = Modifier.fillMaxSize().padding(48.dp),
@@ -1323,15 +1431,15 @@ private fun ExtensionDataRemovalConfirmation(
         )
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             TvActionButton(
-                text = confirmLabel,
-                icon = Icons.Rounded.Block,
-                focusRequester = confirmFocusRequester,
-                onClick = onConfirm,
-            )
-            TvActionButton(
                 text = stringResource(android.R.string.cancel),
                 icon = Icons.Rounded.CheckCircle,
+                focusRequester = cancelFocusRequester,
                 onClick = onCancel,
+            )
+            TvActionButton(
+                text = confirmLabel,
+                icon = Icons.Rounded.Block,
+                onClick = onConfirm,
             )
         }
     }
@@ -1341,7 +1449,12 @@ private fun ExtensionDataRemovalConfirmation(
 private fun ExtensionSettingsPanel(
     configuration: ExtensionSettingsConfiguration,
     onClose: () -> Unit,
-    onUpdate: (sectionId: String, fieldKey: String, rawValue: String?) -> Unit,
+    onUpdate: (
+        sectionId: String,
+        fieldKey: String,
+        editToken: ExtensionSettingEditToken,
+        rawValue: String?,
+    ) -> Unit,
 ) {
     val initialFocusRequester = remember { FocusRequester() }
     val firstFieldKey = configuration.sections.firstNotNullOfOrNull { section ->
@@ -1402,13 +1515,18 @@ private fun ExtensionSettingsPanel(
             )
             section.schema.fields.forEach { field ->
                 val key = ExtensionSettingKeys.qualified(section.id, field.key)
+                val editToken = checkNotNull(
+                    configuration.editToken(section.id, field.key)
+                )
                 TvExtensionSettingControl(
                     field = field,
                     rawValue = draftValues[key].orEmpty(),
                     secretConfigured = key in configuration.snapshot.credentialHandles,
                     focusRequester = initialFocusRequester.takeIf { key == firstFieldKey },
                     onDraftChange = { value -> draftValues[key] = value },
-                    onUpdate = { value -> onUpdate(section.id, field.key, value) },
+                    onUpdate = { value ->
+                        onUpdate(section.id, field.key, editToken, value)
+                    },
                 )
             }
         }
@@ -1432,6 +1550,13 @@ private fun TvExtensionSettingControl(
         )
         field.description?.let { description ->
             Text(description, color = TvColors.TextSecondary, fontSize = 14.sp)
+        }
+        if (field.networkOrigin) {
+            Text(
+                text = stringResource(string.feat_setting_extension_network_origin_save_notice),
+                color = TvColors.Danger,
+                fontSize = 14.sp,
+            )
         }
         when (field.type) {
             ExtensionSettingType.BOOLEAN -> {

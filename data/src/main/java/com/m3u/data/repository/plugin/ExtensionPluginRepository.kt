@@ -5,8 +5,16 @@ import com.m3u.extension.api.ExtensionState
 
 interface ExtensionPluginRepository {
     suspend fun installedPlugins(): List<InstalledPlugin>
-    suspend fun enable(packageName: String, serviceName: String): PluginEnableResult
-    suspend fun reauthorize(packageName: String, serviceName: String): PluginEnableResult
+    suspend fun enable(
+        packageName: String,
+        serviceName: String,
+        authorizationToken: PluginAuthorizationToken,
+    ): PluginEnableResult
+    suspend fun reauthorize(
+        packageName: String,
+        serviceName: String,
+        authorizationToken: PluginAuthorizationToken,
+    ): PluginEnableResult
     suspend fun disable(extensionId: String): Boolean
     suspend fun revoke(packageName: String, serviceName: String)
     suspend fun clearData(packageName: String, serviceName: String): PluginDataClearResult
@@ -19,6 +27,7 @@ sealed interface PluginDataClearResult {
         val clearedSettingValues: Int,
         val clearedCredentialHandles: Int,
         val clearedEpgSources: Int,
+        val clearedMetadataOverlays: Int,
     ) : PluginDataClearResult
 
     data class Rejected(val reason: String) : PluginDataClearResult
@@ -28,6 +37,7 @@ data class InstalledPlugin(
     val packageName: String,
     val serviceName: String,
     val certificateSha256: String,
+    val previousCertificateSha256: String?,
     val trusted: Boolean,
     val signatureChanged: Boolean,
     val extensionId: String?,
@@ -42,7 +52,22 @@ data class InstalledPlugin(
     val inspectionError: String?,
     val installed: Boolean,
     val canClearData: Boolean,
+    val networkOrigins: Set<String> = emptySet(),
+    val approvedNetworkOrigins: Set<String> = emptySet(),
+    val networkOriginSettingFields: Set<String> = emptySet(),
+    val authorizationToken: PluginAuthorizationToken? = null,
 )
+
+class PluginAuthorizationToken internal constructor(
+    internal val value: String,
+) {
+    override fun equals(other: Any?): Boolean =
+        other is PluginAuthorizationToken && value == other.value
+
+    override fun hashCode(): Int = value.hashCode()
+
+    override fun toString(): String = "PluginAuthorizationToken(redacted)"
+}
 
 data class PluginCapabilityPermission(
     val id: String,

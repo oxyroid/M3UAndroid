@@ -326,6 +326,49 @@ class ProviderBrokerScopeStoreTest {
     }
 
     @Test
+    fun accountNetworkScopeExposesOnlyTheOwnedAccountOrigin() {
+        val vault = FakeCredentialVault()
+        val registry = ActiveExtensionPrincipalRegistry()
+        val principal = principal()
+        registry.activate(principal)
+        val store = store(vault, registry)
+        val account = account(principal)
+
+        val scope = store.mintAccountNetworkScope(
+            principal = principal,
+            allowedHook = ExtensionHookIds.SearchProviderQuery,
+            account = account,
+        )
+
+        val access = store.authorize(
+            scope,
+            principal,
+            ExtensionHookIds.SearchProviderQuery,
+        )
+        assertEquals(ProviderBrokerScopeKind.ACCOUNT, access.kind)
+        assertEquals(account.id, access.accountId)
+        assertEquals("https://media.example.test:8443", access.approvedOrigin)
+        assertTrue(access.credentialHandles.isEmpty())
+        assertTrue(access.opaqueContextKeys.isEmpty())
+        expectFailure<SecurityException> {
+            store.resolveCredential(
+                scope,
+                principal,
+                ExtensionHookIds.SearchProviderQuery,
+                CredentialHandle("persistent-token"),
+            )
+        }
+        expectFailure<SecurityException> {
+            store.resolveContext(
+                scope,
+                principal,
+                ExtensionHookIds.SearchProviderQuery,
+                ContextReference("user_id"),
+            )
+        }
+    }
+
+    @Test
     fun inactiveOrReplacedPrincipalCannotMintOrReuseScope() {
         val vault = FakeCredentialVault()
         val registry = ActiveExtensionPrincipalRegistry()

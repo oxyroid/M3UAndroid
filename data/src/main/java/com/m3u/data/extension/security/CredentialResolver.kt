@@ -11,10 +11,7 @@ internal class CredentialResolver @Inject constructor(
     suspend fun resolve(handle: CredentialHandle): String? {
         credentialVault.consume(handle)?.let { return it }
         val credential = providerDao.getCredentialByHandle(handle.value) ?: return null
-        credentialVault.decrypt(credential)?.let { return it }
-        providerDao.deleteCredential(credential.accountId)
-        providerDao.setRequiresReauthentication(credential.accountId, true)
-        return null
+        return credentialVault.decrypt(credential)
     }
 
     fun stage(secret: String): CredentialHandle = credentialVault.stage(secret)

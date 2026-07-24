@@ -66,7 +66,7 @@ For persistent channel, provider, and EPG work, start with [`SubscriptionProvide
 
 [`ExtensionSettingsRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/extension/ExtensionSettingsRepositoryImpl.kt) owns settings schema and ordinary values. Host vaults encrypt secret settings and provider tokens. Extension contracts carry credential handles, never plaintext secrets.
 
-When changing the broker, add denial cases to [`HostNetworkBrokerSecurityTest`](../../../data/src/androidTest/java/com/m3u/data/extension/security/HostNetworkBrokerSecurityTest.kt) before implementing behavior. Changes to owner, origin, redirect, authentication headers, response size, or credential capture must also be checked against the [remaining release gates](status-and-release.md#remaining-release-gates).
+When changing the broker, add denial cases to [`HostNetworkBrokerSecurityTest`](../../../data/src/androidTest/java/com/m3u/data/extension/security/HostNetworkBrokerSecurityTest.kt) before implementing behavior. Changes to owner, origin, redirect, authentication headers, response size, or credential capture must also be checked against the [external extension release gates](status-and-release.md#before-opening-external-extensions).
 
 ## Change phone or TV UI
 

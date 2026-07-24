@@ -5,7 +5,6 @@ import android.os.Build
 import com.m3u.data.api.OkhttpClient
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
-import java.security.MessageDigest
 import java.util.zip.ZipInputStream
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -31,6 +30,8 @@ class CodecPackRepository @Inject constructor(
     fun isInstalled(): Boolean {
         if (!CodecPackConfig.enabled) return false
         val manifest = readInstalledManifest() ?: return false
+        if (manifest.schemaVersion != SUPPORTED_MANIFEST_SCHEMA) return false
+        if (manifest.packId != CodecPackConfig.packId) return false
         val asset = selectAsset(manifest) ?: return false
         return isAssetInstalled(manifest, asset)
     }
@@ -54,7 +55,9 @@ class CodecPackRepository @Inject constructor(
     fun installFromManifestUrl(manifestUrl: String): CodecPackInstallResult {
         if (!CodecPackConfig.enabled) return CodecPackInstallResult.Disabled
         val manifest = fetchManifest(manifestUrl)
-        require(manifest.schemaVersion == 1) { "Unsupported codec manifest schema: ${manifest.schemaVersion}" }
+        require(manifest.schemaVersion == SUPPORTED_MANIFEST_SCHEMA) {
+            "Unsupported codec manifest schema: ${manifest.schemaVersion}"
+        }
         require(manifest.packId == CodecPackConfig.packId) {
             "Codec pack mismatch: app=${CodecPackConfig.packId}, manifest=${manifest.packId}"
         }
@@ -72,12 +75,20 @@ class CodecPackRepository @Inject constructor(
         val zipFile = File(staging, asset.fileName)
         download(
             url = CodecPackConfig.assetUrl(asset.path),
-            output = zipFile
+            output = zipFile,
+            expectedSize = asset.size
         )
         require(zipFile.length() == asset.size) {
             "Codec pack size mismatch: expected=${asset.size}, actual=${zipFile.length()}"
         }
-        require(md5(zipFile) == asset.md5) { "Codec pack md5 mismatch: ${asset.fileName}" }
+        val expectedAssetSha256 = requireNotNull(
+            CodecPackConfig.expectedAssetSha256(asset.fileName)
+        ) {
+            "Codec pack asset is not trusted by this app build: ${asset.fileName}"
+        }
+        require(CodecPackIntegrity.matchesSha256(zipFile, expectedAssetSha256)) {
+            "Codec pack SHA-256 mismatch: ${asset.fileName}"
+        }
 
         val unpacked = File(staging, "unpacked").apply { mkdirs() }
         unzip(zipFile, unpacked)
@@ -126,16 +137,51 @@ class CodecPackRepository @Inject constructor(
         okHttpClient.newCall(request).execute().use { response ->
             require(response.isSuccessful) { "Failed to fetch codec manifest: ${response.code}" }
             val body = requireNotNull(response.body) { "Codec manifest response body is empty." }
-            return json.decodeFromString(body.string())
+            val contentLength = body.contentLength()
+            require(contentLength < 0L || contentLength <= MAX_MANIFEST_BYTES.toLong()) {
+                "Codec manifest is too large."
+            }
+            val bytes = body.source().readByteArray(MAX_MANIFEST_BYTES + 1L)
+            require(bytes.size <= MAX_MANIFEST_BYTES) { "Codec manifest is too large." }
+            require(
+                CodecPackIntegrity.matchesSha256(
+                    bytes = bytes,
+                    expectedSha256 = CodecPackConfig.expectedManifestSha256
+                )
+            ) {
+                "Codec manifest identity does not match this app build."
+            }
+            return json.decodeFromString(bytes.decodeToString())
         }
     }
 
-    private fun download(url: String, output: File) {
+    private fun download(url: String, output: File, expectedSize: Long) {
         val request = Request.Builder().url(url).build()
         okHttpClient.newCall(request).execute().use { response ->
             require(response.isSuccessful) { "Failed to download codec pack: ${response.code}" }
             val body = requireNotNull(response.body) { "Codec pack response body is empty." }
-            output.outputStream().buffered().use { outputStream -> body.byteStream().use { input -> input.copyTo(outputStream) } }
+            val contentLength = body.contentLength()
+            require(contentLength < 0L || contentLength <= expectedSize) {
+                "Codec pack response is larger than expected."
+            }
+            output.outputStream().buffered().use { outputStream ->
+                body.byteStream().use { input ->
+                    val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+                    var total = 0L
+                    while (true) {
+                        val read = input.read(buffer)
+                        if (read < 0) break
+                        total += read
+                        require(total <= expectedSize) {
+                            "Codec pack response is larger than expected."
+                        }
+                        outputStream.write(buffer, 0, read)
+                    }
+                    require(total == expectedSize) {
+                        "Codec pack size mismatch: expected=$expectedSize, actual=$total"
+                    }
+                }
+            }
         }
     }
 
@@ -165,8 +211,13 @@ class CodecPackRepository @Inject constructor(
             require(file.length() == library.size) {
                 "Codec library size mismatch: ${library.name}"
             }
-            require(md5(file) == library.md5) {
-                "Codec library md5 mismatch: ${library.name}"
+            val expectedSha256 = requireNotNull(
+                CodecPackConfig.expectedLibrarySha256(asset.fileName, library.name)
+            ) {
+                "Codec library is not trusted by this app build: ${library.name}"
+            }
+            require(CodecPackIntegrity.matchesSha256(file, expectedSha256)) {
+                "Codec library SHA-256 mismatch: ${library.name}"
             }
         }
     }
@@ -177,7 +228,14 @@ class CodecPackRepository @Inject constructor(
         val directory = installDirectory(manifest)
         return asset.libraries.all { library ->
             val file = File(directory, library.name)
-            file.isFile && file.length() == library.size && md5(file) == library.md5
+            val expectedSha256 = CodecPackConfig.expectedLibrarySha256(
+                asset.fileName,
+                library.name
+            )
+            expectedSha256 != null &&
+                file.isFile &&
+                file.length() == library.size &&
+                CodecPackIntegrity.matchesSha256(file, expectedSha256)
         }
     }
 
@@ -194,16 +252,8 @@ class CodecPackRepository @Inject constructor(
         return File(applicationContext.noBackupFilesDir, "${CodecPackConfig.DIRECTORY}/${CodecPackConfig.packId}/manifest.json")
     }
 
-    private fun md5(file: File): String {
-        val digest = MessageDigest.getInstance("MD5")
-        file.inputStream().buffered().use { input ->
-            val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-            while (true) {
-                val read = input.read(buffer)
-                if (read < 0) break
-                digest.update(buffer, 0, read)
-            }
-        }
-        return digest.digest().joinToString("") { byte -> "%02x".format(byte) }
+    private companion object {
+        const val SUPPORTED_MANIFEST_SCHEMA = 1
+        const val MAX_MANIFEST_BYTES = 1024 * 1024
     }
 }

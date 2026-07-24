@@ -1,6 +1,7 @@
 package com.m3u.extension.api.subscription
 
 import com.m3u.extension.api.ExtensionId
+import com.m3u.extension.api.ExtensionErrorCode
 import com.m3u.extension.api.ExtensionHookIds
 import com.m3u.extension.api.ExtensionPayload
 import com.m3u.extension.api.ExtensionSettingSchema
@@ -18,12 +19,19 @@ private val PROVIDER_KIND_PATTERN = Regex("[a-z0-9]+(?:[._-][a-z0-9]+)*")
 @JvmInline
 value class ProviderKind(val value: String) {
     init {
-        require(value.matches(PROVIDER_KIND_PATTERN)) {
+        require(
+            value.length <= MAX_LENGTH &&
+                value.matches(PROVIDER_KIND_PATTERN)
+        ) {
             "Provider kind must be a lowercase identifier"
         }
     }
 
     override fun toString(): String = value
+
+    companion object {
+        const val MAX_LENGTH = 64
+    }
 }
 
 object EmbyCompatibleProviderKinds {
@@ -41,6 +49,10 @@ object SubscriptionProviderSettingKeys {
 object ProviderAuthenticationContextKeys {
     const val ServerId = "server_id"
     const val UserId = "user_id"
+}
+
+object SubscriptionProviderErrorCodes {
+    val AuthenticationFailed = ExtensionErrorCode("provider.authentication_failed")
 }
 
 @Serializable
@@ -76,7 +88,7 @@ data class SubscriptionProviderDescriptor(
 
 @Serializable
 data class SubscriptionProviderDiscoverResult(
-    val providers: List<SubscriptionProviderDescriptor>,
+    val provider: SubscriptionProviderDescriptor,
 ) : ExtensionPayload
 
 @Serializable
@@ -155,7 +167,6 @@ data class SubscriptionContentRefreshRequest(
     val account: ProviderAccountReference,
     val credential: ProviderCredential,
     val reason: SubscriptionRefreshReason,
-    val lastSyncMetadata: Map<String, String> = emptyMap(),
 ) : ExtensionPayload
 
 @Serializable
@@ -164,8 +175,31 @@ data class PlaybackReference(
     val itemId: String,
     val mediaSourceId: String? = null,
     val sourceType: String,
-    val fallbackDirectUrl: String? = null,
-)
+) {
+    init {
+        require(itemId.isNotBlank() && itemId.encodeToByteArray().size <= MAX_ID_UTF8_BYTES) {
+            "Playback item id is blank or too large"
+        }
+        require(
+            mediaSourceId == null ||
+                mediaSourceId.isNotBlank() &&
+                mediaSourceId.encodeToByteArray().size <= MAX_ID_UTF8_BYTES
+        ) {
+            "Playback media source id is blank or too large"
+        }
+        require(
+            sourceType.isNotBlank() &&
+                sourceType.encodeToByteArray().size <= MAX_SOURCE_TYPE_UTF8_BYTES
+        ) {
+            "Playback source type is blank or too large"
+        }
+    }
+
+    companion object {
+        const val MAX_ID_UTF8_BYTES = 512
+        const val MAX_SOURCE_TYPE_UTF8_BYTES = 128
+    }
+}
 
 @Serializable
 data class SubscriptionChannelDescriptor(
@@ -174,14 +208,11 @@ data class SubscriptionChannelDescriptor(
     val logoUrl: String? = null,
     val category: String,
     val playbackReference: PlaybackReference,
-    val epgReference: String? = null,
-    val metadata: Map<String, String> = emptyMap(),
 )
 
 @Serializable
 data class SubscriptionSourceDescriptor(
     val remoteId: String,
-    val title: String,
     val providerKind: ProviderKind,
 )
 
@@ -189,8 +220,6 @@ data class SubscriptionSourceDescriptor(
 data class SubscriptionContentRefreshResult(
     val source: SubscriptionSourceDescriptor,
     val channels: List<SubscriptionChannelDescriptor>,
-    val syncMetadata: Map<String, String> = emptyMap(),
-    val diagnostics: List<String> = emptyList(),
 ) : ExtensionPayload
 
 @Serializable
@@ -211,7 +240,25 @@ data class PlaybackSourceResolveRequest(
 data class PlaybackSessionDescriptor(
     val playSessionId: String? = null,
     val liveStreamId: String? = null,
-)
+) {
+    init {
+        require(playSessionId != null || liveStreamId != null) {
+            "Playback session must contain at least one identifier"
+        }
+        listOfNotNull(playSessionId, liveStreamId).forEach { identifier ->
+            require(identifier.isNotBlank()) {
+                "Playback session identifiers must not be blank"
+            }
+            require(identifier.encodeToByteArray().size <= MAX_IDENTIFIER_UTF8_BYTES) {
+                "Playback session identifier is too large"
+            }
+        }
+    }
+
+    companion object {
+        const val MAX_IDENTIFIER_UTF8_BYTES = 512
+    }
+}
 
 @Serializable
 data class PlaybackHeaderValue(
@@ -233,9 +280,25 @@ data class PlaybackSourceResolveResult(
     val url: String,
     val headers: Map<String, PlaybackHeaderValue> = emptyMap(),
     val mediaSourceId: String? = null,
-    val expiresAtEpochMilliseconds: Long? = null,
     val session: PlaybackSessionDescriptor? = null,
-) : ExtensionPayload
+) : ExtensionPayload {
+    init {
+        require(url.isNotBlank() && url.encodeToByteArray().size <= MAX_URL_UTF8_BYTES) {
+            "Playback URL is blank or too large"
+        }
+        require(
+            mediaSourceId == null ||
+                mediaSourceId.isNotBlank() &&
+                mediaSourceId.encodeToByteArray().size <= PlaybackReference.MAX_ID_UTF8_BYTES
+        ) {
+            "Resolved media source id is blank or too large"
+        }
+    }
+
+    companion object {
+        const val MAX_URL_UTF8_BYTES = 8_192
+    }
+}
 
 @Serializable
 @JvmInline
@@ -265,13 +328,12 @@ data class PlaybackSessionCloseRequest(
 @Serializable
 data class PlaybackSessionCloseResult(
     val closed: Boolean,
-    val diagnostics: List<String> = emptyList(),
 ) : ExtensionPayload
 
 object SubscriptionHookSpecs {
     val Discover = HookSpec(
         hook = ExtensionHookIds.SubscriptionProviderDiscover,
-        schemaVersion = 2,
+        schemaVersion = 3,
         requestSerializer = SubscriptionProviderDiscoverRequest.serializer(),
         responseSerializer = SubscriptionProviderDiscoverResult.serializer(),
     )
@@ -283,19 +345,19 @@ object SubscriptionHookSpecs {
     )
     val Refresh = HookSpec(
         hook = ExtensionHookIds.SubscriptionContentRefresh,
-        schemaVersion = 1,
+        schemaVersion = 4,
         requestSerializer = SubscriptionContentRefreshRequest.serializer(),
         responseSerializer = SubscriptionContentRefreshResult.serializer(),
     )
     val ResolvePlayback = HookSpec(
         hook = ExtensionHookIds.PlaybackSourceResolve,
-        schemaVersion = 2,
+        schemaVersion = 4,
         requestSerializer = PlaybackSourceResolveRequest.serializer(),
         responseSerializer = PlaybackSourceResolveResult.serializer(),
     )
     val ClosePlayback = HookSpec(
         hook = ExtensionHookIds.PlaybackSessionClose,
-        schemaVersion = 1,
+        schemaVersion = 3,
         requestSerializer = PlaybackSessionCloseRequest.serializer(),
         responseSerializer = PlaybackSessionCloseResult.serializer(),
     )

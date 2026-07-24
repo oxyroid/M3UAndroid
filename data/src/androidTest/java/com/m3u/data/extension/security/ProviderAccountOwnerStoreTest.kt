@@ -127,6 +127,44 @@ class ProviderAccountOwnerStoreTest {
     }
 
     @Test
+    fun transferPreservesAccountDataButRequiresFreshAuthentication() = runBlocking {
+        val ownership = seedOwnership(
+            id = "transfer",
+            extensionId = EXTENSION_ID,
+            packageName = PACKAGE_NAME,
+            serviceName = SERVICE_NAME,
+            certificateSha256 = CERTIFICATE_SHA256,
+        )
+
+        val result = store.transfer(
+            previous = ExtensionOwnerIdentity(
+                extensionId = EXTENSION_ID,
+                packageName = PACKAGE_NAME,
+                serviceName = SERVICE_NAME,
+                certificateSha256 = CERTIFICATE_SHA256,
+            ),
+            replacement = ExtensionOwnerIdentity(
+                extensionId = EXTENSION_ID,
+                packageName = PACKAGE_NAME,
+                serviceName = OTHER_SERVICE_NAME,
+                certificateSha256 = OTHER_CERTIFICATE_SHA256,
+            ),
+        )
+
+        assertEquals(1, result.affectedAccounts)
+        assertEquals(1, result.deletedCredentials)
+        assertEquals(1, result.deletedPlaybackSessions)
+        val account = requireNotNull(database.providerDao().getAccount(ownership.accountId))
+        assertEquals(PACKAGE_NAME, account.ownerPackageName)
+        assertEquals(OTHER_SERVICE_NAME, account.ownerServiceName)
+        assertEquals(OTHER_CERTIFICATE_SHA256, account.ownerCertificateSha256)
+        assertTrue(account.requiresReauthentication)
+        assertNull(database.providerDao().getCredential(ownership.accountId))
+        assertNull(database.providerDao().getPlaybackSession(ownership.sessionId))
+        assertNotNull(database.channelDao().get(ownership.channelId))
+    }
+
+    @Test
     fun restoringAccountInvalidatesExistingCredentialAndOpenSession() = runBlocking {
         val ownership = seedOwnership(
             id = "restored",
@@ -213,7 +251,6 @@ class ProviderAccountOwnerStoreTest {
                 itemId = "item-$id",
                 mediaSourceId = null,
                 sourceType = "live",
-                fallbackDirectUrl = null,
             )
         )
         val sessionId = "session-$id"
@@ -225,7 +262,6 @@ class ProviderAccountOwnerStoreTest {
                 itemId = "item-$id",
                 mediaSourceId = null,
                 sourceType = "live",
-                fallbackDirectUrl = null,
                 playSessionId = "remote-$id",
                 liveStreamId = "live-$id",
                 createdAtEpochMillis = 1_000,

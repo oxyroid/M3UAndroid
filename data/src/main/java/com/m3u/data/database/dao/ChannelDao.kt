@@ -6,17 +6,178 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
+import androidx.room.Upsert
 import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.ChannelMetadataBase
+import com.m3u.data.database.model.ExtensionChannelMetadataOverlay
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ChannelDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertOrReplace(channel: Channel): Long
+    suspend fun insertOrReplaceAllRaw(vararg channels: Channel): List<Long>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertOrReplaceAll(vararg channels: Channel)
+    @Transaction
+    suspend fun insertOrReplace(channel: Channel): Long {
+        val id = insertOrReplaceAllRaw(channel).single()
+        synchronizeMetadataBases(listOf(channel))
+        return id
+    }
+
+    @Transaction
+    suspend fun insertOrReplaceAll(vararg channels: Channel) {
+        insertOrReplaceAllRaw(*channels)
+        synchronizeMetadataBases(channels.asList())
+    }
+
+    @Transaction
+    suspend fun insertOrReplaceAllAndReturnIds(vararg channels: Channel): List<Long> {
+        val ids = insertOrReplaceAllRaw(*channels)
+        synchronizeMetadataBases(channels.asList())
+        return ids
+    }
+
+    @Upsert
+    suspend fun upsertMetadataBases(vararg bases: ChannelMetadataBase)
+
+    @Upsert
+    suspend fun upsertMetadataOverlays(vararg overlays: ExtensionChannelMetadataOverlay)
+
+    @Query(
+        """
+        SELECT * FROM channel_metadata_bases
+        WHERE playlist_url = :playlistUrl
+        """
+    )
+    suspend fun getMetadataBases(playlistUrl: String): List<ChannelMetadataBase>
+
+    @Query(
+        """
+        SELECT * FROM extension_channel_metadata_overlays
+        WHERE playlist_url = :playlistUrl AND extension_id = :extensionId
+        """
+    )
+    suspend fun getMetadataOverlays(
+        playlistUrl: String,
+        extensionId: String,
+    ): List<ExtensionChannelMetadataOverlay>
+
+    @Query(
+        """
+        SELECT * FROM extension_channel_metadata_overlays
+        WHERE extension_id = :extensionId
+        """
+    )
+    suspend fun getMetadataOverlays(
+        extensionId: String,
+    ): List<ExtensionChannelMetadataOverlay>
+
+    @Query(
+        """
+        DELETE FROM extension_channel_metadata_overlays
+        WHERE playlist_url = :playlistUrl AND extension_id = :extensionId
+        """
+    )
+    suspend fun deleteMetadataOverlays(
+        playlistUrl: String,
+        extensionId: String,
+    ): Int
+
+    @Query(
+        """
+        DELETE FROM extension_channel_metadata_overlays
+        WHERE extension_id = :extensionId
+        """
+    )
+    suspend fun deleteMetadataOverlays(extensionId: String): Int
+
+    @Query(
+        """
+        UPDATE streams
+        SET title = COALESCE(
+                (
+                    SELECT overlay.title
+                    FROM extension_channel_metadata_overlays AS overlay
+                    WHERE overlay.playlist_url = :playlistUrl
+                    AND overlay.channel_reference = :channelReference
+                    AND overlay.title IS NOT NULL
+                    ORDER BY overlay.extension_id ASC
+                    LIMIT 1
+                ),
+                (
+                    SELECT base.title
+                    FROM channel_metadata_bases AS base
+                    WHERE base.playlist_url = :playlistUrl
+                    AND base.channel_reference = :channelReference
+                ),
+                title
+            ),
+            `group` = COALESCE(
+                (
+                    SELECT overlay.category
+                    FROM extension_channel_metadata_overlays AS overlay
+                    WHERE overlay.playlist_url = :playlistUrl
+                    AND overlay.channel_reference = :channelReference
+                    AND overlay.category IS NOT NULL
+                    ORDER BY overlay.extension_id ASC
+                    LIMIT 1
+                ),
+                (
+                    SELECT base.category
+                    FROM channel_metadata_bases AS base
+                    WHERE base.playlist_url = :playlistUrl
+                    AND base.channel_reference = :channelReference
+                ),
+                `group`
+            )
+        WHERE playlist_url = :playlistUrl
+        AND relation_id = :channelReference
+        """
+    )
+    suspend fun recomputeEffectiveMetadata(
+        playlistUrl: String,
+        channelReference: String,
+    ): Int
+
+    @Query(
+        """
+        DELETE FROM channel_metadata_bases AS base
+        WHERE base.playlist_url = :playlistUrl
+        AND base.channel_reference NOT IN (
+            SELECT streams.relation_id
+            FROM streams
+            WHERE streams.playlist_url = :playlistUrl
+            AND streams.relation_id IS NOT NULL
+        )
+        """
+    )
+    suspend fun deleteOrphanedMetadata(playlistUrl: String): Int
+
+    @Transaction
+    suspend fun synchronizeMetadataBases(channels: List<Channel>) {
+        val bases = channels
+            .asSequence()
+            .mapNotNull { channel ->
+                val reference = channel.relationId?.takeIf(String::isNotBlank)
+                    ?: return@mapNotNull null
+                ChannelMetadataBase(
+                    playlistUrl = channel.playlistUrl,
+                    channelReference = reference,
+                    title = channel.title,
+                    category = channel.category,
+                )
+            }
+            .associateBy { base -> base.playlistUrl to base.channelReference }
+            .values
+            .toTypedArray()
+        if (bases.isEmpty()) return
+        upsertMetadataBases(*bases)
+        bases.forEach { base ->
+            recomputeEffectiveMetadata(base.playlistUrl, base.channelReference)
+        }
+    }
 
     @Query(
         """
@@ -101,6 +262,28 @@ interface ChannelDao {
 
     @Query("SELECT * FROM streams WHERE playlist_url = :playlistUrl")
     suspend fun getByPlaylistUrl(playlistUrl: String): List<Channel>
+
+    @Query(
+        """
+        SELECT stream.url AS url,
+            COALESCE(base.category, stream.`group`) AS `group`,
+            COALESCE(base.title, stream.title) AS title,
+            stream.cover AS cover,
+            stream.playlist_url AS playlist_url,
+            stream.license_type AS license_type,
+            stream.license_key AS license_key,
+            stream.id AS id,
+            stream.favourite AS favourite,
+            stream.hidden AS hidden,
+            stream.seen AS seen,
+            stream.relation_id AS relation_id
+        FROM streams AS stream
+        LEFT JOIN channel_metadata_bases AS base
+            ON base.playlist_url = stream.playlist_url
+            AND base.channel_reference = stream.relation_id
+        """
+    )
+    suspend fun getAllWithSourceMetadata(): List<Channel>
 
     @Query("SELECT * FROM streams WHERE playlist_url = :playlistUrl AND relation_id = :relationId")
     suspend fun getByPlaylistUrlAndRelationId(playlistUrl: String, relationId: String): Channel?
@@ -217,16 +400,6 @@ interface ChannelDao {
 
     @Query("UPDATE streams SET seen = :target WHERE id = :id")
     suspend fun updateSeen(id: Int, target: Long)
-
-    @Query(
-        """
-        UPDATE streams
-        SET title = COALESCE(:title, title),
-            `group` = COALESCE(:category, `group`)
-        WHERE id = :id
-        """
-    )
-    suspend fun applyMetadataEnrichment(id: Int, title: String?, category: String?)
 
     @Query(
         """

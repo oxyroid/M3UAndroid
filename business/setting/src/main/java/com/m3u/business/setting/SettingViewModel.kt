@@ -26,6 +26,7 @@ import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.parser.xtream.XtreamInput
 import com.m3u.data.repository.channel.ChannelRepository
+import com.m3u.data.repository.extension.ExtensionSettingEditToken
 import com.m3u.data.repository.extension.ExtensionSettingUpdateResult
 import com.m3u.data.repository.extension.ExtensionSettingsConfiguration
 import com.m3u.data.repository.extension.ExtensionSettingsRepository
@@ -37,6 +38,7 @@ import com.m3u.data.repository.provider.ProviderSubscriptionRequest
 import com.m3u.data.repository.provider.SubscriptionProviderRepository
 import com.m3u.data.repository.plugin.ExtensionPluginRepository
 import com.m3u.data.repository.plugin.InstalledPlugin
+import com.m3u.data.repository.plugin.PluginAuthorizationToken
 import com.m3u.data.repository.plugin.PluginDataClearResult
 import com.m3u.data.repository.plugin.PluginEnableResult
 import com.m3u.data.repository.tv.TvRepository
@@ -90,6 +92,15 @@ class SettingViewModel @Inject constructor(
     val codecPackState: StateFlow<CodecPackState> = _codecPackState
     private var providerSubscriptionJob: Job? = null
     private var providerDiscoveryJob: Job? = null
+    private var providerReauthenticationJob: Job? = null
+    private var extensionSettingsLoadJob: Job? = null
+    private var extensionSettingsRequestedId: ExtensionId? = null
+    private var extensionSettingsGeneration = 0L
+    private var extensionSettingsUpdateGeneration = 0L
+    private val extensionSettingsOperationQueue = ExtensionSettingsOperationQueue(
+        scope = viewModelScope,
+        onFailure = { messager.emit(SettingMessage.ExtensionOperationFailed) },
+    )
 
     private val _extensionPlugins = MutableStateFlow<List<InstalledPlugin>>(emptyList())
     val extensionPlugins: StateFlow<List<InstalledPlugin>> = _extensionPlugins
@@ -117,6 +128,9 @@ class SettingViewModel @Inject constructor(
     private val _providerSubscriptionForm = MutableStateFlow<ProviderSubscriptionForm?>(null)
     val providerSubscriptionForm: StateFlow<ProviderSubscriptionForm?> = _providerSubscriptionForm
 
+    private val _providerOperationState = MutableStateFlow(ProviderOperationState())
+    val providerOperationState: StateFlow<ProviderOperationState> = _providerOperationState
+
     init {
         refreshCodecPack()
         refreshExtensionPlugins()
@@ -128,13 +142,19 @@ class SettingViewModel @Inject constructor(
     }
 
     fun refreshSubscriptionProviders() {
-        providerDiscoveryJob?.cancel()
+        if (_providerOperationState.value.isBusy) return
+        if (providerDiscoveryJob?.isActive == true) return
         providerDiscoveryJob = viewModelScope.launch {
-            loadSubscriptionProviders()
+            try {
+                loadSubscriptionProviders()
+            } finally {
+                providerDiscoveryJob = null
+            }
         }
     }
 
     fun selectSubscriptionProvider(providerId: String) {
+        if (_providerOperationState.value.isBusy) return
         val descriptor = currentSubscriptionProviders().firstOrNull { provider ->
             provider.descriptor.providerId.value == providerId
         }?.descriptor ?: return
@@ -151,6 +171,7 @@ class SettingViewModel @Inject constructor(
     }
 
     fun selectSubscriptionProviderKind(kindValue: String) {
+        if (_providerOperationState.value.isBusy) return
         val current = _providerSubscriptionForm.value ?: return
         val descriptor = currentSubscriptionProviders().firstOrNull { provider ->
             provider.descriptor.providerId == current.providerId
@@ -163,6 +184,7 @@ class SettingViewModel @Inject constructor(
     }
 
     fun updateSubscriptionProviderSetting(fieldKey: String, value: String?) {
+        if (_providerOperationState.value.isBusy) return
         _providerSubscriptionForm.value = _providerSubscriptionForm.value?.update(fieldKey, value)
     }
 
@@ -192,6 +214,7 @@ class SettingViewModel @Inject constructor(
     }
 
     private suspend fun loadSubscriptionProviders(): List<DiscoveredSubscriptionProvider>? {
+        val previousState = _providerDiscoveryState.value
         _providerDiscoveryState.value = ProviderDiscoveryState.Loading
         return try {
             val providers = withContext(Dispatchers.IO) {
@@ -201,6 +224,9 @@ class SettingViewModel @Inject constructor(
             _providerDiscoveryState.value = providers.toProviderDiscoveryState()
             providers
         } catch (cancelled: CancellationException) {
+            if (_providerDiscoveryState.value is ProviderDiscoveryState.Loading) {
+                _providerDiscoveryState.value = previousState
+            }
             throw cancelled
         } catch (error: Exception) {
             _providerDiscoveryState.value = ProviderDiscoveryState.Failed(
@@ -214,26 +240,43 @@ class SettingViewModel @Inject constructor(
         (_providerDiscoveryState.value as? ProviderDiscoveryState.Ready)?.providers.orEmpty()
 
     fun reauthenticateProviderAccount(playlistUrl: String) {
+        if (_providerOperationState.value.isBusy) return
         val account = providerAccountSummaries.value.firstOrNull { summary ->
             summary.playlistUrl == playlistUrl && summary.requiresReauthentication
         } ?: return
-        providerDiscoveryJob?.cancel()
-        providerDiscoveryJob = viewModelScope.launch {
-            var provider = currentSubscriptionProviders().providerFor(account)
-            if (provider == null) {
-                provider = loadSubscriptionProviders().orEmpty().providerFor(account)
+        providerReauthenticationJob?.cancel()
+        _providerOperationState.value = _providerOperationState.value.copy(
+            preparingReauthenticationPlaylistUrl = playlistUrl,
+        )
+        providerReauthenticationJob = viewModelScope.launch {
+            try {
+                providerDiscoveryJob?.join()
+                var provider = currentSubscriptionProviders().providerFor(account)
+                if (provider == null) {
+                    provider = loadSubscriptionProviders().orEmpty().providerFor(account)
+                }
+                if (provider == null) {
+                    messager.emit(SettingMessage.ProviderSubscriptionFailed)
+                    return@launch
+                }
+                resetAllInputs()
+                properties.selectedState.value = DataSource.Provider
+                properties.titleState.value = account.playlistTitle
+                _providerSubscriptionForm.value =
+                    ProviderSubscriptionForm.createForReauthentication(
+                        descriptor = provider,
+                        account = account,
+                    )
+            } finally {
+                if (
+                    _providerOperationState.value.preparingReauthenticationPlaylistUrl ==
+                    playlistUrl
+                ) {
+                    _providerOperationState.value = _providerOperationState.value.copy(
+                        preparingReauthenticationPlaylistUrl = null,
+                    )
+                }
             }
-            if (provider == null) {
-                messager.emit(SettingMessage.ProviderSubscriptionFailed)
-                return@launch
-            }
-            resetAllInputs()
-            properties.selectedState.value = DataSource.Provider
-            properties.titleState.value = account.playlistTitle
-            _providerSubscriptionForm.value = ProviderSubscriptionForm.createForReauthentication(
-                descriptor = provider,
-                account = account,
-            )
         }
     }
 
@@ -244,78 +287,140 @@ class SettingViewModel @Inject constructor(
         }
     }
 
-    fun enableExtensionPlugin(packageName: String, serviceName: String) {
+    fun enableExtensionPlugin(
+        packageName: String,
+        serviceName: String,
+        authorizationToken: PluginAuthorizationToken,
+    ) {
         viewModelScope.launch {
-            when (val result = extensionPluginRepository.enable(packageName, serviceName)) {
+            when (
+                val result = extensionPluginRepository.enable(
+                    packageName,
+                    serviceName,
+                    authorizationToken,
+                )
+            ) {
                 is PluginEnableResult.Enabled -> Unit
-                is PluginEnableResult.Rejected -> messager.emit(result.reason)
+                is PluginEnableResult.Rejected ->
+                    messager.emit(SettingMessage.ExtensionOperationFailed)
             }
             refreshExtensionPlugins()
         }
     }
 
-    fun reauthorizeExtensionPlugin(packageName: String, serviceName: String) {
+    fun reauthorizeExtensionPlugin(
+        packageName: String,
+        serviceName: String,
+        authorizationToken: PluginAuthorizationToken,
+    ) {
         viewModelScope.launch {
-            when (val result = extensionPluginRepository.reauthorize(packageName, serviceName)) {
+            when (
+                val result = extensionPluginRepository.reauthorize(
+                    packageName,
+                    serviceName,
+                    authorizationToken,
+                )
+            ) {
                 is PluginEnableResult.Enabled -> Unit
-                is PluginEnableResult.Rejected -> messager.emit(result.reason)
+                is PluginEnableResult.Rejected ->
+                    messager.emit(SettingMessage.ExtensionOperationFailed)
             }
             refreshExtensionPlugins()
         }
     }
 
     fun disableExtensionPlugin(extensionId: String) {
-        if (_extensionSettings.value?.extensionId?.value == extensionId) {
-            closeExtensionSettings()
-        }
+        closeExtensionSettingsIfActive(extensionId)
         viewModelScope.launch {
             extensionPluginRepository.disable(extensionId)
             refreshExtensionPlugins()
         }
     }
 
-    fun revokeExtensionPlugin(packageName: String, serviceName: String) {
-        val revokedExtensionId = _extensionPlugins.value
-            .firstOrNull { it.packageName == packageName && it.serviceName == serviceName }
-            ?.extensionId
-        if (_extensionSettings.value?.extensionId?.value == revokedExtensionId) {
-            closeExtensionSettings()
+    fun revokeExtensionPlugin(
+        packageName: String,
+        serviceName: String,
+        extensionId: String?,
+    ) {
+        if (extensionId == null) {
+            viewModelScope.launch { messager.emit(SettingMessage.ExtensionOperationFailed) }
+            return
         }
-        viewModelScope.launch {
+        closeExtensionSettingsIfActive(extensionId)
+        val operation: suspend () -> Unit = {
             extensionPluginRepository.revoke(packageName, serviceName)
             refreshExtensionPlugins()
         }
+        extensionSettingsOperationQueue.launchDestructive(
+            extensionId = extensionId,
+            operation = operation,
+        )
     }
 
     fun openExtensionSettings(extensionId: String, localeTag: String?) {
-        viewModelScope.launch(Dispatchers.IO) {
-            _extensionSettings.value = extensionSettingsRepository.configuration(
-                ExtensionId(extensionId),
-                localeTag,
-                PHONE_SETTINGS_SURFACE,
-            )
+        val requestedExtensionId = ExtensionId(extensionId)
+        val generation = ++extensionSettingsGeneration
+        extensionSettingsLoadJob?.cancel()
+        extensionSettingsRequestedId = requestedExtensionId
+        _extensionSettings.value = null
+        extensionSettingsLoadJob = extensionSettingsOperationQueue.launchOperation(extensionId) {
+            val configuration = withContext(Dispatchers.IO) {
+                extensionSettingsRepository.configuration(
+                    requestedExtensionId,
+                    localeTag,
+                    PHONE_SETTINGS_SURFACE,
+                )
+            }
+            if (generation == extensionSettingsGeneration) {
+                _extensionSettings.value = configuration
+            }
         }
     }
 
     fun closeExtensionSettings() {
+        extensionSettingsGeneration++
+        extensionSettingsLoadJob?.cancel()
+        extensionSettingsLoadJob = null
+        extensionSettingsRequestedId = null
         _extensionSettings.value = null
     }
 
-    fun clearExtensionData(packageName: String, serviceName: String) {
-        val extensionId = _extensionPlugins.value
-            .firstOrNull { plugin ->
-                plugin.packageName == packageName && plugin.serviceName == serviceName
-            }
-            ?.extensionId
-        if (_extensionSettings.value?.extensionId?.value == extensionId) closeExtensionSettings()
-        viewModelScope.launch(Dispatchers.IO) {
-            when (val result = extensionPluginRepository.clearData(packageName, serviceName)) {
+    private fun closeExtensionSettingsIfActive(extensionId: String) {
+        if (
+            _extensionSettings.value?.extensionId?.value == extensionId ||
+            extensionSettingsRequestedId?.value == extensionId
+        ) {
+            closeExtensionSettings()
+        }
+    }
+
+    fun clearExtensionData(
+        packageName: String,
+        serviceName: String,
+        extensionId: String?,
+    ) {
+        if (extensionId == null) {
+            viewModelScope.launch { messager.emit(SettingMessage.ExtensionOperationFailed) }
+            return
+        }
+        closeExtensionSettingsIfActive(extensionId)
+        val operation: suspend () -> Unit = {
+            when (
+                val result = withContext(Dispatchers.IO) {
+                    extensionPluginRepository.clearData(packageName, serviceName)
+                }
+            ) {
                 is PluginDataClearResult.Cleared -> {
                     messager.emit(SettingMessage.ExtensionDataCleared)
                 }
-                is PluginDataClearResult.Rejected -> messager.emit(result.reason)
+                is PluginDataClearResult.Rejected ->
+                    messager.emit(SettingMessage.ExtensionOperationFailed)
             }
         }
+        extensionSettingsOperationQueue.launchDestructive(
+            extensionId = extensionId,
+            operation = operation,
+        )
     }
 
     fun exportExtensionDiagnostics(extensionId: String) {
@@ -329,31 +434,71 @@ class SettingViewModel @Inject constructor(
     fun updateExtensionSetting(
         sectionId: String,
         fieldKey: String,
+        editToken: ExtensionSettingEditToken,
         rawValue: String?,
         localeTag: String?,
     ) {
         val extensionId = _extensionSettings.value?.extensionId ?: return
-        viewModelScope.launch(Dispatchers.IO) {
-            when (
-                val result = extensionSettingsRepository.update(
-                    extensionId,
-                    sectionId,
-                    fieldKey,
-                    rawValue,
-                    localeTag,
-                    PHONE_SETTINGS_SURFACE,
-                )
-            ) {
-                is ExtensionSettingUpdateResult.Updated -> {
-                    _extensionSettings.value = extensionSettingsRepository.configuration(
+        val generation = extensionSettingsGeneration
+        val updateGeneration = ++extensionSettingsUpdateGeneration
+        extensionSettingsOperationQueue.launchUpdate(extensionId.value) update@{
+            val result = withContext(Dispatchers.IO) {
+                when (
+                    val update = extensionSettingsRepository.update(
                         extensionId,
-                        localeTag,
-                        PHONE_SETTINGS_SURFACE,
+                        sectionId,
+                        fieldKey,
+                        editToken,
+                        rawValue,
                     )
+                ) {
+                    is ExtensionSettingUpdateResult.Updated -> {
+                        ExtensionSettingsRefreshResult.Updated(
+                            extensionSettingsRepository.configuration(
+                                extensionId,
+                                localeTag,
+                                PHONE_SETTINGS_SURFACE,
+                            )
+                        )
+                    }
+                    is ExtensionSettingUpdateResult.Rejected -> {
+                        ExtensionSettingsRefreshResult.Rejected(
+                            configuration = extensionSettingsRepository.configuration(
+                                extensionId,
+                                localeTag,
+                                PHONE_SETTINGS_SURFACE,
+                            )
+                        )
+                    }
                 }
-                is ExtensionSettingUpdateResult.Rejected -> messager.emit(result.reason)
+            }
+            if (
+                generation != extensionSettingsGeneration ||
+                updateGeneration != extensionSettingsUpdateGeneration ||
+                _extensionSettings.value?.extensionId != extensionId
+            ) {
+                return@update
+            }
+            when (result) {
+                is ExtensionSettingsRefreshResult.Updated -> {
+                    _extensionSettings.value = result.configuration
+                }
+                is ExtensionSettingsRefreshResult.Rejected -> {
+                    _extensionSettings.value = result.configuration
+                    messager.emit(SettingMessage.ExtensionOperationFailed)
+                }
             }
         }
+    }
+
+    private sealed interface ExtensionSettingsRefreshResult {
+        data class Updated(
+            val configuration: ExtensionSettingsConfiguration?,
+        ) : ExtensionSettingsRefreshResult
+
+        data class Rejected(
+            val configuration: ExtensionSettingsConfiguration?,
+        ) : ExtensionSettingsRefreshResult
     }
 
     val epgs: StateFlow<List<Playlist>> = playlistRepository
@@ -506,7 +651,7 @@ class SettingViewModel @Inject constructor(
         val basicUrl = if (inputBasicUrl.startWithHttpScheme()) inputBasicUrl
         else "http://$inputBasicUrl"
 
-        if (forTv) {
+        if (forTv && selected.supportsRemoteTvSubscription()) {
             subscribeForTv(
                 selected = selected,
                 title = title,
@@ -516,6 +661,9 @@ class SettingViewModel @Inject constructor(
                 password = password,
                 epg = epg
             )
+            return
+        }
+        if (selected.isSubscriptionProvider() && _providerOperationState.value.isBusy) {
             return
         }
 
@@ -592,7 +740,6 @@ class SettingViewModel @Inject constructor(
                         providerKind = when (selected) {
                             DataSource.Emby -> EmbyCompatibleProviderKinds.Emby
                             DataSource.Jellyfin -> EmbyCompatibleProviderKinds.Jellyfin
-                            else -> return
                         },
                     )
                     return
@@ -616,7 +763,10 @@ class SettingViewModel @Inject constructor(
                             messager.emit(SettingMessage.ProviderCredentialsRequired)
                         }
                         is ProviderSubscriptionFormBuildResult.Ready -> {
-                            enqueueProviderSubscription { result.request }
+                            enqueueProviderSubscription(
+                                request = result.request,
+                                reauthenticationPlaylistUrl = form.reauthenticationPlaylistUrl,
+                            )
                         }
                     }
                     return
@@ -653,32 +803,58 @@ class SettingViewModel @Inject constructor(
                 messager.emit(SettingMessage.ProviderCredentialsRequired)
             }
             is ProviderSubscriptionFormBuildResult.Ready -> {
-                enqueueProviderSubscription { result.request }
+                enqueueProviderSubscription(request = result.request)
             }
         }
     }
 
     private fun enqueueProviderSubscription(
-        request: suspend () -> ProviderSubscriptionRequest,
+        request: ProviderSubscriptionRequest,
+        reauthenticationPlaylistUrl: String? = null,
     ) {
-        if (providerSubscriptionJob?.isActive == true) return
+        if (
+            providerSubscriptionJob?.isActive == true ||
+            _providerOperationState.value.submission != null
+        ) {
+            return
+        }
+        val operation = ProviderSubmissionOperation(
+            providerId = request.providerId,
+            providerKind = request.providerKind,
+            reauthenticationPlaylistUrl = reauthenticationPlaylistUrl,
+        )
+        val submittedInputs = providerInputSnapshot()
+        _providerOperationState.value = _providerOperationState.value.copy(
+            submission = operation,
+        )
         providerSubscriptionJob = viewModelScope.launch {
-            val result = runCatching {
-                withContext(Dispatchers.IO) {
-                    subscriptionProviderRepository.subscribe(request())
+            try {
+                val result = runCatching {
+                    withContext(Dispatchers.IO) {
+                        subscriptionProviderRepository.subscribe(request)
+                    }
+                }.onFailure { error ->
+                    if (error is CancellationException) throw error
                 }
-            }.onFailure { error ->
-                if (error is CancellationException) throw error
+                result.fold(
+                    onSuccess = { subscription ->
+                        messager.emit(SettingMessage.ProviderAdded(subscription.channelCount))
+                        if (providerInputSnapshot() == submittedInputs) {
+                            resetAllInputs()
+                        }
+                    },
+                    onFailure = {
+                        messager.emit(SettingMessage.ProviderSubscriptionFailed)
+                    },
+                )
+            } finally {
+                if (_providerOperationState.value.submission == operation) {
+                    _providerOperationState.value = _providerOperationState.value.copy(
+                        submission = null,
+                    )
+                }
+                providerSubscriptionJob = null
             }
-            result.fold(
-                onSuccess = { subscription ->
-                    messager.emit(SettingMessage.ProviderAdded(subscription.channelCount))
-                    resetAllInputs()
-                },
-                onFailure = {
-                    messager.emit(SettingMessage.ProviderSubscriptionFailed)
-                },
-            )
         }
     }
 
@@ -827,6 +1003,22 @@ class SettingViewModel @Inject constructor(
         }
     }
 
+    private fun providerInputSnapshot(): ProviderInputSnapshot = with(properties) {
+        ProviderInputSnapshot(
+            selected = selectedState.value,
+            title = titleState.value,
+            url = urlState.value,
+            uri = uriState.value,
+            localStorage = localStorageState.value,
+            forTv = forTvState.value,
+            basicUrl = basicUrlState.value,
+            username = usernameState.value,
+            password = passwordState.value,
+            epg = epgState.value,
+            providerForm = _providerSubscriptionForm.value,
+        )
+    }
+
     fun deleteEpgPlaylist(epgUrl: String) {
         viewModelScope.launch {
             playlistRepository.deleteEpgPlaylistAndProgrammes(epgUrl)
@@ -869,6 +1061,39 @@ class SettingViewModel @Inject constructor(
     private companion object {
         const val PHONE_SETTINGS_SURFACE = "phone"
     }
+}
+
+private data class ProviderInputSnapshot(
+    val selected: DataSource,
+    val title: String,
+    val url: String,
+    val uri: Uri,
+    val localStorage: Boolean,
+    val forTv: Boolean,
+    val basicUrl: String,
+    val username: String,
+    val password: String,
+    val epg: String,
+    val providerForm: ProviderSubscriptionForm?,
+)
+
+private fun DataSource.isSubscriptionProvider(): Boolean = when (this) {
+    DataSource.Emby,
+    DataSource.Jellyfin,
+    DataSource.Provider -> true
+
+    else -> false
+}
+
+private fun DataSource.supportsRemoteTvSubscription(): Boolean = when (this) {
+    DataSource.M3U,
+    DataSource.EPG,
+    DataSource.Xtream -> true
+
+    DataSource.Emby,
+    DataSource.Jellyfin,
+    DataSource.Provider,
+    DataSource.Dropbox -> false
 }
 
 private fun List<DiscoveredSubscriptionProvider>.providerFor(

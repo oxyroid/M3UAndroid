@@ -1,5 +1,8 @@
 package com.m3u.data.repository.extension
 
+import com.m3u.data.database.dao.ChannelDao
+import com.m3u.data.database.dao.ProviderDao
+import com.m3u.data.database.model.ProviderAccount
 import com.m3u.extension.api.ChannelMetadataPatch
 import com.m3u.extension.api.ChannelMetadataSnapshot
 import com.m3u.extension.api.ExtensionState
@@ -9,6 +12,11 @@ import com.m3u.extension.api.HookResult
 import com.m3u.extension.api.HostHookSpecs
 import com.m3u.extension.api.MetadataEnrichmentRequest
 import com.m3u.extension.api.SearchProviderRequest
+import com.m3u.extension.api.ExtensionId
+import com.m3u.extension.api.security.CredentialHandle
+import com.m3u.extension.api.subscription.ProviderAccountReference
+import com.m3u.extension.api.subscription.ProviderCredential
+import com.m3u.extension.api.subscription.ProviderKind
 import com.m3u.extension.runtime.ExtensionRuntime
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -18,27 +26,95 @@ import kotlinx.coroutines.supervisorScope
 
 internal class ExtensionContributionRepositoryImpl @Inject constructor(
     private val runtime: ExtensionRuntime,
+    private val providerDao: ProviderDao,
+    private val channelDao: ChannelDao,
 ) : ExtensionContributionRepository {
     override suspend fun search(query: String, limit: Int): List<ExtensionSearchContribution> {
         val normalizedQuery = query.trim()
         if (normalizedQuery.isEmpty() || limit <= 0) return emptyList()
+        val acceptedLimit = limit.coerceAtMost(MAX_SEARCH_RESULTS)
         return supervisorScope {
             runtime.extensionsSupporting(HostHookSpecs.SearchProvider.hook)
                 .filter { extension -> extension.state == ExtensionState.ENABLED }
                 .map { extension ->
-                    async {
+                    async<List<ExtensionSearchContribution>> {
                         try {
-                            when (
-                                val outcome = runtime.invoke(
-                                    extension.manifest.id,
-                                    HostHookSpecs.SearchProvider,
-                                    SearchProviderRequest(normalizedQuery, limit),
-                                ).outcome
-                            ) {
-                                is HookResult.Success -> outcome.payload.items.map { item ->
-                                    ExtensionSearchContribution(extension.manifest.id, item)
+                            val accountEntities = providerDao
+                                .getAccountsByProviderId(extension.manifest.id.value)
+                            val invocationAccounts: List<ProviderAccount?> =
+                                accountEntities.ifEmpty { listOf(null) }
+                            buildList {
+                                for (account in invocationAccounts) {
+                                    if (size >= acceptedLimit) break
+                                    val binding = account?.toInvocationBinding()
+                                    if (account != null && binding == null) continue
+                                    val remainingLimit = acceptedLimit - size
+                                    val outcome = try {
+                                        runtime.invoke(
+                                            extension.manifest.id,
+                                            HostHookSpecs.SearchProvider,
+                                            SearchProviderRequest(
+                                                query = normalizedQuery,
+                                                account = binding?.account,
+                                                credential = binding?.credential,
+                                                limit = remainingLimit,
+                                            ),
+                                            validateResponse = { response ->
+                                                require(response.items.size <= remainingLimit)
+                                                require(
+                                                    response.items.all { item ->
+                                                        (account == null ||
+                                                            item.accountId == account.id) &&
+                                                            item.accountId.isSafeExtensionText(
+                                                                MAX_STABLE_REFERENCE_LENGTH
+                                                            ) &&
+                                                            item.remoteId.isSafeExtensionText(
+                                                                MAX_STABLE_REFERENCE_LENGTH
+                                                            )
+                                                    }
+                                                )
+                                                require(
+                                                    response.items
+                                                        .map { item ->
+                                                            item.accountId to item.remoteId
+                                                        }
+                                                        .distinct()
+                                                        .size == response.items.size
+                                                )
+                                            },
+                                        ).outcome
+                                    } catch (cancelled: CancellationException) {
+                                        throw cancelled
+                                    } catch (_: Exception) {
+                                        continue
+                                    }
+                                    if (outcome is HookResult.Success) {
+                                        outcome.payload.items
+                                            .distinctBy { item ->
+                                                item.accountId to item.remoteId
+                                            }
+                                            .take(acceptedLimit - size)
+                                            .forEach { item ->
+                                                val resolvedAccount = account
+                                                    ?: providerDao.getAccount(item.accountId)
+                                                    ?: return@forEach
+                                                val channel = channelDao
+                                                    .getByPlaylistUrlAndRelationId(
+                                                        playlistUrl =
+                                                            resolvedAccount.playlistUrl,
+                                                        relationId = item.remoteId,
+                                                    )
+                                                if (channel != null && !channel.hidden) {
+                                                    add(
+                                                        ExtensionSearchContribution(
+                                                            extensionId = extension.manifest.id,
+                                                            channel = channel,
+                                                        )
+                                                    )
+                                                }
+                                            }
+                                    }
                                 }
-                                is HookResult.Failure -> emptyList()
                             }
                         } catch (cancelled: CancellationException) {
                             throw cancelled
@@ -49,16 +125,15 @@ internal class ExtensionContributionRepositoryImpl @Inject constructor(
                 }
                 .awaitAll()
                 .flatten()
-                .distinctBy { contribution ->
-                    contribution.extensionId.value to contribution.item.stableReference
-                }
-                .take(limit)
+                .distinctBy { contribution -> contribution.channel.id }
+                .take(acceptedLimit)
         }
     }
 
     override suspend fun enrichChannels(
         channels: List<ChannelMetadataSnapshot>,
-    ): List<ExtensionMetadataContribution> {
+        playlistUrl: String?,
+    ): List<ExtensionMetadataRefreshContribution> {
         val acceptedChannels = channels
             .asSequence()
             .filter { channel -> channel.stableReference.isNotBlank() }
@@ -66,44 +141,80 @@ internal class ExtensionContributionRepositoryImpl @Inject constructor(
             .take(MAX_CHANNELS_PER_ENRICHMENT)
             .toList()
         if (acceptedChannels.isEmpty()) return emptyList()
+        val playlistBinding = playlistUrl?.let { url ->
+            providerDao.getAccountByPlaylistUrl(url)?.toInvocationBinding()
+        }
         return supervisorScope {
             runtime.extensionsSupporting(HostHookSpecs.MetadataEnrichment.hook)
                 .filter { extension -> extension.state == ExtensionState.ENABLED }
                 .map { extension ->
-                    async {
+                    async<ExtensionMetadataRefreshContribution?> {
                         try {
-                            acceptedChannels.chunked(CHANNEL_ENRICHMENT_BATCH_SIZE).flatMap { batch ->
+                            val accountBinding = playlistBinding?.takeIf { binding ->
+                                binding.account.providerId == extension.manifest.id
+                            }
+                            val patches = mutableListOf<ChannelMetadataPatch>()
+                            for (batch in acceptedChannels.chunked(CHANNEL_ENRICHMENT_BATCH_SIZE)) {
                                 val batchReferences = batch
                                     .mapTo(mutableSetOf(), ChannelMetadataSnapshot::stableReference)
                                 when (
                                     val outcome = runtime.invoke(
                                         extension.manifest.id,
                                         HostHookSpecs.MetadataEnrichment,
-                                        MetadataEnrichmentRequest(batch),
-                                    ).outcome
+                                        MetadataEnrichmentRequest(
+                                            channels = batch,
+                                            account = accountBinding?.account,
+                                            credential = accountBinding?.credential,
+                                        ),
+                                        validateResponse = { response ->
+                                            require(response.patches.size <= batch.size)
+                                            require(
+                                                response.patches.all { patch ->
+                                                    patch.isValidFor(batchReferences)
+                                                }
+                                            )
+                                            require(
+                                                response.patches
+                                                    .map(ChannelMetadataPatch::stableReference)
+                                                    .distinct()
+                                                    .size == response.patches.size
+                                            )
+                                    },
+                                ).outcome
                                 ) {
-                                    is HookResult.Success -> outcome.payload.patches
+                                    is HookResult.Success -> patches += outcome.payload.patches
                                         .asSequence()
                                         .filter { patch -> patch.isValidFor(batchReferences) }
                                         .distinctBy(ChannelMetadataPatch::stableReference)
                                         .take(batch.size)
-                                        .map { patch ->
-                                            ExtensionMetadataContribution(extension.manifest.id, patch)
-                                        }
                                         .toList()
-                                    is HookResult.Failure -> emptyList()
+                                    is HookResult.Failure -> {
+                                        if (outcome.error.recoverable) {
+                                            throw RecoverableExtensionContributionException(
+                                                outcome.error.code.value
+                                            )
+                                        }
+                                        return@async null
+                                    }
                                 }
                             }
+                            ExtensionMetadataRefreshContribution(
+                                extensionId = extension.manifest.id,
+                                patches = patches,
+                            )
                         } catch (cancelled: CancellationException) {
                             throw cancelled
-                        } catch (_: Exception) {
-                            emptyList()
+                        } catch (recoverable: RecoverableExtensionContributionException) {
+                            throw recoverable
+                        } catch (failure: Exception) {
+                            throw RecoverableExtensionContributionException(
+                                failure.javaClass.simpleName
+                            )
                         }
                     }
                 }
                 .awaitAll()
-                .flatten()
-                .distinctBy { contribution -> contribution.patch.stableReference }
+                .filterNotNull()
         }
     }
 
@@ -111,6 +222,7 @@ internal class ExtensionContributionRepositoryImpl @Inject constructor(
         channelReferences: List<String>,
         fromEpochMillis: Long,
         toEpochMillis: Long,
+        playlistUrl: String?,
     ): List<ExtensionEpgRefreshContribution> {
         if (fromEpochMillis >= toEpochMillis) return emptyList()
         val acceptedReferences = channelReferences
@@ -121,12 +233,18 @@ internal class ExtensionContributionRepositoryImpl @Inject constructor(
             .toList()
         if (acceptedReferences.isEmpty()) return emptyList()
         if (acceptedReferences.size > MAX_CHANNELS_PER_ENRICHMENT) return emptyList()
+        val playlistBinding = playlistUrl?.let { url ->
+            providerDao.getAccountByPlaylistUrl(url)?.toInvocationBinding()
+        }
         return supervisorScope {
             runtime.extensionsSupporting(HostHookSpecs.EpgRefresh.hook)
                 .filter { extension -> extension.state == ExtensionState.ENABLED }
                 .map { extension ->
                     async<ExtensionEpgRefreshContribution?> {
                         try {
+                            val accountBinding = playlistBinding?.takeIf { binding ->
+                                binding.account.providerId == extension.manifest.id
+                            }
                             val programmes = mutableListOf<ExtensionProgramme>()
                             var receivedProgrammeCount = 0
                             for (batch in acceptedReferences.chunked(CHANNEL_ENRICHMENT_BATCH_SIZE)) {
@@ -135,7 +253,28 @@ internal class ExtensionContributionRepositoryImpl @Inject constructor(
                                     val outcome = runtime.invoke(
                                         extension.manifest.id,
                                         HostHookSpecs.EpgRefresh,
-                                        EpgRefreshRequest(batch, fromEpochMillis, toEpochMillis),
+                                        EpgRefreshRequest(
+                                            sourceIds = batch,
+                                            fromEpochMillis = fromEpochMillis,
+                                            toEpochMillis = toEpochMillis,
+                                            account = accountBinding?.account,
+                                            credential = accountBinding?.credential,
+                                        ),
+                                        validateResponse = { response ->
+                                            require(
+                                                response.programmes.size <=
+                                                    MAX_PROGRAMMES_PER_BATCH
+                                            )
+                                            require(
+                                                response.programmes.all { programme ->
+                                                    programme.isValidFor(
+                                                        batchReferences,
+                                                        fromEpochMillis,
+                                                        toEpochMillis,
+                                                    )
+                                                }
+                                            )
+                                        },
                                     ).outcome
                                 ) {
                                     is HookResult.Success -> {
@@ -160,7 +299,14 @@ internal class ExtensionContributionRepositoryImpl @Inject constructor(
                                             }
                                             .toList()
                                     }
-                                    is HookResult.Failure -> return@async null
+                                    is HookResult.Failure -> {
+                                        if (outcome.error.recoverable) {
+                                            throw RecoverableExtensionContributionException(
+                                                outcome.error.code.value
+                                            )
+                                        }
+                                        return@async null
+                                    }
                                 }
                             }
                             ExtensionEpgRefreshContribution(
@@ -180,8 +326,12 @@ internal class ExtensionContributionRepositoryImpl @Inject constructor(
                             )
                         } catch (cancelled: CancellationException) {
                             throw cancelled
-                        } catch (_: Exception) {
-                            null
+                        } catch (recoverable: RecoverableExtensionContributionException) {
+                            throw recoverable
+                        } catch (failure: Exception) {
+                            throw RecoverableExtensionContributionException(
+                                failure.javaClass.simpleName
+                            )
                         }
                     }
                 }
@@ -195,7 +345,8 @@ internal class ExtensionContributionRepositoryImpl @Inject constructor(
             (title?.isValidDisplayValue() != false) &&
             (category?.isValidDisplayValue() != false)
 
-    private fun String.isValidDisplayValue(): Boolean = isNotBlank() && length <= MAX_DISPLAY_LENGTH
+    private fun String.isValidDisplayValue(): Boolean =
+        isSafeExtensionText(MAX_DISPLAY_LENGTH)
 
     private fun ExtensionProgramme.isValidFor(
         acceptedReferences: Set<String>,
@@ -206,14 +357,71 @@ internal class ExtensionContributionRepositoryImpl @Inject constructor(
         startEpochMillis < endEpochMillis &&
         endEpochMillis >= fromEpochMillis &&
         startEpochMillis <= toEpochMillis &&
-        (description?.length?.let { length -> length <= MAX_DESCRIPTION_LENGTH } != false)
+        (
+            description?.isSafeExtensionText(
+                maximumLength = MAX_DESCRIPTION_LENGTH,
+                allowBlank = true,
+            ) != false
+        ) &&
+        categories.size <= MAX_CATEGORIES &&
+        categories.all { category ->
+            category.isSafeExtensionText(MAX_CATEGORY_LENGTH)
+        }
+
+    private fun String.isSafeExtensionText(
+        maximumLength: Int,
+        allowBlank: Boolean = false,
+    ): Boolean =
+        (allowBlank || isNotBlank()) &&
+            length <= maximumLength &&
+            none { character ->
+                character.isISOControl() ||
+                    character.code in 0x202A..0x202E ||
+                    character.code in 0x2066..0x2069 ||
+                    character.code == 0x200E ||
+                    character.code == 0x200F
+            }
+
+    private suspend fun ProviderAccount.toInvocationBinding(): ProviderInvocationBinding? {
+        if (requiresReauthentication) return null
+        val credential = providerDao.getCredential(id) ?: return null
+        return ProviderInvocationBinding(
+            account = ProviderAccountReference(
+                accountId = id,
+                providerId = ExtensionId(providerId),
+                providerKind = ProviderKind(providerKind),
+                baseUrl = baseUrl,
+                serverId = serverId,
+                serverName = serverName,
+                serverVersion = serverVersion,
+                userId = userId,
+                username = username,
+            ),
+            credential = ProviderCredential(
+                handle = CredentialHandle(credential.credentialHandle)
+            ),
+        )
+    }
+
+    private data class ProviderInvocationBinding(
+        val account: ProviderAccountReference,
+        val credential: ProviderCredential,
+    )
 
     private companion object {
         const val CHANNEL_ENRICHMENT_BATCH_SIZE = 200
         const val MAX_CHANNELS_PER_ENRICHMENT = 5_000
         const val MAX_DISPLAY_LENGTH = 512
+        const val MAX_STABLE_REFERENCE_LENGTH = 512
+        const val MAX_SEARCH_RESULTS = 100
         const val MAX_DESCRIPTION_LENGTH = 16_384
+        const val MAX_CATEGORIES = 32
+        const val MAX_CATEGORY_LENGTH = 256
         const val MAX_PROGRAMMES_PER_BATCH = 10_000
         const val MAX_PROGRAMMES_PER_EXTENSION = 50_000
     }
 }
+
+internal class RecoverableExtensionContributionException(
+    diagnosticCode: String,
+) : Exception("Extension contribution can be retried ($diagnosticCode)")

@@ -25,6 +25,7 @@ import java.util.UUID
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
@@ -94,8 +95,19 @@ enum class ExtensionExecutionKind {
 }
 
 sealed interface ExtensionRegistrationResult {
-    data class Registered(val extension: RegisteredExtension) : ExtensionRegistrationResult
+    data class Registered(
+        val extension: RegisteredExtension,
+        val registrationToken: ExtensionRegistrationToken? = null,
+    ) : ExtensionRegistrationResult
     data class Rejected(val error: ExtensionError) : ExtensionRegistrationResult
+}
+
+class ExtensionRegistrationToken private constructor() {
+    override fun toString(): String = "ExtensionRegistrationToken(opaque)"
+
+    companion object {
+        internal fun create(): ExtensionRegistrationToken = ExtensionRegistrationToken()
+    }
 }
 
 class ExtensionRuntime(
@@ -103,6 +115,8 @@ class ExtensionRuntime(
     private val invocationIdFactory: InvocationIdFactory = UuidInvocationIdFactory(),
     private val capabilityPolicy: CapabilityPolicy = DeclaredCapabilityPolicy,
     private val settingsProvider: ExtensionSettingsProvider = EmptyExtensionSettingsProvider,
+    private val brokerScopeProvider: ExtensionBrokerScopeProvider =
+        EmptyExtensionBrokerScopeProvider,
     private val invocationPolicy: InvocationPolicy = InvocationPolicy(),
     private val json: Json = Json {
         ignoreUnknownKeys = true
@@ -110,6 +124,9 @@ class ExtensionRuntime(
     },
 ) : ExtensionCatalog {
     private val registrations = ConcurrentHashMap<ExtensionId, Registration>()
+    private val externalFailureTrackers =
+        ConcurrentHashMap<ExtensionId, ExternalFailureTracker>()
+    private val registrationLifecycleLock = Any()
 
     fun register(entrypoint: ExtensionEntrypoint): ExtensionRegistrationResult {
         val manifest = entrypoint.manifest
@@ -155,14 +172,17 @@ class ExtensionRuntime(
             semaphore = Semaphore(invocationPolicy.maxConcurrentInvocationsPerExtension),
             unhealthyFailureThreshold = invocationPolicy.unhealthyFailureThreshold,
         )
-        if (registrations.putIfAbsent(manifest.id, registration) != null) {
-            return ExtensionRegistrationResult.Rejected(
-                ExtensionError(
-                    code = ExtensionErrorCodes.ExtensionAlreadyRegistered,
-                    message = "Extension ${manifest.id} is already registered",
-                    recoverable = false,
+        synchronized(registrationLifecycleLock) {
+            if (registrations.containsKey(manifest.id)) {
+                return ExtensionRegistrationResult.Rejected(
+                    ExtensionError(
+                        code = ExtensionErrorCodes.ExtensionAlreadyRegistered,
+                        message = "Extension ${manifest.id} is already registered",
+                        recoverable = false,
+                    )
                 )
-            )
+            }
+            registrations[manifest.id] = registration
         }
         return ExtensionRegistrationResult.Registered(registration.publicModel())
     }
@@ -172,33 +192,76 @@ class ExtensionRuntime(
         validateExternalManifest(manifest)?.let { error ->
             return ExtensionRegistrationResult.Rejected(error)
         }
-        val registration = Registration(
-            manifest = manifest,
-            handlers = emptyMap(),
-            transport = transport,
-            semaphore = Semaphore(invocationPolicy.maxConcurrentInvocationsPerExtension),
-            unhealthyFailureThreshold = invocationPolicy.unhealthyFailureThreshold,
-        )
-        if (registrations.putIfAbsent(manifest.id, registration) != null) {
-            return ExtensionRegistrationResult.Rejected(
-                ExtensionError(
-                    ExtensionErrorCodes.ExtensionAlreadyRegistered,
-                    "Extension ${manifest.id} is already registered",
-                    false,
+        val registrationToken = ExtensionRegistrationToken.create()
+        val registration = synchronized(registrationLifecycleLock) {
+            if (registrations.containsKey(manifest.id)) {
+                return ExtensionRegistrationResult.Rejected(
+                    ExtensionError(
+                        ExtensionErrorCodes.ExtensionAlreadyRegistered,
+                        "Extension ${manifest.id} is already registered",
+                        false,
+                    )
                 )
+            }
+            val failureTracker = externalFailureTrackers.computeIfAbsent(manifest.id) {
+                ExternalFailureTracker()
+            }
+            val candidate = Registration(
+                manifest = manifest,
+                handlers = emptyMap(),
+                transport = transport,
+                semaphore = Semaphore(invocationPolicy.maxConcurrentInvocationsPerExtension),
+                unhealthyFailureThreshold = invocationPolicy.unhealthyFailureThreshold,
+                registrationToken = registrationToken,
+                externalFailureTracker = failureTracker,
+                transportHealth = AtomicReference(ExtensionTransportHealth.UNAVAILABLE),
             )
+            failureTracker.activate(registrationToken)
+            registrations[manifest.id] = candidate
+            candidate
         }
-        return ExtensionRegistrationResult.Registered(registration.publicModel())
+        return ExtensionRegistrationResult.Registered(
+            extension = registration.publicModel(),
+            registrationToken = registrationToken,
+        )
     }
 
     fun unregister(extensionId: ExtensionId): RegisteredExtension? =
-        registrations.remove(extensionId)?.publicModel()
+        synchronized(registrationLifecycleLock) {
+            registrations.remove(extensionId)?.let { registration ->
+                registration.deactivate()
+                registration.publicModel()
+            }
+        }
+
+    fun forgetExternalState(extensionId: ExtensionId): Boolean =
+        synchronized(registrationLifecycleLock) {
+            if (registrations.containsKey(extensionId)) return false
+            externalFailureTrackers.remove(extensionId) != null
+        }
 
     fun setEnabled(extensionId: ExtensionId, enabled: Boolean): RegisteredExtension? {
-        val registration = registrations[extensionId] ?: return null
-        registration.enabled = enabled
-        if (enabled) registration.failures.set(0)
-        return registration.publicModel()
+        return synchronized(registrationLifecycleLock) {
+            val registration = registrations[extensionId] ?: return null
+            registration.enabled = enabled
+            if (enabled) {
+                registration.resetFailures()
+            }
+            registration.publicModel()
+        }
+    }
+
+    fun recordTransportHealth(
+        extensionId: ExtensionId,
+        registrationToken: ExtensionRegistrationToken,
+        health: ExtensionTransportHealth,
+    ): RegisteredExtension? {
+        return synchronized(registrationLifecycleLock) {
+            val registration = registrations[extensionId] ?: return null
+            if (!registration.matches(registrationToken)) return null
+            registration.transportHealth.set(health)
+            registration.publicModel()
+        }
     }
 
     override fun registeredExtensions(): List<RegisteredExtension> = registrations.values
@@ -221,6 +284,7 @@ class ExtensionRuntime(
         spec: HookSpec<Request, Response>,
         request: Request,
         brokerScope: BrokerScopeHandle? = null,
+        validateResponse: (Response) -> Unit = {},
     ): ExtensionResult<Response> {
         val invocationId = invocationIdFactory.create()
         val registration = registrations[extensionId]
@@ -228,7 +292,7 @@ class ExtensionRuntime(
         if (!registration.enabled) {
             return failure(invocationId, extensionId, spec, ExtensionErrorCodes.ExtensionDisabled, "Extension $extensionId is disabled", true)
         }
-        if (registration.failures.get() >= invocationPolicy.unhealthyFailureThreshold) {
+        if (registration.isUnhealthy) {
             return failure(invocationId, extensionId, spec, ExtensionErrorCodes.ExtensionUnhealthy, "Extension $extensionId is unhealthy", true)
         }
         val declaration = registration.manifest.hooks.singleOrNull { candidate -> candidate.hook == spec.hook }
@@ -236,9 +300,9 @@ class ExtensionRuntime(
         if (declaration.schemaVersion != spec.schemaVersion) {
             return failure(invocationId, extensionId, spec, ExtensionErrorCodes.SchemaIncompatible, "Hook schema version is incompatible", false)
         }
-        val granted = capabilityPolicy.grants(registration.manifest, spec.hook)
+        val policyGrants = capabilityPolicy.grants(registration.manifest, spec.hook)
             .intersect(registration.manifest.capabilities.mapTo(mutableSetOf()) { it.capability })
-        val missing = declaration.requiredCapabilities - granted
+        val missing = declaration.requiredCapabilities - policyGrants
         if (missing.isNotEmpty()) {
             return failure(
                 invocationId,
@@ -250,6 +314,7 @@ class ExtensionRuntime(
                 mapOf("missingCapabilities" to missing.joinToString(transform = Capability::id)),
             )
         }
+        val granted = policyGrants.intersect(declaration.requiredCapabilities)
         val settings = runCatching { settingsProvider.snapshot(registration.manifest) }
             .getOrElse {
                 return failure(
@@ -270,14 +335,47 @@ class ExtensionRuntime(
         val invocation = try {
             withTimeout(invocationPolicy.timeoutMillis) {
                 registration.semaphore.withPermit {
-                    registration.invoke(
-                        spec = spec,
-                        context = context,
-                        request = request,
-                        brokerScope = brokerScope,
-                        json = json,
-                        hostApiVersion = hostApiVersion,
-                    )
+                    val managedBrokerScope = if (
+                        brokerScope == null &&
+                        registration.isExternal
+                    ) {
+                        try {
+                            brokerScopeProvider.open(
+                                ExtensionBrokerScopeRequest(
+                                    manifest = registration.manifest,
+                                    hook = spec.hook,
+                                    payload = request,
+                                    settings = settings,
+                                    grantedCapabilities = granted,
+                                )
+                            )
+                        } catch (cancellation: CancellationException) {
+                            throw cancellation
+                        } catch (_: Exception) {
+                            return@withPermit InvocationAttempt(
+                                outcome = HookResult.Failure(
+                                    ExtensionError(
+                                        ExtensionErrorCodes.InvocationFailed,
+                                        "Host broker scope is unavailable",
+                                        true,
+                                    )
+                                ),
+                                runtimeFailure = false,
+                            )
+                        }
+                    } else {
+                        null
+                    }
+                    withManagedBrokerScope(managedBrokerScope) {
+                        registration.invoke(
+                            spec = spec,
+                            context = context,
+                            request = request,
+                            brokerScope = brokerScope ?: managedBrokerScope?.handle,
+                            json = json,
+                            hostApiVersion = hostApiVersion,
+                        )
+                    }
                 }
             }
         } catch (cancellation: TimeoutCancellationException) {
@@ -318,7 +416,21 @@ class ExtensionRuntime(
                         )
                     )
                 } else {
-                    rawOutcome
+                    try {
+                        validateResponse(rawOutcome.payload)
+                        rawOutcome
+                    } catch (cancellation: CancellationException) {
+                        throw cancellation
+                    } catch (_: Exception) {
+                        invocation.runtimeFailure = true
+                        HookResult.Failure(
+                            ExtensionError(
+                                ExtensionErrorCodes.ResponseInvalid,
+                                "Extension response violates the hook contract",
+                                false,
+                            )
+                        )
+                    }
                 }
             }
             is HookResult.Failure -> {
@@ -331,17 +443,49 @@ class ExtensionRuntime(
                             false,
                         )
                     )
+                } else if (!rawOutcome.error.isSafeForHostDisplay()) {
+                    invocation.runtimeFailure = true
+                    HookResult.Failure(
+                        ExtensionError(
+                            ExtensionErrorCodes.ResponseInvalid,
+                            "Extension returned an invalid error response",
+                            false,
+                        )
+                    )
                 } else {
                     HookResult.Failure(sanitize(rawOutcome.error))
                 }
             }
         }
         if (invocation.runtimeFailure) {
-            registration.failures.incrementAndGet()
+            registration.recordInvocationOutcome(runtimeFailure = true)
         } else {
-            registration.failures.set(0)
+            registration.recordInvocationOutcome(runtimeFailure = false)
         }
         return ExtensionResult(invocationId, extensionId, spec, outcome)
+    }
+
+    private suspend fun <T> withManagedBrokerScope(
+        lease: ExtensionBrokerScopeLease?,
+        block: suspend () -> T,
+    ): T {
+        var invocationFailure: Throwable? = null
+        return try {
+            block()
+        } catch (failure: Throwable) {
+            invocationFailure = failure
+            throw failure
+        } finally {
+            try {
+                lease?.close()
+            } catch (closeFailure: Throwable) {
+                if (invocationFailure != null) {
+                    invocationFailure.addSuppressed(closeFailure)
+                } else {
+                    throw closeFailure
+                }
+            }
+        }
     }
 
     private fun incompatibleApiError(manifest: ExtensionManifest) = ExtensionError(
@@ -393,29 +537,31 @@ class ExtensionRuntime(
     private fun validateManifestBounds(manifest: ExtensionManifest): ExtensionError? {
         val schema = manifest.settingsSchema
         val invalid =
-            manifest.displayName.length > MAX_MANIFEST_DISPLAY_NAME_LENGTH ||
+            !manifest.displayName.isSafeDisplayText(MAX_MANIFEST_DISPLAY_NAME_LENGTH) ||
                 (manifest.extensionVersion.preRelease?.length ?: 0) >
                     MAX_MANIFEST_VERSION_LABEL_LENGTH ||
                 manifest.hooks.size > MAX_MANIFEST_HOOKS ||
                 manifest.capabilities.size > MAX_MANIFEST_CAPABILITIES ||
                 manifest.capabilities.any { request ->
-                    request.reason.length > MAX_CAPABILITY_REASON_LENGTH
+                    !request.reason.isSafeDisplayText(MAX_CAPABILITY_REASON_LENGTH)
                 } ||
                 manifest.metadata.size > MAX_MANIFEST_METADATA_ENTRIES ||
                 manifest.metadata.any { (key, value) ->
-                    key.isBlank() ||
-                        key.length > MAX_MANIFEST_METADATA_KEY_LENGTH ||
-                        value.length > MAX_MANIFEST_METADATA_VALUE_LENGTH
+                    !key.isSafeDisplayText(MAX_MANIFEST_METADATA_KEY_LENGTH) ||
+                        !value.isSafeDisplayText(MAX_MANIFEST_METADATA_VALUE_LENGTH)
                 } ||
                 (schema != null && (
                     schema.fields.size > MAX_MANIFEST_SETTING_FIELDS ||
                         schema.fields.any { field ->
-                            field.label.length > MAX_SETTING_LABEL_LENGTH ||
-                                (field.description?.length ?: 0) > MAX_SETTING_DESCRIPTION_LENGTH ||
+                            !field.label.isSafeDisplayText(MAX_SETTING_LABEL_LENGTH) ||
+                                (
+                                    field.description?.isSafeDisplayText(
+                                        MAX_SETTING_DESCRIPTION_LENGTH
+                                    ) == false
+                                ) ||
                                 field.choices.size > MAX_SETTING_CHOICES ||
                                 field.choices.any { choice ->
-                                    choice.label.isBlank() ||
-                                        choice.label.length > MAX_SETTING_LABEL_LENGTH ||
+                                    !choice.label.isSafeDisplayText(MAX_SETTING_LABEL_LENGTH) ||
                                         choice.value.length > MAX_SETTING_CHOICE_VALUE_LENGTH
                                 } ||
                                 (field.defaultValue?.toString()?.encodeToByteArray()?.size ?: 0) >
@@ -440,6 +586,24 @@ class ExtensionRuntime(
             .filterKeys { key -> SENSITIVE_KEY_WORDS.none { word -> key.contains(word, ignoreCase = true) } }
             .mapValues { (_, value) -> redact(value) },
     )
+
+    private fun ExtensionError.isSafeForHostDisplay(): Boolean =
+        message.isSafeDisplayText(MAX_ERROR_MESSAGE_BYTES, measureUtf8Bytes = true) &&
+            details.size <= MAX_ERROR_DETAILS &&
+            details.all { (key, value) ->
+                key.isSafeDisplayText(MAX_ERROR_DETAIL_KEY_BYTES, measureUtf8Bytes = true) &&
+                    value.isSafeDisplayText(MAX_ERROR_DETAIL_VALUE_BYTES, measureUtf8Bytes = true)
+            }
+
+    private fun String.isSafeDisplayText(
+        maximumLength: Int,
+        measureUtf8Bytes: Boolean = false,
+    ): Boolean =
+        isNotBlank() &&
+            (if (measureUtf8Bytes) encodeToByteArray().size else length) <= maximumLength &&
+            none { character ->
+                character.isISOControl() || character.code in BIDI_CONTROL_CODE_POINTS
+            }
 
     @OptIn(ExperimentalSerializationApi::class)
     private fun errorEnvelopeFitsPayloadLimit(error: ExtensionError): Boolean = runCatching {
@@ -488,7 +652,11 @@ class ExtensionRuntime(
         val transport: ExtensionTransport?,
         val semaphore: Semaphore,
         val unhealthyFailureThreshold: Int,
-        val failures: AtomicInteger = AtomicInteger(0),
+        val registrationToken: ExtensionRegistrationToken? = null,
+        val externalFailureTracker: ExternalFailureTracker? = null,
+        val localFailures: AtomicInteger = AtomicInteger(0),
+        val transportHealth: AtomicReference<ExtensionTransportHealth> =
+            AtomicReference(ExtensionTransportHealth.HEALTHY),
         @Volatile var enabled: Boolean = true,
     ) {
         @Suppress("UNCHECKED_CAST")
@@ -566,6 +734,49 @@ class ExtensionRuntime(
         fun supports(hook: Hook): Boolean = hook in handlers ||
             (transport != null && manifest.hooks.any { declaration -> declaration.hook == hook })
 
+        val isExternal: Boolean
+            get() = transport != null
+
+        fun matches(token: ExtensionRegistrationToken): Boolean =
+            isExternal && registrationToken === token
+
+        fun deactivate() {
+            val token = registrationToken
+            val tracker = externalFailureTracker
+            if (token != null && tracker != null) {
+                tracker.deactivate(token)
+            }
+        }
+
+        fun recordInvocationOutcome(runtimeFailure: Boolean) {
+            val token = registrationToken
+            val tracker = externalFailureTracker
+            if (token != null && tracker != null) {
+                tracker.record(token, runtimeFailure)
+            } else if (runtimeFailure) {
+                localFailures.incrementAndGet()
+            } else {
+                localFailures.set(0)
+            }
+        }
+
+        fun resetFailures() {
+            val token = registrationToken
+            val tracker = externalFailureTracker
+            if (token != null && tracker != null) {
+                tracker.reset(token)
+            } else {
+                localFailures.set(0)
+            }
+        }
+
+        private val consecutiveFailures: Int
+            get() = externalFailureTracker?.count() ?: localFailures.get()
+
+        val isUnhealthy: Boolean
+            get() = consecutiveFailures >= unhealthyFailureThreshold ||
+                (isExternal && transportHealth.get() != ExtensionTransportHealth.HEALTHY)
+
         fun publicModel() = RegisteredExtension(
             manifest = manifest,
             boundHooks = if (transport == null) handlers.keys else manifest.hooks.mapTo(mutableSetOf()) { it.hook },
@@ -576,11 +787,47 @@ class ExtensionRuntime(
             },
             state = when {
                 !enabled -> ExtensionState.DISABLED
-                failures.get() >= unhealthyFailureThreshold -> ExtensionState.UNHEALTHY
+                isUnhealthy -> ExtensionState.UNHEALTHY
                 else -> ExtensionState.ENABLED
             },
-            consecutiveFailures = failures.get(),
+            consecutiveFailures = consecutiveFailures,
         )
+    }
+
+    private class ExternalFailureTracker {
+        private var activeToken: ExtensionRegistrationToken? = null
+        private var consecutiveFailures: Int = 0
+
+        @Synchronized
+        fun activate(token: ExtensionRegistrationToken) {
+            activeToken = token
+        }
+
+        @Synchronized
+        fun deactivate(token: ExtensionRegistrationToken) {
+            if (activeToken === token) activeToken = null
+        }
+
+        @Synchronized
+        fun record(
+            token: ExtensionRegistrationToken,
+            runtimeFailure: Boolean,
+        ) {
+            if (activeToken !== token) return
+            if (runtimeFailure) {
+                consecutiveFailures = incrementSaturatedFailureCount(consecutiveFailures)
+            } else {
+                consecutiveFailures = 0
+            }
+        }
+
+        @Synchronized
+        fun reset(token: ExtensionRegistrationToken) {
+            if (activeToken === token) consecutiveFailures = 0
+        }
+
+        @Synchronized
+        fun count(): Int = consecutiveFailures
     }
 
     private data class InvocationAttempt<Response : ExtensionPayload>(
@@ -616,6 +863,7 @@ class ExtensionRuntime(
         val RUNTIME_FAILURE_CODES = setOf(
             ExtensionErrorCodes.HookNotBound,
             ExtensionErrorCodes.InvocationFailed,
+            ExtensionErrorCodes.ResponseInvalid,
             ExtensionErrorCodes.InvocationTimedOut,
             ExtensionErrorCodes.PayloadTooLarge,
             ExtensionErrorCodes.SchemaIncompatible,
@@ -624,6 +872,15 @@ class ExtensionRuntime(
         val SENSITIVE_VALUE_PATTERN = Regex(
             "(?i)\\b(token|password|authorization|secret|credential)\\s*[=:]\\s*[^\\s,;]+",
         )
+        val BIDI_CONTROL_CODE_POINTS = (
+            (0x202A..0x202E) +
+                (0x2066..0x2069) +
+                listOf(0x200E, 0x200F)
+            ).toSet()
+        const val MAX_ERROR_MESSAGE_BYTES = 512
+        const val MAX_ERROR_DETAILS = 16
+        const val MAX_ERROR_DETAIL_KEY_BYTES = 64
+        const val MAX_ERROR_DETAIL_VALUE_BYTES = 512
         const val MAX_MANIFEST_BYTES = 256 * 1024
         const val MAX_MANIFEST_DISPLAY_NAME_LENGTH = 160
         const val MAX_MANIFEST_VERSION_LABEL_LENGTH = 64
@@ -641,3 +898,6 @@ class ExtensionRuntime(
         const val MAX_SETTING_DEFAULT_BYTES = 4_096
     }
 }
+
+internal fun incrementSaturatedFailureCount(value: Int): Int =
+    if (value == Int.MAX_VALUE) Int.MAX_VALUE else value + 1

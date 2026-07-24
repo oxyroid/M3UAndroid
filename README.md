@@ -23,6 +23,11 @@ It is made for users who want a clean, practical, ad-free IPTV app that works we
 - [Nightly Build](https://nightly.link/oxyroid/M3UAndroid/workflows/android/master/artifact.zip)
 - [Telegram Channel](https://t.me/m3u_android)
 
+## Extensions
+
+- [Extension documentation (English)](docs/extensions/README.md)
+- [插件文档（简体中文）](docs/extensions/README.zh-CN.md)
+
 ## License
 
 M3UAndroid is an open-source project licensed under the [GNU General Public License v3.0](LICENSE).

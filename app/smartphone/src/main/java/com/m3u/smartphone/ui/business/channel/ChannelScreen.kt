@@ -112,6 +112,7 @@ fun ChannelRoute(
     val isProgrammeSupported by viewModel.isProgrammeSupported.collectAsStateWithLifecycle(
         initialValue = false
     )
+    val supportsDirectSharing = channel?.url?.let { url -> url != Channel.URL_DYNAMIC } == true
 
     val channels = viewModel.pagingChannels.collectAsLazyPagingItems()
     val programmes = viewModel.programmes.collectAsLazyPagingItems()
@@ -299,6 +300,7 @@ fun ChannelRoute(
                 playlist = playlist,
                 adjacentChannels = adjacentChannels,
                 channel = channel,
+                supportsDirectSharing = supportsDirectSharing,
                 hasTrack = tracks.isNotEmpty(),
                 isPanelExpanded = isPanelExpanded,
                 brightness = brightness,
@@ -331,11 +333,14 @@ fun ChannelRoute(
     DlnaDevicesBottomSheet(
         maskState = maskState,
         searching = searching,
-        isDevicesVisible = isDevicesVisible,
+        isDevicesVisible = isDevicesVisible && supportsDirectSharing,
         devices = devices,
         connectDlnaDevice = { viewModel.connectDlnaDevice(it) },
         openInExternalPlayer = {
-            val channelUrl = channel?.url ?: return@DlnaDevicesBottomSheet
+            val channelUrl = channel
+                ?.url
+                ?.takeUnless { url -> url == Channel.URL_DYNAMIC }
+                ?: return@DlnaDevicesBottomSheet
             context.startActivity(
                 Intent(Intent.ACTION_VIEW).apply {
                     setDataAndType(channelUrl.toUri(), "video/*")
@@ -366,6 +371,7 @@ private fun ChannelPlayer(
     playerState: PlayerState,
     playlist: Playlist?,
     channel: Channel?,
+    supportsDirectSharing: Boolean,
     adjacentChannels: AdjacentChannels?,
     isSeriesPlaylist: Boolean,
     hasTrack: Boolean,
@@ -469,6 +475,7 @@ private fun ChannelPlayer(
             maskState = maskState,
             favourite = favourite,
             isSeriesPlaylist = isSeriesPlaylist,
+            supportsDirectSharing = supportsDirectSharing,
             useVertical = useVertical,
             hasTrack = hasTrack,
             cwPosition = cwPosition,

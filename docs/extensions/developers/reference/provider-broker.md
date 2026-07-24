@@ -1,33 +1,96 @@
-# Use the provider broker
+# Use the host network broker
 
-[简体中文](provider-broker.zh-CN.md) · [Build a subscription provider](../host-broker.md)
+[简体中文](provider-broker.zh-CN.md) · [Developer guide](../README.md)
 
-Use the `ExtensionHostNetworkBroker` passed to the current handler for provider HTTP calls:
+Extension code does not open network connections itself. A Hook sends a request through
+`ExtensionHostNetworkBroker`, and M3UAndroid checks the Hook, capabilities, destination, size, and
+timeout before sending it.
 
-- `authenticate(...)` performs account login and returns an authentication receipt;
-- `execute(...)` performs refresh, playback, session-close, and other ordinary requests.
+## Know which origin the Hook can use
 
-## Capabilities
-
-Declare each capability on the Hook that uses it and in `ExtensionManifest.capabilities`.
-
-| Operation | Capability |
+| Call | Allowed origin |
 | --- | --- |
-| Send a broker request | `network` |
-| Use `BrokerValue.Secret` | `credential.read` |
-| Call `authenticate(...)` | `credential.write` |
+| `SubscriptionHookSpecs.Discover` | None. Discovery is offline. |
+| Provider `Validate` | The origin submitted for this login. |
+| Provider `Refresh`, `ResolvePlayback`, or `ClosePlayback` | The current account's base origin. |
+| Search, metadata, or EPG with a provider account | That account's base origin. |
+| Settings, background work, or a search/metadata/EPG call without an account | Origins approved for the extension. |
 
-The reference provider's `Validate` Hook requests all three because its login body contains a password handle. Refresh, playback, and close request `network` plus `credential.read`.
+An account-scoped call uses only its account origin. It does not add the extension's other approved
+origins.
 
-## Build an ordinary request
+## Declare access on the Hook that uses it
 
-Use `BrokerValue.Literal` for ordinary values and `BrokerValue.Secret` for a credential handle from the current request.
+A Hook can use the broker only when all three conditions are true:
+
+1. Its `ExtensionHookDeclaration.requiredCapabilities` contains `network`.
+2. `ExtensionManifest.capabilities` requests `network`, and the user has approved it.
+3. The call has an account origin or at least one approved extension origin.
+
+Add `credential.read` to the same Hook when its broker request uses a submitted or saved credential
+handle. Provider `Validate` uses `credential.write` because `authenticate(...)` captures the
+returned credential.
+Keep the Hook's base capability too.
+
+For example, a network-backed search Hook declares:
+
+```kotlin
+ExtensionHookDeclaration(
+    hook = HostHookSpecs.SearchProvider.hook,
+    schemaVersion = HostHookSpecs.SearchProvider.schemaVersion,
+    requiredCapabilities = setOf(
+        ExtensionCapabilityIds.SearchRead,
+        ExtensionCapabilityIds.Network,
+    ),
+)
+```
+
+Every required capability must also have an `ExtensionCapabilityRequest` in the manifest.
+M3UAndroid gives each invocation only the capabilities declared by that Hook and approved by the
+user. A capability declared by another Hook is not available.
+
+## Approve an extension origin
+
+Use `ExtensionManifest.networkOrigins` for a fixed service:
+
+```kotlin
+networkOrigins = setOf(
+    ExtensionNetworkOrigin("https://api.example.com"),
+)
+```
+
+M3UAndroid shows these origins when the user authorizes the extension. Adding an origin in a later
+version does not silently expand an existing approval.
+
+Use a text setting marked `networkOrigin` when the user chooses the server:
+
+```kotlin
+ExtensionSettingField(
+    key = "api_origin",
+    label = "Server address",
+    type = ExtensionSettingType.TEXT,
+    required = true,
+    networkOrigin = true,
+)
+```
+
+This field cannot have a default. Saving the field approves its current value. Clearing it removes
+the approval. If its settings schema version changes, the user must save the value again.
+
+An origin is exactly `http` or `https` plus a host and optional port. Do not include a path,
+query, fragment, user information, or wildcard. IPv6 literals are not supported by the current
+contract.
+
+## Send a request
+
+Use `BrokerValue.Literal` for ordinary values. Use `BrokerValue.Secret` only with a credential
+handle supplied in the current call:
 
 ```kotlin
 val response = broker.execute(
     BrokeredHttpRequest(
         method = "GET",
-        url = request.account.baseUrl + "/channels",
+        url = apiOrigin + "/channels",
         headers = mapOf(
             "Authorization" to BrokerValue.Concatenated(
                 listOf(
@@ -38,36 +101,37 @@ val response = broker.execute(
                 )
             )
         ),
+        maximumResponseBytes = 512 * 1024,
     )
 )
 ```
 
-For JSON, form, or Base64 values, wrap the value in `BrokerValue.Encoded`. Encoding happens after the broker resolves a secret.
+The host resolves secret and context references while building the request. Their plaintext values
+are not returned to the extension. Use `BrokerValue.Encoded` when a resolved value needs JSON
+string, form-component, or Base64 encoding.
 
-```kotlin
-BrokerValue.Encoded(
-    value = BrokerValue.Secret(SecretReference(passwordHandle)),
-    encoding = BrokerValueEncoding.JsonString,
-)
-```
+If the server echoes one of those resolved values, the host replaces it with `***`. In JSON
+responses, the host also masks values in these authentication fields: `token`, `accessToken`,
+`refreshToken`, `idToken`, `authToken`, `bearerToken`, `sessionToken`, `password`, `secret`,
+`clientSecret`, `authorization`, `credential`, and `apiKey`. Field matching ignores case and
+separators.
 
-Build URLs from the submitted `base_url` during validation and from `request.account.baseUrl` in later Hooks. Use only handles supplied to the current handler call.
+Pagination fields such as `nextPageToken`, `continuationToken`, `tokenType`, and `tokenExpiry` are
+not authentication fields and keep their values. When nothing needs masking, the response body is
+returned unchanged.
 
-## Authenticate
+Check `response.statusCode` before decoding the body. Set `maximumResponseBytes` to a realistic
+limit for the endpoint.
 
-`authenticate(...)` needs one primary credential source. It may also capture provider values required by later requests.
+## Authenticate a provider
+
+Only the provider `Validate` flow uses `authenticate(...)`. Give the broker the login exchange,
+the location of the returned credential, and any account values needed by later calls:
 
 ```kotlin
 val response = broker.authenticate(
     BrokerAuthenticationRequest(
-        exchange = BrokerHttpExchange(
-            method = "POST",
-            url = baseUrl + "/login",
-            headers = mapOf(
-                "Content-Type" to BrokerValue.Literal("application/json"),
-            ),
-            body = loginBody,
-        ),
+        exchange = loginExchange,
         primaryCredentialSource =
             ResponseValueSource.JsonPointer("/accessToken"),
         opaqueContexts = listOf(
@@ -80,39 +144,40 @@ val response = broker.authenticate(
 )
 ```
 
-`ResponseValueSource` can read a response header or an absolute JSON Pointer. A successful call returns a one-time `ProviderAuthenticationReceipt`. The response body, primary credential, and captured contexts are not returned to the plugin.
+`ResponseValueSource` may read a response header or an RFC 6901 JSON Pointer. A successful call
+returns an HTTP status and a one-time `ProviderAuthenticationReceipt`; it does not return the login
+body or captured values. Return that receipt from `SubscriptionHookSpecs.Validate`.
 
-Return that receipt from `SubscriptionHookSpecs.Validate`:
+Later provider calls can use a captured value by key:
 
 ```kotlin
-SubscriptionProviderValidateResult(
-    evidence = ProviderValidationEvidence.HostBrokerReceipt(
-        receipt = requireNotNull(response.receipt),
-    )
+BrokerValue.Context(
+    ContextReference(ProviderAuthenticationContextKeys.UserId)
 )
 ```
 
-## Use a captured context
+## Scope and lifetime
 
-Refer to a captured context by the same key in a later request. The broker resolves its value when sending the request.
+Each broker scope belongs to one extension principal, one Hook, and one invocation. Account scopes
+also belong to one provider account. The scope closes when the Hook completes or is cancelled.
+A reference from another extension, Hook, call, or account is rejected.
 
-```kotlin
-headers = mapOf(
-    "X-Provider-User" to BrokerValue.Context(
-        ContextReference(ProviderAuthenticationContextKeys.UserId)
-    )
-)
-```
+The first URL and every redirect must keep an approved scheme, host, and port. A different origin
+fails with `scope_denied`.
 
-Use a context only when the provider protocol requires it. M3UAndroid also uses captured server and user identities to keep accounts stable without exposing those raw values to the plugin.
+Provider playback headers may also contain `BrokerValue.Secret` or `BrokerValue.Context` inside
+`PlaybackHeaderValue`. M3UAndroid resolves them before opening the media. The playback URL must stay
+on the account's base origin.
 
-## Handle responses and errors
+## Handle failures
 
-- Check every HTTP status before decoding an ordinary response body.
-- For an expected provider rejection, return `HookResult.Failure` with a stable extension error code.
-- `BrokerException` reports `invalid_request`, `capability_denied`, `scope_denied`, `timeout`, `network_failed`, `response_too_large`, or `internal` when no HTTP response is available.
-- Cancellation is delivered as `CancellationException` and must continue to the caller.
-- Set `maximumResponseBytes` to a realistic upper bound for that endpoint.
-- Keep request bodies, response bodies, and credential handles out of diagnostics.
+- Return `HookResult.Failure` with a stable extension error code for an expected server rejection.
+- `BrokerException` uses `invalid_request`, `capability_denied`, `scope_denied`, `timeout`,
+  `network_failed`, `response_too_large`, or `internal` when no HTTP response is available.
+- Let `CancellationException` continue to the caller.
+- Keep request bodies, response bodies, credentials, and credential handles out of diagnostics.
 
-API types are in [`HostNetworkBrokerContracts.kt`](../../../../extension/api/src/main/kotlin/com/m3u/extension/api/security/HostNetworkBrokerContracts.kt). Working login and refresh requests are in [`ReferenceExtensionService.kt`](../../../../testing/extension-reference/src/main/java/com/m3u/testing/extension/reference/ReferenceExtensionService.kt).
+API types are in
+[`HostNetworkBrokerContracts.kt`](../../../../extension/api/src/main/kotlin/com/m3u/extension/api/security/HostNetworkBrokerContracts.kt).
+The complete provider flow is in
+[`ReferenceExtensionService`](../../../../testing/extension-reference/src/main/java/com/m3u/testing/extension/reference/ReferenceExtensionService.kt).

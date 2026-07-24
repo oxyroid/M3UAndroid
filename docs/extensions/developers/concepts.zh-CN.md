@@ -1,8 +1,9 @@
-# 定义插件 manifest
+# 定义插件 Manifest
 
 [English](concepts.md) · [插件开发指南](README.zh-CN.md)
 
-插件需要一个 `TypedExtensionService` 和一个 `ExtensionManifest`。先复制 Hello 的两个文件，再把示例身份和功能替换为自己的内容。
+插件由 `TypedExtensionService` 和 `ExtensionManifest` 组成。以 Hello 示例为起点，再把身份
+和功能替换为自己的内容。
 
 ## 1. 添加 SDK
 
@@ -26,6 +27,8 @@ dependencies {
     </intent-filter>
 </service>
 ```
+
+外部插件通过宿主 Broker 访问网络。声明了 `android.permission.INTERNET` 的插件会显示为不兼容。
 
 该类必须继承 `TypedExtensionService`：
 
@@ -58,29 +61,13 @@ class HelloExtensionService : TypedExtensionService() {
 
 ## 3. 声明每个已实现 Hook
 
-例如，设置 Hook 需要以下 manifest 声明：
-
-```kotlin
-hooks = setOf(
-    ExtensionHookDeclaration(
-        hook = HostHookSpecs.SettingsSchema.hook,
-        schemaVersion = HostHookSpecs.SettingsSchema.schemaVersion,
-        requiredCapabilities = setOf(ExtensionCapabilityIds.SettingsContribute),
-    )
-)
-capabilities = setOf(
-    ExtensionCapabilityRequest(
-        capability = ExtensionCapabilityIds.SettingsContribute,
-        reason = "Add settings for the current device type",
-    )
-)
-```
-
-handler 与声明必须使用同一个 `HookSpec`。`requiredCapabilities` 中的每一项都必须有对应的 `ExtensionCapabilityRequest`，并填写用户能看懂的具体用途。
+处理函数和声明必须使用同一个 `HookSpec`。`requiredCapabilities` 中的每一项都要有对应
+的 `ExtensionCapabilityRequest`，并填写用户能看懂的具体用途。下一页会给出完整的设置
+Hook 声明和处理函数。
 
 ## 4. 按需声明固定设置
 
-不依赖当前 request 的字段写在 `settingsSchema` 中：
+不依赖当前请求的字段写在 `settingsSchema` 中：
 
 ```kotlin
 settingsSchema = ExtensionSettingSchema(
@@ -96,7 +83,8 @@ settingsSchema = ExtensionSettingSchema(
 )
 ```
 
-M3UAndroid 负责显示和保存这些值。如果字段取决于 Hook request，例如 `request.surface`，应改用设置 Hook 返回字段。
+M3UAndroid 负责显示和保存这些值。如果字段取决于 Hook 请求，例如 `request.surface`，
+应由设置 Hook 返回。
 
 发布更新时必须保持插件身份稳定，具体字段见[准备发布或更新](reference/compatibility.zh-CN.md)。
 
