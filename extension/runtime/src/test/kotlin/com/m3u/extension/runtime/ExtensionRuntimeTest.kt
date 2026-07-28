@@ -65,6 +65,34 @@ class ExtensionRuntimeTest {
     }
 
     @Test
+    fun `forged hook spec with different payload returns schema error without invoking handler`() =
+        runBlocking {
+            var handlerInvoked = false
+            val runtime = runtime()
+            val entrypoint = entrypoint { _, payload ->
+                handlerInvoked = true
+                HookResult.Success(payload)
+            }
+            runtime.register(entrypoint)
+            val forgedSpec = HookSpec(
+                hook = TEST_SPEC.hook,
+                schemaVersion = TEST_SPEC.schemaVersion,
+                requestSerializer = ForgedPayload.serializer(),
+                responseSerializer = ForgedPayload.serializer(),
+            )
+
+            val result = runtime.invoke(
+                extensionId = entrypoint.manifest.id,
+                spec = forgedSpec,
+                request = ForgedPayload(42),
+            )
+
+            val failure = assertIs<HookResult.Failure>(result.outcome).error
+            assertEquals(ExtensionErrorCodes.SchemaIncompatible, failure.code)
+            assertEquals(false, handlerInvoked)
+        }
+
+    @Test
     fun `runtime derives and rejects missing capabilities from policy`() = runBlocking {
         val runtime = runtime(capabilityPolicy = CapabilityPolicy { _, _ -> emptySet() })
         val entrypoint = entrypoint()
@@ -995,6 +1023,9 @@ class ExtensionRuntimeTest {
 
     @Serializable
     private data class TestPayload(val value: String) : ExtensionPayload
+
+    @Serializable
+    private data class ForgedPayload(val count: Int) : ExtensionPayload
 
     private companion object {
         val TEST_SPEC = HookSpec(

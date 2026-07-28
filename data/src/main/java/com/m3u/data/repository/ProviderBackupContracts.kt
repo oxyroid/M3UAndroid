@@ -176,6 +176,7 @@ internal val DataSource.isSubscriptionProvider: Boolean
     get() = this == DataSource.Emby || this == DataSource.Jellyfin || this == DataSource.Provider
 
 internal fun Playlist.toProviderBackupCopy(): Playlist = copy(
+    source = DataSource.Provider,
     userAgent = null,
     epgUrls = emptyList(),
 )

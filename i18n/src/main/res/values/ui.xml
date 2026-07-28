@@ -94,6 +94,8 @@
     <string name="ui_action_play">Play</string>
     <string name="ui_action_pause">Pause</string>
     <string name="ui_action_retry">Try again</string>
+    <string name="ui_action_expand">Expand</string>
+    <string name="ui_action_collapse">Collapse</string>
     <string name="ui_action_next_channel">Next channel</string>
     <string name="ui_action_previous_channel">Previous channel</string>
     <string name="ui_action_open_player_panel">Open player details</string>

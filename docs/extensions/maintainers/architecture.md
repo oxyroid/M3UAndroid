@@ -123,7 +123,10 @@ ProviderWorker or user refresh
 
 The importer updates only the current account and preserves host-owned local channel state. An
 external provider uses the same repository and importer as Emby/Jellyfin; only the handler call
-crosses Android IPC.
+crosses Android IPC. Phone and TV build their new-subscription choices from selectable descriptor
+variants. A non-selectable variant remains valid for an existing account but is not offered for a
+new subscription. Every new or restored provider playlist is stored as `DataSource.Provider`;
+the older Emby/Jellyfin source values are decode-and-migrate inputs only.
 
 The broker prevents direct host-side credential disclosure. It cannot stop a malicious extension
 from colluding with an origin that the user approved. That remaining threat is one reason external

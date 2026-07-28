@@ -101,6 +101,27 @@ internal fun tvAppBackTarget(
     else -> TvAppBackTarget.ACTIVITY
 }
 
+internal enum class TvProviderFormAvailability {
+    AVAILABLE,
+    LOADING,
+    UNAVAILABLE,
+}
+
+internal fun tvProviderFormAvailability(
+    discoveryLoading: Boolean,
+    providerSupported: Boolean,
+    providerMarkedUnavailable: Boolean,
+): TvProviderFormAvailability = when {
+    discoveryLoading -> TvProviderFormAvailability.LOADING
+    providerMarkedUnavailable || !providerSupported -> TvProviderFormAvailability.UNAVAILABLE
+    else -> TvProviderFormAvailability.AVAILABLE
+}
+
+internal fun tvProviderSubmitEnabled(
+    inProgress: Boolean,
+    availability: TvProviderFormAvailability,
+): Boolean = !inProgress && availability == TvProviderFormAvailability.AVAILABLE
+
 internal data class TvExtensionPluginActionAvailability(
     val settings: Boolean,
     val disable: Boolean,

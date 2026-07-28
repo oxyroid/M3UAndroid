@@ -88,6 +88,31 @@ class ReferenceProviderContractTest {
     }
 
     @Test
+    fun `dynamic provider copy follows locale and falls back to English`() {
+        val chineseProvider = discoverProvider("zh-Hans-CN").provider
+        assertEquals("参考服务提供方", chineseProvider.displayName)
+        assertEquals("参考服务", chineseProvider.variants.single().displayName)
+        assertEquals(
+            listOf("服务器 URL", "用户名", "密码"),
+            requireNotNull(chineseProvider.settingsSchema).fields.map { field -> field.label },
+        )
+        val chineseSettings = referenceDynamicSettings("zh-CN")
+        assertEquals("播放", chineseSettings.sections.single().title)
+        assertEquals(
+            listOf("自动", "直接播放"),
+            chineseSettings.sections.single().schema.fields.single().choices.map { choice ->
+                choice.label
+            },
+        )
+
+        val fallbackProvider = discoverProvider("fr-FR").provider
+        assertEquals("Reference Provider", fallbackProvider.displayName)
+        assertEquals("Reference", fallbackProvider.variants.single().displayName)
+        assertEquals("Reference Provider", discoverProvider("zh-Hant-TW").provider.displayName)
+        assertEquals("Playback", referenceDynamicSettings(null).sections.single().title)
+    }
+
+    @Test
     fun `login request keeps password and authentication response opaque`() {
         val call = SubscriptionProviderValidateRequest(
             providerKind = REFERENCE_PROVIDER_KIND,

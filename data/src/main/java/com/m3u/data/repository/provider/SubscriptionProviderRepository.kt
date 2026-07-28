@@ -8,7 +8,7 @@ import com.m3u.extension.api.subscription.SubscriptionRefreshReason
 import kotlinx.coroutines.flow.Flow
 
 interface SubscriptionProviderRepository {
-    suspend fun discoverProviders(): List<DiscoveredSubscriptionProvider>
+    suspend fun discoverProviders(localeTag: String? = null): List<DiscoveredSubscriptionProvider>
     fun observeAccountSummaries(): Flow<List<ProviderAccountSummary>>
     fun stageCredential(secret: String): CredentialHandle
     suspend fun subscribe(request: ProviderSubscriptionRequest): ProviderSubscriptionResult

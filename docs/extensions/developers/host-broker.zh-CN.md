@@ -22,7 +22,9 @@ Hook 和 Schema Version。四个 Hook 会访问服务器，因此使用带 Broke
 
 ```kotlin
 init {
-    handle(SubscriptionHookSpecs.Discover) { _, _ -> discoverProvider() }
+    handle(SubscriptionHookSpecs.Discover) { request, _ ->
+        discoverProvider(request.localeTag)
+    }
     handleResultWithBroker(SubscriptionHookSpecs.Validate) { request, _, broker ->
         validateProvider(request, broker)
     }
@@ -45,25 +47,34 @@ init {
 
 `Discover` 返回一个 `SubscriptionProviderDescriptor`。`providerId` 和每个
 `ProviderKind` 在不同版本间保持稳定。按显示顺序列出可选类型，并包含登录需要的全部
-字段。
+字段。只有历史账号仍需识别、但新订阅不应再选择的兼容类型，才设置
+`userSelectable = false`。这项行为从 Discover Schema 4 开始强制执行；当前宿主会拒绝
+旧 Schema 3，不会静默显示本应隐藏的类型。
 
 ```kotlin
-SubscriptionProviderDiscoverResult(
-    provider = SubscriptionProviderDescriptor(
-        providerId = extensionManifest.id,
-        displayName = "Example Media Server",
-        variants = listOf(
-            SubscriptionProviderVariant(
-                kind = ProviderKind("example"),
-                displayName = "Example",
-            )
-        ),
-        settingsSchema = providerSettings,
+private fun discoverProvider(localeTag: String?): SubscriptionProviderDiscoverResult {
+    val copy = providerCopy(localeTag)
+    return SubscriptionProviderDiscoverResult(
+        provider = SubscriptionProviderDescriptor(
+            providerId = extensionManifest.id,
+            displayName = copy.providerName,
+            variants = listOf(
+                SubscriptionProviderVariant(
+                    kind = ProviderKind("example"),
+                    displayName = copy.variantName,
+                )
+            ),
+            settingsSchema = providerSettings(localeTag),
+        )
     )
-)
+}
 ```
 
 Schema 必须包含必填的 `base_url` 文本字段。密码或 Token 使用 `SECRET` 字段。普通文本位于 `request.settingValues`，敏感字段位于 `request.credentialHandles`。
+
+面向用户的名称、Label、说明和选项都应按 `request.localeTag` 本地化，并在缺失或不支持时
+回退插件默认语言。返回自然书写顺序的纯文本，不插入双向控制字符；RTL 隔离由宿主处理。
+文本应能独立朗读；ID、URL 与 Handle 不翻译。
 
 ## 2. 认证账号
 

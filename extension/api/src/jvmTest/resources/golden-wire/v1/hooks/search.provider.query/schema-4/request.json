@@ -1,0 +1,18 @@
+{
+  "query": "news",
+  "account": {
+    "accountId": "account-1",
+    "providerId": "com.example.provider",
+    "providerKind": "example",
+    "baseUrl": "https://media.example.test",
+    "serverId": "server-1",
+    "serverName": "Example Server",
+    "serverVersion": "1.2.3",
+    "userId": "user-1",
+    "username": "alex"
+  },
+  "credential": {
+    "handle": "credential-1"
+  },
+  "limit": 25
+}

@@ -64,11 +64,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.error
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -82,9 +85,12 @@ import com.m3u.business.setting.BackingUpAndRestoringState
 import com.m3u.business.setting.ProviderDiscoveryState
 import com.m3u.business.setting.ProviderOperationState
 import com.m3u.business.setting.ProviderSettingFieldError
+import com.m3u.business.setting.ProviderSubscriptionSource
 import com.m3u.business.setting.ProviderSubscriptionForm
 import com.m3u.business.setting.ProviderSubscriptionFormField
 import com.m3u.business.setting.SettingProperties
+import com.m3u.business.setting.subscriptionSources
+import com.m3u.business.setting.supports
 import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
 import com.m3u.core.foundation.architecture.preferences.preferenceOf
 import com.m3u.data.database.model.Channel
@@ -95,11 +101,13 @@ import com.m3u.data.repository.extension.ExtensionSettingsConfiguration
 import com.m3u.data.repository.plugin.InstalledPlugin
 import com.m3u.data.repository.plugin.PluginAuthorizationToken
 import com.m3u.data.repository.provider.ProviderAccountSummary
+import com.m3u.data.repository.provider.SubscriptionProviderExecutionKind
 import com.m3u.extension.api.ExtensionSettingType
 import com.m3u.extension.api.ExtensionState
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.benchmark.DebugBenchmarkSettings
 import com.m3u.smartphone.ui.business.setting.components.DataSourceSelection
+import com.m3u.smartphone.ui.business.setting.components.DataSourceSelectionOption
 import com.m3u.smartphone.ui.business.setting.components.EpgPlaylistItem
 import com.m3u.smartphone.ui.business.setting.components.HiddenChannelItem
 import com.m3u.smartphone.ui.business.setting.components.HiddenPlaylistGroupItem
@@ -152,8 +160,7 @@ internal fun SubscriptionsFragment(
     providerAccountSummaries: List<ProviderAccountSummary>,
     providerSubscriptionForm: ProviderSubscriptionForm?,
     providerOperationState: ProviderOperationState,
-    onSelectSubscriptionProvider: (String) -> Unit,
-    onSelectSubscriptionProviderKind: (String) -> Unit,
+    onSelectSubscriptionProviderVariant: (String, String) -> Unit,
     onUpdateSubscriptionProviderSetting: (String, String?) -> Unit,
     onRetryProviderDiscovery: () -> Unit,
     onReauthenticateProviderAccount: (String) -> Unit,
@@ -228,8 +235,8 @@ internal fun SubscriptionsFragment(
                             providerAccountSummaries = providerAccountSummaries,
                             providerSubscriptionForm = providerSubscriptionForm,
                             providerOperationState = providerOperationState,
-                            onSelectSubscriptionProvider = onSelectSubscriptionProvider,
-                            onSelectSubscriptionProviderKind = onSelectSubscriptionProviderKind,
+                            onSelectSubscriptionProviderVariant =
+                                onSelectSubscriptionProviderVariant,
                             onUpdateSubscriptionProviderSetting = onUpdateSubscriptionProviderSetting,
                             onRetryProviderDiscovery = onRetryProviderDiscovery,
                             onReauthenticateProviderAccount = onReauthenticateProviderAccount,
@@ -669,8 +676,7 @@ private fun MainContentImpl(
     providerAccountSummaries: List<ProviderAccountSummary>,
     providerSubscriptionForm: ProviderSubscriptionForm?,
     providerOperationState: ProviderOperationState,
-    onSelectSubscriptionProvider: (String) -> Unit,
-    onSelectSubscriptionProviderKind: (String) -> Unit,
+    onSelectSubscriptionProviderVariant: (String, String) -> Unit,
     onUpdateSubscriptionProviderSetting: (String, String?) -> Unit,
     onRetryProviderDiscovery: () -> Unit,
     onReauthenticateProviderAccount: (String) -> Unit,
@@ -685,6 +691,74 @@ private fun MainContentImpl(
     val remoteControl by preferenceOf(PreferencesKeys.REMOTE_CONTROL)
     val providerOperationInProgress = providerOperationState.isBusy
     val providerSubmissionInProgress = providerOperationState.isSubmitting
+    val bidiFormatter = rememberUiBidiFormatter()
+    val ordinarySources = listOf(
+        DataSource.M3U,
+        DataSource.EPG,
+        DataSource.Xtream,
+    )
+    val providerSources = providerDiscoveryState.subscriptionSources()
+    val ordinarySourceOptions = ordinarySources.map { source ->
+        DataSourceSelectionOption(
+            key = source.selectionKey(),
+            label = stringResource(source.resId),
+        )
+    }
+    val providerSourceOptions = providerSources.map { source ->
+        val stableProviderId = bidiFormatter.ltr(source.providerId.value)
+        val variantName = bidiFormatter.natural(source.displayName)
+            .ifBlank { stableProviderId }
+        val providerName = bidiFormatter.natural(source.providerDisplayName)
+            .ifBlank { stableProviderId }
+        val isExternal = source.executionKind == SubscriptionProviderExecutionKind.EXTERNAL
+        DataSourceSelectionOption(
+            key = source.selectionKey(),
+            label = if (isExternal && providerName != variantName) {
+                stringResource(
+                    string.feat_setting_provider_source_with_provider,
+                    variantName,
+                    providerName,
+                )
+            } else {
+                variantName
+            },
+            supportingLabel = stableProviderId.takeIf { isExternal },
+        )
+    }
+    val selectedSourceKey = if (properties.selectedState.value == DataSource.Provider) {
+        providerSubscriptionForm?.let { form ->
+            providerSourceSelectionKey(
+                providerId = form.providerId.value,
+                providerKind = form.providerKind.value,
+            )
+        }.orEmpty()
+    } else {
+        properties.selectedState.value.selectionKey()
+    }
+    val selectedProviderFallback = providerSubscriptionForm
+        ?.takeIf {
+            properties.selectedState.value == DataSource.Provider &&
+                providerSourceOptions.none { option -> option.key == selectedSourceKey }
+        }
+        ?.let { form ->
+            DataSourceSelectionOption(
+                key = selectedSourceKey,
+                label = bidiFormatter.ltr(form.providerKind.value),
+                supportingLabel = bidiFormatter.ltr(form.providerId.value),
+                enabled = false,
+            )
+        }
+    val sourceOptions = ordinarySourceOptions +
+        providerSourceOptions +
+        listOfNotNull(selectedProviderFallback)
+    val selectedSourceLabel = sourceOptions
+        .firstOrNull { option -> option.key == selectedSourceKey }
+        ?.label
+        ?: stringResource(properties.selectedState.value.resId)
+    val ordinarySourceDiscoveryNotice = providerDiscoveryNotice(
+        state = providerDiscoveryState,
+        providerSelected = properties.selectedState.value == DataSource.Provider,
+    )
 
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(spacing.small),
@@ -693,17 +767,61 @@ private fun MainContentImpl(
     ) {
         item {
             DataSourceSelection(
-                selectedState = properties.selectedState,
-                supported = listOf(
-                    DataSource.M3U,
-                    DataSource.EPG,
-                    DataSource.Xtream,
-                    DataSource.Emby,
-                    DataSource.Jellyfin,
-                    DataSource.Provider,
-                ),
+                selectedKey = selectedSourceKey,
+                selectedLabel = selectedSourceLabel,
+                options = sourceOptions,
+                onSelect = { selectionKey ->
+                    val ordinarySource = ordinarySources.firstOrNull { source ->
+                        source.selectionKey() == selectionKey
+                    }
+                    if (ordinarySource != null) {
+                        properties.selectedState.value = ordinarySource
+                    } else {
+                        providerSources.firstOrNull { source ->
+                            source.selectionKey() == selectionKey
+                        }?.let { source ->
+                            properties.selectedState.value = DataSource.Provider
+                            onSelectSubscriptionProviderVariant(
+                                source.providerId.value,
+                                source.providerKind.value,
+                            )
+                        }
+                    }
+                },
                 enabled = !providerOperationInProgress,
             )
+        }
+
+        when (ordinarySourceDiscoveryNotice) {
+            ProviderDiscoveryNotice.NONE -> Unit
+
+            ProviderDiscoveryNotice.LOADING -> {
+                item {
+                    ProviderDiscoveryLoadingNotice()
+                }
+            }
+
+            ProviderDiscoveryNotice.EMPTY -> {
+                item {
+                    ProviderDiscoveryRetryNotice(
+                        message = stringResource(string.feat_setting_provider_discovery_empty),
+                        onRetry = onRetryProviderDiscovery,
+                        enabled = !providerOperationInProgress,
+                        testTag = "provider-discovery-empty",
+                    )
+                }
+            }
+
+            ProviderDiscoveryNotice.FAILED -> {
+                item {
+                    ProviderDiscoveryRetryNotice(
+                        message = stringResource(string.feat_setting_provider_discovery_failed),
+                        onRetry = onRetryProviderDiscovery,
+                        enabled = !providerOperationInProgress,
+                        testTag = "provider-discovery-failed",
+                    )
+                }
+            }
         }
 
         val reauthenticationAccounts = providerAccountSummaries.filter { account ->
@@ -733,19 +851,14 @@ private fun MainContentImpl(
                 DataSource.M3U -> M3UInputContent()
                 DataSource.EPG -> EPGInputContent()
                 DataSource.Xtream -> XtreamInputContent()
-                DataSource.Emby, DataSource.Jellyfin -> EmbyCompatibleInputContent(
-                    enabled = !providerOperationInProgress,
-                )
                 DataSource.Provider -> DynamicProviderInputContent(
                     discoveryState = providerDiscoveryState,
                     form = providerSubscriptionForm,
-                    onSelectProvider = onSelectSubscriptionProvider,
-                    onSelectKind = onSelectSubscriptionProviderKind,
                     onUpdateField = onUpdateSubscriptionProviderSetting,
                     onRetry = onRetryProviderDiscovery,
                     enabled = !providerOperationInProgress,
                 )
-                DataSource.Dropbox -> {}
+                else -> Unit
             }
         }
 
@@ -786,10 +899,7 @@ private fun MainContentImpl(
                         enabled = !providerOperationInProgress &&
                             (
                                 properties.selectedState.value != DataSource.Provider ||
-                                    (
-                                        providerDiscoveryState is ProviderDiscoveryState.Ready &&
-                                            providerSubscriptionForm != null
-                                    )
+                                    providerDiscoveryState.supports(providerSubscriptionForm)
                             ),
                         onClick = {
                             postNotificationPermission.checkPermissionOrRationale(
@@ -830,7 +940,9 @@ private fun MainContentImpl(
                             ) {
                                 Icon(
                                     imageVector = Icons.Rounded.ContentPaste,
-                                    contentDescription = null
+                                    contentDescription = stringResource(
+                                        string.feat_setting_label_parse_from_clipboard
+                                    )
                                 )
                             }
                         }
@@ -1146,59 +1258,9 @@ private fun XtreamInputContent(modifier: Modifier = Modifier) {
 
 @Composable
 context(properties: SettingProperties)
-private fun EmbyCompatibleInputContent(
-    enabled: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    val spacing = LocalSpacing.current
-
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(spacing.small)
-    ) {
-        PlaceholderField(
-            text = properties.titleState.value,
-            placeholder = stringResource(string.feat_setting_placeholder_title),
-            onValueChange = { properties.titleState.value = Uri.decode(it) },
-            imeAction = ImeAction.Next,
-            enabled = enabled,
-            modifier = Modifier.fillMaxWidth()
-        )
-        PlaceholderField(
-            text = properties.basicUrlState.value,
-            placeholder = stringResource(string.feat_setting_placeholder_basic_url),
-            onValueChange = { properties.basicUrlState.value = it },
-            imeAction = ImeAction.Next,
-            enabled = enabled,
-            modifier = Modifier.fillMaxWidth()
-        )
-        PlaceholderField(
-            text = properties.usernameState.value,
-            placeholder = stringResource(string.feat_setting_placeholder_username),
-            onValueChange = { properties.usernameState.value = it },
-            imeAction = ImeAction.Next,
-            enabled = enabled,
-            modifier = Modifier.fillMaxWidth()
-        )
-        PlaceholderField(
-            text = properties.passwordState.value,
-            placeholder = stringResource(string.feat_setting_placeholder_password),
-            onValueChange = { properties.passwordState.value = it },
-            keyboardType = KeyboardType.Password,
-            visualTransformation = PasswordVisualTransformation(),
-            enabled = enabled,
-            modifier = Modifier.fillMaxWidth()
-        )
-    }
-}
-
-@Composable
-context(properties: SettingProperties)
 private fun DynamicProviderInputContent(
     discoveryState: ProviderDiscoveryState,
     form: ProviderSubscriptionForm?,
-    onSelectProvider: (String) -> Unit,
-    onSelectKind: (String) -> Unit,
     onUpdateField: (String, String?) -> Unit,
     onRetry: () -> Unit,
     enabled: Boolean,
@@ -1206,20 +1268,6 @@ private fun DynamicProviderInputContent(
 ) {
     val spacing = LocalSpacing.current
     val bidiFormatter = rememberUiBidiFormatter()
-    val providers = (discoveryState as? ProviderDiscoveryState.Ready)
-        ?.providers
-        .orEmpty()
-        .map { provider -> provider.descriptor }
-    LaunchedEffect(providers, form?.providerId, enabled) {
-        if (enabled && providers.none { provider -> provider.providerId == form?.providerId }) {
-            providers.firstOrNull()?.let { provider ->
-                onSelectProvider(provider.providerId.value)
-            }
-        }
-    }
-    val selected = providers.firstOrNull {
-        it.providerId == form?.providerId
-    }
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(spacing.small),
@@ -1231,84 +1279,93 @@ private fun DynamicProviderInputContent(
             enabled = enabled,
             modifier = Modifier.fillMaxWidth(),
         )
-        when (discoveryState) {
-            ProviderDiscoveryState.Loading -> {
-                Row(
-                    modifier = Modifier.testTag("provider-discovery-loading"),
-                    horizontalArrangement = Arrangement.spacedBy(spacing.small),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                    Text(stringResource(string.feat_setting_provider_discovery_loading))
-                }
-                return@Column
+        when {
+            discoveryState is ProviderDiscoveryState.Loading -> {
+                ProviderDiscoveryLoadingNotice()
             }
 
-            ProviderDiscoveryState.Empty -> {
-                Text(
-                    text = stringResource(string.feat_setting_provider_discovery_empty),
-                    modifier = Modifier.testTag("provider-discovery-empty"),
+            form != null && !discoveryState.supports(form) -> {
+                ProviderDiscoveryRetryNotice(
+                    message = stringResource(
+                        string.feat_setting_provider_selected_unavailable
+                    ),
+                    onRetry = onRetry,
+                    enabled = enabled,
+                    testTag = "provider-selected-unavailable",
                 )
-                return@Column
             }
 
-            is ProviderDiscoveryState.Failed -> {
-                Column(
-                    modifier = Modifier.testTag("provider-discovery-failed"),
-                    verticalArrangement = Arrangement.spacedBy(spacing.small),
-                ) {
-                    Text(stringResource(string.feat_setting_provider_discovery_failed))
-                    FilledTonalButton(
-                        onClick = onRetry,
-                        enabled = enabled,
-                        modifier = Modifier.testTag("provider-discovery-retry"),
-                    ) {
-                        Text(stringResource(string.feat_setting_provider_discovery_retry))
-                    }
-                }
-                return@Column
+            discoveryState is ProviderDiscoveryState.Empty -> {
+                ProviderDiscoveryRetryNotice(
+                    message = stringResource(string.feat_setting_provider_discovery_empty),
+                    onRetry = onRetry,
+                    enabled = enabled,
+                    testTag = "provider-discovery-empty",
+                )
             }
 
-            is ProviderDiscoveryState.Ready -> Unit
+            discoveryState is ProviderDiscoveryState.Failed -> {
+                ProviderDiscoveryRetryNotice(
+                    message = stringResource(string.feat_setting_provider_discovery_failed),
+                    onRetry = onRetry,
+                    enabled = enabled,
+                    testTag = "provider-discovery-failed",
+                )
+            }
         }
-        FlowRow(
-            modifier = Modifier.selectableGroup(),
-            horizontalArrangement = Arrangement.spacedBy(spacing.small),
+        form?.fields?.forEach { field ->
+            ProviderFormField(
+                field = field,
+                bidiFormatter = bidiFormatter,
+                enabled = enabled,
+                onUpdate = { value -> onUpdateField(field.definition.key, value) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProviderDiscoveryLoadingNotice() {
+    val spacing = LocalSpacing.current
+    Row(
+        modifier = Modifier.testTag("provider-discovery-loading"),
+        horizontalArrangement = Arrangement.spacedBy(spacing.small),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+        Text(
+            text = stringResource(string.feat_setting_provider_discovery_loading),
+            modifier = Modifier.semantics {
+                liveRegion = LiveRegionMode.Polite
+            },
+        )
+    }
+}
+
+@Composable
+private fun ProviderDiscoveryRetryNotice(
+    message: String,
+    onRetry: () -> Unit,
+    enabled: Boolean,
+    testTag: String,
+) {
+    val spacing = LocalSpacing.current
+    Column(
+        modifier = Modifier.testTag(testTag),
+        verticalArrangement = Arrangement.spacedBy(spacing.small),
+    ) {
+        Text(
+            text = message,
+            modifier = Modifier.semantics {
+                liveRegion = LiveRegionMode.Polite
+            },
+        )
+        FilledTonalButton(
+            onClick = onRetry,
+            enabled = enabled,
+            modifier = Modifier.testTag("provider-discovery-retry"),
         ) {
-            providers.forEach { provider ->
-                val active = provider.providerId == selected?.providerId
-                ProviderChoiceButton(
-                    selected = active,
-                    enabled = enabled,
-                    onClick = {
-                        onSelectProvider(provider.providerId.value)
-                    },
-                    text = bidiFormatter.natural(provider.displayName),
-                )
-            }
-        }
-        selected?.let { provider ->
-            FlowRow(
-                modifier = Modifier.selectableGroup(),
-                horizontalArrangement = Arrangement.spacedBy(spacing.small),
-            ) {
-                provider.variants.forEach { variant ->
-                    ProviderChoiceButton(
-                        selected = variant.kind == form?.providerKind,
-                        enabled = enabled,
-                        onClick = { onSelectKind(variant.kind.value) },
-                        text = bidiFormatter.natural(variant.displayName),
-                    )
-                }
-            }
-            form?.fields?.forEach { field ->
-                ProviderFormField(
-                    field = field,
-                    bidiFormatter = bidiFormatter,
-                    enabled = enabled,
-                    onUpdate = { value -> onUpdateField(field.definition.key, value) },
-                )
-            }
+            Text(stringResource(string.feat_setting_provider_discovery_retry))
         }
     }
 }
@@ -1323,6 +1380,8 @@ private fun ProviderFormField(
     val definition = field.definition
     val spacing = LocalSpacing.current
     val errorMessage = field.error?.let { stringResource(it.messageResource()) }
+    val requiredDescription =
+        stringResource(string.feat_setting_extension_capability_required)
     Column(verticalArrangement = Arrangement.spacedBy(spacing.extraSmall)) {
         val displayLabel = bidiFormatter.natural(definition.label)
         Text(
@@ -1363,6 +1422,9 @@ private fun ProviderFormField(
                 modifier = Modifier
                     .fillMaxWidth()
                     .semantics {
+                        if (definition.required) {
+                            stateDescription = requiredDescription
+                        }
                         if (errorMessage != null) {
                             error(errorMessage)
                         }
@@ -1373,6 +1435,9 @@ private fun ProviderFormField(
                 modifier = Modifier
                     .selectableGroup()
                     .semantics {
+                        if (definition.required) {
+                            stateDescription = requiredDescription
+                        }
                         if (errorMessage != null) {
                             error(errorMessage)
                         }
@@ -1398,6 +1463,9 @@ private fun ProviderFormField(
                 modifier = Modifier
                     .selectableGroup()
                     .semantics {
+                        if (definition.required) {
+                            stateDescription = requiredDescription
+                        }
                         if (errorMessage != null) {
                             error(errorMessage)
                         }
@@ -1515,6 +1583,16 @@ private val REMOTE_TV_SUBSCRIPTION_SOURCES = setOf(
     DataSource.EPG,
     DataSource.Xtream,
 )
+
+private fun DataSource.selectionKey(): String = "data-source:$value"
+
+private fun ProviderSubscriptionSource.selectionKey(): String =
+    providerSourceSelectionKey(providerId.value, providerKind.value)
+
+private fun providerSourceSelectionKey(
+    providerId: String,
+    providerKind: String,
+): String = "provider:$providerId:$providerKind"
 
 @Composable
 private fun Warning(

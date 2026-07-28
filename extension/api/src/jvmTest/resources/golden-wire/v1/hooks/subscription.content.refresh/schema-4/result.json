@@ -1,0 +1,20 @@
+{
+  "source": {
+    "remoteId": "source-1",
+    "providerKind": "example"
+  },
+  "channels": [
+    {
+      "remoteId": "channel-1",
+      "title": "Example News",
+      "logoUrl": "https://media.example.test/logo/channel-1.png",
+      "category": "News",
+      "playbackReference": {
+        "providerId": "com.example.provider",
+        "itemId": "channel-1",
+        "mediaSourceId": "source-main",
+        "sourceType": "live"
+      }
+    }
+  ]
+}

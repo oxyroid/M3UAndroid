@@ -32,6 +32,10 @@
 输出：`SettingsSchemaResult`，包含声明式设置分组。M3UAndroid 负责显示和保存字段。固定
 不变的设置直接写入 `ExtensionManifest.settingsSchema`。
 
+动态的标题、Label、说明和选项都应按 `request.localeTag` 本地化，并在缺失或不支持时
+回退默认语言。返回自然书写顺序的纯文本，不插入双向控制字符；RTL 隔离由宿主处理。
+文本应能独立朗读；ID、URL 与 Handle 不翻译。
+
 示例：[`HelloExtensionService.kt`](../../../samples/hello-extension/src/main/java/com/m3u/samples/hello/extension/HelloExtensionService.kt)。
 
 ### 搜索

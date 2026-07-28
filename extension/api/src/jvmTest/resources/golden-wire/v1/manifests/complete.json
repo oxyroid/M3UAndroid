@@ -1,0 +1,103 @@
+{
+  "id": "com.example.complete",
+  "displayName": "Complete example",
+  "extensionVersion": {
+    "major": 2,
+    "minor": 3,
+    "patch": 4,
+    "preRelease": "rc.1"
+  },
+  "apiRange": {
+    "minimum": {
+      "major": 1,
+      "minor": 0
+    },
+    "maximum": {
+      "major": 1,
+      "minor": 2
+    }
+  },
+  "hooks": [
+    {
+      "hook": "subscription.provider.validate",
+      "schemaVersion": 2,
+      "requiredCapabilities": [
+        "credential.write",
+        "network"
+      ]
+    },
+    {
+      "hook": "background.task.run",
+      "schemaVersion": 2,
+      "requiredCapabilities": [
+        "background.task",
+        "network"
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "capability": "credential.write",
+      "reason": "Store a successful login"
+    },
+    {
+      "capability": "network",
+      "reason": "Contact approved media servers"
+    },
+    {
+      "capability": "background.task",
+      "reason": "Refresh the media catalog",
+      "required": false
+    }
+  ],
+  "settingsSchema": {
+    "version": 2,
+    "fields": [
+      {
+        "key": "base_url",
+        "label": "Server URL",
+        "type": "TEXT",
+        "required": true,
+        "description": "Origin of the media server",
+        "networkOrigin": true
+      },
+      {
+        "key": "quality",
+        "label": "Playback quality",
+        "type": "SINGLE_CHOICE",
+        "choices": [
+          {
+            "value": "auto",
+            "label": "Automatic"
+          },
+          {
+            "value": "original",
+            "label": "Original"
+          }
+        ],
+        "defaultValue": "auto"
+      },
+      {
+        "key": "password",
+        "label": "Password",
+        "type": "SECRET",
+        "required": true
+      }
+    ]
+  },
+  "metadata": {
+    "homepage": "https://example.test/extensions/complete",
+    "vendor": "Example"
+  },
+  "backgroundTasks": [
+    {
+      "taskId": "catalog.refresh",
+      "repeatIntervalHours": 24,
+      "requiresNetwork": true
+    }
+  ],
+  "networkOrigins": [
+    "https://api.example.test",
+    "https://images.example.test:8443"
+  ]
+}

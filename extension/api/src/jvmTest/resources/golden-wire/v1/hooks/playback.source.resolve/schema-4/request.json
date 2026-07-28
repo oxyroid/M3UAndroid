@@ -1,0 +1,26 @@
+{
+  "account": {
+    "accountId": "account-1",
+    "providerId": "com.example.provider",
+    "providerKind": "example",
+    "baseUrl": "https://media.example.test",
+    "serverId": "server-1",
+    "serverName": "Example Server",
+    "serverVersion": "1.2.3",
+    "userId": "user-1",
+    "username": "alex"
+  },
+  "credential": {
+    "handle": "credential-1"
+  },
+  "reference": {
+    "providerId": "com.example.provider",
+    "itemId": "channel-1",
+    "mediaSourceId": "source-main",
+    "sourceType": "live"
+  },
+  "preferences": {
+    "maxStreamingBitrate": 8000000,
+    "allowTranscoding": false
+  }
+}

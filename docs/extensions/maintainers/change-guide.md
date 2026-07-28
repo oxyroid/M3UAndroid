@@ -32,7 +32,10 @@ SubscriptionProviderRepositoryImpl -> SubscriptionProviderImporter
 
 Start in [`EmbyCompatibleProviderIntegrationTest`](../../../data/src/androidTest/java/com/m3u/data/extension/emby/EmbyCompatibleProviderIntegrationTest.kt) for HTTP behavior and [`SubscriptionProviderRepositoryIntegrationTest`](../../../data/src/androidTest/java/com/m3u/data/repository/provider/SubscriptionProviderRepositoryIntegrationTest.kt) for persistence and lifecycle.
 
-New provider kinds are driven by descriptors and declarative settings. App, business, and data remain independent of concrete provider kinds, and provider implementations return generic contract types.
+New provider kinds are driven by descriptors and declarative settings. The generic source selector,
+form state, subscription repository, and importer do not branch on concrete `ProviderKind`; only
+the provider implementation does. New subscriptions are stored as `DataSource.Provider`.
+`DataSource.Emby` and `DataSource.Jellyfin` remain legacy compatibility inputs.
 
 ## Change APK discovery, trust, or IPC
 

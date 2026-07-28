@@ -71,7 +71,6 @@ class ProviderPersistenceLifecycleGateTest {
                 registry.commit(lease) {
                     importer.importSubscription(
                         title = "Stale provider",
-                        source = DataSource.Provider,
                         account = account(),
                         accessToken = "stale-token",
                         refresh = refresh("Stale channel"),
@@ -97,7 +96,6 @@ class ProviderPersistenceLifecycleGateTest {
         val account = account()
         importer.importSubscription(
             title = "Original provider",
-            source = DataSource.Provider,
             account = account,
             accessToken = "original-token",
             refresh = refresh("Original channel"),
@@ -125,7 +123,6 @@ class ProviderPersistenceLifecycleGateTest {
                 registry.commit(staleLease) {
                     importer.importSubscription(
                         title = "Stale refreshed provider",
-                        source = DataSource.Provider,
                         account = account.copy(
                             serverName = "Stale refreshed server",
                             requiresReauthentication = false,
@@ -162,7 +159,6 @@ class ProviderPersistenceLifecycleGateTest {
             1,
             importer.importSubscription(
                 title = "External provider",
-                source = DataSource.Provider,
                 account = account(),
                 accessToken = "external-token",
                 refresh = refresh(
@@ -182,7 +178,6 @@ class ProviderPersistenceLifecycleGateTest {
         val logoUrl = "https://provider.example.test/logo.png"
         importer.importSubscription(
             title = "Built-in provider",
-            source = DataSource.Provider,
             account = account().copy(
                 ownerPackageName = null,
                 ownerServiceName = null,

@@ -92,6 +92,10 @@ fun SettingRoute(
     val context = LocalContext.current
     val diagnosticsShareTitle = stringResource(string.feat_setting_extension_diagnostics_share_title)
 
+    LaunchedEffect(viewModel, localeTag) {
+        viewModel.refreshSubscriptionProvidersForLocale(localeTag)
+    }
+
     LaunchedEffect(viewModel, context) {
         viewModel.extensionDiagnostics.collect { payload ->
             context.startActivity(
@@ -161,8 +165,7 @@ fun SettingRoute(
             providerAccountSummaries = providerAccountSummaries,
             providerSubscriptionForm = providerSubscriptionForm,
             providerOperationState = providerOperationState,
-            onSelectSubscriptionProvider = viewModel::selectSubscriptionProvider,
-            onSelectSubscriptionProviderKind = viewModel::selectSubscriptionProviderKind,
+            onSelectSubscriptionProviderVariant = viewModel::selectSubscriptionProviderVariant,
             onUpdateSubscriptionProviderSetting = viewModel::updateSubscriptionProviderSetting,
             onRetryProviderDiscovery = viewModel::refreshSubscriptionProviders,
             onReauthenticateProviderAccount = viewModel::reauthenticateProviderAccount,
@@ -233,8 +236,7 @@ private fun SettingScreen(
     providerAccountSummaries: List<ProviderAccountSummary>,
     providerSubscriptionForm: ProviderSubscriptionForm?,
     providerOperationState: ProviderOperationState,
-    onSelectSubscriptionProvider: (String) -> Unit,
-    onSelectSubscriptionProviderKind: (String) -> Unit,
+    onSelectSubscriptionProviderVariant: (String, String) -> Unit,
     onUpdateSubscriptionProviderSetting: (String, String?) -> Unit,
     onRetryProviderDiscovery: () -> Unit,
     onReauthenticateProviderAccount: (String) -> Unit,
@@ -377,8 +379,8 @@ private fun SettingScreen(
                         providerAccountSummaries = providerAccountSummaries,
                         providerSubscriptionForm = providerSubscriptionForm,
                         providerOperationState = providerOperationState,
-                        onSelectSubscriptionProvider = onSelectSubscriptionProvider,
-                        onSelectSubscriptionProviderKind = onSelectSubscriptionProviderKind,
+                        onSelectSubscriptionProviderVariant =
+                            onSelectSubscriptionProviderVariant,
                         onUpdateSubscriptionProviderSetting = onUpdateSubscriptionProviderSetting,
                         onRetryProviderDiscovery = onRetryProviderDiscovery,
                         onReauthenticateProviderAccount = onReauthenticateProviderAccount,

@@ -1,5 +1,7 @@
 package com.m3u.data.extension.emby
 
+import android.content.Context
+import android.content.res.Configuration
 import com.m3u.extension.api.ExtensionApiRange
 import com.m3u.extension.api.ExtensionApiVersions
 import com.m3u.extension.api.ExtensionCapabilityIds
@@ -42,6 +44,9 @@ import com.m3u.extension.api.subscription.SubscriptionSourceDescriptor
 import com.m3u.extension.api.subscription.ValidatedProviderAccount
 import com.m3u.data.extension.security.CredentialResolver
 import com.m3u.extension.runtime.InvocationPolicy
+import com.m3u.i18n.R
+import dagger.hilt.android.qualifiers.ApplicationContext
+import java.util.Locale
 import java.util.concurrent.CancellationException
 import javax.inject.Inject
 import kotlinx.coroutines.currentCoroutineContext
@@ -50,6 +55,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 internal class EmbyCompatibleProvider @Inject constructor(
+    @ApplicationContext private val applicationContext: Context,
     private val client: EmbyCompatibleClient,
     private val credentialResolver: CredentialResolver,
     private val invocationPolicy: InvocationPolicy = InvocationPolicy(),
@@ -143,7 +149,7 @@ internal class EmbyCompatibleProvider @Inject constructor(
     ): HookResult<SubscriptionProviderDiscoverResult> {
         return HookResult.Success(
             payload = SubscriptionProviderDiscoverResult(
-                provider = descriptorForLocale(request.localeTag),
+                provider = descriptorForLocale(applicationContext, request.localeTag),
             )
         )
     }
@@ -372,15 +378,14 @@ internal class EmbyCompatibleProvider @Inject constructor(
     companion object {
         val ID = ExtensionId("com.m3u.provider.emby-compatible")
 
-        internal fun descriptorForLocale(localeTag: String?): SubscriptionProviderDescriptor {
-            val labels = if (localeTag.isSimplifiedChinese()) {
-                SIMPLIFIED_CHINESE_LABELS
-            } else {
-                ENGLISH_LABELS
-            }
+        internal fun descriptorForLocale(
+            context: Context,
+            localeTag: String?,
+        ): SubscriptionProviderDescriptor {
+            val labels = context.providerLabelsForLocale(localeTag)
             return SubscriptionProviderDescriptor(
                 providerId = ID,
-                displayName = labels.displayName,
+                displayName = "Emby / Jellyfin",
                 variants = listOf(
                     SubscriptionProviderVariant(
                         kind = EmbyCompatibleProviderKinds.Emby,
@@ -393,6 +398,7 @@ internal class EmbyCompatibleProvider @Inject constructor(
                     SubscriptionProviderVariant(
                         kind = EmbyCompatibleProviderKinds.Auto,
                         displayName = labels.automatic,
+                        userSelectable = false,
                     ),
                 ),
                 settingsSchema = ExtensionSettingSchema(
@@ -421,44 +427,41 @@ internal class EmbyCompatibleProvider @Inject constructor(
             )
         }
 
-        private fun String?.isSimplifiedChinese(): Boolean {
-            val subtags = this
+        private fun Context.providerLabelsForLocale(localeTag: String?): ProviderLabels {
+            val localizedContext = localeTag
                 ?.trim()
                 ?.replace('_', '-')
-                ?.lowercase()
-                ?.split('-')
-                ?.filter { it.isNotBlank() }
-                .orEmpty()
-            if (subtags.firstOrNull() != "zh") return false
-            return when {
-                "hant" in subtags -> false
-                "hans" in subtags -> true
-                else -> subtags.none { it == "tw" || it == "hk" || it == "mo" }
-            }
+                ?.takeIf { tag -> tag.isNotBlank() }
+                ?.let { tag ->
+                    val configuration = Configuration(resources.configuration).apply {
+                        setLocale(Locale.forLanguageTag(tag))
+                    }
+                    createConfigurationContext(configuration)
+                }
+                ?: this
+            return ProviderLabels(
+                serverUrl = localizedContext.getString(
+                    R.string.feat_setting_placeholder_basic_url
+                ),
+                username = localizedContext.getString(
+                    R.string.feat_setting_placeholder_username
+                ),
+                password = localizedContext.getString(
+                    R.string.feat_setting_placeholder_password
+                ),
+                automatic = localizedContext.getString(
+                    R.string.feat_setting_provider_variant_automatic
+                ),
+            )
         }
 
         private data class ProviderLabels(
-            val displayName: String,
-            val automatic: String,
             val serverUrl: String,
             val username: String,
             val password: String,
+            val automatic: String,
         )
 
-        private val ENGLISH_LABELS = ProviderLabels(
-            displayName = "Emby / Jellyfin server",
-            automatic = "Automatic",
-            serverUrl = "Server URL",
-            username = "Username",
-            password = "Password",
-        )
-        private val SIMPLIFIED_CHINESE_LABELS = ProviderLabels(
-            displayName = "Emby / Jellyfin 服务器",
-            automatic = "自动检测",
-            serverUrl = "服务器地址",
-            username = "用户名",
-            password = "密码",
-        )
         private const val MANIFEST_DISPLAY_NAME = "Emby Compatible"
         private val INVALID_PAYLOAD = ExtensionErrorCode("provider.invalid_payload")
         private val PROVIDER_REQUEST_FAILED = ExtensionErrorCode("provider.request_failed")

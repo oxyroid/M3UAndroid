@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -52,6 +53,7 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
@@ -62,8 +64,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -78,6 +82,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
@@ -88,12 +93,14 @@ import androidx.compose.ui.unit.sp
 import com.m3u.business.setting.ProviderDiscoveryState
 import com.m3u.business.setting.ProviderSettingFieldError
 import com.m3u.business.setting.ProviderSubscriptionForm
+import com.m3u.business.setting.supports
 import com.m3u.core.foundation.util.basic.title
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.repository.extension.ExtensionSettingEditToken
 import com.m3u.data.repository.extension.ExtensionSettingsConfiguration
 import com.m3u.data.repository.provider.ProviderAccountSummary
+import com.m3u.data.repository.provider.SubscriptionProviderExecutionKind
 import com.m3u.data.repository.plugin.InstalledPlugin
 import com.m3u.data.repository.plugin.PluginAuthorizationToken
 import com.m3u.extension.api.ExtensionSettingField
@@ -719,10 +726,13 @@ private fun StatusScreen(
     }
 
     state.providerSubscriptionForm?.let { form ->
-        val descriptor = (state.providerDiscoveryState as? ProviderDiscoveryState.Ready)
-            ?.providers
-            ?.firstOrNull { provider -> provider.descriptor.providerId == form.providerId }
-            ?.descriptor
+        val descriptor = state.providerSubscriptionDescriptor
+            ?.takeIf { candidate -> candidate.providerId == form.providerId }
+        val providerAvailability = tvProviderFormAvailability(
+            discoveryLoading = state.providerDiscoveryState is ProviderDiscoveryState.Loading,
+            providerSupported = state.providerDiscoveryState.supports(form),
+            providerMarkedUnavailable = state.providerSubscriptionUnavailable,
+        )
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(24.dp),
             contentPadding = PaddingValues(start = 48.dp, top = 48.dp, end = 64.dp, bottom = 48.dp),
@@ -732,17 +742,27 @@ private fun StatusScreen(
                 ProviderSubscriptionPanel(
                     form = form,
                     providerName = descriptor?.displayName
-                        ?: stringResource(string.feat_setting_data_source_provider),
-                    variants = descriptor?.variants.orEmpty().map { variant ->
-                        variant.kind.value to variant.displayName
+                        ?: form.providerId.value,
+                    variants = descriptor?.variants
+                        ?.filter { variant ->
+                            variant.userSelectable || variant.kind == form.providerKind
+                        }
+                        ?.map { variant ->
+                            variant.kind.value to variant.displayName
+                        }
+                        .orEmpty()
+                        .ifEmpty {
+                            listOf(form.providerKind.value to form.providerKind.value)
                     },
                     title = state.providerSubscriptionTitle,
                     inProgress = state.providerSubscriptionInProgress,
+                    providerAvailability = providerAvailability,
                     feedback = state.providerSubscriptionFeedback,
                     onClose = onCloseProviderSubscription,
                     onTitleChange = onUpdateProviderTitle,
                     onKind = onSelectProviderKind,
                     onSetting = onUpdateProviderSetting,
+                    onRetry = onRefreshProviders,
                     onSubmit = onSubmitProviderSubscription,
                 )
             }
@@ -891,16 +911,46 @@ private fun StatusScreen(
 
             is ProviderDiscoveryState.Ready -> {
                 discovery.providers.forEach { provider ->
-                    provider.descriptor.variants.forEach { variant ->
+                    val selectableVariants = provider.descriptor.variants.filter { variant ->
+                        variant.userSelectable
+                    }
+                    selectableVariants.forEach { variant ->
                         item(key = "provider:${provider.descriptor.providerId.value}:${variant.kind.value}") {
+                            val providerLabel = if (selectableVariants.size == 1) {
+                                bidiFormatter.natural(provider.descriptor.displayName)
+                            } else {
+                                stringResource(
+                                    string.feat_setting_provider_source_with_provider,
+                                    bidiFormatter.natural(provider.descriptor.displayName),
+                                    bidiFormatter.natural(variant.displayName),
+                                )
+                            }
+                            val providerId = bidiFormatter.ltr(
+                                provider.descriptor.providerId.value
+                            )
+                            val isExternal =
+                                provider.executionKind ==
+                                    SubscriptionProviderExecutionKind.EXTERNAL
                             TvActionButton(
-                                text = if (provider.descriptor.variants.size == 1) {
-                                    bidiFormatter.natural(provider.descriptor.displayName)
+                                text = if (isExternal) {
+                                    stringResource(
+                                        string.feat_setting_provider_choice_with_identifier,
+                                        providerLabel,
+                                        providerId,
+                                    )
                                 } else {
-                                    "${bidiFormatter.natural(provider.descriptor.displayName)} · " +
-                                        bidiFormatter.natural(variant.displayName)
+                                    providerLabel
                                 },
                                 icon = Icons.Rounded.Extension,
+                                semanticsLabel = if (isExternal) {
+                                    stringResource(
+                                        string.feat_setting_provider_choice_with_identifier_description,
+                                        providerLabel,
+                                        providerId,
+                                    )
+                                } else {
+                                    null
+                                },
                                 onClick = {
                                     onOpenProviderSubscription(
                                         provider.descriptor.providerId.value,
@@ -982,11 +1032,13 @@ private fun ProviderSubscriptionPanel(
     variants: List<Pair<String, String>>,
     title: String,
     inProgress: Boolean,
+    providerAvailability: TvProviderFormAvailability,
     feedback: TvProviderSubscriptionFeedback?,
     onClose: () -> Unit,
     onTitleChange: (String) -> Unit,
     onKind: (String) -> Unit,
     onSetting: (String, String?) -> Unit,
+    onRetry: () -> Unit,
     onSubmit: () -> Unit,
 ) {
     val bidiFormatter = rememberTvBidiFormatter()
@@ -1047,7 +1099,8 @@ private fun ProviderSubscriptionPanel(
                         } else {
                             Icons.Rounded.Extension
                         },
-                        enabled = !inProgress,
+                        enabled = !inProgress &&
+                            providerAvailability == TvProviderFormAvailability.AVAILABLE,
                         selected = kind == form.providerKind.value,
                         semanticRole = Role.RadioButton,
                         onClick = { onKind(kind) },
@@ -1092,6 +1145,37 @@ private fun ProviderSubscriptionPanel(
             }
             fieldError?.let { ProviderFieldError(it) }
         }
+        when (providerAvailability) {
+            TvProviderFormAvailability.AVAILABLE -> Unit
+
+            TvProviderFormAvailability.LOADING -> {
+                Text(
+                    text = stringResource(string.feat_setting_provider_discovery_loading),
+                    color = TvColors.TextSecondary,
+                    fontSize = 16.sp,
+                    modifier = Modifier.semantics {
+                        liveRegion = LiveRegionMode.Polite
+                    },
+                )
+            }
+
+            TvProviderFormAvailability.UNAVAILABLE -> {
+                Text(
+                    text = stringResource(string.feat_setting_provider_selected_unavailable),
+                    color = TvColors.Danger,
+                    fontSize = 16.sp,
+                    modifier = Modifier.semantics {
+                        liveRegion = LiveRegionMode.Polite
+                    },
+                )
+                TvActionButton(
+                    text = stringResource(string.feat_setting_provider_discovery_retry),
+                    icon = Icons.Rounded.Refresh,
+                    enabled = !inProgress,
+                    onClick = onRetry,
+                )
+            }
+        }
         feedback?.let { ProviderSubscriptionFeedback(it) }
         TvActionButton(
             text = stringResource(
@@ -1102,7 +1186,7 @@ private fun ProviderSubscriptionPanel(
                 }
             ),
             icon = Icons.Rounded.CheckCircle,
-            enabled = !inProgress,
+            enabled = tvProviderSubmitEnabled(inProgress, providerAvailability),
             onClick = onSubmit,
         )
     }
@@ -1670,6 +1754,7 @@ private fun TvExtensionSettingControl(
     val requiredDescription =
         stringResource(string.feat_setting_extension_capability_required)
     val bidiFormatter = rememberTvBidiFormatter()
+    val focusManager = LocalFocusManager.current
     val displayLabel = bidiFormatter.natural(
         if (field.required) "${field.label} *" else field.label
     )
@@ -1709,6 +1794,9 @@ private fun TvExtensionSettingControl(
                     semanticRole = Role.Switch,
                     semanticsLabel = bidiFormatter.natural(field.label),
                     modifier = Modifier.semantics {
+                        if (field.required) {
+                            stateDescription = requiredDescription
+                        }
                         accessibilityError?.let { message ->
                             error(message)
                         }
@@ -1726,6 +1814,9 @@ private fun TvExtensionSettingControl(
                     modifier = Modifier
                         .selectableGroup()
                         .semantics {
+                            if (field.required) {
+                                stateDescription = requiredDescription
+                            }
                             accessibilityError?.let { message ->
                                 error(message)
                             }
@@ -1752,6 +1843,7 @@ private fun TvExtensionSettingControl(
             ExtensionSettingType.NUMBER,
             ExtensionSettingType.SECRET -> {
                 var focused by remember { mutableStateOf(false) }
+                val actionFocusRequester = remember(field.key) { FocusRequester() }
                 if (field.type == ExtensionSettingType.SECRET && secretConfigured) {
                     Text(
                         stringResource(string.feat_setting_extension_secret_configured),
@@ -1759,43 +1851,73 @@ private fun TvExtensionSettingControl(
                         fontSize = 14.sp,
                     )
                 }
-                BasicTextField(
-                    value = rawValue,
-                    onValueChange = onDraftChange,
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 52.dp)
-                        .then(focusRequester?.let { Modifier.focusRequester(it) } ?: Modifier)
-                        .onFocusChanged { focused = it.isFocused }
-                        .semantics {
-                            contentDescription = bidiFormatter.natural(field.label)
-                            if (field.required) {
-                                stateDescription = requiredDescription
+                        .onPreviewKeyEvent { event ->
+                            if (event.type != KeyEventType.KeyDown) {
+                                false
+                            } else {
+                                when (event.key) {
+                                    Key.DirectionUp ->
+                                        focusManager.moveFocus(FocusDirection.Up)
+
+                                    Key.DirectionDown ->
+                                        actionFocusRequester.requestFocus()
+
+                                    else -> false
+                                }
                             }
-                            if (field.type == ExtensionSettingType.SECRET) {
-                                password()
+                        },
+                ) {
+                    BasicTextField(
+                        value = rawValue,
+                        onValueChange = onDraftChange,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 52.dp)
+                            .then(
+                                focusRequester?.let { Modifier.focusRequester(it) } ?: Modifier
+                            )
+                            .onFocusChanged { focused = it.isFocused }
+                            .semantics {
+                                contentDescription = bidiFormatter.natural(field.label)
+                                if (field.required) {
+                                    stateDescription = requiredDescription
+                                }
+                                if (field.type == ExtensionSettingType.SECRET) {
+                                    password()
+                                }
+                                accessibilityError?.let { message ->
+                                    error(message)
+                                }
                             }
-                            accessibilityError?.let { message ->
-                                error(message)
-                            }
-                        }
-                        .border(
-                            width = if (focused) 3.dp else 1.dp,
-                            color = if (focused) TvColors.Focus else TvColors.TextMuted,
-                            shape = RoundedCornerShape(10.dp),
-                        )
-                        .padding(horizontal = 14.dp, vertical = 12.dp),
-                    textStyle = TextStyle(
-                        color = TvColors.TextPrimary,
-                        fontSize = 16.sp,
-                    ),
-                    visualTransformation = if (field.type == ExtensionSettingType.SECRET) {
-                        PasswordVisualTransformation()
-                    } else {
-                        VisualTransformation.None
-                    },
-                    singleLine = true,
-                )
+                            .border(
+                                width = if (focused) 3.dp else 1.dp,
+                                color = if (focused) TvColors.Focus else TvColors.TextMuted,
+                                shape = RoundedCornerShape(10.dp),
+                            )
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                        textStyle = TextStyle(
+                            color = TvColors.TextPrimary,
+                            fontSize = 16.sp,
+                        ),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = when (field.type) {
+                                ExtensionSettingType.NUMBER -> KeyboardType.Decimal
+                                ExtensionSettingType.SECRET -> KeyboardType.Password
+                                else -> KeyboardType.Text
+                            },
+                            autoCorrectEnabled = false,
+                        ),
+                        visualTransformation = if (field.type == ExtensionSettingType.SECRET) {
+                            PasswordVisualTransformation()
+                        } else {
+                            VisualTransformation.None
+                        },
+                        singleLine = true,
+                    )
+                }
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -1803,6 +1925,7 @@ private fun TvExtensionSettingControl(
                     TvActionButton(
                         text = stringResource(string.feat_setting_extension_setting_save),
                         icon = Icons.Rounded.CheckCircle,
+                        focusRequester = actionFocusRequester,
                         onClick = { onUpdate(rawValue) },
                     )
                     if (rawValue.isNotEmpty() || secretConfigured) {

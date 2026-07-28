@@ -1,0 +1,13 @@
+{
+  "type": "trusted_direct",
+  "account": {
+    "normalizedBaseUrl": "https://media.example.test",
+    "detectedKind": "example",
+    "serverId": "server-1",
+    "serverName": "Example Server",
+    "serverVersion": "1.2.3",
+    "userId": "user-1",
+    "username": "alex"
+  },
+  "credential": "credential-1"
+}

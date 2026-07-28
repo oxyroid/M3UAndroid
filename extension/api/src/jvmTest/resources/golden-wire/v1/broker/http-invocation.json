@@ -1,0 +1,13 @@
+{
+  "brokerProtocolVersion": 4,
+  "operation": {
+    "type": "http",
+    "request": {
+      "method": "GET",
+      "url": {
+        "type": "literal",
+        "value": "https://media.example.test/system/info"
+      }
+    }
+  }
+}

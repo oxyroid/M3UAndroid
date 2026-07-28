@@ -166,6 +166,7 @@ class EmbyCompatibleProviderPlaybackFailureTest {
                 keyAlias = "m3u.provider-playback-failure.${UUID.randomUUID()}",
             )
             val provider = EmbyCompatibleProvider(
+                applicationContext = context,
                 client = client,
                 credentialResolver = CredentialResolver(
                     providerDao = database.providerDao(),

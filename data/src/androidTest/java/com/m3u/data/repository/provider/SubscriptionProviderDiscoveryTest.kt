@@ -99,6 +99,30 @@ class SubscriptionProviderDiscoveryTest {
         }
 
     @Test
+    fun bidiControlOnlyProviderLabelIsRejectedBeforeItReachesTheUi() =
+        withRepository { repository, runtime, _ ->
+            register(
+                runtime,
+                providerEntrypoint(
+                    id = VALID_PROVIDER_ID,
+                    descriptor = validDescriptor(VALID_PROVIDER_ID).copy(
+                        variants = listOf(
+                            SubscriptionProviderVariant(
+                                kind = PROVIDER_KIND,
+                                displayName = "\u061C",
+                            )
+                        )
+                    ),
+                ),
+            )
+
+            val failure = runCatching { repository.discoverProviders() }.exceptionOrNull()
+
+            assertTrue(failure is ProviderDiscoveryException)
+            assertEquals(1, (failure as ProviderDiscoveryException).failureCount)
+        }
+
+    @Test
     fun discoverForwardsCurrentLocaleTag() =
         withRepository(localeTag = "zh-CN") { repository, runtime, _ ->
             var receivedLocaleTag: String? = null
@@ -115,6 +139,27 @@ class SubscriptionProviderDiscoveryTest {
             )
 
             repository.discoverProviders()
+
+            assertEquals("zh-CN", receivedLocaleTag)
+        }
+
+    @Test
+    fun discoverUsesExplicitLocaleAfterAnInPlaceConfigurationChange() =
+        withRepository(localeTag = "en-US") { repository, runtime, _ ->
+            var receivedLocaleTag: String? = null
+            register(
+                runtime,
+                entrypoint(VALID_PROVIDER_ID) { _, request ->
+                    receivedLocaleTag = request.localeTag
+                    HookResult.Success(
+                        SubscriptionProviderDiscoverResult(
+                            validDescriptor(VALID_PROVIDER_ID),
+                        )
+                    )
+                },
+            )
+
+            repository.discoverProviders(localeTag = "zh-CN")
 
             assertEquals("zh-CN", receivedLocaleTag)
         }

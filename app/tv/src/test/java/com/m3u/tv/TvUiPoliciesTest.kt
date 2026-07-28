@@ -153,6 +153,70 @@ class TvUiPoliciesTest {
     }
 
     @Test
+    fun `provider form distinguishes loading from unavailable`() {
+        assertEquals(
+            TvProviderFormAvailability.LOADING,
+            tvProviderFormAvailability(
+                discoveryLoading = true,
+                providerSupported = false,
+                providerMarkedUnavailable = true,
+            ),
+        )
+        assertEquals(
+            TvProviderFormAvailability.UNAVAILABLE,
+            tvProviderFormAvailability(
+                discoveryLoading = false,
+                providerSupported = false,
+                providerMarkedUnavailable = false,
+            ),
+        )
+        assertEquals(
+            TvProviderFormAvailability.UNAVAILABLE,
+            tvProviderFormAvailability(
+                discoveryLoading = false,
+                providerSupported = true,
+                providerMarkedUnavailable = true,
+            ),
+        )
+        assertEquals(
+            TvProviderFormAvailability.AVAILABLE,
+            tvProviderFormAvailability(
+                discoveryLoading = false,
+                providerSupported = true,
+                providerMarkedUnavailable = false,
+            ),
+        )
+    }
+
+    @Test
+    fun `provider submit requires an available idle provider`() {
+        assertTrue(
+            tvProviderSubmitEnabled(
+                inProgress = false,
+                availability = TvProviderFormAvailability.AVAILABLE,
+            )
+        )
+        assertFalse(
+            tvProviderSubmitEnabled(
+                inProgress = true,
+                availability = TvProviderFormAvailability.AVAILABLE,
+            )
+        )
+        assertFalse(
+            tvProviderSubmitEnabled(
+                inProgress = false,
+                availability = TvProviderFormAvailability.LOADING,
+            )
+        )
+        assertFalse(
+            tvProviderSubmitEnabled(
+                inProgress = false,
+                availability = TvProviderFormAvailability.UNAVAILABLE,
+            )
+        )
+    }
+
+    @Test
     fun `app back handler preserves overlay priority`() {
         assertEquals(
             TvAppBackTarget.PLAYER,

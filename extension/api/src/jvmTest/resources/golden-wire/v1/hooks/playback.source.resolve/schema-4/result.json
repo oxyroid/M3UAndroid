@@ -1,0 +1,24 @@
+{
+  "url": "https://media.example.test/live/channel-1.m3u8",
+  "headers": {
+    "Authorization": {
+      "parts": [
+        {
+          "type": "literal",
+          "value": "Bearer "
+        },
+        {
+          "type": "secret",
+          "reference": {
+            "handle": "credential-1"
+          }
+        }
+      ]
+    }
+  },
+  "mediaSourceId": "source-main",
+  "session": {
+    "playSessionId": "play-session-1",
+    "liveStreamId": "live-stream-1"
+  }
+}

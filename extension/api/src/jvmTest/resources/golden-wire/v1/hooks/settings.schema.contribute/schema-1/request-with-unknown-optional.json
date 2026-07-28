@@ -1,0 +1,7 @@
+{
+  "localeTag": "zh-Hans-CN",
+  "surface": "phone",
+  "futureOptional": {
+    "enabled": true
+  }
+}

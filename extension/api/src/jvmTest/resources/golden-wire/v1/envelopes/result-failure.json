@@ -1,0 +1,11 @@
+{
+  "invocationId": "call-1",
+  "extensionId": "com.example.provider",
+  "hook": "settings.schema.contribute",
+  "schemaVersion": 1,
+  "error": {
+    "code": "invocation.failed",
+    "message": "Settings are unavailable",
+    "recoverable": true
+  }
+}

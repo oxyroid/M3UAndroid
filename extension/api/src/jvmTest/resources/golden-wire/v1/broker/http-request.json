@@ -1,0 +1,7 @@
+{
+  "method": "POST",
+  "url": {
+    "type": "literal",
+    "value": "https://media.example.test/login"
+  }
+}

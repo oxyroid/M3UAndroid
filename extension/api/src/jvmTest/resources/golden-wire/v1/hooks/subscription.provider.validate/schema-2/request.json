@@ -1,0 +1,9 @@
+{
+  "providerKind": "example",
+  "settingValues": {
+    "base_url": "https://media.example.test"
+  },
+  "credentialHandles": {
+    "password": "credential-1"
+  }
+}

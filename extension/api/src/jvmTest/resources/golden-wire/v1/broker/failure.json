@@ -1,0 +1,8 @@
+{
+  "type": "failure",
+  "error": {
+    "code": "timeout",
+    "recoverable": true,
+    "message": "The broker request timed out"
+  }
+}

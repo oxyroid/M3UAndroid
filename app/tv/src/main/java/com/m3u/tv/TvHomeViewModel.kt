@@ -8,6 +8,7 @@ import com.m3u.business.setting.ExtensionSettingsOperationQueue
 import com.m3u.business.setting.ProviderDiscoveryState
 import com.m3u.business.setting.ProviderSubscriptionForm
 import com.m3u.business.setting.ProviderSubscriptionFormBuildResult
+import com.m3u.business.setting.supports
 import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
 import com.m3u.core.foundation.architecture.preferences.Settings
 import com.m3u.core.foundation.architecture.preferences.set
@@ -34,12 +35,14 @@ import com.m3u.data.service.DPadReactionService
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.PlayerManager
 import com.m3u.extension.api.ExtensionId
+import com.m3u.extension.api.subscription.SubscriptionProviderDescriptor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.Locale
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -67,6 +70,8 @@ data class TvUiState(
     val providerDiscoveryState: ProviderDiscoveryState = ProviderDiscoveryState.Loading,
     val providerAccounts: List<ProviderAccountSummary> = emptyList(),
     val providerSubscriptionForm: ProviderSubscriptionForm? = null,
+    val providerSubscriptionDescriptor: SubscriptionProviderDescriptor? = null,
+    val providerSubscriptionUnavailable: Boolean = false,
     val providerSubscriptionTitle: String = "",
     val providerSubscriptionInProgress: Boolean = false,
     val providerSubscriptionFeedback: TvProviderSubscriptionFeedback? = null,
@@ -106,36 +111,47 @@ class TvHomeViewModel @Inject constructor(
     val remoteDirections = dPadReactionService.incoming
     private var loadChannelsJob: Job? = null
     private var providerDiscoveryJob: Job? = null
+    private var providerDiscoveryGeneration: Long = 0L
+    private var providerReauthenticationJob: Job? = null
     private var providerSubscriptionJob: Job? = null
+    private var providerLocaleTag: String? = null
     private var extensionSettingsLoadJob: Job? = null
     private var extensionSettingsRequestedId: ExtensionId? = null
     @Volatile
     private var sortLocale: Locale = Locale.getDefault()
 
     fun updateLocale(localeTag: String) {
-        val locale = Locale.forLanguageTag(localeTag)
-        if (locale == sortLocale) return
-        sortLocale = locale
-        _state.update { state ->
-            state.copy(
-                playlists = state.playlists.sortedWith(
-                    localeAwareComparator(
-                        primarySelector = Playlist::title,
-                        locale = locale,
-                    )
-                ),
-                channels = state.channels.sortedWith(
-                    localeAwareComparator(
-                        primarySelector = Channel::category,
-                        secondarySelector = Channel::title,
-                        locale = locale,
-                    )
-                ),
-            )
+        val requestedLocaleTag = localeTag.trim().takeIf(String::isNotEmpty)
+        val providerLocaleChanged = providerLocaleTag != requestedLocaleTag
+        providerLocaleTag = requestedLocaleTag
+        val locale = requestedLocaleTag
+            ?.let(Locale::forLanguageTag)
+            ?: Locale.getDefault()
+        if (locale != sortLocale) {
+            sortLocale = locale
+            _state.update { state ->
+                state.copy(
+                    playlists = state.playlists.sortedWith(
+                        localeAwareComparator(
+                            primarySelector = Playlist::title,
+                            locale = locale,
+                        )
+                    ),
+                    channels = state.channels.sortedWith(
+                        localeAwareComparator(
+                            primarySelector = Channel::category,
+                            secondarySelector = Channel::title,
+                            locale = locale,
+                        )
+                    ),
+                )
+            }
         }
-        refreshSubscriptionProviders()
-        extensionSettingsRequestedId?.value?.let { extensionId ->
-            openExtensionSettings(extensionId, localeTag)
+        if (providerLocaleChanged) {
+            startSubscriptionProviderDiscovery(requestedLocaleTag)
+            extensionSettingsRequestedId?.value?.let { extensionId ->
+                openExtensionSettings(extensionId, requestedLocaleTag)
+            }
         }
     }
     private var extensionSettingsGeneration = 0L
@@ -395,48 +411,108 @@ class TvHomeViewModel @Inject constructor(
     }
 
     fun refreshSubscriptionProviders() {
-        providerDiscoveryJob?.cancel()
-        providerDiscoveryJob = viewModelScope.launch {
-            _state.update { state ->
-                state.copy(providerDiscoveryState = ProviderDiscoveryState.Loading)
-            }
+        startSubscriptionProviderDiscovery(providerLocaleTag)
+    }
+
+    private fun startSubscriptionProviderDiscovery(localeTag: String?): Job {
+        val previousJob = providerDiscoveryJob
+        val generation = ++providerDiscoveryGeneration
+        return viewModelScope.launch {
+            previousJob?.cancelAndJoin()
             try {
-                val providers = withContext(Dispatchers.IO) {
-                    subscriptionProviderRepository.discoverProviders()
-                }
-                _state.update { state ->
-                    val formAvailable = state.providerSubscriptionForm?.let { form ->
-                        providers.any { provider ->
-                            provider.descriptor.providerId == form.providerId &&
-                                provider.descriptor.variants.any { variant ->
-                                    variant.kind == form.providerKind
-                                }
-                        }
-                    } != false
-                    state.copy(
-                        providerDiscoveryState = if (providers.isEmpty()) {
-                            ProviderDiscoveryState.Empty
-                        } else {
-                            ProviderDiscoveryState.Ready(providers)
-                        },
-                        providerSubscriptionForm = state.providerSubscriptionForm
-                            .takeIf { formAvailable },
-                        providerSubscriptionTitle = state.providerSubscriptionTitle
-                            .takeIf { formAvailable }
-                            .orEmpty(),
-                    )
-                }
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (error: Exception) {
-                _state.update { state ->
-                    state.copy(
-                        providerDiscoveryState = ProviderDiscoveryState.Failed(
-                            failureCount = (error as? ProviderDiscoveryException)?.failureCount,
-                        )
-                    )
+                loadSubscriptionProviders(localeTag)
+            } finally {
+                if (providerDiscoveryGeneration == generation) {
+                    providerDiscoveryJob = null
                 }
             }
+        }.also { job -> providerDiscoveryJob = job }
+    }
+
+    private suspend fun awaitLatestSubscriptionProviderDiscovery(
+        forceRefresh: Boolean,
+    ) {
+        var awaitedJob = if (forceRefresh) {
+            startSubscriptionProviderDiscovery(providerLocaleTag)
+        } else {
+            providerDiscoveryJob ?: startSubscriptionProviderDiscovery(providerLocaleTag)
+        }
+        while (true) {
+            awaitedJob.join()
+            val latestJob = providerDiscoveryJob
+            if (latestJob == null || latestJob === awaitedJob) return
+            awaitedJob = latestJob
+        }
+    }
+
+    private suspend fun loadSubscriptionProviders(
+        localeTag: String?,
+    ): List<DiscoveredSubscriptionProvider>? {
+        val previousDiscoveryState = state.value.providerDiscoveryState
+        val previousProviderUnavailable = state.value.providerSubscriptionUnavailable
+        _state.update { current ->
+            current.copy(
+                providerDiscoveryState = ProviderDiscoveryState.Loading,
+                providerSubscriptionUnavailable = false,
+            )
+        }
+        return try {
+            val providers = withContext(Dispatchers.IO) {
+                subscriptionProviderRepository.discoverProviders(localeTag)
+            }
+            val discoveryState = if (providers.isEmpty()) {
+                ProviderDiscoveryState.Empty
+            } else {
+                ProviderDiscoveryState.Ready(providers)
+            }
+            _state.update { current ->
+                val form = current.providerSubscriptionForm
+                val matchingProvider = form?.let { activeForm ->
+                    providers.firstOrNull { provider ->
+                        provider.descriptor.providerId == activeForm.providerId &&
+                            provider.descriptor.variants.any { variant ->
+                                variant.kind == activeForm.providerKind
+                            }
+                    }
+                }
+                current.copy(
+                    providerDiscoveryState = discoveryState,
+                    providerSubscriptionForm = matchingProvider
+                        ?.descriptor
+                        ?.let { descriptor -> requireNotNull(form).updateDescriptor(descriptor) }
+                        ?: form,
+                    providerSubscriptionDescriptor = when {
+                        form == null -> null
+                        matchingProvider != null -> matchingProvider.descriptor
+                        else -> current.providerSubscriptionDescriptor
+                    },
+                    providerSubscriptionUnavailable = form != null && !discoveryState.supports(form),
+                )
+            }
+            providers
+        } catch (cancelled: CancellationException) {
+            _state.update { current ->
+                if (current.providerDiscoveryState is ProviderDiscoveryState.Loading) {
+                    current.copy(
+                        providerDiscoveryState = previousDiscoveryState,
+                        providerSubscriptionUnavailable = previousProviderUnavailable,
+                    )
+                } else {
+                    current
+                }
+            }
+            throw cancelled
+        } catch (error: Exception) {
+            _state.update { current ->
+                current.copy(
+                    providerDiscoveryState = ProviderDiscoveryState.Failed(
+                        failureCount = (error as? ProviderDiscoveryException)?.failureCount,
+                    ),
+                    providerSubscriptionUnavailable =
+                        current.providerSubscriptionForm != null,
+                )
+            }
+            null
         }
     }
 
@@ -445,11 +521,13 @@ class TvHomeViewModel @Inject constructor(
             provider.descriptor.providerId.value == providerId
         }?.descriptor ?: return
         val kind = descriptor.variants.firstOrNull { variant ->
-            variant.kind.value == providerKind
+            variant.kind.value == providerKind && variant.userSelectable
         }?.kind ?: return
         _state.update { state ->
             state.copy(
                 providerSubscriptionForm = ProviderSubscriptionForm.create(descriptor, kind),
+                providerSubscriptionDescriptor = descriptor,
+                providerSubscriptionUnavailable = false,
                 providerSubscriptionTitle = descriptor.displayName,
                 providerSubscriptionFeedback = null,
             )
@@ -460,17 +538,15 @@ class TvHomeViewModel @Inject constructor(
         val account = state.value.providerAccounts.firstOrNull { summary ->
             summary.playlistUrl == playlistUrl && summary.requiresReauthentication
         } ?: return
-        providerDiscoveryJob?.cancel()
-        providerDiscoveryJob = viewModelScope.launch {
-            val providers = currentProviders().ifEmpty {
-                loadProvidersForAction() ?: return@launch
+        providerReauthenticationJob?.cancel()
+        providerReauthenticationJob = viewModelScope.launch {
+            awaitLatestSubscriptionProviderDiscovery(forceRefresh = false)
+            var descriptor = currentProviders().providerFor(account)?.descriptor
+            if (descriptor == null) {
+                awaitLatestSubscriptionProviderDiscovery(forceRefresh = true)
+                descriptor = currentProviders().providerFor(account)?.descriptor
             }
-            val descriptor = providers.singleOrNull { provider ->
-                provider.descriptor.providerId == account.providerId &&
-                    provider.descriptor.variants.any { variant ->
-                        variant.kind == account.providerKind
-                    }
-            }?.descriptor ?: run {
+            if (descriptor == null) {
                 _state.update {
                     it.copy(providerSubscriptionFeedback = TvProviderSubscriptionFeedback.Failed)
                 }
@@ -482,6 +558,8 @@ class TvHomeViewModel @Inject constructor(
                         descriptor = descriptor,
                         account = account,
                     ),
+                    providerSubscriptionDescriptor = descriptor,
+                    providerSubscriptionUnavailable = false,
                     providerSubscriptionTitle = account.playlistTitle,
                     providerSubscriptionFeedback = null,
                 )
@@ -494,6 +572,8 @@ class TvHomeViewModel @Inject constructor(
         _state.update { current ->
             current.copy(
                 providerSubscriptionForm = null,
+                providerSubscriptionDescriptor = null,
+                providerSubscriptionUnavailable = false,
                 providerSubscriptionTitle = "",
                 providerSubscriptionFeedback = null,
             )
@@ -507,10 +587,12 @@ class TvHomeViewModel @Inject constructor(
     }
 
     fun selectProviderKind(kindValue: String) {
-        val form = state.value.providerSubscriptionForm ?: return
-        val descriptor = currentProviders().firstOrNull { provider ->
-            provider.descriptor.providerId == form.providerId
-        }?.descriptor ?: return
+        val currentState = state.value
+        if (currentState.providerSubscriptionUnavailable) return
+        val form = currentState.providerSubscriptionForm ?: return
+        val descriptor = currentState.providerSubscriptionDescriptor
+            ?.takeIf { it.providerId == form.providerId }
+            ?: return
         val kind = descriptor.variants.firstOrNull { variant ->
             variant.kind.value == kindValue
         }?.kind ?: return
@@ -518,6 +600,7 @@ class TvHomeViewModel @Inject constructor(
         _state.update { current ->
             current.copy(
                 providerSubscriptionForm = ProviderSubscriptionForm.create(descriptor, kind),
+                providerSubscriptionDescriptor = descriptor,
                 providerSubscriptionFeedback = null,
             )
         }
@@ -536,6 +619,12 @@ class TvHomeViewModel @Inject constructor(
         if (providerSubscriptionJob?.isActive == true) return
         val current = state.value
         val form = current.providerSubscriptionForm ?: return
+        if (
+            current.providerSubscriptionUnavailable ||
+            !current.providerDiscoveryState.supports(form)
+        ) {
+            return
+        }
         if (current.providerSubscriptionTitle.isBlank()) {
             _state.update {
                 it.copy(providerSubscriptionFeedback = TvProviderSubscriptionFeedback.InvalidSettings)
@@ -578,6 +667,8 @@ class TvHomeViewModel @Inject constructor(
                         _state.update {
                             it.copy(
                                 providerSubscriptionForm = null,
+                                providerSubscriptionDescriptor = null,
+                                providerSubscriptionUnavailable = false,
                                 providerSubscriptionTitle = "",
                                 providerSubscriptionInProgress = false,
                                 providerSubscriptionFeedback = TvProviderSubscriptionFeedback.Added(
@@ -613,8 +704,10 @@ class TvHomeViewModel @Inject constructor(
     }
 
     private fun refreshExtensionPlugins() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val plugins = extensionPluginRepository.installedPlugins()
+        viewModelScope.launch {
+            val plugins = withContext(Dispatchers.IO) {
+                extensionPluginRepository.installedPlugins()
+            }
             _state.update { it.copy(extensionPlugins = plugins) }
             refreshSubscriptionProviders()
         }
@@ -632,36 +725,6 @@ class TvHomeViewModel @Inject constructor(
         (state.value.providerDiscoveryState as? ProviderDiscoveryState.Ready)
             ?.providers
             .orEmpty()
-
-    private suspend fun loadProvidersForAction(): List<DiscoveredSubscriptionProvider>? {
-        _state.update { it.copy(providerDiscoveryState = ProviderDiscoveryState.Loading) }
-        return try {
-            val providers = withContext(Dispatchers.IO) {
-                subscriptionProviderRepository.discoverProviders()
-            }
-            _state.update {
-                it.copy(
-                    providerDiscoveryState = if (providers.isEmpty()) {
-                        ProviderDiscoveryState.Empty
-                    } else {
-                        ProviderDiscoveryState.Ready(providers)
-                    }
-                )
-            }
-            providers
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (error: Exception) {
-            _state.update {
-                it.copy(
-                    providerDiscoveryState = ProviderDiscoveryState.Failed(
-                        failureCount = (error as? ProviderDiscoveryException)?.failureCount,
-                    )
-                )
-            }
-            null
-        }
-    }
 
     private fun updateExtensionPluginResult(result: PluginEnableResult) {
         _state.update { state ->
@@ -771,3 +834,12 @@ private data class TvExtensionSettingsRefreshResult(
     val configuration: ExtensionSettingsConfiguration?,
     val rejected: Boolean,
 )
+
+private fun List<DiscoveredSubscriptionProvider>.providerFor(
+    account: ProviderAccountSummary,
+): DiscoveredSubscriptionProvider? = singleOrNull { provider ->
+    provider.descriptor.providerId == account.providerId &&
+        provider.descriptor.variants.any { variant ->
+            variant.kind == account.providerKind
+        }
+}

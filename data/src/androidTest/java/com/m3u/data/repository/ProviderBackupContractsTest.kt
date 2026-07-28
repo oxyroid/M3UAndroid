@@ -128,7 +128,7 @@ class ProviderBackupContractsTest {
         val playlist = Playlist(
             title = "Media",
             url = "m3u-provider://account/account/live",
-            source = DataSource.Provider,
+            source = DataSource.Emby,
             userAgent = "token-agent",
             epgUrls = listOf("https://example.com/epg?token=secret"),
         ).toProviderBackupCopy()
@@ -146,6 +146,7 @@ class ProviderBackupContractsTest {
         val encoded = json.encodeToString(playlist) + json.encodeToString(channel)
 
         assertEquals(Channel.URL_DYNAMIC, channel.url)
+        assertEquals(DataSource.Provider, playlist.source)
         assertNull(channel.cover)
         assertNull(channel.licenseType)
         assertNull(channel.licenseKey)
@@ -153,6 +154,19 @@ class ProviderBackupContractsTest {
         assertTrue(playlist.epgUrls.isEmpty())
         assertFalse(encoded.contains("secret"))
         assertFalse(encoded.contains("token-agent"))
+    }
+
+    @Test
+    fun everyLegacyProviderSourceIsNormalizedBeforeItCanBeWrittenAgain() {
+        listOf(DataSource.Emby, DataSource.Jellyfin, DataSource.Provider).forEach { source ->
+            val normalized = Playlist(
+                title = "Media",
+                url = "m3u-provider://account/account/live",
+                source = source,
+            ).toProviderBackupCopy()
+
+            assertEquals(DataSource.Provider, normalized.source)
+        }
     }
 
     @Test

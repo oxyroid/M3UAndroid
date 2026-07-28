@@ -1,0 +1,7 @@
+{
+  "taskId": "catalog.refresh",
+  "input": {
+    "cursor": "page-2"
+  },
+  "runAttempt": 2
+}

@@ -18,7 +18,21 @@ Cover at least:
 
 Use `handleResult(...)` or `handleResultWithBroker(...)` for expected failures. Reserve thrown exceptions for unexpected faults.
 
-## 2. Build the module
+## 2. Check the wire fixtures
+
+The [API 1 golden wire fixtures](../../../extension/api/src/jvmTest/resources/golden-wire/v1/README.md)
+contain invocation and result envelopes, every current Hook request and result, and broker messages.
+Run their decode-and-re-encode checks with:
+
+```bash
+./gradlew :extension:api:jvmTest
+```
+
+Before changing a fixture, use the
+[compatibility decision table](reference/compatibility.md#follow-the-wire-compatibility-rules).
+Keep every previous schema fixture and add a sibling `schema-<version>` directory.
+
+## 3. Build the module
 
 For the Hello module:
 
@@ -28,7 +42,7 @@ For the Hello module:
 
 Use the corresponding task for your extension module.
 
-## 3. Trigger the Hook from M3UAndroid
+## 4. Trigger the Hook from M3UAndroid
 
 Run the current extension build with M3UAndroid, then use the feature that owns the Hook.
 
@@ -46,7 +60,7 @@ Run the current extension build with M3UAndroid, then use the feature that owns 
 The reference provider test covers discovery, rejected and successful login, initial and later
 refresh, playback resolution, header resolution, and session close through the external transport.
 
-## 4. Check failure behavior
+## 5. Check failure behavior
 
 For each Hook, trigger one expected failure and confirm:
 
@@ -62,7 +76,7 @@ handle, missing `credential.read` must also be rejected.
 Provider tests should also cover rejected credentials, a failed refresh that preserves stored data,
 an invalid playback result, and repeated session close.
 
-## 5. Verify an update
+## 6. Verify an update
 
 - Keep the same extension identity and signing certificate.
 - Confirm existing settings still load.

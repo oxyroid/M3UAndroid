@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hello_settings_section_device">设备</string>
+    <string name="hello_settings_phone_name">手机名称</string>
+    <string name="hello_settings_phone_description">用于手机界面的名称</string>
+    <string name="hello_settings_phone_default">我的手机</string>
+    <string name="hello_settings_tv_name">电视名称</string>
+    <string name="hello_settings_tv_description">用于电视界面的名称</string>
+    <string name="hello_settings_tv_default">我的电视</string>
+    <string name="hello_settings_device_name">设备名称</string>
+    <string name="hello_settings_device_description">用于当前界面的名称</string>
+    <string name="hello_settings_device_default">我的设备</string>
+</resources>

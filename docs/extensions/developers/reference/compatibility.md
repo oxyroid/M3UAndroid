@@ -6,14 +6,9 @@ Before an update, decide separately whether you are changing extension identity,
 
 ## Keep identity stable
 
-Keep these values unchanged across updates:
-
-1. Android `applicationId`
-2. Service class name
-3. Signing certificate
-4. `ExtensionId`
-
-Change one only when you intend to create a different extension identity.
+Keep Android `applicationId` and `ExtensionId` unchanged across updates. A Service-class rename or
+signing-certificate change forces a fresh identity review and invalidates provider credentials.
+Treat either change as an explicit migration, not a normal update.
 
 ## Set each version deliberately
 
@@ -28,6 +23,26 @@ Fixed settings use `manifest.settingsSchema.version`; dynamic settings use each 
 `section.schema.version`. For a compatible field addition, keep that section's version and
 existing keys. M3UAndroid applies the new field's default. If you increase a section version,
 M3UAndroid clears saved values and credential handles for that section before applying defaults.
+
+## Follow the wire compatibility rules
+
+API version and Hook schema answer different questions:
+
+| Contract change | Host behavior | Extension rule |
+| --- | --- | --- |
+| Different API major | Registration is rejected. The minimum and maximum of `apiRange` must both use the host major. | Publish a build for the new major. |
+| Different API minor, same major | The API line remains eligible. The minor does not select a Hook decoder. | Check every declared Hook schema instead of using the minor as a feature flag. |
+| Unknown Hook or unsupported Hook schema | Registration is rejected. Hook schemas are matched exactly. | Use the schema from the SDK `HookSpec`. A required field removal, rename, or meaning change needs a new Hook schema. |
+| Unknown JSON field | Host and SDK decoders ignore it. | Add a field without changing the Hook schema only when it is optional and the feature still works when an older peer omits it. Extension decoders must also ignore unknown fields. |
+| Unknown capability with `required = true` | Registration is rejected. | Require only capabilities published by the host. |
+| Unknown capability with `required = false` | It does not block registration and is not granted by an older host. | API 1 has no Hook-level optional capabilities. A Hook must not depend on it; every capability in `requiredCapabilities` is mandatory. |
+
+Omitting a field is compatible only when the receiving contract defines a default. Adding a field
+that every receiver must understand requires a new Hook schema even within the same API major.
+
+The checked-in [API 1 golden wire fixtures](../../../../extension/api/src/jvmTest/resources/golden-wire/v1/README.md)
+show the canonical envelope, Hook payload, and broker JSON shapes. A new Hook schema gets a new
+`schema-<version>` directory; do not overwrite the older schema's fixtures.
 
 ## Review capability changes
 
@@ -54,6 +69,7 @@ saved value and approval, so the user must save that origin again.
 - Confirm every broker-backed Hook works only with its intended origins.
 - Confirm the extension keeps the same identity.
 - Confirm results and diagnostics contain no secrets or user-identifying request data.
+- Compare wire changes with the golden fixtures and run `./gradlew :extension:api:jvmTest`.
 
 If a setting key is renamed, increase its section schema version. Always take the Hook schema
 version from the current `HookSpec`.

@@ -138,7 +138,7 @@ object ExtensionCapabilityIds {
 
 object ExtensionContractCatalog {
     val SupportedHookSchemaVersions: Map<Hook, Set<Int>> = mapOf(
-        ExtensionHookIds.SubscriptionProviderDiscover to setOf(3),
+        ExtensionHookIds.SubscriptionProviderDiscover to setOf(4),
         ExtensionHookIds.SubscriptionProviderValidate to setOf(2),
         ExtensionHookIds.SubscriptionContentRefresh to setOf(4),
         ExtensionHookIds.PlaybackSourceResolve to setOf(4),

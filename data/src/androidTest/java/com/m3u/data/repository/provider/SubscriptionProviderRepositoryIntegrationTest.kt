@@ -58,6 +58,7 @@ class SubscriptionProviderRepositoryIntegrationTest {
             val credentialVault = AndroidKeystoreCredentialVault(context)
             val principalRegistry = ActiveExtensionPrincipalRegistry()
             val provider = EmbyCompatibleProvider(
+                applicationContext = context,
                 client = client,
                 credentialResolver = CredentialResolver(providerDao, credentialVault),
             )

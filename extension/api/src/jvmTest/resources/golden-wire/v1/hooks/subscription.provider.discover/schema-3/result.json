@@ -1,0 +1,34 @@
+{
+  "provider": {
+    "providerId": "com.example.provider",
+    "displayName": "Example Media",
+    "variants": [
+      {
+        "kind": "example",
+        "displayName": "Example"
+      },
+      {
+        "kind": "legacy",
+        "displayName": "Legacy"
+      }
+    ],
+    "settingsSchema": {
+      "version": 1,
+      "fields": [
+        {
+          "key": "base_url",
+          "label": "Server URL",
+          "type": "TEXT",
+          "required": true,
+          "networkOrigin": true
+        },
+        {
+          "key": "password",
+          "label": "Password",
+          "type": "SECRET",
+          "required": true
+        }
+      ]
+    }
+  }
+}

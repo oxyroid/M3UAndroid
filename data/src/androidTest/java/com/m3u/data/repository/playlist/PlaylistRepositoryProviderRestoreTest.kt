@@ -178,11 +178,11 @@ class PlaylistRepositoryProviderRestoreTest {
             database.playlistDao().insertOrReplace(targetPlaylist)
             database.channelDao().insertOrReplace(existingChannel)
 
-            val providerAccount = providerAccount()
+            val providerAccount = providerAccount().copy(providerKind = "jellyfin")
             val providerPlaylist = Playlist(
                 title = "Restored provider",
                 url = providerAccount.playlistUrl,
-                source = DataSource.Provider,
+                source = DataSource.Jellyfin,
             )
             val providerChannels = List(PROVIDER_CHANNEL_BATCH_SIZE) { index ->
                 Channel(
@@ -269,6 +269,18 @@ class PlaylistRepositoryProviderRestoreTest {
             }
 
             assertEquals(existingChannel, database.channelDao().get(COLLIDING_CHANNEL_ID))
+            assertEquals(
+                providerPlaylist.copy(source = DataSource.Provider),
+                database.playlistDao().get(providerPlaylist.url),
+            )
+            assertEquals(
+                providerAccount.copy(
+                    baseUrl = "https://provider.example/",
+                    requiresReauthentication = true,
+                ),
+                database.providerDao().getAccount(providerAccount.id),
+            )
+            assertNull(database.providerDao().getCredential(providerAccount.id))
             val restoredProviderChannels = database.channelDao()
                 .getByPlaylistUrl(providerPlaylist.url)
             assertEquals(PROVIDER_CHANNEL_BATCH_SIZE, restoredProviderChannels.size)
@@ -289,7 +301,10 @@ class PlaylistRepositoryProviderRestoreTest {
             assertNotNull(restoredReference)
             assertEquals(restoredProviderChannel.id, restoredReference?.channelId)
             assertEquals(reference.accountId, restoredReference?.accountId)
+            assertEquals(reference.providerId, restoredReference?.providerId)
             assertEquals(reference.itemId, restoredReference?.itemId)
+            assertEquals(reference.mediaSourceId, restoredReference?.mediaSourceId)
+            assertEquals(reference.sourceType, restoredReference?.sourceType)
         }
     }
 
@@ -588,7 +603,9 @@ class PlaylistRepositoryProviderRestoreTest {
 
     private data object UnusedSubscriptionProviderRepository :
         SubscriptionProviderRepository {
-        override suspend fun discoverProviders(): List<DiscoveredSubscriptionProvider> =
+        override suspend fun discoverProviders(
+            localeTag: String?,
+        ): List<DiscoveredSubscriptionProvider> =
             emptyList()
 
         override fun observeAccountSummaries(): Flow<List<ProviderAccountSummary>> = emptyFlow()

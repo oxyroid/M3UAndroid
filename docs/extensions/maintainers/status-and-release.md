@@ -14,23 +14,25 @@ This page defines what may ship from the current branch. Implementation instruct
 
 | Area | Current behavior | Evidence |
 | --- | --- | --- |
-| Contract and runtime | Typed, versioned Hook contracts; singular provider discovery in schema 3; title-free refresh source in schema 4; each call receives only the current Hook's declared and approved capabilities; payload, timeout, concurrency, cancellation, health, and failure isolation | `ExtensionContractTest`, `SubscriptionProviderContractsTest`, `ExtensionRuntimeTest`, and transport conformance tests |
-| Built-in provider | Emby and Jellyfin are variants of one built-in extension; discover, validate, refresh, playback resolve, and session close share the provider path | `EmbyCompatibleProviderIntegrationTest` and `SubscriptionProviderRepositoryIntegrationTest` |
+| Contract and runtime | Typed, versioned Hook contracts; each call receives only the current Hook's declared and approved capabilities; payload, timeout, concurrency, cancellation, health, and failure isolation | `WireGoldenFixtureTest`, `ExtensionContractTest`, `SubscriptionProviderContractsTest`, `ExtensionRuntimeTest`, and transport conformance tests |
+| Built-in provider | Emby and Jellyfin are selectable variants of one built-in extension; the hidden automatic kind remains only as a compatibility value for existing accounts and is not offered for new subscriptions | `EmbyCompatibleProviderIntegrationTest`, `EmbyCompatibleProviderLocalizationTest`, and `SubscriptionProviderRepositoryIntegrationTest` |
 | Provider credentials | External login returns a one-time host receipt. Post-validation scopes resolve references only into requests for the approved origin; the host does not directly serialize resolved values back to the extension. | `HostNetworkBrokerSecurityTest`, `ExtensionHostBridgeTest`, `ProviderBrokerScopeStoreTest`, and `CredentialVaultTest` |
 | General Hook network access | Settings, search, metadata, EPG, and background Hooks can use the host broker when that Hook declares and receives `network`. Search/metadata/EPG use an account scope when their request has an account; other calls use approved manifest and explicitly saved setting origins. Discover stays offline. | `ExtensionNetworkOriginContractTest`, `ExtensionBrokerScopeRuntimeTest`, `ExtensionHookBrokerScopeStoreTest`, and `ExtensionHostBridgeTest` |
-| Provider persistence | Generic provider accounts, database migrations, backup without tokens, reauthentication state, WorkManager refresh, and restart session cleanup | Migration, provider repository, worker, restore, and session cleanup tests |
+| Provider persistence | New and restored subscriptions use `DataSource.Provider`; generic provider accounts, backup without tokens, reauthentication state, WorkManager refresh, and restart session cleanup share one path | Migration, provider repository, worker, restore, and session cleanup tests |
 | External lifecycle | Discovery, identity and certificate trust, review-bound enable/reauthorize tokens, enable/disable, capability and fixed-origin authorization, reconnect, clear data, diagnostics, streamed payloads, and cancellation | Transport tests, `ExtensionPluginRepositoryLifecycleTest`, and `ExternalExtensionIpcTest` |
 | Extension settings | Manifest and dynamic schemas, ordinary values, encrypted secret handles, network-origin approval, and review-bound field edits | `ExtensionSettingsRepositoryTest` and `ExtensionPluginRepositoryLifecycleTest` |
 | External reference provider | Discover, host-managed login, initial and later refresh, Room import, credential-backed playback resolve, header resolution, and session close cross Binder and use the same repository as built-in providers. | `ExternalProviderEndToEndTest` |
-| Provider UI | Phone and TV use descriptor-driven provider lists and forms; both expose reauthentication state; Emby and Jellyfin remain separate choices | `SubscriptionSourceSelectionTest` plus phone and TV device checks |
+| Provider UI | Phone and TV use descriptor-driven provider lists and forms; Emby and Jellyfin remain separate choices, while external choices retain visible provider identity | `SubscriptionSourceSelectionTest` plus phone and TV device checks |
 | Other Hooks | Settings, search, metadata enrichment, and EPG refresh have typed SDK handlers and product callers | SDK, contribution repository/importer, and IPC tests |
 | Background task | Manifest task declarations are reconciled into periodic WorkManager jobs when an extension is enabled, reauthorized, or restored. Disablement or missing grants cancels them; network tasks use a connected constraint. | `ExtensionBackgroundTaskSchedulerTest`, Worker tests, and `ExtensionPluginRepositoryLifecycleTest` |
 
 ## Before shipping the built-in provider path
 
-- Run migration tests from database versions 21, 22, and 23.
+- Run the complete migration chain from every supported starting schema through the current
+  database version, currently 21→26.
 - Run M3U, EPG, Xtream, ordinary playback, and DLNA regressions after provider or playback changes.
-- Verify the phone and TV provider forms with real input and focus movement.
+- Verify phone and TV provider forms with real input in LTR and RTL, large text, accessible labels,
+  and TV focus movement.
 - Keep the database schema artifact and every manual migration in the same change.
 
 ## Before opening external extensions
@@ -41,7 +43,8 @@ This page defines what may ship from the current branch. Implementation instruct
 - Add process-level hostile fixtures for a blocked call, ignored cancellation, process death, malformed or oversized output, retained broker access, signer change, and extension-ID collision.
 - Apply one host-wide invocation budget and one deadline across a Hook and all of its broker requests.
 - Run the same published conformance suite against built-in and external transports.
-- Publish golden wire fixtures, the SDK artifact, and the same-major compatibility policy.
+- Publish the SDK artifact together with the checked-in golden fixtures and compatibility policy,
+  and run fixture verification in CI.
 
 ## Decision rule
 

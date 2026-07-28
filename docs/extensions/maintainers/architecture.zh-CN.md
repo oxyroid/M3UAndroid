@@ -116,7 +116,10 @@ ProviderWorker 或用户刷新
 ```
 
 Importer 只更新当前账号，并保留宿主管理的频道本地状态。外部 Provider 与
-Emby/Jellyfin 共用同一个 repository 和 importer；只有 handler 调用会经过 Android IPC。
+Emby/Jellyfin 共用同一个 Repository 和 Importer；只有 Handler 调用会经过 Android IPC。
+手机和 TV 从 Descriptor 中可选择的 Variant 生成新订阅入口。不可选择的 Variant 仍可用于
+已有账号，但不会出现在新订阅列表。新建或恢复的 Provider Playlist 统一保存为
+`DataSource.Provider`；旧 Emby/Jellyfin Source 只用于解码和迁移。
 
 Broker 可以防止宿主直接泄露凭据，但无法阻止恶意插件与用户已批准的 Origin 串谋。这项
 剩余风险是外部插件仍放在开发者开关后的原因之一。

@@ -105,8 +105,13 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
     private val playbackSessionAdmissionMutex = Mutex()
     private val playbackSessionReservations = mutableSetOf<PlaybackSessionReservation>()
 
-    override suspend fun discoverProviders(): List<DiscoveredSubscriptionProvider> = supervisorScope {
-        val localeTag = context.resources.configuration.locales[0].toLanguageTag()
+    override suspend fun discoverProviders(
+        localeTag: String?,
+    ): List<DiscoveredSubscriptionProvider> = supervisorScope {
+        val requestedLocaleTag = localeTag
+            ?.trim()
+            ?.takeIf(String::isNotEmpty)
+            ?: context.resources.configuration.locales[0].toLanguageTag()
         val candidates = runtime.extensionsSupporting(SubscriptionHookSpecs.Discover.hook)
             .filter { extension ->
                 extension.executionKind != ExtensionExecutionKind.EXTERNAL ||
@@ -119,7 +124,7 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
                         extensionId = extension.manifest.id,
                         spec = SubscriptionHookSpecs.Discover,
                         request = SubscriptionProviderDiscoverRequest(
-                            localeTag = localeTag,
+                            localeTag = requestedLocaleTag,
                         ),
                         validateResponse = { response ->
                             require(response.provider.isUsableFor(extension.manifest.id))
@@ -1182,7 +1187,6 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
     ): Int = try {
         importer.importSubscription(
             title = title,
-            source = DataSource.Provider,
             account = account,
             accessToken = accessToken,
             refresh = refresh,
@@ -1621,6 +1625,7 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
             length <= maximumLength &&
             none { character ->
                 character.isISOControl() ||
+                    character.code == 0x061C ||
                     character.code in 0x202A..0x202E ||
                     character.code in 0x2066..0x2069 ||
                     character.code == 0x200E ||

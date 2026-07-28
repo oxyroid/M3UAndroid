@@ -1,0 +1,13 @@
+{
+  "type": "success",
+  "result": {
+    "type": "http",
+    "response": {
+      "statusCode": 204,
+      "headers": {
+        "ETag": "revision-1"
+      },
+      "body": ""
+    }
+  }
+}

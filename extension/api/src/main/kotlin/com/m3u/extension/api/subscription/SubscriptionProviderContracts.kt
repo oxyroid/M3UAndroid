@@ -64,6 +64,7 @@ data class SubscriptionProviderDiscoverRequest(
 data class SubscriptionProviderVariant(
     val kind: ProviderKind,
     val displayName: String,
+    val userSelectable: Boolean = true,
 ) {
     init {
         require(displayName.isNotBlank()) { "Provider variant display name must not be blank" }
@@ -333,7 +334,7 @@ data class PlaybackSessionCloseResult(
 object SubscriptionHookSpecs {
     val Discover = HookSpec(
         hook = ExtensionHookIds.SubscriptionProviderDiscover,
-        schemaVersion = 3,
+        schemaVersion = 4,
         requestSerializer = SubscriptionProviderDiscoverRequest.serializer(),
         responseSerializer = SubscriptionProviderDiscoverResult.serializer(),
     )

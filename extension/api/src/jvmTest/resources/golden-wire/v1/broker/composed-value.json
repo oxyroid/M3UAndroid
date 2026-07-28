@@ -1,0 +1,19 @@
+{
+  "type": "concatenated",
+  "parts": [
+    {
+      "type": "literal",
+      "value": "Basic "
+    },
+    {
+      "type": "encoded",
+      "value": {
+        "type": "secret",
+        "reference": {
+          "handle": "provider-token"
+        }
+      },
+      "encoding": "base64"
+    }
+  ]
+}

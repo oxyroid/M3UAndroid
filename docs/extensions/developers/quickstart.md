@@ -3,7 +3,8 @@
 [简体中文](quickstart.zh-CN.md) · [Developer guide](README.md)
 
 This check takes one build command and one pass through M3UAndroid settings. Success means that
-**Hello Extension** appears and its settings page contains **Greeting** and **Phone name**.
+**Hello Extension** appears and its settings page contains **Greeting** plus the localized
+**Phone name** or **手机名称** field.
 
 ## 1. Install the Hello sample
 
@@ -24,25 +25,19 @@ From the repository root:
 The Hello settings page should contain:
 
 - **Greeting** with `Hello from my extension`;
-- **Phone name** with `My phone`.
+- **Phone name** with `My phone` in English, or **手机名称** with `我的手机` in Chinese.
 
-This proves both paths: `Greeting` comes from the manifest, while `Phone name` comes from a Hook
-call.
+This proves both paths: `Greeting` comes from the manifest, while the localized device field comes
+from a Hook call.
 
 ## 3. Change the Hook result
 
-In [`HelloExtensionService.kt`](../../../samples/hello-extension/src/main/java/com/m3u/samples/hello/extension/HelloExtensionService.kt), change:
+In the sample's
+[`values/strings.xml`](../../../samples/hello-extension/src/main/res/values/strings.xml), change
+`Phone name` to `Handset name`. Make the matching Chinese change in
+[`values-zh-rCN/strings.xml`](../../../samples/hello-extension/src/main/res/values-zh-rCN/strings.xml).
 
-```kotlin
-"phone" -> "Phone name" to "My phone"
-```
-
-to:
-
-```kotlin
-"phone" -> "Handset name" to "My phone"
-```
-
-Run `./gradlew :samples:hello-extension:installDebug` again, refresh the extension list, and reopen Hello settings. The field should now be named **Handset name**.
+Run `./gradlew :samples:hello-extension:installDebug` again, refresh the extension list, and reopen
+Hello settings. The field should use the changed name for the current app language.
 
 Next: [declare the extension manifest](concepts.md).

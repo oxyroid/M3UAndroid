@@ -50,6 +50,8 @@
     <string name="ui_action_play">播放</string>
     <string name="ui_action_pause">暂停</string>
     <string name="ui_action_retry">重试</string>
+    <string name="ui_action_expand">展开</string>
+    <string name="ui_action_collapse">收起</string>
     <string name="ui_action_next_channel">下一个频道</string>
     <string name="ui_action_previous_channel">上一个频道</string>
     <string name="ui_action_open_player_panel">打开播放详情</string>

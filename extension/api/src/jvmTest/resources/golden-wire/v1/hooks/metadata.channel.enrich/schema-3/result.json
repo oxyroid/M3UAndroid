@@ -1,0 +1,9 @@
+{
+  "patches": [
+    {
+      "stableReference": "channel-1",
+      "title": "Example News HD",
+      "category": "News"
+    }
+  ]
+}

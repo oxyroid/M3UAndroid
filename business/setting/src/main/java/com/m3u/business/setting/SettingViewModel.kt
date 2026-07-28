@@ -46,14 +46,12 @@ import com.m3u.data.service.Messager
 import com.m3u.data.worker.BackupWorker
 import com.m3u.data.worker.RestoreWorker
 import com.m3u.data.worker.SubscriptionWorker
-import com.m3u.extension.api.subscription.EmbyCompatibleProviderKinds
-import com.m3u.extension.api.subscription.ProviderKind
 import com.m3u.extension.api.ExtensionId
-import com.m3u.extension.api.subscription.SubscriptionProviderSettingKeys
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -92,6 +90,8 @@ class SettingViewModel @Inject constructor(
     val codecPackState: StateFlow<CodecPackState> = _codecPackState
     private var providerSubscriptionJob: Job? = null
     private var providerDiscoveryJob: Job? = null
+    private var providerDiscoveryGeneration = 0L
+    private var providerLocaleTag: String? = null
     private var providerReauthenticationJob: Job? = null
     private var extensionSettingsLoadJob: Job? = null
     private var extensionSettingsRequestedId: ExtensionId? = null
@@ -143,43 +143,62 @@ class SettingViewModel @Inject constructor(
 
     fun refreshSubscriptionProviders() {
         if (_providerOperationState.value.isBusy) return
-        if (providerDiscoveryJob?.isActive == true) return
-        providerDiscoveryJob = viewModelScope.launch {
+        startSubscriptionProviderDiscovery(providerLocaleTag)
+    }
+
+    fun refreshSubscriptionProvidersForLocale(localeTag: String) {
+        val requestedLocaleTag = localeTag.trim().takeIf(String::isNotEmpty)
+        if (providerLocaleTag == requestedLocaleTag) return
+        providerLocaleTag = requestedLocaleTag
+        startSubscriptionProviderDiscovery(requestedLocaleTag)
+    }
+
+    private fun startSubscriptionProviderDiscovery(localeTag: String?): Job {
+        val previousJob = providerDiscoveryJob
+        val generation = ++providerDiscoveryGeneration
+        return viewModelScope.launch {
+            previousJob?.cancelAndJoin()
             try {
-                loadSubscriptionProviders()
+                loadSubscriptionProviders(localeTag)
             } finally {
-                providerDiscoveryJob = null
+                if (providerDiscoveryGeneration == generation) {
+                    providerDiscoveryJob = null
+                }
             }
+        }.also { job -> providerDiscoveryJob = job }
+    }
+
+    private suspend fun awaitLatestSubscriptionProviderDiscovery(
+        forceRefresh: Boolean,
+    ) {
+        var awaitedJob = if (forceRefresh) {
+            startSubscriptionProviderDiscovery(providerLocaleTag)
+        } else {
+            providerDiscoveryJob ?: startSubscriptionProviderDiscovery(providerLocaleTag)
+        }
+        while (true) {
+            awaitedJob.join()
+            val latestJob = providerDiscoveryJob
+            if (latestJob == null || latestJob === awaitedJob) return
+            awaitedJob = latestJob
         }
     }
 
-    fun selectSubscriptionProvider(providerId: String) {
+    fun selectSubscriptionProviderVariant(
+        providerId: String,
+        kindValue: String,
+    ) {
         if (_providerOperationState.value.isBusy) return
         val descriptor = currentSubscriptionProviders().firstOrNull { provider ->
             provider.descriptor.providerId.value == providerId
         }?.descriptor ?: return
+        val kind = descriptor.variants.firstOrNull { variant ->
+            variant.kind.value == kindValue && variant.userSelectable
+        }?.kind ?: return
         val current = _providerSubscriptionForm.value
-        if (
-            current?.providerId == descriptor.providerId &&
-            current.schemaVersion == descriptor.settingsSchema?.version &&
-            descriptor.variants.any { variant -> variant.kind == current.providerKind }
-        ) {
+        if (current.matchesNewSubscription(descriptor, kind)) {
             return
         }
-        val kind = descriptor.variants.first().kind
-        _providerSubscriptionForm.value = ProviderSubscriptionForm.create(descriptor, kind)
-    }
-
-    fun selectSubscriptionProviderKind(kindValue: String) {
-        if (_providerOperationState.value.isBusy) return
-        val current = _providerSubscriptionForm.value ?: return
-        val descriptor = currentSubscriptionProviders().firstOrNull { provider ->
-            provider.descriptor.providerId == current.providerId
-        }?.descriptor ?: return
-        val kind = descriptor.variants.firstOrNull { variant ->
-            variant.kind.value == kindValue
-        }?.kind ?: return
-        if (kind == current.providerKind) return
         _providerSubscriptionForm.value = ProviderSubscriptionForm.create(descriptor, kind)
     }
 
@@ -191,34 +210,19 @@ class SettingViewModel @Inject constructor(
     private fun synchronizeProviderSubscriptionForm(
         providers: List<DiscoveredSubscriptionProvider>,
     ) {
-        val current = _providerSubscriptionForm.value
-        val descriptor = providers.firstOrNull { provider ->
-            provider.descriptor.providerId == current?.providerId
-        }?.descriptor ?: providers.firstOrNull()?.descriptor
-        if (descriptor == null) {
-            _providerSubscriptionForm.value = null
-            return
-        }
-        val kind = descriptor.variants.firstOrNull { variant ->
-            variant.kind == current?.providerKind
-        }?.kind ?: descriptor.variants.first().kind
-        val currentDefinitions = current?.fields?.map(ProviderSubscriptionFormField::definition)
-        if (
-            current?.providerId != descriptor.providerId ||
-            current.providerKind != kind ||
-            current.schemaVersion != descriptor.settingsSchema?.version ||
-            currentDefinitions != descriptor.settingsSchema?.fields.orEmpty()
-        ) {
-            _providerSubscriptionForm.value = ProviderSubscriptionForm.create(descriptor, kind)
-        }
+        _providerSubscriptionForm.value = providers.reconcileSubscriptionForm(
+            current = _providerSubscriptionForm.value,
+        )
     }
 
-    private suspend fun loadSubscriptionProviders(): List<DiscoveredSubscriptionProvider>? {
+    private suspend fun loadSubscriptionProviders(
+        localeTag: String? = providerLocaleTag,
+    ): List<DiscoveredSubscriptionProvider>? {
         val previousState = _providerDiscoveryState.value
         _providerDiscoveryState.value = ProviderDiscoveryState.Loading
         return try {
             val providers = withContext(Dispatchers.IO) {
-                subscriptionProviderRepository.discoverProviders()
+                subscriptionProviderRepository.discoverProviders(localeTag)
             }
             synchronizeProviderSubscriptionForm(providers)
             _providerDiscoveryState.value = providers.toProviderDiscoveryState()
@@ -250,10 +254,11 @@ class SettingViewModel @Inject constructor(
         )
         providerReauthenticationJob = viewModelScope.launch {
             try {
-                providerDiscoveryJob?.join()
+                awaitLatestSubscriptionProviderDiscovery(forceRefresh = false)
                 var provider = currentSubscriptionProviders().providerFor(account)
                 if (provider == null) {
-                    provider = loadSubscriptionProviders().orEmpty().providerFor(account)
+                    awaitLatestSubscriptionProviderDiscovery(forceRefresh = true)
+                    provider = currentSubscriptionProviders().providerFor(account)
                 }
                 if (provider == null) {
                     messager.emit(SettingMessage.ProviderSubscriptionFailed)
@@ -281,8 +286,10 @@ class SettingViewModel @Inject constructor(
     }
 
     fun refreshExtensionPlugins() {
-        viewModelScope.launch(Dispatchers.IO) {
-            _extensionPlugins.value = extensionPluginRepository.installedPlugins()
+        viewModelScope.launch {
+            _extensionPlugins.value = withContext(Dispatchers.IO) {
+                extensionPluginRepository.installedPlugins()
+            }
             refreshSubscriptionProviders()
         }
     }
@@ -719,39 +726,13 @@ class SettingViewModel @Inject constructor(
                     messager.emit(SettingMessage.Enqueued)
                 }
 
-                DataSource.Emby, DataSource.Jellyfin -> {
-                    if (title.isEmpty()) {
-                        messager.emit(SettingMessage.EmptyTitle)
-                        return
-                    }
-                    if (inputBasicUrl.isBlank()) {
-                        messager.emit(SettingMessage.EmptyUrl)
-                        return
-                    }
-                    if (username.isBlank()) {
-                        messager.emit(SettingMessage.ProviderCredentialsRequired)
-                        return
-                    }
-                    subscribeProvider(
-                        title = title,
-                        baseUrl = basicUrl,
-                        username = username,
-                        password = password,
-                        providerKind = when (selected) {
-                            DataSource.Emby -> EmbyCompatibleProviderKinds.Emby
-                            DataSource.Jellyfin -> EmbyCompatibleProviderKinds.Jellyfin
-                        },
-                    )
-                    return
-                }
-
                 DataSource.Provider -> {
                     if (title.isBlank()) {
                         messager.emit(SettingMessage.EmptyTitle)
                         return
                     }
-                    if (_providerDiscoveryState.value !is ProviderDiscoveryState.Ready) return
                     val form = _providerSubscriptionForm.value ?: return
+                    if (!_providerDiscoveryState.value.supports(form)) return
                     when (
                         val result = form.buildRequest(
                             title = title,
@@ -775,37 +756,6 @@ class SettingViewModel @Inject constructor(
                 else -> return
             }
         resetAllInputs()
-    }
-
-    private fun subscribeProvider(
-        title: String,
-        baseUrl: String,
-        username: String,
-        password: String,
-        providerKind: ProviderKind,
-    ) {
-        val provider = currentSubscriptionProviders().singleBuiltInProviderFor(providerKind)
-        if (provider == null) {
-            messager.emit(SettingMessage.ProviderSubscriptionFailed)
-            return
-        }
-        val form = ProviderSubscriptionForm.create(provider, providerKind)
-            .update(SubscriptionProviderSettingKeys.BaseUrl, baseUrl)
-            .update(SubscriptionProviderSettingKeys.Username, username)
-            .update(SubscriptionProviderSettingKeys.Password, password)
-        when (
-            val result = form.buildRequest(
-                title = title,
-                stageCredential = subscriptionProviderRepository::stageCredential,
-            )
-        ) {
-            is ProviderSubscriptionFormBuildResult.Invalid -> {
-                messager.emit(SettingMessage.ProviderCredentialsRequired)
-            }
-            is ProviderSubscriptionFormBuildResult.Ready -> {
-                enqueueProviderSubscription(request = result.request)
-            }
-        }
     }
 
     private fun enqueueProviderSubscription(
@@ -1015,7 +965,7 @@ class SettingViewModel @Inject constructor(
             username = usernameState.value,
             password = passwordState.value,
             epg = epgState.value,
-            providerForm = _providerSubscriptionForm.value,
+            providerForm = _providerSubscriptionForm.value?.inputSnapshot(),
         )
     }
 
@@ -1074,12 +1024,29 @@ private data class ProviderInputSnapshot(
     val username: String,
     val password: String,
     val epg: String,
-    val providerForm: ProviderSubscriptionForm?,
+    val providerForm: ProviderFormInputSnapshot?,
 )
 
+private data class ProviderFormInputSnapshot(
+    val providerId: ExtensionId,
+    val providerKind: String,
+    val schemaVersion: Int?,
+    val reauthenticationPlaylistUrl: String?,
+    val inputs: List<Pair<String, String?>>,
+)
+
+private fun ProviderSubscriptionForm.inputSnapshot(): ProviderFormInputSnapshot =
+    ProviderFormInputSnapshot(
+        providerId = providerId,
+        providerKind = providerKind.value,
+        schemaVersion = schemaVersion,
+        reauthenticationPlaylistUrl = reauthenticationPlaylistUrl,
+        inputs = fields
+            .map { field -> field.definition.key to field.input }
+            .sortedBy { (key, _) -> key },
+    )
+
 private fun DataSource.isSubscriptionProvider(): Boolean = when (this) {
-    DataSource.Emby,
-    DataSource.Jellyfin,
     DataSource.Provider -> true
 
     else -> false
@@ -1090,10 +1057,7 @@ private fun DataSource.supportsRemoteTvSubscription(): Boolean = when (this) {
     DataSource.EPG,
     DataSource.Xtream -> true
 
-    DataSource.Emby,
-    DataSource.Jellyfin,
-    DataSource.Provider,
-    DataSource.Dropbox -> false
+    else -> false
 }
 
 private fun List<DiscoveredSubscriptionProvider>.providerFor(

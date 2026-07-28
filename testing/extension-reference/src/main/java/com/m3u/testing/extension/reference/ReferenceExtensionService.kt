@@ -70,6 +70,7 @@ import com.m3u.extension.api.subscription.SubscriptionSourceDescriptor
 import com.m3u.extension.sdk.android.BrokerException
 import com.m3u.extension.sdk.android.ExtensionHostNetworkBroker
 import com.m3u.extension.sdk.android.TypedExtensionService
+import java.util.Locale
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -89,8 +90,8 @@ class ReferenceExtensionService : TypedExtensionService() {
     private val invocationGateProbeCount = AtomicInteger()
 
     init {
-        handle(SubscriptionHookSpecs.Discover) { _, _ ->
-            discoverProvider()
+        handle(SubscriptionHookSpecs.Discover) { request, _ ->
+            discoverProvider(request.localeTag)
         }
         handleResultWithBroker(SubscriptionHookSpecs.Validate) { request, _, broker ->
             providerBrokerResult("validation") { validateProvider(request, broker) }
@@ -147,30 +148,8 @@ class ReferenceExtensionService : TypedExtensionService() {
                 }
             )
         }
-        handle(HostHookSpecs.SettingsSchema) { _, _ ->
-            SettingsSchemaResult(
-                sections = listOf(
-                    ExtensionSettingSection(
-                        id = "playback",
-                        title = "Playback",
-                        schema = ExtensionSettingSchema(
-                            version = 1,
-                            fields = listOf(
-                                ExtensionSettingField(
-                                    key = "quality",
-                                    label = "Quality",
-                                    type = ExtensionSettingType.SINGLE_CHOICE,
-                                    choices = listOf(
-                                        ExtensionSettingChoice("auto", "Automatic"),
-                                        ExtensionSettingChoice("direct", "Direct play"),
-                                    ),
-                                    defaultValue = JsonPrimitive("auto"),
-                                )
-                            ),
-                        ),
-                    )
-                )
-            )
+        handle(HostHookSpecs.SettingsSchema) { request, _ ->
+            referenceDynamicSettings(request.localeTag)
         }
     }
 }
@@ -241,20 +220,132 @@ internal fun SearchProviderRequest.referenceSearchRequest(): BrokeredHttpRequest
     )
 }
 
-private fun discoverProvider(): SubscriptionProviderDiscoverResult =
-    SubscriptionProviderDiscoverResult(
+internal fun discoverProvider(localeTag: String?): SubscriptionProviderDiscoverResult {
+    val copy = referenceLocalizedCopy(localeTag)
+    return SubscriptionProviderDiscoverResult(
         provider = SubscriptionProviderDescriptor(
             providerId = REFERENCE_EXTENSION_ID,
-            displayName = "Reference Provider",
+            displayName = copy.providerName,
             variants = listOf(
                 SubscriptionProviderVariant(
                     kind = REFERENCE_PROVIDER_KIND,
-                    displayName = "Reference",
+                    displayName = copy.variantName,
                 )
             ),
-            settingsSchema = REFERENCE_PROVIDER_SETTINGS,
+            settingsSchema = referenceProviderSettings(localeTag),
         )
     )
+}
+
+internal fun referenceDynamicSettings(localeTag: String?): SettingsSchemaResult {
+    val copy = referenceLocalizedCopy(localeTag)
+    return SettingsSchemaResult(
+        sections = listOf(
+            ExtensionSettingSection(
+                id = "playback",
+                title = copy.playback,
+                schema = ExtensionSettingSchema(
+                    version = 1,
+                    fields = listOf(
+                        ExtensionSettingField(
+                            key = "quality",
+                            label = copy.quality,
+                            type = ExtensionSettingType.SINGLE_CHOICE,
+                            choices = listOf(
+                                ExtensionSettingChoice("auto", copy.automatic),
+                                ExtensionSettingChoice("direct", copy.directPlay),
+                            ),
+                            defaultValue = JsonPrimitive("auto"),
+                        )
+                    ),
+                ),
+            )
+        )
+    )
+}
+
+internal fun referenceProviderSettings(localeTag: String?): ExtensionSettingSchema {
+    val copy = referenceLocalizedCopy(localeTag)
+    return ExtensionSettingSchema(
+        version = 1,
+        fields = listOf(
+            ExtensionSettingField(
+                key = SubscriptionProviderSettingKeys.BaseUrl,
+                label = copy.serverUrl,
+                type = ExtensionSettingType.TEXT,
+                required = true,
+            ),
+            ExtensionSettingField(
+                key = SubscriptionProviderSettingKeys.Username,
+                label = copy.username,
+                type = ExtensionSettingType.TEXT,
+                required = true,
+                defaultValue = JsonPrimitive("m3u"),
+            ),
+            ExtensionSettingField(
+                key = SubscriptionProviderSettingKeys.Password,
+                label = copy.password,
+                type = ExtensionSettingType.SECRET,
+                required = true,
+            ),
+        ),
+    )
+}
+
+private data class ReferenceLocalizedCopy(
+    val providerName: String,
+    val variantName: String,
+    val serverUrl: String,
+    val username: String,
+    val password: String,
+    val playback: String,
+    val quality: String,
+    val automatic: String,
+    val directPlay: String,
+)
+
+private fun referenceLocalizedCopy(localeTag: String?): ReferenceLocalizedCopy {
+    return if (localeTag.usesSimplifiedChineseCopy()) {
+        ReferenceLocalizedCopy(
+            providerName = "参考服务提供方",
+            variantName = "参考服务",
+            serverUrl = "服务器 URL",
+            username = "用户名",
+            password = "密码",
+            playback = "播放",
+            quality = "画质",
+            automatic = "自动",
+            directPlay = "直接播放",
+        )
+    } else {
+        ReferenceLocalizedCopy(
+            providerName = "Reference Provider",
+            variantName = "Reference",
+            serverUrl = "Server URL",
+            username = "Username",
+            password = "Password",
+            playback = "Playback",
+            quality = "Quality",
+            automatic = "Automatic",
+            directPlay = "Direct play",
+        )
+    }
+}
+
+private fun String?.usesSimplifiedChineseCopy(): Boolean {
+    val locale = this
+        ?.trim()
+        ?.replace('_', '-')
+        ?.takeIf(String::isNotEmpty)
+        ?.let(Locale::forLanguageTag)
+        ?: return false
+    if (locale.language != "zh") return false
+    return when (locale.script.lowercase(Locale.ROOT)) {
+        "hans" -> true
+        "hant" -> false
+        else -> locale.country.uppercase(Locale.ROOT) !in setOf("TW", "HK", "MO")
+    }
+}
 
 private suspend fun validateProvider(
     request: SubscriptionProviderValidateRequest,
@@ -715,30 +806,7 @@ private const val INVOCATION_GATE_RESET_REFERENCE = "test.invocation-gate.reset"
 private const val INVOCATION_GATE_COUNT_REFERENCE = "test.invocation-gate.count"
 private const val INVOCATION_GATE_COUNT_TITLE_PREFIX = "invocation-count:"
 
-internal val REFERENCE_PROVIDER_SETTINGS = ExtensionSettingSchema(
-    version = 1,
-    fields = listOf(
-        ExtensionSettingField(
-            key = SubscriptionProviderSettingKeys.BaseUrl,
-            label = "Server URL",
-            type = ExtensionSettingType.TEXT,
-            required = true,
-        ),
-        ExtensionSettingField(
-            key = SubscriptionProviderSettingKeys.Username,
-            label = "Username",
-            type = ExtensionSettingType.TEXT,
-            required = true,
-            defaultValue = JsonPrimitive("m3u"),
-        ),
-        ExtensionSettingField(
-            key = SubscriptionProviderSettingKeys.Password,
-            label = "Password",
-            type = ExtensionSettingType.SECRET,
-            required = true,
-        ),
-    ),
-)
+internal val REFERENCE_PROVIDER_SETTINGS = referenceProviderSettings(localeTag = null)
 
 internal val REFERENCE_MANIFEST = ExtensionManifest(
     id = REFERENCE_EXTENSION_ID,

@@ -50,7 +50,6 @@ internal class SubscriptionProviderImporter @Inject constructor(
 
     suspend fun importSubscription(
         title: String,
-        source: DataSource,
         account: ProviderAccount,
         accessToken: String,
         refresh: SubscriptionContentRefreshResult,
@@ -63,14 +62,14 @@ internal class SubscriptionProviderImporter @Inject constructor(
                     Playlist(
                         title = title,
                         url = account.playlistUrl,
-                        source = source,
+                        source = DataSource.Provider,
                     )
                 )
             } else {
                 playlistDao.updateProviderPlaylist(
                     url = account.playlistUrl,
                     title = title,
-                    source = source,
+                    source = DataSource.Provider,
                 )
             }
             providerDao.insertOrReplace(account)

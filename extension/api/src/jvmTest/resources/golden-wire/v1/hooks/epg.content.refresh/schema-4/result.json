@@ -1,0 +1,14 @@
+{
+  "programmes": [
+    {
+      "channelReference": "channel-1",
+      "title": "Morning News",
+      "startEpochMillis": 1767225600000,
+      "endEpochMillis": 1767229200000,
+      "description": "Daily headlines",
+      "categories": [
+        "News"
+      ]
+    }
+  ]
+}

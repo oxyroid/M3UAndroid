@@ -1,0 +1,21 @@
+{
+  "sourceIds": [
+    "source-1"
+  ],
+  "fromEpochMillis": 1767225600000,
+  "toEpochMillis": 1767312000000,
+  "account": {
+    "accountId": "account-1",
+    "providerId": "com.example.provider",
+    "providerKind": "example",
+    "baseUrl": "https://media.example.test",
+    "serverId": "server-1",
+    "serverName": "Example Server",
+    "serverVersion": "1.2.3",
+    "userId": "user-1",
+    "username": "alex"
+  },
+  "credential": {
+    "handle": "credential-1"
+  }
+}

@@ -6,14 +6,8 @@
 
 ## 保持身份稳定
 
-更新时保持以下内容不变：
-
-1. Android `applicationId`
-2. Service 类名
-3. 签名证书
-4. `ExtensionId`
-
-只有确实需要创建另一个插件身份时，才修改其中的值。
+更新时保持 Android `applicationId` 与 `ExtensionId` 不变。Service 类名或签名证书变化会
+触发重新审阅，并使 Provider 凭据失效；应把它当作显式迁移，而不是普通升级。
 
 ## 分别设置每种版本
 
@@ -28,6 +22,26 @@
 `section.schema.version`。兼容性新增字段时，保留该 Section 的版本与已有 Key，
 M3UAndroid 会应用新字段的默认值。提高 Section 版本后，M3UAndroid 会先清除该 Section
 已保存的值与 Credential Handle，再应用默认值。
+
+## 遵守 Wire 兼容规则
+
+API 版本与 Hook Schema 回答的是两个不同问题：
+
+| 契约变化 | 宿主行为 | 插件规则 |
+| --- | --- | --- |
+| API Major 不同 | 拒绝注册。`apiRange` 的最小值和最大值都必须使用宿主的 Major。 | 为新 Major 发布单独构建。 |
+| API Minor 不同，但 Major 相同 | 仍可进入兼容检查。Minor 不负责选择 Hook 解码器。 | 逐个检查声明的 Hook Schema，不要把 Minor 当成功能开关。 |
+| 未知 Hook 或不支持的 Hook Schema | 拒绝注册。Hook Schema 必须精确匹配。 | 使用 SDK `HookSpec` 中的 Schema。删除、改名必要字段，或改变其含义时，新建 Hook Schema。 |
+| 未知 JSON 字段 | 宿主与 SDK 解码器会忽略。 | 只有字段可选，且旧端省略它时功能仍可工作，才能不改变 Hook Schema 直接新增。插件解码器也必须忽略未知字段。 |
+| 未知 Capability，且 `required = true` | 拒绝注册。 | 只要求宿主已经发布的 Capability。 |
+| 未知 Capability，且 `required = false` | 不阻止注册，旧宿主也不会授权。 | API 1 尚无 Hook 级可选 Capability；Hook 不得依赖它，写入 `requiredCapabilities` 的能力都属于本次调用的必要能力。 |
+
+只有接收端契约为字段定义了默认值时，省略该字段才兼容。新增一个所有接收端都必须理解的
+字段时，即使 API Major 不变，也要新建 Hook Schema。
+
+仓库内的 [API 1 Golden Wire Fixtures](../../../../extension/api/src/jvmTest/resources/golden-wire/v1/README.zh-CN.md)
+给出了 Envelope、Hook Payload 与 Broker JSON 的规范形状。新增 Hook Schema 时，新建
+`schema-<version>` 目录，不要覆盖旧 Schema 的 Fixture。
 
 ## 检查 capability 变化
 
@@ -53,6 +67,7 @@ M3UAndroid 会应用新字段的默认值。提高 Section 版本后，M3UAndroi
 - 确认每个使用 Broker 的 Hook 只能访问预期 Origin；
 - 确认插件身份保持不变；
 - 确认结果与诊断信息不包含 Secret 或可识别用户的请求数据。
+- 对照 Golden Fixture 审查 Wire 变化，并运行 `./gradlew :extension:api:jvmTest`。
 
 设置 Key 改名时，提高所在 Section 的 Schema Version。Hook Schema Version 始终使用当前
 `HookSpec` 提供的值。

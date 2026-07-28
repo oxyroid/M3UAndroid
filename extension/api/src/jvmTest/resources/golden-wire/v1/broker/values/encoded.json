@@ -1,0 +1,10 @@
+{
+  "type": "encoded",
+  "value": {
+    "type": "secret",
+    "reference": {
+      "handle": "provider-token"
+    }
+  },
+  "encoding": "base64"
+}

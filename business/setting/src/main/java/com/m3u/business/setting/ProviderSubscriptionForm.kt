@@ -57,6 +57,34 @@ data class ProviderSubscriptionForm(
         ).validateFields()
     }
 
+    fun updateDescriptor(
+        descriptor: SubscriptionProviderDescriptor,
+    ): ProviderSubscriptionForm {
+        require(descriptor.providerId == providerId) {
+            "Provider descriptor does not match the form"
+        }
+        require(descriptor.variants.any { variant -> variant.kind == providerKind }) {
+            "Provider descriptor does not support ${providerKind.value}"
+        }
+        if (schemaVersion != descriptor.settingsSchema?.version) {
+            return create(descriptor, providerKind).copy(
+                reauthenticationPlaylistUrl = reauthenticationPlaylistUrl,
+            )
+        }
+        val previousFields = fields.associateBy { field -> field.definition.key }
+        return copy(
+            schemaVersion = descriptor.settingsSchema?.version,
+            fields = descriptor.settingsSchema?.fields.orEmpty().map { definition ->
+                val previous = previousFields[definition.key]
+                    ?.takeIf { field -> field.definition.type == definition.type }
+                ProviderSubscriptionFormField(
+                    definition = definition,
+                    input = previous?.input,
+                )
+            },
+        ).validateFields()
+    }
+
     fun buildRequest(
         title: String,
         stageCredential: (String) -> CredentialHandle,
@@ -145,6 +173,16 @@ sealed interface ProviderSubscriptionFormBuildResult {
         val form: ProviderSubscriptionForm,
     ) : ProviderSubscriptionFormBuildResult
 }
+
+internal fun ProviderSubscriptionForm?.matchesNewSubscription(
+    descriptor: SubscriptionProviderDescriptor,
+    providerKind: ProviderKind,
+): Boolean =
+    this != null &&
+        providerId == descriptor.providerId &&
+        this.providerKind == providerKind &&
+        schemaVersion == descriptor.settingsSchema?.version &&
+        reauthenticationPlaylistUrl == null
 
 private fun ExtensionSettingField.validationError(
     value: String?,

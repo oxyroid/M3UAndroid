@@ -1,0 +1,13 @@
+{
+  "type": "concatenated",
+  "parts": [
+    {
+      "type": "literal",
+      "value": "users/"
+    },
+    {
+      "type": "context",
+      "reference": "user_id"
+    }
+  ]
+}

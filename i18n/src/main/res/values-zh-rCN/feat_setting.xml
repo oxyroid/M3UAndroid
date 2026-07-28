@@ -126,6 +126,7 @@
     <string name="feat_setting_provider_discovery_empty">当前没有可用的订阅服务</string>
     <string name="feat_setting_provider_discovery_failed">无法加载可用的订阅服务</string>
     <string name="feat_setting_provider_discovery_retry">重试</string>
+    <string name="feat_setting_provider_selected_unavailable">所选订阅服务暂时不可用，填写内容已保留。请重试加载。</string>
     <string name="feat_setting_provider_reauthentication_required">%1$s 需要重新登录</string>
     <string name="feat_setting_provider_account_summary">%1$s · %2$s\n%3$s</string>
     <string name="feat_setting_provider_reauthenticate">重新登录</string>
@@ -141,6 +142,12 @@
     <string name="feat_setting_provider_error_boolean">请选择开启或关闭</string>
     <string name="feat_setting_provider_error_choice">请选择可用选项</string>
     <string name="feat_setting_data_source_provider">订阅服务</string>
+    <string name="feat_setting_provider_variant_automatic">自动检测</string>
+    <string name="feat_setting_provider_source_with_provider">%1$s — %2$s</string>
+    <string name="feat_setting_provider_choice_with_identifier">%1$s · %2$s</string>
+    <string name="feat_setting_provider_choice_with_identifier_description">%1$s；服务标识：%2$s</string>
+    <string name="feat_setting_data_source_selector_description">订阅来源，当前为：%1$s</string>
+    <string name="feat_setting_data_source_selector_with_identifier_description">订阅来源，当前为：%1$s；服务标识：%2$s</string>
     <string name="feat_setting_extension_plugins">扩展插件</string>
     <string name="feat_setting_extension_enable_external_hint">请先在“可选功能”中开启“外部扩展”，再管理已安装的插件。</string>
     <string name="feat_setting_extension_no_plugins">未安装兼容的扩展插件</string>

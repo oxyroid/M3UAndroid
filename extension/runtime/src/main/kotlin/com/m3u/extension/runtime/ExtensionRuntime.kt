@@ -19,6 +19,7 @@ import com.m3u.extension.api.HookSpec
 import com.m3u.extension.api.InvocationId
 import com.m3u.extension.api.SerializedExtensionEnvelope
 import com.m3u.extension.api.ExtensionResult
+import com.m3u.extension.api.SerializedExtensionResult
 import com.m3u.extension.api.security.BrokerScopeHandle
 import java.io.OutputStream
 import java.util.UUID
@@ -32,6 +33,7 @@ import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.encodeToStream
@@ -167,7 +169,9 @@ class ExtensionRuntime(
         }
         val registration = Registration(
             manifest = manifest,
-            handlers = handlers.associateBy { handler -> handler.spec.hook },
+            handlers = handlers.associate { handler ->
+                handler.spec.hook to handler.toBuiltInHandlerBinding()
+            },
             transport = null,
             semaphore = Semaphore(invocationPolicy.maxConcurrentInvocationsPerExtension),
             unhealthyFailureThreshold = invocationPolicy.unhealthyFailureThreshold,
@@ -648,7 +652,7 @@ class ExtensionRuntime(
 
     private class Registration(
         val manifest: ExtensionManifest,
-        val handlers: Map<Hook, ExtensionHandler<*, *>>,
+        val handlers: Map<Hook, BuiltInHandlerBinding>,
         val transport: ExtensionTransport?,
         val semaphore: Semaphore,
         val unhealthyFailureThreshold: Int,
@@ -659,7 +663,6 @@ class ExtensionRuntime(
             AtomicReference(ExtensionTransportHealth.HEALTHY),
         @Volatile var enabled: Boolean = true,
     ) {
-        @Suppress("UNCHECKED_CAST")
         suspend fun <Request : ExtensionPayload, Response : ExtensionPayload> invoke(
             spec: HookSpec<Request, Response>,
             context: ExtensionCallContext,
@@ -668,35 +671,38 @@ class ExtensionRuntime(
             json: Json,
             hostApiVersion: ExtensionApiVersion,
         ): InvocationAttempt<Response> {
-            val handler = handlers[spec.hook] as? ExtensionHandler<Request, Response>
-            if (handler != null) {
-                return InvocationAttempt(
-                    outcome = handler.invoke(context, request),
-                    runtimeFailure = false,
-                )
-            }
-            val currentTransport = transport ?: return InvocationAttempt(
-                outcome = HookResult.Failure(
-                    ExtensionError(ExtensionErrorCodes.HookNotBound, "Extension did not bind ${spec.hook}", false)
-                ),
-                runtimeFailure = true,
-            )
+            val requestPayload = json.encodeToJsonElement(spec.requestSerializer, request)
+            val handler = handlers[spec.hook]
+            val currentTransport = transport
             val envelope = SerializedExtensionEnvelope(
                 apiVersion = hostApiVersion,
                 invocationId = context.invocationId,
                 extensionId = context.extensionId,
                 hook = spec.hook,
                 schemaVersion = spec.schemaVersion,
-                payload = json.encodeToJsonElement(spec.requestSerializer, request),
+                payload = requestPayload,
                 settings = context.settings,
                 grantedCapabilities = context.grantedCapabilities,
                 brokerScope = brokerScope,
             )
-            val result = try {
-                currentTransport.invoke(envelope)
-            } catch (cancellation: CancellationException) {
-                currentTransport.cancel(context.invocationId)
-                throw cancellation
+            val result = when {
+                handler != null -> handler.invoke(context, requestPayload, json)
+                currentTransport != null -> try {
+                    currentTransport.invoke(envelope)
+                } catch (cancellation: CancellationException) {
+                    currentTransport.cancel(context.invocationId)
+                    throw cancellation
+                }
+                else -> return InvocationAttempt(
+                    outcome = HookResult.Failure(
+                        ExtensionError(
+                            ExtensionErrorCodes.HookNotBound,
+                            "Extension did not bind ${spec.hook}",
+                            false,
+                        )
+                    ),
+                    runtimeFailure = true,
+                )
             }
             if (result.invocationId != context.invocationId || result.extensionId != context.extensionId ||
                 result.hook != spec.hook || result.schemaVersion != spec.schemaVersion
@@ -830,10 +836,88 @@ class ExtensionRuntime(
         fun count(): Int = consecutiveFailures
     }
 
+    private fun <
+        Request : ExtensionPayload,
+        Response : ExtensionPayload,
+    > ExtensionHandler<Request, Response>.toBuiltInHandlerBinding(): BuiltInHandlerBinding {
+        val handler = this
+        return object : BuiltInHandlerBinding {
+            override val spec: HookSpec<Request, Response> = handler.spec
+
+            override suspend fun invoke(
+                context: ExtensionCallContext,
+                requestPayload: JsonElement,
+                json: Json,
+            ): SerializedExtensionResult {
+                val request = try {
+                    json.decodeFromJsonElement(spec.requestSerializer, requestPayload)
+                } catch (cancellation: CancellationException) {
+                    throw cancellation
+                } catch (_: Exception) {
+                    return failureResult(
+                        context = context,
+                        error = ExtensionError(
+                            code = ExtensionErrorCodes.SchemaIncompatible,
+                            message = "Built-in extension request payload is incompatible",
+                            recoverable = false,
+                        ),
+                    )
+                }
+                return when (val outcome = handler.invoke(context, request)) {
+                    is HookResult.Success -> {
+                        val responsePayload = try {
+                            json.encodeToJsonElement(spec.responseSerializer, outcome.payload)
+                        } catch (cancellation: CancellationException) {
+                            throw cancellation
+                        } catch (_: Exception) {
+                            return failureResult(
+                                context = context,
+                                error = ExtensionError(
+                                    code = ExtensionErrorCodes.ResponseInvalid,
+                                    message = "Built-in extension response payload is invalid",
+                                    recoverable = false,
+                                ),
+                            )
+                        }
+                        SerializedExtensionResult(
+                            invocationId = context.invocationId,
+                            extensionId = context.extensionId,
+                            hook = spec.hook,
+                            schemaVersion = spec.schemaVersion,
+                            payload = responsePayload,
+                        )
+                    }
+                    is HookResult.Failure -> failureResult(context, outcome.error)
+                }
+            }
+
+            private fun failureResult(
+                context: ExtensionCallContext,
+                error: ExtensionError,
+            ) = SerializedExtensionResult(
+                invocationId = context.invocationId,
+                extensionId = context.extensionId,
+                hook = spec.hook,
+                schemaVersion = spec.schemaVersion,
+                error = error,
+            )
+        }
+    }
+
     private data class InvocationAttempt<Response : ExtensionPayload>(
         val outcome: HookResult<Response>,
         var runtimeFailure: Boolean,
     )
+
+    private interface BuiltInHandlerBinding {
+        val spec: HookSpec<*, *>
+
+        suspend fun invoke(
+            context: ExtensionCallContext,
+            requestPayload: JsonElement,
+            json: Json,
+        ): SerializedExtensionResult
+    }
 
     private class PayloadLimitOutputStream(
         private val maxBytes: Int,

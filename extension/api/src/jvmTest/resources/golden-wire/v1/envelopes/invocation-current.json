@@ -1,0 +1,30 @@
+{
+  "apiVersion": {
+    "major": 1,
+    "minor": 0
+  },
+  "invocationId": "call-1",
+  "extensionId": "com.example.provider",
+  "hook": "settings.schema.contribute",
+  "schemaVersion": 1,
+  "payload": {
+    "surface": "phone"
+  },
+  "settings": {
+    "schemaVersions": {
+      "provider": 2
+    },
+    "values": {
+      "provider/display_name": "Living room",
+      "provider/result_limit": 25
+    },
+    "credentialHandles": {
+      "provider/password": "credential-1"
+    }
+  },
+  "grantedCapabilities": [
+    "settings.contribute",
+    "network"
+  ],
+  "brokerScope": "broker-scope-1"
+}

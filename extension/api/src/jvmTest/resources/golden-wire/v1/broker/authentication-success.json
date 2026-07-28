@@ -1,0 +1,10 @@
+{
+  "type": "success",
+  "result": {
+    "type": "authentication",
+    "response": {
+      "statusCode": 200,
+      "receipt": "receipt-1"
+    }
+  }
+}

@@ -32,7 +32,10 @@ SubscriptionProviderRepositoryImpl -> SubscriptionProviderImporter
 
 从 [`EmbyCompatibleProviderIntegrationTest`](../../../data/src/androidTest/java/com/m3u/data/extension/emby/EmbyCompatibleProviderIntegrationTest.kt) 开始复现 HTTP 行为，从 [`SubscriptionProviderRepositoryIntegrationTest`](../../../data/src/androidTest/java/com/m3u/data/repository/provider/SubscriptionProviderRepositoryIntegrationTest.kt) 检查持久化和生命周期。
 
-新增 provider kind 由 descriptor 与声明式设置驱动。App、business 和 data 保持与具体 provider kind 无关，provider 实现返回通用契约类型。
+新增 Provider Kind 由 Descriptor 与声明式设置驱动。通用数据源选择器、表单状态、订阅
+Repository 和 Importer 不按具体 `ProviderKind` 分支；只有 Provider 实现处理具体类型。
+新订阅统一保存为 `DataSource.Provider`，`DataSource.Emby` 与 `DataSource.Jellyfin`
+只作为历史兼容输入保留。
 
 ## 修改 APK 发现、信任或 IPC
 

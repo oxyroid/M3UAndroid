@@ -23,7 +23,9 @@ handlers:
 
 ```kotlin
 init {
-    handle(SubscriptionHookSpecs.Discover) { _, _ -> discoverProvider() }
+    handle(SubscriptionHookSpecs.Discover) { request, _ ->
+        discoverProvider(request.localeTag)
+    }
     handleResultWithBroker(SubscriptionHookSpecs.Validate) { request, _, broker ->
         validateProvider(request, broker)
     }
@@ -46,27 +48,37 @@ request uses a submitted or saved credential handle.
 
 `Discover` returns one `SubscriptionProviderDescriptor`. Keep `providerId` and every
 `ProviderKind` stable between releases. List variants in display order and include every field
-needed for login.
+needed for login. Set `userSelectable = false` only for a compatibility kind that existing accounts
+still need but users must not choose for a new subscription. This behavior requires Discover schema
+4; the current host rejects the older schema 3 instead of silently showing the hidden kind.
 
 ```kotlin
-SubscriptionProviderDiscoverResult(
-    provider = SubscriptionProviderDescriptor(
-        providerId = extensionManifest.id,
-        displayName = "Example Media Server",
-        variants = listOf(
-            SubscriptionProviderVariant(
-                kind = ProviderKind("example"),
-                displayName = "Example",
-            )
-        ),
-        settingsSchema = providerSettings,
+private fun discoverProvider(localeTag: String?): SubscriptionProviderDiscoverResult {
+    val copy = providerCopy(localeTag)
+    return SubscriptionProviderDiscoverResult(
+        provider = SubscriptionProviderDescriptor(
+            providerId = extensionManifest.id,
+            displayName = copy.providerName,
+            variants = listOf(
+                SubscriptionProviderVariant(
+                    kind = ProviderKind("example"),
+                    displayName = copy.variantName,
+                )
+            ),
+            settingsSchema = providerSettings(localeTag),
+        )
     )
-)
+}
 ```
 
 The schema must contain the required `base_url` text field. Use a `SECRET` field for a password or
 token. Submitted text is available in `request.settingValues`; secret fields are available in
 `request.credentialHandles`.
+
+Localize every user-facing name, label, description, and choice from `request.localeTag`, with a
+fallback to the extension's default language. Return plain text in natural reading order and do not
+insert bidi control characters; the host handles RTL isolation. Text should make sense when read
+aloud. IDs, URLs, and handles remain untranslated.
 
 ## 2. Authenticate the account
 

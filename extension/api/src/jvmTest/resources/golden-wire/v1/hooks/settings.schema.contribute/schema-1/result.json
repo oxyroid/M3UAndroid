@@ -1,0 +1,19 @@
+{
+  "sections": [
+    {
+      "id": "display",
+      "title": "Display",
+      "schema": {
+        "version": 1,
+        "fields": [
+          {
+            "key": "show_badges",
+            "label": "Show badges",
+            "type": "BOOLEAN",
+            "defaultValue": true
+          }
+        ]
+      }
+    }
+  ]
+}

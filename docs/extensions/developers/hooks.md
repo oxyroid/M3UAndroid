@@ -34,6 +34,11 @@ Input: `SettingsSchemaRequest` with the locale and UI surface.
 Output: `SettingsSchemaResult` containing declarative sections. M3UAndroid renders and stores the
 fields. Put settings that never change in `ExtensionManifest.settingsSchema` instead.
 
+Localize every dynamic user-facing title, label, description, and choice from `request.localeTag`,
+with a default-language fallback. Return plain text in natural reading order without bidi control
+characters; the host handles RTL isolation. Text must make sense when read aloud. IDs, URLs, and
+handles remain untranslated.
+
 Example: [`HelloExtensionService.kt`](../../../samples/hello-extension/src/main/java/com/m3u/samples/hello/extension/HelloExtensionService.kt).
 
 ### Search

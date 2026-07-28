@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hello_settings_section_device">Device</string>
+    <string name="hello_settings_phone_name">Phone name</string>
+    <string name="hello_settings_phone_description">A name for the phone</string>
+    <string name="hello_settings_phone_default">My phone</string>
+    <string name="hello_settings_tv_name">TV name</string>
+    <string name="hello_settings_tv_description">A name for the TV</string>
+    <string name="hello_settings_tv_default">My TV</string>
+    <string name="hello_settings_device_name">Device name</string>
+    <string name="hello_settings_device_description">A name for this device</string>
+    <string name="hello_settings_device_default">My device</string>
+</resources>
