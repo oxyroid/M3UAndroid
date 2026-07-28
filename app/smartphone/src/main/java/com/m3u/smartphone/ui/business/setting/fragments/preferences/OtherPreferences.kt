@@ -3,7 +3,6 @@ package com.m3u.smartphone.ui.business.setting.fragments.preferences
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
@@ -21,7 +20,6 @@ import com.m3u.core.foundation.util.basic.title
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.material.components.Preference
 import com.m3u.smartphone.ui.material.components.TrailingIconPreference
-import com.m3u.smartphone.ui.material.model.LocalSpacing
 
 @Composable
 internal fun OtherPreferences(
@@ -29,11 +27,9 @@ internal fun OtherPreferences(
     versionCode: Int,
     modifier: Modifier = Modifier
 ) {
-    val spacing = LocalSpacing.current
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
     Column(
-        verticalArrangement = Arrangement.spacedBy(spacing.small),
         modifier = modifier
     ) {
         TrailingIconPreference(

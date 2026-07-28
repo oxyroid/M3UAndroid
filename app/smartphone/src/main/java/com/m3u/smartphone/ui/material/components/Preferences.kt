@@ -5,7 +5,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -13,30 +12,22 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalAbsoluteTonalElevation
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
-import com.m3u.smartphone.ui.material.model.LocalSpacing
 
 @Composable
 fun Preference(
@@ -51,90 +42,66 @@ fun Preference(
     icon: ImageVector? = null,
     trailing: @Composable (() -> Unit)? = null
 ) {
-    val spacing = LocalSpacing.current
     val interactionSource = remember { MutableInteractionSource() }
-
-    TooltipBox(
-        state = rememberTooltipState(),
-        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-        tooltip = {
-            if (!content.isNullOrEmpty()) {
-                PlainTooltip {
-                    Text(
-                        text = content.capitalize(Locale.current)
+    val alpha = if (enabled) 1f else 0.38f
+    ListItem(
+        headlineContent = {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+            )
+        },
+        supportingContent = content?.let { supportingText ->
+            @Composable {
+                Text(
+                    text = supportingText,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+        },
+        trailingContent = trailing,
+        leadingContent = icon?.let {
+            @Composable {
+                Icon(imageVector = it, contentDescription = null)
+            }
+        },
+        tonalElevation = LocalAbsoluteTonalElevation.current,
+        shadowElevation = elevation,
+        colors = ListItemDefaults.colors(
+            containerColor = if (selected == true) {
+                MaterialTheme.colorScheme.surfaceContainerHighest
+            } else {
+                Color.Transparent
+            },
+            overlineColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha),
+            supportingColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha),
+            headlineColor = MaterialTheme.colorScheme.onSurface.copy(alpha)
+        ),
+        modifier = modifier
+            .clip(MaterialTheme.shapes.large)
+            .semantics(mergeDescendants = true) {}
+            .then(
+                if (selected != null) {
+                    Modifier.selectable(
+                        selected = selected,
+                        enabled = enabled,
+                        role = role ?: Role.Tab,
+                        onClick = onClick,
+                        interactionSource = interactionSource,
+                        indication = ripple()
+                    )
+                } else {
+                    Modifier.clickable(
+                        enabled = enabled,
+                        role = role,
+                        onClick = onClick,
+                        interactionSource = interactionSource,
+                        indication = ripple()
                     )
                 }
-            }
-        }
-    ) {
-        val alpha = if (enabled) 1f else 0.38f
-        OutlinedCard(
-            colors = CardDefaults.outlinedCardColors(Color.Transparent),
-            shape = AbsoluteSmoothCornerShape(spacing.medium, 65)
-        ) {
-            ListItem(
-                headlineContent = {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                },
-                supportingContent = {
-                    if (content != null) {
-                        Text(
-                            text = content.capitalize(Locale.current),
-                            style = MaterialTheme.typography.bodyMedium,
-                            maxLines = 3,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                },
-                trailingContent = trailing,
-                leadingContent = icon?.let {
-                    @Composable {
-                        Icon(imageVector = it, contentDescription = null)
-                    }
-                },
-                tonalElevation = LocalAbsoluteTonalElevation.current,
-                shadowElevation = elevation,
-                colors = ListItemDefaults.colors(
-                    containerColor = if (selected == true) {
-                        MaterialTheme.colorScheme.surfaceContainerHighest
-                    } else {
-                        Color.Transparent
-                    },
-                    overlineColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha),
-                    supportingColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha),
-                    headlineColor = MaterialTheme.colorScheme.onSurface.copy(alpha)
-                ),
-                modifier = modifier
-                    .semantics(mergeDescendants = true) {}
-                    .then(
-                        if (selected != null) {
-                            Modifier.selectable(
-                                selected = selected,
-                                enabled = enabled,
-                                role = role ?: Role.Tab,
-                                onClick = onClick,
-                                interactionSource = interactionSource,
-                                indication = ripple()
-                            )
-                        } else {
-                            Modifier.clickable(
-                                enabled = enabled,
-                                role = role,
-                                onClick = onClick,
-                                interactionSource = interactionSource,
-                                indication = ripple()
-                            )
-                        }
-                    )
-                    .fillMaxWidth()
             )
-        }
-    }
+            .fillMaxWidth()
+    )
 }
 
 

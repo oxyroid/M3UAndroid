@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="feat_setting_external_extensions">外部扩展</string>
-    <string name="feat_setting_external_extensions_description">开发者功能：允许使用本地安装的扩展 APK</string>
+    <string name="feat_setting_external_extensions_description">允许已安装的扩展连接到此应用</string>
     <string name="feat_setting_app_version">应用版本</string>
     <string name="feat_setting_label_subscribe">订阅</string>
     <string name="feat_setting_success_subscribe">订阅成功</string>
@@ -141,6 +141,7 @@
     <string name="feat_setting_provider_error_number">请输入有效数字</string>
     <string name="feat_setting_provider_error_boolean">请选择开启或关闭</string>
     <string name="feat_setting_provider_error_choice">请选择可用选项</string>
+    <string name="feat_setting_extension_error_network_origin">请输入不含路径、查询参数、片段或通配符的精确 HTTP(S) 源站</string>
     <string name="feat_setting_data_source_provider">订阅服务</string>
     <string name="feat_setting_provider_variant_automatic">自动检测</string>
     <string name="feat_setting_provider_source_with_provider">%1$s — %2$s</string>
@@ -149,8 +150,24 @@
     <string name="feat_setting_data_source_selector_description">订阅来源，当前为：%1$s</string>
     <string name="feat_setting_data_source_selector_with_identifier_description">订阅来源，当前为：%1$s；服务标识：%2$s</string>
     <string name="feat_setting_extension_plugins">扩展插件</string>
-    <string name="feat_setting_extension_enable_external_hint">请先在“可选功能”中开启“外部扩展”，再管理已安装的插件。</string>
+    <string name="feat_setting_extension_on_device">此设备上</string>
+    <string name="feat_setting_extension_details">插件详情</string>
+    <string name="feat_setting_extension_access">访问权限</string>
+    <string name="feat_setting_extension_capabilities">能力权限</string>
+    <string name="feat_setting_extension_network_access">网络访问</string>
+    <string name="feat_setting_extension_capability_summary">已授予 %1$s/%2$s 项</string>
+    <string name="feat_setting_extension_network_origin_summary">已批准 %1$s/%2$s 项</string>
+    <string name="feat_setting_extension_identity_summary">软件包、服务和签名证书</string>
+    <string name="feat_setting_extension_diagnostics">诊断</string>
+    <string name="feat_setting_extension_identity">插件身份</string>
+    <string name="feat_setting_extension_data_and_trust">数据与信任</string>
+    <string name="feat_setting_extension_support_and_details">支持与详情</string>
+    <string name="feat_setting_extension_package">软件包</string>
+    <string name="feat_setting_extension_service">服务</string>
+    <string name="feat_setting_extension_certificate_sha256">证书 SHA-256</string>
+    <string name="feat_setting_extension_enable_external_hint">开启上方的“外部扩展”后即可管理已安装的插件。</string>
     <string name="feat_setting_extension_no_plugins">未安装兼容的扩展插件</string>
+    <string name="feat_setting_extension_loading">正在加载扩展…</string>
     <string name="feat_setting_extension_enable">启用</string>
     <string name="feat_setting_extension_disable">停用</string>
     <string name="feat_setting_extension_revoke">取消信任</string>
@@ -172,9 +189,14 @@
     <string name="feat_setting_extension_inspection_failed">无法检查此扩展。</string>
     <string name="feat_setting_extension_settings">设置</string>
     <string name="feat_setting_extension_settings_empty">此扩展没有可配置的设置项</string>
+    <string name="feat_setting_extension_settings_unavailable">扩展设置当前不可用。请确认扩展已启用，然后重试。</string>
     <string name="feat_setting_extension_secret_configured">已配置；输入新值可替换</string>
     <string name="feat_setting_extension_setting_save">保存</string>
     <string name="feat_setting_extension_setting_clear">清除</string>
+    <string name="feat_setting_extension_field_required_description">%1$s，%2$s</string>
+    <string name="feat_setting_extension_action_field_description">%1$s：%2$s</string>
+    <string name="feat_setting_extension_choice_field_description">%2$s：%1$s</string>
+    <string name="feat_setting_extension_choice_field_required_description">%2$s：%1$s，%3$s</string>
     <string name="feat_setting_extension_clear_data">清除数据</string>
     <string name="feat_setting_extension_clear_data_title">清除插件数据？</string>
     <string name="feat_setting_extension_clear_data_body">将删除设置、加密凭据和插件 EPG 缓存；订阅与频道状态会保留。</string>
@@ -184,6 +206,17 @@
     <string name="feat_setting_extension_diagnostics_share_title">分享插件诊断</string>
     <string name="feat_setting_extension_reauthorize">重新授权</string>
     <string name="feat_setting_extension_certificate_repin">签名身份已变化。\n原 SHA-256：%1$s\n新 SHA-256：%2$s\n继续操作会删除已保存的凭据，并要求订阅服务账号重新登录。</string>
+    <string name="feat_setting_extension_capability_name_network">访问网络</string>
+    <string name="feat_setting_extension_capability_name_credential_read">使用已保存的登录信息</string>
+    <string name="feat_setting_extension_capability_name_credential_write">保存登录信息</string>
+    <string name="feat_setting_extension_capability_name_subscription_read">刷新订阅内容</string>
+    <string name="feat_setting_extension_capability_name_subscription_write">管理订阅</string>
+    <string name="feat_setting_extension_capability_name_playback_resolve">准备播放</string>
+    <string name="feat_setting_extension_capability_name_epg_read">添加节目单数据</string>
+    <string name="feat_setting_extension_capability_name_metadata_write">修改频道信息</string>
+    <string name="feat_setting_extension_capability_name_settings_contribute">添加插件设置</string>
+    <string name="feat_setting_extension_capability_name_search_read">添加搜索结果</string>
+    <string name="feat_setting_extension_capability_name_background_task">执行定期后台任务</string>
     <string name="feat_setting_extension_capability_required">必要</string>
     <string name="feat_setting_extension_capability_optional">可选</string>
     <string name="feat_setting_extension_capability_granted">已授予</string>

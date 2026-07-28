@@ -48,6 +48,20 @@ class ProviderSubscriptionFormTest {
     }
 
     @Test
+    fun `localized decimal input is stored in canonical wire format`() {
+        val form = ProviderSubscriptionForm.create(
+            descriptor(requireSecret = false),
+            KIND_ALPHA,
+        ).update("number", " 12,5 ")
+
+        val request = assertIs<ProviderSubscriptionFormBuildResult.Ready>(
+            form.buildRequest("My provider") { CredentialHandle("unused") }
+        ).request
+
+        assertEquals("12.5", request.settingValues["number"])
+    }
+
+    @Test
     fun `required field falls back to its default after blank input`() {
         val form = ProviderSubscriptionForm.create(descriptor(requireSecret = false), KIND_ALPHA)
             .update("required_text", "   ")

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="feat_setting_external_extensions">External extensions</string>
-    <string name="feat_setting_external_extensions_description">Developer feature: allow locally installed extension APKs</string>
+    <string name="feat_setting_external_extensions_description">Allow installed extensions to connect to the app</string>
     <string name="feat_setting_app_version">app version</string>
     <string name="feat_setting_label_subscribe">subscribe</string>
     <string name="feat_setting_success_subscribe">subscribe successfully</string>
@@ -62,6 +62,7 @@
     <string name="feat_setting_provider_error_number">Enter a valid number</string>
     <string name="feat_setting_provider_error_boolean">Choose On or Off</string>
     <string name="feat_setting_provider_error_choice">Choose one of the available options</string>
+    <string name="feat_setting_extension_error_network_origin">Enter an exact HTTP(S) origin without a path, query, fragment, or wildcard</string>
     <string name="feat_setting_dropbox">dropbox</string>
     <string name="feat_setting_project_about">about project</string>
     <string name="feat_setting_local_storage">local storage</string>
@@ -120,8 +121,24 @@
     <string name="feat_setting_data_source_selector_description">Subscription source. Current: %1$s</string>
     <string name="feat_setting_data_source_selector_with_identifier_description">Subscription source. Current: %1$s. Provider ID: %2$s</string>
     <string name="feat_setting_extension_plugins">Extension plugins</string>
-    <string name="feat_setting_extension_enable_external_hint">Turn on External extensions in Optional features to manage installed plugins.</string>
+    <string name="feat_setting_extension_on_device">On this device</string>
+    <string name="feat_setting_extension_details">Plugin details</string>
+    <string name="feat_setting_extension_access">Access</string>
+    <string name="feat_setting_extension_capabilities">Capabilities</string>
+    <string name="feat_setting_extension_network_access">Network access</string>
+    <string name="feat_setting_extension_capability_summary">%1$s of %2$s granted</string>
+    <string name="feat_setting_extension_network_origin_summary">%1$s of %2$s approved</string>
+    <string name="feat_setting_extension_identity_summary">Package, service, and signing certificate</string>
+    <string name="feat_setting_extension_diagnostics">Diagnostics</string>
+    <string name="feat_setting_extension_identity">Plugin identity</string>
+    <string name="feat_setting_extension_data_and_trust">Data and trust</string>
+    <string name="feat_setting_extension_support_and_details">Support and details</string>
+    <string name="feat_setting_extension_package">Package</string>
+    <string name="feat_setting_extension_service">Service</string>
+    <string name="feat_setting_extension_certificate_sha256">Certificate SHA-256</string>
+    <string name="feat_setting_extension_enable_external_hint">Turn on External extensions above to manage installed plugins.</string>
     <string name="feat_setting_extension_no_plugins">No compatible extension plugins are installed</string>
+    <string name="feat_setting_extension_loading">Loading extensions…</string>
     <string name="feat_setting_extension_enable">Enable</string>
     <string name="feat_setting_extension_disable">Disable</string>
     <string name="feat_setting_extension_revoke">Forget trust</string>
@@ -143,9 +160,14 @@
     <string name="feat_setting_extension_inspection_failed">Couldn’t inspect this extension.</string>
     <string name="feat_setting_extension_settings">Settings</string>
     <string name="feat_setting_extension_settings_empty">This extension has no configurable settings</string>
+    <string name="feat_setting_extension_settings_unavailable">Extension settings are currently unavailable. Make sure the extension is enabled, then try again.</string>
     <string name="feat_setting_extension_secret_configured">Configured; enter a new value to replace it</string>
     <string name="feat_setting_extension_setting_save">Save</string>
     <string name="feat_setting_extension_setting_clear">Clear</string>
+    <string name="feat_setting_extension_field_required_description">%1$s, %2$s</string>
+    <string name="feat_setting_extension_action_field_description">%1$s: %2$s</string>
+    <string name="feat_setting_extension_choice_field_description">%2$s: %1$s</string>
+    <string name="feat_setting_extension_choice_field_required_description">%2$s: %1$s, %3$s</string>
     <string name="feat_setting_extension_clear_data">Clear data</string>
     <string name="feat_setting_extension_clear_data_title">Clear extension data?</string>
     <string name="feat_setting_extension_clear_data_body">Settings, encrypted secrets, and extension EPG cache will be removed. Subscriptions and your channel state will be kept.</string>
@@ -155,6 +177,17 @@
     <string name="feat_setting_extension_diagnostics_share_title">Share extension diagnostics</string>
     <string name="feat_setting_extension_reauthorize">Reauthorize</string>
     <string name="feat_setting_extension_certificate_repin">Signing identity changed.\nPrevious SHA-256: %1$s\nNew SHA-256: %2$s\nContinuing deletes saved credentials and requires provider accounts to sign in again.</string>
+    <string name="feat_setting_extension_capability_name_network">Network access</string>
+    <string name="feat_setting_extension_capability_name_credential_read">Use saved sign-in details</string>
+    <string name="feat_setting_extension_capability_name_credential_write">Save sign-in details</string>
+    <string name="feat_setting_extension_capability_name_subscription_read">Refresh subscription content</string>
+    <string name="feat_setting_extension_capability_name_subscription_write">Manage subscriptions</string>
+    <string name="feat_setting_extension_capability_name_playback_resolve">Prepare playback</string>
+    <string name="feat_setting_extension_capability_name_epg_read">Add programme guide data</string>
+    <string name="feat_setting_extension_capability_name_metadata_write">Change channel information</string>
+    <string name="feat_setting_extension_capability_name_settings_contribute">Add plugin settings</string>
+    <string name="feat_setting_extension_capability_name_search_read">Add search results</string>
+    <string name="feat_setting_extension_capability_name_background_task">Run periodic background tasks</string>
     <string name="feat_setting_extension_capability_required">required</string>
     <string name="feat_setting_extension_capability_optional">optional</string>
     <string name="feat_setting_extension_capability_granted">granted</string>

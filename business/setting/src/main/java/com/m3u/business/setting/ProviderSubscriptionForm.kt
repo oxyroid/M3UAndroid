@@ -202,7 +202,7 @@ private fun ExtensionSettingField.validationError(
         ExtensionSettingType.SECRET -> null
 
         ExtensionSettingType.NUMBER -> ProviderSettingFieldError.INVALID_NUMBER.takeUnless {
-            value.trim().toDoubleOrNull()?.isFinite() == true
+            value.canonicalExtensionNumberOrNull() != null
         }
 
         ExtensionSettingType.BOOLEAN -> ProviderSettingFieldError.INVALID_BOOLEAN.takeUnless {
@@ -218,7 +218,7 @@ private fun ExtensionSettingField.validationError(
 private const val MAX_PROVIDER_SETTING_VALUE_LENGTH = 4_096
 
 private fun String.normalizedFor(type: ExtensionSettingType): String = when (type) {
-    ExtensionSettingType.NUMBER,
+    ExtensionSettingType.NUMBER -> canonicalExtensionNumberOrNull() ?: trim()
     ExtensionSettingType.BOOLEAN -> trim()
 
     ExtensionSettingType.TEXT,

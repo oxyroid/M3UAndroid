@@ -37,7 +37,6 @@ import com.m3u.data.repository.provider.ProviderDiscoveryException
 import com.m3u.data.repository.provider.ProviderSubscriptionRequest
 import com.m3u.data.repository.provider.SubscriptionProviderRepository
 import com.m3u.data.repository.plugin.ExtensionPluginRepository
-import com.m3u.data.repository.plugin.InstalledPlugin
 import com.m3u.data.repository.plugin.PluginAuthorizationToken
 import com.m3u.data.repository.plugin.PluginDataClearResult
 import com.m3u.data.repository.plugin.PluginEnableResult
@@ -101,12 +100,22 @@ class SettingViewModel @Inject constructor(
         scope = viewModelScope,
         onFailure = { messager.emit(SettingMessage.ExtensionOperationFailed) },
     )
+    private val extensionPluginOperationController = ExtensionPluginOperationController()
 
-    private val _extensionPlugins = MutableStateFlow<List<InstalledPlugin>>(emptyList())
-    val extensionPlugins: StateFlow<List<InstalledPlugin>> = _extensionPlugins
+    private val _extensionPluginDiscoveryState =
+        MutableStateFlow<ExtensionPluginDiscoveryState>(
+            ExtensionPluginDiscoveryState.Loading()
+        )
+    val extensionPluginDiscoveryState: StateFlow<ExtensionPluginDiscoveryState> =
+        _extensionPluginDiscoveryState
 
-    private val _extensionSettings = MutableStateFlow<ExtensionSettingsConfiguration?>(null)
-    val extensionSettings: StateFlow<ExtensionSettingsConfiguration?> = _extensionSettings
+    private val _extensionSettingsState = MutableStateFlow<ExtensionSettingsState>(
+        ExtensionSettingsState.Closed
+    )
+    val extensionSettingsState: StateFlow<ExtensionSettingsState> = _extensionSettingsState
+
+    val extensionPluginOperationState: StateFlow<ExtensionPluginOperationState> =
+        extensionPluginOperationController.state
 
     private val _extensionDiagnostics = MutableSharedFlow<String>(extraBufferCapacity = 1)
     val extensionDiagnostics = _extensionDiagnostics.asSharedFlow()
@@ -133,10 +142,10 @@ class SettingViewModel @Inject constructor(
 
     init {
         refreshCodecPack()
-        refreshExtensionPlugins()
         viewModelScope.launch {
             settings.flowOf(PreferencesKeys.EXTERNAL_EXTENSIONS).collect { enabled ->
                 if (!enabled) closeExtensionSettings()
+                requestExtensionPluginRefresh(queueIfBusy = true)
             }
         }
     }
@@ -289,11 +298,15 @@ class SettingViewModel @Inject constructor(
     }
 
     fun refreshExtensionPlugins() {
-        viewModelScope.launch {
-            _extensionPlugins.value = withContext(Dispatchers.IO) {
-                extensionPluginRepository.installedPlugins()
-            }
-            refreshSubscriptionProviders()
+        requestExtensionPluginRefresh(queueIfBusy = false)
+    }
+
+    private fun requestExtensionPluginRefresh(queueIfBusy: Boolean) {
+        launchExtensionPluginOperation(
+            operation = ExtensionPluginOperation.Refresh,
+            queueRefreshIfBusy = queueIfBusy,
+        ) {
+            refreshExtensionPluginsInternal()
         }
     }
 
@@ -302,19 +315,23 @@ class SettingViewModel @Inject constructor(
         serviceName: String,
         authorizationToken: PluginAuthorizationToken,
     ) {
-        viewModelScope.launch {
-            when (
+        launchExtensionPluginOperation(
+            ExtensionPluginOperation.Enable(packageName, serviceName)
+        ) {
+            val enabled = when (
                 val result = extensionPluginRepository.enable(
                     packageName,
                     serviceName,
                     authorizationToken,
                 )
             ) {
-                is PluginEnableResult.Enabled -> Unit
-                is PluginEnableResult.Rejected ->
-                    messager.emit(SettingMessage.ExtensionOperationFailed)
+                is PluginEnableResult.Enabled -> true
+                is PluginEnableResult.Rejected -> false
             }
-            refreshExtensionPlugins()
+            refreshExtensionPluginsInternal()
+            if (!enabled) {
+                messager.emit(SettingMessage.ExtensionOperationFailed)
+            }
         }
     }
 
@@ -323,27 +340,36 @@ class SettingViewModel @Inject constructor(
         serviceName: String,
         authorizationToken: PluginAuthorizationToken,
     ) {
-        viewModelScope.launch {
-            when (
+        launchExtensionPluginOperation(
+            ExtensionPluginOperation.Reauthorize(packageName, serviceName)
+        ) {
+            val reauthorized = when (
                 val result = extensionPluginRepository.reauthorize(
                     packageName,
                     serviceName,
                     authorizationToken,
                 )
             ) {
-                is PluginEnableResult.Enabled -> Unit
-                is PluginEnableResult.Rejected ->
-                    messager.emit(SettingMessage.ExtensionOperationFailed)
+                is PluginEnableResult.Enabled -> true
+                is PluginEnableResult.Rejected -> false
             }
-            refreshExtensionPlugins()
+            refreshExtensionPluginsInternal()
+            if (!reauthorized) {
+                messager.emit(SettingMessage.ExtensionOperationFailed)
+            }
         }
     }
 
     fun disableExtensionPlugin(extensionId: String) {
-        closeExtensionSettingsIfActive(extensionId)
-        viewModelScope.launch {
-            extensionPluginRepository.disable(extensionId)
-            refreshExtensionPlugins()
+        launchExtensionPluginOperation(
+            operation = ExtensionPluginOperation.Disable(extensionId),
+            onStarted = { closeExtensionSettingsIfActive(extensionId) },
+        ) {
+            val disabled = extensionPluginRepository.disable(extensionId)
+            refreshExtensionPluginsInternal()
+            if (!disabled) {
+                messager.emit(SettingMessage.ExtensionOperationFailed)
+            }
         }
     }
 
@@ -356,15 +382,18 @@ class SettingViewModel @Inject constructor(
             viewModelScope.launch { messager.emit(SettingMessage.ExtensionOperationFailed) }
             return
         }
-        closeExtensionSettingsIfActive(extensionId)
-        val operation: suspend () -> Unit = {
-            extensionPluginRepository.revoke(packageName, serviceName)
-            refreshExtensionPlugins()
-        }
-        extensionSettingsOperationQueue.launchDestructive(
+        launchDestructiveExtensionPluginOperation(
+            operation = ExtensionPluginOperation.Revoke(
+                packageName = packageName,
+                serviceName = serviceName,
+                extensionId = extensionId,
+            ),
             extensionId = extensionId,
-            operation = operation,
-        )
+            onStarted = { closeExtensionSettingsIfActive(extensionId) },
+        ) {
+            extensionPluginRepository.revoke(packageName, serviceName)
+            refreshExtensionPluginsInternal()
+        }
     }
 
     fun openExtensionSettings(extensionId: String, localeTag: String?) {
@@ -372,17 +401,29 @@ class SettingViewModel @Inject constructor(
         val generation = ++extensionSettingsGeneration
         extensionSettingsLoadJob?.cancel()
         extensionSettingsRequestedId = requestedExtensionId
-        _extensionSettings.value = null
+        _extensionSettingsState.value =
+            ExtensionSettingsState.Loading(requestedExtensionId)
         extensionSettingsLoadJob = extensionSettingsOperationQueue.launchOperation(extensionId) {
-            val configuration = withContext(Dispatchers.IO) {
-                extensionSettingsRepository.configuration(
-                    requestedExtensionId,
-                    localeTag,
-                    PHONE_SETTINGS_SURFACE,
-                )
-            }
-            if (generation == extensionSettingsGeneration) {
-                _extensionSettings.value = configuration
+            try {
+                val configuration = withContext(Dispatchers.IO) {
+                    extensionSettingsRepository.configuration(
+                        requestedExtensionId,
+                        localeTag,
+                        PHONE_SETTINGS_SURFACE,
+                    )
+                }
+                if (generation == extensionSettingsGeneration) {
+                    _extensionSettingsState.value =
+                        configuration.toExtensionSettingsState(requestedExtensionId)
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Exception) {
+                if (generation == extensionSettingsGeneration) {
+                    _extensionSettingsState.value =
+                        ExtensionSettingsState.Error(requestedExtensionId)
+                }
+                throw failure
             }
         }
     }
@@ -392,12 +433,12 @@ class SettingViewModel @Inject constructor(
         extensionSettingsLoadJob?.cancel()
         extensionSettingsLoadJob = null
         extensionSettingsRequestedId = null
-        _extensionSettings.value = null
+        _extensionSettingsState.value = ExtensionSettingsState.Closed
     }
 
     private fun closeExtensionSettingsIfActive(extensionId: String) {
         if (
-            _extensionSettings.value?.extensionId?.value == extensionId ||
+            _extensionSettingsState.value.extensionId?.value == extensionId ||
             extensionSettingsRequestedId?.value == extensionId
         ) {
             closeExtensionSettings()
@@ -413,8 +454,15 @@ class SettingViewModel @Inject constructor(
             viewModelScope.launch { messager.emit(SettingMessage.ExtensionOperationFailed) }
             return
         }
-        closeExtensionSettingsIfActive(extensionId)
-        val operation: suspend () -> Unit = {
+        launchDestructiveExtensionPluginOperation(
+            operation = ExtensionPluginOperation.ClearData(
+                packageName = packageName,
+                serviceName = serviceName,
+                extensionId = extensionId,
+            ),
+            extensionId = extensionId,
+            onStarted = { closeExtensionSettingsIfActive(extensionId) },
+        ) {
             when (
                 val result = withContext(Dispatchers.IO) {
                     extensionPluginRepository.clearData(packageName, serviceName)
@@ -427,10 +475,6 @@ class SettingViewModel @Inject constructor(
                     messager.emit(SettingMessage.ExtensionOperationFailed)
             }
         }
-        extensionSettingsOperationQueue.launchDestructive(
-            extensionId = extensionId,
-            operation = operation,
-        )
     }
 
     fun exportExtensionDiagnostics(extensionId: String) {
@@ -448,7 +492,11 @@ class SettingViewModel @Inject constructor(
         rawValue: String?,
         localeTag: String?,
     ) {
-        val extensionId = _extensionSettings.value?.extensionId ?: return
+        val extensionId =
+            (_extensionSettingsState.value as? ExtensionSettingsState.Content)
+                ?.configuration
+                ?.extensionId
+                ?: return
         val generation = extensionSettingsGeneration
         val updateGeneration = ++extensionSettingsUpdateGeneration
         extensionSettingsOperationQueue.launchUpdate(extensionId.value) update@{
@@ -485,19 +533,97 @@ class SettingViewModel @Inject constructor(
             if (
                 generation != extensionSettingsGeneration ||
                 updateGeneration != extensionSettingsUpdateGeneration ||
-                _extensionSettings.value?.extensionId != extensionId
+                _extensionSettingsState.value.extensionId != extensionId
             ) {
                 return@update
             }
             when (result) {
                 is ExtensionSettingsRefreshResult.Updated -> {
-                    _extensionSettings.value = result.configuration
+                    _extensionSettingsState.value =
+                        result.configuration.toExtensionSettingsState(extensionId)
                 }
                 is ExtensionSettingsRefreshResult.Rejected -> {
-                    _extensionSettings.value = result.configuration
+                    _extensionSettingsState.value =
+                        result.configuration.toExtensionSettingsState(extensionId)
                     messager.emit(SettingMessage.ExtensionOperationFailed)
                 }
             }
+        }
+    }
+
+    private fun launchExtensionPluginOperation(
+        operation: ExtensionPluginOperation,
+        queueRefreshIfBusy: Boolean = false,
+        onStarted: () -> Unit = {},
+        block: suspend () -> Unit,
+    ): Job? {
+        val running = extensionPluginOperationController.tryStart(
+            operation = operation,
+            queueRefreshIfBusy = queueRefreshIfBusy,
+        ) ?: return null
+        onStarted()
+        return viewModelScope.launch {
+            try {
+                block()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Exception) {
+                messager.emit(SettingMessage.ExtensionOperationFailed)
+            } finally {
+                if (
+                    extensionPluginOperationController
+                        .finishAndConsumePendingRefresh(running)
+                ) {
+                    requestExtensionPluginRefresh(queueIfBusy = false)
+                }
+            }
+        }
+    }
+
+    private fun launchDestructiveExtensionPluginOperation(
+        operation: ExtensionPluginOperation,
+        extensionId: String,
+        onStarted: () -> Unit,
+        block: suspend () -> Unit,
+    ): Job? {
+        val running = extensionPluginOperationController.tryStart(operation) ?: return null
+        onStarted()
+        return extensionSettingsOperationQueue.launchDestructive(
+            extensionId = extensionId,
+            operation = block,
+        ).also { job ->
+            job.invokeOnCompletion {
+                if (
+                    extensionPluginOperationController
+                        .finishAndConsumePendingRefresh(running)
+                ) {
+                    requestExtensionPluginRefresh(queueIfBusy = false)
+                }
+            }
+        }
+    }
+
+    private suspend fun refreshExtensionPluginsInternal() {
+        val previousState = _extensionPluginDiscoveryState.value
+        val previousPlugins = previousState.plugins
+        _extensionPluginDiscoveryState.value =
+            ExtensionPluginDiscoveryState.Loading(previousPlugins)
+        try {
+            val plugins = withContext(Dispatchers.IO) {
+                extensionPluginRepository.installedPlugins()
+            }
+            _extensionPluginDiscoveryState.value =
+                plugins.toExtensionPluginDiscoveryState()
+            refreshSubscriptionProviders()
+        } catch (cancelled: CancellationException) {
+            if (_extensionPluginDiscoveryState.value is ExtensionPluginDiscoveryState.Loading) {
+                _extensionPluginDiscoveryState.value = previousState
+            }
+            throw cancelled
+        } catch (failure: Exception) {
+            _extensionPluginDiscoveryState.value =
+                ExtensionPluginDiscoveryState.Error(previousPlugins)
+            throw failure
         }
     }
 

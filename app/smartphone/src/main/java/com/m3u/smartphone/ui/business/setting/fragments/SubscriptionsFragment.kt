@@ -23,17 +23,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ContentPaste
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material.icons.rounded.Warning
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -61,7 +58,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -78,9 +74,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.LayoutDirection
-import androidx.core.text.BidiFormatter
-import androidx.core.text.TextDirectionHeuristicsCompat
 import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.business.setting.BackingUpAndRestoringState
 import com.m3u.business.setting.ProviderDiscoveryState
@@ -97,14 +90,9 @@ import com.m3u.core.foundation.architecture.preferences.preferenceOf
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
-import com.m3u.data.repository.extension.ExtensionSettingEditToken
-import com.m3u.data.repository.extension.ExtensionSettingsConfiguration
-import com.m3u.data.repository.plugin.InstalledPlugin
-import com.m3u.data.repository.plugin.PluginAuthorizationToken
 import com.m3u.data.repository.provider.ProviderAccountSummary
 import com.m3u.data.repository.provider.SubscriptionProviderExecutionKind
 import com.m3u.extension.api.ExtensionSettingType
-import com.m3u.extension.api.ExtensionState
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.benchmark.DebugBenchmarkSettings
 import com.m3u.smartphone.ui.business.setting.components.DataSourceSelection
@@ -126,14 +114,13 @@ import java.util.Locale
 import kotlinx.coroutines.launch
 
 private enum class SubscriptionsFragmentPage {
-    MAIN, EXTENSION_PLUGINS, EPG_PLAYLISTS, HIDDEN_STREAMS, HIDDEN_PLAYLIST_CATEGORIES
+    MAIN, EPG_PLAYLISTS, HIDDEN_STREAMS, HIDDEN_PLAYLIST_CATEGORIES
 }
 
 @Composable
 private fun SubscriptionsFragmentPage.label(): String = stringResource(
     when (this) {
         SubscriptionsFragmentPage.MAIN -> string.feat_setting_label_add_playlist
-        SubscriptionsFragmentPage.EXTENSION_PLUGINS -> string.feat_setting_extension_plugins
         SubscriptionsFragmentPage.EPG_PLAYLISTS -> string.feat_setting_label_epg_playlists
         SubscriptionsFragmentPage.HIDDEN_STREAMS -> string.feat_setting_label_hidden_channels
         SubscriptionsFragmentPage.HIDDEN_PLAYLIST_CATEGORIES ->
@@ -155,8 +142,6 @@ internal fun SubscriptionsFragment(
     restore: () -> Unit,
     epgs: List<Playlist>,
     onDeleteEpgPlaylist: (String) -> Unit,
-    extensionPlugins: List<InstalledPlugin>,
-    extensionSettings: ExtensionSettingsConfiguration?,
     providerDiscoveryState: ProviderDiscoveryState,
     providerAccountSummaries: List<ProviderAccountSummary>,
     providerSubscriptionForm: ProviderSubscriptionForm?,
@@ -165,23 +150,12 @@ internal fun SubscriptionsFragment(
     onUpdateSubscriptionProviderSetting: (String, String?) -> Unit,
     onRetryProviderDiscovery: () -> Unit,
     onReauthenticateProviderAccount: (String) -> Unit,
-    onRefreshExtensionPlugins: () -> Unit,
-    onEnableExtensionPlugin: (String, String, PluginAuthorizationToken) -> Unit,
-    onReauthorizeExtensionPlugin: (String, String, PluginAuthorizationToken) -> Unit,
-    onDisableExtensionPlugin: (String) -> Unit,
-    onRevokeExtensionPlugin: (String, String, String?) -> Unit,
-    onClearExtensionData: (String, String, String?) -> Unit,
-    onExportExtensionDiagnostics: (String) -> Unit,
-    onOpenExtensionSettings: (String) -> Unit,
-    onCloseExtensionSettings: () -> Unit,
-    onUpdateExtensionSetting: (String, String, ExtensionSettingEditToken, String?) -> Unit,
     entryGeneration: Int,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues()
 ) {
     val spacing = LocalSpacing.current
     val coroutineScope = rememberCoroutineScope()
-    val externalExtensionsEnabled by preferenceOf(PreferencesKeys.EXTERNAL_EXTENSIONS)
     val pagerState = rememberPagerState(initialPage = 0) { SubscriptionsFragmentPage.entries.size }
     val tabScrollState = remember { ScrollState(initial = 0) }
 
@@ -275,400 +249,11 @@ internal fun SubscriptionsFragment(
                         )
                     }
 
-                    SubscriptionsFragmentPage.EXTENSION_PLUGINS -> {
-                        ExtensionPluginsContent(
-                            plugins = extensionPlugins,
-                            settings = extensionSettings,
-                            externalExtensionsEnabled = externalExtensionsEnabled,
-                            onRefresh = onRefreshExtensionPlugins,
-                            onEnable = onEnableExtensionPlugin,
-                            onReauthorize = onReauthorizeExtensionPlugin,
-                            onDisable = onDisableExtensionPlugin,
-                            onRevoke = onRevokeExtensionPlugin,
-                            onClearData = onClearExtensionData,
-                            onExportDiagnostics = onExportExtensionDiagnostics,
-                            onOpenSettings = onOpenExtensionSettings,
-                            onCloseSettings = onCloseExtensionSettings,
-                            onUpdateSetting = onUpdateExtensionSetting,
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = contentPadding,
-                        )
-                    }
                 }
             }
         }
     }
 }
-
-@Composable
-private fun ExtensionPluginsContent(
-    plugins: List<InstalledPlugin>,
-    settings: ExtensionSettingsConfiguration?,
-    externalExtensionsEnabled: Boolean,
-    onRefresh: () -> Unit,
-    onEnable: (String, String, PluginAuthorizationToken) -> Unit,
-    onReauthorize: (String, String, PluginAuthorizationToken) -> Unit,
-    onDisable: (String) -> Unit,
-    onRevoke: (String, String, String?) -> Unit,
-    onClearData: (String, String, String?) -> Unit,
-    onExportDiagnostics: (String) -> Unit,
-    onOpenSettings: (String) -> Unit,
-    onCloseSettings: () -> Unit,
-    onUpdateSetting: (String, String, ExtensionSettingEditToken, String?) -> Unit,
-    modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(),
-) {
-    val bidiFormatter = rememberUiBidiFormatter()
-    var pendingTrust by remember { mutableStateOf<InstalledPlugin?>(null) }
-    var pendingReauthorization by remember { mutableStateOf(false) }
-    var pendingRevoke by remember { mutableStateOf<InstalledPlugin?>(null) }
-    var pendingClear by remember { mutableStateOf<InstalledPlugin?>(null) }
-    LazyColumn(
-        modifier = modifier,
-        contentPadding = contentPadding + PaddingValues(LocalSpacing.current.medium),
-        verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.medium),
-    ) {
-        item {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.small),
-            ) {
-                Text(
-                    text = stringResource(string.feat_setting_extension_plugins),
-                    style = MaterialTheme.typography.titleLarge,
-                )
-                TextButton(
-                    onClick = onRefresh,
-                    enabled = externalExtensionsEnabled,
-                    modifier = Modifier.align(Alignment.End),
-                ) {
-                    Text(stringResource(string.feat_setting_codec_pack_refresh))
-                }
-            }
-        }
-        if (!externalExtensionsEnabled) {
-            item { Text(stringResource(string.feat_setting_extension_enable_external_hint)) }
-        } else if (plugins.isEmpty()) {
-            item { Text(stringResource(string.feat_setting_extension_no_plugins)) }
-        }
-        if (externalExtensionsEnabled) {
-            items(
-                count = plugins.size,
-                key = { index -> "${plugins[index].packageName}/${plugins[index].serviceName}" },
-            ) { index ->
-                val plugin = plugins[index]
-                val extensionId = plugin.extensionId
-                val actions = plugin.actionAvailability()
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        plugin.displayName?.let(bidiFormatter::natural)
-                            ?: bidiFormatter.ltr(plugin.packageName),
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                    plugin.developer?.let {
-                        Text(bidiFormatter.natural(it), style = MaterialTheme.typography.bodyMedium)
-                    }
-                    plugin.version?.let {
-                        Text(bidiFormatter.ltr("v$it"), style = MaterialTheme.typography.bodySmall)
-                    }
-                    Text(extensionStateLabel(plugin.state), style = MaterialTheme.typography.labelMedium)
-                    Text(
-                        bidiFormatter.ltr(plugin.serviceName),
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                    Text(
-                        bidiFormatter.ltr(plugin.certificateSha256),
-                        style = MaterialTheme.typography.labelSmall,
-                    )
-                    if (plugin.grantedCapabilities.isNotEmpty()) {
-                        Text(
-                            plugin.grantedCapabilities.sorted()
-                                .joinToString(transform = bidiFormatter::ltr),
-                            style = MaterialTheme.typography.labelSmall,
-                        )
-                    }
-                    val unapprovedNetworkOrigins =
-                        plugin.networkOrigins - plugin.approvedNetworkOrigins
-                    if (plugin.trusted && unapprovedNetworkOrigins.isNotEmpty()) {
-                        Text(
-                            text = stringResource(
-                                string.feat_setting_extension_network_reauthorization_required,
-                                unapprovedNetworkOrigins.sorted()
-                                    .joinToString(transform = bidiFormatter::ltr),
-                            ),
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-                    plugin.inspectionError?.let {
-                        Text(
-                            stringResource(string.feat_setting_extension_inspection_failed),
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                    }
-                    if (!plugin.installed) {
-                        Text(
-                            stringResource(string.feat_setting_extension_not_installed),
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                    }
-                    if (plugin.signatureChanged) {
-                        Text(
-                            stringResource(string.feat_setting_extension_signature_changed),
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                    }
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        if (actions.settings && extensionId != null) {
-                            FilledTonalButton(onClick = { onOpenSettings(extensionId) }) {
-                                Text(stringResource(string.feat_setting_extension_settings))
-                            }
-                        }
-                        if (actions.disable && extensionId != null) {
-                            FilledTonalButton(onClick = { onDisable(extensionId) }) {
-                                Text(stringResource(string.feat_setting_extension_disable))
-                            }
-                        }
-                        if (actions.enable) {
-                            Button(onClick = { pendingTrust = plugin }) {
-                                Text(stringResource(string.feat_setting_extension_enable))
-                            }
-                        }
-                        if (actions.revoke) {
-                            TextButton(onClick = { pendingRevoke = plugin }) {
-                                Text(stringResource(string.feat_setting_extension_revoke))
-                            }
-                        }
-                        if (actions.reauthorize) {
-                            TextButton(onClick = {
-                                pendingReauthorization = true
-                                pendingTrust = plugin
-                            }) {
-                                Text(stringResource(string.feat_setting_extension_reauthorize))
-                            }
-                        }
-                        if (actions.exportDiagnostics && extensionId != null) {
-                            TextButton(onClick = { onExportDiagnostics(extensionId) }) {
-                                Text(
-                                    stringResource(
-                                        string.feat_setting_extension_export_diagnostics
-                                    )
-                                )
-                            }
-                        }
-                        if (actions.clearData) {
-                            TextButton(onClick = { pendingClear = plugin }) {
-                                Text(stringResource(string.feat_setting_extension_clear_data))
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    pendingTrust?.let { plugin ->
-        AlertDialog(
-            onDismissRequest = {
-                pendingTrust = null
-                pendingReauthorization = false
-            },
-            title = { Text(stringResource(string.feat_setting_extension_confirm_title)) },
-            text = {
-                Column(
-                    modifier = Modifier.verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Text(
-                        stringResource(
-                            string.feat_setting_extension_confirm_identity,
-                            bidiFormatter.ltr(plugin.packageName),
-                            bidiFormatter.ltr(
-                                plugin.certificateSha256.chunked(16).joinToString(" ")
-                            ),
-                            bidiFormatter.natural(plugin.displayName.orEmpty()),
-                            bidiFormatter.natural(plugin.developer.orEmpty()),
-                            bidiFormatter.ltr(plugin.version.orEmpty()),
-                        )
-                    )
-                    plugin.previousCertificateSha256?.let { previousCertificate ->
-                        Text(
-                            text = stringResource(
-                                string.feat_setting_extension_certificate_repin,
-                                bidiFormatter.ltr(previousCertificate.chunked(16).joinToString(" ")),
-                                bidiFormatter.ltr(
-                                    plugin.certificateSha256.chunked(16).joinToString(" ")
-                                ),
-                            ),
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                    }
-                    Text(
-                        stringResource(string.feat_setting_extension_requested_capabilities),
-                        style = MaterialTheme.typography.titleSmall,
-                    )
-                    Text(extensionCapabilitySummary(plugin, bidiFormatter))
-                    Text(
-                        stringResource(string.feat_setting_extension_network_origins),
-                        style = MaterialTheme.typography.titleSmall,
-                    )
-                    Text(
-                        plugin.networkOrigins.sorted()
-                            .joinToString("\n", transform = bidiFormatter::ltr)
-                            .ifEmpty { "—" }
-                    )
-                    if (plugin.networkOriginSettingFields.isNotEmpty()) {
-                        Text(
-                            stringResource(
-                                string.feat_setting_extension_network_origin_settings,
-                                plugin.networkOriginSettingFields.sorted()
-                                    .joinToString(transform = bidiFormatter::ltr),
-                            )
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        val reauthorize = pendingReauthorization
-                        pendingTrust = null
-                        pendingReauthorization = false
-                        plugin.authorizationToken?.let { authorizationToken ->
-                            if (reauthorize) {
-                                onReauthorize(
-                                    plugin.packageName,
-                                    plugin.serviceName,
-                                    authorizationToken,
-                                )
-                            } else {
-                                onEnable(
-                                    plugin.packageName,
-                                    plugin.serviceName,
-                                    authorizationToken,
-                                )
-                            }
-                        }
-                    }
-                ) {
-                    Text(
-                        stringResource(
-                            if (pendingReauthorization) {
-                                string.feat_setting_extension_reauthorize
-                            } else {
-                                string.feat_setting_extension_enable
-                            }
-                        )
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    pendingTrust = null
-                    pendingReauthorization = false
-                }) {
-                    Text(stringResource(android.R.string.cancel))
-                }
-            },
-        )
-    }
-    pendingRevoke?.let { plugin ->
-        AlertDialog(
-            onDismissRequest = { pendingRevoke = null },
-            title = { Text(stringResource(string.feat_setting_extension_forget_title)) },
-            text = { Text(stringResource(string.feat_setting_extension_forget_body)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    pendingRevoke = null
-                    onRevoke(plugin.packageName, plugin.serviceName, plugin.extensionId)
-                }) {
-                    Text(stringResource(string.feat_setting_extension_revoke))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { pendingRevoke = null }) {
-                    Text(stringResource(android.R.string.cancel))
-                }
-            },
-        )
-    }
-    settings?.let { configuration ->
-        ExtensionSettingsDialog(
-            configuration = configuration,
-            onDismiss = onCloseSettings,
-            onUpdate = onUpdateSetting,
-        )
-    }
-    pendingClear?.let { plugin ->
-        AlertDialog(
-            onDismissRequest = { pendingClear = null },
-            title = { Text(stringResource(string.feat_setting_extension_clear_data_title)) },
-            text = { Text(stringResource(string.feat_setting_extension_clear_data_body)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    pendingClear = null
-                    onClearData(plugin.packageName, plugin.serviceName, plugin.extensionId)
-                }) { Text(stringResource(string.feat_setting_extension_clear_data)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { pendingClear = null }) {
-                    Text(stringResource(android.R.string.cancel))
-                }
-            },
-        )
-    }
-}
-
-@Composable
-private fun extensionCapabilitySummary(
-    plugin: InstalledPlugin,
-    bidiFormatter: UiBidiFormatter,
-): String {
-    val required = stringResource(string.feat_setting_extension_capability_required)
-    val optional = stringResource(string.feat_setting_extension_capability_optional)
-    return plugin.capabilityPermissions.joinToString("\n") { permission ->
-        val requirement = if (permission.required) required else optional
-        "${bidiFormatter.ltr(permission.id)} ($requirement) — " +
-            bidiFormatter.natural(permission.reason)
-    }.ifEmpty { "—" }
-}
-
-@Composable
-internal fun rememberUiBidiFormatter(): UiBidiFormatter {
-    val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
-    return remember(isRtl) { UiBidiFormatter(isRtl) }
-}
-
-internal class UiBidiFormatter(isRtlContext: Boolean) {
-    private val formatter = BidiFormatter.getInstance(isRtlContext)
-
-    fun natural(value: String): String = formatter.unicodeWrap(value.withoutBidiControls())
-
-    fun ltr(value: String): String = formatter.unicodeWrap(
-        value.withoutBidiControls(),
-        TextDirectionHeuristicsCompat.LTR,
-    )
-}
-
-internal fun String.withoutBidiControls(): String = filterNot { character ->
-    character == '\u061C' ||
-        character == '\u200E' ||
-        character == '\u200F' ||
-        character.code in 0x202A..0x202E ||
-        character.code in 0x2066..0x2069
-}
-
-@Composable
-private fun extensionStateLabel(state: ExtensionState): String = stringResource(
-    when (state) {
-        ExtensionState.ENABLED -> string.feat_setting_extension_state_enabled
-        ExtensionState.DISABLED -> string.feat_setting_extension_state_disabled
-        ExtensionState.INCOMPATIBLE -> string.feat_setting_extension_state_incompatible
-        ExtensionState.UNHEALTHY -> string.feat_setting_extension_state_unhealthy
-    }
-)
 
 @Composable
 context(properties: SettingProperties)

@@ -56,7 +56,9 @@ tasks.matching { task ->
     task.name.startsWith("connected") && task.name.endsWith("AndroidTest")
 }.configureEach {
     dependsOn(":testing:mock-server:startMockServer")
+    dependsOn(":testing:extension-reference:installDebug")
     finalizedBy(":testing:mock-server:stopMockServer")
+    finalizedBy(":testing:extension-reference:uninstallDebug")
 }
 
 hilt {

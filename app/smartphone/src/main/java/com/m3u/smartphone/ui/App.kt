@@ -52,6 +52,7 @@ import androidx.compose.material3.SearchBarValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopSearchBar
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.material3.rememberSearchBarState
@@ -72,6 +73,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -92,6 +94,7 @@ import com.m3u.smartphone.ui.common.AppNavHost
 import com.m3u.smartphone.ui.common.connect.RemoteControlSheet
 import com.m3u.smartphone.ui.common.connect.RemoteControlSheetValue
 import com.m3u.smartphone.ui.common.helper.LocalHelper
+import com.m3u.smartphone.ui.common.helper.Metadata
 import com.m3u.smartphone.ui.material.components.Destination
 import com.m3u.smartphone.ui.material.components.SnackHost
 import com.m3u.smartphone.ui.material.model.LocalSpacing
@@ -207,7 +210,10 @@ private fun AppImpl(
         isNavigationCurrentlyVisible = bottomNavigationVisibility.currentState,
         isNavigationTargetVisible = bottomNavigationVisibility.targetState,
     )
-    val remoteControlVisible = remoteControl && !searchActive && !imeVisible
+    val remoteControlVisible = remoteControl &&
+        !searchActive &&
+        !imeVisible &&
+        (navigationMode != AppNavigationMode.BottomOverlay || !nestedDetailVisible)
 
     var measuredNavigationHeight by remember { mutableStateOf(64.dp) }
     val safeDrawingPadding = WindowInsets.safeDrawing.asPaddingValues()
@@ -270,6 +276,7 @@ private fun AppImpl(
                 navigateToChannel = arguments.navigateToChannel,
                 contentPadding = arguments.contentPadding,
                 showBottomEdgeBlur = arguments.showBottomEdgeBlur,
+                showContextualTopBar = arguments.showContextualTopBar,
                 onNestedDetailVisibilityChanged =
                     arguments.onNestedDetailVisibilityChanged,
             )
@@ -284,6 +291,8 @@ private fun AppImpl(
         navigateToChannel = navigateToChannel,
         contentPadding = contentInsets.contentPadding,
         showBottomEdgeBlur = shouldShowBottomEdgeBlur(navigationMode),
+        showContextualTopBar =
+            navigationMode == AppNavigationMode.BottomOverlay && nestedDetailVisible,
         onNestedDetailVisibilityChanged = onNestedDetailVisibilityChanged,
     )
 
@@ -428,6 +437,7 @@ private class AppContentArguments(
     val navigateToChannel: () -> Unit,
     val contentPadding: PaddingValues,
     val showBottomEdgeBlur: Boolean,
+    val showContextualTopBar: Boolean,
     val onNestedDetailVisibilityChanged: (Boolean) -> Unit,
 )
 
@@ -442,6 +452,7 @@ private fun AppContent(
     navigateToChannel: () -> Unit,
     contentPadding: PaddingValues,
     showBottomEdgeBlur: Boolean,
+    showContextualTopBar: Boolean,
     onNestedDetailVisibilityChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -480,39 +491,77 @@ private fun AppContent(
     }
 
     Column(modifier = modifier.fillMaxSize()) {
-        TopSearchBar(
-            state = searchBarState,
-            inputField = inputField,
-            windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top),
-        )
-        ExpandedFullScreenSearchBar(
-            inputField = inputField,
-            state = searchBarState,
-        ) {
-            BackHandler {
-                coroutineScope.launch {
-                    searchBarState.animateToCollapsed()
-                }
-            }
-            val state = rememberLazyStaggeredGridState()
-            ChannelGallery(
-                state = state,
-                rowCount = 1,
-                channels = channels,
-                zapping = null,
-                recently = false,
-                isVodOrSeriesPlaylist = false,
-                onClick = { channel ->
-                    coroutineScope.launch {
-                        helper.play(MediaCommand.Common(channel.id))
-                        navigateToChannel()
+        if (showContextualTopBar) {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = Metadata.title,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+                navigationIcon = {
+                    Metadata.fob?.let { backAction ->
+                        IconButton(onClick = backAction.onClick) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(
+                                    string.ui_cd_top_bar_on_back_pressed
+                                ),
+                            )
+                        }
                     }
                 },
-                onLongClick = {},
-                reloadThumbnail = { null },
-                syncThumbnail = { null },
-                contentPadding = WindowInsets.ime.asPaddingValues(),
+                actions = {
+                    Metadata.actions.forEach { action ->
+                        IconButton(
+                            onClick = action.onClick,
+                            enabled = action.enabled,
+                        ) {
+                            Icon(
+                                imageVector = action.icon,
+                                contentDescription = action.contentDescription,
+                            )
+                        }
+                    }
+                },
+                windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top),
             )
+        } else {
+            TopSearchBar(
+                state = searchBarState,
+                inputField = inputField,
+                windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top),
+            )
+            ExpandedFullScreenSearchBar(
+                inputField = inputField,
+                state = searchBarState,
+            ) {
+                BackHandler {
+                    coroutineScope.launch {
+                        searchBarState.animateToCollapsed()
+                    }
+                }
+                val state = rememberLazyStaggeredGridState()
+                ChannelGallery(
+                    state = state,
+                    rowCount = 1,
+                    channels = channels,
+                    zapping = null,
+                    recently = false,
+                    isVodOrSeriesPlaylist = false,
+                    onClick = { channel ->
+                        coroutineScope.launch {
+                            helper.play(MediaCommand.Common(channel.id))
+                            navigateToChannel()
+                        }
+                    },
+                    onLongClick = {},
+                    reloadThumbnail = { null },
+                    syncThumbnail = { null },
+                    contentPadding = WindowInsets.ime.asPaddingValues(),
+                )
+            }
         }
         AppNavHost(
             navController = navController,

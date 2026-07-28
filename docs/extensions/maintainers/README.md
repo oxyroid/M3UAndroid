@@ -36,4 +36,4 @@ If any answer is missing, the flow usually still lacks a real host caller or res
 - One extension's failure must not delete another extension's data or its own last successful data.
 - Built-in and APK extensions share the same Hook contracts; only the APK path crosses Android IPC.
 
-Use [Current architecture and code map](architecture.md) to trace a complete path, [Change by task](change-guide.md) before editing, and [Current status and release gate](status-and-release.md) only when deciding whether a capability is open or releasable.
+Use [Current architecture and code map](architecture.md) to trace a complete path, [Change by task](change-guide.md) before editing, and [Extension UI quality gates](ui-quality-gates.md) for any plugin-facing phone, tablet, or TV change. Read [Current status and release gate](status-and-release.md) only when deciding whether a capability is open or releasable.

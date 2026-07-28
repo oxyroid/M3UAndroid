@@ -1,6 +1,5 @@
 package com.m3u.smartphone.ui.business.setting.fragments.preferences
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
@@ -8,35 +7,42 @@ import androidx.compose.material.icons.rounded.ColorLens
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.MusicNote
+import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import com.m3u.core.foundation.util.basic.title
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.material.components.Preference
 import com.m3u.smartphone.ui.material.components.SettingDestination
-import com.m3u.smartphone.ui.material.model.LocalSpacing
 
 @Composable
 internal fun RegularPreferences(
     fragment: SettingDestination,
     navigateToPlaylistManagement: () -> Unit,
+    navigateToExtensionPlugins: () -> Unit,
     navigateToThemeSelector: () -> Unit,
     navigateToOptional: () -> Unit,
     codecPackEnabled: Boolean,
     navigateToCodecPack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val spacing = LocalSpacing.current
     Column(
         modifier = modifier.selectableGroup(),
-        verticalArrangement = Arrangement.spacedBy(spacing.small)
     ) {
         Preference(
             title = stringResource(string.feat_setting_playlist_management).title(),
             icon = Icons.Rounded.MusicNote,
             selected = fragment == SettingDestination.Playlists,
             onClick = navigateToPlaylistManagement
+        )
+        Preference(
+            title = stringResource(string.feat_setting_extension_plugins),
+            icon = Icons.Rounded.Extension,
+            selected = fragment.isExtensionPluginDestination(),
+            onClick = navigateToExtensionPlugins,
+            modifier = Modifier.testTag("extension-entry"),
         )
         Preference(
             title = stringResource(string.feat_setting_appearance).title(),
@@ -46,7 +52,7 @@ internal fun RegularPreferences(
         )
         Preference(
             title = stringResource(string.feat_setting_optional_features).title(),
-            icon = Icons.Rounded.Extension,
+            icon = Icons.Rounded.Tune,
             selected = fragment == SettingDestination.Optional,
             onClick = navigateToOptional
         )
@@ -59,4 +65,12 @@ internal fun RegularPreferences(
             )
         }
     }
+}
+
+private fun SettingDestination.isExtensionPluginDestination(): Boolean = when (this) {
+    SettingDestination.ExtensionPlugins,
+    is SettingDestination.ExtensionPluginDetails,
+    is SettingDestination.ExtensionPluginAuthorization,
+    is SettingDestination.ExtensionPluginSettings -> true
+    else -> false
 }

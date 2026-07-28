@@ -58,6 +58,31 @@ sealed interface SettingDestination : Parcelable {
 
     @Immutable
     @Parcelize
+    data object ExtensionPlugins : SettingDestination
+
+    @Immutable
+    @Parcelize
+    data class ExtensionPluginDetails(
+        val packageName: String,
+        val serviceName: String,
+    ) : SettingDestination
+
+    @Immutable
+    @Parcelize
+    data class ExtensionPluginAuthorization(
+        val packageName: String,
+        val serviceName: String,
+        val reauthorize: Boolean,
+    ) : SettingDestination
+
+    @Immutable
+    @Parcelize
+    data class ExtensionPluginSettings(
+        val extensionId: String,
+    ) : SettingDestination
+
+    @Immutable
+    @Parcelize
     data object Appearance : SettingDestination
 
     @Immutable

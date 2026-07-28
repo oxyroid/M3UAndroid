@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChangeCircle
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
+import androidx.compose.material3.adaptive.navigation.BackNavigationBehavior
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -35,6 +36,9 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.m3u.business.setting.BackingUpAndRestoringState
 import com.m3u.business.setting.CodecPackState
+import com.m3u.business.setting.ExtensionPluginDiscoveryState
+import com.m3u.business.setting.ExtensionPluginOperationState
+import com.m3u.business.setting.ExtensionSettingsState
 import com.m3u.business.setting.ProviderDiscoveryState
 import com.m3u.business.setting.ProviderOperationState
 import com.m3u.business.setting.ProviderSubscriptionForm
@@ -47,7 +51,6 @@ import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.ColorScheme
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.repository.extension.ExtensionSettingEditToken
-import com.m3u.data.repository.extension.ExtensionSettingsConfiguration
 import com.m3u.data.repository.plugin.InstalledPlugin
 import com.m3u.data.repository.plugin.PluginAuthorizationToken
 import com.m3u.data.repository.provider.ProviderAccountSummary
@@ -55,6 +58,10 @@ import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.business.setting.components.CanvasBottomSheet
 import com.m3u.smartphone.ui.business.setting.fragments.AppearanceFragment
 import com.m3u.smartphone.ui.business.setting.fragments.CodecPackFragment
+import com.m3u.smartphone.ui.business.setting.fragments.ExtensionPluginAuthorizationScreen
+import com.m3u.smartphone.ui.business.setting.fragments.ExtensionPluginDetailScreen
+import com.m3u.smartphone.ui.business.setting.fragments.ExtensionPluginListScreen
+import com.m3u.smartphone.ui.business.setting.fragments.ExtensionSettingsScreen
 import com.m3u.smartphone.ui.business.setting.fragments.OptionalFragment
 import com.m3u.smartphone.ui.business.setting.fragments.SubscriptionsFragment
 import com.m3u.smartphone.ui.business.setting.fragments.preferences.PreferencesFragment
@@ -83,8 +90,12 @@ fun SettingRoute(
     val hiddenCategoriesWithPlaylists by viewModel.hiddenCategoriesWithPlaylists.collectAsStateWithLifecycle()
     val backingUpOrRestoring by viewModel.backingUpOrRestoring.collectAsStateWithLifecycle()
     val codecPackState by viewModel.codecPackState.collectAsStateWithLifecycle()
-    val extensionPlugins by viewModel.extensionPlugins.collectAsStateWithLifecycle()
-    val extensionSettings by viewModel.extensionSettings.collectAsStateWithLifecycle()
+    val extensionPluginDiscoveryState by
+        viewModel.extensionPluginDiscoveryState.collectAsStateWithLifecycle()
+    val extensionPluginOperationState by
+        viewModel.extensionPluginOperationState.collectAsStateWithLifecycle()
+    val extensionSettingsState by viewModel.extensionSettingsState.collectAsStateWithLifecycle()
+    val extensionPlugins = extensionPluginDiscoveryState.plugins
     val providerDiscoveryState by viewModel.providerDiscoveryState.collectAsStateWithLifecycle()
     val providerAccountSummaries by viewModel.providerAccountSummaries.collectAsStateWithLifecycle()
     val providerSubscriptionForm by viewModel.providerSubscriptionForm.collectAsStateWithLifecycle()
@@ -162,7 +173,9 @@ fun SettingRoute(
             onDeleteCodecPack = viewModel::deleteCodecPack,
             onRefreshCodecPack = viewModel::refreshCodecPack,
             extensionPlugins = extensionPlugins,
-            extensionSettings = extensionSettings,
+            extensionPluginDiscoveryState = extensionPluginDiscoveryState,
+            extensionPluginOperationState = extensionPluginOperationState,
+            extensionSettingsState = extensionSettingsState,
             providerDiscoveryState = providerDiscoveryState,
             providerAccountSummaries = providerAccountSummaries,
             providerSubscriptionForm = providerSubscriptionForm,
@@ -233,7 +246,9 @@ private fun SettingScreen(
     onDeleteCodecPack: () -> Unit,
     onRefreshCodecPack: () -> Unit,
     extensionPlugins: List<InstalledPlugin>,
-    extensionSettings: ExtensionSettingsConfiguration?,
+    extensionPluginDiscoveryState: ExtensionPluginDiscoveryState,
+    extensionPluginOperationState: ExtensionPluginOperationState,
+    extensionSettingsState: ExtensionSettingsState,
     providerDiscoveryState: ProviderDiscoveryState,
     providerAccountSummaries: List<ProviderAccountSummary>,
     providerSubscriptionForm: ProviderSubscriptionForm?,
@@ -260,6 +275,11 @@ private fun SettingScreen(
 
     val defaultTitle = stringResource(string.ui_title_setting)
     val playlistTitle = stringResource(string.feat_setting_playlist_management)
+    val extensionPluginsTitle = stringResource(string.feat_setting_extension_plugins)
+    val extensionDetailsTitle = stringResource(string.feat_setting_extension_details)
+    val extensionAuthorizationTitle =
+        stringResource(string.feat_setting_extension_confirm_title)
+    val extensionSettingsTitle = stringResource(string.feat_setting_extension_settings)
     val appearanceTitle = stringResource(string.feat_setting_appearance)
     val optionalTitle = stringResource(string.feat_setting_optional_features)
     val codecPackTitle = stringResource(string.feat_setting_codec_pack)
@@ -267,12 +287,21 @@ private fun SettingScreen(
     val colorArgb by preferenceOf(PreferencesKeys.COLOR_ARGB)
 
     val navigator = rememberListDetailPaneScaffoldNavigator<SettingDestination>()
+    val backNavigationBehavior = BackNavigationBehavior.PopUntilContentChange
     val destination = navigator.currentDestination?.contentKey ?: SettingDestination.Default
     var subscriptionsEntryGeneration by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(destination) {
         if (destination == SettingDestination.Playlists) {
             subscriptionsEntryGeneration++
+        }
+    }
+
+    LaunchedEffect(destination) {
+        when (destination) {
+            is SettingDestination.ExtensionPluginSettings ->
+                onOpenExtensionSettings(destination.extensionId)
+            else -> onCloseExtensionSettings()
         }
     }
 
@@ -287,16 +316,35 @@ private fun SettingScreen(
         navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, it)
     }
 
-    LifecycleResumeEffect(destination, defaultTitle, playlistTitle, appearanceTitle, optionalTitle, codecPackTitle) {
-        Metadata.title = when (destination) {
+    LifecycleResumeEffect(
+        destination,
+        extensionPlugins,
+        defaultTitle,
+        playlistTitle,
+        extensionPluginsTitle,
+        extensionDetailsTitle,
+        extensionAuthorizationTitle,
+        extensionSettingsTitle,
+        appearanceTitle,
+        optionalTitle,
+        codecPackTitle,
+    ) {
+        val title = when (destination) {
             SettingDestination.Default -> defaultTitle
             SettingDestination.Playlists -> playlistTitle
+            SettingDestination.ExtensionPlugins -> extensionPluginsTitle
+            is SettingDestination.ExtensionPluginDetails -> extensionDetailsTitle
+            is SettingDestination.ExtensionPluginAuthorization ->
+                extensionAuthorizationTitle
+            is SettingDestination.ExtensionPluginSettings -> extensionSettingsTitle
             SettingDestination.Appearance -> appearanceTitle
             SettingDestination.Optional -> optionalTitle
             SettingDestination.CodecPack -> codecPackTitle
         }
-            .title()
-            .let(::AnnotatedString)
+        Metadata.title = (
+            if (destination.usesLocalizedStaticTitle()) title.title() else title
+        ).let(::AnnotatedString)
+        Metadata.actions = emptyList()
         Metadata.color = Color.Unspecified
         Metadata.contentColor = Color.Unspecified
         if (destination != SettingDestination.Default) {
@@ -306,7 +354,7 @@ private fun SettingScreen(
                 iconTextId = string.feat_setting_back_home
             ) {
                 coroutineScope.launch {
-                    navigator.navigateBack()
+                    navigator.navigateBack(backNavigationBehavior)
                 }
             }
         }
@@ -330,6 +378,14 @@ private fun SettingScreen(
                         navigator.navigateTo(
                             pane = ListDetailPaneScaffoldRole.Detail,
                             contentKey = SettingDestination.Playlists
+                        )
+                    }
+                },
+                navigateToExtensionPlugins = {
+                    coroutineScope.launch {
+                        navigator.navigateTo(
+                            pane = ListDetailPaneScaffoldRole.Detail,
+                            contentKey = SettingDestination.ExtensionPlugins,
                         )
                     }
                 },
@@ -375,8 +431,6 @@ private fun SettingScreen(
                         restore = restore,
                         epgs = epgs,
                         onDeleteEpgPlaylist = onDeleteEpgPlaylist,
-                        extensionPlugins = extensionPlugins,
-                        extensionSettings = extensionSettings,
                         providerDiscoveryState = providerDiscoveryState,
                         providerAccountSummaries = providerAccountSummaries,
                         providerSubscriptionForm = providerSubscriptionForm,
@@ -386,19 +440,111 @@ private fun SettingScreen(
                         onUpdateSubscriptionProviderSetting = onUpdateSubscriptionProviderSetting,
                         onRetryProviderDiscovery = onRetryProviderDiscovery,
                         onReauthenticateProviderAccount = onReauthenticateProviderAccount,
-                        onRefreshExtensionPlugins = onRefreshExtensionPlugins,
-                        onEnableExtensionPlugin = onEnableExtensionPlugin,
-                        onReauthorizeExtensionPlugin = onReauthorizeExtensionPlugin,
-                        onDisableExtensionPlugin = onDisableExtensionPlugin,
-                        onRevokeExtensionPlugin = onRevokeExtensionPlugin,
-                        onClearExtensionData = onClearExtensionData,
-                        onExportExtensionDiagnostics = onExportExtensionDiagnostics,
-                        onOpenExtensionSettings = onOpenExtensionSettings,
-                        onCloseExtensionSettings = onCloseExtensionSettings,
-                        onUpdateExtensionSetting = onUpdateExtensionSetting,
                         entryGeneration = subscriptionsEntryGeneration,
                         contentPadding = contentPadding,
                         modifier = Modifier.fillMaxSize()
+                    )
+                }
+
+                SettingDestination.ExtensionPlugins -> {
+                    ExtensionPluginListScreen(
+                        state = extensionPluginDiscoveryState,
+                        operationState = extensionPluginOperationState,
+                        onRefresh = onRefreshExtensionPlugins,
+                        onOpenDetails = { packageName, serviceName ->
+                            coroutineScope.launch {
+                                navigator.navigateTo(
+                                    pane = ListDetailPaneScaffoldRole.Detail,
+                                    contentKey = SettingDestination.ExtensionPluginDetails(
+                                        packageName = packageName,
+                                        serviceName = serviceName,
+                                    ),
+                                )
+                            }
+                        },
+                        contentPadding = contentPadding,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+
+                is SettingDestination.ExtensionPluginDetails -> {
+                    val plugin = extensionPlugins.find(
+                        packageName = destination.packageName,
+                        serviceName = destination.serviceName,
+                    )
+                    ExtensionPluginDetailScreen(
+                        plugin = plugin,
+                        operationState = extensionPluginOperationState,
+                        onOpenAuthorization = { reauthorize ->
+                            coroutineScope.launch {
+                                navigator.navigateTo(
+                                    pane = ListDetailPaneScaffoldRole.Detail,
+                                    contentKey =
+                                        SettingDestination.ExtensionPluginAuthorization(
+                                            packageName = destination.packageName,
+                                            serviceName = destination.serviceName,
+                                            reauthorize = reauthorize,
+                                        ),
+                                )
+                            }
+                        },
+                        onOpenSettings = { extensionId ->
+                            coroutineScope.launch {
+                                navigator.navigateTo(
+                                    pane = ListDetailPaneScaffoldRole.Detail,
+                                    contentKey = SettingDestination.ExtensionPluginSettings(
+                                        extensionId = extensionId,
+                                    ),
+                                )
+                            }
+                        },
+                        onDisable = onDisableExtensionPlugin,
+                        onRevoke = onRevokeExtensionPlugin,
+                        onClearData = onClearExtensionData,
+                        onExportDiagnostics = onExportExtensionDiagnostics,
+                        contentPadding = contentPadding,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+
+                is SettingDestination.ExtensionPluginAuthorization -> {
+                    val plugin = extensionPlugins.find(
+                        packageName = destination.packageName,
+                        serviceName = destination.serviceName,
+                    )
+                    ExtensionPluginAuthorizationScreen(
+                        plugin = plugin,
+                        reauthorize = destination.reauthorize,
+                        onAuthorize = { packageName, serviceName, token, reauthorize ->
+                            if (reauthorize) {
+                                onReauthorizeExtensionPlugin(packageName, serviceName, token)
+                            } else {
+                                onEnableExtensionPlugin(packageName, serviceName, token)
+                            }
+                            coroutineScope.launch {
+                                navigator.navigateBack(backNavigationBehavior)
+                            }
+                        },
+                        onCancel = {
+                            coroutineScope.launch {
+                                navigator.navigateBack(backNavigationBehavior)
+                            }
+                        },
+                        contentPadding = contentPadding,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+
+                is SettingDestination.ExtensionPluginSettings -> {
+                    ExtensionSettingsScreen(
+                        state = extensionSettingsState,
+                        extensionId = destination.extensionId,
+                        onRetry = {
+                            onOpenExtensionSettings(destination.extensionId)
+                        },
+                        onUpdate = onUpdateExtensionSetting,
+                        contentPadding = contentPadding,
+                        modifier = Modifier.fillMaxSize(),
                     )
                 }
 
@@ -439,9 +585,28 @@ private fun SettingScreen(
             .hazeSource(LocalHazeState.current)
             .testTag("feature:setting")
     )
-    BackHandler(navigator.canNavigateBack()) {
+    BackHandler(navigator.canNavigateBack(backNavigationBehavior)) {
         coroutineScope.launch {
-            navigator.navigateBack()
+            navigator.navigateBack(backNavigationBehavior)
         }
     }
+}
+
+private fun List<InstalledPlugin>.find(
+    packageName: String,
+    serviceName: String,
+): InstalledPlugin? = singleOrNull { plugin ->
+    plugin.packageName == packageName && plugin.serviceName == serviceName
+}
+
+private fun SettingDestination.usesLocalizedStaticTitle(): Boolean = when (this) {
+    SettingDestination.Default,
+    SettingDestination.Playlists,
+    SettingDestination.Appearance,
+    SettingDestination.Optional,
+    SettingDestination.CodecPack -> true
+    SettingDestination.ExtensionPlugins,
+    is SettingDestination.ExtensionPluginDetails,
+    is SettingDestination.ExtensionPluginAuthorization,
+    is SettingDestination.ExtensionPluginSettings -> false
 }

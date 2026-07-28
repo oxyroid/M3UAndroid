@@ -10,6 +10,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.BySelector
+import androidx.test.uiautomator.StaleObjectException
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
@@ -85,7 +86,7 @@ class SubscriptionSourceSelectionTest {
             if (matrixCase == MATRIX_CASE_WIDE_LTR) {
                 assertWideSettingPanesAreArrangedSideBySide()
             }
-            assertExtensionPluginHeaderWrapsWithoutOverlap()
+            assertExtensionPluginListHeaderWrapsWithoutOverlap()
         }
     }
 
@@ -142,7 +143,7 @@ class SubscriptionSourceSelectionTest {
                 caseInsensitive(context.getString(string.feat_setting_label_add_playlist))
             )
             val alternateTabSelector = By.text(
-                caseInsensitive(context.getString(string.feat_setting_extension_plugins))
+                caseInsensitive(context.getString(string.feat_setting_label_epg_playlists))
             )
 
             device.findRequiredObject(alternateTabSelector).clickableAncestor().click()
@@ -169,9 +170,9 @@ class SubscriptionSourceSelectionTest {
                 shiftedBounds == null || shiftedBounds != fullyVisibleBounds,
             )
             device.pressBack()
-            device.findRequiredObject(
+            device.clickRequiredObject(
                 By.text(caseInsensitive(context.getString(string.feat_setting_playlist_management)))
-            ).click()
+            )
             SystemClock.sleep(TAB_ANIMATION_SETTLE_MILLIS)
 
             val restoredBounds = device.findRequiredObject(firstTabSelector).visibleBounds
@@ -212,7 +213,7 @@ class SubscriptionSourceSelectionTest {
                 focusedField.visibleBounds.bottom <= imeTop,
             )
 
-            assertTrue(device.pressBack())
+            device.pressBack()
             waitForImeHidden(scenario)
         }
     }
@@ -461,13 +462,12 @@ class SubscriptionSourceSelectionTest {
         )
     }
 
-    private fun assertExtensionPluginHeaderWrapsWithoutOverlap() {
+    private fun assertExtensionPluginListHeaderWrapsWithoutOverlap() {
         val extensionTitle = context.getString(string.feat_setting_extension_plugins)
-        val extensionTab = device.findObjects(
-            By.text(caseInsensitive(extensionTitle))
-        ).minByOrNull { node -> node.visibleBounds.top }
-            ?: error("Extension plugins tab was not found")
-        extensionTab.clickableAncestor().click()
+        device.pressBack()
+        device.findRequiredObject(By.text(caseInsensitive(extensionTitle)))
+            .clickableAncestor()
+            .click()
 
         val hint = device.wait(
             Until.findObject(
@@ -479,36 +479,35 @@ class SubscriptionSourceSelectionTest {
             ),
             UI_TIMEOUT_MILLIS,
         ) ?: error("Extension plugins page did not become visible")
-        val header = device.findObjects(
-            By.text(caseInsensitive(extensionTitle))
-        ).maxByOrNull { node -> node.visibleBounds.top }
-            ?: error("Extension plugins page heading was not found")
-        val refresh = device.findRequiredObject(
+        val heading = device.findRequiredObject(
             By.text(
-                caseInsensitive(
-                    context.getString(string.feat_setting_codec_pack_refresh)
-                )
+                caseInsensitive(context.getString(string.feat_setting_extension_on_device))
             )
         )
-        assertTrue(
-            "Extension title and refresh action overlap: " +
-                "title=${header.visibleBounds}, refresh=${refresh.visibleBounds}",
-            header.visibleBounds.bottom <= refresh.visibleBounds.top,
+        val refresh = device.findRequiredObject(
+            By.desc(caseInsensitive(context.getString(string.ui_action_refresh)))
+        )
+        assertFalse(
+            "Extension section heading and refresh action overlap: " +
+                "heading=${heading.visibleBounds}, refresh=${refresh.visibleBounds}",
+            Rect.intersects(heading.visibleBounds, refresh.visibleBounds),
         )
         assertTrue(
-            "Extension hint overlaps the refresh action: " +
-                "refresh=${refresh.visibleBounds}, hint=${hint.visibleBounds}",
-            refresh.visibleBounds.bottom <= hint.visibleBounds.top,
+            "Extension hint overlaps the section header: " +
+                "heading=${heading.visibleBounds}, refresh=${refresh.visibleBounds}, " +
+                "hint=${hint.visibleBounds}",
+            maxOf(heading.visibleBounds.bottom, refresh.visibleBounds.bottom) <=
+                hint.visibleBounds.top,
         )
         val isRtl =
             context.resources.configuration.layoutDirection == View.LAYOUT_DIRECTION_RTL
         assertTrue(
             "Extension refresh action is not aligned to the logical end: " +
-                "title=${header.visibleBounds}, refresh=${refresh.visibleBounds}, rtl=$isRtl",
+                "heading=${heading.visibleBounds}, refresh=${refresh.visibleBounds}, rtl=$isRtl",
             if (isRtl) {
-                refresh.visibleBounds.left <= header.visibleBounds.left
+                refresh.visibleBounds.right <= heading.visibleBounds.left
             } else {
-                refresh.visibleBounds.right >= header.visibleBounds.right
+                heading.visibleBounds.right <= refresh.visibleBounds.left
             },
         )
     }
@@ -597,6 +596,27 @@ class SubscriptionSourceSelectionTest {
     private fun UiDevice.findRequiredObject(selector: BySelector): UiObject2 =
         wait(Until.findObject(selector), UI_TIMEOUT_MILLIS)
             ?: error("Required UI object was not found: $selector")
+
+    private fun UiDevice.clickRequiredObject(selector: BySelector) {
+        val deadline = SystemClock.uptimeMillis() + UI_TIMEOUT_MILLIS
+        var lastFailure: StaleObjectException? = null
+        while (SystemClock.uptimeMillis() < deadline) {
+            val target = findObject(selector)
+            if (target != null) {
+                try {
+                    target.clickableAncestor().click()
+                    return
+                } catch (failure: StaleObjectException) {
+                    lastFailure = failure
+                }
+            }
+            SystemClock.sleep(MENU_ANIMATION_POLL_MILLIS)
+        }
+        throw AssertionError(
+            "Required UI object could not be clicked: $selector",
+            lastFailure,
+        )
+    }
 
     private fun waitForFullWidthOption(
         selector: BySelector,

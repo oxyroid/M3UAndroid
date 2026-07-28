@@ -2,22 +2,26 @@
 
 set -euo pipefail
 
-if [[ "$#" -ne 1 ]]; then
-  echo "Usage: $0 <emulator-serial>" >&2
+if [[ "$#" -lt 1 || "$#" -gt 2 ]]; then
+  echo "Usage: $0 <emulator-serial> [phone|tablet|all]" >&2
   exit 2
 fi
 
 device_serial="$1"
+device_profile="${2:-all}"
 adb_command="${ADB_COMMAND:-adb}"
 test_class="com.m3u.testing.SubscriptionSourceSelectionTest"
 content_padding_test="com.m3u.testing.SubscriptionContentPaddingTest"
-full_test="$test_class,$content_padding_test"
-matrix_test="$test_class#providerFormWorksInRequestedAccessibilityConfiguration,$content_padding_test#lastProviderActionCanScrollAboveTheSystemSafeArea"
+extension_test="com.m3u.testing.ExternalExtensionManagementUiTest"
+full_test="$test_class,$content_padding_test,$extension_test"
+matrix_test="$test_class#providerFormWorksInRequestedAccessibilityConfiguration,$content_padding_test#lastProviderActionCanScrollAboveTheSystemSafeArea,$extension_test"
 runner="com.m3u.smartphone.test/androidx.test.runner.AndroidJUnitRunner"
 app_package="com.m3u.smartphone"
 test_package="com.m3u.smartphone.test"
+reference_extension_package="com.m3u.testing.extension.reference"
 main_apk="app/smartphone/build/outputs/apk/debug/smartphone-debug.apk"
 test_apk="app/smartphone/build/outputs/apk/androidTest/debug/smartphone-debug-androidTest.apk"
+reference_extension_apk="testing/extension-reference/build/outputs/apk/debug/extension-reference-debug.apk"
 work_dir=""
 restore_needed=0
 
@@ -61,15 +65,27 @@ apply_original_device_settings() {
   restore_setting system user_rotation "$original_user_rotation" || apply_status=1
   restore_setting secure show_ime_with_hard_keyboard \
     "$original_show_ime" || apply_status=1
-  adb_for_device shell setprop debug.force_rtl \
-    "$original_force_rtl_property" || apply_status=1
+  if [[ -n "$original_force_rtl_property" ]]; then
+    adb_for_device shell setprop debug.force_rtl \
+      "$original_force_rtl_property" || apply_status=1
+  else
+    # adb's argument protocol drops an empty final argument. Let the device
+    # shell parse an explicitly quoted empty value instead.
+    adb_for_device shell "setprop debug.force_rtl ''" || apply_status=1
+  fi
 
   return "$apply_status"
 }
 
 wait_for_boot() {
-  adb_for_device wait-for-device
   local deadline=$((SECONDS + 180))
+  while ! adb_for_device get-state >/dev/null 2>&1; do
+    if (( SECONDS >= deadline )); then
+      echo "Timed out waiting for $device_serial to connect." >&2
+      return 1
+    fi
+    sleep 1
+  done
   while [[ "$(adb_for_device shell getprop sys.boot_completed | tr -d '\r')" != "1" ]]; do
     if (( SECONDS >= deadline )); then
       echo "Timed out waiting for $device_serial to boot." >&2
@@ -80,6 +96,23 @@ wait_for_boot() {
   # LocaleManager can accept a command before its configuration broadcast is
   # observable by a newly started activity immediately after a reboot.
   sleep 2
+}
+
+uninstall_test_package() {
+  local package_name="$1"
+
+  if ! adb_for_device shell pm path "$package_name" 2>/dev/null |
+      tr -d '\r' |
+      grep -q '^package:'; then
+    return 0
+  fi
+  adb_for_device uninstall "$package_name" >/dev/null
+  if adb_for_device shell pm path "$package_name" 2>/dev/null |
+      tr -d '\r' |
+      grep -q '^package:'; then
+    echo "Package remains installed after cleanup: $package_name" >&2
+    return 1
+  fi
 }
 
 wait_for_app_locale() {
@@ -121,15 +154,16 @@ restore_device() {
 cleanup() {
   local exit_status=$?
   trap - EXIT
-  # Ignore a second interrupt until restoration and package cleanup finish.
-  trap '' INT TERM
+  # A second signal is an explicit request to stop even if the device is lost.
+  trap 'exit 130' INT TERM
 
   restore_device || {
     echo "Failed to restore $device_serial; restore its display settings manually." >&2
     exit_status=1
   }
-  adb_for_device uninstall "$test_package" >/dev/null 2>&1 || true
-  adb_for_device uninstall "$app_package" >/dev/null 2>&1 || true
+  uninstall_test_package "$test_package" || exit_status=1
+  uninstall_test_package "$app_package" || exit_status=1
+  uninstall_test_package "$reference_extension_package" || exit_status=1
   rm -rf "$work_dir"
   exit "$exit_status"
 }
@@ -152,8 +186,10 @@ configure_case() {
       adb_for_device shell wm size 1080x2400
       adb_for_device shell wm density 420
       font_scale=2.0
-      force_rtl=1
-      force_rtl_property=true
+      # The RTL locale must drive layout direction; Force RTL would mask
+      # locale-sensitive ordering bugs.
+      force_rtl=0
+      force_rtl_property=false
       ;;
     wide-ltr)
       adb_for_device shell wm size 2160x1200
@@ -226,7 +262,7 @@ if [[ ! "$sdk_level" =~ ^[0-9]+$ ]] || (( sdk_level < 33 )); then
   echo "The per-app locale matrix requires an API 33 or newer emulator." >&2
   exit 2
 fi
-for package_name in "$app_package" "$test_package"; do
+for package_name in "$app_package" "$test_package" "$reference_extension_package"; do
   if adb_for_device shell pm path "$package_name" | tr -d '\r' | grep -q '^package:'; then
     echo "Remove $package_name or use a clean disposable emulator." >&2
     exit 2
@@ -242,7 +278,6 @@ original_force_rtl="$(read_setting global debug.force_rtl)"
 original_force_rtl_property="$(
   adb_for_device shell getprop debug.force_rtl | tr -d '\r'
 )"
-original_force_rtl_property="${original_force_rtl_property:-false}"
 original_accelerometer_rotation="$(read_setting system accelerometer_rotation)"
 original_user_rotation="$(read_setting system user_rotation)"
 original_show_ime="$(read_setting secure show_ime_with_hard_keyboard)"
@@ -250,12 +285,29 @@ work_dir="$(mktemp -d)"
 restore_needed=1
 trap cleanup EXIT INT TERM
 
-./gradlew \
+./gradlew --no-daemon --max-workers=1 \
   :app:smartphone:assembleDebug \
-  :app:smartphone:assembleDebugAndroidTest
+  :app:smartphone:assembleDebugAndroidTest \
+  :testing:extension-reference:assembleDebug
 adb_for_device install -r "$main_apk"
 adb_for_device install -r "$test_apk"
+adb_for_device install -r "$reference_extension_apk"
 
-run_case compact-ltr "$full_test"
-run_case compact-rtl-large "$matrix_test"
-run_case wide-ltr "$matrix_test"
+case "$device_profile" in
+  phone)
+    run_case compact-ltr "$full_test"
+    run_case compact-rtl-large "$matrix_test"
+    ;;
+  tablet)
+    run_case wide-ltr "$matrix_test"
+    ;;
+  all)
+    run_case compact-ltr "$full_test"
+    run_case compact-rtl-large "$matrix_test"
+    run_case wide-ltr "$matrix_test"
+    ;;
+  *)
+    echo "Unknown device profile: $device_profile" >&2
+    exit 2
+    ;;
+esac

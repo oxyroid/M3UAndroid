@@ -399,7 +399,7 @@ fun TvActionButton(
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                         fontFamily = TvFonts.Body,
-                        maxLines = 2,
+                        maxLines = 4,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.clearAndSetSemantics {},
                     )
