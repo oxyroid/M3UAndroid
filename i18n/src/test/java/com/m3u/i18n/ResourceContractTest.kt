@@ -117,6 +117,58 @@ class ResourceContractTest {
         assertTrue(failures.isEmpty(), failures.joinToString(separator = "\n"))
     }
 
+    @Test
+    fun `provider added feedback is count independent`() {
+        val resourceRoot = resourceRoot()
+        val defaults = readEntries(resourceRoot.resolve("values"))
+        assertTrue(
+            PROVIDER_ADDED_KEY in defaults,
+            "$PROVIDER_ADDED_KEY must have a default resource",
+        )
+        val directories = listOf(resourceRoot.resolve("values")) + localeDirectories(resourceRoot)
+        val failures = buildList {
+            directories.forEach { directory ->
+                val entry = readEntries(directory)[PROVIDER_ADDED_KEY] ?: return@forEach
+                if (entry.formatSignature.isNotEmpty()) {
+                    add(
+                        "${directory.name}: $PROVIDER_ADDED_KEY must not depend on a count argument"
+                    )
+                }
+            }
+        }
+
+        assertTrue(failures.isEmpty(), failures.joinToString(separator = "\n"))
+    }
+
+    @Test
+    fun `extension and provider resources exist in every supported locale`() {
+        val resourceRoot = resourceRoot()
+        val requiredKeys = readEntries(resourceRoot.resolve("values"))
+            .keys
+            .filterTo(sortedSetOf()) { key ->
+                key.startsWith(PROVIDER_KEY_PREFIX) ||
+                    key.startsWith(EXTENSION_KEY_PREFIX) ||
+                    key in EXTENSION_PROVIDER_UI_KEYS
+            }
+        val failures = buildList {
+            localeDirectories(resourceRoot).forEach { directory ->
+                val localized = readEntries(directory)
+                val missing = requiredKeys - localized.keys
+                if (missing.isNotEmpty()) {
+                    add("${directory.name}: missing ${missing.joinToString()}")
+                }
+                requiredKeys
+                    .filter { key -> localized[key]?.text?.isBlank() == true }
+                    .forEach { key ->
+                        add("${directory.name}: $key is blank")
+                    }
+            }
+        }
+
+        assertTrue(requiredKeys.isNotEmpty(), "No extension or provider resources were found")
+        assertTrue(failures.isEmpty(), failures.joinToString(separator = "\n"))
+    }
+
     private fun localeDirectories(resourceRoot: Path): List<Path> {
         return Files.list(resourceRoot).use { directories ->
             directories
@@ -219,6 +271,22 @@ class ResourceContractTest {
 
     private companion object {
         const val ANDROID_NAMESPACE = "http://schemas.android.com/apk/res/android"
+        const val PROVIDER_ADDED_KEY = "string/feat_setting_provider_added"
+        const val PROVIDER_KEY_PREFIX = "string/feat_setting_provider_"
+        const val EXTENSION_KEY_PREFIX = "string/feat_setting_extension_"
+        val EXTENSION_PROVIDER_UI_KEYS = setOf(
+            "string/feat_setting_external_extensions",
+            "string/feat_setting_external_extensions_description",
+            "string/feat_setting_data_source_provider",
+            "string/feat_setting_data_source_selector_description",
+            "string/feat_setting_data_source_selector_with_identifier_description",
+            "string/feat_setting_label_subscribe",
+            "string/feat_setting_label_subscribing",
+            "string/tv_extensions_subtitle",
+            "string/tv_extensions_enable_developer_mode",
+            "string/tv_extensions_disable_developer_mode",
+            "string/ui_state_loading",
+        )
         val FORMAT_ARGUMENT =
             Regex("%(?:(\\d+)\\$)?[-#+ 0,(]*\\d*(?:\\.\\d+)?([a-zA-Z%])")
         val BIDI_CONTROL = Regex("[\\u061C\\u200E\\u200F\\u202A-\\u202E\\u2066-\\u2069]")

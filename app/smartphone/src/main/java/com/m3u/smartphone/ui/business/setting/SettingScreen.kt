@@ -20,6 +20,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -91,6 +92,7 @@ fun SettingRoute(
     val localeTag = LocalConfiguration.current.locales[0].toLanguageTag()
     val context = LocalContext.current
     val diagnosticsShareTitle = stringResource(string.feat_setting_extension_diagnostics_share_title)
+    val currentDiagnosticsShareTitle by rememberUpdatedState(diagnosticsShareTitle)
 
     LaunchedEffect(viewModel, localeTag) {
         viewModel.refreshSubscriptionProvidersForLocale(localeTag)
@@ -104,7 +106,7 @@ fun SettingRoute(
                         type = "application/json"
                         putExtra(Intent.EXTRA_TEXT, payload)
                     },
-                    diagnosticsShareTitle,
+                    currentDiagnosticsShareTitle,
                 )
             )
         }

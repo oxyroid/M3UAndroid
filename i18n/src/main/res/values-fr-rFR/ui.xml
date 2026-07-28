@@ -18,6 +18,10 @@
     <string name="ui_sort_mixed">Mélangé</string>
     <string name="ui_sort_never_played">jamais joué</string>
     <string name="ui_sort_unspecified">Non spécifié</string>
+    <string name="ui_state_loading">Chargement</string>
+    <string name="tv_extensions_subtitle">Extensions APK locales installées et leur état de confiance.</string>
+    <string name="tv_extensions_enable_developer_mode">Activer les extensions pour développeurs</string>
+    <string name="tv_extensions_disable_developer_mode">Désactiver les extensions pour développeurs</string>
     <string name="ui_connect">Se connecter</string>
     <string name="ui_remote_control_pair_title">entrez le code depuis la TV</string>
     <string name="ui_remote_control_pair_subtitle">Assurez-vous d\'être connecté au même Wi-Fi</string>

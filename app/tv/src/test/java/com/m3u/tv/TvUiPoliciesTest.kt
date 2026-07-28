@@ -217,6 +217,206 @@ class TvUiPoliciesTest {
     }
 
     @Test
+    fun `built in provider choice uses the selectable variant name`() {
+        assertEquals(
+            TvProviderChoicePresentation(
+                variantName = "Jellyfin",
+                providerName = null,
+            ),
+            tvProviderChoicePresentation(
+                providerId = "builtin.media-server",
+                providerDisplayName = "Emby / Jellyfin",
+                variantDisplayName = "Jellyfin",
+                external = false,
+            ),
+        )
+    }
+
+    @Test
+    fun `external provider choice preserves a distinct plugin name`() {
+        assertEquals(
+            TvProviderChoicePresentation(
+                variantName = "Jellyfin",
+                providerName = "Living room provider",
+            ),
+            tvProviderChoicePresentation(
+                providerId = "dev.example.provider",
+                providerDisplayName = "Living room provider",
+                variantDisplayName = "Jellyfin",
+                external = true,
+            ),
+        )
+        assertEquals(
+            TvProviderChoicePresentation(
+                variantName = "Jellyfin",
+                providerName = null,
+            ),
+            tvProviderChoicePresentation(
+                providerId = "dev.example.provider",
+                providerDisplayName = "Jellyfin",
+                variantDisplayName = "Jellyfin",
+                external = true,
+            ),
+        )
+    }
+
+    @Test
+    fun `status focus returns only after a transient panel closes`() {
+        assertTrue(
+            shouldRestoreTvStatusFocus(
+                panelWasVisible = true,
+                panelIsVisible = false,
+                hasReturnTarget = true,
+            )
+        )
+        assertFalse(
+            shouldRestoreTvStatusFocus(
+                panelWasVisible = false,
+                panelIsVisible = false,
+                hasReturnTarget = true,
+            )
+        )
+        assertFalse(
+            shouldRestoreTvStatusFocus(
+                panelWasVisible = true,
+                panelIsVisible = false,
+                hasReturnTarget = false,
+            )
+        )
+    }
+
+    @Test
+    fun `plugin trust mutations return to the stable developer mode control`() {
+        listOf(
+            TvExtensionPluginAction.DISABLE,
+            TvExtensionPluginAction.ENABLE,
+            TvExtensionPluginAction.REVOKE,
+            TvExtensionPluginAction.REAUTHORIZE,
+            TvExtensionPluginAction.CLEAR_DATA,
+        ).forEach { action ->
+            assertEquals(
+                TvExtensionPluginReturnFocusAnchor.DEVELOPER_MODE,
+                tvExtensionPluginReturnFocusAnchor(action),
+            )
+        }
+        listOf(
+            TvExtensionPluginAction.SETTINGS,
+            TvExtensionPluginAction.EXPORT_DIAGNOSTICS,
+        ).forEach { action ->
+            assertEquals(
+                TvExtensionPluginReturnFocusAnchor.SOURCE_ACTION,
+                tvExtensionPluginReturnFocusAnchor(action),
+            )
+        }
+    }
+
+    @Test
+    fun `developer mode item index accounts for dynamic provider rows`() {
+        assertEquals(
+            8,
+            tvExtensionDeveloperModeItemIndex(
+                providerFeedbackVisible = false,
+                reauthenticationCount = 0,
+                providerDiscoveryItemCount = 4,
+                extensionErrorVisible = false,
+            ),
+        )
+        assertEquals(
+            12,
+            tvExtensionDeveloperModeItemIndex(
+                providerFeedbackVisible = true,
+                reauthenticationCount = 2,
+                providerDiscoveryItemCount = 4,
+                extensionErrorVisible = true,
+            ),
+        )
+    }
+
+    @Test
+    fun `provider return indexes account for feedback and reauthentication rows`() {
+        assertEquals(
+            5,
+            tvProviderReauthenticationItemIndex(
+                providerFeedbackVisible = true,
+                reauthenticationIndex = 1,
+            ),
+        )
+        assertEquals(
+            8,
+            tvProviderVariantItemIndex(
+                providerFeedbackVisible = true,
+                reauthenticationCount = 2,
+                providerVariantIndex = 2,
+            ),
+        )
+    }
+
+    @Test
+    fun `successful reauthentication returns to the stable provider variant`() {
+        assertEquals(
+            TvProviderReauthenticationFocusAnchor.ACCOUNT_ACTION,
+            tvProviderReauthenticationFocusAnchor(
+                subscriptionSucceeded = false,
+                accountActionVisible = true,
+            ),
+        )
+        listOf(
+            true to true,
+            false to false,
+            true to false,
+        ).forEach { (subscriptionSucceeded, accountActionVisible) ->
+            assertEquals(
+                TvProviderReauthenticationFocusAnchor.PROVIDER_VARIANT,
+                tvProviderReauthenticationFocusAnchor(
+                    subscriptionSucceeded = subscriptionSucceeded,
+                    accountActionVisible = accountActionVisible,
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun `cancelling a plugin panel returns to its source action`() {
+        listOf(
+            TvExtensionPluginAction.ENABLE,
+            TvExtensionPluginAction.REVOKE,
+            TvExtensionPluginAction.REAUTHORIZE,
+            TvExtensionPluginAction.CLEAR_DATA,
+        ).forEach { action ->
+            assertEquals(
+                TvExtensionPluginReturnFocusAnchor.SOURCE_ACTION,
+                tvExtensionPluginReturnFocusAnchor(
+                    action = action,
+                    panelCancelled = true,
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun `plugin source action availability is exposed for focus retry`() {
+        val actions = TvExtensionPluginActionAvailability(
+            settings = false,
+            disable = true,
+            enable = false,
+            revoke = true,
+            reauthorize = false,
+            exportDiagnostics = true,
+            clearData = false,
+        )
+
+        assertTrue(actions.isActionAvailable(TvExtensionPluginAction.DISABLE))
+        assertTrue(actions.isActionAvailable(TvExtensionPluginAction.REVOKE))
+        assertTrue(
+            actions.isActionAvailable(TvExtensionPluginAction.EXPORT_DIAGNOSTICS)
+        )
+        assertFalse(actions.isActionAvailable(TvExtensionPluginAction.SETTINGS))
+        assertFalse(actions.isActionAvailable(TvExtensionPluginAction.ENABLE))
+        assertFalse(actions.isActionAvailable(TvExtensionPluginAction.REAUTHORIZE))
+        assertFalse(actions.isActionAvailable(TvExtensionPluginAction.CLEAR_DATA))
+    }
+
+    @Test
     fun `app back handler preserves overlay priority`() {
         assertEquals(
             TvAppBackTarget.PLAYER,

@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.m3u.extension.api.subscription.EmbyCompatibleProviderKinds
 import com.m3u.extension.api.subscription.SubscriptionProviderSettingKeys
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -60,4 +61,32 @@ class EmbyCompatibleProviderLocalizationTest {
         assertEquals("nom d'utilisateur", fields[SubscriptionProviderSettingKeys.Username])
         assertEquals("mot de passe", fields[SubscriptionProviderSettingKeys.Password])
     }
+
+    @Test
+    fun wireDisplayTextRemovesEveryControlRejectedByProviderDiscovery() {
+        val bidiControls = buildList {
+            add('\u061C')
+            add('\u200E')
+            add('\u200F')
+            addAll(('\u202A'..'\u202E').toList())
+            addAll(('\u2066'..'\u2069').toList())
+        }.joinToString(separator = "")
+        val sanitized = EmbyCompatibleProvider.wireSafeDisplayText(
+            "$bidiControls server\u0000\naddress $bidiControls"
+        )
+
+        assertEquals("server address", sanitized)
+        assertFalse(
+            sanitized.any { character ->
+                character.isISOControl() || character.isExtensionBidiControl()
+            }
+        )
+    }
+
+    private fun Char.isExtensionBidiControl(): Boolean =
+        code == 0x061C ||
+            code in 0x202A..0x202E ||
+            code in 0x2066..0x2069 ||
+            code == 0x200E ||
+            code == 0x200F
 }

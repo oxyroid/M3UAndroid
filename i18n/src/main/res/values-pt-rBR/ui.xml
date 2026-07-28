@@ -16,6 +16,10 @@
     <string name="ui_sort_recently">Recentes</string>
     <string name="ui_sort_never_played">Não assistiu ainda</string>
     <string name="ui_sort_unspecified">Não especificado</string>
+    <string name="ui_state_loading">Carregando</string>
+    <string name="tv_extensions_subtitle">Extensões APK locais instaladas e seu status de confiança.</string>
+    <string name="tv_extensions_enable_developer_mode">Ativar extensões de desenvolvedor</string>
+    <string name="tv_extensions_disable_developer_mode">Desativar extensões de desenvolvedor</string>
     <string name="ui_connect">Conectar</string>
     <string name="ui_remote_control_pair_title">Digite o código da TV</string>
     <string name="ui_remote_control_pair_subtitle">Certifique-se de está conectado ao mesmo Wi-Fi</string>

@@ -50,6 +50,17 @@ jobs:
             :extension:sdk-android:testDebugUnitTest \
             :extension:transport-android:testDebugUnitTest
 
+      - name: Verify localization contracts
+        run: ./gradlew :i18n:testDebugUnitTest
+
+      - name: Validate connected UI harnesses
+        run: |
+          bash -n testing/bin/run-smartphone-provider-ui-matrix.sh
+          ./gradlew \
+            :data:assembleDebugAndroidTest \
+            :app:smartphone:assembleDebugAndroidTest \
+            :app:tv:assembleDebugAndroidTest
+
       - name: Build smartphone release APK
         run: ./gradlew :app:smartphone:assembleRelease
 

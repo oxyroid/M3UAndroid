@@ -190,10 +190,12 @@ dependencies {
     implementation(libs.acra.mail)
 
     testImplementation(kotlin("test-junit"))
+    androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.core)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.uiautomator.uiautomator)
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(project(":extension:runtime"))
     androidTestImplementation(project(":extension:transport-android"))
 }

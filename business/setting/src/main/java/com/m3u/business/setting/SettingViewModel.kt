@@ -151,6 +151,9 @@ class SettingViewModel @Inject constructor(
         if (providerLocaleTag == requestedLocaleTag) return
         providerLocaleTag = requestedLocaleTag
         startSubscriptionProviderDiscovery(requestedLocaleTag)
+        extensionSettingsRequestedId?.value?.let { extensionId ->
+            openExtensionSettings(extensionId, requestedLocaleTag)
+        }
     }
 
     private fun startSubscriptionProviderDiscovery(localeTag: String?): Job {
@@ -787,8 +790,8 @@ class SettingViewModel @Inject constructor(
                     if (error is CancellationException) throw error
                 }
                 result.fold(
-                    onSuccess = { subscription ->
-                        messager.emit(SettingMessage.ProviderAdded(subscription.channelCount))
+                    onSuccess = {
+                        messager.emit(SettingMessage.ProviderAdded)
                         if (providerInputSnapshot() == submittedInputs) {
                             resetAllInputs()
                         }

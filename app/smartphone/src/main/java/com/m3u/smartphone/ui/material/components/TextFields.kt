@@ -193,6 +193,7 @@ fun PlaceholderField(
     modifier: Modifier = Modifier,
     backgroundColor: Color = TextFieldDefaults.containerColor(),
     contentColor: Color = TextFieldDefaults.contentColor(),
+    placeholderColor: Color = contentColor.copy(alpha = 0.35f),
     shape: Shape = TextFieldDefaults.shape(),
     placeholder: String = "",
     keyboardType: KeyboardType = KeyboardType.Text,
@@ -325,7 +326,7 @@ fun PlaceholderField(
                             Text(
                                 modifier = Modifier.clearTextFieldLabelSemantics(),
                                 text = placeholder,
-                                color = contentColor.copy(alpha = .35f),
+                                color = placeholderColor,
                                 fontSize = animPlaceHolderFontSize.sp,
                                 maxLines = 2,
                                 overflow = TextOverflow.Ellipsis,
@@ -349,7 +350,7 @@ fun PlaceholderField(
                                 Text(
                                     modifier = Modifier.clearTextFieldLabelSemantics(),
                                     text = placeholder,
-                                    color = contentColor.copy(alpha = .35f),
+                                    color = placeholderColor,
                                     fontSize = animPlaceHolderFontSize.sp,
                                     maxLines = 2,
                                     overflow = TextOverflow.Ellipsis,

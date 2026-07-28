@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -27,6 +28,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.error
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -143,6 +148,11 @@ private fun ExtensionSettingControl(
     onDraftChange: (String) -> Unit,
     onUpdate: (String?) -> Unit,
 ) {
+    val requiredDescription = stringResource(string.feat_setting_provider_error_required)
+    val semanticFieldLabel = buildList {
+        add(field.label.withoutBidiControls())
+        if (field.required) add(requiredDescription)
+    }.distinct().joinToString(separator = ". ")
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         when (field.type) {
             ExtensionSettingType.BOOLEAN -> {
@@ -155,6 +165,9 @@ private fun ExtensionSettingControl(
                             role = Role.Switch,
                             onValueChange = { value -> onUpdate(value.toString()) },
                         )
+                        .semantics {
+                            contentDescription = semanticFieldLabel
+                        }
                         .padding(vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
@@ -176,12 +189,34 @@ private fun ExtensionSettingControl(
 
             ExtensionSettingType.SINGLE_CHOICE -> {
                 SettingLabel(field, bidiFormatter)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                val errorMessage = if (
+                    field.required && field.choices.none { choice -> choice.value == rawValue }
+                ) {
+                    requiredDescription
+                } else {
+                    null
+                }
+                FlowRow(
+                    modifier = Modifier.selectableGroup(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     field.choices.forEach { choice ->
                         FilterChip(
                             selected = rawValue == choice.value,
                             onClick = { onUpdate(choice.value) },
                             label = { Text(bidiFormatter.natural(choice.label)) },
+                            modifier = Modifier.semantics {
+                                role = Role.RadioButton
+                                contentDescription = buildList {
+                                    add(choice.label.withoutBidiControls())
+                                    add(field.label.withoutBidiControls())
+                                    if (field.required) add(requiredDescription)
+                                }.distinct().joinToString(separator = ". ")
+                                errorMessage?.let { message ->
+                                    error(message)
+                                }
+                            },
                         )
                     }
                 }
@@ -193,7 +228,11 @@ private fun ExtensionSettingControl(
                 OutlinedTextField(
                     value = rawValue,
                     onValueChange = onDraftChange,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .semantics {
+                            contentDescription = semanticFieldLabel
+                        },
                     label = { SettingLabel(field, bidiFormatter) },
                     placeholder = if (field.type == ExtensionSettingType.SECRET && secretConfigured) {
                         { Text(stringResource(string.feat_setting_extension_secret_configured)) }
@@ -214,7 +253,10 @@ private fun ExtensionSettingControl(
                     ),
                     singleLine = true,
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     TextButton(
                         enabled = field.type != ExtensionSettingType.SECRET || rawValue.isNotEmpty(),
                         onClick = { onUpdate(rawValue) },

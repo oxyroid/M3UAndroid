@@ -122,6 +122,131 @@ internal fun tvProviderSubmitEnabled(
     availability: TvProviderFormAvailability,
 ): Boolean = !inProgress && availability == TvProviderFormAvailability.AVAILABLE
 
+internal data class TvProviderChoicePresentation(
+    val variantName: String,
+    val providerName: String?,
+)
+
+/**
+ * Built-in providers are presented as their selectable variant (for example,
+ * Emby or Jellyfin). External providers additionally retain their plugin
+ * identity when it differs from the variant name.
+ */
+internal fun tvProviderChoicePresentation(
+    providerId: String,
+    providerDisplayName: String,
+    variantDisplayName: String,
+    external: Boolean,
+): TvProviderChoicePresentation {
+    val variantName = variantDisplayName.ifBlank { providerId }
+    val providerName = providerDisplayName.ifBlank { providerId }
+    return TvProviderChoicePresentation(
+        variantName = variantName,
+        providerName = providerName.takeIf {
+            external && providerName != variantName
+        },
+    )
+}
+
+internal fun shouldRestoreTvStatusFocus(
+    panelWasVisible: Boolean,
+    panelIsVisible: Boolean,
+    hasReturnTarget: Boolean,
+): Boolean = panelWasVisible && !panelIsVisible && hasReturnTarget
+
+internal fun tvExtensionDeveloperModeItemIndex(
+    providerFeedbackVisible: Boolean,
+    reauthenticationCount: Int,
+    providerDiscoveryItemCount: Int,
+    extensionErrorVisible: Boolean,
+): Int {
+    require(reauthenticationCount >= 0)
+    require(providerDiscoveryItemCount >= 0)
+    return 3 +
+        (if (providerFeedbackVisible) 1 else 0) +
+        reauthenticationCount +
+        providerDiscoveryItemCount +
+        1 +
+        (if (extensionErrorVisible) 1 else 0)
+}
+
+internal fun tvProviderReauthenticationItemIndex(
+    providerFeedbackVisible: Boolean,
+    reauthenticationIndex: Int,
+): Int {
+    require(reauthenticationIndex >= 0)
+    return 3 +
+        (if (providerFeedbackVisible) 1 else 0) +
+        reauthenticationIndex
+}
+
+internal fun tvProviderVariantItemIndex(
+    providerFeedbackVisible: Boolean,
+    reauthenticationCount: Int,
+    providerVariantIndex: Int,
+): Int {
+    require(reauthenticationCount >= 0)
+    require(providerVariantIndex >= 0)
+    return 3 +
+        (if (providerFeedbackVisible) 1 else 0) +
+        reauthenticationCount +
+        providerVariantIndex
+}
+
+internal enum class TvProviderReauthenticationFocusAnchor {
+    ACCOUNT_ACTION,
+    PROVIDER_VARIANT,
+}
+
+internal fun tvProviderReauthenticationFocusAnchor(
+    subscriptionSucceeded: Boolean,
+    accountActionVisible: Boolean,
+): TvProviderReauthenticationFocusAnchor =
+    if (subscriptionSucceeded || !accountActionVisible) {
+        TvProviderReauthenticationFocusAnchor.PROVIDER_VARIANT
+    } else {
+        TvProviderReauthenticationFocusAnchor.ACCOUNT_ACTION
+    }
+
+internal enum class TvExtensionPluginAction {
+    SETTINGS,
+    DISABLE,
+    ENABLE,
+    REVOKE,
+    REAUTHORIZE,
+    EXPORT_DIAGNOSTICS,
+    CLEAR_DATA,
+}
+
+internal enum class TvExtensionPluginReturnFocusAnchor {
+    SOURCE_ACTION,
+    DEVELOPER_MODE,
+}
+
+/**
+ * Executed mutations can remove their source action, so they return to the
+ * stable developer-mode switch. Cancelling a panel keeps the source action
+ * intact and returns there instead.
+ */
+internal fun tvExtensionPluginReturnFocusAnchor(
+    action: TvExtensionPluginAction,
+    panelCancelled: Boolean = false,
+): TvExtensionPluginReturnFocusAnchor =
+    if (panelCancelled) {
+        TvExtensionPluginReturnFocusAnchor.SOURCE_ACTION
+    } else {
+        when (action) {
+            TvExtensionPluginAction.DISABLE,
+            TvExtensionPluginAction.ENABLE,
+            TvExtensionPluginAction.REVOKE,
+            TvExtensionPluginAction.REAUTHORIZE,
+            TvExtensionPluginAction.CLEAR_DATA,
+            -> TvExtensionPluginReturnFocusAnchor.DEVELOPER_MODE
+
+            else -> TvExtensionPluginReturnFocusAnchor.SOURCE_ACTION
+        }
+    }
+
 internal data class TvExtensionPluginActionAvailability(
     val settings: Boolean,
     val disable: Boolean,
@@ -131,6 +256,18 @@ internal data class TvExtensionPluginActionAvailability(
     val exportDiagnostics: Boolean,
     val clearData: Boolean,
 )
+
+internal fun TvExtensionPluginActionAvailability.isActionAvailable(
+    action: TvExtensionPluginAction,
+): Boolean = when (action) {
+    TvExtensionPluginAction.SETTINGS -> settings
+    TvExtensionPluginAction.DISABLE -> disable
+    TvExtensionPluginAction.ENABLE -> enable
+    TvExtensionPluginAction.REVOKE -> revoke
+    TvExtensionPluginAction.REAUTHORIZE -> reauthorize
+    TvExtensionPluginAction.EXPORT_DIAGNOSTICS -> exportDiagnostics
+    TvExtensionPluginAction.CLEAR_DATA -> clearData
+}
 
 internal fun extensionPluginActionAvailability(
     enabled: Boolean,

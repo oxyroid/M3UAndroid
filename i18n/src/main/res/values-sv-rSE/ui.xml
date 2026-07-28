@@ -18,6 +18,10 @@
     <string name="ui_sort_mixed">Blandad</string>
     <string name="ui_sort_never_played">aldrig spelad</string>
     <string name="ui_sort_unspecified">Ospecificerad</string>
+    <string name="ui_state_loading">Läser in</string>
+    <string name="tv_extensions_subtitle">Installerade lokala APK-tillägg och deras förtroendestatus.</string>
+    <string name="tv_extensions_enable_developer_mode">Aktivera utvecklartillägg</string>
+    <string name="tv_extensions_disable_developer_mode">Inaktivera utvecklartillägg</string>
     <string name="ui_connect">Anslut</string>
     <string name="ui_remote_control_pair_title">ange kod från TV</string>
     <string name="ui_remote_control_pair_subtitle">Se till att ansluta till samma Wi-Fi</string>

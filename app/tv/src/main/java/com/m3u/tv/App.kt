@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,6 +55,7 @@ fun App(
     val localeTag = LocalConfiguration.current.locales[0].toLanguageTag()
     val context = LocalContext.current
     val diagnosticsShareTitle = stringResource(string.feat_setting_extension_diagnostics_share_title)
+    val currentDiagnosticsShareTitle by rememberUpdatedState(diagnosticsShareTitle)
     var destination by remember { mutableStateOf(TvDestination.Home) }
     var surface by remember { mutableStateOf(TvSurface.Browse) }
     val closePlayer = {
@@ -92,7 +94,7 @@ fun App(
                         type = "application/json"
                         putExtra(Intent.EXTRA_TEXT, payload)
                     },
-                    diagnosticsShareTitle,
+                    currentDiagnosticsShareTitle,
                 )
             )
         }

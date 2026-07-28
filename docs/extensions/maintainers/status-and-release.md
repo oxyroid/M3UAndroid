@@ -22,24 +22,60 @@ This page defines what may ship from the current branch. Implementation instruct
 | External lifecycle | Discovery, identity and certificate trust, review-bound enable/reauthorize tokens, enable/disable, capability and fixed-origin authorization, reconnect, clear data, diagnostics, streamed payloads, and cancellation | Transport tests, `ExtensionPluginRepositoryLifecycleTest`, and `ExternalExtensionIpcTest` |
 | Extension settings | Manifest and dynamic schemas, ordinary values, encrypted secret handles, network-origin approval, and review-bound field edits | `ExtensionSettingsRepositoryTest` and `ExtensionPluginRepositoryLifecycleTest` |
 | External reference provider | Discover, host-managed login, initial and later refresh, Room import, credential-backed playback resolve, header resolution, and session close cross Binder and use the same repository as built-in providers. | `ExternalProviderEndToEndTest` |
-| Provider UI | Phone and TV use descriptor-driven provider lists and forms; Emby and Jellyfin remain separate choices, while external choices retain visible provider identity | `SubscriptionSourceSelectionTest` plus phone and TV device checks |
+| Provider UI | Phone and TV use descriptor-driven provider lists and forms; Emby and Jellyfin remain separate choices, while external choices retain visible provider identity | `SubscriptionSourceSelectionTest`, `TvProviderAccessibilityTest`, and `ResourceContractTest`; connected UI tests currently require an explicit device run |
 | Other Hooks | Settings, search, metadata enrichment, and EPG refresh have typed SDK handlers and product callers | SDK, contribution repository/importer, and IPC tests |
 | Background task | Manifest task declarations are reconciled into periodic WorkManager jobs when an extension is enabled, reauthorized, or restored. Disablement or missing grants cancels them; network tasks use a connected constraint. | `ExtensionBackgroundTaskSchedulerTest`, Worker tests, and `ExtensionPluginRepositoryLifecycleTest` |
+
+## How to read the evidence
+
+A CI gate is run by `.github/workflows/android.yml`. A connected UI check is repeatable, but
+currently needs an explicit device run. A device check is a recorded one-off run.
+`ResourceContractTest` validates resource structure, not native-language quality.
+CI syntax-checks the phone matrix runner and compiles the data, phone, and TV connected-test
+harnesses; it does not execute either device matrix.
+
+Latest connected run, 2026-07-28:
+
+- Phone API 36: 7/7 passed in compact English LTR, 2/2 in compact `ar-XB` RTL with
+  200% text, and 2/2 in a 1080dp-wide English LTR layout. In addition to provider
+  selection and form semantics, the matrix verifies that the final action scrolls fully
+  above the system safe area and floating navigation.
+- TV API 34 at 1280×720: `TvProviderAccessibilityTest` passed 1/1 in English LTR and
+  1/1 in actual `ar-XB` RTL with the rail on the right, including DPad entry, provider
+  form open/close, accessible name, and focus return to Emby.
+
+Repeat the phone matrix on a disposable, booted API 33 or newer phone emulator with:
+
+```shell
+testing/bin/run-smartphone-provider-ui-matrix.sh emulator-5554
+```
+
+The script runs the complete provider and content-safe-area tests in compact English LTR, then
+two targeted cases in the RTL pseudolocale with 200% text and in a 1080dp-wide English window.
+Each run passes a required named instrumentation case; the test fails if the argument, app locale,
+or actual device configuration does not match. The script restores the emulator display settings
+and removes the test packages when it finishes.
 
 ## Before shipping the built-in provider path
 
 - Run the complete migration chain from every supported starting schema through the current
   database version, currently 21→26.
 - Run M3U, EPG, Xtream, ordinary playback, and DLNA regressions after provider or playback changes.
-- Verify phone and TV provider forms with real input in LTR and RTL, large text, accessible labels,
-  and TV focus movement.
+- Run the phone, tablet, and TV connected UI checks with the requested configuration asserted by
+  the test: LTR and RTL, large text, compact and ≥600dp layouts, provider selection/forms, and TV
+  DPad return focus. Record the device or AVD, locale, font scale, width, command, and result.
+- Treat `ResourceContractTest` as a structural gate for keys, placeholders, plurals, and bidi
+  controls. Native-speaker review of provider, sign-in, authorization, error, and destructive
+  action copy is still required before a locale is called complete.
 - Keep the database schema artifact and every manual migration in the same change.
 
 ## Before opening external extensions
 
 - Decide the published threat model. The current broker does not protect a token from a malicious extension colluding with its approved server. A stronger guarantee requires host-owned protected-response parsing and import.
 - Run the complete external provider flow on TV, through WorkManager, and through the real player rather than only the repository-level device test.
-- Add repeatable UI automation for authorization, reauthorization, settings, errors, and TV focus.
+- Add CI-runnable connected UI automation for external authorization, reauthorization, settings,
+  error states, destructive confirmations, and TV focus restoration. The built-in provider DPad
+  test does not satisfy this gate.
 - Add process-level hostile fixtures for a blocked call, ignored cancellation, process death, malformed or oversized output, retained broker access, signer change, and extension-ID collision.
 - Run the same published conformance suite against built-in and external transports.
 - Publish the SDK artifact together with the checked-in golden fixtures and compatibility policy.

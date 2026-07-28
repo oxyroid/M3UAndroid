@@ -54,8 +54,11 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.error
+import androidx.compose.ui.semantics.onClick as semanticsOnClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -67,6 +70,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import com.m3u.core.foundation.util.basic.title
 import com.m3u.data.database.model.Channel
@@ -183,6 +187,7 @@ fun FocusFrame(
     focusedBorderColor: Color = Color.White,
     semanticRole: Role? = Role.Button,
     semanticsLabel: String? = null,
+    semanticsError: String? = null,
     toggleState: ToggleableState? = null,
     onFocus: () -> Unit = {},
     onKey: (KeyEvent) -> Boolean = { false },
@@ -195,6 +200,7 @@ fun FocusFrame(
     )
     Box(
         modifier = modifier
+            .zIndex(if (focused) 1f else 0f)
             .scale(scale)
             .shadow(
                 elevation = if (focused && enabled) 18.dp else 0.dp,
@@ -205,7 +211,7 @@ fun FocusFrame(
             .background(
                 when {
                     focused && enabled -> TvColors.Focus
-                    selected -> TvColors.Focus.copy(alpha = 0.72f)
+                    selected && enabled -> TvColors.Focus.copy(alpha = 0.72f)
                     else -> TvColors.Surface.copy(alpha = 0.86f)
                 }
             )
@@ -239,7 +245,7 @@ fun FocusFrame(
                             }
                         }
                         .clickable(
-                            role = semanticRole,
+                            role = null,
                             onClick = onClick,
                         )
                         .focusable()
@@ -250,19 +256,41 @@ fun FocusFrame(
                 }
             )
             .then(
-                if (semanticRole != null) {
-                    Modifier.semantics(mergeDescendants = true) {
-                        semanticsLabel?.let { label ->
-                            contentDescription = label
-                        }
+                if (semanticRole != null && semanticsLabel != null) {
+                    Modifier.clearAndSetSemantics {
+                        contentDescription = semanticsLabel
                         selectionState?.let { isSelected ->
                             this.selected = isSelected
                         }
                         toggleState?.let { state ->
                             toggleableState = state
                         }
+                        semanticsError?.let { message ->
+                            error(message)
+                        }
+                        role = semanticRole
+                        if (enabled) {
+                            semanticsOnClick {
+                                onClick()
+                                true
+                            }
+                        } else {
+                            disabled()
+                        }
+                    }
+                } else if (semanticRole != null) {
+                    Modifier.semantics(mergeDescendants = true) {
+                        selectionState?.let { isSelected ->
+                            this.selected = isSelected
+                        }
+                        toggleState?.let { state ->
+                            toggleableState = state
+                        }
+                        semanticsError?.let { message ->
+                            error(message)
+                        }
+                        role = semanticRole
                         if (!enabled) {
-                            role = semanticRole
                             disabled()
                         }
                     }
@@ -308,26 +336,33 @@ fun TvActionButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    focusableWhenDisabled: Boolean = false,
     focusRequester: FocusRequester? = null,
     showTextWhenUnfocused: Boolean = true,
     selected: Boolean? = null,
     checked: Boolean? = null,
     semanticRole: Role = Role.Button,
     semanticsLabel: String? = null,
+    semanticsError: String? = null,
+    supportingText: String? = null,
 ) {
     FocusFrame(
         onClick = onClick,
         selected = selected == true || checked == true,
         selectionState = selected.takeIf { checked == null },
         enabled = enabled,
+        focusableWhenDisabled = focusableWhenDisabled,
         shape = RoundedCornerShape(24.dp),
         focusRequester = focusRequester,
+        focusedScale = 1.04f,
         semanticRole = semanticRole,
-        semanticsLabel = semanticsLabel,
+        semanticsLabel = semanticsLabel ?: listOfNotNull(text, supportingText)
+            .joinToString(separator = ". "),
+        semanticsError = semanticsError,
         toggleState = checked?.let { isChecked ->
             if (isChecked) ToggleableState.On else ToggleableState.Off
         },
-        modifier = modifier.heightIn(min = 48.dp)
+        modifier = modifier.heightIn(min = 48.dp),
     ) { focused ->
         val showText = focused || showTextWhenUnfocused
         val active = focused || selected == true || checked == true
@@ -352,19 +387,38 @@ fun TvActionButton(
                 modifier = Modifier.size(24.dp)
             )
             if (showText) {
-                Text(
-                    text = text,
-                    color = when {
-                        !enabled -> TvColors.TextMuted
-                        active -> TvColors.OnFocus
-                        else -> TvColors.TextPrimary
-                    },
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    fontFamily = TvFonts.Body,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
+                val primaryColor = when {
+                    !enabled -> TvColors.TextMuted
+                    active -> TvColors.OnFocus
+                    else -> TvColors.TextPrimary
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        text = text,
+                        color = primaryColor,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        fontFamily = TvFonts.Body,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.clearAndSetSemantics {},
+                    )
+                    supportingText?.let { supportingLabel ->
+                        Text(
+                            text = supportingLabel,
+                            color = when {
+                                !enabled -> TvColors.TextMuted
+                                active -> TvColors.OnFocus.copy(alpha = 0.78f)
+                                else -> TvColors.TextSecondary
+                            },
+                            fontSize = 12.sp,
+                            fontFamily = TvFonts.Body,
+                            maxLines = 1,
+                            overflow = TextOverflow.MiddleEllipsis,
+                            modifier = Modifier.clearAndSetSemantics {},
+                        )
+                    }
+                }
             }
         }
     }

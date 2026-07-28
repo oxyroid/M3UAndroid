@@ -67,6 +67,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.role
@@ -328,10 +329,9 @@ private fun ExtensionPluginsContent(
         verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.medium),
     ) {
         item {
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+                verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.small),
             ) {
                 Text(
                     text = stringResource(string.feat_setting_extension_plugins),
@@ -340,6 +340,7 @@ private fun ExtensionPluginsContent(
                 TextButton(
                     onClick = onRefresh,
                     enabled = externalExtensionsEnabled,
+                    modifier = Modifier.align(Alignment.End),
                 ) {
                     Text(stringResource(string.feat_setting_codec_pack_refresh))
                 }
@@ -417,7 +418,10 @@ private fun ExtensionPluginsContent(
                             color = MaterialTheme.colorScheme.error,
                         )
                     }
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
                         if (actions.settings && extensionId != null) {
                             FilledTonalButton(onClick = { onOpenSettings(extensionId) }) {
                                 Text(stringResource(string.feat_setting_extension_settings))
@@ -691,6 +695,7 @@ private fun MainContentImpl(
     val remoteControl by preferenceOf(PreferencesKeys.REMOTE_CONTROL)
     val providerOperationInProgress = providerOperationState.isBusy
     val providerSubmissionInProgress = providerOperationState.isSubmitting
+    val loadingStateDescription = stringResource(string.ui_state_loading)
     val bidiFormatter = rememberUiBidiFormatter()
     val ordinarySources = listOf(
         DataSource.M3U,
@@ -763,7 +768,9 @@ private fun MainContentImpl(
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(spacing.small),
         contentPadding = contentPadding + PaddingValues(spacing.medium),
-        modifier = modifier.imePadding()
+        modifier = modifier
+            .testTag("subscription-main-content")
+            .imePadding()
     ) {
         item {
             DataSourceSelection(
@@ -895,7 +902,13 @@ private fun MainContentImpl(
                     Button(
                         modifier = Modifier
                             .weight(1f)
-                            .testTag("subscription-submit-action"),
+                            .testTag("subscription-submit-action")
+                            .semantics {
+                                if (providerSubmissionInProgress) {
+                                    liveRegion = LiveRegionMode.Polite
+                                    stateDescription = loadingStateDescription
+                                }
+                            },
                         enabled = !providerOperationInProgress &&
                             (
                                 properties.selectedState.value != DataSource.Provider ||
@@ -929,7 +942,15 @@ private fun MainContentImpl(
                             )
                             Spacer(Modifier.size(8.dp))
                         }
-                        Text(stringResource(string.feat_setting_label_subscribe))
+                        Text(
+                            stringResource(
+                                if (providerSubmissionInProgress) {
+                                    string.feat_setting_label_subscribing
+                                } else {
+                                    string.feat_setting_label_subscribe
+                                }
+                            )
+                        )
                     }
                     when (properties.selectedState.value) {
                         DataSource.M3U, DataSource.Xtream -> {
@@ -953,24 +974,23 @@ private fun MainContentImpl(
                 val backupText = stringResource(string.feat_setting_label_backup)
                 val restoreText = stringResource(string.feat_setting_label_restore)
 
-
-                TextButton(
-                    onClick = backup,
-                    enabled = backingUpOrRestoring == BackingUpAndRestoringState.NONE,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(spacing.small),
+                    verticalArrangement = Arrangement.spacedBy(spacing.small),
                 ) {
-                    Text(
-                        text = backupText
-                    )
-                }
-                TextButton(
-                    onClick = restore,
-                    enabled = backingUpOrRestoring == BackingUpAndRestoringState.NONE,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                ) {
-                    Text(
-                        text = restoreText
-                    )
+                    TextButton(
+                        onClick = backup,
+                        enabled = backingUpOrRestoring == BackingUpAndRestoringState.NONE,
+                    ) {
+                        Text(text = backupText)
+                    }
+                    TextButton(
+                        onClick = restore,
+                        enabled = backingUpOrRestoring == BackingUpAndRestoringState.NONE,
+                    ) {
+                        Text(text = restoreText)
+                    }
                 }
             }
 
@@ -987,6 +1007,7 @@ private fun ProviderReauthenticationCard(
 ) {
     val spacing = LocalSpacing.current
     val bidiFormatter = rememberUiBidiFormatter()
+    val loadingStateDescription = stringResource(string.ui_state_loading)
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -1033,7 +1054,14 @@ private fun ProviderReauthenticationCard(
             FilledTonalButton(
                 onClick = onReauthenticate,
                 enabled = enabled && !inProgress,
-                modifier = Modifier.testTag("provider-reauthenticate-action"),
+                modifier = Modifier
+                    .testTag("provider-reauthenticate-action")
+                    .semantics {
+                        if (inProgress) {
+                            liveRegion = LiveRegionMode.Polite
+                            stateDescription = loadingStateDescription
+                        }
+                    },
             ) {
                 if (inProgress) {
                     CircularProgressIndicator(
@@ -1381,7 +1409,7 @@ private fun ProviderFormField(
     val spacing = LocalSpacing.current
     val errorMessage = field.error?.let { stringResource(it.messageResource()) }
     val requiredDescription =
-        stringResource(string.feat_setting_extension_capability_required)
+        stringResource(string.feat_setting_provider_error_required)
     Column(verticalArrangement = Arrangement.spacedBy(spacing.extraSmall)) {
         val displayLabel = bidiFormatter.natural(definition.label)
         Text(
@@ -1409,6 +1437,7 @@ private fun ProviderFormField(
                 } else {
                     MaterialTheme.colorScheme.error
                 },
+                placeholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 keyboardType = when (definition.type) {
                     ExtensionSettingType.NUMBER -> KeyboardType.Decimal
                     ExtensionSettingType.SECRET -> KeyboardType.Password
@@ -1432,53 +1461,60 @@ private fun ProviderFormField(
             )
 
             ExtensionSettingType.BOOLEAN -> FlowRow(
-                modifier = Modifier
-                    .selectableGroup()
-                    .semantics {
-                        if (definition.required) {
-                            stateDescription = requiredDescription
-                        }
-                        if (errorMessage != null) {
-                            error(errorMessage)
-                        }
-                    },
+                modifier = Modifier.selectableGroup(),
                 horizontalArrangement = Arrangement.spacedBy(spacing.small),
+                verticalArrangement = Arrangement.spacedBy(spacing.small),
             ) {
-                ProviderResetChoice(field, enabled, onUpdate)
+                ProviderResetChoice(
+                    field = field,
+                    enabled = enabled,
+                    fieldLabel = definition.label,
+                    requiredDescription = requiredDescription.takeIf { definition.required },
+                    errorMessage = errorMessage,
+                    onUpdate = onUpdate,
+                )
                 ProviderChoiceButton(
                     selected = field.value == "true" && !field.isUsingDefault,
                     enabled = enabled,
                     onClick = { onUpdate("true") },
                     text = stringResource(string.feat_setting_provider_value_true),
+                    fieldLabel = definition.label,
+                    requiredDescription = requiredDescription.takeIf { definition.required },
+                    errorMessage = errorMessage,
                 )
                 ProviderChoiceButton(
                     selected = field.value == "false" && !field.isUsingDefault,
                     enabled = enabled,
                     onClick = { onUpdate("false") },
                     text = stringResource(string.feat_setting_provider_value_false),
+                    fieldLabel = definition.label,
+                    requiredDescription = requiredDescription.takeIf { definition.required },
+                    errorMessage = errorMessage,
                 )
             }
 
             ExtensionSettingType.SINGLE_CHOICE -> FlowRow(
-                modifier = Modifier
-                    .selectableGroup()
-                    .semantics {
-                        if (definition.required) {
-                            stateDescription = requiredDescription
-                        }
-                        if (errorMessage != null) {
-                            error(errorMessage)
-                        }
-                    },
+                modifier = Modifier.selectableGroup(),
                 horizontalArrangement = Arrangement.spacedBy(spacing.small),
+                verticalArrangement = Arrangement.spacedBy(spacing.small),
             ) {
-                ProviderResetChoice(field, enabled, onUpdate)
+                ProviderResetChoice(
+                    field = field,
+                    enabled = enabled,
+                    fieldLabel = definition.label,
+                    requiredDescription = requiredDescription.takeIf { definition.required },
+                    errorMessage = errorMessage,
+                    onUpdate = onUpdate,
+                )
                 definition.choices.forEach { choice ->
                     ProviderChoiceButton(
                         selected = field.value == choice.value && !field.isUsingDefault,
                         enabled = enabled,
                         onClick = { onUpdate(choice.value) },
                         text = bidiFormatter.natural(choice.label),
+                        fieldLabel = definition.label,
+                        requiredDescription = requiredDescription.takeIf { definition.required },
+                        errorMessage = errorMessage,
                     )
                 }
             }
@@ -1507,6 +1543,9 @@ private fun ProviderFormField(
 private fun ProviderResetChoice(
     field: ProviderSubscriptionFormField,
     enabled: Boolean,
+    fieldLabel: String,
+    requiredDescription: String?,
+    errorMessage: String?,
     onUpdate: (String?) -> Unit,
 ) {
     if (field.definition.defaultValue != null || !field.definition.required) {
@@ -1514,6 +1553,8 @@ private fun ProviderResetChoice(
             selected = field.isUsingDefault || field.value == null,
             enabled = enabled,
             onClick = { onUpdate(null) },
+            fieldLabel = fieldLabel,
+            requiredDescription = requiredDescription,
             text = stringResource(
                 if (field.definition.defaultValue == null) {
                     string.feat_setting_provider_value_not_set
@@ -1521,6 +1562,7 @@ private fun ProviderResetChoice(
                     string.feat_setting_provider_value_default
                 }
             ),
+            errorMessage = errorMessage,
         )
     }
 }
@@ -1531,6 +1573,9 @@ private fun ProviderChoiceButton(
     enabled: Boolean = true,
     onClick: () -> Unit,
     text: String,
+    fieldLabel: String,
+    requiredDescription: String?,
+    errorMessage: String? = null,
 ) {
     val containerColor = if (selected) {
         MaterialTheme.colorScheme.secondaryContainer
@@ -1549,7 +1594,17 @@ private fun ProviderChoiceButton(
         shape = CircleShape,
         color = containerColor,
         contentColor = contentColor,
-        modifier = Modifier.semantics { role = Role.RadioButton },
+        modifier = Modifier.semantics {
+            role = Role.RadioButton
+            contentDescription = buildList {
+                add(text.withoutBidiControls())
+                add(fieldLabel.withoutBidiControls())
+                requiredDescription?.let(::add)
+            }.distinct().joinToString(separator = ". ")
+            errorMessage?.let { message ->
+                error(message)
+            }
+        },
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),

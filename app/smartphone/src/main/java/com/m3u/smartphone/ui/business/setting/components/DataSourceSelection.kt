@@ -125,7 +125,7 @@ internal fun DataSourceSelection(
                         text = supportingLabel,
                         color = LocalContentColor.current.copy(alpha = 0.7f),
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+                        overflow = TextOverflow.MiddleEllipsis,
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }

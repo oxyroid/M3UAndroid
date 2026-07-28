@@ -52,11 +52,10 @@ sealed class SettingMessage(
         resId = string.feat_setting_provider_credentials_required
     )
 
-    data class ProviderAdded(val channelCount: Int) : SettingMessage(
+    data object ProviderAdded : SettingMessage(
         level = LEVEL_INFO,
         type = TYPE_SNACK,
-        resId = string.feat_setting_provider_added,
-        formatArgs = arrayOf(channelCount),
+        resId = string.feat_setting_provider_added
     )
 
     data object ProviderSubscriptionFailed : SettingMessage(

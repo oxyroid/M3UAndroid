@@ -442,18 +442,37 @@ internal class EmbyCompatibleProvider @Inject constructor(
             return ProviderLabels(
                 serverUrl = localizedContext.getString(
                     R.string.feat_setting_placeholder_basic_url
-                ),
+                ).let(::wireSafeDisplayText),
                 username = localizedContext.getString(
                     R.string.feat_setting_placeholder_username
-                ),
+                ).let(::wireSafeDisplayText),
                 password = localizedContext.getString(
                     R.string.feat_setting_placeholder_password
-                ),
+                ).let(::wireSafeDisplayText),
                 automatic = localizedContext.getString(
                     R.string.feat_setting_provider_variant_automatic
-                ),
+                ).let(::wireSafeDisplayText),
             )
         }
+
+        internal fun wireSafeDisplayText(value: String): String = buildString(value.length) {
+            value.forEach { character ->
+                when {
+                    character.isExtensionBidiControl() -> Unit
+                    character.isISOControl() -> {
+                        if (isNotEmpty() && last() != ' ') append(' ')
+                    }
+                    else -> append(character)
+                }
+            }
+        }.trim()
+
+        private fun Char.isExtensionBidiControl(): Boolean =
+            code == 0x061C ||
+                code in 0x202A..0x202E ||
+                code in 0x2066..0x2069 ||
+                code == 0x200E ||
+                code == 0x200F
 
         private data class ProviderLabels(
             val serverUrl: String,

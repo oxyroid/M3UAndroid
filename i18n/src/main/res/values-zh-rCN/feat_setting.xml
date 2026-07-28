@@ -120,7 +120,7 @@
     <string name="feat_setting_codec_pack_refresh">刷新</string>
     <string name="feat_setting_codec_pack_delete">删除已下载组件</string>
     <string name="feat_setting_provider_credentials_required">请检查订阅服务的必填设置</string>
-    <string name="feat_setting_provider_added">已连接并导入 %1$d 个直播频道</string>
+    <string name="feat_setting_provider_added">已连接到订阅服务并导入直播频道</string>
     <string name="feat_setting_provider_subscription_failed">无法连接或刷新此服务器</string>
     <string name="feat_setting_provider_discovery_loading">正在加载可用服务…</string>
     <string name="feat_setting_provider_discovery_empty">当前没有可用的订阅服务</string>
@@ -183,7 +183,7 @@
     <string name="feat_setting_extension_export_diagnostics">导出诊断</string>
     <string name="feat_setting_extension_diagnostics_share_title">分享插件诊断</string>
     <string name="feat_setting_extension_reauthorize">重新授权</string>
-    <string name="feat_setting_extension_certificate_repin">签名身份已变化。\n原 SHA-256：%1$s\n新 SHA-256：%2$s\n继续操作会删除已保存凭据，并要求 Provider 账号重新登录。</string>
+    <string name="feat_setting_extension_certificate_repin">签名身份已变化。\n原 SHA-256：%1$s\n新 SHA-256：%2$s\n继续操作会删除已保存的凭据，并要求订阅服务账号重新登录。</string>
     <string name="feat_setting_extension_capability_required">必要</string>
     <string name="feat_setting_extension_capability_optional">可选</string>
     <string name="feat_setting_extension_capability_granted">已授予</string>

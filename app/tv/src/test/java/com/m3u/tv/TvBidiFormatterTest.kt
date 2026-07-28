@@ -27,4 +27,19 @@ class TvBidiFormatterTest {
 
         assertEquals("provider.example.kind", sanitized)
     }
+
+    @Test
+    fun `long text is segmented before paired bidi controls are added`() {
+        val segments = "a".repeat(160).tvReadableSegments { segment ->
+            "\u202A$segment\u202C"
+        }
+
+        assertEquals(2, segments.size)
+        segments.forEach { segment ->
+            assertTrue(segment.startsWith('\u202A'))
+            assertTrue(segment.endsWith('\u202C'))
+            assertEquals(1, segment.count { it == '\u202A' })
+            assertEquals(1, segment.count { it == '\u202C' })
+        }
+    }
 }
