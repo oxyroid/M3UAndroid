@@ -52,6 +52,7 @@ internal fun ExtensionSettingsDialog(
         rawValue: String?,
     ) -> Unit,
 ) {
+    val bidiFormatter = rememberUiBidiFormatter()
     val draftValues = remember(configuration.extensionId) {
         mutableStateMapOf<String, String>().apply {
             configuration.sections.forEach { section ->
@@ -95,7 +96,10 @@ internal fun ExtensionSettingsDialog(
                     Text(stringResource(string.feat_setting_extension_settings_empty))
                 }
                 configuration.sections.forEach { section ->
-                    Text(section.title, style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        bidiFormatter.natural(section.title),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
                     section.schema.fields.forEach { field ->
                         val key = ExtensionSettingKeys.qualified(section.id, field.key)
                         val editToken = checkNotNull(
@@ -103,6 +107,7 @@ internal fun ExtensionSettingsDialog(
                         )
                         ExtensionSettingControl(
                             field = field,
+                            bidiFormatter = bidiFormatter,
                             rawValue = draftValues[key].orEmpty(),
                             secretConfigured = key in configuration.snapshot.credentialHandles,
                             onDraftChange = { value -> draftValues[key] = value },
@@ -132,6 +137,7 @@ internal fun ExtensionSettingsDialog(
 @Composable
 private fun ExtensionSettingControl(
     field: ExtensionSettingField,
+    bidiFormatter: UiBidiFormatter,
     rawValue: String,
     secretConfigured: Boolean,
     onDraftChange: (String) -> Unit,
@@ -155,6 +161,7 @@ private fun ExtensionSettingControl(
                 ) {
                     SettingLabel(
                         field = field,
+                        bidiFormatter = bidiFormatter,
                         modifier = Modifier
                             .weight(1f)
                             .padding(end = 16.dp),
@@ -168,13 +175,13 @@ private fun ExtensionSettingControl(
             }
 
             ExtensionSettingType.SINGLE_CHOICE -> {
-                SettingLabel(field)
+                SettingLabel(field, bidiFormatter)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     field.choices.forEach { choice ->
                         FilterChip(
                             selected = rawValue == choice.value,
                             onClick = { onUpdate(choice.value) },
-                            label = { Text(choice.label) },
+                            label = { Text(bidiFormatter.natural(choice.label)) },
                         )
                     }
                 }
@@ -187,7 +194,7 @@ private fun ExtensionSettingControl(
                     value = rawValue,
                     onValueChange = onDraftChange,
                     modifier = Modifier.fillMaxWidth(),
-                    label = { SettingLabel(field) },
+                    label = { SettingLabel(field, bidiFormatter) },
                     placeholder = if (field.type == ExtensionSettingType.SECRET && secretConfigured) {
                         { Text(stringResource(string.feat_setting_extension_secret_configured)) }
                     } else {
@@ -232,7 +239,10 @@ private fun ExtensionSettingControl(
             }
         }
         field.description?.let { description ->
-            Text(description, style = MaterialTheme.typography.bodySmall)
+            Text(
+                bidiFormatter.natural(description),
+                style = MaterialTheme.typography.bodySmall,
+            )
         }
     }
 }
@@ -240,10 +250,13 @@ private fun ExtensionSettingControl(
 @Composable
 private fun SettingLabel(
     field: ExtensionSettingField,
+    bidiFormatter: UiBidiFormatter,
     modifier: Modifier = Modifier,
 ) {
     Text(
-        text = if (field.required) "${field.label} *" else field.label,
+        text = bidiFormatter.natural(
+            if (field.required) "${field.label} *" else field.label
+        ),
         modifier = modifier,
     )
 }

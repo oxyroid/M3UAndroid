@@ -14,11 +14,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
@@ -49,17 +51,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 import com.m3u.core.foundation.ui.thenIf
+import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.material.effects.BackStackEntry
 import com.m3u.smartphone.ui.material.effects.BackStackHandler
 import com.m3u.smartphone.ui.material.ktx.Edge
 import com.m3u.smartphone.ui.material.ktx.blurEdge
 import com.m3u.smartphone.ui.material.model.LocalHazeState
 import com.m3u.smartphone.ui.material.model.LocalSpacing
-import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 import dev.chrisbanes.haze.hazeSource
 
 @Composable
@@ -78,6 +89,22 @@ internal fun PlaylistTabRow(
     val spacing = LocalSpacing.current
     val hapticFeedback = LocalHapticFeedback.current
     val state = rememberLazyListState()
+    val pinDescription = stringResource(string.ui_action_pin)
+    val unpinDescription = stringResource(string.ui_action_unpin)
+    val hideDescription = stringResource(string.ui_action_hide)
+    val categoryOptionsDescription = stringResource(string.ui_action_category_options)
+    val expandDescription = stringResource(string.ui_action_expand_categories)
+    val collapseDescription = stringResource(string.ui_action_collapse_categories)
+    val expandedStateDescription = stringResource(string.ui_state_expanded)
+    val collapsedStateDescription = stringResource(string.ui_state_collapsed)
+    val pinnedStateDescription = stringResource(string.ui_state_pinned)
+    val categoryMenuSemantics = categoryMenuSemantics(
+        isExpanded = isExpanded,
+        expandedStateDescription = expandedStateDescription,
+        collapsedStateDescription = collapsedStateDescription,
+        expandActionLabel = expandDescription,
+        collapseActionLabel = collapseDescription,
+    )
 
     Box(modifier) {
         var focusCategory: String? by rememberSaveable { mutableStateOf(null) }
@@ -99,6 +126,10 @@ internal fun PlaylistTabRow(
                             horizontalArrangement = Arrangement.End
                         ) {
                             IconButton(
+                                modifier = Modifier.sizeIn(
+                                    minWidth = 48.dp,
+                                    minHeight = 48.dp
+                                ),
                                 onClick = {
                                     name.let(onPinOrUnpinCategory)
                                     focusCategory = null
@@ -106,10 +137,18 @@ internal fun PlaylistTabRow(
                             ) {
                                 Icon(
                                     imageVector = Icons.Rounded.PushPin,
-                                    contentDescription = "pin"
+                                    contentDescription = if (name in pinnedCategories) {
+                                        unpinDescription
+                                    } else {
+                                        pinDescription
+                                    }
                                 )
                             }
                             IconButton(
+                                modifier = Modifier.sizeIn(
+                                    minWidth = 48.dp,
+                                    minHeight = 48.dp
+                                ),
                                 onClick = {
                                     name.let(onHideCategory)
                                     focusCategory = null
@@ -117,17 +156,28 @@ internal fun PlaylistTabRow(
                             ) {
                                 Icon(
                                     imageVector = Icons.Rounded.VisibilityOff,
-                                    contentDescription = "hide"
+                                    contentDescription = hideDescription
                                 )
                             }
                         }
                     } else {
                         IconButton(
+                            modifier = Modifier
+                                .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                                .clearAndSetSemantics {
+                                    contentDescription = categoryOptionsDescription
+                                    role = Role.Button
+                                    stateDescription = categoryMenuSemantics.stateDescription
+                                    onClick(label = categoryMenuSemantics.actionLabel) {
+                                        onExpanded()
+                                        true
+                                    }
+                                },
                             onClick = onExpanded
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Menu,
-                                contentDescription = ""
+                                contentDescription = null
                             )
                         }
                     }
@@ -159,7 +209,9 @@ internal fun PlaylistTabRow(
                         focusCategory = category
                         onCategoryChanged(category)
                         hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                    }
+                    },
+                    categoryOptionsDescription = categoryOptionsDescription,
+                    pinnedStateDescription = pinnedStateDescription
                 )
             }
         }
@@ -172,6 +224,7 @@ internal fun PlaylistTabRow(
                     contentPadding = bottomContentPadding,
                     modifier = Modifier
                         .fillMaxSize()
+                        .selectableGroup()
                         .background(MaterialTheme.colorScheme.surface)
                         .hazeSource(LocalHazeState.current),
                     content = categoriesContent
@@ -184,7 +237,8 @@ internal fun PlaylistTabRow(
                     modifier = Modifier
                         .background(MaterialTheme.colorScheme.surface)
                         .blurEdge(MaterialTheme.colorScheme.surface, Edge.End)
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        .selectableGroup(),
                     content = categoriesContent
                 )
             }
@@ -198,6 +252,29 @@ internal fun PlaylistTabRow(
     }
 }
 
+internal data class CategoryMenuSemantics(
+    val stateDescription: String,
+    val actionLabel: String,
+)
+
+internal fun categoryMenuSemantics(
+    isExpanded: Boolean,
+    expandedStateDescription: String,
+    collapsedStateDescription: String,
+    expandActionLabel: String,
+    collapseActionLabel: String,
+): CategoryMenuSemantics = if (isExpanded) {
+    CategoryMenuSemantics(
+        stateDescription = expandedStateDescription,
+        actionLabel = collapseActionLabel,
+    )
+} else {
+    CategoryMenuSemantics(
+        stateDescription = collapsedStateDescription,
+        actionLabel = expandActionLabel,
+    )
+}
+
 @Composable
 private fun PlaylistTabRowItem(
     name: String,
@@ -208,6 +285,8 @@ private fun PlaylistTabRowItem(
     isExpanded: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
+    categoryOptionsDescription: String,
+    pinnedStateDescription: String,
     modifier: Modifier = Modifier,
 ) {
     val spacing = LocalSpacing.current
@@ -236,10 +315,18 @@ private fun PlaylistTabRowItem(
             shape = shape,
             modifier = Modifier
                 .clip(shape)
+                .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                .semantics {
+                    this.selected = selected
+                    if (pinned) {
+                        stateDescription = pinnedStateDescription
+                    }
+                }
                 .combinedClickable(
                     interactionSource = interactionSource,
                     indication = indication,
                     onClick = onClick,
+                    onLongClickLabel = categoryOptionsDescription,
                     onLongClick = onLongClick,
                     role = Role.Tab
                 )

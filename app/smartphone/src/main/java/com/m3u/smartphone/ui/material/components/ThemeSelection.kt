@@ -16,6 +16,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
@@ -48,18 +49,29 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shader
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
+import com.m3u.core.foundation.ui.SugarColors
+import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.material.LocalM3UHapticFeedback
 import com.m3u.smartphone.ui.material.ktx.InteractionType
+import com.m3u.smartphone.ui.material.ktx.Edge
 import com.m3u.smartphone.ui.material.ktx.createScheme
 import com.m3u.smartphone.ui.material.ktx.interactionBorder
+import com.m3u.smartphone.ui.material.ktx.resolvePhysicalEdge
 import com.m3u.smartphone.ui.material.model.LocalSpacing
-import com.m3u.core.foundation.ui.SugarColors
-import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
+import java.util.Locale
 import kotlin.math.max
 
 /**
@@ -70,6 +82,7 @@ fun ThemeSelection(
     argb: Int,
     isDark: Boolean,
     selected: Boolean,
+    themeName: String = argb.toUInt().toString(16).uppercase(Locale.ROOT),
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -134,27 +147,29 @@ fun ThemeSelection(
                     shape = shape,
                     color = colorScheme.primary
                 )
+                .semantics(mergeDescendants = true) {
+                    contentDescription = themeName
+                    this.selected = selected
+                    role = Role.RadioButton
+                }
                 .combinedClickable(
-                    onClick = onClick,
-                    onLongClick = onLongClick,
-                    indication = null,
-                    interactionSource = null
-                )
-        ) {
-            Box(
-                modifier = Modifier.combinedClickable(
                     interactionSource = interactionSource,
                     indication = ripple(),
+                    role = Role.RadioButton,
                     onClick = {
-                        if (selected) return@combinedClickable
-                        feedback.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                        onClick()
+                        if (!selected) {
+                            feedback.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                            onClick()
+                        }
                     },
                     onLongClick = {
                         feedback.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
                         onLongClick()
                     }
-                ),
+                )
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
                 content = { content() }
             )
         }
@@ -168,7 +183,7 @@ fun ThemeSelection(
                         false -> Icons.Rounded.LightMode
                     }
                 },
-                contentDescription = "icon",
+                contentDescription = null,
                 tint = when {
                     selected -> colorScheme.onPrimary
                     else -> when (isDark) {
@@ -189,6 +204,7 @@ fun ThemeAddSelection(
     onClick: () -> Unit
 ) {
     val spacing = LocalSpacing.current
+    val addDescription = stringResource(string.ui_theme_add)
     Box(
         contentAlignment = Alignment.Center
     ) {
@@ -204,14 +220,17 @@ fun ThemeAddSelection(
                     scaleY = 0.8f
                 }
                 .size(96.dp)
-                .padding(spacing.extraSmall),
+                .padding(spacing.extraSmall)
+                .semantics(mergeDescendants = true) {
+                    contentDescription = addDescription
+                },
             onClick = onClick,
             content = {}
         )
 
         Icon(
             imageVector = Icons.Rounded.Add,
-            contentDescription = "",
+            contentDescription = null,
             tint = contentColor
         )
     }
@@ -221,11 +240,13 @@ fun ThemeAddSelection(
 internal fun MessageItem(
     containerColor: Color,
     contentColor: Color,
-    left: Boolean,
+    alignedToStart: Boolean,
     contentDescription: String,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
+    val logicalTailEdge = if (alignedToStart) Edge.Start else Edge.End
+    val tailEdge = resolvePhysicalEdge(logicalTailEdge, LocalLayoutDirection.current)
     ElevatedCard(
         colors = CardDefaults.elevatedCardColors(
             containerColor = containerColor,
@@ -234,26 +255,26 @@ internal fun MessageItem(
         shape = AbsoluteSmoothCornerShape(
             cornerRadiusTL = spacing.small,
             cornerRadiusTR = spacing.small,
-            cornerRadiusBL = if (left) spacing.none else spacing.small,
-            cornerRadiusBR = if (!left) spacing.none else spacing.small
+            cornerRadiusBL = if (tailEdge == Edge.Start) spacing.none else spacing.small,
+            cornerRadiusBR = if (tailEdge == Edge.End) spacing.none else spacing.small
         ),
         modifier = modifier
     ) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .sizeIn(minWidth = if (!left) 48.dp else 32.dp)
-                .padding(if (left) spacing.extraSmall else spacing.small)
+                .sizeIn(minWidth = if (!alignedToStart) 48.dp else 32.dp)
+                .padding(if (alignedToStart) spacing.extraSmall else spacing.small)
         ) {
             Text(
                 text = AnnotatedString.fromHtml(contentDescription),
                 style = MaterialTheme.typography.bodyLarge
                     .copy(
-                        fontSize = if (!left) 14.sp
+                        fontSize = if (!alignedToStart) 14.sp
                         else 12.sp
                     ),
                 color = contentColor,
-                lineHeight = if (!left) 16.sp
+                lineHeight = if (!alignedToStart) 16.sp
                 else 14.sp
             )
         }

@@ -20,9 +20,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.m3u.core.foundation.wrapper.Resource
 import com.m3u.data.parser.xtream.XtreamUserInfo
+import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.smartphone.ui.material.components.Badge
 import com.m3u.smartphone.ui.material.components.FontFamilies
@@ -86,7 +88,9 @@ internal fun XtreamPanel(
                             )
                             if (userInfo.isTrial == "1") {
                                 TextBadge(
-                                    text = "Trial",
+                                    text = stringResource(
+                                        string.feat_playlist_configuration_xtream_trial
+                                    ),
                                     color = MaterialTheme.colorScheme.tertiary
                                 )
                             }

@@ -61,9 +61,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
@@ -71,6 +74,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.core.text.BidiFormatter
+import androidx.core.text.TextDirectionHeuristicsCompat
 import com.google.accompanist.permissions.rememberPermissionState
 import com.m3u.business.setting.BackingUpAndRestoringState
 import com.m3u.business.setting.ProviderDiscoveryState
@@ -107,6 +113,7 @@ import com.m3u.smartphone.ui.material.ktx.checkPermissionOrRationale
 import com.m3u.smartphone.ui.material.ktx.plus
 import com.m3u.smartphone.ui.material.ktx.textHorizontalLabel
 import com.m3u.smartphone.ui.material.model.LocalSpacing
+import java.util.Locale
 import kotlinx.coroutines.launch
 
 private enum class SubscriptionsFragmentPage {
@@ -192,7 +199,9 @@ internal fun SubscriptionsFragment(
                         }
                     },
                     text = { Text(page.label()) },
-                    modifier = Modifier.testTag("subscriptions-page-${page.name.lowercase()}"),
+                    modifier = Modifier.testTag(
+                        "subscriptions-page-${page.name.lowercase(Locale.ROOT)}"
+                    ),
                 )
             }
         }
@@ -301,6 +310,7 @@ private fun ExtensionPluginsContent(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
+    val bidiFormatter = rememberUiBidiFormatter()
     var pendingTrust by remember { mutableStateOf<InstalledPlugin?>(null) }
     var pendingReauthorization by remember { mutableStateOf(false) }
     var pendingRevoke by remember { mutableStateOf<InstalledPlugin?>(null) }
@@ -343,17 +353,29 @@ private fun ExtensionPluginsContent(
                 val actions = plugin.actionAvailability()
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        plugin.displayName ?: plugin.packageName,
+                        plugin.displayName?.let(bidiFormatter::natural)
+                            ?: bidiFormatter.ltr(plugin.packageName),
                         style = MaterialTheme.typography.titleMedium,
                     )
-                    plugin.developer?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
-                    plugin.version?.let { Text("v$it", style = MaterialTheme.typography.bodySmall) }
+                    plugin.developer?.let {
+                        Text(bidiFormatter.natural(it), style = MaterialTheme.typography.bodyMedium)
+                    }
+                    plugin.version?.let {
+                        Text(bidiFormatter.ltr("v$it"), style = MaterialTheme.typography.bodySmall)
+                    }
                     Text(extensionStateLabel(plugin.state), style = MaterialTheme.typography.labelMedium)
-                    Text(plugin.serviceName, style = MaterialTheme.typography.bodySmall)
-                    Text(plugin.certificateSha256, style = MaterialTheme.typography.labelSmall)
+                    Text(
+                        bidiFormatter.ltr(plugin.serviceName),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    Text(
+                        bidiFormatter.ltr(plugin.certificateSha256),
+                        style = MaterialTheme.typography.labelSmall,
+                    )
                     if (plugin.grantedCapabilities.isNotEmpty()) {
                         Text(
-                            plugin.grantedCapabilities.sorted().joinToString(),
+                            plugin.grantedCapabilities.sorted()
+                                .joinToString(transform = bidiFormatter::ltr),
                             style = MaterialTheme.typography.labelSmall,
                         )
                     }
@@ -363,7 +385,8 @@ private fun ExtensionPluginsContent(
                         Text(
                             text = stringResource(
                                 string.feat_setting_extension_network_reauthorization_required,
-                                unapprovedNetworkOrigins.sorted().joinToString(),
+                                unapprovedNetworkOrigins.sorted()
+                                    .joinToString(transform = bidiFormatter::ltr),
                             ),
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall,
@@ -450,19 +473,23 @@ private fun ExtensionPluginsContent(
                     Text(
                         stringResource(
                             string.feat_setting_extension_confirm_identity,
-                            plugin.packageName,
-                            plugin.certificateSha256.chunked(16).joinToString(" "),
-                            plugin.displayName.orEmpty(),
-                            plugin.developer.orEmpty(),
-                            plugin.version.orEmpty(),
+                            bidiFormatter.ltr(plugin.packageName),
+                            bidiFormatter.ltr(
+                                plugin.certificateSha256.chunked(16).joinToString(" ")
+                            ),
+                            bidiFormatter.natural(plugin.displayName.orEmpty()),
+                            bidiFormatter.natural(plugin.developer.orEmpty()),
+                            bidiFormatter.ltr(plugin.version.orEmpty()),
                         )
                     )
                     plugin.previousCertificateSha256?.let { previousCertificate ->
                         Text(
                             text = stringResource(
                                 string.feat_setting_extension_certificate_repin,
-                                previousCertificate.chunked(16).joinToString(" "),
-                                plugin.certificateSha256.chunked(16).joinToString(" "),
+                                bidiFormatter.ltr(previousCertificate.chunked(16).joinToString(" ")),
+                                bidiFormatter.ltr(
+                                    plugin.certificateSha256.chunked(16).joinToString(" ")
+                                ),
                             ),
                             color = MaterialTheme.colorScheme.error,
                         )
@@ -471,17 +498,22 @@ private fun ExtensionPluginsContent(
                         stringResource(string.feat_setting_extension_requested_capabilities),
                         style = MaterialTheme.typography.titleSmall,
                     )
-                    Text(extensionCapabilitySummary(plugin))
+                    Text(extensionCapabilitySummary(plugin, bidiFormatter))
                     Text(
                         stringResource(string.feat_setting_extension_network_origins),
                         style = MaterialTheme.typography.titleSmall,
                     )
-                    Text(plugin.networkOrigins.sorted().joinToString("\n").ifEmpty { "—" })
+                    Text(
+                        plugin.networkOrigins.sorted()
+                            .joinToString("\n", transform = bidiFormatter::ltr)
+                            .ifEmpty { "—" }
+                    )
                     if (plugin.networkOriginSettingFields.isNotEmpty()) {
                         Text(
                             stringResource(
                                 string.feat_setting_extension_network_origin_settings,
-                                plugin.networkOriginSettingFields.sorted().joinToString(),
+                                plugin.networkOriginSettingFields.sorted()
+                                    .joinToString(transform = bidiFormatter::ltr),
                             )
                         )
                     }
@@ -579,13 +611,42 @@ private fun ExtensionPluginsContent(
 }
 
 @Composable
-private fun extensionCapabilitySummary(plugin: InstalledPlugin): String {
+private fun extensionCapabilitySummary(
+    plugin: InstalledPlugin,
+    bidiFormatter: UiBidiFormatter,
+): String {
     val required = stringResource(string.feat_setting_extension_capability_required)
     val optional = stringResource(string.feat_setting_extension_capability_optional)
     return plugin.capabilityPermissions.joinToString("\n") { permission ->
         val requirement = if (permission.required) required else optional
-        "${permission.id} ($requirement) — ${permission.reason}"
+        "${bidiFormatter.ltr(permission.id)} ($requirement) — " +
+            bidiFormatter.natural(permission.reason)
     }.ifEmpty { "—" }
+}
+
+@Composable
+internal fun rememberUiBidiFormatter(): UiBidiFormatter {
+    val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+    return remember(isRtl) { UiBidiFormatter(isRtl) }
+}
+
+internal class UiBidiFormatter(isRtlContext: Boolean) {
+    private val formatter = BidiFormatter.getInstance(isRtlContext)
+
+    fun natural(value: String): String = formatter.unicodeWrap(value.withoutBidiControls())
+
+    fun ltr(value: String): String = formatter.unicodeWrap(
+        value.withoutBidiControls(),
+        TextDirectionHeuristicsCompat.LTR,
+    )
+}
+
+internal fun String.withoutBidiControls(): String = filterNot { character ->
+    character == '\u061C' ||
+        character == '\u200E' ||
+        character == '\u200F' ||
+        character.code in 0x202A..0x202E ||
+        character.code in 0x2066..0x2069
 }
 
 @Composable
@@ -758,7 +819,7 @@ private fun MainContentImpl(
                             )
                             Spacer(Modifier.size(8.dp))
                         }
-                        Text(stringResource(string.feat_setting_label_subscribe).uppercase())
+                        Text(stringResource(string.feat_setting_label_subscribe))
                     }
                     when (properties.selectedState.value) {
                         DataSource.M3U, DataSource.Xtream -> {
@@ -777,8 +838,8 @@ private fun MainContentImpl(
                         else -> {}
                     }
                 }
-                val backupText = stringResource(string.feat_setting_label_backup).uppercase()
-                val restoreText = stringResource(string.feat_setting_label_restore).uppercase()
+                val backupText = stringResource(string.feat_setting_label_backup)
+                val restoreText = stringResource(string.feat_setting_label_restore)
 
 
                 TextButton(
@@ -813,6 +874,7 @@ private fun ProviderReauthenticationCard(
     onReauthenticate: () -> Unit,
 ) {
     val spacing = LocalSpacing.current
+    val bidiFormatter = rememberUiBidiFormatter()
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -834,7 +896,7 @@ private fun ProviderReauthenticationCard(
                 Text(
                     text = stringResource(
                         string.feat_setting_provider_reauthentication_required,
-                        account.playlistTitle,
+                        bidiFormatter.natural(account.playlistTitle),
                     ),
                     style = MaterialTheme.typography.titleSmall,
                 )
@@ -842,9 +904,9 @@ private fun ProviderReauthenticationCard(
             Text(
                 text = stringResource(
                     string.feat_setting_provider_account_summary,
-                    account.serverName,
-                    account.username,
-                    account.baseUrl,
+                    bidiFormatter.natural(account.serverName),
+                    bidiFormatter.natural(account.username),
+                    bidiFormatter.ltr(account.baseUrl),
                 ),
                 style = MaterialTheme.typography.bodySmall,
             )
@@ -985,7 +1047,7 @@ private fun M3UInputContent(
     ) {
         PlaceholderField(
             text = properties.titleState.value,
-            placeholder = stringResource(string.feat_setting_placeholder_title).uppercase(),
+            placeholder = stringResource(string.feat_setting_placeholder_title),
             onValueChange = { properties.titleState.value = Uri.decode(it) },
             imeAction = ImeAction.Next,
             modifier = Modifier.fillMaxWidth()
@@ -997,7 +1059,7 @@ private fun M3UInputContent(
             if (!localStorage) {
                 PlaceholderField(
                     text = properties.urlState.value,
-                    placeholder = stringResource(string.feat_setting_placeholder_url).uppercase(),
+                    placeholder = stringResource(string.feat_setting_placeholder_url),
                     onValueChange = { properties.urlState.value = Uri.decode(it) },
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -1030,13 +1092,13 @@ private fun EPGInputContent(
     ) {
         PlaceholderField(
             text = properties.titleState.value,
-            placeholder = stringResource(string.feat_setting_placeholder_epg_title).uppercase(),
+            placeholder = stringResource(string.feat_setting_placeholder_epg_title),
             onValueChange = { properties.titleState.value = Uri.decode(it) },
             modifier = Modifier.fillMaxWidth()
         )
         PlaceholderField(
             text = properties.epgState.value,
-            placeholder = stringResource(string.feat_setting_placeholder_epg).uppercase(),
+            placeholder = stringResource(string.feat_setting_placeholder_epg),
             onValueChange = { properties.epgState.value = Uri.decode(it) },
             modifier = Modifier.fillMaxWidth()
         )
@@ -1054,25 +1116,25 @@ private fun XtreamInputContent(modifier: Modifier = Modifier) {
     ) {
         PlaceholderField(
             text = properties.titleState.value,
-            placeholder = stringResource(string.feat_setting_placeholder_title).uppercase(),
+            placeholder = stringResource(string.feat_setting_placeholder_title),
             onValueChange = { properties.titleState.value = Uri.decode(it) },
             modifier = Modifier.fillMaxWidth()
         )
         PlaceholderField(
             text = properties.basicUrlState.value,
-            placeholder = stringResource(string.feat_setting_placeholder_basic_url).uppercase(),
+            placeholder = stringResource(string.feat_setting_placeholder_basic_url),
             onValueChange = { properties.basicUrlState.value = it },
             modifier = Modifier.fillMaxWidth()
         )
         PlaceholderField(
             text = properties.usernameState.value,
-            placeholder = stringResource(string.feat_setting_placeholder_username).uppercase(),
+            placeholder = stringResource(string.feat_setting_placeholder_username),
             onValueChange = { properties.usernameState.value = it },
             modifier = Modifier.fillMaxWidth()
         )
         PlaceholderField(
             text = properties.passwordState.value,
-            placeholder = stringResource(string.feat_setting_placeholder_password).uppercase(),
+            placeholder = stringResource(string.feat_setting_placeholder_password),
             onValueChange = { properties.passwordState.value = it },
             keyboardType = KeyboardType.Password,
             visualTransformation = PasswordVisualTransformation(),
@@ -1096,7 +1158,7 @@ private fun EmbyCompatibleInputContent(
     ) {
         PlaceholderField(
             text = properties.titleState.value,
-            placeholder = stringResource(string.feat_setting_placeholder_title).uppercase(),
+            placeholder = stringResource(string.feat_setting_placeholder_title),
             onValueChange = { properties.titleState.value = Uri.decode(it) },
             imeAction = ImeAction.Next,
             enabled = enabled,
@@ -1104,7 +1166,7 @@ private fun EmbyCompatibleInputContent(
         )
         PlaceholderField(
             text = properties.basicUrlState.value,
-            placeholder = stringResource(string.feat_setting_placeholder_basic_url).uppercase(),
+            placeholder = stringResource(string.feat_setting_placeholder_basic_url),
             onValueChange = { properties.basicUrlState.value = it },
             imeAction = ImeAction.Next,
             enabled = enabled,
@@ -1112,7 +1174,7 @@ private fun EmbyCompatibleInputContent(
         )
         PlaceholderField(
             text = properties.usernameState.value,
-            placeholder = stringResource(string.feat_setting_placeholder_username).uppercase(),
+            placeholder = stringResource(string.feat_setting_placeholder_username),
             onValueChange = { properties.usernameState.value = it },
             imeAction = ImeAction.Next,
             enabled = enabled,
@@ -1120,7 +1182,7 @@ private fun EmbyCompatibleInputContent(
         )
         PlaceholderField(
             text = properties.passwordState.value,
-            placeholder = stringResource(string.feat_setting_placeholder_password).uppercase(),
+            placeholder = stringResource(string.feat_setting_placeholder_password),
             onValueChange = { properties.passwordState.value = it },
             keyboardType = KeyboardType.Password,
             visualTransformation = PasswordVisualTransformation(),
@@ -1143,6 +1205,7 @@ private fun DynamicProviderInputContent(
     modifier: Modifier = Modifier,
 ) {
     val spacing = LocalSpacing.current
+    val bidiFormatter = rememberUiBidiFormatter()
     val providers = (discoveryState as? ProviderDiscoveryState.Ready)
         ?.providers
         .orEmpty()
@@ -1163,7 +1226,7 @@ private fun DynamicProviderInputContent(
     ) {
         PlaceholderField(
             text = properties.titleState.value,
-            placeholder = stringResource(string.feat_setting_placeholder_title).uppercase(),
+            placeholder = stringResource(string.feat_setting_placeholder_title),
             onValueChange = { properties.titleState.value = Uri.decode(it) },
             enabled = enabled,
             modifier = Modifier.fillMaxWidth(),
@@ -1220,7 +1283,7 @@ private fun DynamicProviderInputContent(
                     onClick = {
                         onSelectProvider(provider.providerId.value)
                     },
-                    text = provider.displayName,
+                    text = bidiFormatter.natural(provider.displayName),
                 )
             }
         }
@@ -1234,13 +1297,14 @@ private fun DynamicProviderInputContent(
                         selected = variant.kind == form?.providerKind,
                         enabled = enabled,
                         onClick = { onSelectKind(variant.kind.value) },
-                        text = variant.displayName,
+                        text = bidiFormatter.natural(variant.displayName),
                     )
                 }
             }
             form?.fields?.forEach { field ->
                 ProviderFormField(
                     field = field,
+                    bidiFormatter = bidiFormatter,
                     enabled = enabled,
                     onUpdate = { value -> onUpdateField(field.definition.key, value) },
                 )
@@ -1252,25 +1316,33 @@ private fun DynamicProviderInputContent(
 @Composable
 private fun ProviderFormField(
     field: ProviderSubscriptionFormField,
+    bidiFormatter: UiBidiFormatter,
     enabled: Boolean,
     onUpdate: (String?) -> Unit,
 ) {
     val definition = field.definition
     val spacing = LocalSpacing.current
+    val errorMessage = field.error?.let { stringResource(it.messageResource()) }
     Column(verticalArrangement = Arrangement.spacedBy(spacing.extraSmall)) {
+        val displayLabel = bidiFormatter.natural(definition.label)
         Text(
-            text = definition.label + if (definition.required) " *" else "",
+            text = bidiFormatter.natural(
+                if (definition.required) "${definition.label} *" else definition.label
+            ),
             style = MaterialTheme.typography.labelLarge,
         )
         definition.description?.let { description ->
-            Text(description, style = MaterialTheme.typography.bodySmall)
+            Text(
+                bidiFormatter.natural(description),
+                style = MaterialTheme.typography.bodySmall,
+            )
         }
         when (definition.type) {
             ExtensionSettingType.TEXT,
             ExtensionSettingType.NUMBER,
             ExtensionSettingType.SECRET -> PlaceholderField(
                 text = field.value.orEmpty(),
-                placeholder = definition.label,
+                placeholder = displayLabel,
                 onValueChange = onUpdate,
                 enabled = enabled,
                 contentColor = if (field.error == null) {
@@ -1288,11 +1360,23 @@ private fun ProviderFormField(
                 } else {
                     VisualTransformation.None
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics {
+                        if (errorMessage != null) {
+                            error(errorMessage)
+                        }
+                    },
             )
 
             ExtensionSettingType.BOOLEAN -> FlowRow(
-                modifier = Modifier.selectableGroup(),
+                modifier = Modifier
+                    .selectableGroup()
+                    .semantics {
+                        if (errorMessage != null) {
+                            error(errorMessage)
+                        }
+                    },
                 horizontalArrangement = Arrangement.spacedBy(spacing.small),
             ) {
                 ProviderResetChoice(field, enabled, onUpdate)
@@ -1311,7 +1395,13 @@ private fun ProviderFormField(
             }
 
             ExtensionSettingType.SINGLE_CHOICE -> FlowRow(
-                modifier = Modifier.selectableGroup(),
+                modifier = Modifier
+                    .selectableGroup()
+                    .semantics {
+                        if (errorMessage != null) {
+                            error(errorMessage)
+                        }
+                    },
                 horizontalArrangement = Arrangement.spacedBy(spacing.small),
             ) {
                 ProviderResetChoice(field, enabled, onUpdate)
@@ -1320,7 +1410,7 @@ private fun ProviderFormField(
                         selected = field.value == choice.value && !field.isUsingDefault,
                         enabled = enabled,
                         onClick = { onUpdate(choice.value) },
-                        text = choice.label,
+                        text = bidiFormatter.natural(choice.label),
                     )
                 }
             }
@@ -1329,16 +1419,17 @@ private fun ProviderFormField(
             Text(
                 text = stringResource(
                     string.feat_setting_provider_default_value,
-                    field.value.orEmpty(),
+                    bidiFormatter.natural(field.value.orEmpty()),
                 ),
                 style = MaterialTheme.typography.bodySmall,
             )
         }
-        field.error?.let { error ->
+        errorMessage?.let { message ->
             Text(
-                text = stringResource(error.messageResource()),
+                text = message,
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.clearAndSetSemantics {},
             )
         }
     }

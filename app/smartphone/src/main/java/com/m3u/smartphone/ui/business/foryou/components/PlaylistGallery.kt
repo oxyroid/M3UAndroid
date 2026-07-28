@@ -136,7 +136,7 @@ private object PlaylistGalleryDefaults {
             if (!refreshable) stringResource(string.feat_foryou_imported_playlist_title)
             else ""
         }
-        return actual.uppercase()
+        return actual
     }
 
     @Composable

@@ -27,6 +27,10 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -76,6 +80,9 @@ fun App(
             view.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, direction.keyCode))
             view.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, direction.keyCode))
         }
+    }
+    LaunchedEffect(viewModel, localeTag) {
+        viewModel.updateLocale(localeTag)
     }
     LaunchedEffect(viewModel, context) {
         viewModel.extensionDiagnostics.collect { payload ->
@@ -168,8 +175,12 @@ fun App(
         }
 
         remoteControlCode?.let { code ->
+            val displayCode = code.toString().padStart(6, '0')
+            val spokenCode = displayCode.toCharArray().joinToString(separator = " ")
+            val pairingCodeDescription =
+                stringResource(string.ui_remote_control_pairing_code, spokenCode)
             Text(
-                text = code.toString().padStart(6, '0'),
+                text = displayCode,
                 color = TvColors.TextPrimary,
                 fontFamily = TvFonts.Body,
                 fontSize = 28.sp,
@@ -179,6 +190,10 @@ fun App(
                     .padding(24.dp)
                     .background(TvColors.Surface.copy(alpha = 0.86f), RoundedCornerShape(8.dp))
                     .padding(horizontal = 18.dp, vertical = 10.dp)
+                    .clearAndSetSemantics {
+                        contentDescription = pairingCodeDescription
+                        liveRegion = LiveRegionMode.Polite
+                    }
             )
         }
     }

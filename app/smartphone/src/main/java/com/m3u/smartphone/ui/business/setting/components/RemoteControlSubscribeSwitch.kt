@@ -47,7 +47,7 @@ internal fun RemoteControlSubscribeSwitch(
         horizontalArrangement = Arrangement.spacedBy(spacing.medium)
     ) {
         Text(
-            text = stringResource(string.feat_setting_subscribe_for_tv).uppercase(),
+            text = stringResource(string.feat_setting_subscribe_for_tv),
             style = MaterialTheme.typography.titleSmall,
             modifier = Modifier.weight(1f),
             fontWeight = FontWeight.SemiBold,

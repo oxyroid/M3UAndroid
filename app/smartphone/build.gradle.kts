@@ -45,6 +45,7 @@ android {
         debug {
             isMinifyEnabled = false
             isShrinkResources = false
+            isPseudoLocalesEnabled = true
             signingConfig = signingConfigs.getByName("debug")
         }
         all {

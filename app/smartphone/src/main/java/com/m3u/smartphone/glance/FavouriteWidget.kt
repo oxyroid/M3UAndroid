@@ -154,7 +154,7 @@ private fun FavoriteGalleryItem(
                 }
                 programme?.let {
                     Text(
-                        text = it.readText(),
+                        text = it.readText(context),
                         style = TextStyle(
                             color = ColorProvider(
                                 GlanceTheme.colors.onSurfaceVariant
@@ -175,9 +175,12 @@ private fun FavoriteGalleryItem(
     }
 }
 
-private fun Programme.readText(): String = buildString {
+private fun Programme.readText(context: Context): String = buildString {
     val start = Instant.fromEpochMilliseconds(start)
         .toLocalDateTime(TimeZone.currentSystemDefault())
-        .formatEOrSh(true)
+        .formatEOrSh(
+            twelveHourClock = true,
+            locale = context.resources.configuration.locales[0],
+        )
     append("[$start] $title")
 }

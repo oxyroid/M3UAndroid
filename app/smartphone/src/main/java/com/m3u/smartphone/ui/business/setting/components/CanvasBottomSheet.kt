@@ -150,7 +150,7 @@ internal fun CanvasBottomSheet(
                                 )
                             },
                             label = {
-                                Text(stringResource(string.feat_setting_canvas_apply).uppercase())
+                                Text(stringResource(string.feat_setting_canvas_apply))
                             },
                             modifier = Modifier.weight(1f)
                         )
@@ -176,7 +176,7 @@ internal fun CanvasBottomSheet(
                                 )
                             },
                             label = {
-                                Text(stringResource(string.feat_setting_canvas_reset).uppercase())
+                                Text(stringResource(string.feat_setting_canvas_reset))
                             },
                             modifier = Modifier.weight(1f)
                         )
@@ -195,7 +195,7 @@ internal fun CanvasBottomSheet(
                                             true -> Icons.Rounded.DarkMode
                                             false -> Icons.Rounded.LightMode
                                         },
-                                        contentDescription = "",
+                                        contentDescription = null,
                                         tint = when (currentIsDark) {
                                             true -> SugarColors.Tee.color
                                             false -> SugarColors.Yellow.color
@@ -211,7 +211,7 @@ internal fun CanvasBottomSheet(
                                                 true -> string.feat_setting_canvas_dark
                                                 false -> string.feat_setting_canvas_light
                                             }
-                                        ).uppercase()
+                                        )
                                     )
                                 }
                             },

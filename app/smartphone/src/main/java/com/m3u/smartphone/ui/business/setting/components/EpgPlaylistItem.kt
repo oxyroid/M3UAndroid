@@ -8,7 +8,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import com.m3u.i18n.R.string
 import com.m3u.data.database.model.Playlist
 import androidx.compose.material3.IconButton
 
@@ -39,7 +41,7 @@ internal fun EpgPlaylistItem(
             ) {
                 Icon(
                     imageVector = Icons.Rounded.Delete,
-                    contentDescription = "delete epg"
+                    contentDescription = stringResource(string.ui_action_delete_epg)
                 )
             }
         },

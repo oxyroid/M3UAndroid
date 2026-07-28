@@ -74,8 +74,7 @@ internal fun PrepareContent(
             }
             CodeRow(
                 code = code,
-                length = 6,
-                onClick = {}
+                length = 6
             )
 
             Button(
@@ -88,8 +87,8 @@ internal fun PrepareContent(
             ) {
                 Text(
                     when {
-                        searchingOrConnecting -> stringResource(string.ui_remote_control_connecting).uppercase()
-                        else -> stringResource(string.ui_remote_control_connect).uppercase()
+                        searchingOrConnecting -> stringResource(string.ui_remote_control_connecting)
+                        else -> stringResource(string.ui_remote_control_connect)
                     }
                 )
             }

@@ -1,5 +1,9 @@
 package com.m3u.smartphone
 
+import android.text.format.DateFormat
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 import kotlinx.datetime.LocalDateTime
 
 object TimeUtils {
@@ -7,48 +11,119 @@ object TimeUtils {
 
     fun LocalDateTime.formatEOrSh(
         twelveHourClock: Boolean,
-        ignoreSeconds: Boolean = true
+        ignoreSeconds: Boolean = true,
+        locale: Locale = Locale.getDefault(Locale.Category.FORMAT),
     ): String {
-        return if (twelveHourClock) {
-            val hour12 = if (hour > 12) hour - 12 else if (hour == 0) 12 else hour
-            val formattedHour = if (hour12 < 10) "0$hour12" else hour12.toString()
-            val formattedMinute = if (minute < 10) "0$minute" else minute.toString()
-            val formattedSecond = if (second < 10) "0$second" else second.toString()
-            buildString {
-                append("$formattedHour:")
-                append(formattedMinute)
-                if (!ignoreSeconds) {
-                    append(":$formattedSecond")
-                }
-            }
-        } else {
-            buildString {
-                append("${if (hour < 10) "0$hour" else hour}:")
-                append("${if (minute < 10) "0$minute" else minute}")
-                if (!ignoreSeconds) {
-                    append(":${if (second < 10) "0$second" else second}")
-                }
-            }
-        }
+        return formatTime(
+            hour = hour,
+            minute = minute,
+            second = second.takeUnless { ignoreSeconds },
+            twelveHourClock = twelveHourClock,
+            locale = locale,
+        )
     }
 
-    fun Float.formatEOrSh(use12HourFormat: Boolean): String {
+    fun Float.formatEOrSh(
+        use12HourFormat: Boolean,
+        locale: Locale = Locale.getDefault(Locale.Category.FORMAT),
+    ): String {
         val hour = (this / 1).toInt()
         val minute = (this % 1 * 60).toInt()
-        val amPm = if (hour < 12) "AM" else "PM"
-        val hour12 = when {
-            !use12HourFormat -> hour
-            hour > 12 -> hour - 12
-            hour == 0 -> 12
-            else -> hour
-        }
-        val formattedHour = if (hour12 < 10) "0$hour12" else hour12.toString()
-        val formattedMinute = if (minute < 10) "0$minute" else minute.toString()
-        return if (use12HourFormat) {
-            "$formattedHour:$formattedMinute $amPm"
-        } else {
-            "$formattedHour:$formattedMinute"// $amPm"
-        }
+        return formatTime(hour, minute, null, use12HourFormat, locale)
+    }
 
+    private fun formatTime(
+        hour: Int,
+        minute: Int,
+        second: Int?,
+        twelveHourClock: Boolean,
+        locale: Locale,
+    ): String {
+        val skeleton = buildString {
+            append(if (twelveHourClock) "hm" else "Hm")
+            if (second != null) append('s')
+        }
+        val pattern = runCatching {
+            DateFormat.getBestDateTimePattern(locale, skeleton)
+        }.getOrNull()
+            ?.takeIf(String::isNotBlank)
+            ?: fallbackTimePattern(locale, twelveHourClock, second != null)
+        val endpointPattern = if (!twelveHourClock && hour == 24) {
+            pattern.replaceUnquotedHourSymbol(from = 'H', to = 'k')
+        } else {
+            pattern
+        }
+        return formatTimeWithPattern(
+            hour = hour,
+            minute = minute,
+            second = second,
+            locale = locale,
+            pattern = endpointPattern,
+        )
+    }
+}
+
+internal fun formatTimeWithPattern(
+    hour: Int,
+    minute: Int,
+    second: Int?,
+    locale: Locale,
+    pattern: String,
+): String {
+    val calendar = Calendar.getInstance(locale).apply {
+        clear()
+        set(2000, Calendar.JANUARY, 1, hour % 24, minute, second ?: 0)
+    }
+    return SimpleDateFormat(pattern, locale).format(calendar.time)
+}
+
+private fun fallbackTimePattern(
+    locale: Locale,
+    twelveHourClock: Boolean,
+    includeSeconds: Boolean,
+): String {
+    val defaultPattern = (
+        java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT, locale)
+            as? SimpleDateFormat
+        )?.toPattern().orEmpty()
+    val dayPeriodBeforeHour = defaultPattern.unquotedIndexOf('a')
+        .takeIf { it >= 0 }
+        ?.let { periodIndex ->
+            val hourIndex = listOf('h', 'H', 'k', 'K')
+                .map(defaultPattern::unquotedIndexOf)
+                .filter { it >= 0 }
+                .minOrNull()
+                ?: Int.MAX_VALUE
+            periodIndex < hourIndex
+        } == true
+    val time = if (includeSeconds) "h:mm:ss" else "h:mm"
+    return when {
+        !twelveHourClock -> if (includeSeconds) "HH:mm:ss" else "HH:mm"
+        dayPeriodBeforeHour -> "a$time"
+        else -> "$time a"
+    }
+}
+
+private fun String.unquotedIndexOf(target: Char): Int {
+    var quoted = false
+    forEachIndexed { index, character ->
+        if (character == '\'') {
+            quoted = !quoted
+        } else if (!quoted && character == target) {
+            return index
+        }
+    }
+    return -1
+}
+
+private fun String.replaceUnquotedHourSymbol(from: Char, to: Char): String = buildString(length) {
+    var quoted = false
+    this@replaceUnquotedHourSymbol.forEach { character ->
+        if (character == '\'') {
+            quoted = !quoted
+            append(character)
+        } else {
+            append(if (!quoted && character == from) to else character)
+        }
     }
 }

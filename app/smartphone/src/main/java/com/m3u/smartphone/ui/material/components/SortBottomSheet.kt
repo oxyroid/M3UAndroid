@@ -39,7 +39,7 @@ fun SortBottomSheet(
         header = {
             Icon(
                 imageVector = Icons.AutoMirrored.Rounded.Sort,
-                contentDescription = "sort"
+                contentDescription = null
             )
             Text(
                 text = stringResource(string.ui_sort),

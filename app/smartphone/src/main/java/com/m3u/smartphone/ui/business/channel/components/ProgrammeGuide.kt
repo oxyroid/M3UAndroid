@@ -52,7 +52,9 @@ import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventTimeoutCancellationException
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastAny
@@ -65,6 +67,7 @@ import com.m3u.core.foundation.architecture.preferences.preferenceOf
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.ProgrammeRange
 import com.m3u.data.database.model.ProgrammeRange.Companion.HOUR_LENGTH
+import com.m3u.i18n.R.string
 import com.m3u.smartphone.TimeUtils.formatEOrSh
 import com.m3u.smartphone.TimeUtils.toEOrSh
 import com.m3u.smartphone.ui.material.components.FontFamilies
@@ -316,6 +319,7 @@ private fun ProgrammeCell(
     val currentOnPressed by rememberUpdatedState(onPressed)
     val spacing = LocalSpacing.current
     val clockMode by preferenceOf(PreferencesKeys.CLOCK_MODE)
+    val formatLocale = LocalConfiguration.current.locales[0]
 
     val content = @Composable {
         Column(
@@ -331,7 +335,9 @@ private fun ProgrammeCell(
                 .toLocalDateTime(TimeZone.currentSystemDefault())
                 .toEOrSh()
             Text(
-                text = "${start.formatEOrSh(clockMode)} - ${end.formatEOrSh(clockMode)}",
+                text = "${start.formatEOrSh(clockMode, locale = formatLocale)} - ${
+                    end.formatEOrSh(clockMode, locale = formatLocale)
+                }",
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodyMedium,
@@ -418,15 +424,20 @@ private fun CurrentTimelineCell(
     val spacing = LocalSpacing.current
 
     val twelveHourClock by preferenceOf(PreferencesKeys.CLOCK_MODE)
+    val formatLocale = LocalConfiguration.current.locales[0]
 
     val color = MaterialTheme.colorScheme.error
     val contentColor = MaterialTheme.colorScheme.onError
     val currentMilliseconds by rememberUpdatedState(milliseconds)
-    val time = remember(currentMilliseconds) {
+    val time = remember(currentMilliseconds, twelveHourClock, formatLocale) {
         Instant
             .fromEpochMilliseconds(currentMilliseconds)
             .toLocalDateTime(TimeZone.currentSystemDefault())
-            .formatEOrSh(twelveHourClock, ignoreSeconds = false)
+            .formatEOrSh(
+                twelveHourClock = twelveHourClock,
+                ignoreSeconds = false,
+                locale = formatLocale,
+            )
     }
     Box(contentAlignment = Alignment.CenterEnd) {
         Canvas(
@@ -484,7 +495,7 @@ private fun Controls(
         ) {
             Icon(
                 imageVector = Icons.Rounded.KeyboardDoubleArrowUp,
-                contentDescription = "scroll to current timeline"
+                contentDescription = stringResource(string.ui_action_scroll_to_current_timeline)
             )
         }
     }

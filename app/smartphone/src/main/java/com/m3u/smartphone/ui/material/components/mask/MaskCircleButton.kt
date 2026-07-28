@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 fun MaskCircleButton(
     state: MaskState,
     icon: ImageVector,
+    contentDescription: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     tint: Color = Color.Unspecified,
@@ -39,7 +40,7 @@ fun MaskCircleButton(
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = null,
+            contentDescription = contentDescription,
             modifier = Modifier.size(dimension)
         )
     }

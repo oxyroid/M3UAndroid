@@ -40,7 +40,7 @@ internal fun MaskGestureValuePanel(
         ) {
             Icon(
                 imageVector = icon,
-                contentDescription = "icon-gesture",
+                contentDescription = null,
                 modifier = Modifier.size(24.dp),
             )
             Spacer(modifier = Modifier.width(spacing.extraSmall))

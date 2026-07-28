@@ -3,14 +3,13 @@
 package com.m3u.smartphone.ui.material.components
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.defaultMinSize
@@ -45,20 +44,24 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.error
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.material.ktx.InteractionType
 import com.m3u.smartphone.ui.material.ktx.interactionBorder
 
@@ -80,12 +83,18 @@ fun TextField(
     fontSize: TextUnit = TextFieldDefaults.TextFontSize,
     fontWeight: FontWeight? = null,
     isError: Boolean = false,
+    errorMessage: String? = null,
     onValueChange: (String) -> Unit = {},
 ) {
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
     val interactionSource = remember { MutableInteractionSource() }
     val focus by interactionSource.collectIsFocusedAsState()
+    val semanticErrorMessage = when {
+        !isError -> null
+        !errorMessage.isNullOrBlank() -> errorMessage
+        else -> stringResource(string.ui_error_unknown)
+    }
 
     BackHandler(focus) {
         focusManager.clearFocus()
@@ -125,6 +134,14 @@ fun TextField(
             interactionSource = interactionSource,
             modifier = modifier
                 .fillMaxWidth()
+                .semantics {
+                    if (placeholder.isNotBlank()) {
+                        contentDescription = placeholder
+                    }
+                    if (semanticErrorMessage != null) {
+                        error(semanticErrorMessage)
+                    }
+                }
                 .focusRequester(focusRequester),
             readOnly = readOnly,
             cursorBrush = SolidColor(contentColor),
@@ -155,6 +172,7 @@ fun TextField(
 
                     if (text.isEmpty()) {
                         Text(
+                            modifier = Modifier.clearTextFieldLabelSemantics(),
                             text = placeholder,
                             color = contentColor.copy(.35f),
                             fontSize = fontSize,
@@ -169,7 +187,6 @@ fun TextField(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PlaceholderField(
     text: String,
@@ -244,6 +261,11 @@ fun PlaceholderField(
             modifier = modifier
                 .bringIntoViewRequester(bringIntoViewRequester)
                 .fillMaxWidth()
+                .semantics {
+                    if (placeholder.isNotBlank()) {
+                        contentDescription = placeholder
+                    }
+                }
                 .focusRequester(focusRequester),
             readOnly = readOnly,
             cursorBrush = SolidColor(contentColor.copy(.35f)),
@@ -276,7 +298,7 @@ fun PlaceholderField(
                         )
                     }
 
-                    Box(
+                    Column(
                         Modifier
                             .interactionBorder(
                                 type = InteractionType.PRESS,
@@ -287,41 +309,53 @@ fun PlaceholderField(
                             .defaultMinSize(minHeight = 56.dp)
                             .padding(
                                 start = if (icon == null) 15.dp else 0.dp,
-                                end = 15.dp
-                            ),
-                        contentAlignment = Alignment.CenterStart
+                                end = 15.dp,
+                                top = 7.dp,
+                                bottom = 7.dp
+                            )
                     ) {
                         val hasText = text.isNotEmpty()
-
-                        val animPlaceholder: Dp by animateDpAsState(
-                            if (focus || hasText) (-10).dp else 0.dp,
-                            label = "placeholder-translation-y"
-                        )
+                        val showFloatingLabel = focus || hasText
                         val animPlaceHolderFontSize: Float by animateFloatAsState(
-                            targetValue = if (focus || hasText) 12f else 14f,
+                            targetValue = if (showFloatingLabel) 12f else 14f,
                             label = "placeholder-font-size"
                         )
 
-                        Text(
-                            modifier = Modifier
-                                .graphicsLayer {
-                                    translationY = animPlaceholder.toPx()
-                                },
-                            text = placeholder,
-                            color = contentColor.copy(alpha = .35f),
-                            fontSize = animPlaceHolderFontSize.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            fontWeight = FontWeight.SemiBold
-                        )
-
-                        Box(
-                            Modifier
-                                .padding(top = -animPlaceholder)
-                                .fillMaxWidth()
-                                .heightIn(18.dp),
-                        ) {
-                            innerTextField()
+                        if (showFloatingLabel) {
+                            Text(
+                                modifier = Modifier.clearTextFieldLabelSemantics(),
+                                text = placeholder,
+                                color = contentColor.copy(alpha = .35f),
+                                fontSize = animPlaceHolderFontSize.sp,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 18.dp),
+                                contentAlignment = Alignment.CenterStart
+                            ) {
+                                innerTextField()
+                            }
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .defaultMinSize(minHeight = 42.dp),
+                                contentAlignment = Alignment.CenterStart
+                            ) {
+                                Text(
+                                    modifier = Modifier.clearTextFieldLabelSemantics(),
+                                    text = placeholder,
+                                    color = contentColor.copy(alpha = .35f),
+                                    fontSize = animPlaceHolderFontSize.sp,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
                         }
                     }
                 }
@@ -329,6 +363,8 @@ fun PlaceholderField(
         )
     }
 }
+
+private fun Modifier.clearTextFieldLabelSemantics(): Modifier = clearAndSetSemantics {}
 
 private object TextFieldDefaults {
     val TextFontSize = 16.sp

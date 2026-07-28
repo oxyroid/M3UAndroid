@@ -3,7 +3,7 @@
     <string name="feat_setting_app_version">uygulama sürümü</string>
     <string name="feat_setting_label_subscribe">Ekle</string>
     <string name="feat_setting_success_subscribe">başarıyla abone olundu</string>
-    <string name="feat_setting_failed_malformed_url">geçersiz URL (%%s)</string>
+    <string name="feat_setting_failed_malformed_url">geçersiz URL (%s)</string>
     <string name="feat_setting_error_empty_title">oynatma listesi adı boş</string>
     <string name="feat_setting_placeholder_title">oynatma listesi adı</string>
     <string name="feat_setting_placeholder_url">oynatma listesi bağlantısı</string>
@@ -80,11 +80,6 @@
     <string name="feat_setting_backing_up">tüm oynatma listeleri ve kanallar yedekleniyor</string>
     <string name="feat_setting_restoring">tüm oynatma listeleri ve kanallar geri yükleniyor</string>
     <string name="feat_setting_follow_system_theme">sistem temasını takip et</string>
-    <string name="feat_setting_data_source_m3u" translatable="false">M3U</string>
-    <string name="feat_setting_data_source_epg" translatable="false">EPG</string>
-    <string name="feat_setting_data_source_xtream" translatable="false">Xtream</string>
-    <string name="feat_setting_data_source_emby" translatable="false">Emby</string>
-    <string name="feat_setting_data_source_dropbox" translatable="false">Dropbox</string>
     <string name="feat_setting_placeholder_basic_url">adres</string>
     <string name="feat_setting_placeholder_username">kullanıcı adı</string>
     <string name="feat_setting_placeholder_password">şifre</string>

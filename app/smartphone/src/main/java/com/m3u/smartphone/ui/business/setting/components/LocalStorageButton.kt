@@ -69,7 +69,7 @@ internal fun LocalStorageButton(
         },
         modifier = modifier
     ) {
-        Text(text.uppercase())
+        Text(text)
         Icon(
             imageVector = icon,
             contentDescription = null

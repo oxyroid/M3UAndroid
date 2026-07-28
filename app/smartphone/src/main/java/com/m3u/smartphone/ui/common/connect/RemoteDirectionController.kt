@@ -19,9 +19,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.KeyboardArrowLeft
+import androidx.compose.material.icons.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -42,8 +42,18 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.m3u.data.tv.model.RemoteDirection
+import com.m3u.i18n.R.string
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -128,6 +138,12 @@ internal fun RemoteDirectionController(
         targetValue = pressedPosition.takeOrElse { draggedPosition.takeOrElse { Offset.Zero } },
         label = "current-position"
     )
+    val directionPadDescription = stringResource(string.ui_remote_control_direction_pad)
+    val moveUpDescription = stringResource(string.ui_remote_control_direction_up)
+    val moveDownDescription = stringResource(string.ui_remote_control_direction_down)
+    val moveLeftDescription = stringResource(string.ui_remote_control_direction_left)
+    val moveRightDescription = stringResource(string.ui_remote_control_direction_right)
+    val confirmDescription = stringResource(string.ui_remote_control_direction_confirm)
 
     LaunchedEffect(Unit) {
         interactionSource
@@ -169,7 +185,35 @@ internal fun RemoteDirectionController(
             .launchIn(this)
     }
 
-    Box(contentAlignment = Alignment.Center) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier.semantics(mergeDescendants = true) {
+            contentDescription = directionPadDescription
+            role = Role.Button
+            onClick(label = confirmDescription) {
+                onRemoteDirection(RemoteDirection.ENTER)
+                true
+            }
+            customActions = listOf(
+                CustomAccessibilityAction(moveUpDescription) {
+                    onRemoteDirection(RemoteDirection.UP)
+                    true
+                },
+                CustomAccessibilityAction(moveDownDescription) {
+                    onRemoteDirection(RemoteDirection.DOWN)
+                    true
+                },
+                CustomAccessibilityAction(moveLeftDescription) {
+                    onRemoteDirection(RemoteDirection.LEFT)
+                    true
+                },
+                CustomAccessibilityAction(moveRightDescription) {
+                    onRemoteDirection(RemoteDirection.RIGHT)
+                    true
+                }
+            )
+        }
+    ) {
         Canvas(
             modifier = Modifier
                 .wrapContentSize(Alignment.Center)
@@ -199,7 +243,7 @@ internal fun RemoteDirectionController(
                     controllerCenter = Offset(size.width / 2f, size.height / 2f)
                     controllerRadius = minOf(size.width, size.height) / 2f
                 }
-                .then(modifier)
+                .clearAndSetSemantics { }
         ) {
             val radius = size.minDimension / 2
             drawCircle(
@@ -216,8 +260,8 @@ internal fun RemoteDirectionController(
             )
         }
         val icon = when (direction) {
-            RemoteDirection.LEFT -> Icons.AutoMirrored.Rounded.KeyboardArrowLeft
-            RemoteDirection.RIGHT -> Icons.AutoMirrored.Rounded.KeyboardArrowRight
+            RemoteDirection.LEFT -> Icons.Rounded.KeyboardArrowLeft
+            RemoteDirection.RIGHT -> Icons.Rounded.KeyboardArrowRight
             RemoteDirection.UP -> Icons.Rounded.KeyboardArrowUp
             RemoteDirection.DOWN -> Icons.Rounded.KeyboardArrowDown
             else -> null
@@ -236,7 +280,7 @@ internal fun RemoteDirectionController(
             if (icon != null) {
                 Icon(
                     imageVector = icon,
-                    contentDescription = direction?.name,
+                    contentDescription = null,
                     tint = contentColor,
                     modifier = Modifier.matchParentSize()
                 )

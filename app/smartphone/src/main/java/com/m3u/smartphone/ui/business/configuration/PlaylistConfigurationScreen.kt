@@ -255,7 +255,7 @@ private fun PlaylistConfigurationScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.Save,
-                        contentDescription = "apply changes"
+                        contentDescription = stringResource(string.ui_action_save_changes)
                     )
                 }
             }

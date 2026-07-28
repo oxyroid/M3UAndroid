@@ -57,6 +57,7 @@ fun FavoriteRoute(
     viewModel: FavoriteViewModel = hiltViewModel()
 ) {
     val title = stringResource(R.string.ui_title_favourite)
+    val sortContentDescription = stringResource(R.string.ui_sort)
 
     val helper = LocalHelper.current
     val context = LocalContext.current
@@ -88,7 +89,7 @@ fun FavoriteRoute(
         Metadata.actions = listOf(
             Action(
                 icon = Icons.AutoMirrored.Rounded.Sort,
-                contentDescription = "sort",
+                contentDescription = sortContentDescription,
                 onClick = { isSortSheetVisible = true }
             )
         )

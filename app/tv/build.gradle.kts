@@ -23,6 +23,9 @@ android {
         testInstrumentationRunnerArguments["m3uMockServerUrl"] = m3uMockServerUrl.get()
     }
     buildTypes {
+        debug {
+            isPseudoLocalesEnabled = true
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true

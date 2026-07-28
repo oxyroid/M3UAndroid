@@ -2,6 +2,7 @@ package com.m3u.smartphone.ui.material.components.mask
 
 import androidx.annotation.IntRange
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -10,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalAccessibilityManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -41,31 +43,35 @@ private class MaskStateCoroutineImpl(
 ) : MaskState, CoroutineScope by coroutineScope {
     private var currentTime: Long by mutableLongStateOf(systemClock)
     private var lastTime: Long by mutableLongStateOf(0L)
+    private var explicitlySleeping by mutableStateOf(true)
     private var keys by mutableStateOf<Set<Any>>(emptySet())
     override val locked: Boolean = keys.isNotEmpty()
 
     override val visible: Boolean by derivedStateOf {
-        val before = (locked || (currentTime - lastTime <= minDuration))
+        val before = locked || (!explicitlySleeping && currentTime - lastTime <= minDuration)
         interceptor?.invoke(before) ?: before
     }
 
     init {
         if (minDuration < 1L) error("minSecondDuration cannot less than 1s.")
-        launch {
-            while (true) {
-                delay(1000L)
-                currentTime += 1
-            }
+    }
+
+    private val tickerJob = launch {
+        while (true) {
+            delay(1000L)
+            currentTime += 1
         }
     }
 
     private val systemClock: Long get() = System.currentTimeMillis() / 1000
 
     override fun wake(duration: Duration) {
+        explicitlySleeping = false
         lastTime = currentTime + duration.inWholeMilliseconds / 1000
     }
 
     override fun sleep() {
+        explicitlySleeping = true
         lastTime = 0
         val iterator = unlockedJobs.iterator()
         while (iterator.hasNext()) {
@@ -116,6 +122,12 @@ private class MaskStateCoroutineImpl(
     override fun intercept(interceptor: MaskInterceptor?) {
         this.interceptor = interceptor
     }
+
+    fun dispose() {
+        tickerJob.cancel()
+        unlockedJobs.values.forEach(Job::cancel)
+        unlockedJobs.clear()
+    }
 }
 
 @Composable
@@ -123,10 +135,41 @@ fun rememberMaskState(
     @IntRange(from = 1) minDuration: Long = MaskDefaults.MIN_DURATION_SECOND,
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
 ): MaskState {
-    return remember(minDuration, coroutineScope) {
+    val accessibilityManager = LocalAccessibilityManager.current
+    val baseDurationMillis = minDuration.saturatedMilliseconds()
+    val recommendedDurationMillis = accessibilityManager?.calculateRecommendedTimeoutMillis(
+        originalTimeoutMillis = baseDurationMillis,
+        containsIcons = true,
+        containsText = true,
+        containsControls = true,
+    ) ?: baseDurationMillis
+    val effectiveDuration = calculateRecommendedMaskDurationSeconds(
+        baseDurationSeconds = minDuration,
+        recommendedDurationMillis = recommendedDurationMillis,
+    )
+    val state = remember(effectiveDuration, coroutineScope) {
         MaskStateCoroutineImpl(
-            minDuration = minDuration,
+            minDuration = effectiveDuration,
             coroutineScope = coroutineScope,
         )
     }
+    DisposableEffect(state) {
+        onDispose(state::dispose)
+    }
+    return state
+}
+
+internal fun calculateRecommendedMaskDurationSeconds(
+    baseDurationSeconds: Long,
+    recommendedDurationMillis: Long,
+): Long {
+    require(baseDurationSeconds >= 1L)
+    if (recommendedDurationMillis == Long.MAX_VALUE) return Long.MAX_VALUE
+    val recommendedSeconds = recommendedDurationMillis / 1000L +
+        if (recommendedDurationMillis % 1000L == 0L) 0L else 1L
+    return recommendedSeconds.coerceAtLeast(baseDurationSeconds)
+}
+
+private fun Long.saturatedMilliseconds(): Long {
+    return if (this > Long.MAX_VALUE / 1000L) Long.MAX_VALUE else this * 1000L
 }

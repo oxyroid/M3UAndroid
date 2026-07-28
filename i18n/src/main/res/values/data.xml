@@ -4,9 +4,19 @@
     <string name="data_error_empty_title">playlist name is empty</string>
     <string name="data_channel_name_stream_download_service">Stream Download Service</string>
     <string name="data_channel_description_stream_download_service">Stream Download Description</string>
+    <string name="data_worker_backup_notification_title">Backing up</string>
+    <string name="data_worker_backup_notification_channel_name">Backup</string>
+    <string name="data_worker_backup_notification_channel_description">Shows backup progress</string>
+    <string name="data_worker_restore_notification_title">Restoring</string>
+    <string name="data_worker_restore_notification_channel_name">Restore</string>
+    <string name="data_worker_restore_notification_channel_description">Shows restore progress</string>
     <string name="data_worker_subscription_action_cancel">Cancel</string>
     <string name="data_worker_subscription_action_retry">Retry</string>
+    <string name="data_worker_subscription_notification_channel_name">Subscription updates</string>
+    <string name="data_worker_subscription_notification_channel_description">Shows subscription update progress</string>
     <string name="data_worker_subscription_content_completed">Completed (+%d)</string>
     <string name="data_worker_subscription_content_channel_progress">%d channels have been downloaded</string>
     <string name="data_worker_subscription_content_programme_progress">%d programmes have been downloaded</string>
+    <string name="data_worker_programme_reminder_notification_channel_name">Programme reminders</string>
+    <string name="data_worker_programme_reminder_notification_channel_description">Notifies you about upcoming programmes</string>
 </resources>

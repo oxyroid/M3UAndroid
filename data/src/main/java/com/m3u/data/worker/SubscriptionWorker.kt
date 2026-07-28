@@ -183,9 +183,12 @@ class SubscriptionWorker @AssistedInject constructor(
 
     private fun createChannel() {
         val channel = NotificationChannel(
-            CHANNEL_ID, NOTIFICATION_NAME, NotificationManager.IMPORTANCE_LOW
+            CHANNEL_ID,
+            context.getString(string.data_worker_subscription_notification_channel_name),
+            NotificationManager.IMPORTANCE_LOW
         )
-        channel.description = "display subscribe task progress"
+        channel.description =
+            context.getString(string.data_worker_subscription_notification_channel_description)
         notificationManager.createNotificationChannel(channel)
     }
 
@@ -253,7 +256,6 @@ class SubscriptionWorker @AssistedInject constructor(
 
     companion object {
         private const val CHANNEL_ID = "subscribe_channel"
-        private const val NOTIFICATION_NAME = "subscribe task"
         private const val INPUT_STRING_TITLE = "title"
         private const val INPUT_STRING_URL = "url"
         private const val INPUT_STRING_EPG_PLAYLIST_URL = "epg"

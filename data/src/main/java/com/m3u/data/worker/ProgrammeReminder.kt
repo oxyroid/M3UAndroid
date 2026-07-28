@@ -16,6 +16,7 @@ import androidx.work.workDataOf
 import com.m3u.data.R
 import com.m3u.data.repository.media.MediaRepository
 import com.m3u.data.repository.programme.ProgrammeRepository
+import com.m3u.i18n.R.string
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import java.util.concurrent.TimeUnit
@@ -59,10 +60,12 @@ class ProgrammeReminder @AssistedInject constructor(
     private fun createChannel() {
         val channel = NotificationChannel(
             CHANNEL_ID,
-            NOTIFICATION_NAME,
+            context.getString(string.data_worker_programme_reminder_notification_channel_name),
             NotificationManager.IMPORTANCE_HIGH
         )
-        channel.description = "Receive programme notifications"
+        channel.description = context.getString(
+            string.data_worker_programme_reminder_notification_channel_description
+        )
         channel.setSound(
             RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION),
             AudioAttributes.Builder()
@@ -76,7 +79,6 @@ class ProgrammeReminder @AssistedInject constructor(
 
     companion object {
         private const val CHANNEL_ID = "reminder_channel"
-        private const val NOTIFICATION_NAME = "programme_reminder"
         private const val PROGRAMME_ID = "programme_id"
         fun readProgrammeId(tags: Collection<String>): Int? = tags.find {
             it.startsWith("id=")

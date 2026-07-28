@@ -23,11 +23,10 @@ import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Unarchive
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.m3u.core.foundation.architecture.preferences.ConnectTimeout
 import com.m3u.core.foundation.architecture.preferences.PlaylistStrategy
@@ -37,6 +36,7 @@ import com.m3u.core.foundation.architecture.preferences.UnseensMilliseconds
 import com.m3u.core.foundation.architecture.preferences.mutablePreferenceOf
 import com.m3u.core.foundation.util.basic.title
 import com.m3u.i18n.R.string
+import com.m3u.i18n.R.plurals
 import com.m3u.smartphone.ui.business.setting.components.SwitchSharedPreference
 import com.m3u.smartphone.ui.material.components.TextPreference
 import com.m3u.smartphone.ui.material.ktx.plus
@@ -204,7 +204,11 @@ internal fun OptionalFragment(
             TextPreference(
                 title = stringResource(string.feat_setting_connect_timeout).title(),
                 icon = Icons.Rounded.Timer,
-                trailing = "${connectTimeout / 1000}s",
+                trailing = pluralStringResource(
+                    plurals.ui_duration_seconds,
+                    (connectTimeout / 1000).toInt(),
+                    connectTimeout / 1000,
+                ),
                 onClick = {
                     connectTimeout = when (connectTimeout) {
                         ConnectTimeout.LONG -> ConnectTimeout.SHORT
@@ -216,14 +220,15 @@ internal fun OptionalFragment(
         }
         item {
             var unseensMilliseconds by mutablePreferenceOf(PreferencesKeys.UNSEENS_MILLISECONDS)
-            val unseensMillisecondsText by remember {
-                derivedStateOf {
-                    val duration = unseensMilliseconds.toDuration(DurationUnit.MILLISECONDS)
-                    if (unseensMilliseconds > UnseensMilliseconds.DAYS_30) "Never"
-                    else duration
-                        .toString()
-                        .title()
-                }
+            val unseensMillisecondsText = if (
+                unseensMilliseconds > UnseensMilliseconds.DAYS_30
+            ) {
+                stringResource(string.ui_never)
+            } else {
+                val days = unseensMilliseconds.toDuration(DurationUnit.MILLISECONDS)
+                    .toLong(DurationUnit.DAYS)
+                    .toInt()
+                pluralStringResource(plurals.ui_duration_days, days, days)
             }
             TextPreference(
                 title = stringResource(string.feat_setting_unseen_limit).title(),

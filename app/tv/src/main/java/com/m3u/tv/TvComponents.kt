@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -48,10 +49,22 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -60,10 +73,13 @@ import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.isSeries
 import com.m3u.data.database.model.isVod
+import com.m3u.i18n.R.plurals
 import com.m3u.i18n.R.string
+import java.util.Locale
 
 @Composable
 fun TvBackdrop(channel: Channel?) {
+    val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     Box(Modifier.fillMaxSize()) {
         AsyncImage(
             model = channel?.cover,
@@ -81,9 +97,13 @@ fun TvBackdrop(channel: Channel?) {
                 .fillMaxSize()
                 .background(
                     Brush.horizontalGradient(
-                        0f to TvColors.Background,
-                        0.58f to TvColors.Background.copy(alpha = 0.92f),
-                        1f to TvColors.Background.copy(alpha = 0.72f)
+                        *tvLeadingGradientColorStops(
+                            isRtl = isRtl,
+                            leading = TvColors.Background,
+                            middle = TvColors.Background.copy(alpha = 0.92f),
+                            trailing = TvColors.Background.copy(alpha = 0.72f),
+                            middlePosition = 0.58f,
+                        ).toTypedArray()
                     )
                 )
         )
@@ -123,12 +143,15 @@ private fun RailItem(
     FocusFrame(
         onClick = onClick,
         selected = selected,
+        selectionState = selected,
+        semanticsLabel = destination.label(),
         shape = RoundedCornerShape(16.dp),
+        semanticRole = Role.Tab,
         modifier = Modifier.size(64.dp)
     ) { focused ->
         Icon(
             imageVector = destination.icon,
-            contentDescription = destination.label(),
+            contentDescription = null,
             tint = if (selected || focused) TvColors.OnFocus else TvColors.TextSecondary,
             modifier = Modifier
                 .align(Alignment.Center)
@@ -150,12 +173,17 @@ fun FocusFrame(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     selected: Boolean = false,
+    selectionState: Boolean? = null,
     enabled: Boolean = true,
+    focusableWhenDisabled: Boolean = false,
     shape: RoundedCornerShape = RoundedCornerShape(8.dp),
     focusRequester: FocusRequester? = null,
     focusedScale: Float = 1.08f,
     focusedBorderWidth: Dp = 4.dp,
     focusedBorderColor: Color = Color.White,
+    semanticRole: Role? = Role.Button,
+    semanticsLabel: String? = null,
+    toggleState: ToggleableState? = null,
     onFocus: () -> Unit = {},
     onKey: (KeyEvent) -> Boolean = { false },
     content: @Composable BoxScope.(focused: Boolean) -> Unit
@@ -210,8 +238,34 @@ fun FocusFrame(
                                 else -> false
                             }
                         }
-                        .clickable(onClick = onClick)
+                        .clickable(
+                            role = semanticRole,
+                            onClick = onClick,
+                        )
                         .focusable()
+                } else if (focusableWhenDisabled) {
+                    Modifier.focusable()
+                } else {
+                    Modifier
+                }
+            )
+            .then(
+                if (semanticRole != null) {
+                    Modifier.semantics(mergeDescendants = true) {
+                        semanticsLabel?.let { label ->
+                            contentDescription = label
+                        }
+                        selectionState?.let { isSelected ->
+                            this.selected = isSelected
+                        }
+                        toggleState?.let { state ->
+                            toggleableState = state
+                        }
+                        if (!enabled) {
+                            role = semanticRole
+                            disabled()
+                        }
+                    }
                 } else {
                     Modifier
                 }
@@ -233,11 +287,12 @@ fun TvIconActionButton(
         onClick = onClick,
         shape = RoundedCornerShape(28.dp),
         focusRequester = focusRequester,
+        semanticsLabel = contentDescription,
         modifier = modifier.size(56.dp)
     ) { focused ->
         Icon(
             imageVector = icon,
-            contentDescription = contentDescription,
+            contentDescription = null,
             tint = if (focused) TvColors.OnFocus else TvColors.TextPrimary,
             modifier = Modifier
                 .align(Alignment.Center)
@@ -254,30 +309,44 @@ fun TvActionButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     focusRequester: FocusRequester? = null,
-    showTextWhenUnfocused: Boolean = true
+    showTextWhenUnfocused: Boolean = true,
+    selected: Boolean? = null,
+    checked: Boolean? = null,
+    semanticRole: Role = Role.Button,
+    semanticsLabel: String? = null,
 ) {
     FocusFrame(
         onClick = onClick,
-        selected = false,
+        selected = selected == true || checked == true,
+        selectionState = selected.takeIf { checked == null },
         enabled = enabled,
         shape = RoundedCornerShape(24.dp),
         focusRequester = focusRequester,
-        modifier = modifier.height(48.dp)
+        semanticRole = semanticRole,
+        semanticsLabel = semanticsLabel,
+        toggleState = checked?.let { isChecked ->
+            if (isChecked) ToggleableState.On else ToggleableState.Off
+        },
+        modifier = modifier.heightIn(min = 48.dp)
     ) { focused ->
         val showText = focused || showTextWhenUnfocused
+        val active = focused || selected == true || checked == true
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .align(Alignment.Center)
-                .padding(horizontal = if (showText) 16.dp else 12.dp)
+                .padding(
+                    horizontal = if (showText) 16.dp else 12.dp,
+                    vertical = 8.dp,
+                )
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = when {
                     !enabled -> TvColors.TextMuted
-                    focused -> TvColors.OnFocus
+                    active -> TvColors.OnFocus
                     else -> TvColors.TextPrimary
                 },
                 modifier = Modifier.size(24.dp)
@@ -287,13 +356,13 @@ fun TvActionButton(
                     text = text,
                     color = when {
                         !enabled -> TvColors.TextMuted
-                        focused -> TvColors.OnFocus
+                        active -> TvColors.OnFocus
                         else -> TvColors.TextPrimary
                     },
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = TvFonts.Body,
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
             }
@@ -317,7 +386,7 @@ fun SectionTitle(
             fontSize = 24.sp,
             fontWeight = FontWeight.SemiBold,
             fontFamily = TvFonts.Body,
-            maxLines = 1,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis
         )
         Text(
@@ -325,7 +394,7 @@ fun SectionTitle(
             color = TvColors.TextSecondary,
             fontSize = 14.sp,
             fontFamily = TvFonts.Body,
-            maxLines = 2,
+            maxLines = 3,
             overflow = TextOverflow.Ellipsis
         )
     }
@@ -370,7 +439,7 @@ fun ChannelCard(
                     contentAlignment = Alignment.CenterStart,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(32.dp)
+                        .heightIn(min = 32.dp)
                 ) {
                     Text(
                         text = channel.title.title(),
@@ -428,10 +497,12 @@ fun PlaylistCard(
     modifier: Modifier = Modifier,
     focusRequester: FocusRequester? = null
 ) {
+    val largeTextLayout = tvLargeTextLayout(LocalDensity.current.fontScale)
     FocusFrame(
         onClick = onClick,
         selected = selected,
-        modifier = modifier,
+        selectionState = selected,
+        modifier = modifier.heightIn(min = largeTextLayout.playlistCardMinHeightDp.dp),
         focusRequester = focusRequester,
         shape = RoundedCornerShape(12.dp)
     ) { focused ->
@@ -465,7 +536,7 @@ fun PlaylistCard(
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = TvFonts.Body,
-                    maxLines = 1,
+                    maxLines = if (largeTextLayout.stackEmptyLibrary) 2 else 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
@@ -473,7 +544,7 @@ fun PlaylistCard(
                     color = secondaryTextColor,
                     fontSize = 12.sp,
                     fontFamily = TvFonts.Body,
-                    maxLines = 1,
+                    maxLines = if (largeTextLayout.stackEmptyLibrary) 2 else 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
@@ -491,6 +562,7 @@ fun MetricTile(
     FocusFrame(
         onClick = {},
         enabled = false,
+        semanticRole = null,
         modifier = modifier,
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -563,17 +635,17 @@ fun InfoPill(
     Box(
         contentAlignment = Alignment.CenterStart,
         modifier = modifier
-            .height(minHeight)
+            .heightIn(min = minHeight)
             .clip(RoundedCornerShape(20.dp))
             .background(Color.White.copy(alpha = 0.08f))
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         Text(
             text = text,
             color = TvColors.TextSecondary,
             fontSize = 13.sp,
             fontFamily = TvFonts.Body,
-            maxLines = 1,
+            maxLines = 3,
             overflow = TextOverflow.Ellipsis
         )
     }
@@ -588,7 +660,7 @@ fun playlistLabel(playlist: Playlist, count: Int): String {
     val type = when {
         playlist.isSeries -> stringResource(string.tv_playlist_type_series)
         playlist.isVod -> stringResource(string.tv_playlist_type_vod)
-        else -> playlist.source.value.uppercase()
+        else -> playlist.source.value.uppercase(Locale.ROOT)
     }
-    return stringResource(string.tv_playlist_label, type, count)
+    return pluralStringResource(plurals.tv_playlist_label, count, type, count)
 }

@@ -102,7 +102,7 @@ internal fun AppearanceFragment(
                         MessageItem(
                             containerColor = colorScheme.primary,
                             contentColor = colorScheme.onPrimary,
-                            left = true,
+                            alignedToStart = true,
                             contentDescription = leftContentDescription,
                             modifier = Modifier.sizeIn(maxWidth = maxWidth * 0.8f)
                         )
@@ -115,7 +115,7 @@ internal fun AppearanceFragment(
                         MessageItem(
                             containerColor = colorScheme.secondary,
                             contentColor = colorScheme.onSecondary,
-                            left = false,
+                            alignedToStart = false,
                             contentDescription = rightContentDescription,
                             modifier = Modifier.sizeIn(maxWidth = maxWidth * 0.8f)
                         )
@@ -147,6 +147,7 @@ internal fun AppearanceFragment(
                             argb = colorScheme.argb,
                             isDark = colorScheme.isDark,
                             selected = selected,
+                            themeName = colorScheme.name,
                             onClick = {
                                 useDynamicColors = false
                                 argb = colorScheme.argb

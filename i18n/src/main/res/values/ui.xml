@@ -30,9 +30,15 @@
     <string name="tv_metric_playlists">Playlists</string>
     <string name="tv_metric_channels">Channels</string>
     <string name="tv_metric_favorites">Favorites</string>
-    <string name="tv_channel_count">%d channels</string>
+    <plurals name="tv_channel_count">
+        <item quantity="one">%1$d channel</item>
+        <item quantity="other">%1$d channels</item>
+    </plurals>
     <string name="tv_library_summary">%1$d playlists · %2$d channels</string>
-    <string name="tv_playlist_label">%1$s · %2$d channels</string>
+    <plurals name="tv_playlist_label">
+        <item quantity="one">%1$s · %2$d channel</item>
+        <item quantity="other">%1$s · %2$d channels</item>
+    </plurals>
     <string name="tv_playlist_type_series">Series</string>
     <string name="tv_playlist_type_vod">VOD</string>
     <string name="tv_empty_recent_title">Nothing played yet</string>
@@ -67,4 +73,45 @@
     <string name="ui_remote_control_disconnect">Disconnect</string>
     <string name="ui_remote_control_keypad_backspace">Backspace</string>
     <string name="ui_remote_control_keypad_clear">Clear</string>
+    <string name="ui_remote_control_direction_pad">TV directional pad</string>
+    <string name="ui_remote_control_direction_up">Move up</string>
+    <string name="ui_remote_control_direction_down">Move down</string>
+    <string name="ui_remote_control_direction_left">Move left</string>
+    <string name="ui_remote_control_direction_right">Move right</string>
+    <string name="ui_remote_control_direction_confirm">Select</string>
+    <string name="ui_remote_control_pairing_code">Pairing code: %1$s</string>
+    <string name="ui_remote_control_pairing_code_empty">Pairing code is empty</string>
+    <string name="ui_action_add">Add</string>
+    <string name="ui_action_refresh">Refresh</string>
+    <string name="ui_action_save_changes">Save changes</string>
+    <string name="ui_action_delete_epg">Delete EPG</string>
+    <string name="ui_action_pin">Pin</string>
+    <string name="ui_action_unpin">Unpin</string>
+    <string name="ui_action_hide">Hide</string>
+    <string name="ui_action_expand_categories">Expand categories</string>
+    <string name="ui_action_collapse_categories">Collapse categories</string>
+    <string name="ui_action_category_options">Category options</string>
+    <string name="ui_action_play">Play</string>
+    <string name="ui_action_pause">Pause</string>
+    <string name="ui_action_retry">Try again</string>
+    <string name="ui_action_next_channel">Next channel</string>
+    <string name="ui_action_previous_channel">Previous channel</string>
+    <string name="ui_action_open_player_panel">Open player details</string>
+    <string name="ui_action_close_player_panel">Close player details</string>
+    <string name="ui_action_scroll_to_current_timeline">Scroll to the current programme</string>
+    <string name="ui_state_loading">Loading</string>
+    <string name="ui_state_expanded">Expanded</string>
+    <string name="ui_state_collapsed">Collapsed</string>
+    <string name="ui_state_pinned">Pinned</string>
+    <string name="ui_theme_add">Add color theme</string>
+    <string name="ui_unsupported_mode">Unsupported UI mode: %1$s</string>
+    <plurals name="ui_duration_seconds">
+        <item quantity="one">%1$d second</item>
+        <item quantity="other">%1$d seconds</item>
+    </plurals>
+    <plurals name="ui_duration_days">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
+    <string name="ui_never">Never</string>
 </resources>

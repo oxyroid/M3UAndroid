@@ -9,4 +9,5 @@
     <string name="feat_playlist_configuration_programmes_expired">Cached programmes are out of date</string>
     <string name="feat_playlist_configuration_auto_refresh_programmes">Auto Refresh Programmes</string>
     <string name="feat_playlist_configuration_auto_refresh_programmes_description">When App Startup</string>
+    <string name="feat_playlist_configuration_xtream_trial">Trial</string>
 </resources>

@@ -9,6 +9,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 
 sealed interface Edge {
     data object Start : Edge
@@ -26,20 +28,23 @@ fun Modifier.blurEdge(
     enable: Boolean = true,
     dimen: Float = BlurDefaults.DIMEN
 ): Modifier {
-    return if (enable) drawWithCache {
-        val brush = brush(
-            colors = colors(color, edge),
-            edge = edge,
-            full = full(edge, size),
-            dimen = dimen
-        )
-        onDrawWithContent {
-            drawContent()
-            drawRect(
-                brush = brush,
-                topLeft = topLeft(size, edge, dimen),
-                size = size(size, edge, dimen),
+    return if (enable) composed {
+        val resolvedEdge = resolvePhysicalEdge(edge, LocalLayoutDirection.current)
+        Modifier.drawWithCache {
+            val brush = brush(
+                colors = colors(color, resolvedEdge),
+                edge = resolvedEdge,
+                full = full(resolvedEdge, size),
+                dimen = dimen
             )
+            onDrawWithContent {
+                drawContent()
+                drawRect(
+                    brush = brush,
+                    topLeft = topLeft(size, resolvedEdge, dimen),
+                    size = size(size, resolvedEdge, dimen),
+                )
+            }
         }
     } else this
 }
@@ -51,17 +56,19 @@ fun Modifier.blurEdges(
     dimen: Float = BlurDefaults.DIMEN
 ): Modifier {
     return if (edges.size == 1) blurEdge(color, edges.first(), enable, dimen)
-    else if (!enable || edges.isEmpty()) Modifier else composed {
+    else if (!enable || edges.isEmpty()) this else composed {
         val currentColor by animateColorAsState(
             targetValue = color,
             label = "brushColor"
         )
+        val layoutDirection = LocalLayoutDirection.current
         Modifier.drawWithCache {
-            val brushes = edges.map { edge ->
-                edge to brush(
-                    colors = colors(currentColor, edge),
-                    edge = edge,
-                    full = full(edge, size),
+            val brushes = edges.map { logicalEdge ->
+                val resolvedEdge = resolvePhysicalEdge(logicalEdge, layoutDirection)
+                resolvedEdge to brush(
+                    colors = colors(currentColor, resolvedEdge),
+                    edge = resolvedEdge,
+                    full = full(resolvedEdge, size),
                     dimen = dimen
                 )
             }
@@ -77,6 +84,15 @@ fun Modifier.blurEdges(
             }
         }
     }
+}
+
+internal fun resolvePhysicalEdge(
+    edge: Edge,
+    layoutDirection: LayoutDirection,
+): Edge = when {
+    layoutDirection == LayoutDirection.Rtl && edge == Edge.Start -> Edge.End
+    layoutDirection == LayoutDirection.Rtl && edge == Edge.End -> Edge.Start
+    else -> edge
 }
 
 private fun full(edge: Edge, size: Size): Float = when {

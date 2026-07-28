@@ -35,6 +35,7 @@ import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.PlayerManager
 import com.m3u.extension.api.ExtensionId
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.util.Locale
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -108,6 +109,35 @@ class TvHomeViewModel @Inject constructor(
     private var providerSubscriptionJob: Job? = null
     private var extensionSettingsLoadJob: Job? = null
     private var extensionSettingsRequestedId: ExtensionId? = null
+    @Volatile
+    private var sortLocale: Locale = Locale.getDefault()
+
+    fun updateLocale(localeTag: String) {
+        val locale = Locale.forLanguageTag(localeTag)
+        if (locale == sortLocale) return
+        sortLocale = locale
+        _state.update { state ->
+            state.copy(
+                playlists = state.playlists.sortedWith(
+                    localeAwareComparator(
+                        primarySelector = Playlist::title,
+                        locale = locale,
+                    )
+                ),
+                channels = state.channels.sortedWith(
+                    localeAwareComparator(
+                        primarySelector = Channel::category,
+                        secondarySelector = Channel::title,
+                        locale = locale,
+                    )
+                ),
+            )
+        }
+        refreshSubscriptionProviders()
+        extensionSettingsRequestedId?.value?.let { extensionId ->
+            openExtensionSettings(extensionId, localeTag)
+        }
+    }
     private var extensionSettingsGeneration = 0L
     private var extensionSettingsUpdateGeneration = 0L
     private val extensionSettingsOperationQueue = ExtensionSettingsOperationQueue(
@@ -658,7 +688,12 @@ class TvHomeViewModel @Inject constructor(
                     val state = _state.value
                     val playlists = counts.keys
                         .filterNot { it.source == DataSource.EPG }
-                        .sortedBy { it.title.lowercase() }
+                        .sortedWith(
+                            localeAwareComparator(
+                                primarySelector = Playlist::title,
+                                locale = sortLocale,
+                            )
+                        )
                     val previous = state.selectedPlaylist
                     val selected = previous
                         ?.let { active -> playlists.firstOrNull { it.url == active.url } }
@@ -705,8 +740,11 @@ class TvHomeViewModel @Inject constructor(
                 .getByPlaylistUrl(url)
                 .filterNot { it.hidden }
                 .sortedWith(
-                    compareBy<Channel> { it.category.lowercase() }
-                        .thenBy { it.title.lowercase() }
+                    localeAwareComparator(
+                        primarySelector = Channel::category,
+                        secondarySelector = Channel::title,
+                        locale = sortLocale,
+                    )
                 )
             _state.update { state ->
                 if (state.selectedPlaylist?.url == url) {

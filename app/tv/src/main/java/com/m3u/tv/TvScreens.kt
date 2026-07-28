@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -27,6 +28,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
@@ -61,12 +63,26 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.error
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.password
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.m3u.business.setting.ProviderDiscoveryState
@@ -85,6 +101,7 @@ import com.m3u.extension.api.ExtensionSettingKeys
 import com.m3u.extension.api.ExtensionSettingType
 import com.m3u.extension.api.ExtensionState
 import com.m3u.i18n.R.string
+import com.m3u.i18n.R.plurals
 import kotlinx.coroutines.yield
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
@@ -257,7 +274,6 @@ private fun HomeScreen(
                             onClick = { onPlaylist(playlist) },
                             modifier = Modifier
                                 .widthIn(min = 256.dp, max = 336.dp)
-                                .height(144.dp)
                         )
                     }
                 }
@@ -276,6 +292,8 @@ private fun FeaturedCarouselPane(
     onPlayRecent: () -> Unit,
     onPlay: (Channel) -> Unit
 ) {
+    val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+    val largeTextLayout = tvLargeTextLayout(LocalDensity.current.fontScale)
     val primaryHeroAction = {
         if (channel == null) {
             onOpenLibrary()
@@ -285,15 +303,21 @@ private fun FeaturedCarouselPane(
             onPlay(channel)
         }
     }
-    var selectedAction by remember(channel?.id) { mutableStateOf(HeroAction.Primary) }
+    var selectedAction by remember(channel?.id) { mutableStateOf(TvHeroAction.PRIMARY) }
     val secondaryAvailable = channel != null
-    val selectedHeroAction = if (secondaryAvailable) selectedAction else HeroAction.Primary
+    val selectedHeroAction = if (secondaryAvailable) selectedAction else TvHeroAction.PRIMARY
+    val openLibraryLabel = stringResource(string.tv_action_open_library)
+    val primaryActionLabel = if (channel == null) {
+        openLibraryLabel
+    } else {
+        stringResource(string.tv_action_resume)
+    }
 
     FocusFrame(
         onClick = {
             when (selectedHeroAction) {
-                HeroAction.Primary -> primaryHeroAction()
-                HeroAction.Secondary -> onOpenLibrary()
+                TvHeroAction.PRIMARY -> primaryHeroAction()
+                TvHeroAction.SECONDARY -> onOpenLibrary()
             }
         },
         shape = RoundedCornerShape(16.dp),
@@ -303,7 +327,7 @@ private fun FeaturedCarouselPane(
         focusedBorderColor = Color.Transparent,
         modifier = Modifier
             .fillMaxWidth()
-            .height(if (channel == null) 280.dp else 288.dp)
+            .heightIn(min = largeTextLayout.heroMinHeightDp.dp)
             .focusProperties { down = nextFocusRequester },
         onKey = { event ->
             if (event.type != KeyEventType.KeyDown || !secondaryAvailable) {
@@ -311,12 +335,24 @@ private fun FeaturedCarouselPane(
             } else {
                 when (event.key) {
                     Key.DirectionLeft -> {
-                        selectedAction = HeroAction.Primary
-                        true
+                        tvHeroActionAfterHorizontalMove(
+                            current = selectedHeroAction,
+                            direction = TvHorizontalDirection.LEFT,
+                            isRtl = isRtl,
+                        )?.let { action ->
+                            selectedAction = action
+                            true
+                        } ?: false
                     }
                     Key.DirectionRight -> {
-                        selectedAction = HeroAction.Secondary
-                        true
+                        tvHeroActionAfterHorizontalMove(
+                            current = selectedHeroAction,
+                            direction = TvHorizontalDirection.RIGHT,
+                            isRtl = isRtl,
+                        )?.let { action ->
+                            selectedAction = action
+                            true
+                        } ?: false
                     }
                     else -> false
                 }
@@ -344,9 +380,13 @@ private fun FeaturedCarouselPane(
                     .fillMaxSize()
                     .background(
                         Brush.horizontalGradient(
-                            0f to Color.Black.copy(alpha = 0.92f),
-                            0.48f to Color.Black.copy(alpha = 0.72f),
-                            1f to Color.Transparent
+                            *tvLeadingGradientColorStops(
+                                isRtl = isRtl,
+                                leading = Color.Black.copy(alpha = 0.92f),
+                                middle = Color.Black.copy(alpha = 0.72f),
+                                trailing = Color.Transparent,
+                                middlePosition = 0.48f,
+                            ).toTypedArray()
                         )
                     )
             )
@@ -359,7 +399,7 @@ private fun FeaturedCarouselPane(
                     verticalArrangement = Arrangement.spacedBy(18.dp),
                     modifier = Modifier
                         .align(Alignment.CenterStart)
-                        .fillMaxWidth(0.54f)
+                        .fillMaxWidth(largeTextLayout.heroTextWidthFraction)
                 ) {
                     Text(
                         text = channel?.title?.title() ?: stringResource(string.tv_home_title),
@@ -384,23 +424,23 @@ private fun FeaturedCarouselPane(
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         if (channel == null) {
                             HeroActionChip(
-                                text = stringResource(string.tv_action_open_library),
+                                text = openLibraryLabel,
                                 icon = Icons.AutoMirrored.Rounded.PlaylistPlay,
                                 selected = heroFocused,
                                 expanded = heroFocused
                             )
                         } else {
                             HeroActionChip(
-                                text = stringResource(string.tv_action_resume),
+                                text = primaryActionLabel,
                                 icon = Icons.Rounded.PlayArrow,
-                                selected = heroFocused && selectedHeroAction == HeroAction.Primary,
-                                expanded = heroFocused && selectedHeroAction == HeroAction.Primary
+                                selected = heroFocused && selectedHeroAction == TvHeroAction.PRIMARY,
+                                expanded = heroFocused && selectedHeroAction == TvHeroAction.PRIMARY
                             )
                             HeroActionChip(
-                                text = stringResource(string.tv_action_open_library),
+                                text = openLibraryLabel,
                                 icon = Icons.AutoMirrored.Rounded.PlaylistPlay,
-                                selected = heroFocused && selectedHeroAction == HeroAction.Secondary,
-                                expanded = heroFocused && selectedHeroAction == HeroAction.Secondary
+                                selected = heroFocused && selectedHeroAction == TvHeroAction.SECONDARY,
+                                expanded = heroFocused && selectedHeroAction == TvHeroAction.SECONDARY
                             )
                         }
                     }
@@ -408,11 +448,6 @@ private fun FeaturedCarouselPane(
             }
         }
     }
-}
-
-private enum class HeroAction {
-    Primary,
-    Secondary
 }
 
 @Composable
@@ -426,7 +461,7 @@ private fun HeroActionChip(
         horizontalArrangement = Arrangement.spacedBy(if (expanded) 8.dp else 0.dp),
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .height(48.dp)
+            .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(24.dp))
             .background(if (selected) TvColors.Focus else TvColors.Surface.copy(alpha = 0.86f))
             .border(
@@ -436,7 +471,10 @@ private fun HeroActionChip(
                 ),
                 RoundedCornerShape(24.dp)
             )
-            .padding(horizontal = if (expanded) 16.dp else 12.dp)
+            .padding(
+                horizontal = if (expanded) 16.dp else 12.dp,
+                vertical = 8.dp,
+            )
     ) {
         Icon(
             imageVector = icon,
@@ -503,7 +541,6 @@ private fun LibraryScreen(
                         focusRequester = if (playlist.url == focusTarget?.url) playlistFocusRequester else null,
                         modifier = Modifier
                             .widthIn(min = 256.dp, max = 336.dp)
-                            .height(144.dp)
                     )
                 }
             }
@@ -525,7 +562,11 @@ private fun LibraryScreen(
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
-                        text = stringResource(string.tv_channel_count, state.channels.size),
+                        text = pluralStringResource(
+                            plurals.tv_channel_count,
+                            state.channels.size,
+                            state.channels.size,
+                        ),
                         color = TvColors.TextSecondary,
                         fontSize = 14.sp,
                         fontFamily = TvFonts.Body,
@@ -604,6 +645,8 @@ private fun StatusScreen(
     onUpdateProviderSetting: (String, String?) -> Unit,
     onSubmitProviderSubscription: () -> Unit,
 ) {
+    val bidiFormatter = rememberTvBidiFormatter()
+    val largeTextLayout = tvLargeTextLayout(LocalDensity.current.fontScale)
     var pendingTrust by remember { mutableStateOf<InstalledPlugin?>(null) }
     var pendingReauthorization by remember { mutableStateOf(false) }
     var pendingRevoke by remember { mutableStateOf<InstalledPlugin?>(null) }
@@ -764,7 +807,7 @@ private fun StatusScreen(
                 icon = Icons.Rounded.VideoLibrary,
                 modifier = Modifier
                     .weight(1f)
-                    .height(136.dp)
+                    .heightIn(min = largeTextLayout.metricTileMinHeightDp.dp)
             )
             MetricTile(
                 title = stringResource(string.tv_metric_channels),
@@ -772,7 +815,7 @@ private fun StatusScreen(
                 icon = Icons.AutoMirrored.Rounded.PlaylistPlay,
                 modifier = Modifier
                     .weight(1f)
-                    .height(136.dp)
+                    .heightIn(min = largeTextLayout.metricTileMinHeightDp.dp)
             )
             MetricTile(
                 title = stringResource(string.tv_metric_favorites),
@@ -780,7 +823,7 @@ private fun StatusScreen(
                 icon = Icons.Rounded.Favorite,
                 modifier = Modifier
                     .weight(1f)
-                    .height(136.dp)
+                    .heightIn(min = largeTextLayout.metricTileMinHeightDp.dp)
             )
         }
         }
@@ -809,6 +852,9 @@ private fun StatusScreen(
                 Text(
                     stringResource(string.feat_setting_provider_discovery_loading),
                     color = TvColors.TextSecondary,
+                    modifier = Modifier.semantics {
+                        liveRegion = LiveRegionMode.Polite
+                    },
                 )
             }
 
@@ -816,14 +862,22 @@ private fun StatusScreen(
                 Text(
                     stringResource(string.feat_setting_provider_discovery_empty),
                     color = TvColors.TextSecondary,
+                    modifier = Modifier.semantics {
+                        liveRegion = LiveRegionMode.Polite
+                    },
                 )
             }
 
             is ProviderDiscoveryState.Failed -> {
                 item {
+                    val message =
+                        stringResource(string.feat_setting_provider_discovery_failed)
                     Text(
-                        stringResource(string.feat_setting_provider_discovery_failed),
+                        message,
                         color = TvColors.Danger,
+                        modifier = Modifier.semantics {
+                            liveRegion = LiveRegionMode.Polite
+                        },
                     )
                 }
                 item {
@@ -841,9 +895,10 @@ private fun StatusScreen(
                         item(key = "provider:${provider.descriptor.providerId.value}:${variant.kind.value}") {
                             TvActionButton(
                                 text = if (provider.descriptor.variants.size == 1) {
-                                    provider.descriptor.displayName
+                                    bidiFormatter.natural(provider.descriptor.displayName)
                                 } else {
-                                    "${provider.descriptor.displayName} · ${variant.displayName}"
+                                    "${bidiFormatter.natural(provider.descriptor.displayName)} · " +
+                                        bidiFormatter.natural(variant.displayName)
                                 },
                                 icon = Icons.Rounded.Extension,
                                 onClick = {
@@ -870,6 +925,9 @@ private fun StatusScreen(
                     extensionOperationFailedMessage,
                     color = TvColors.Danger,
                     fontSize = 16.sp,
+                    modifier = Modifier.semantics {
+                        liveRegion = LiveRegionMode.Polite
+                    },
                 )
             }
         }
@@ -883,6 +941,9 @@ private fun StatusScreen(
                     }
                 ),
                 icon = if (state.externalExtensionsEnabled) Icons.Rounded.Block else Icons.Rounded.Extension,
+                checked = state.externalExtensionsEnabled,
+                semanticRole = Role.Switch,
+                semanticsLabel = stringResource(string.feat_setting_external_extensions),
                 onClick = { onExternalExtensionsEnabled(!state.externalExtensionsEnabled) },
             )
         }
@@ -928,6 +989,7 @@ private fun ProviderSubscriptionPanel(
     onSetting: (String, String?) -> Unit,
     onSubmit: () -> Unit,
 ) {
+    val bidiFormatter = rememberTvBidiFormatter()
     val initialFocusRequester = remember { FocusRequester() }
     val titleField = ExtensionSettingField(
         key = "playlist_title",
@@ -950,7 +1012,7 @@ private fun ProviderSubscriptionPanel(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = providerName,
+                    text = bidiFormatter.natural(providerName),
                     color = TvColors.TextPrimary,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -958,6 +1020,7 @@ private fun ProviderSubscriptionPanel(
                 Text(
                     text = variants.firstOrNull { (kind, _) -> kind == form.providerKind.value }
                         ?.second
+                        ?.let(bidiFormatter::natural)
                         .orEmpty(),
                     color = TvColors.TextSecondary,
                     fontSize = 14.sp,
@@ -974,38 +1037,49 @@ private fun ProviderSubscriptionPanel(
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.selectableGroup(),
             ) {
                 variants.forEach { (kind, label) ->
                     TvActionButton(
-                        text = label,
+                        text = bidiFormatter.natural(label),
                         icon = if (kind == form.providerKind.value) {
                             Icons.Rounded.CheckCircle
                         } else {
                             Icons.Rounded.Extension
                         },
                         enabled = !inProgress,
+                        selected = kind == form.providerKind.value,
+                        semanticRole = Role.RadioButton,
                         onClick = { onKind(kind) },
                     )
                 }
             }
+        }
+        val titleError = if (
+            feedback == TvProviderSubscriptionFeedback.InvalidSettings && title.isBlank()
+        ) {
+            providerFieldErrorMessage(ProviderSettingFieldError.REQUIRED)
+        } else {
+            null
         }
         TvExtensionSettingControl(
             field = titleField,
             rawValue = title,
             secretConfigured = false,
             focusRequester = initialFocusRequester,
+            accessibilityError = titleError,
             onDraftChange = onTitleChange,
             onUpdate = { value -> onTitleChange(value.orEmpty()) },
         )
-        if (feedback == TvProviderSubscriptionFeedback.InvalidSettings && title.isBlank()) {
-            ProviderFieldError(ProviderSettingFieldError.REQUIRED)
-        }
+        titleError?.let { ProviderFieldError(it) }
         form.fields.forEach { field ->
+            val fieldError = field.error?.let { providerFieldErrorMessage(it) }
             TvExtensionSettingControl(
                 field = field.definition,
                 rawValue = field.input ?: field.value.orEmpty(),
                 secretConfigured = false,
                 focusRequester = null,
+                accessibilityError = fieldError,
                 onDraftChange = { value -> onSetting(field.definition.key, value) },
                 onUpdate = { value -> onSetting(field.definition.key, value) },
             )
@@ -1016,7 +1090,7 @@ private fun ProviderSubscriptionPanel(
                     fontSize = 14.sp,
                 )
             }
-            field.error?.let { error -> ProviderFieldError(error) }
+            fieldError?.let { ProviderFieldError(it) }
         }
         feedback?.let { ProviderSubscriptionFeedback(it) }
         TvActionButton(
@@ -1039,6 +1113,7 @@ private fun ProviderReauthenticationCard(
     account: ProviderAccountSummary,
     onReauthenticate: () -> Unit,
 ) {
+    val bidiFormatter = rememberTvBidiFormatter()
     Column(
         verticalArrangement = Arrangement.spacedBy(10.dp),
         modifier = Modifier
@@ -1049,7 +1124,7 @@ private fun ProviderReauthenticationCard(
         Text(
             text = stringResource(
                 string.feat_setting_provider_reauthentication_required,
-                account.playlistTitle,
+                bidiFormatter.natural(account.playlistTitle),
             ),
             color = TvColors.TextPrimary,
             fontSize = 18.sp,
@@ -1058,9 +1133,9 @@ private fun ProviderReauthenticationCard(
         Text(
             text = stringResource(
                 string.feat_setting_provider_account_summary,
-                account.serverName,
-                account.username,
-                account.baseUrl,
+                bidiFormatter.natural(account.serverName),
+                bidiFormatter.natural(account.username),
+                bidiFormatter.ltr(account.baseUrl),
             ),
             color = TvColors.TextSecondary,
             fontSize = 14.sp,
@@ -1092,12 +1167,19 @@ private fun ProviderSubscriptionFeedback(feedback: TvProviderSubscriptionFeedbac
         is TvProviderSubscriptionFeedback.Added ->
             stringResource(string.feat_setting_provider_added, feedback.channelCount) to TvColors.Focus
     }
-    Text(text = text, color = color, fontSize = 16.sp)
+    Text(
+        text = text,
+        color = color,
+        fontSize = 16.sp,
+        modifier = Modifier.semantics {
+            liveRegion = LiveRegionMode.Polite
+        },
+    )
 }
 
 @Composable
-private fun ProviderFieldError(error: ProviderSettingFieldError) {
-    val message = stringResource(
+private fun providerFieldErrorMessage(error: ProviderSettingFieldError): String =
+    stringResource(
         when (error) {
             ProviderSettingFieldError.REQUIRED -> string.feat_setting_provider_error_required
             ProviderSettingFieldError.TOO_LONG -> string.feat_setting_provider_error_too_long
@@ -1106,7 +1188,15 @@ private fun ProviderFieldError(error: ProviderSettingFieldError) {
             ProviderSettingFieldError.INVALID_CHOICE -> string.feat_setting_provider_error_choice
         }
     )
-    Text(text = message, color = TvColors.Danger, fontSize = 14.sp)
+
+@Composable
+private fun ProviderFieldError(message: String) {
+    Text(
+        text = message,
+        color = TvColors.Danger,
+        fontSize = 14.sp,
+        modifier = Modifier.clearAndSetSemantics {},
+    )
 }
 
 @Composable
@@ -1117,6 +1207,7 @@ private fun ExtensionAuthorizationConfirmation(
     onConfirm: () -> Unit,
     onCancel: () -> Unit,
 ) {
+    val bidiFormatter = rememberTvBidiFormatter()
     BackHandler(onBack = onCancel)
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(20.dp),
@@ -1135,11 +1226,13 @@ private fun ExtensionAuthorizationConfirmation(
             Text(
                 text = stringResource(
                     string.feat_setting_extension_confirm_identity,
-                    plugin.packageName,
-                    plugin.certificateSha256.chunked(16).joinToString(" "),
-                    plugin.displayName.orEmpty(),
-                    plugin.developer.orEmpty(),
-                    plugin.version.orEmpty(),
+                    bidiFormatter.ltr(plugin.packageName),
+                    bidiFormatter.ltr(
+                        plugin.certificateSha256.chunked(16).joinToString(" ")
+                    ),
+                    bidiFormatter.natural(plugin.displayName.orEmpty()),
+                    bidiFormatter.natural(plugin.developer.orEmpty()),
+                    bidiFormatter.ltr(plugin.version.orEmpty()),
                 ),
                 color = TvColors.TextSecondary,
                 fontSize = 16.sp,
@@ -1150,8 +1243,10 @@ private fun ExtensionAuthorizationConfirmation(
                 Text(
                     text = stringResource(
                         string.feat_setting_extension_certificate_repin,
-                        previousCertificate.chunked(16).joinToString(" "),
-                        plugin.certificateSha256.chunked(16).joinToString(" "),
+                        bidiFormatter.ltr(previousCertificate.chunked(16).joinToString(" ")),
+                        bidiFormatter.ltr(
+                            plugin.certificateSha256.chunked(16).joinToString(" ")
+                        ),
                     ),
                     color = TvColors.Danger,
                     fontSize = 14.sp,
@@ -1159,7 +1254,10 @@ private fun ExtensionAuthorizationConfirmation(
             }
         }
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 TvActionButton(
                     text = stringResource(android.R.string.cancel),
                     icon = Icons.Rounded.Block,
@@ -1203,12 +1301,16 @@ private fun ExtensionAuthorizationConfirmation(
                 )
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = "${permission.id} ($requirement)",
+                        text = "${bidiFormatter.ltr(permission.id)} ($requirement)",
                         color = TvColors.TextPrimary,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
                     )
-                    Text(permission.reason, color = TvColors.TextSecondary, fontSize = 14.sp)
+                    Text(
+                        bidiFormatter.natural(permission.reason),
+                        color = TvColors.TextSecondary,
+                        fontSize = 14.sp,
+                    )
                 }
             }
         }
@@ -1227,7 +1329,11 @@ private fun ExtensionAuthorizationConfirmation(
                 items = plugin.networkOrigins.sorted(),
                 key = { origin -> origin },
             ) { origin ->
-                Text(origin, color = TvColors.TextSecondary, fontSize = 16.sp)
+                Text(
+                    bidiFormatter.ltr(origin),
+                    color = TvColors.TextSecondary,
+                    fontSize = 16.sp,
+                )
             }
         }
         if (plugin.networkOriginSettingFields.isNotEmpty()) {
@@ -1235,7 +1341,8 @@ private fun ExtensionAuthorizationConfirmation(
                 Text(
                     text = stringResource(
                         string.feat_setting_extension_network_origin_settings,
-                        plugin.networkOriginSettingFields.sorted().joinToString(),
+                        plugin.networkOriginSettingFields.sorted()
+                            .joinToString(transform = bidiFormatter::ltr),
                     ),
                     color = TvColors.TextSecondary,
                     fontSize = 14.sp,
@@ -1256,6 +1363,7 @@ private fun ExtensionPluginCard(
     onClearData: () -> Unit,
     onExportDiagnostics: () -> Unit,
 ) {
+    val bidiFormatter = rememberTvBidiFormatter()
     val actions = extensionPluginActionAvailability(
         enabled = plugin.enabled,
         state = plugin.state,
@@ -1269,23 +1377,32 @@ private fun ExtensionPluginCard(
     )
     Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = plugin.displayName ?: plugin.packageName,
+            text = plugin.displayName?.let(bidiFormatter::natural)
+                ?: bidiFormatter.ltr(plugin.packageName),
             color = TvColors.TextPrimary,
             fontSize = 20.sp,
             fontWeight = FontWeight.SemiBold,
         )
         Text(
-            text = listOfNotNull(plugin.developer, plugin.version?.let { "v$it" }).joinToString(" · "),
+            text = listOfNotNull(
+                plugin.developer?.let(bidiFormatter::natural),
+                plugin.version?.let { bidiFormatter.ltr("v$it") },
+            ).joinToString(" · "),
             color = TvColors.TextSecondary,
             fontSize = 14.sp,
         )
-        Text(plugin.certificateSha256, color = TvColors.TextMuted, fontSize = 12.sp)
+        Text(
+            bidiFormatter.ltr(plugin.certificateSha256),
+            color = TvColors.TextMuted,
+            fontSize = 12.sp,
+        )
         val unapprovedNetworkOrigins = plugin.networkOrigins - plugin.approvedNetworkOrigins
         if (plugin.trusted && unapprovedNetworkOrigins.isNotEmpty()) {
             Text(
                 text = stringResource(
                     string.feat_setting_extension_network_reauthorization_required,
-                    unapprovedNetworkOrigins.sorted().joinToString(),
+                    unapprovedNetworkOrigins.sorted()
+                        .joinToString(transform = bidiFormatter::ltr),
                 ),
                 color = TvColors.Danger,
                 fontSize = 14.sp,
@@ -1403,6 +1520,7 @@ private fun ExtensionDataRemovalConfirmation(
     onConfirm: () -> Unit,
     onCancel: () -> Unit,
 ) {
+    val bidiFormatter = rememberTvBidiFormatter()
     BackHandler(onBack = onCancel)
     val cancelFocusRequester = remember { FocusRequester() }
     LaunchedEffect(plugin.packageName, plugin.serviceName) {
@@ -1420,7 +1538,8 @@ private fun ExtensionDataRemovalConfirmation(
             fontWeight = FontWeight.SemiBold,
         )
         Text(
-            text = plugin.displayName ?: plugin.packageName,
+            text = plugin.displayName?.let(bidiFormatter::natural)
+                ?: bidiFormatter.ltr(plugin.packageName),
             color = TvColors.TextPrimary,
             fontSize = 20.sp,
         )
@@ -1429,7 +1548,10 @@ private fun ExtensionDataRemovalConfirmation(
             color = TvColors.TextSecondary,
             fontSize = 16.sp,
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             TvActionButton(
                 text = stringResource(android.R.string.cancel),
                 icon = Icons.Rounded.CheckCircle,
@@ -1456,6 +1578,7 @@ private fun ExtensionSettingsPanel(
         rawValue: String?,
     ) -> Unit,
 ) {
+    val bidiFormatter = rememberTvBidiFormatter()
     val initialFocusRequester = remember { FocusRequester() }
     val firstFieldKey = configuration.sections.firstNotNullOfOrNull { section ->
         section.schema.fields.firstOrNull()?.let { field ->
@@ -1508,7 +1631,7 @@ private fun ExtensionSettingsPanel(
         }
         configuration.sections.forEach { section ->
             Text(
-                text = section.title,
+                text = bidiFormatter.natural(section.title),
                 color = TvColors.TextPrimary,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -1523,6 +1646,7 @@ private fun ExtensionSettingsPanel(
                     rawValue = draftValues[key].orEmpty(),
                     secretConfigured = key in configuration.snapshot.credentialHandles,
                     focusRequester = initialFocusRequester.takeIf { key == firstFieldKey },
+                    accessibilityError = null,
                     onDraftChange = { value -> draftValues[key] = value },
                     onUpdate = { value ->
                         onUpdate(section.id, field.key, editToken, value)
@@ -1539,17 +1663,28 @@ private fun TvExtensionSettingControl(
     rawValue: String,
     secretConfigured: Boolean,
     focusRequester: FocusRequester?,
+    accessibilityError: String?,
     onDraftChange: (String) -> Unit,
     onUpdate: (String?) -> Unit,
 ) {
+    val requiredDescription =
+        stringResource(string.feat_setting_extension_capability_required)
+    val bidiFormatter = rememberTvBidiFormatter()
+    val displayLabel = bidiFormatter.natural(
+        if (field.required) "${field.label} *" else field.label
+    )
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            text = if (field.required) "${field.label} *" else field.label,
+            text = displayLabel,
             color = TvColors.TextPrimary,
             fontSize = 16.sp,
         )
         field.description?.let { description ->
-            Text(description, color = TvColors.TextSecondary, fontSize = 14.sp)
+            Text(
+                bidiFormatter.natural(description),
+                color = TvColors.TextSecondary,
+                fontSize = 14.sp,
+            )
         }
         if (field.networkOrigin) {
             Text(
@@ -1570,6 +1705,14 @@ private fun TvExtensionSettingControl(
                     ),
                     icon = Icons.Rounded.CheckCircle,
                     focusRequester = focusRequester,
+                    checked = rawValue.toBooleanStrictOrNull() == true,
+                    semanticRole = Role.Switch,
+                    semanticsLabel = bidiFormatter.natural(field.label),
+                    modifier = Modifier.semantics {
+                        accessibilityError?.let { message ->
+                            error(message)
+                        }
+                    },
                     onClick = {
                         onUpdate((rawValue.toBooleanStrictOrNull() != true).toString())
                     },
@@ -1577,16 +1720,28 @@ private fun TvExtensionSettingControl(
             }
 
             ExtensionSettingType.SINGLE_CHOICE -> {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier
+                        .selectableGroup()
+                        .semantics {
+                            accessibilityError?.let { message ->
+                                error(message)
+                            }
+                        },
+                ) {
                     field.choices.forEach { choice ->
                         TvActionButton(
-                            text = choice.label,
+                            text = bidiFormatter.natural(choice.label),
                             icon = if (rawValue == choice.value) {
                                 Icons.Rounded.CheckCircle
                             } else {
                                 Icons.Rounded.Extension
                             },
                             focusRequester = focusRequester.takeIf { choice == field.choices.firstOrNull() },
+                            selected = rawValue == choice.value,
+                            semanticRole = Role.RadioButton,
                             onClick = { onUpdate(choice.value) },
                         )
                     }
@@ -1609,9 +1764,21 @@ private fun TvExtensionSettingControl(
                     onValueChange = onDraftChange,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp)
+                        .heightIn(min = 52.dp)
                         .then(focusRequester?.let { Modifier.focusRequester(it) } ?: Modifier)
                         .onFocusChanged { focused = it.isFocused }
+                        .semantics {
+                            contentDescription = bidiFormatter.natural(field.label)
+                            if (field.required) {
+                                stateDescription = requiredDescription
+                            }
+                            if (field.type == ExtensionSettingType.SECRET) {
+                                password()
+                            }
+                            accessibilityError?.let { message ->
+                                error(message)
+                            }
+                        }
                         .border(
                             width = if (focused) 3.dp else 1.dp,
                             color = if (focused) TvColors.Focus else TvColors.TextMuted,
@@ -1629,7 +1796,10 @@ private fun TvExtensionSettingControl(
                     },
                     singleLine = true,
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     TvActionButton(
                         text = stringResource(string.feat_setting_extension_setting_save),
                         icon = Icons.Rounded.CheckCircle,
@@ -1706,71 +1876,114 @@ private fun ChannelGrid(
 
 @Composable
 private fun EmptyLibraryScreen() {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(48.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(360.dp)
+    val largeTextLayout = tvLargeTextLayout(LocalDensity.current.fontScale)
+    LazyColumn(
+        verticalArrangement = Arrangement.Center,
+        contentPadding = PaddingValues(start = 48.dp, top = 48.dp, end = 64.dp, bottom = 48.dp),
+        modifier = Modifier.fillMaxSize(),
     ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.weight(1f)
-        ) {
-            Text(
-                text = stringResource(string.tv_home_title),
-                color = TvColors.TextPrimary,
-                fontSize = 48.sp,
-                fontWeight = FontWeight.Bold,
-                fontFamily = TvFonts.Body,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = stringResource(string.tv_empty_library_title),
-                color = TvColors.TextPrimary,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.SemiBold,
-                fontFamily = TvFonts.Body,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = stringResource(string.tv_empty_library_subtitle),
-                color = TvColors.TextSecondary,
-                fontSize = 17.sp,
-                lineHeight = 25.sp,
-                fontFamily = TvFonts.Body,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.fillMaxWidth(0.82f)
-            )
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth(0.72f)
-                    .widthIn(max = 420.dp)
-            ) {
-                InfoPill(text = stringResource(string.tv_empty_library_phone_hint), modifier = Modifier.fillMaxWidth())
-                InfoPill(text = stringResource(string.tv_empty_library_restore_hint), modifier = Modifier.fillMaxWidth())
+        item {
+            if (largeTextLayout.stackEmptyLibrary) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(32.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    EmptyLibraryDescription(expandedWidth = true)
+                    SetupPanel(
+                        minHeight = largeTextLayout.emptySetupMinHeightDp.dp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .widthIn(max = 640.dp),
+                    )
+                }
+            } else {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(48.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    EmptyLibraryDescription(
+                        expandedWidth = false,
+                        modifier = Modifier.weight(1f),
+                    )
+                    SetupPanel(
+                        modifier = Modifier
+                            .weight(0.88f)
+                            .widthIn(max = 420.dp),
+                    )
+                }
             }
         }
-        SetupPanel(
-            modifier = Modifier
-                .weight(0.88f)
-                .widthIn(max = 420.dp)
-        )
     }
 }
 
 @Composable
-private fun SetupPanel(modifier: Modifier = Modifier) {
+private fun EmptyLibraryDescription(
+    expandedWidth: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = modifier,
+    ) {
+        Text(
+            text = stringResource(string.tv_home_title),
+            color = TvColors.TextPrimary,
+            fontSize = 48.sp,
+            fontWeight = FontWeight.Bold,
+            fontFamily = TvFonts.Body,
+        )
+        Text(
+            text = stringResource(string.tv_empty_library_title),
+            color = TvColors.TextPrimary,
+            fontSize = 28.sp,
+            fontWeight = FontWeight.SemiBold,
+            fontFamily = TvFonts.Body,
+        )
+        Text(
+            text = stringResource(string.tv_empty_library_subtitle),
+            color = TvColors.TextSecondary,
+            fontSize = 17.sp,
+            lineHeight = 25.sp,
+            fontFamily = TvFonts.Body,
+            modifier = Modifier.fillMaxWidth(if (expandedWidth) 1f else 0.82f),
+        )
+        Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier
+                .fillMaxWidth(if (expandedWidth) 1f else 0.72f)
+                .widthIn(max = if (expandedWidth) 720.dp else 420.dp),
+        ) {
+            InfoPill(
+                text = stringResource(string.tv_empty_library_phone_hint),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            InfoPill(
+                text = stringResource(string.tv_empty_library_restore_hint),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun SetupPanel(
+    modifier: Modifier = Modifier,
+    minHeight: Dp? = null,
+) {
+    val sizeModifier = if (minHeight == null) {
+        Modifier.aspectRatio(1.18f)
+    } else {
+        Modifier.heightIn(min = minHeight)
+    }
     FocusFrame(
         onClick = {},
         enabled = false,
+        focusableWhenDisabled = minHeight != null,
+        semanticRole = null,
         modifier = Modifier
             .then(modifier)
-            .aspectRatio(1.18f),
+            .then(sizeModifier),
         shape = RoundedCornerShape(16.dp)
     ) {
         Column(
@@ -1789,7 +2002,9 @@ private fun SetupPanel(modifier: Modifier = Modifier) {
                 title = stringResource(string.tv_empty_library_panel_title),
                 subtitle = stringResource(string.tv_empty_library_panel_subtitle)
             )
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
                 SetupStep(text = stringResource(string.tv_empty_library_step_sources))
                 SetupStep(text = stringResource(string.tv_empty_library_step_sync))
                 SetupStep(text = stringResource(string.tv_empty_library_step_watch))
@@ -1816,7 +2031,7 @@ private fun SetupStep(text: String) {
             color = TvColors.TextSecondary,
             fontSize = 14.sp,
             fontFamily = TvFonts.Body,
-            maxLines = 1,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis
         )
     }

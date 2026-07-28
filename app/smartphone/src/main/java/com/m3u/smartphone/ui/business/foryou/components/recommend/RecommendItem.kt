@@ -186,7 +186,7 @@ private fun UnseenContent(spec: Recommend.UnseenSpec) {
         cover = spec.channel.cover.orEmpty(),
         primaryContent = {
             Text(
-                text = stringResource(string.feat_foryou_recommend_unseen_label).uppercase(),
+                text = stringResource(string.feat_foryou_recommend_unseen_label),
                 maxLines = 1
             )
         },
@@ -225,7 +225,7 @@ private fun DiscoverContent(spec: Recommend.DiscoverSpec) {
     val playlist = spec.playlist
     val category = spec.category
     Text(
-        text = stringResource(string.feat_foryou_recommend_unseen_label).uppercase(),
+        text = stringResource(string.feat_foryou_recommend_unseen_label),
         style = MaterialTheme.typography.labelLarge,
         maxLines = 1
     )
@@ -259,7 +259,7 @@ private fun CwContent(spec: Recommend.CwSpec) {
         cover = channel.cover.orEmpty(),
         primaryContent = {
             Text(
-                text = stringResource(string.feat_foryou_recommend_cw_label).uppercase(),
+                text = stringResource(string.feat_foryou_recommend_cw_label),
                 maxLines = 1
             )
         },

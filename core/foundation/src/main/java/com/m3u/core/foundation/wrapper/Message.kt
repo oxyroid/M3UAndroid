@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.res.stringResource
-import java.util.Locale
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -63,9 +62,6 @@ sealed class Message(
         }
 
         is Dynamic -> value
-    }.replaceFirstChar {
-        if (it.isLowerCase()) it.titlecase(Locale.ROOT)
-        else it.toString()
     }
 
     companion object {

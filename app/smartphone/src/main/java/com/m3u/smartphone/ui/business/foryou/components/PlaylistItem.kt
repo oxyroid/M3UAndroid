@@ -32,6 +32,7 @@ import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 import com.m3u.smartphone.ui.material.components.Badge
 import com.m3u.smartphone.ui.material.components.FontFamilies
+import java.util.Locale
 
 @Composable
 internal fun PlaylistItem(
@@ -64,7 +65,7 @@ internal fun PlaylistItem(
             },
             supportingContent = {
                 Text(
-                    text = type?.uppercase().orEmpty(),
+                    text = type?.uppercase(Locale.ROOT).orEmpty(),
                     style = MaterialTheme.typography.bodySmall.copy(
                         letterSpacing = 1.sp,
                         baselineShift = BaselineShift.Subscript,

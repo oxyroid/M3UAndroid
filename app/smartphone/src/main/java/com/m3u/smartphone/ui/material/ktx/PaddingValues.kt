@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 
 @Composable
 operator fun PaddingValues.plus(another: PaddingValues): PaddingValues {
@@ -31,13 +32,19 @@ operator fun PaddingValues.minus(another: PaddingValues): PaddingValues {
 
 @Composable
 infix fun PaddingValues.only(side: WindowInsetsSides): PaddingValues {
-    val layoutDirection = LocalLayoutDirection.current
+    return only(side, LocalLayoutDirection.current)
+}
+
+internal fun PaddingValues.only(
+    side: WindowInsetsSides,
+    layoutDirection: LayoutDirection,
+): PaddingValues {
     return when (side) {
         WindowInsetsSides.Start ->
             PaddingValues(start = calculateStartPadding(layoutDirection))
 
         WindowInsetsSides.End ->
-            PaddingValues(end = calculateStartPadding(layoutDirection))
+            PaddingValues(end = calculateEndPadding(layoutDirection))
 
         WindowInsetsSides.Top -> PaddingValues(top = calculateTopPadding())
         WindowInsetsSides.Bottom -> PaddingValues(bottom = calculateBottomPadding())

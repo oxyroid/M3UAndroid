@@ -22,7 +22,7 @@ internal fun LocalStorageSwitch(
         enabled = enabled
     ) {
         Text(
-            text = stringResource(string.feat_setting_local_storage).uppercase(),
+            text = stringResource(string.feat_setting_local_storage),
             modifier = Modifier.weight(1f)
         )
         Switch(checked = checked, onCheckedChange = null, enabled = enabled)

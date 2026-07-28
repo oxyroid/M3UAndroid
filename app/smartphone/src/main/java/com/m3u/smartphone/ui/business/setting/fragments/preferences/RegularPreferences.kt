@@ -2,6 +2,7 @@ package com.m3u.smartphone.ui.business.setting.fragments.preferences
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ColorLens
 import androidx.compose.material.icons.rounded.Download
@@ -13,8 +14,8 @@ import androidx.compose.ui.res.stringResource
 import com.m3u.core.foundation.util.basic.title
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.material.components.Preference
-import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.smartphone.ui.material.components.SettingDestination
+import com.m3u.smartphone.ui.material.model.LocalSpacing
 
 @Composable
 internal fun RegularPreferences(
@@ -28,32 +29,32 @@ internal fun RegularPreferences(
 ) {
     val spacing = LocalSpacing.current
     Column(
-        modifier = modifier,
+        modifier = modifier.selectableGroup(),
         verticalArrangement = Arrangement.spacedBy(spacing.small)
     ) {
         Preference(
             title = stringResource(string.feat_setting_playlist_management).title(),
             icon = Icons.Rounded.MusicNote,
-            enabled = fragment != SettingDestination.Playlists,
+            selected = fragment == SettingDestination.Playlists,
             onClick = navigateToPlaylistManagement
         )
         Preference(
             title = stringResource(string.feat_setting_appearance).title(),
             icon = Icons.Rounded.ColorLens,
-            enabled = fragment != SettingDestination.Appearance,
+            selected = fragment == SettingDestination.Appearance,
             onClick = navigateToThemeSelector
         )
         Preference(
             title = stringResource(string.feat_setting_optional_features).title(),
             icon = Icons.Rounded.Extension,
-            enabled = fragment != SettingDestination.Optional,
+            selected = fragment == SettingDestination.Optional,
             onClick = navigateToOptional
         )
         if (codecPackEnabled) {
             Preference(
                 title = stringResource(string.feat_setting_codec_pack).title(),
                 icon = Icons.Rounded.Download,
-                enabled = fragment != SettingDestination.CodecPack,
+                selected = fragment == SettingDestination.CodecPack,
                 onClick = navigateToCodecPack
             )
         }
