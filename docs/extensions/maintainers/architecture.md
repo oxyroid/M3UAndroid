@@ -32,7 +32,7 @@ Both use the same `HookSpec<Request, Result>` and runtime policy.
 | Owner | Responsibility | Start here |
 | --- | --- | --- |
 | API contract | Extension identity, manifest, settings, Hook request/result, wire fields | [`:extension:api`](../../../extension/api/src/main/kotlin/com/m3u/extension/api) |
-| Runtime | Registration, API/schema negotiation, per-Hook capabilities, payload limits, concurrency, timeout, cancellation, health | [`ExtensionRuntime`](../../../extension/runtime/src/main/kotlin/com/m3u/extension/runtime/ExtensionRuntime.kt) |
+| Runtime | Registration, API/schema negotiation, per-Hook capabilities, payload limits, per-extension and host-wide invocation admission caps, one invocation deadline, cancellation, health | [`ExtensionRuntime`](../../../extension/runtime/src/main/kotlin/com/m3u/extension/runtime/ExtensionRuntime.kt) |
 | Android transport | Service discovery, identity, binding, handshake, streamed payloads, Binder death | [`:extension:transport-android`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android) |
 | External SDK | Decode a call and run the registered typed handler | [`TypedExtensionService`](../../../extension/sdk-android/src/main/java/com/m3u/extension/sdk/android/TypedExtensionService.kt) |
 | Plugin lifecycle | Trust, certificate pin, enablement, grants, reconnect, reauthorization, diagnostics | [`ExtensionPluginRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/plugin/ExtensionPluginRepositoryImpl.kt) |
@@ -50,12 +50,22 @@ Both use the same `HookSpec<Request, Result>` and runtime policy.
 3. The runtime checks API and Hook schema versions.
 4. `CapabilityPolicy` computes the user's grants. The runtime keeps only capabilities declared by
    this Hook. Capabilities declared by another Hook never enter the call.
-5. The runtime applies payload, concurrency, and timeout limits.
+5. The runtime starts one deadline before request preparation, then applies payload limits and waits
+   for both per-extension and host-wide invocation admission within that deadline.
 6. If an external Hook declares and receives `network`, the broker scope provider may open one
-   short-lived scope.
+   short-lived scope. The serialized external envelope carries a host-computed upper bound on the
+   remaining invocation budget, reduced again for transport queueing before dispatch.
 7. A built-in handler runs directly, or the external request crosses the Android transport.
-8. The runtime decodes the result, closes the broker scope, and records health.
+8. The runtime decodes and validates the result before the same deadline, closes the broker scope,
+   and records health.
 9. The feature repository checks ownership and applies the result.
+
+A Hook does not receive a fresh timeout after preparation or while waiting in a queue. Preparation,
+admission, handler or transport execution, and response validation all consume the same invocation
+deadline. An external broker bridge derives that deadline from the remaining budget in the
+envelope. Every broker request in the invocation shares it and also consumes cumulative limits for
+request count, encoded request bytes, and encoded response bytes. Starting another broker request
+does not reset any of those limits. The runtime's host-side deadline remains authoritative.
 
 A missing broker scope does not grant a fallback network path. The Hook can still return an offline
 result, but broker operations fail.

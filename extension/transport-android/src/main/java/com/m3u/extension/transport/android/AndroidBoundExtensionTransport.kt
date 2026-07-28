@@ -11,12 +11,14 @@ import android.os.SystemClock
 import com.m3u.extension.api.ExtensionApiVersion
 import com.m3u.extension.api.ExtensionApiVersions
 import com.m3u.extension.api.ExtensionManifest
-import com.m3u.extension.api.security.BrokerProtocolVersions
 import com.m3u.extension.api.InvocationId
 import com.m3u.extension.api.SerializedExtensionEnvelope
 import com.m3u.extension.api.SerializedExtensionResult
+import com.m3u.extension.api.security.BrokerErrorCodes
+import com.m3u.extension.api.security.BrokerProtocolVersions
 import com.m3u.extension.runtime.ExtensionTransport
 import com.m3u.extension.runtime.ExtensionTransportHealth
+import com.m3u.extension.runtime.HostInvocationDeadlineExceededException
 import com.m3u.extension.transport.android.ipc.IExtensionHostBridge
 import com.m3u.extension.transport.android.ipc.IExtensionResultCallback
 import com.m3u.extension.transport.android.ipc.IExtensionService
@@ -25,6 +27,7 @@ import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.resume
 import kotlinx.coroutines.CancellableContinuation
@@ -40,15 +43,31 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
+internal fun SerializedExtensionEnvelope.afterTransportElapsed(
+    elapsedMillis: Long,
+): SerializedExtensionEnvelope {
+    val budget = invocationBudget ?: return this
+    val safeElapsedMillis = elapsedMillis.coerceAtLeast(0)
+    if (safeElapsedMillis >= budget.remainingTimeMillis) {
+        throw HostInvocationDeadlineExceededException()
+    }
+    val remainingTimeMillis = budget.remainingTimeMillis - safeElapsedMillis
+    return copy(
+        invocationBudget = budget.copy(remainingTimeMillis = remainingTimeMillis)
+    )
+}
+
 class AndroidBoundExtensionTransport private constructor(
     private val context: Context,
     private val connection: ServiceConnection,
     private val service: IExtensionService,
     private val serviceUid: Int,
+    private val brokerProtocolVersion: Int,
     override val manifest: ExtensionManifest,
     private val hostBridgeFactory: (
         ExtensionManifest,
         SerializedExtensionEnvelope,
+        Int,
     ) -> IExtensionHostBridge,
     private val json: Json,
     private val connectionState: ExtensionConnectionState,
@@ -72,8 +91,11 @@ class AndroidBoundExtensionTransport private constructor(
         connectionState.setUnavailableListener(::terminateInFlightOperations)
     }
 
-    override suspend fun invoke(request: SerializedExtensionEnvelope): SerializedExtensionResult =
-        suspendCancellableCoroutine { continuation ->
+    override suspend fun invoke(
+        request: SerializedExtensionEnvelope,
+    ): SerializedExtensionResult {
+        val transportStartedAtMillis = SystemClock.elapsedRealtime()
+        return suspendCancellableCoroutine { continuation ->
             val record = ExtensionInvocationRecord(
                 invocationId = request.invocationId,
                 deliverCompletion = { result -> continuation.resumeResult(result) },
@@ -113,10 +135,20 @@ class AndroidBoundExtensionTransport private constructor(
                         check(processBinderPermitAcquired) {
                             "Host has too many outstanding extension invocations"
                         }
+                        val dispatchRequest = request.afterTransportElapsed(
+                            SystemClock.elapsedRealtime() - transportStartedAtMillis
+                        )
                         val bridge = RevocableExtensionHostBridge(
-                            delegate = hostBridgeFactory(manifest, request),
+                            delegate = hostBridgeFactory(
+                                manifest,
+                                dispatchRequest,
+                                brokerProtocolVersion,
+                            ),
                             expectedUid = serviceUid,
                             requestPermits = brokerRequestPermits,
+                            maxRequestAttempts = dispatchRequest.invocationBudget
+                                ?.maxBrokerRequests
+                                ?: DEFAULT_MAX_BROKER_REQUEST_ATTEMPTS,
                         )
                         check(record.attachBridge(bridge)) {
                             "Extension invocation was cancelled"
@@ -124,7 +156,7 @@ class AndroidBoundExtensionTransport private constructor(
                         check(record.isActive) { "Extension invocation was cancelled" }
                         val responseFile = ParcelFileCodec.write(
                             context,
-                            json.encodeToString(request),
+                            json.encodeToString(dispatchRequest),
                         ).use { requestFile ->
                             resultDispatcher.await { resultRequestId, callback ->
                                 synchronized(binderCallLock) {
@@ -133,9 +165,9 @@ class AndroidBoundExtensionTransport private constructor(
                                     }
                                     service.invoke(
                                         resultRequestId,
-                                        request.invocationId.value,
-                                        request.hook.id,
-                                        request.schemaVersion,
+                                        dispatchRequest.invocationId.value,
+                                        dispatchRequest.hook.id,
+                                        dispatchRequest.schemaVersion,
                                         requestFile,
                                         bridge,
                                         callback,
@@ -166,6 +198,7 @@ class AndroidBoundExtensionTransport private constructor(
                 invocations.release(record)
             }
         }
+    }
 
     override suspend fun cancel(invocationId: InvocationId) {
         val outcome = invocations.cancel(
@@ -262,6 +295,7 @@ class AndroidBoundExtensionTransport private constructor(
         private const val MAX_OUTSTANDING_BROKER_REQUESTS = 4
         private const val MAX_OUTSTANDING_REMOTE_CANCELS = 4
         private const val MAX_PROCESS_BINDER_INVOCATIONS = 16
+        private const val DEFAULT_MAX_BROKER_REQUEST_ATTEMPTS = 16
         private val PROCESS_BINDER_INVOCATION_PERMITS =
             Semaphore(MAX_PROCESS_BINDER_INVOCATIONS, true)
 
@@ -271,6 +305,7 @@ class AndroidBoundExtensionTransport private constructor(
             hostBridgeFactory: (
                 ExtensionManifest,
                 SerializedExtensionEnvelope,
+                Int,
             ) -> IExtensionHostBridge,
             hostApiVersion: ExtensionApiVersion = ExtensionApiVersions.Current,
             json: Json = Json { ignoreUnknownKeys = true; explicitNulls = false },
@@ -339,6 +374,7 @@ class AndroidBoundExtensionTransport private constructor(
                                     connection,
                                     service,
                                     installed.uid,
+                                    checkNotNull(handshake.brokerProtocolVersion),
                                     manifest,
                                     hostBridgeFactory,
                                     json,
@@ -440,9 +476,18 @@ internal class RevocableExtensionHostBridge(
     delegate: IExtensionHostBridge,
     private val expectedUid: Int,
     private val requestPermits: Semaphore,
+    maxRequestAttempts: Int = DEFAULT_MAX_REQUEST_ATTEMPTS,
 ) : IExtensionHostBridge.Stub(), Closeable {
     private val delegate = AtomicReference<IExtensionHostBridge?>(delegate)
     private val activeCallbacks = ConcurrentHashMap<String, PermitReleasingCallback>()
+    private val remainingRequestAttempts = AtomicInteger(maxRequestAttempts)
+    private val requestAttemptExhaustionReported = AtomicBoolean(false)
+
+    init {
+        require(maxRequestAttempts > 0) {
+            "Maximum broker request attempts must be positive"
+        }
+    }
 
     override fun executeHttp(
         requestId: String?,
@@ -460,12 +505,18 @@ internal class RevocableExtensionHostBridge(
         }
         val current = delegate.get() ?: run {
             runCatching { request.close() }
-            runCatching {
-                callback.onFailure(
-                    requestId,
-                    "request.cancelled",
-                    "Extension invocation is no longer active",
-                )
+            return
+        }
+        if (!consumeRequestAttempt()) {
+            runCatching { request.close() }
+            if (requestAttemptExhaustionReported.compareAndSet(false, true)) {
+                runCatching {
+                    callback.onFailure(
+                        requestId,
+                        BrokerErrorCodes.InvalidRequest.value,
+                        "Extension broker request budget is exhausted",
+                    )
+                }
             }
             return
         }
@@ -544,6 +595,16 @@ internal class RevocableExtensionHostBridge(
         }
     }
 
+    private fun consumeRequestAttempt(): Boolean {
+        while (true) {
+            val remaining = remainingRequestAttempts.get()
+            if (remaining <= 0) return false
+            if (remainingRequestAttempts.compareAndSet(remaining, remaining - 1)) {
+                return true
+            }
+        }
+    }
+
     private class PermitReleasingCallback(
         private val requestId: String,
         private val delegate: IExtensionResultCallback,
@@ -608,6 +669,7 @@ internal class RevocableExtensionHostBridge(
         isNotBlank() && length <= MAX_BROKER_REQUEST_ID_LENGTH
 
     private companion object {
+        const val DEFAULT_MAX_REQUEST_ATTEMPTS = 16
         const val MAX_PROCESS_BROKER_REQUESTS = 16
         const val MAX_BROKER_REQUEST_ID_LENGTH = 64
         val PROCESS_BROKER_REQUEST_PERMITS = Semaphore(MAX_PROCESS_BROKER_REQUESTS, true)

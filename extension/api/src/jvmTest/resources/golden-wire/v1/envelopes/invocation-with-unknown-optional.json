@@ -27,6 +27,12 @@
     "network"
   ],
   "brokerScope": "broker-scope-1",
+  "invocationBudget": {
+    "remainingTimeMillis": 30000,
+    "maxBrokerRequests": 16,
+    "maxBrokerRequestBytes": 4194304,
+    "maxBrokerResponseBytes": 16777216
+  },
   "futureOptional": {
     "enabled": true
   }

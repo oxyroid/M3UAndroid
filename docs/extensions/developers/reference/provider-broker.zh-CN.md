@@ -155,6 +155,14 @@ BrokerValue.Context(
 Provider 账号。Hook 完成或取消时，作用域随即关闭。来自其他插件、Hook、调用或账号的引用
 会被拒绝。
 
+一次 Hook 调用只有一个截止时间。`ExtensionCallContext.invocationBudget` 描述插件开始执行前，
+宿主为这次调用保留的剩余时间和资源上限。Transport 派发调用时会继续扣除排队耗时，Binder
+传输和解码也包含在同一段时间内。每个 Broker 请求不会获得新的计时窗口。本次调用发出的全部
+`execute(...)` 与 `authenticate(...)` 共用这个截止时间，并共同消耗累计请求次数、编码后的
+请求总字节数和响应总字节数。拆成更多请求或分页不会重置这些限制。为兼容旧版宿主，这个字段
+可能为 `null`；`null` 不表示可以无限执行。分页必须有明确上限，收到取消或 `timeout` 后应立即
+停止。最终始终以宿主侧的截止时间为准。
+
 首次 URL 与每次重定向都必须保持已批准的 Scheme、Host 和 Port。改变 Origin 会返回
 `scope_denied`。
 

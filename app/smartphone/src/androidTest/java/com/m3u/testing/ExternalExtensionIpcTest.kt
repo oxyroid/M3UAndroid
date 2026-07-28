@@ -60,7 +60,7 @@ class ExternalExtensionIpcTest {
         val transport = AndroidBoundExtensionTransport.connect(
             context = context,
             installed = installed,
-            hostBridgeFactory = { _, _ -> ConformanceHostBridge },
+            hostBridgeFactory = { _, _, _ -> ConformanceHostBridge },
         )
         try {
             val runtime = ExtensionRuntime(

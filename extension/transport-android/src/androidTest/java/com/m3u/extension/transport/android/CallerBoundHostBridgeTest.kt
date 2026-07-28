@@ -147,4 +147,95 @@ class CallerBoundHostBridgeTest {
             ParcelFileCodec.read(request, 16)
         }
     }
+
+    @Test
+    fun requestAttemptBudgetReportsExhaustionOnlyOnce() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val callbackAttempts = AtomicInteger()
+        val bridge = RevocableExtensionHostBridge(
+            delegate = NoOpHostBridge,
+            expectedUid = Process.myUid(),
+            requestPermits = Semaphore(0),
+            maxRequestAttempts = 2,
+        )
+        val callback = object : IExtensionResultCallback.Stub() {
+            override fun onSuccess(
+                requestId: String?,
+                response: ParcelFileDescriptor?,
+            ) {
+                response?.close()
+            }
+
+            override fun onFailure(
+                requestId: String?,
+                code: String?,
+                message: String?,
+            ) {
+                callbackAttempts.incrementAndGet()
+            }
+        }
+
+        repeat(5) { index ->
+            bridge.executeHttp(
+                "request-$index",
+                ParcelFileCodec.write(context, "{}"),
+                callback,
+            )
+        }
+
+        assertEquals(3, callbackAttempts.get())
+    }
+
+    @Test
+    fun retainedBridgeDropsNewRequestsWithoutCallbacksAfterClose() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val callbackAttempts = AtomicInteger()
+        val bridge = RevocableExtensionHostBridge(
+            delegate = NoOpHostBridge,
+            expectedUid = Process.myUid(),
+            requestPermits = Semaphore(1),
+            maxRequestAttempts = 1,
+        )
+        bridge.close()
+        val request = ParcelFileCodec.write(context, "{}")
+
+        bridge.executeHttp(
+            "retained-request",
+            request,
+            object : IExtensionResultCallback.Stub() {
+                override fun onSuccess(
+                    requestId: String?,
+                    response: ParcelFileDescriptor?,
+                ) {
+                    response?.close()
+                    callbackAttempts.incrementAndGet()
+                }
+
+                override fun onFailure(
+                    requestId: String?,
+                    code: String?,
+                    message: String?,
+                ) {
+                    callbackAttempts.incrementAndGet()
+                }
+            },
+        )
+
+        assertEquals(0, callbackAttempts.get())
+        assertThrows(java.io.IOException::class.java) {
+            ParcelFileCodec.read(request, 16)
+        }
+    }
+
+    private object NoOpHostBridge : IExtensionHostBridge.Stub() {
+        override fun executeHttp(
+            requestId: String?,
+            request: ParcelFileDescriptor?,
+            callback: IExtensionResultCallback?,
+        ) {
+            request?.close()
+        }
+
+        override fun cancelHttp(requestId: String?) = Unit
+    }
 }

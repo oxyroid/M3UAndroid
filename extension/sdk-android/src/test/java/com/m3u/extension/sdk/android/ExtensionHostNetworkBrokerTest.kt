@@ -8,9 +8,10 @@ import com.m3u.extension.api.security.BrokerInvocationError
 import com.m3u.extension.api.security.BrokerInvocationResult
 import com.m3u.extension.api.security.BrokerOperationResult
 import com.m3u.extension.api.security.BrokeredHttpRequest
+import com.m3u.extension.api.security.BrokeredHttpResponse
 import com.m3u.extension.api.security.ProviderAuthenticationReceipt
 import com.m3u.extension.api.security.ResponseValueSource
-import com.m3u.extension.api.security.BrokeredHttpResponse
+import com.m3u.extension.transport.android.ExtensionRemoteException
 import java.util.concurrent.CancellationException
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -63,6 +64,40 @@ class ExtensionHostNetworkBrokerTest {
         assertFailsWith<CancellationException> {
             BrokerInvocationResult.Failure(error).operationResultOrThrow()
         }
+    }
+
+    @Test
+    fun `response budget control failure remains typed`() {
+        val failure = ExtensionRemoteException(
+            code = BrokerErrorCodes.ResponseTooLarge.value,
+            message = "bounded host response",
+        ).toBrokerExceptionOrNull()
+
+        requireNotNull(failure)
+        assertEquals(BrokerErrorCodes.ResponseTooLarge, failure.code)
+        assertEquals(false, failure.recoverable)
+    }
+
+    @Test
+    fun `unknown control failure is not treated as a broker result`() {
+        val failure = ExtensionRemoteException(
+            code = "request.failed",
+            message = "transport failure",
+        ).toBrokerExceptionOrNull()
+
+        assertEquals(null, failure)
+    }
+
+    @Test
+    fun `request budget control failure remains typed`() {
+        val failure = ExtensionRemoteException(
+            code = BrokerErrorCodes.InvalidRequest.value,
+            message = "bounded host request",
+        ).toBrokerExceptionOrNull()
+
+        requireNotNull(failure)
+        assertEquals(BrokerErrorCodes.InvalidRequest, failure.code)
+        assertEquals(false, failure.recoverable)
     }
 
     @Test

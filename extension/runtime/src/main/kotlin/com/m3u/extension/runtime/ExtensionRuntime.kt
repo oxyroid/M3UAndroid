@@ -9,6 +9,7 @@ import com.m3u.extension.api.ExtensionError
 import com.m3u.extension.api.ExtensionErrorCodes
 import com.m3u.extension.api.ExtensionHandler
 import com.m3u.extension.api.ExtensionId
+import com.m3u.extension.api.ExtensionInvocationBudget
 import com.m3u.extension.api.ExtensionManifest
 import com.m3u.extension.api.ExtensionPayload
 import com.m3u.extension.api.ExtensionState
@@ -51,11 +52,27 @@ data class InvocationPolicy(
     val maxConcurrentInvocationsPerExtension: Int = 4,
     val maxPayloadBytes: Int = 1_048_576,
     val unhealthyFailureThreshold: Int = 3,
+    val maxConcurrentInvocationsAcrossExtensions: Int = 16,
+    val maxBrokerRequestsPerInvocation: Int = 16,
+    val maxBrokerRequestBytesPerInvocation: Long = 4_194_304,
+    val maxBrokerResponseBytesPerInvocation: Long = 16_777_216,
 ) {
     init {
         require(timeoutMillis > 0) { "Invocation timeout must be positive" }
         require(maxConcurrentInvocationsPerExtension > 0) { "Invocation concurrency must be positive" }
+        require(maxConcurrentInvocationsAcrossExtensions > 0) {
+            "Host invocation concurrency must be positive"
+        }
         require(maxPayloadBytes > 0) { "Payload limit must be positive" }
+        require(maxBrokerRequestsPerInvocation > 0) {
+            "Broker request limit must be positive"
+        }
+        require(maxBrokerRequestBytesPerInvocation > 0) {
+            "Broker request byte limit must be positive"
+        }
+        require(maxBrokerResponseBytesPerInvocation > 0) {
+            "Broker response byte limit must be positive"
+        }
         require(unhealthyFailureThreshold > 0) { "Failure threshold must be positive" }
     }
 }
@@ -124,11 +141,14 @@ class ExtensionRuntime(
         ignoreUnknownKeys = true
         explicitNulls = false
     },
+    private val monotonicNanos: () -> Long = System::nanoTime,
 ) : ExtensionCatalog {
     private val registrations = ConcurrentHashMap<ExtensionId, Registration>()
     private val externalFailureTrackers =
         ConcurrentHashMap<ExtensionId, ExternalFailureTracker>()
     private val registrationLifecycleLock = Any()
+    private val hostInvocationSemaphore =
+        Semaphore(invocationPolicy.maxConcurrentInvocationsAcrossExtensions)
 
     fun register(entrypoint: ExtensionEntrypoint): ExtensionRegistrationResult {
         val manifest = entrypoint.manifest
@@ -319,66 +339,114 @@ class ExtensionRuntime(
             )
         }
         val granted = policyGrants.intersect(declaration.requiredCapabilities)
-        val settings = runCatching { settingsProvider.snapshot(registration.manifest) }
-            .getOrElse {
-                return failure(
-                    invocationId,
-                    extensionId,
-                    spec,
-                    ExtensionErrorCodes.InvocationFailed,
-                    "Extension settings are unavailable",
-                    true,
-                )
-            }
-        val payloadSize = json.encodeToString(spec.requestSerializer, request).encodeToByteArray().size +
-            json.encodeToString(ExtensionSettingsSnapshot.serializer(), settings).encodeToByteArray().size
-        if (payloadSize > invocationPolicy.maxPayloadBytes) {
-            return failure(invocationId, extensionId, spec, ExtensionErrorCodes.PayloadTooLarge, "Invocation payload exceeds the host limit", false)
-        }
-        val context = ExtensionCallContext(invocationId, extensionId, granted, settings)
+        val invocationStartedNanos = monotonicNanos()
+        var extensionExecutionStarted = false
         val invocation = try {
             withTimeout(invocationPolicy.timeoutMillis) {
-                registration.semaphore.withPermit {
-                    val managedBrokerScope = if (
-                        brokerScope == null &&
-                        registration.isExternal
-                    ) {
-                        try {
-                            brokerScopeProvider.open(
-                                ExtensionBrokerScopeRequest(
-                                    manifest = registration.manifest,
-                                    hook = spec.hook,
-                                    payload = request,
-                                    settings = settings,
-                                    grantedCapabilities = granted,
-                                )
+                val settings = try {
+                    settingsProvider.snapshot(registration.manifest)
+                } catch (cancellation: CancellationException) {
+                    throw cancellation
+                } catch (_: Exception) {
+                    return@withTimeout InvocationAttempt(
+                        outcome = HookResult.Failure(
+                            ExtensionError(
+                                ExtensionErrorCodes.InvocationFailed,
+                                "Extension settings are unavailable",
+                                true,
                             )
-                        } catch (cancellation: CancellationException) {
-                            throw cancellation
-                        } catch (_: Exception) {
-                            return@withPermit InvocationAttempt(
-                                outcome = HookResult.Failure(
-                                    ExtensionError(
-                                        ExtensionErrorCodes.InvocationFailed,
-                                        "Host broker scope is unavailable",
-                                        true,
+                        ),
+                        runtimeFailure = false,
+                        affectsHealth = false,
+                    )
+                }
+                val payloadSize =
+                    json.encodeToString(spec.requestSerializer, request).encodeToByteArray().size +
+                        json.encodeToString(
+                            ExtensionSettingsSnapshot.serializer(),
+                            settings,
+                        ).encodeToByteArray().size
+                if (payloadSize > invocationPolicy.maxPayloadBytes) {
+                    return@withTimeout InvocationAttempt(
+                        outcome = HookResult.Failure(
+                            ExtensionError(
+                                ExtensionErrorCodes.PayloadTooLarge,
+                                "Invocation payload exceeds the host limit",
+                                false,
+                            )
+                        ),
+                        runtimeFailure = false,
+                        affectsHealth = false,
+                    )
+                }
+                registration.semaphore.withPermit {
+                    hostInvocationSemaphore.withPermit hostPermit@{
+                        val managedBrokerScope = if (
+                            brokerScope == null &&
+                            registration.isExternal
+                        ) {
+                            try {
+                                brokerScopeProvider.open(
+                                    ExtensionBrokerScopeRequest(
+                                        manifest = registration.manifest,
+                                        hook = spec.hook,
+                                        payload = request,
+                                        settings = settings,
+                                        grantedCapabilities = granted,
                                     )
+                                )
+                            } catch (cancellation: CancellationException) {
+                                throw cancellation
+                            } catch (_: Exception) {
+                                return@hostPermit InvocationAttempt(
+                                    outcome = HookResult.Failure(
+                                        ExtensionError(
+                                            ExtensionErrorCodes.InvocationFailed,
+                                            "Host broker scope is unavailable",
+                                            true,
+                                        )
+                                    ),
+                                    runtimeFailure = false,
+                                    affectsHealth = false,
+                                )
+                            }
+                        } else {
+                            null
+                        }
+                        withManagedBrokerScope(managedBrokerScope) {
+                            val remainingTimeMillis =
+                                remainingTimeMillis(invocationStartedNanos)
+                            if (remainingTimeMillis <= 0) {
+                                throw HostInvocationDeadlineExceededException()
+                            }
+                            val context = ExtensionCallContext(
+                                invocationId = invocationId,
+                                extensionId = extensionId,
+                                grantedCapabilities = granted,
+                                settings = settings,
+                                invocationBudget = invocationPolicy.toBudget(
+                                    remainingTimeMillis
                                 ),
-                                runtimeFailure = false,
+                            )
+                            normalizeInvocationAttempt(
+                                invocation = registration.invoke(
+                                    spec = spec,
+                                    context = context,
+                                    request = request,
+                                    brokerScope = brokerScope ?: managedBrokerScope?.handle,
+                                    json = json,
+                                    hostApiVersion = hostApiVersion,
+                                    remainingTimeMillis = {
+                                        remainingTimeMillis(invocationStartedNanos)
+                                    },
+                                    onExecutionStarted = {
+                                        extensionExecutionStarted = true
+                                    },
+                                ),
+                                spec = spec,
+                                validateResponse = validateResponse,
                             )
                         }
-                    } else {
-                        null
-                    }
-                    withManagedBrokerScope(managedBrokerScope) {
-                        registration.invoke(
-                            spec = spec,
-                            context = context,
-                            request = request,
-                            brokerScope = brokerScope ?: managedBrokerScope?.handle,
-                            json = json,
-                            hostApiVersion = hostApiVersion,
-                        )
                     }
                 }
             }
@@ -387,7 +455,20 @@ class ExtensionRuntime(
                 outcome = HookResult.Failure(
                     ExtensionError(ExtensionErrorCodes.InvocationTimedOut, "Extension invocation timed out", true)
                 ),
-                runtimeFailure = true,
+                runtimeFailure = extensionExecutionStarted,
+                affectsHealth = extensionExecutionStarted,
+            )
+        } catch (_: HostInvocationDeadlineExceededException) {
+            InvocationAttempt(
+                outcome = HookResult.Failure(
+                    ExtensionError(
+                        ExtensionErrorCodes.InvocationTimedOut,
+                        "Extension invocation timed out",
+                        true,
+                    )
+                ),
+                runtimeFailure = false,
+                affectsHealth = false,
             )
         } catch (cancellation: CancellationException) {
             throw cancellation
@@ -401,9 +482,21 @@ class ExtensionRuntime(
                         details = mapOf("exception" to exception.javaClass.simpleName),
                     )
                 ),
-                runtimeFailure = true,
+                runtimeFailure = extensionExecutionStarted,
+                affectsHealth = extensionExecutionStarted,
             )
         }
+        if (invocation.affectsHealth) {
+            registration.recordInvocationOutcome(runtimeFailure = invocation.runtimeFailure)
+        }
+        return ExtensionResult(invocationId, extensionId, spec, invocation.outcome)
+    }
+
+    private fun <Response : ExtensionPayload> normalizeInvocationAttempt(
+        invocation: InvocationAttempt<Response>,
+        spec: HookSpec<*, Response>,
+        validateResponse: (Response) -> Unit,
+    ): InvocationAttempt<Response> {
         val outcome = when (val rawOutcome = invocation.outcome) {
             is HookResult.Success -> {
                 val responseBytes = runCatching {
@@ -461,13 +554,23 @@ class ExtensionRuntime(
                 }
             }
         }
-        if (invocation.runtimeFailure) {
-            registration.recordInvocationOutcome(runtimeFailure = true)
-        } else {
-            registration.recordInvocationOutcome(runtimeFailure = false)
-        }
-        return ExtensionResult(invocationId, extensionId, spec, outcome)
+        return invocation.copy(outcome = outcome)
     }
+
+    private fun remainingTimeMillis(startedNanos: Long): Long {
+        val elapsedMillis = ((monotonicNanos() - startedNanos) / NANOS_PER_MILLISECOND)
+            .coerceAtLeast(0)
+        return (invocationPolicy.timeoutMillis - elapsedMillis).coerceAtLeast(0)
+    }
+
+    private fun InvocationPolicy.toBudget(
+        remainingTimeMillis: Long,
+    ) = ExtensionInvocationBudget(
+        remainingTimeMillis = remainingTimeMillis,
+        maxBrokerRequests = maxBrokerRequestsPerInvocation,
+        maxBrokerRequestBytes = maxBrokerRequestBytesPerInvocation,
+        maxBrokerResponseBytes = maxBrokerResponseBytesPerInvocation,
+    )
 
     private suspend fun <T> withManagedBrokerScope(
         lease: ExtensionBrokerScopeLease?,
@@ -670,27 +773,43 @@ class ExtensionRuntime(
             brokerScope: BrokerScopeHandle?,
             json: Json,
             hostApiVersion: ExtensionApiVersion,
+            remainingTimeMillis: () -> Long,
+            onExecutionStarted: () -> Unit,
         ): InvocationAttempt<Response> {
             val requestPayload = json.encodeToJsonElement(spec.requestSerializer, request)
+            val remainingTimeMillis = remainingTimeMillis()
+            if (remainingTimeMillis <= 0) {
+                throw HostInvocationDeadlineExceededException()
+            }
+            val effectiveContext = context.copy(
+                invocationBudget = context.invocationBudget?.copy(
+                    remainingTimeMillis = remainingTimeMillis
+                )
+            )
             val handler = handlers[spec.hook]
             val currentTransport = transport
             val envelope = SerializedExtensionEnvelope(
                 apiVersion = hostApiVersion,
-                invocationId = context.invocationId,
-                extensionId = context.extensionId,
+                invocationId = effectiveContext.invocationId,
+                extensionId = effectiveContext.extensionId,
                 hook = spec.hook,
                 schemaVersion = spec.schemaVersion,
                 payload = requestPayload,
-                settings = context.settings,
-                grantedCapabilities = context.grantedCapabilities,
+                settings = effectiveContext.settings,
+                grantedCapabilities = effectiveContext.grantedCapabilities,
                 brokerScope = brokerScope,
+                invocationBudget = effectiveContext.invocationBudget,
             )
             val result = when {
-                handler != null -> handler.invoke(context, requestPayload, json)
+                handler != null -> {
+                    onExecutionStarted()
+                    handler.invoke(effectiveContext, requestPayload, json)
+                }
                 currentTransport != null -> try {
+                    onExecutionStarted()
                     currentTransport.invoke(envelope)
                 } catch (cancellation: CancellationException) {
-                    currentTransport.cancel(context.invocationId)
+                    currentTransport.cancel(effectiveContext.invocationId)
                     throw cancellation
                 }
                 else -> return InvocationAttempt(
@@ -704,7 +823,9 @@ class ExtensionRuntime(
                     runtimeFailure = true,
                 )
             }
-            if (result.invocationId != context.invocationId || result.extensionId != context.extensionId ||
+            if (
+                result.invocationId != effectiveContext.invocationId ||
+                result.extensionId != effectiveContext.extensionId ||
                 result.hook != spec.hook || result.schemaVersion != spec.schemaVersion
             ) {
                 return InvocationAttempt(
@@ -907,6 +1028,7 @@ class ExtensionRuntime(
     private data class InvocationAttempt<Response : ExtensionPayload>(
         val outcome: HookResult<Response>,
         var runtimeFailure: Boolean,
+        val affectsHealth: Boolean = true,
     )
 
     private interface BuiltInHandlerBinding {
@@ -944,6 +1066,7 @@ class ExtensionRuntime(
 
 
     private companion object {
+        const val NANOS_PER_MILLISECOND = 1_000_000L
         val RUNTIME_FAILURE_CODES = setOf(
             ExtensionErrorCodes.HookNotBound,
             ExtensionErrorCodes.InvocationFailed,

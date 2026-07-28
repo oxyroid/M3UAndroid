@@ -14,7 +14,7 @@ This page defines what may ship from the current branch. Implementation instruct
 
 | Area | Current behavior | Evidence |
 | --- | --- | --- |
-| Contract and runtime | Typed, versioned Hook contracts; each call receives only the current Hook's declared and approved capabilities; payload, timeout, concurrency, cancellation, health, and failure isolation | `WireGoldenFixtureTest`, `ExtensionContractTest`, `SubscriptionProviderContractsTest`, `ExtensionRuntimeTest`, and transport conformance tests |
+| Contract and runtime | Typed, versioned Hook contracts; each call receives only the current Hook's declared and approved capabilities; per-extension and host-wide admission caps; one deadline across preparation, queueing, execution, response validation, and broker requests; cumulative broker request-count, encoded request-byte, and encoded response-byte limits; cancellation, health, and failure isolation | `WireGoldenFixtureTest`, `ExtensionContractTest`, `ExtensionRuntimeTest`, `InvocationBudgetPropagationTest`, and `ExtensionHostBridgeTest`. CI runs the API golden, runtime, SDK, and transport unit tests; the broker bridge uses connected device evidence. |
 | Built-in provider | Emby and Jellyfin are selectable variants of one built-in extension; the hidden automatic kind remains only as a compatibility value for existing accounts and is not offered for new subscriptions | `EmbyCompatibleProviderIntegrationTest`, `EmbyCompatibleProviderLocalizationTest`, and `SubscriptionProviderRepositoryIntegrationTest` |
 | Provider credentials | External login returns a one-time host receipt. Post-validation scopes resolve references only into requests for the approved origin; the host does not directly serialize resolved values back to the extension. | `HostNetworkBrokerSecurityTest`, `ExtensionHostBridgeTest`, `ProviderBrokerScopeStoreTest`, and `CredentialVaultTest` |
 | General Hook network access | Settings, search, metadata, EPG, and background Hooks can use the host broker when that Hook declares and receives `network`. Search/metadata/EPG use an account scope when their request has an account; other calls use approved manifest and explicitly saved setting origins. Discover stays offline. | `ExtensionNetworkOriginContractTest`, `ExtensionBrokerScopeRuntimeTest`, `ExtensionHookBrokerScopeStoreTest`, and `ExtensionHostBridgeTest` |
@@ -41,10 +41,8 @@ This page defines what may ship from the current branch. Implementation instruct
 - Run the complete external provider flow on TV, through WorkManager, and through the real player rather than only the repository-level device test.
 - Add repeatable UI automation for authorization, reauthorization, settings, errors, and TV focus.
 - Add process-level hostile fixtures for a blocked call, ignored cancellation, process death, malformed or oversized output, retained broker access, signer change, and extension-ID collision.
-- Apply one host-wide invocation budget and one deadline across a Hook and all of its broker requests.
 - Run the same published conformance suite against built-in and external transports.
-- Publish the SDK artifact together with the checked-in golden fixtures and compatibility policy,
-  and run fixture verification in CI.
+- Publish the SDK artifact together with the checked-in golden fixtures and compatibility policy.
 
 ## Decision rule
 

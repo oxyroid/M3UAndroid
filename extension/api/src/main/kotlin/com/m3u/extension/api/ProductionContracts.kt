@@ -204,6 +204,21 @@ object ExtensionSettingKeys {
 }
 
 @Serializable
+data class ExtensionInvocationBudget(
+    val remainingTimeMillis: Long,
+    val maxBrokerRequests: Int,
+    val maxBrokerRequestBytes: Long,
+    val maxBrokerResponseBytes: Long,
+) {
+    init {
+        require(remainingTimeMillis > 0) { "Invocation remaining time must be positive" }
+        require(maxBrokerRequests > 0) { "Maximum broker request count must be positive" }
+        require(maxBrokerRequestBytes > 0) { "Maximum broker request size must be positive" }
+        require(maxBrokerResponseBytes > 0) { "Maximum broker response size must be positive" }
+    }
+}
+
+@Serializable
 data class SerializedExtensionEnvelope(
     val apiVersion: ExtensionApiVersion,
     val invocationId: InvocationId,
@@ -214,6 +229,7 @@ data class SerializedExtensionEnvelope(
     val settings: ExtensionSettingsSnapshot = ExtensionSettingsSnapshot(),
     val grantedCapabilities: Set<Capability> = emptySet(),
     val brokerScope: BrokerScopeHandle? = null,
+    val invocationBudget: ExtensionInvocationBudget? = null,
 )
 
 @Serializable
@@ -253,6 +269,7 @@ data class ExtensionCallContext(
     val extensionId: ExtensionId,
     val grantedCapabilities: Set<Capability>,
     val settings: ExtensionSettingsSnapshot = ExtensionSettingsSnapshot(),
+    val invocationBudget: ExtensionInvocationBudget? = null,
 )
 
 sealed interface HookResult<out Response : ExtensionPayload> {

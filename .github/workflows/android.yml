@@ -42,6 +42,14 @@ jobs:
       - name: Clean GMD
         run: ./gradlew cleanManagedDevices --unused-only
 
+      - name: Verify extension contracts
+        run: |
+          ./gradlew \
+            :extension:api:jvmTest \
+            :extension:runtime:test \
+            :extension:sdk-android:testDebugUnitTest \
+            :extension:transport-android:testDebugUnitTest
+
       - name: Build smartphone release APK
         run: ./gradlew :app:smartphone:assembleRelease
 

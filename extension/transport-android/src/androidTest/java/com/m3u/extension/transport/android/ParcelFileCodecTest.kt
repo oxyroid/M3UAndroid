@@ -9,6 +9,7 @@ import android.os.SystemClock
 import android.os.storage.StorageManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import java.io.File
 import java.io.IOException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -33,6 +34,19 @@ class ParcelFileCodecTest {
     }
 
     @Test
+    fun reportsTheExactEncodedByteCount() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+
+        val result = ParcelFileCodec.readWithEncodedSize(
+            ParcelFileCodec.write(context, "电视"),
+            32,
+        )
+
+        assertEquals("电视", result.content)
+        assertEquals(6, result.encodedByteCount)
+    }
+
+    @Test
     fun rejectsPayloadBeyondLimit() {
         val context = ApplicationProvider.getApplicationContext<Context>()
 
@@ -47,6 +61,22 @@ class ParcelFileCodecTest {
 
         assertThrows(IllegalArgumentException::class.java) {
             ParcelFileCodec.write(context, "too large", maximumBytes = 3)
+        }
+    }
+
+    @Test
+    fun rejectsInvalidUtf8InsteadOfReplacingBytes() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val file = File.createTempFile("invalid-extension-", ".json", context.cacheDir)
+        file.writeBytes(byteArrayOf(0xC3.toByte(), 0x28))
+        val descriptor = ParcelFileDescriptor.open(
+            file,
+            ParcelFileDescriptor.MODE_READ_ONLY,
+        )
+        file.delete()
+
+        assertThrows(IOException::class.java) {
+            ParcelFileCodec.read(descriptor, maximumBytes = 32)
         }
     }
 

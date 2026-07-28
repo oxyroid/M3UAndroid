@@ -199,6 +199,7 @@ class WireGoldenFixtureTest {
         assertTrue(legacy.settings.values.isEmpty())
         assertTrue(legacy.grantedCapabilities.isEmpty())
         assertNull(legacy.brokerScope)
+        assertNull(legacy.invocationBudget)
 
         val current = decodeFixture(
             "envelopes/invocation-current.json",
@@ -209,12 +210,20 @@ class WireGoldenFixtureTest {
         assertTrue(current.settings.credentialHandles.isNotEmpty())
         assertTrue(current.grantedCapabilities.isNotEmpty())
         assertTrue(current.brokerScope != null)
+        val expectedBudget = ExtensionInvocationBudget(
+            remainingTimeMillis = 30_000,
+            maxBrokerRequests = 16,
+            maxBrokerRequestBytes = 4_194_304,
+            maxBrokerResponseBytes = 16_777_216,
+        )
+        assertEquals(expectedBudget, current.invocationBudget)
 
         val withFutureOptionalField = decodeFixture(
             "envelopes/invocation-with-unknown-optional.json",
             SerializedExtensionEnvelope.serializer(),
         )
         assertEquals(current, withFutureOptionalField)
+        assertEquals(expectedBudget, withFutureOptionalField.invocationBudget)
 
         val currentHookRequest = decodeFixture(
             "hooks/settings.schema.contribute/schema-1/request.json",

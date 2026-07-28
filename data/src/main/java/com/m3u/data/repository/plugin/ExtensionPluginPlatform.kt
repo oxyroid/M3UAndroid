@@ -52,13 +52,14 @@ internal class AndroidExtensionPluginTransportConnector @Inject constructor(
             delegate = AndroidBoundExtensionTransport.connect(
                 context = context,
                 installed = service,
-                hostBridgeFactory = { manifest, envelope ->
+                hostBridgeFactory = { manifest, envelope, brokerProtocolVersion ->
                     ExtensionHostBridge(
                         context = context,
                         broker = hostNetworkBroker,
                         principal = service.toPrincipal(manifest.id),
                         manifest = manifest,
                         envelope = envelope,
+                        brokerProtocolVersion = brokerProtocolVersion,
                     )
                 },
             ),

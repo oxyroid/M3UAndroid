@@ -5,6 +5,7 @@ import com.m3u.extension.api.ExtensionApiVersions
 import com.m3u.extension.api.ExtensionCapabilityIds
 import com.m3u.extension.api.ExtensionCapabilityRequest
 import com.m3u.extension.api.ExtensionEntrypoint
+import com.m3u.extension.api.ExtensionErrorCodes
 import com.m3u.extension.api.ExtensionHandler
 import com.m3u.extension.api.ExtensionHookDeclaration
 import com.m3u.extension.api.ExtensionHookIds
@@ -174,6 +175,34 @@ class ExtensionBrokerScopeRuntimeTest {
     }
 
     @Test
+    fun `managed scope closes when opening it exhausts the invocation deadline`() = runBlocking {
+        var nowNanos = 0L
+        var invoked = false
+        val lease = TestLease()
+        val runtime = runtime(
+            brokerScopeProvider = ExtensionBrokerScopeProvider {
+                nowNanos = 6_000_000
+                lease
+            },
+            invocationPolicy = InvocationPolicy(timeoutMillis = 5),
+            monotonicNanos = { nowNanos },
+        )
+        runtime.registerHealthy(transport { request ->
+            invoked = true
+            request.success(ScopePayload("unexpected"))
+        })
+
+        val result = runtime.invoke(EXTENSION_ID, SPEC, ScopePayload("request"))
+
+        assertEquals(
+            ExtensionErrorCodes.InvocationTimedOut,
+            assertIs<HookResult.Failure>(result.outcome).error.code,
+        )
+        assertFalse(invoked)
+        assertTrue(lease.closed)
+    }
+
+    @Test
     fun `managed scope opens only after the extension concurrency permit`() = runBlocking {
         var openedScopes = 0
         var invocations = 0
@@ -230,10 +259,12 @@ class ExtensionBrokerScopeRuntimeTest {
     private fun runtime(
         brokerScopeProvider: ExtensionBrokerScopeProvider,
         invocationPolicy: InvocationPolicy = InvocationPolicy(),
+        monotonicNanos: () -> Long = System::nanoTime,
     ) = ExtensionRuntime(
         hostApiVersion = ExtensionApiVersions.Current,
         brokerScopeProvider = brokerScopeProvider,
         invocationPolicy = invocationPolicy,
+        monotonicNanos = monotonicNanos,
     )
 
     private fun transport(

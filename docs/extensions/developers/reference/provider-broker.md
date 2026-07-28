@@ -162,6 +162,16 @@ Each broker scope belongs to one extension principal, one Hook, and one invocati
 also belong to one provider account. The scope closes when the Hook completes or is cancelled.
 A reference from another extension, Hook, call, or account is rejected.
 
+One Hook invocation has one deadline. `ExtensionCallContext.invocationBudget` describes the
+host-controlled upper bounds remaining before execution. `remainingTimeMillis` is reduced again
+when the transport dispatches the call; Binder transfer and decoding continue to consume that time.
+It is not a fresh allowance for each broker call. All `execute(...)` and `authenticate(...)` calls
+made by that invocation share the deadline. They also share the budget's cumulative limits for
+request count, encoded request bytes, and encoded response bytes. Splitting work into more calls or
+pages does not reset those limits. The field may be `null` for compatibility with an older host;
+`null` does not mean unlimited work. Keep pagination bounded and stop work when cancellation or
+`timeout` is reported. The host-side invocation deadline is always authoritative.
+
 The first URL and every redirect must keep an approved scheme, host, and port. A different origin
 fails with `scope_denied`.
 

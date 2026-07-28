@@ -2,8 +2,10 @@ package com.m3u.data.extension.security
 
 import android.content.Context
 import android.os.ParcelFileDescriptor
+import android.os.SystemClock
 import com.m3u.extension.api.Capability
 import com.m3u.extension.api.ExtensionCapabilityIds
+import com.m3u.extension.api.ExtensionInvocationBudget
 import com.m3u.extension.api.ExtensionManifest
 import com.m3u.extension.api.SerializedExtensionEnvelope
 import com.m3u.extension.api.security.BrokerAuthenticationRequest
@@ -16,6 +18,7 @@ import com.m3u.extension.api.security.BrokerInvocationResult
 import com.m3u.extension.api.security.BrokerHttpExchange
 import com.m3u.extension.api.security.BrokerOperation
 import com.m3u.extension.api.security.BrokerOperationResult
+import com.m3u.extension.api.security.BrokerProtocolVersions
 import com.m3u.extension.api.security.BrokeredHttpRequest
 import com.m3u.extension.api.security.BrokeredHttpResponse
 import com.m3u.extension.api.security.HostNetworkBrokerHooks
@@ -25,17 +28,22 @@ import com.m3u.extension.transport.android.ipc.IExtensionHostBridge
 import com.m3u.extension.transport.android.ipc.IExtensionResultCallback
 import com.m3u.extension.transport.android.requireSafeExtensionJsonDepth
 import java.io.Closeable
+import java.io.IOException
 import java.util.concurrent.CancellationException
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -45,15 +53,42 @@ internal class ExtensionHostBridge(
     private val principal: ExtensionPrincipal,
     manifest: ExtensionManifest,
     envelope: SerializedExtensionEnvelope,
+    private val brokerProtocolVersion: Int,
+    private val elapsedRealtimeMillis: () -> Long = SystemClock::elapsedRealtime,
 ) : IExtensionHostBridge.Stub(), Closeable {
     private val json = Json { ignoreUnknownKeys = true; explicitNulls = false }
     private val active = AtomicBoolean(true)
     private val bridgeScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val requestLock = Any()
     private val activeRequests = mutableMapOf<String, ActiveBrokerRequest>()
+    // Keep file reads and byte accounting in one critical section so concurrent requests cannot
+    // each observe the same remaining invocation budget.
+    private val requestReadMutex = Mutex()
+    private val budgetLock = Any()
     private val hook = envelope.hook
     private val brokerScope = envelope.brokerScope
     private val grantedCapabilities = envelope.grantedCapabilities.toSet()
+    private val invocationBudget = envelope.invocationBudget ?: LEGACY_INVOCATION_BUDGET
+    private val responseTooLargeEnvelope = json.encodeToString(
+        BrokerInvocationResult.serializer(),
+        BrokerInvocationResult.Failure(
+            brokerError(BrokerErrorCodes.ResponseTooLarge, recoverable = false)
+        ),
+    )
+    private val responseTooLargeEnvelopeBytes =
+        responseTooLargeEnvelope.encodeToByteArray().size.toLong()
+    private val invocationDeadlineMillis = deadlineAfter(
+        startMillis = elapsedRealtimeMillis(),
+        durationMillis = invocationBudget.remainingTimeMillis,
+    )
+    private var remainingBrokerRequests = invocationBudget.maxBrokerRequests
+    private var remainingBrokerRequestBytes = invocationBudget.maxBrokerRequestBytes
+    // Reserve one typed terminal envelope up front. It can therefore be emitted without exceeding
+    // the cumulative encoded-response budget; later over-budget calls use the Binder failure path.
+    private var responseTooLargeEnvelopeAvailable =
+        invocationBudget.maxBrokerResponseBytes >= responseTooLargeEnvelopeBytes
+    private var remainingBrokerResponseBytes = invocationBudget.maxBrokerResponseBytes -
+        if (responseTooLargeEnvelopeAvailable) responseTooLargeEnvelopeBytes else 0L
     private val hookDeclaration = manifest.hooks.singleOrNull { candidate ->
         candidate.hook == envelope.hook
     } ?: error("Invocation hook is not declared by the connected extension")
@@ -67,6 +102,9 @@ internal class ExtensionHostBridge(
         }
         require(hookDeclaration.schemaVersion == envelope.schemaVersion) {
             "Invocation hook schema does not match the connected extension"
+        }
+        require(brokerProtocolVersion in BrokerProtocolVersions.Supported) {
+            "Invocation broker protocol was not negotiated by the host"
         }
         val declaredCapabilities = manifest.capabilities.mapTo(mutableSetOf()) { request ->
             request.capability
@@ -89,17 +127,28 @@ internal class ExtensionHostBridge(
         }
         lateinit var activeRequest: ActiveBrokerRequest
         val execution = bridgeScope.launch(start = CoroutineStart.LAZY) {
-            val result: BrokerInvocationResult = try {
-                BrokerInvocationResult.Success(executeOperation(invocationRequest = ownedRequest))
-            } catch (failure: Exception) {
-                val error = if (active.get() && !activeRequest.cancelled.get()) {
-                    failure.toBrokerError()
-                } else {
-                    brokerError(BrokerErrorCodes.Cancelled, recoverable = true)
+            try {
+                withInvocationDeadline {
+                    val result = BrokerInvocationResult.Success(
+                        executeOperation(invocationRequest = ownedRequest)
+                    )
+                    ensureInvocationActive()
+                    respond(safeRequestId, callback, result)
                 }
-                BrokerInvocationResult.Failure(error)
+            } catch (failure: Exception) {
+                val error = when {
+                    !active.get() || activeRequest.cancelled.get() ->
+                        brokerError(BrokerErrorCodes.Cancelled, recoverable = true)
+                    remainingInvocationTimeMillis() <= 0 ->
+                        brokerError(BrokerErrorCodes.Timeout, recoverable = true)
+                    else -> failure.toBrokerError()
+                }
+                respond(
+                    safeRequestId,
+                    callback,
+                    BrokerInvocationResult.Failure(error),
+                )
             }
-            respond(safeRequestId, callback, result)
         }
         activeRequest = ActiveBrokerRequest(
             job = execution,
@@ -161,10 +210,30 @@ internal class ExtensionHostBridge(
     private suspend fun executeOperation(
         invocationRequest: ParcelFileDescriptor,
     ): BrokerOperationResult {
-        val invocationPayload =
-            ParcelFileCodec.readInterruptibly(invocationRequest, MAX_REQUEST_BYTES)
-        invocationPayload.requireSafeExtensionJsonDepth()
-        val invocation = json.decodeFromString<BrokerInvocation>(invocationPayload)
+        ensureInvocationActive()
+        requestReadMutex.lock()
+        val invocationPayload = try {
+            val requestReservation = reserveBrokerRequest()
+            ParcelFileCodec.readInterruptiblyWithEncodedSize(
+                descriptor = invocationRequest,
+                maximumBytes = requestReservation.maximumBytes,
+            ).also { payload ->
+                refundUnusedBrokerRequestBytes(
+                    requestReservation.maximumBytes - payload.encodedByteCount
+                )
+            }
+        } finally {
+            requestReadMutex.unlock()
+        }
+        invocationPayload.content.requireSafeExtensionJsonDepth()
+        val invocation = json.decodeFromString<BrokerInvocation>(invocationPayload.content)
+        if (invocation.brokerProtocolVersion != brokerProtocolVersion) {
+            throw ProviderBrokerException(
+                BrokerErrorCodes.InvalidRequest,
+                recoverable = false,
+            )
+        }
+        ensureInvocationActive()
         return when (val operation = invocation.operation) {
             is BrokerOperation.Http -> BrokerOperationResult.Http(
                 executeHttp(operation.request)
@@ -254,6 +323,12 @@ internal class ExtensionHostBridge(
     private suspend fun ensureInvocationActive() {
         currentCoroutineContext().ensureActive()
         if (!active.get()) throw CancellationException("Extension invocation was cancelled")
+        if (remainingInvocationTimeMillis() <= 0) {
+            throw ProviderBrokerException(
+                BrokerErrorCodes.Timeout,
+                recoverable = true,
+            )
+        }
     }
 
     private fun respond(
@@ -262,7 +337,14 @@ internal class ExtensionHostBridge(
         result: BrokerInvocationResult,
     ) {
         try {
-            val encoded = encodeResponseWithinLimit(result)
+            val encoded = encodeResponseWithinLimit(result) ?: run {
+                callback.onFailure(
+                    requestId,
+                    BrokerErrorCodes.ResponseTooLarge.value,
+                    SAFE_ERROR_MESSAGES.getValue(BrokerErrorCodes.ResponseTooLarge),
+                )
+                return
+            }
             ParcelFileCodec.write(
                 context = context,
                 content = encoded,
@@ -277,17 +359,87 @@ internal class ExtensionHostBridge(
         }
     }
 
-    private fun encodeResponseWithinLimit(result: BrokerInvocationResult): String {
+    private fun encodeResponseWithinLimit(result: BrokerInvocationResult): String? {
         val encoded = json.encodeToString(result)
-        if (encoded.encodeToByteArray().size <= MAX_RESPONSE_ENVELOPE_BYTES) {
+        val encodedBytes = encoded.encodeToByteArray().size
+        val withinFixedLimit = encodedBytes <= MAX_RESPONSE_ENVELOPE_BYTES
+        val withinInvocationBudget = withinFixedLimit &&
+            reserveBrokerResponseBytes(encodedBytes)
+        if (withinInvocationBudget) {
             return encoded
         }
-        return json.encodeToString(
-            BrokerInvocationResult.serializer(),
-            BrokerInvocationResult.Failure(
-                brokerError(BrokerErrorCodes.ResponseTooLarge, recoverable = false)
+        return takeResponseTooLargeEnvelope()
+    }
+
+    private suspend fun <T> withInvocationDeadline(block: suspend () -> T): T {
+        val remainingMillis = remainingInvocationTimeMillis()
+        if (remainingMillis <= 0) {
+            throw ProviderBrokerException(
+                BrokerErrorCodes.Timeout,
+                recoverable = true,
             )
-        )
+        }
+        return try {
+            withTimeout(remainingMillis) {
+                block()
+            }
+        } catch (failure: TimeoutCancellationException) {
+            throw ProviderBrokerException(
+                BrokerErrorCodes.Timeout,
+                recoverable = true,
+                cause = failure,
+            )
+        }
+    }
+
+    private fun remainingInvocationTimeMillis(): Long {
+        val nowMillis = elapsedRealtimeMillis()
+        return if (nowMillis >= invocationDeadlineMillis) {
+            0
+        } else {
+            invocationDeadlineMillis - nowMillis
+        }
+    }
+
+    private fun reserveBrokerRequest(): BrokerRequestReservation = synchronized(budgetLock) {
+        if (remainingBrokerRequests <= 0 || remainingBrokerRequestBytes <= 0) {
+            throw ProviderBrokerException(
+                BrokerErrorCodes.InvalidRequest,
+                recoverable = false,
+            )
+        }
+        remainingBrokerRequests--
+        val maximumBytes = minOf(
+            MAX_REQUEST_BYTES.toLong(),
+            remainingBrokerRequestBytes,
+        ).toInt()
+        remainingBrokerRequestBytes -= maximumBytes
+        BrokerRequestReservation(maximumBytes)
+    }
+
+    private fun refundUnusedBrokerRequestBytes(unusedBytes: Int) = synchronized(budgetLock) {
+        check(unusedBytes >= 0) { "Broker request exceeded its reserved byte budget" }
+        remainingBrokerRequestBytes += unusedBytes
+    }
+
+    private fun reserveBrokerResponseBytes(encodedBytes: Int): Boolean =
+        synchronized(budgetLock) {
+            val encodedByteCount = encodedBytes.toLong()
+            if (encodedByteCount > remainingBrokerResponseBytes) {
+                false
+            } else {
+                remainingBrokerResponseBytes -= encodedByteCount
+                true
+            }
+        }
+
+    private fun takeResponseTooLargeEnvelope(): String? = synchronized(budgetLock) {
+        if (!responseTooLargeEnvelopeAvailable) {
+            null
+        } else {
+            responseTooLargeEnvelopeAvailable = false
+            responseTooLargeEnvelope
+        }
     }
 
     private fun requireCapability(capability: Capability) {
@@ -301,7 +453,14 @@ internal class ExtensionHostBridge(
 
     private fun Exception.toBrokerError(): BrokerInvocationError = when (this) {
         is ProviderBrokerException -> brokerError(code, recoverable)
+        is TimeoutCancellationException ->
+            brokerError(BrokerErrorCodes.Timeout, recoverable = true)
         is CancellationException -> brokerError(BrokerErrorCodes.Cancelled, recoverable = true)
+        is IOException -> if (cause is TimeoutException) {
+            brokerError(BrokerErrorCodes.Timeout, recoverable = true)
+        } else {
+            brokerError(BrokerErrorCodes.Internal, recoverable = true)
+        }
         is SecurityException -> brokerError(BrokerErrorCodes.ScopeDenied, recoverable = false)
         is IllegalArgumentException -> brokerError(
             BrokerErrorCodes.InvalidRequest,
@@ -338,6 +497,10 @@ internal class ExtensionHostBridge(
         val cancelled: AtomicBoolean = AtomicBoolean(false),
     )
 
+    private data class BrokerRequestReservation(
+        val maximumBytes: Int,
+    )
+
     private enum class BrokerRequestRegistration {
         REGISTERED,
         DUPLICATE,
@@ -350,6 +513,12 @@ internal class ExtensionHostBridge(
         const val MAX_RESPONSE_ENVELOPE_BYTES = 5 * 1024 * 1024
         const val MAX_BROKER_REQUEST_ID_LENGTH = 64
         const val MAX_ACTIVE_BROKER_REQUESTS = 4
+        val LEGACY_INVOCATION_BUDGET = ExtensionInvocationBudget(
+            remainingTimeMillis = 30_000,
+            maxBrokerRequests = 16,
+            maxBrokerRequestBytes = 4L * 1024 * 1024,
+            maxBrokerResponseBytes = 16L * 1024 * 1024,
+        )
         val SAFE_ERROR_MESSAGES = mapOf(
             BrokerErrorCodes.InvalidRequest to "The broker request is invalid",
             BrokerErrorCodes.CapabilityDenied to "The broker capability is not granted",
@@ -360,5 +529,15 @@ internal class ExtensionHostBridge(
             BrokerErrorCodes.ResponseTooLarge to "The broker response exceeded the allowed size",
             BrokerErrorCodes.Internal to "The broker request failed",
         )
+
+        fun deadlineAfter(
+            startMillis: Long,
+            durationMillis: Long,
+        ): Long = if (startMillis > Long.MAX_VALUE - durationMillis) {
+            Long.MAX_VALUE
+        } else {
+            startMillis + durationMillis
+        }
+
     }
 }

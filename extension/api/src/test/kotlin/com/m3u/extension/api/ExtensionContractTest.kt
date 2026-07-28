@@ -274,6 +274,33 @@ class ExtensionContractTest {
     }
 
     @Test
+    fun `invocation budget requires positive time and broker limits`() {
+        val budget = ExtensionInvocationBudget(
+            remainingTimeMillis = 30_000,
+            maxBrokerRequests = 4,
+            maxBrokerRequestBytes = 1_048_576,
+            maxBrokerResponseBytes = 4_194_304,
+        )
+
+        assertEquals(30_000L, budget.remainingTimeMillis)
+        assertEquals(4, budget.maxBrokerRequests)
+        assertEquals(1_048_576L, budget.maxBrokerRequestBytes)
+        assertEquals(4_194_304L, budget.maxBrokerResponseBytes)
+        assertFailsWith<IllegalArgumentException> {
+            budget.copy(remainingTimeMillis = 0)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            budget.copy(maxBrokerRequests = 0)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            budget.copy(maxBrokerRequestBytes = 0)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            budget.copy(maxBrokerResponseBytes = 0)
+        }
+    }
+
+    @Test
     fun `semantic version follows prerelease precedence`() {
         val ordered = listOf(
             "alpha",

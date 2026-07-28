@@ -15,6 +15,7 @@ import com.m3u.extension.api.ExtensionHandler
 import com.m3u.extension.api.ExtensionHookDeclaration
 import com.m3u.extension.api.ExtensionHookIds
 import com.m3u.extension.api.ExtensionId
+import com.m3u.extension.api.ExtensionInvocationBudget
 import com.m3u.extension.api.ExtensionManifest
 import com.m3u.extension.api.ExtensionPayload
 import com.m3u.extension.api.ExtensionSemanticVersion
@@ -28,10 +29,15 @@ import com.m3u.extension.api.SerializedExtensionResult
 import com.m3u.extension.api.security.BrokerScopeHandle
 import com.m3u.extension.api.security.CredentialHandle
 import com.m3u.extension.api.ExtensionEntrypoint
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.async
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
@@ -39,12 +45,30 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ExtensionRuntimeTest {
+    @Test
+    fun `invocation policy rejects nonpositive host budgets`() {
+        assertFailsWith<IllegalArgumentException> {
+            InvocationPolicy(maxConcurrentInvocationsAcrossExtensions = 0)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            InvocationPolicy(maxBrokerRequestsPerInvocation = 0)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            InvocationPolicy(maxBrokerRequestBytesPerInvocation = 0)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            InvocationPolicy(maxBrokerResponseBytesPerInvocation = 0)
+        }
+    }
+
     @Test
     fun `runtime registers queries and invokes typed hook`() = runBlocking {
         val runtime = runtime()
@@ -171,6 +195,148 @@ class ExtensionRuntimeTest {
     }
 
     @Test
+    fun `host concurrency budget is shared across different extensions`() = runBlocking {
+        val firstStarted = CompletableDeferred<Unit>()
+        val releaseFirst = CompletableDeferred<Unit>()
+        val secondStarted = CompletableDeferred<Unit>()
+        val runtime = runtime(
+            invocationPolicy = InvocationPolicy(
+                timeoutMillis = 5_000,
+                maxConcurrentInvocationsPerExtension = 4,
+                maxConcurrentInvocationsAcrossExtensions = 1,
+            )
+        )
+        val first = entrypoint(extensionId = ExtensionId("com.example.first")) { _, payload ->
+            firstStarted.complete(Unit)
+            releaseFirst.await()
+            HookResult.Success(payload)
+        }
+        val second = entrypoint(extensionId = ExtensionId("com.example.second")) { _, payload ->
+            secondStarted.complete(Unit)
+            HookResult.Success(payload)
+        }
+        runtime.register(first)
+        runtime.register(second)
+
+        val firstResult = async {
+            runtime.invoke(first.manifest.id, TEST_SPEC, TestPayload("first"))
+        }
+        firstStarted.await()
+        val secondResult = async {
+            runtime.invoke(second.manifest.id, TEST_SPEC, TestPayload("second"))
+        }
+        repeat(10) { yield() }
+
+        assertFalse(secondStarted.isCompleted)
+        releaseFirst.complete(Unit)
+        assertIs<HookResult.Success<TestPayload>>(firstResult.await().outcome)
+        assertIs<HookResult.Success<TestPayload>>(secondResult.await().outcome)
+        assertTrue(secondStarted.isCompleted)
+    }
+
+    @Test
+    fun `timeout while waiting for host capacity does not quarantine extension`() = runBlocking {
+        val holderStarted = CompletableDeferred<Unit>()
+        val runtime = runtime(
+            invocationPolicy = InvocationPolicy(
+                timeoutMillis = 50,
+                maxConcurrentInvocationsAcrossExtensions = 1,
+                unhealthyFailureThreshold = 1,
+            )
+        )
+        val holder = entrypoint(extensionId = ExtensionId("com.example.holder")) { _, payload ->
+            withContext(NonCancellable) {
+                holderStarted.complete(Unit)
+                delay(200)
+            }
+            HookResult.Success(payload)
+        }
+        val waiting = entrypoint(extensionId = ExtensionId("com.example.waiting"))
+        runtime.register(holder)
+        runtime.register(waiting)
+
+        val holderResult = async {
+            runtime.invoke(holder.manifest.id, TEST_SPEC, TestPayload("holder"))
+        }
+        holderStarted.await()
+        val result = runtime.invoke(waiting.manifest.id, TEST_SPEC, TestPayload("waiting"))
+
+        assertEquals(
+            ExtensionErrorCodes.InvocationTimedOut,
+            assertIs<HookResult.Failure>(result.outcome).error.code,
+        )
+        val waitingState = runtime.registeredExtensions().single { extension ->
+            extension.manifest.id == waiting.manifest.id
+        }
+        assertEquals(ExtensionState.ENABLED, waitingState.state)
+        assertEquals(0, waitingState.consecutiveFailures)
+        holderResult.await()
+        Unit
+    }
+
+    @Test
+    fun `runtime exposes one remaining invocation budget to built in handlers`() = runBlocking {
+        var receivedBudget: ExtensionInvocationBudget? = null
+        val policy = InvocationPolicy(
+            timeoutMillis = 5_000,
+            maxBrokerRequestsPerInvocation = 7,
+            maxBrokerRequestBytesPerInvocation = 8_192,
+            maxBrokerResponseBytesPerInvocation = 16_384,
+        )
+        val runtime = runtime(invocationPolicy = policy)
+        val entrypoint = entrypoint { context, payload ->
+            receivedBudget = context.invocationBudget
+            HookResult.Success(payload)
+        }
+        runtime.register(entrypoint)
+
+        runtime.invoke(entrypoint.manifest.id, TEST_SPEC, TestPayload("request"))
+
+        val budget = assertNotNull(receivedBudget)
+        assertTrue(budget.remainingTimeMillis in 1..policy.timeoutMillis)
+        assertEquals(7, budget.maxBrokerRequests)
+        assertEquals(8_192L, budget.maxBrokerRequestBytes)
+        assertEquals(16_384L, budget.maxBrokerResponseBytes)
+    }
+
+    @Test
+    fun `runtime refuses to start a handler after preparation exhausts the deadline`() =
+        runBlocking {
+            var nowNanos = 0L
+            var handlerInvoked = false
+            val runtime = runtime(
+                invocationPolicy = InvocationPolicy(
+                    timeoutMillis = 5,
+                    unhealthyFailureThreshold = 1,
+                ),
+                settingsProvider = ExtensionSettingsProvider {
+                    nowNanos = 6_000_000
+                    ExtensionSettingsSnapshot()
+                },
+                monotonicNanos = { nowNanos },
+            )
+            val entrypoint = entrypoint { _, payload ->
+                handlerInvoked = true
+                HookResult.Success(payload)
+            }
+            runtime.register(entrypoint)
+
+            val result = runtime.invoke(
+                entrypoint.manifest.id,
+                TEST_SPEC,
+                TestPayload("request"),
+            )
+
+            assertEquals(
+                ExtensionErrorCodes.InvocationTimedOut,
+                assertIs<HookResult.Failure>(result.outcome).error.code,
+            )
+            assertFalse(handlerInvoked)
+            assertEquals(ExtensionState.ENABLED, runtime.registeredExtensions().single().state)
+            assertEquals(0, runtime.registeredExtensions().single().consecutiveFailures)
+        }
+
+    @Test
     fun `runtime keeps extension enabled below consecutive failure threshold`() = runBlocking {
         val runtime = runtime(invocationPolicy = InvocationPolicy(unhealthyFailureThreshold = 2))
         val entrypoint = entrypoint { _, _ -> error("first failure") }
@@ -210,6 +376,45 @@ class ExtensionRuntimeTest {
             runtime.invoke(manifest.id, TEST_SPEC, TestPayload("after-health")).outcome
         )
         Unit
+    }
+
+    @Test
+    fun `transport dispatch deadline does not quarantine extension`() = runBlocking {
+        val manifest = entrypoint().manifest
+        val runtime = runtime(
+            invocationPolicy = InvocationPolicy(unhealthyFailureThreshold = 1)
+        )
+        val transport = object : ExtensionTransport {
+            override val manifest = manifest
+
+            override suspend fun invoke(
+                request: SerializedExtensionEnvelope,
+            ): SerializedExtensionResult {
+                throw HostInvocationDeadlineExceededException()
+            }
+
+            override suspend fun cancel(invocationId: InvocationId) = Unit
+
+            override suspend fun health(): ExtensionTransportHealth =
+                ExtensionTransportHealth.HEALTHY
+        }
+        val registration = assertIs<ExtensionRegistrationResult.Registered>(
+            runtime.register(transport)
+        )
+        runtime.recordTransportHealth(
+            manifest.id,
+            assertNotNull(registration.registrationToken),
+            ExtensionTransportHealth.HEALTHY,
+        )
+
+        val result = runtime.invoke(manifest.id, TEST_SPEC, TestPayload("request"))
+
+        assertEquals(
+            ExtensionErrorCodes.InvocationTimedOut,
+            assertIs<HookResult.Failure>(result.outcome).error.code,
+        )
+        assertEquals(ExtensionState.ENABLED, runtime.registeredExtensions().single().state)
+        assertEquals(0, runtime.registeredExtensions().single().consecutiveFailures)
     }
 
     @Test
@@ -690,6 +895,11 @@ class ExtensionRuntimeTest {
                 assertEquals(settings, request.settings)
                 assertEquals(setOf(ExtensionCapabilityIds.PlaybackResolve), request.grantedCapabilities)
                 assertEquals(brokerScope, request.brokerScope)
+                val budget = assertNotNull(request.invocationBudget)
+                assertTrue(budget.remainingTimeMillis in 1..30_000)
+                assertEquals(16, budget.maxBrokerRequests)
+                assertEquals(4_194_304L, budget.maxBrokerRequestBytes)
+                assertEquals(16_777_216L, budget.maxBrokerResponseBytes)
                 val payload = json.decodeFromJsonElement(TEST_SPEC.requestSerializer, request.payload)
                 return SerializedExtensionResult(
                     invocationId = request.invocationId,
@@ -977,15 +1187,18 @@ class ExtensionRuntimeTest {
         capabilityPolicy: CapabilityPolicy = DeclaredCapabilityPolicy,
         invocationPolicy: InvocationPolicy = InvocationPolicy(),
         settingsProvider: ExtensionSettingsProvider = EmptyExtensionSettingsProvider,
+        monotonicNanos: () -> Long = System::nanoTime,
     ) = ExtensionRuntime(
         hostApiVersion = ExtensionApiVersions.Current,
         invocationIdFactory = InvocationIdFactory { InvocationId("invocation-1") },
         capabilityPolicy = capabilityPolicy,
         settingsProvider = settingsProvider,
         invocationPolicy = invocationPolicy,
+        monotonicNanos = monotonicNanos,
     )
 
     private fun entrypoint(
+        extensionId: ExtensionId = ExtensionId("com.example.provider"),
         apiRange: ExtensionApiRange = ExtensionApiRange(
             minimum = ExtensionApiVersions.Current,
             maximum = ExtensionApiVersions.Current,
@@ -995,7 +1208,7 @@ class ExtensionRuntimeTest {
         },
     ): ExtensionEntrypoint = object : ExtensionEntrypoint {
         override val manifest = ExtensionManifest(
-            id = ExtensionId("com.example.provider"),
+            id = extensionId,
             displayName = "Example Provider",
             extensionVersion = ExtensionSemanticVersion(1, 0, 0),
             apiRange = apiRange,

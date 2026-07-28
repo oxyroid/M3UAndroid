@@ -31,7 +31,7 @@ Runtime 负责完成一次调用。功能 repository 负责解释 result，并�
 | 负责人 | 职责 | 从这里开始 |
 | --- | --- | --- |
 | API 契约 | 插件身份、manifest、设置、Hook request/result 与 wire 字段 | [`:extension:api`](../../../extension/api/src/main/kotlin/com/m3u/extension/api) |
-| Runtime | 注册、API/schema 协商、按 Hook 分配 capability、payload 限制、并发、超时、取消与健康状态 | [`ExtensionRuntime`](../../../extension/runtime/src/main/kotlin/com/m3u/extension/runtime/ExtensionRuntime.kt) |
+| Runtime | 注册、API/schema 协商、按 Hook 分配 capability、payload 限制、单插件与宿主级调用准入上限、一次调用的截止时间、取消与健康状态 | [`ExtensionRuntime`](../../../extension/runtime/src/main/kotlin/com/m3u/extension/runtime/ExtensionRuntime.kt) |
 | Android transport | Service 发现、身份、绑定、handshake、流式 payload 与 Binder death | [`:extension:transport-android`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android) |
 | 外部 SDK | 解码调用并运行已注册的类型化 handler | [`TypedExtensionService`](../../../extension/sdk-android/src/main/java/com/m3u/extension/sdk/android/TypedExtensionService.kt) |
 | 插件生命周期 | 信任、证书固定、启停、授权、重连、重新授权与诊断 | [`ExtensionPluginRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/plugin/ExtensionPluginRepositoryImpl.kt) |
@@ -49,11 +49,20 @@ Runtime 负责完成一次调用。功能 repository 负责解释 result，并�
 3. Runtime 检查 API 与 Hook schema version。
 4. `CapabilityPolicy` 计算用户授权。Runtime 只保留当前 Hook 声明的 capability，其他 Hook
    的 capability 不会进入本次调用。
-5. Runtime 应用 payload、并发与超时限制。
+5. Runtime 在准备 Request 前开始计时，并在同一个截止时间内检查 Payload、等待单插件与
+   宿主级调用准入。
 6. 如果外部 Hook 声明并获得 `network`，Broker Scope Provider 可以打开一个短期作用域。
+   发给外部插件的序列化 Envelope 携带宿主计算的剩余预算上限；Transport 会在派发前继续
+   扣除排队耗时。
 7. 内置 handler 直接运行；外部 request 经过 Android transport。
-8. Runtime 解码 result、关闭 Broker 作用域并记录健康状态。
+8. Runtime 在同一个截止时间内解码并校验 result，然后关闭 Broker 作用域并记录健康状态。
 9. 功能 repository 校验所有权，再应用 result。
+
+Hook 不会在准备完成或排队结束后获得新的超时窗口。Request 准备、调用准入、Handler 或
+Transport 执行，以及 Response 校验都计入同一个截止时间。外部 Broker Bridge 根据 Envelope
+中的剩余预算继续计时；本次调用的全部 Broker 请求共用这段时间，并累计消耗请求次数、编码后
+的请求总字节数和响应总字节数。发起下一次 Broker 请求不会重置其中任何一项。最终始终以
+Runtime 的宿主侧截止时间为准。
 
 没有 Broker 作用域时，不会提供备用联网路径。Hook 仍可返回离线结果，但 Broker 操作会失败。
 

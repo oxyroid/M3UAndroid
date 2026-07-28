@@ -12,6 +12,7 @@ import com.m3u.extension.api.security.BrokerOperationResult
 import com.m3u.extension.api.security.BrokeredHttpRequest
 import com.m3u.extension.api.security.BrokeredHttpResponse
 import com.m3u.extension.transport.android.ExtensionResultDispatcher
+import com.m3u.extension.transport.android.ExtensionRemoteException
 import com.m3u.extension.transport.android.ParcelFileCodec
 import com.m3u.extension.transport.android.ipc.IExtensionHostBridge
 import java.io.Closeable
@@ -135,6 +136,8 @@ private class BoundBrokerInvoker(
                 throw cancellation
             } catch (failure: BrokerException) {
                 throw failure
+            } catch (failure: ExtensionRemoteException) {
+                throw (failure.toBrokerExceptionOrNull() ?: invalidHostResponse())
             } catch (_: Exception) {
                 throw invalidHostResponse()
             }
@@ -170,6 +173,21 @@ internal fun BrokerInvocationResult.operationResultOrThrow(): BrokerOperationRes
         )
     }
 }
+
+internal fun ExtensionRemoteException.toBrokerExceptionOrNull(): BrokerException? =
+    when (code) {
+        BrokerErrorCodes.ResponseTooLarge.value -> BrokerException(
+            code = BrokerErrorCodes.ResponseTooLarge,
+            recoverable = false,
+            message = "The broker response exceeded the allowed size",
+        )
+        BrokerErrorCodes.InvalidRequest.value -> BrokerException(
+            code = BrokerErrorCodes.InvalidRequest,
+            recoverable = false,
+            message = "The broker request exceeded the host invocation budget",
+        )
+        else -> null
+    }
 
 private fun invalidHostResponse() = BrokerException(
     code = BrokerErrorCodes.Internal,

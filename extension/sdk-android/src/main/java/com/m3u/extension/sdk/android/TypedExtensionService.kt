@@ -288,6 +288,7 @@ private class TypedExtensionTransport(
             extensionId = manifest.id,
             grantedCapabilities = grantedCapabilities,
             settings = request.settings,
+            invocationBudget = request.invocationBudget,
         )
         val job = currentCoroutineContext()[Job]
         if (job != null) {

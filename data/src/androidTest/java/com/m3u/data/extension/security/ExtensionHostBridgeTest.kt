@@ -1,6 +1,8 @@
 package com.m3u.data.extension.security
 
 import android.content.Context
+import android.os.ParcelFileDescriptor
+import android.os.SystemClock
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.m3u.data.database.model.ProviderCredentialEntity
@@ -13,6 +15,7 @@ import com.m3u.extension.api.ExtensionContractCatalog
 import com.m3u.extension.api.ExtensionHookDeclaration
 import com.m3u.extension.api.ExtensionHookIds
 import com.m3u.extension.api.ExtensionId
+import com.m3u.extension.api.ExtensionInvocationBudget
 import com.m3u.extension.api.ExtensionManifest
 import com.m3u.extension.api.ExtensionSemanticVersion
 import com.m3u.extension.api.Hook
@@ -34,10 +37,13 @@ import com.m3u.extension.api.security.BrokeredHttpResponse
 import com.m3u.extension.api.security.CredentialHandle
 import com.m3u.extension.api.security.ResponseValueSource
 import com.m3u.extension.api.security.SecretReference
-import com.m3u.extension.transport.android.ParcelFileCodec
 import com.m3u.extension.transport.android.ExtensionResultDispatcher
+import com.m3u.extension.transport.android.ExtensionRemoteException
+import com.m3u.extension.transport.android.ParcelFileCodec
+import java.io.File
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -588,6 +594,353 @@ class ExtensionHostBridgeTest {
         bridge.close()
     }
 
+    @Test
+    fun brokerRequestsShareOneFixedInvocationDeadline() {
+        val fixture = scopeFixture()
+        val broker = RecordingBroker(fixture.store)
+        val clock = AtomicLong(1_000)
+        val bridge = bridge(
+            broker = broker,
+            granted = setOf(ExtensionCapabilityIds.Network),
+            scope = fixture.scope,
+            invocationBudget = invocationBudget(
+                remainingTimeMillis = 10_000,
+                maxBrokerRequests = 2,
+            ),
+            elapsedRealtimeMillis = clock::get,
+        )
+
+        executeSuccess(
+            bridge,
+            BrokeredHttpRequest(method = "GET", url = "$BASE_URL/first"),
+        )
+        clock.set(11_000)
+        val error = executeFailure(
+            bridge,
+            BrokeredHttpRequest(method = "GET", url = "$BASE_URL/after-deadline"),
+        )
+
+        assertEquals(BrokerErrorCodes.Timeout, error.code)
+        assertTrue(error.recoverable)
+        assertEquals(1, broker.calls)
+        bridge.close()
+    }
+
+    @Test
+    fun brokerResultCannotCompleteAfterTheInvocationDeadline() {
+        val fixture = scopeFixture()
+        val clock = AtomicLong(1_000)
+        val broker = object : ProviderHostNetworkBroker {
+            var calls = 0
+
+            override suspend fun execute(
+                scope: BrokerScopeHandle,
+                principal: ExtensionPrincipal,
+                hook: Hook,
+                request: BrokeredHttpRequest,
+            ): BrokeredHttpResponse {
+                calls++
+                fixture.store.authorize(scope, principal, hook)
+                clock.set(11_000)
+                return BrokeredHttpResponse(200, emptyMap(), "late")
+            }
+        }
+        val bridge = bridge(
+            broker = broker,
+            granted = setOf(ExtensionCapabilityIds.Network),
+            scope = fixture.scope,
+            invocationBudget = invocationBudget(remainingTimeMillis = 10_000),
+            elapsedRealtimeMillis = clock::get,
+        )
+
+        val error = executeFailure(
+            bridge,
+            BrokeredHttpRequest(method = "GET", url = "$BASE_URL/late"),
+        )
+
+        assertEquals(BrokerErrorCodes.Timeout, error.code)
+        assertTrue(error.recoverable)
+        assertEquals(1, broker.calls)
+        bridge.close()
+    }
+
+    @Test
+    fun inFlightBrokerRequestIsCancelledByTheInvocationDeadline() = runBlocking {
+        val fixture = scopeFixture()
+        val brokerStarted = CompletableDeferred<Unit>()
+        val broker = object : ProviderHostNetworkBroker {
+            var calls = 0
+
+            override suspend fun execute(
+                scope: BrokerScopeHandle,
+                principal: ExtensionPrincipal,
+                hook: Hook,
+                request: BrokeredHttpRequest,
+            ): BrokeredHttpResponse {
+                calls++
+                fixture.store.authorize(scope, principal, hook)
+                brokerStarted.complete(Unit)
+                awaitCancellation()
+            }
+        }
+        val bridge = bridge(
+            broker = broker,
+            granted = setOf(ExtensionCapabilityIds.Network),
+            scope = fixture.scope,
+            invocationBudget = invocationBudget(remainingTimeMillis = 2_000),
+        )
+
+        val execution = async(Dispatchers.IO) {
+            executeFailure(
+                bridge,
+                BrokeredHttpRequest(method = "GET", url = "$BASE_URL/hangs"),
+            )
+        }
+        withTimeout(1_000) { brokerStarted.await() }
+        val error = execution.await()
+
+        assertEquals(BrokerErrorCodes.Timeout, error.code)
+        assertTrue(error.recoverable)
+        assertEquals(1, broker.calls)
+        bridge.close()
+    }
+
+    @Test
+    fun brokerRequestCountIsCumulativeAcrossOneInvocation() {
+        val fixture = scopeFixture()
+        val broker = RecordingBroker(fixture.store)
+        val bridge = bridge(
+            broker = broker,
+            granted = setOf(ExtensionCapabilityIds.Network),
+            scope = fixture.scope,
+            invocationBudget = invocationBudget(maxBrokerRequests = 1),
+        )
+
+        executeSuccess(
+            bridge,
+            BrokeredHttpRequest(method = "GET", url = "$BASE_URL/first"),
+        )
+        val error = executeFailure(
+            bridge,
+            BrokeredHttpRequest(method = "GET", url = "$BASE_URL/overflow"),
+        )
+
+        assertEquals(BrokerErrorCodes.InvalidRequest, error.code)
+        assertEquals(1, broker.calls)
+        bridge.close()
+    }
+
+    @Test
+    fun brokerRequestBytesAreCumulativeAcrossOneInvocation() {
+        val fixture = scopeFixture()
+        val broker = RecordingBroker(fixture.store)
+        val requestContent = encodedHttpInvocation(
+            BrokeredHttpRequest(method = "GET", url = "$BASE_URL/items"),
+        )
+        val bridge = bridge(
+            broker = broker,
+            granted = setOf(ExtensionCapabilityIds.Network),
+            scope = fixture.scope,
+            invocationBudget = invocationBudget(
+                maxBrokerRequests = 2,
+                maxBrokerRequestBytes = requestContent.encodeToByteArray().size.toLong(),
+            ),
+        )
+
+        assertTrue(executeRaw(bridge, requestContent) is BrokerInvocationResult.Success)
+        val error = (executeRaw(bridge, requestContent) as BrokerInvocationResult.Failure).error
+
+        assertEquals(BrokerErrorCodes.InvalidRequest, error.code)
+        assertEquals(1, broker.calls)
+        bridge.close()
+    }
+
+    @Test
+    fun malformedPayloadStillConsumesItsReservedRequestBytes() {
+        val fixture = scopeFixture()
+        val broker = RecordingBroker(fixture.store)
+        val bridge = bridge(
+            broker = broker,
+            granted = setOf(ExtensionCapabilityIds.Network),
+            scope = fixture.scope,
+            invocationBudget = invocationBudget(
+                maxBrokerRequests = 2,
+                maxBrokerRequestBytes = 2,
+            ),
+        )
+        val malformed = File.createTempFile("invalid-broker-", ".json", context.cacheDir)
+        malformed.writeBytes(byteArrayOf(0xC3.toByte(), 0x28))
+        val descriptor = ParcelFileDescriptor.open(
+            malformed,
+            ParcelFileDescriptor.MODE_READ_ONLY,
+        )
+        malformed.delete()
+
+        assertTrue(executeDescriptor(bridge, descriptor) is BrokerInvocationResult.Failure)
+        val error = executeFailure(
+            bridge,
+            BrokeredHttpRequest(method = "GET", url = "$BASE_URL/after-malformed"),
+        )
+
+        assertEquals(BrokerErrorCodes.InvalidRequest, error.code)
+        assertEquals(0, broker.calls)
+        bridge.close()
+    }
+
+    @Test
+    fun brokerResponseBytesAreReservedAtomicallyAcrossOneInvocation() = runBlocking {
+        val fixture = scopeFixture()
+        val startedCount = AtomicInteger()
+        val allStarted = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val response = BrokeredHttpResponse(
+            statusCode = 200,
+            headers = emptyMap(),
+            body = "ok",
+        )
+        val encodedSuccessBytes = json.encodeToString(
+            BrokerInvocationResult.serializer(),
+            BrokerInvocationResult.Success(
+                BrokerOperationResult.Http(response)
+            ),
+        ).encodeToByteArray().size.toLong()
+        val encodedSizeFailureBytes = encodedResponseTooLargeFailure().encodeToByteArray().size
+            .toLong()
+        val broker = object : ProviderHostNetworkBroker {
+            override suspend fun execute(
+                scope: BrokerScopeHandle,
+                principal: ExtensionPrincipal,
+                hook: Hook,
+                request: BrokeredHttpRequest,
+            ): BrokeredHttpResponse {
+                fixture.store.authorize(scope, principal, hook)
+                if (startedCount.incrementAndGet() == 2) allStarted.complete(Unit)
+                release.await()
+                return response
+            }
+        }
+        val bridge = bridge(
+            broker = broker,
+            granted = setOf(ExtensionCapabilityIds.Network),
+            scope = fixture.scope,
+            invocationBudget = invocationBudget(
+                maxBrokerRequests = 2,
+                maxBrokerResponseBytes = encodedSuccessBytes + encodedSizeFailureBytes,
+            ),
+        )
+        val executions = (0 until 2).map { index ->
+            async(Dispatchers.IO) {
+                execute(
+                    bridge,
+                    BrokeredHttpRequest(method = "GET", url = "$BASE_URL/items/$index"),
+                )
+            }
+        }
+        withTimeout(5_000) { allStarted.await() }
+
+        release.complete(Unit)
+        val results = executions.awaitAll()
+        val successes = results.filterIsInstance<BrokerInvocationResult.Success>()
+        val failures = results.filterIsInstance<BrokerInvocationResult.Failure>()
+
+        assertEquals(1, successes.size)
+        assertEquals(1, failures.size)
+        assertEquals(BrokerErrorCodes.ResponseTooLarge, failures.single().error.code)
+        assertEquals(2, startedCount.get())
+        bridge.close()
+    }
+
+    @Test
+    fun responseBudgetAllowsOnlyOneReservedSizeFailureEnvelope() {
+        val fixture = scopeFixture()
+        val broker = RecordingBroker(fixture.store)
+        val encodedSizeFailure = encodedResponseTooLargeFailure()
+        val bridge = bridge(
+            broker = broker,
+            granted = setOf(ExtensionCapabilityIds.Network),
+            scope = fixture.scope,
+            invocationBudget = invocationBudget(
+                maxBrokerRequests = 2,
+                maxBrokerResponseBytes = encodedSizeFailure.encodeToByteArray().size.toLong(),
+            ),
+        )
+
+        val first = execute(
+            bridge,
+            BrokeredHttpRequest(method = "GET", url = "$BASE_URL/first"),
+        ) as BrokerInvocationResult.Failure
+        val second = assertThrows(
+            ExtensionRemoteException::class.java
+        ) {
+            execute(
+                bridge,
+                BrokeredHttpRequest(method = "GET", url = "$BASE_URL/second"),
+            )
+        }
+
+        assertEquals(BrokerErrorCodes.ResponseTooLarge, first.error.code)
+        assertEquals(BrokerErrorCodes.ResponseTooLarge.value, second.code)
+        assertEquals(2, broker.calls)
+        bridge.close()
+    }
+
+    @Test
+    fun legacyInvocationWithoutBudgetStillHasABoundedRequestCount() {
+        val fixture = scopeFixture()
+        val broker = RecordingBroker(fixture.store)
+        val bridge = bridge(
+            broker = broker,
+            granted = setOf(ExtensionCapabilityIds.Network),
+            scope = fixture.scope,
+            invocationBudget = null,
+        )
+
+        repeat(16) { index ->
+            executeSuccess(
+                bridge,
+                BrokeredHttpRequest(method = "GET", url = "$BASE_URL/items/$index"),
+            )
+        }
+        val error = executeFailure(
+            bridge,
+            BrokeredHttpRequest(method = "GET", url = "$BASE_URL/items/overflow"),
+        )
+
+        assertEquals(BrokerErrorCodes.InvalidRequest, error.code)
+        assertEquals(16, broker.calls)
+        bridge.close()
+    }
+
+    @Test
+    fun brokerProtocolMustMatchTheNegotiatedHostVersion() {
+        val fixture = scopeFixture()
+        val broker = RecordingBroker(fixture.store)
+        val bridge = bridge(
+            broker = broker,
+            granted = setOf(ExtensionCapabilityIds.Network),
+            scope = fixture.scope,
+        )
+        val result = executeRaw(
+            bridge,
+            """
+            {
+              "brokerProtocolVersion": ${BrokerProtocolVersions.Current - 1},
+              "operation": {
+                "type": "http",
+                "request": {
+                  "method": "GET",
+                  "url": {"type": "literal", "value": "$BASE_URL/items"}
+                }
+              }
+            }
+            """.trimIndent(),
+        ) as BrokerInvocationResult.Failure
+
+        assertEquals(BrokerErrorCodes.InvalidRequest, result.error.code)
+        assertEquals(0, broker.calls)
+        bridge.close()
+    }
+
     private fun bridge(
         broker: ProviderHostNetworkBroker,
         granted: Set<Capability>,
@@ -595,18 +948,24 @@ class ExtensionHostBridgeTest {
         principal: ExtensionPrincipal = PRINCIPAL,
         hook: Hook = HOOK,
         hookRequiresNetwork: Boolean = true,
+        invocationBudget: ExtensionInvocationBudget? = null,
+        brokerProtocolVersion: Int = BrokerProtocolVersions.Current,
+        elapsedRealtimeMillis: () -> Long = SystemClock::elapsedRealtime,
     ): ExtensionHostBridge = ExtensionHostBridge(
         context = context,
         broker = broker,
         principal = principal,
         manifest = manifest(hook, hookRequiresNetwork),
-        envelope = envelope(granted, scope, hook),
+        envelope = envelope(granted, scope, hook, invocationBudget),
+        brokerProtocolVersion = brokerProtocolVersion,
+        elapsedRealtimeMillis = elapsedRealtimeMillis,
     )
 
     private fun envelope(
         granted: Set<Capability>,
         scope: BrokerScopeHandle?,
         hook: Hook,
+        invocationBudget: ExtensionInvocationBudget?,
     ) = SerializedExtensionEnvelope(
         apiVersion = ExtensionApiVersion(1, 0),
         invocationId = InvocationId("invocation-1"),
@@ -616,6 +975,19 @@ class ExtensionHostBridgeTest {
         payload = JsonObject(emptyMap()),
         grantedCapabilities = granted,
         brokerScope = scope,
+        invocationBudget = invocationBudget,
+    )
+
+    private fun invocationBudget(
+        remainingTimeMillis: Long = 30_000,
+        maxBrokerRequests: Int = 16,
+        maxBrokerRequestBytes: Long = 4L * 1024 * 1024,
+        maxBrokerResponseBytes: Long = 16L * 1024 * 1024,
+    ) = ExtensionInvocationBudget(
+        remainingTimeMillis = remainingTimeMillis,
+        maxBrokerRequests = maxBrokerRequests,
+        maxBrokerRequestBytes = maxBrokerRequestBytes,
+        maxBrokerResponseBytes = maxBrokerResponseBytes,
     )
 
     private fun executeSuccess(
@@ -651,10 +1023,24 @@ class ExtensionHostBridgeTest {
         request: BrokeredHttpRequest,
     ): BrokerInvocationResult = executeRaw(
         bridge = bridge,
-        content = json.encodeToString(
+        content = encodedHttpInvocation(request),
+    )
+
+    private fun encodedHttpInvocation(request: BrokeredHttpRequest): String =
+        json.encodeToString(
             BrokerInvocation(
                 brokerProtocolVersion = BrokerProtocolVersions.Current,
                 operation = BrokerOperation.Http(request),
+            )
+        )
+
+    private fun encodedResponseTooLargeFailure(): String = json.encodeToString(
+        BrokerInvocationResult.serializer(),
+        BrokerInvocationResult.Failure(
+            BrokerInvocationError(
+                code = BrokerErrorCodes.ResponseTooLarge,
+                recoverable = false,
+                message = "The broker response exceeded the allowed size",
             )
         ),
     )
@@ -662,12 +1048,16 @@ class ExtensionHostBridgeTest {
     private fun executeRaw(
         bridge: ExtensionHostBridge,
         content: String,
+    ): BrokerInvocationResult = executeDescriptor(
+        bridge = bridge,
+        input = ParcelFileCodec.write(context, content),
+    )
+
+    private fun executeDescriptor(
+        bridge: ExtensionHostBridge,
+        input: ParcelFileDescriptor,
     ): BrokerInvocationResult = runBlocking {
         ExtensionResultDispatcher().use { dispatcher ->
-            val input = ParcelFileCodec.write(
-                context,
-                content,
-            )
             input.use { request ->
                 dispatcher.await { requestId, callback ->
                     bridge.executeHttp(requestId, request, callback)

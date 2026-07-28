@@ -10,6 +10,7 @@ import com.m3u.extension.api.ExtensionCapabilityRequest
 import com.m3u.extension.api.ExtensionErrorCodes
 import com.m3u.extension.api.ExtensionHookDeclaration
 import com.m3u.extension.api.ExtensionId
+import com.m3u.extension.api.ExtensionInvocationBudget
 import com.m3u.extension.api.ExtensionManifest
 import com.m3u.extension.api.ExtensionSemanticVersion
 import com.m3u.extension.api.ExtensionSettingField
@@ -109,6 +110,28 @@ class TypedExtensionServiceTest {
             ),
         )
         assertEquals(ExtensionTransportHealth.HEALTHY, transport.health())
+    }
+
+    @Test
+    fun `typed handler receives the host invocation budget`() = runBlocking {
+        lateinit var receivedContext: ExtensionCallContext
+        val registry = TypedHookRegistry().apply {
+            handle(HostHookSpecs.SettingsSchema) { _, context ->
+                receivedContext = context
+                HookResult.Success(SETTINGS_RESULT)
+            }
+        }
+        val transport = registry.createTransport(manifest(), json)
+        val invocationBudget = ExtensionInvocationBudget(
+            remainingTimeMillis = 12_000,
+            maxBrokerRequests = 3,
+            maxBrokerRequestBytes = 65_536,
+            maxBrokerResponseBytes = 262_144,
+        )
+
+        transport.invoke(envelope(invocationBudget = invocationBudget))
+
+        assertEquals(invocationBudget, receivedContext.invocationBudget)
     }
 
     @Test
@@ -310,6 +333,7 @@ class TypedExtensionServiceTest {
         grantedCapabilities: Set<Capability> = setOf(
             ExtensionCapabilityIds.SettingsContribute
         ),
+        invocationBudget: ExtensionInvocationBudget? = null,
     ) = SerializedExtensionEnvelope(
         apiVersion = apiVersion,
         invocationId = invocationId,
@@ -319,6 +343,7 @@ class TypedExtensionServiceTest {
         payload = payload,
         settings = settings,
         grantedCapabilities = grantedCapabilities,
+        invocationBudget = invocationBudget,
     )
 
     private fun providerEnvelope(

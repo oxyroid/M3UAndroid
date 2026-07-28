@@ -21,6 +21,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runInterruptible
 
 object ParcelFileCodec {
+    class ReadResult internal constructor(
+        val content: String,
+        val encodedByteCount: Int,
+    )
+
     fun write(
         context: Context,
         content: String,
@@ -42,7 +47,17 @@ object ParcelFileCodec {
         descriptor: ParcelFileDescriptor,
         maximumBytes: Int,
         timeoutMillis: Long = DEFAULT_READ_TIMEOUT_MILLIS,
-    ): String {
+    ): String = readWithEncodedSize(
+        descriptor = descriptor,
+        maximumBytes = maximumBytes,
+        timeoutMillis = timeoutMillis,
+    ).content
+
+    fun readWithEncodedSize(
+        descriptor: ParcelFileDescriptor,
+        maximumBytes: Int,
+        timeoutMillis: Long = DEFAULT_READ_TIMEOUT_MILLIS,
+    ): ReadResult {
         require(maximumBytes in 0 until Int.MAX_VALUE) {
             "Extension payload limit is invalid"
         }
@@ -87,10 +102,22 @@ object ParcelFileCodec {
         )
     }
 
+    suspend fun readInterruptiblyWithEncodedSize(
+        descriptor: ParcelFileDescriptor,
+        maximumBytes: Int,
+        timeoutMillis: Long = DEFAULT_READ_TIMEOUT_MILLIS,
+    ): ReadResult = runInterruptible(Dispatchers.IO) {
+        readWithEncodedSize(
+            descriptor = descriptor,
+            maximumBytes = maximumBytes,
+            timeoutMillis = timeoutMillis,
+        )
+    }
+
     private fun readFully(
         descriptor: ParcelFileDescriptor,
         maximumBytes: Int,
-    ): String = descriptor.use { current ->
+    ): ReadResult = descriptor.use { current ->
         val fileDescriptor = current.fileDescriptor
         val stat = try {
             Os.fstat(fileDescriptor)
@@ -130,12 +157,15 @@ object ParcelFileCodec {
             }
             offset += count
         }
-        payload.decodeToString()
+        ReadResult(
+            content = payload.decodeToString(throwOnInvalidSequence = true),
+            encodedByteCount = payload.size,
+        )
     }
 
     private fun abortRead(
         descriptor: ParcelFileDescriptor,
-        read: java.util.concurrent.Future<String>,
+        read: java.util.concurrent.Future<*>,
     ) {
         runCatching { descriptor.close() }
         read.cancel(true)

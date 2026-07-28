@@ -14,7 +14,7 @@
 
 | 范围 | 当前行为 | 证据 |
 | --- | --- | --- |
-| 契约与 Runtime | 类型化、带版本的 Hook 契约；每次调用只获得当前 Hook 已声明且已批准的 Capability；限制 Payload、超时和并发；传播取消；记录健康状态并隔离连续失败 | `WireGoldenFixtureTest`、`ExtensionContractTest`、`SubscriptionProviderContractsTest`、`ExtensionRuntimeTest` 与 Transport 一致性测试 |
+| 契约与 Runtime | 类型化、带版本的 Hook 契约；每次调用只获得当前 Hook 已声明且已批准的 Capability；限制单插件与宿主级调用准入；Request 准备、排队、执行、Response 校验与 Broker 请求共用一个截止时间；累计限制 Broker 请求次数、编码后的请求总字节数和响应总字节数；传播取消；记录健康状态并隔离连续失败 | `WireGoldenFixtureTest`、`ExtensionContractTest`、`ExtensionRuntimeTest`、`InvocationBudgetPropagationTest` 与 `ExtensionHostBridgeTest`。CI 运行 API Golden、Runtime、SDK 和 Transport 单测；Broker Bridge 使用 Connected Device Test 作为证据。 |
 | 内置 Provider | Emby 和 Jellyfin 是同一个内置插件中可供新订阅选择的两个类型；隐藏的自动识别类型只作为已有账号的兼容值保留，不提供给新订阅选择 | `EmbyCompatibleProviderIntegrationTest`、`EmbyCompatibleProviderLocalizationTest` 与 `SubscriptionProviderRepositoryIntegrationTest` |
 | Provider 凭据 | 外部登录只返回一次性宿主回执。验证后的作用域只会把引用解析进发往批准 Origin 的请求；宿主不会把解析值直接序列化回插件。 | `HostNetworkBrokerSecurityTest`、`ExtensionHostBridgeTest`、`ProviderBrokerScopeStoreTest` 与 `CredentialVaultTest` |
 | 通用 Hook 联网 | 设置、搜索、Metadata、EPG 和后台任务 Hook 在自身声明并获得 `network` 后可以使用宿主 Broker。搜索、Metadata、EPG request 带账号时使用账号作用域；其他调用使用已批准的 manifest Origin 与用户明确保存的设置 Origin。Discover 保持离线。 | `ExtensionNetworkOriginContractTest`、`ExtensionBrokerScopeRuntimeTest`、`ExtensionHookBrokerScopeStoreTest` 与 `ExtensionHostBridgeTest` |
@@ -40,9 +40,8 @@
 - 在 TV、WorkManager 和真实播放器中跑通完整外部 Provider 流程，而不只依赖 Repository 级设备测试；
 - 为授权、重新授权、设置、错误和 TV 焦点增加可重复的界面自动化；
 - 增加进程级恶意 Fixture，覆盖调用阻塞、忽略取消、进程死亡、错误或超限输出、保留 Broker、签名变化与 Extension ID 冲突；
-- 实施宿主级调用总预算，并让一次 Hook 与其全部 Broker 请求共用一个 Deadline；
 - 让同一套公开一致性测试同时运行于内置和外部 Transport；
-- 将 SDK Artifact 与仓库内 Golden Fixture、兼容策略一起发布，并在 CI 运行 Fixture 验证。
+- 将 SDK Artifact 与仓库内 Golden Fixture、兼容策略一起发布。
 
 ## 决策规则
 
