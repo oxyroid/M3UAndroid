@@ -74,6 +74,86 @@ class AppNavigationPolicyTest {
     }
 
     @Test
+    fun `nested tasks use contextual chrome in compact and rail layouts`() {
+        assertFalse(
+            shouldShowContextualTopBar(
+                isRootPlaylistConfiguration = false,
+                isNestedDetailVisible = false,
+            )
+        )
+        assertTrue(
+            shouldShowContextualTopBar(
+                isRootPlaylistConfiguration = false,
+                isNestedDetailVisible = true,
+            )
+        )
+        assertTrue(
+            shouldShowContextualTopBar(
+                isRootPlaylistConfiguration = true,
+                isNestedDetailVisible = false,
+            )
+        )
+    }
+
+    @Test
+    fun `remote control action is limited to unobstructed top-level content`() {
+        assertTrue(
+            shouldShowRemoteControlAction(
+                remoteControlEnabled = true,
+                isSearchActive = false,
+                isImeVisible = false,
+                isRootPlaylistConfiguration = false,
+                isNestedDetailVisible = false,
+            )
+        )
+        assertFalse(
+            shouldShowRemoteControlAction(
+                remoteControlEnabled = true,
+                isSearchActive = false,
+                isImeVisible = false,
+                isRootPlaylistConfiguration = false,
+                isNestedDetailVisible = true,
+            )
+        )
+        assertFalse(
+            shouldShowRemoteControlAction(
+                remoteControlEnabled = true,
+                isSearchActive = true,
+                isImeVisible = false,
+                isRootPlaylistConfiguration = false,
+                isNestedDetailVisible = false,
+            )
+        )
+        assertFalse(
+            shouldShowRemoteControlAction(
+                remoteControlEnabled = true,
+                isSearchActive = false,
+                isImeVisible = true,
+                isRootPlaylistConfiguration = false,
+                isNestedDetailVisible = false,
+            )
+        )
+        assertFalse(
+            shouldShowRemoteControlAction(
+                remoteControlEnabled = true,
+                isSearchActive = false,
+                isImeVisible = false,
+                isRootPlaylistConfiguration = true,
+                isNestedDetailVisible = false,
+            )
+        )
+        assertFalse(
+            shouldShowRemoteControlAction(
+                remoteControlEnabled = false,
+                isSearchActive = false,
+                isImeVisible = false,
+                isRootPlaylistConfiguration = false,
+                isNestedDetailVisible = false,
+            )
+        )
+    }
+
+    @Test
     fun `backdrop capture follows glass support and the full visibility transition`() {
         assertFalse(
             shouldCaptureNavigationBackdrop(

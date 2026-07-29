@@ -112,6 +112,8 @@ import com.m3u.smartphone.ui.navigation.shouldCaptureNavigationBackdrop
 import com.m3u.smartphone.ui.navigation.shouldReserveBottomNavigationSpace
 import com.m3u.smartphone.ui.navigation.shouldShowBottomEdgeBlur
 import com.m3u.smartphone.ui.navigation.shouldShowBottomNavigation
+import com.m3u.smartphone.ui.navigation.shouldShowContextualTopBar
+import com.m3u.smartphone.ui.navigation.shouldShowRemoteControlAction
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import kotlinx.coroutines.flow.Flow
@@ -217,11 +219,13 @@ private fun AppImpl(
         isNavigationCurrentlyVisible = bottomNavigationVisibility.currentState,
         isNavigationTargetVisible = bottomNavigationVisibility.targetState,
     )
-    val remoteControlVisible = remoteControl &&
-        !searchActive &&
-        !imeVisible &&
-        !isRootPlaylistConfiguration &&
-        (navigationMode != AppNavigationMode.BottomOverlay || !nestedDetailVisible)
+    val remoteControlVisible = shouldShowRemoteControlAction(
+        remoteControlEnabled = remoteControl,
+        isSearchActive = searchActive,
+        isImeVisible = imeVisible,
+        isRootPlaylistConfiguration = isRootPlaylistConfiguration,
+        isNestedDetailVisible = nestedDetailVisible,
+    )
 
     var measuredNavigationHeight by remember { mutableStateOf(64.dp) }
     val safeDrawingPadding = WindowInsets.safeDrawing.asPaddingValues()
@@ -302,12 +306,10 @@ private fun AppImpl(
         navigateToChannel = navigateToChannel,
         contentPadding = contentInsets.contentPadding,
         showBottomEdgeBlur = shouldShowBottomEdgeBlur(navigationMode),
-        showContextualTopBar =
-            isRootPlaylistConfiguration ||
-                (
-                    navigationMode == AppNavigationMode.BottomOverlay &&
-                        nestedDetailVisible
-                    ),
+        showContextualTopBar = shouldShowContextualTopBar(
+            isRootPlaylistConfiguration = isRootPlaylistConfiguration,
+            isNestedDetailVisible = nestedDetailVisible,
+        ),
         onNestedDetailVisibilityChanged = onNestedDetailVisibilityChanged,
     )
 
