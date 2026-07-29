@@ -59,11 +59,12 @@ Connected Test。流水线已配置为在 `hostileApi34` 构建托管设备上�
 
 - 设备与配置：`emulator-5558` 上的 Pixel_6_Pro API 36，使用运行脚本的 `phone`
   profile。
-- 结果：`compact-ltr` 为 17/17，`compact-narrow-ltr` 为 2/2；
-  `compact-rtl-large` 在 `ar-XB`、320dp 宽度和 200% 字体下为 7/7。
-- 其中与插件系统直接相关的覆盖包括 Provider 选择与表单，以及插件详情 Loading、带重试操作的 Failure、
-  Missing 和 Content 状态；同时验证操作目标归属正确、live-region 语义不重复、
-  48dp 操作目标互不重叠，以及版本、包名、服务和证书信息完整。
+- 结果：`compact-ltr` 为 20/20，`compact-narrow-ltr` 为 2/2；
+  `compact-rtl-large` 在 `ar-XB`、320dp 宽度和 200% 字体下为 11/11。
+- 插件覆盖包括 Descriptor 驱动的 Provider 表单、参考插件的完整管理流程，以及可区分的
+  Loading、可重试 Failure、Missing 和 Content 状态。
+- 无障碍覆盖包括每行只有一个操作目标、左右镜像的 48dp 首尾区域、无重复的状态语义、
+  完整技术身份，以及长设置选项在 200% 字体 RTL 下自然换行且错误只朗读一次。
 
 最近一次平板 Connected 实测（2026-07-29）：
 

@@ -1,5 +1,6 @@
 package com.m3u.smartphone.ui.navigation
 
+import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
@@ -14,78 +15,140 @@ import kotlin.test.assertTrue
 
 class FloatingNavigationGlassTokensTest {
     @Test
-    fun `light glass stays translucent while its boundary separates from app backgrounds`() {
-        listOf(
-            ThemePreset.DEFAULT_MATERIAL_SEED to ThemeStyle.MATERIAL,
-            ThemePreset.WARM_EDITORIAL_SEED to ThemeStyle.WARM_EDITORIAL,
-        ).forEach { (seed, style) ->
-            val scheme = createAppColorScheme(
-                argb = seed,
-                isDark = false,
-                themeStyle = style,
-            )
-            val tokens = resolveFloatingNavigationGlassTokens(
-                colorScheme = scheme,
-                useBackdropEffects = true,
-            )
-            val shell = tokens.surfaceColor.compositeOver(scheme.background)
-            val boundary = tokens.outlineColor.compositeOver(shell)
+    fun `glass keeps semantic theme roles and enough translucency for backdrop effects`() {
+        testSchemes().forEach { schemeCase ->
+            listOf(true, false).forEach { useBackdropEffects ->
+                val tokens = resolveFloatingNavigationGlassTokens(
+                    colorScheme = schemeCase.scheme,
+                    useBackdropEffects = useBackdropEffects,
+                )
+                val expectedSurface = if (schemeCase.isDark) {
+                    schemeCase.scheme.surfaceContainer
+                } else {
+                    schemeCase.scheme.surfaceContainerLowest
+                }
 
-            assertEquals(scheme.surfaceContainerLowest, tokens.surfaceColor.copy(alpha = 1f))
-            assertEquals(0.40f, tokens.surfaceColor.alpha)
-            assertEquals(0.75f, tokens.highlightAlpha)
-            assertEquals(0.10f, tokens.shadowColor.alpha, absoluteTolerance = 0.005f)
-            assertTrue(
-                actual = contrastRatio(boundary, scheme.background) >= 2f,
-                message = "$style floating navigation boundary is not distinct enough",
-            )
+                assertEquals(expectedSurface, tokens.surfaceColor.copy(alpha = 1f))
+                assertEquals(
+                    expected = if (useBackdropEffects) 0.78f else 0.94f,
+                    actual = tokens.surfaceColor.alpha,
+                    absoluteTolerance = 0.005f,
+                )
+                assertEquals(schemeCase.scheme.outline, tokens.outlineColor)
+                assertEquals(
+                    expected = if (schemeCase.isDark) Color.White else Color.Black,
+                    actual = tokens.idleIndicatorColor.copy(alpha = 1f),
+                )
+                assertEquals(
+                    expected = 0.06f,
+                    actual = tokens.idleIndicatorColor.alpha,
+                    absoluteTolerance = 0.005f,
+                )
+            }
         }
     }
 
     @Test
-    fun `dark glass keeps a restrained container tint and stronger shadow`() {
-        val scheme = createAppColorScheme(
-            argb = ThemePreset.WARM_EDITORIAL_SEED,
-            isDark = true,
-            themeStyle = ThemeStyle.WARM_EDITORIAL,
-        )
-        val tokens = resolveFloatingNavigationGlassTokens(
-            colorScheme = scheme,
-            useBackdropEffects = true,
-        )
+    fun `token composites keep a three to one baseline over solid scenes`() {
+        testSchemes().forEach { schemeCase ->
+            listOf(true, false).forEach { useBackdropEffects ->
+                val tokens = resolveFloatingNavigationGlassTokens(
+                    colorScheme = schemeCase.scheme,
+                    useBackdropEffects = useBackdropEffects,
+                )
+                val scenes = listOf(
+                    "black" to Color.Black,
+                    "white" to Color.White,
+                    "media-dark" to Color(0xFF121212),
+                    "theme-background" to schemeCase.scheme.background,
+                )
 
-        assertEquals(scheme.surfaceContainer, tokens.surfaceColor.copy(alpha = 1f))
-        assertEquals(scheme.outlineVariant, tokens.outlineColor.copy(alpha = 1f))
-        assertEquals(0.40f, tokens.surfaceColor.alpha)
-        assertEquals(0.38f, tokens.highlightAlpha)
-        assertEquals(0.20f, tokens.shadowColor.alpha, absoluteTolerance = 0.005f)
-        assertEquals(Color.White, tokens.idleIndicatorColor.copy(alpha = 1f))
+                scenes.forEach { (sceneName, scene) ->
+                    // This is a token-level baseline before Haze blur, vibrancy, and
+                    // refraction. Connected tests still exercise the rendered bar.
+                    val shell = tokens.surfaceColor.compositeOver(scene)
+                    val selectedSurface = tokens.idleIndicatorColor.compositeOver(shell)
+                    val boundary = tokens.outlineColor.compositeOver(shell)
+                    val contrasts = listOf(
+                        "idle icon" to contrastRatio(
+                            schemeCase.scheme.onSurfaceVariant,
+                            shell,
+                        ),
+                        "selected icon" to contrastRatio(
+                            schemeCase.scheme.primary,
+                            selectedSurface,
+                        ),
+                        "accessory icon" to contrastRatio(
+                            schemeCase.scheme.primary,
+                            shell,
+                        ),
+                        "boundary" to contrastRatio(boundary, scene),
+                    )
+
+                    contrasts.forEach { (element, ratio) ->
+                        assertTrue(
+                            actual = ratio >= MINIMUM_MEANINGFUL_NON_TEXT_CONTRAST,
+                            message = buildString {
+                                append(schemeCase.name)
+                                append(" ")
+                                append(if (useBackdropEffects) "backdrop" else "fallback")
+                                append(" ")
+                                append(element)
+                                append(" on ")
+                                append(sceneName)
+                                append(" has only ")
+                                append(ratio)
+                                append(":1 contrast")
+                            },
+                        )
+                    }
+                }
+            }
+        }
     }
 
     @Test
-    fun `fallback glass is opaque enough without changing the shared chrome roles`() {
-        val scheme = createAppColorScheme(
-            argb = ThemePreset.DEFAULT_MATERIAL_SEED,
-            isDark = false,
-            themeStyle = ThemeStyle.MATERIAL,
-        )
-        val backdropTokens = resolveFloatingNavigationGlassTokens(
-            colorScheme = scheme,
-            useBackdropEffects = true,
-        )
-        val fallbackTokens = resolveFloatingNavigationGlassTokens(
-            colorScheme = scheme,
-            useBackdropEffects = false,
-        )
+    fun `light and dark glass retain their optical depth`() {
+        testSchemes().forEach { schemeCase ->
+            val tokens = resolveFloatingNavigationGlassTokens(
+                colorScheme = schemeCase.scheme,
+                useBackdropEffects = true,
+            )
 
-        assertEquals(
-            expected = 0.94f,
-            actual = fallbackTokens.surfaceColor.alpha,
-            absoluteTolerance = 0.005f,
+            assertEquals(
+                expected = if (schemeCase.isDark) 0.38f else 0.75f,
+                actual = tokens.highlightAlpha,
+                absoluteTolerance = 0.005f,
+            )
+            assertEquals(
+                expected = if (schemeCase.isDark) 0.20f else 0.10f,
+                actual = tokens.shadowColor.alpha,
+                absoluteTolerance = 0.005f,
+            )
+        }
+    }
+}
+
+private data class TestScheme(
+    val name: String,
+    val isDark: Boolean,
+    val scheme: ColorScheme,
+)
+
+private fun testSchemes(): List<TestScheme> = listOf(
+    Triple("material-light", ThemePreset.DEFAULT_MATERIAL_SEED, ThemeStyle.MATERIAL),
+    Triple("warm-light", ThemePreset.WARM_EDITORIAL_SEED, ThemeStyle.WARM_EDITORIAL),
+).flatMap { (name, seed, style) ->
+    listOf(false, true).map { isDark ->
+        TestScheme(
+            name = if (isDark) name.replace("-light", "-dark") else name,
+            isDark = isDark,
+            scheme = createAppColorScheme(
+                argb = seed,
+                isDark = isDark,
+                themeStyle = style,
+            ),
         )
-        assertEquals(backdropTokens.outlineColor, fallbackTokens.outlineColor)
-        assertEquals(backdropTokens.shadowColor, fallbackTokens.shadowColor)
-        assertEquals(backdropTokens.idleIndicatorColor, fallbackTokens.idleIndicatorColor)
     }
 }
 
@@ -95,3 +158,5 @@ private fun contrastRatio(first: Color, second: Color): Float {
     return (max(firstLuminance, secondLuminance) + 0.05f) /
         (min(firstLuminance, secondLuminance) + 0.05f)
 }
+
+private const val MINIMUM_MEANINGFUL_NON_TEXT_CONTRAST = 3f

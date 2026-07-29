@@ -106,6 +106,7 @@ import com.m3u.smartphone.ui.material.ktx.rememberUiBidiFormatter
 import java.text.NumberFormat
 
 private val ExtensionPageMaxWidth = 640.dp
+private val ExtensionPluginListTextColumnStart = 80.dp
 private const val MINIMUM_COMPACT_EXTENSION_ACTION_WIDTH_DP = 128f
 
 @Composable
@@ -293,7 +294,13 @@ internal fun ExtensionPluginListScreen(
                                 onOpenDetails(plugin.packageName, plugin.serviceName)
                             },
                         )
-                        HorizontalDivider(modifier = Modifier.padding(start = 72.dp))
+                        HorizontalDivider(
+                            modifier = Modifier
+                                .padding(start = ExtensionPluginListTextColumnStart)
+                                .testTag(
+                                    "extension-plugin-list-divider:${plugin.stableKey}"
+                                ),
+                        )
                     }
                 }
             }
@@ -313,7 +320,9 @@ private fun ExtensionPluginListItem(
         plugin = plugin,
         unapprovedNetworkOrigins = plugin.networkOrigins - plugin.approvedNetworkOrigins,
         bidiFormatter = bidiFormatter,
-    ).joinToString(separator = "\n")
+    ).filterNot { message ->
+        message == stateLabel
+    }.joinToString(separator = "\n")
     val supportingText = buildList {
         plugin.developer
             ?.takeIf(String::isNotBlank)
@@ -334,6 +343,11 @@ private fun ExtensionPluginListItem(
                     ?: bidiFormatter.ltr(plugin.packageName),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(
+                        "extension-plugin-list-headline:${plugin.stableKey}"
+                    ),
             )
         },
         supportingContent = {
@@ -354,22 +368,41 @@ private fun ExtensionPluginListItem(
                     } else {
                         MaterialTheme.colorScheme.onSurfaceVariant
                     },
+                    modifier = Modifier.clearAndSetSemantics {},
                 )
             }
         },
         leadingContent = {
-            ExtensionApplicationIcon(
-                plugin = plugin,
-                size = 44.dp,
-                fallbackIconSize = 22.dp,
-                warningBadgeSize = 18.dp,
-            )
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .testTag(
+                        "extension-plugin-list-leading:${plugin.stableKey}"
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                ExtensionApplicationIcon(
+                    plugin = plugin,
+                    size = 44.dp,
+                    fallbackIconSize = 22.dp,
+                    warningBadgeSize = 18.dp,
+                )
+            }
         },
         trailingContent = {
-            Icon(
-                imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                contentDescription = null,
-            )
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .testTag(
+                        "extension-plugin-list-trailing:${plugin.stableKey}"
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                    contentDescription = null,
+                )
+            }
         },
         colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier
@@ -1493,7 +1526,68 @@ private fun ExtensionAuthorizationIdentity(
                     }
                 }
             }
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            ExtensionAuthorizationIdentitySummary(
+                plugin = plugin,
+                bidiFormatter = bidiFormatter,
+            )
         }
+    }
+}
+
+@Composable
+private fun ExtensionAuthorizationIdentitySummary(
+    plugin: InstalledPlugin,
+    bidiFormatter: UiBidiFormatter,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        ExtensionAuthorizationIdentitySummaryLine(
+            label = stringResource(string.feat_setting_extension_package),
+            value = bidiFormatter.standaloneTechnical(plugin.packageName),
+            testTag = "extension-authorization-identity-package",
+        )
+        ExtensionAuthorizationIdentitySummaryLine(
+            label = stringResource(string.feat_setting_extension_certificate_sha256),
+            value = bidiFormatter.standaloneTechnical(
+                plugin.certificateSha256.shortCertificateFingerprint()
+            ),
+            testTag = "extension-authorization-identity-certificate",
+        )
+    }
+}
+
+@Composable
+private fun ExtensionAuthorizationIdentitySummaryLine(
+    label: String,
+    value: String,
+    testTag: String,
+) {
+    FlowRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics(mergeDescendants = true) {}
+            .testTag(testTag),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodySmall.copy(
+                textDirection = TextDirection.Ltr
+            ),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontFamily = FontFamily.Monospace,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 

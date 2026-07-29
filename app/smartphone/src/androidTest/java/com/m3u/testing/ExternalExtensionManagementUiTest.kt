@@ -9,6 +9,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
@@ -37,17 +38,20 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.tryPerformAccessibilityChecks
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.datastore.preferences.core.edit
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.StaleObjectException
 import androidx.test.uiautomator.UiDevice
+import com.m3u.business.setting.ExtensionPluginDiscoveryState
 import com.m3u.business.setting.ExtensionPluginOperation
 import com.m3u.business.setting.ExtensionPluginOperationState
 import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
 import com.m3u.core.foundation.architecture.preferences.settings
 import com.m3u.data.repository.extension.ExtensionNetworkOriginState
+import com.m3u.data.repository.plugin.InstalledPlugin
 import com.m3u.extension.api.ExtensionState
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.DebugExtensionPlatformEntryPoint
@@ -55,8 +59,10 @@ import com.m3u.smartphone.MainActivity
 import com.m3u.smartphone.ui.business.setting.fragments.ExtensionPluginDetailContentState
 import com.m3u.smartphone.ui.business.setting.fragments.ExtensionPluginDetailScreen
 import com.m3u.smartphone.ui.business.setting.fragments.ExtensionPluginDiscoveryStatus
+import com.m3u.smartphone.ui.business.setting.fragments.ExtensionPluginListScreen
 import dagger.hilt.android.EntryPointAccessors
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.math.abs
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -121,16 +127,7 @@ class ExternalExtensionManagementUiTest {
     @Test
     fun directDetailRenderingDistinguishesLookupStatesAndBusyPluginContent() {
         assertRequestedAccessibilityConfigurationIfPresent()
-        val repository = EntryPointAccessors.fromApplication(
-            targetContext,
-            DebugExtensionPlatformEntryPoint::class.java,
-        ).pluginRepository()
-        val inspectedPlugin = runBlocking {
-            repository.installedPlugins().single { plugin ->
-                plugin.packageName == REFERENCE_PACKAGE &&
-                    plugin.serviceName == REFERENCE_SERVICE
-            }
-        }
+        val inspectedPlugin = installedReferencePlugin()
         assertTrue(
             "The installed reference plugin must provide an authorization token",
             inspectedPlugin.authorizationToken != null,
@@ -162,6 +159,36 @@ class ExternalExtensionManagementUiTest {
             ExtensionPluginOperationState.Idle
         )
         val retryRequested = AtomicBoolean(false)
+
+        val warningPlugin = inspectedPlugin.copy(
+            state = ExtensionState.UNHEALTHY,
+            inspectionError = "UI semantics warning",
+        )
+        composeRule.runOnUiThread {
+            composeRule.activity.setContent {
+                MaterialTheme {
+                    Surface(modifier = Modifier.fillMaxSize()) {
+                        ExtensionPluginListScreen(
+                            state = ExtensionPluginDiscoveryState.Content(
+                                listOf(warningPlugin)
+                            ),
+                            operationState = ExtensionPluginOperationState.Idle,
+                            onRefresh = {},
+                            onOpenDetails = { _, _ -> },
+                        )
+                    }
+                }
+            }
+        }
+        waitUntilTagExists(pluginListItemTag())
+        assertPluginListRowSemanticsAndGeometry(
+            expectedStateLabel = composeRule.activity.getString(
+                string.feat_setting_extension_state_unhealthy
+            ),
+            expectedErrorLabel = composeRule.activity.getString(
+                string.feat_setting_extension_inspection_failed
+            ),
+        )
 
         composeRule.runOnUiThread {
             composeRule.activity.setContent {
@@ -273,6 +300,7 @@ class ExternalExtensionManagementUiTest {
     @Test
     fun referencePluginCompletesTheVisibleManagementLifecycle() {
         assertRequestedAccessibilityConfigurationIfPresent()
+        val referencePlugin = installedReferencePlugin()
         openExtensionPlugins()
 
         waitUntilTagExists(PLUGIN_LIST_TAG)
@@ -280,14 +308,14 @@ class ExternalExtensionManagementUiTest {
         composeRule.onRoot().tryPerformAccessibilityChecks()
         composeRule.disableAccessibilityChecks()
         assertAdaptiveNavigation(nestedDetailVisible = true)
-        waitUntilTagExists(pluginListItemTag())
+        composeRule.onNodeWithTag(PLUGIN_LIST_TAG)
+            .performScrollToNode(hasTestTag(pluginListItemTag()))
         composeRule.onNodeWithTag(pluginListItemTag())
             .assertMinimumTouchTarget()
             .performClick()
         waitUntilTagExists(pluginDetailTag())
         waitUntilTagGone(PLUGIN_LIST_TAG)
-        waitUntilTagExists(CAPABILITIES_DISCLOSURE_TAG)
-        waitUntilTagExists(NETWORK_ORIGINS_DISCLOSURE_TAG)
+        scrollDetailTo(CAPABILITIES_DISCLOSURE_TAG)
         composeRule.onAllNodes(
             hasText(REFERENCE_CAPABILITY_ID, substring = true, ignoreCase = false)
         ).assertCountEquals(0)
@@ -349,9 +377,17 @@ class ExternalExtensionManagementUiTest {
             .assertMinimumTouchTarget()
             .performClick()
         waitUntilTagExists(AUTHORIZATION_SCREEN_TAG)
-        composeRule.onAllNodes(
-            hasText(REFERENCE_PACKAGE, substring = true, ignoreCase = false)
-        ).assertCountEquals(0)
+        composeRule.onNodeWithTag(AUTHORIZATION_IDENTITY_PACKAGE_TAG)
+            .assertIsDisplayed()
+            .assertTextContains(REFERENCE_PACKAGE, substring = true)
+        composeRule.onNodeWithTag(AUTHORIZATION_IDENTITY_CERTIFICATE_TAG)
+            .assertIsDisplayed()
+            .assertTextContains(
+                referencePlugin.certificateSha256.shortCertificateFingerprint(),
+                substring = true,
+            )
+        assertTechnicalIdentityValueIsAbsent("package")
+        assertTechnicalIdentityValueIsAbsent("certificate")
         waitUntilExists(
             hasText(
                 composeRule.activity.getString(
@@ -369,11 +405,27 @@ class ExternalExtensionManagementUiTest {
             .assertDisclosureState(string.ui_state_collapsed)
             .performClick()
             .assertDisclosureState(string.ui_state_expanded)
-        waitUntilExists(hasText(REFERENCE_PACKAGE, substring = true))
+        assertTechnicalIdentityValue("package", REFERENCE_PACKAGE)
+        assertTechnicalIdentityValue("service", REFERENCE_SERVICE)
+        assertTechnicalIdentityValue(
+            "certificate",
+            referencePlugin.certificateSha256.chunked(16).joinToString(" "),
+        )
+        composeRule.onNodeWithTag(AUTHORIZATION_SCREEN_TAG)
+            .performScrollToNode(
+                hasTestTag(AUTHORIZATION_IDENTITY_DISCLOSURE_TAG)
+            )
         composeRule.onNodeWithTag(AUTHORIZATION_IDENTITY_DISCLOSURE_TAG)
+            .assertIsDisplayed()
             .performClick()
             .assertDisclosureState(string.ui_state_collapsed)
-        waitUntilGone(hasText(REFERENCE_PACKAGE, substring = true))
+        waitUntilTechnicalIdentityValueGone("package")
+        waitUntilTechnicalIdentityValueGone("certificate")
+        composeRule.onNodeWithTag(AUTHORIZATION_SCREEN_TAG)
+            .performScrollToNode(hasTestTag(AUTHORIZATION_IDENTITY_PACKAGE_TAG))
+        composeRule.onNodeWithTag(AUTHORIZATION_IDENTITY_PACKAGE_TAG)
+            .assertIsDisplayed()
+            .assertTextContains(REFERENCE_PACKAGE, substring = true)
         scrollAuthorizationActionsIntoView()
         assertAuthorizationActionsAreUsable()
         physicallyClickAuthorization(string.feat_setting_extension_enable)
@@ -535,7 +587,9 @@ class ExternalExtensionManagementUiTest {
 
         navigateBack()
         waitUntilTagExists(PLUGIN_LIST_TAG)
-        waitUntilTagExists(pluginListItemTag())
+        composeRule.onNodeWithTag(PLUGIN_LIST_TAG)
+            .performScrollToNode(hasTestTag(pluginListItemTag()))
+        composeRule.onNodeWithTag(pluginListItemTag()).assertIsDisplayed()
         navigateBack()
         waitUntilTagExists(EXTENSION_ENTRY_TAG)
         assertAdaptiveNavigation(nestedDetailVisible = false)
@@ -651,6 +705,158 @@ class ExternalExtensionManagementUiTest {
         }
     }
 
+    private fun assertPluginListRowSemanticsAndGeometry(
+        expectedStateLabel: String,
+        expectedErrorLabel: String,
+    ) {
+        val rowTag = pluginListItemTag()
+        val row = composeRule.onNodeWithTag(rowTag)
+            .assertIsDisplayed()
+            .assertMinimumTouchTarget()
+            .assert(
+                SemanticsMatcher.expectValue(
+                    SemanticsProperties.StateDescription,
+                    expectedStateLabel,
+                )
+            )
+            .assert(
+                SemanticsMatcher("retains warning error semantics") { node ->
+                    node.config.contains(SemanticsProperties.Error) &&
+                        node.config[SemanticsProperties.Error]
+                            .contains(expectedErrorLabel) &&
+                        !node.config[SemanticsProperties.Error]
+                            .contains(expectedStateLabel)
+                }
+            )
+            .assert(
+                SemanticsMatcher(
+                    "does not repeat the visible status as semantic text"
+                ) { node ->
+                    !node.config.contains(SemanticsProperties.Text) ||
+                        node.config[SemanticsProperties.Text].none { text ->
+                            text.text == expectedStateLabel
+                        }
+                }
+            )
+        composeRule.onAllNodes(
+            hasText(
+                expectedStateLabel,
+                substring = false,
+                ignoreCase = false,
+            ),
+            useUnmergedTree = true,
+        ).assertCountEquals(0)
+
+        val rowPixelBounds = composeRule
+            .onNodeWithTag(rowTag, useUnmergedTree = true)
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val clickableNodesInRow = composeRule
+            .onAllNodes(hasClickAction(), useUnmergedTree = true)
+            .fetchSemanticsNodes()
+            .count { node ->
+                val bounds = node.boundsInRoot
+                bounds.left >= rowPixelBounds.left &&
+                    bounds.top >= rowPixelBounds.top &&
+                    bounds.right <= rowPixelBounds.right &&
+                    bounds.bottom <= rowPixelBounds.bottom
+            }
+        assertEquals(
+            "The plugin row must be its only click semantics node",
+            1,
+            clickableNodesInRow,
+        )
+
+        val rowBounds = row.getUnclippedBoundsInRoot()
+        val leadingBounds = composeRule.onNodeWithTag(
+            pluginListPartTag("leading"),
+            useUnmergedTree = true,
+        ).getUnclippedBoundsInRoot()
+        val trailingBounds = composeRule.onNodeWithTag(
+            pluginListPartTag("trailing"),
+            useUnmergedTree = true,
+        ).getUnclippedBoundsInRoot()
+        listOf("leading", "trailing").forEach { part ->
+            composeRule.onNodeWithTag(
+                pluginListPartTag(part),
+                useUnmergedTree = true,
+            ).assert(
+                SemanticsMatcher("$part slot is decorative") { node ->
+                    !node.config.contains(SemanticsActions.OnClick)
+                }
+            )
+        }
+        val headlineBounds = composeRule.onNodeWithTag(
+            pluginListPartTag("headline"),
+            useUnmergedTree = true,
+        ).getUnclippedBoundsInRoot()
+        val dividerBounds = composeRule.onNodeWithTag(
+            pluginListPartTag("divider"),
+            useUnmergedTree = true,
+        ).getUnclippedBoundsInRoot()
+
+        assertDpClose(
+            "leading slot width",
+            48.dp,
+            leadingBounds.right - leadingBounds.left,
+        )
+        assertDpClose(
+            "leading slot height",
+            48.dp,
+            leadingBounds.bottom - leadingBounds.top,
+        )
+        assertDpClose(
+            "trailing slot width",
+            48.dp,
+            trailingBounds.right - trailingBounds.left,
+        )
+        assertDpClose(
+            "trailing slot height",
+            48.dp,
+            trailingBounds.bottom - trailingBounds.top,
+        )
+
+        val isRtl =
+            composeRule.activity.resources.configuration.layoutDirection ==
+                View.LAYOUT_DIRECTION_RTL
+        val leadingStartMargin = if (isRtl) {
+            rowBounds.right - leadingBounds.right
+        } else {
+            leadingBounds.left - rowBounds.left
+        }
+        val trailingEndMargin = if (isRtl) {
+            trailingBounds.left - rowBounds.left
+        } else {
+            rowBounds.right - trailingBounds.right
+        }
+        assertDpClose("leading slot start margin", 16.dp, leadingStartMargin)
+        assertDpClose("trailing slot end margin", 16.dp, trailingEndMargin)
+        assertDpClose(
+            "plugin divider aligns to the text column",
+            if (isRtl) headlineBounds.right else headlineBounds.left,
+            if (isRtl) dividerBounds.right else dividerBounds.left,
+        )
+        assertTrue(
+            "Leading and trailing slots must mirror with layout direction",
+            if (isRtl) {
+                leadingBounds.left > trailingBounds.left
+            } else {
+                leadingBounds.left < trailingBounds.left
+            },
+        )
+    }
+
+    private fun assertDpClose(
+        label: String,
+        expected: Dp,
+        actual: Dp,
+    ) {
+        assertTrue(
+            "$label: expected=$expected, actual=$actual",
+            abs(expected.value - actual.value) <= GEOMETRY_TOLERANCE_DP,
+        )
+    }
+
     private fun assertTechnicalIdentityValue(key: String, expected: String) {
         val tag = "$TECHNICAL_IDENTITY_VALUE_TAG_PREFIX$key"
         composeRule.waitUntil(UI_TIMEOUT_MILLIS) {
@@ -662,6 +868,35 @@ class ExternalExtensionManagementUiTest {
             .performScrollTo()
             .assertIsDisplayed()
             .assertTextContains(expected, substring = true)
+    }
+
+    private fun assertTechnicalIdentityValueIsAbsent(key: String) {
+        composeRule.onAllNodesWithTag(
+            "$TECHNICAL_IDENTITY_VALUE_TAG_PREFIX$key",
+            useUnmergedTree = true,
+        ).assertCountEquals(0)
+    }
+
+    private fun waitUntilTechnicalIdentityValueGone(key: String) {
+        val tag = "$TECHNICAL_IDENTITY_VALUE_TAG_PREFIX$key"
+        composeRule.waitUntil(UI_TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithTag(tag, useUnmergedTree = true)
+                .fetchSemanticsNodes()
+                .isEmpty()
+        }
+    }
+
+    private fun installedReferencePlugin(): InstalledPlugin {
+        val repository = EntryPointAccessors.fromApplication(
+            targetContext,
+            DebugExtensionPlatformEntryPoint::class.java,
+        ).pluginRepository()
+        return runBlocking {
+            repository.installedPlugins().single { plugin ->
+                plugin.packageName == REFERENCE_PACKAGE &&
+                    plugin.serviceName == REFERENCE_SERVICE
+            }
+        }
     }
 
     private fun assertRequestedAccessibilityConfigurationIfPresent() {
@@ -858,6 +1093,9 @@ class ExternalExtensionManagementUiTest {
     private fun pluginListItemTag(): String =
         "extension-plugin-list-item:$REFERENCE_PACKAGE/$REFERENCE_SERVICE"
 
+    private fun pluginListPartTag(part: String): String =
+        "extension-plugin-list-$part:$REFERENCE_PACKAGE/$REFERENCE_SERVICE"
+
     private fun pluginDetailTag(): String =
         "extension-plugin-detail:$REFERENCE_PACKAGE/$REFERENCE_SERVICE"
 
@@ -867,9 +1105,15 @@ class ExternalExtensionManagementUiTest {
     private fun choiceTag(value: String): String =
         "extension-setting-choice:playback/quality:$value"
 
+    private fun String.shortCertificateFingerprint(): String {
+        val prefix = take(16).chunked(8).joinToString(" ")
+        return if (length > 16) "$prefix…" else prefix
+    }
+
     private companion object {
         const val UI_TIMEOUT_MILLIS = 15_000L
         const val UI_AUTOMATOR_RETRY_MILLIS = 100L
+        const val GEOMETRY_TOLERANCE_DP = 0.5f
         const val REFERENCE_PACKAGE = "com.m3u.testing.extension.reference"
         const val REFERENCE_SERVICE =
             "com.m3u.testing.extension.reference.ReferenceExtensionService"
@@ -893,6 +1137,10 @@ class ExternalExtensionManagementUiTest {
         const val AUTHORIZATION_SCREEN_TAG = "extension-authorization"
         const val AUTHORIZATION_IDENTITY_DISCLOSURE_TAG =
             "extension-authorization-identity-disclosure"
+        const val AUTHORIZATION_IDENTITY_PACKAGE_TAG =
+            "extension-authorization-identity-package"
+        const val AUTHORIZATION_IDENTITY_CERTIFICATE_TAG =
+            "extension-authorization-identity-certificate"
         const val AUTHORIZATION_BOTTOM_SAFE_SPACE_TAG =
             "extension-authorization-bottom-safe-space"
         const val AUTHORIZATION_CONFIRM_TAG = "extension-authorization-confirm"

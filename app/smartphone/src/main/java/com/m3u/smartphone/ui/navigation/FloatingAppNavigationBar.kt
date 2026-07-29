@@ -1045,11 +1045,7 @@ internal fun resolveFloatingNavigationGlassTokens(
                 GLASS_FALLBACK_SURFACE_ALPHA
             },
         ),
-        outlineColor = if (isDarkTheme) {
-            colorScheme.outlineVariant.copy(alpha = DARK_GLASS_OUTLINE_ALPHA)
-        } else {
-            colorScheme.outline.copy(alpha = LIGHT_GLASS_OUTLINE_ALPHA)
-        },
+        outlineColor = colorScheme.outline,
         highlightAlpha = if (isDarkTheme) {
             DARK_GLASS_HIGHLIGHT_ALPHA
         } else {
@@ -1086,14 +1082,12 @@ private const val INDICATOR_REFRACTION_HEIGHT_SHARE = 0.22f
 private const val INDICATOR_REFRACTION_AMOUNT_SHARE = 0.18f
 private const val INDICATOR_DEPTH_OVERLAY_ALPHA = 0.025f
 private const val FALLBACK_INDICATOR_BORDER_ALPHA = 0.52f
-private const val GLASS_SURFACE_ALPHA = 0.40f
+private const val GLASS_SURFACE_ALPHA = 0.78f
 private const val GLASS_FALLBACK_SURFACE_ALPHA = 0.94f
-private const val LIGHT_GLASS_OUTLINE_ALPHA = 0.56f
-private const val DARK_GLASS_OUTLINE_ALPHA = 0.72f
 private const val LIGHT_GLASS_HIGHLIGHT_ALPHA = 0.75f
 private const val DARK_GLASS_HIGHLIGHT_ALPHA = 0.38f
 private const val LIGHT_GLASS_SHADOW_ALPHA = 0.10f
 private const val DARK_GLASS_SHADOW_ALPHA = 0.20f
-private const val IDLE_INDICATOR_ALPHA = 0.10f
+private const val IDLE_INDICATOR_ALPHA = 0.06f
 private const val INDICATOR_EXPAND_DURATION_MILLIS = 110
 private const val INDICATOR_COLLAPSE_DURATION_MILLIS = 190

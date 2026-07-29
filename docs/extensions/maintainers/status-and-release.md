@@ -65,12 +65,13 @@ Latest connected phone run, 2026-07-29:
 
 - Device and profile: Pixel_6_Pro API 36 on `emulator-5558`, using the runner's
   `phone` profile.
-- Results: `compact-ltr` passed 17/17, `compact-narrow-ltr` passed 2/2, and
-  `compact-rtl-large` passed 7/7 with `ar-XB` at 320dp width and 200% text.
-- Extension-specific coverage includes provider selection and forms plus the plugin-detail Loading,
-  Failure with retry, Missing, and Content states. It also verifies correct action-target
-  ownership, non-duplicated live-region semantics, non-overlapping 48dp action targets,
-  and complete version, package, service, and certificate information.
+- Results: `compact-ltr` passed 20/20, `compact-narrow-ltr` passed 2/2, and
+  `compact-rtl-large` passed 11/11 with `ar-XB` at 320dp width and 200% text.
+- Extension coverage includes descriptor-driven provider forms, the complete reference-plugin
+  management lifecycle, and distinct Loading, retryable Failure, Missing, and Content states.
+- Accessibility coverage verifies one action owner per plugin row, mirrored 48dp leading and
+  trailing slots, non-duplicated status semantics, complete technical identity, and natural
+  wrapping for long setting choices and single error announcements in RTL at 200% text.
 
 Latest connected tablet run, 2026-07-29:
 

@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -15,15 +16,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -43,14 +46,12 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDirection
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.m3u.business.setting.ExtensionSettingInputError
 import com.m3u.business.setting.ExtensionSettingsState
@@ -408,16 +409,10 @@ private fun ExtensionSettingControl(
 
             ExtensionSettingType.SINGLE_CHOICE -> {
                 SettingLabel(field, bidiFormatter)
-                FlowRow(
-                    modifier = Modifier
-                        .selectableGroup()
-                        .semantics {
-                            inputErrorMessage?.let { message ->
-                                error(message)
-                            }
-                        },
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ExtensionSettingChoiceGroup(
+                    errorMessage = inputErrorMessage,
+                    testTag = "extension-setting-choice-group:$qualifiedKey",
+                    errorTestTag = "extension-setting-choice-error:$qualifiedKey",
                 ) {
                     field.choices.forEach { choice ->
                         val semanticChoiceLabel = extensionSettingSemanticText(
@@ -442,31 +437,15 @@ private fun ExtensionSettingControl(
                             choiceDescription,
                             semanticFieldDescriptionText,
                         ).joinToString(separator = "\n")
-                        FilterChip(
+                        ExtensionSettingChoiceRow(
                             selected = rawValue == choice.value,
                             enabled = !updating,
                             onClick = { onUpdate(choice.value) },
-                            label = {
-                                Text(
-                                    text = bidiFormatter.natural(choice.label),
-                                    maxLines = 3,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            },
-                            modifier = Modifier
-                                .heightIn(min = 48.dp)
-                                .testTag(
-                                    "extension-setting-choice:$qualifiedKey:${choice.value}"
-                                )
-                                .semantics {
-                                    role = Role.RadioButton
-                                    contentDescription = choiceControlDescription
-                                },
+                            label = bidiFormatter.natural(choice.label),
+                            contentDescription = choiceControlDescription,
+                            testTag = "extension-setting-choice:$qualifiedKey:${choice.value}",
                         )
                     }
-                }
-                inputErrorMessage?.let { message ->
-                    ExtensionSettingErrorText(message)
                 }
             }
 
@@ -628,6 +607,81 @@ private fun ExtensionSettingControl(
 }
 
 @Composable
+internal fun ExtensionSettingChoiceGroup(
+    errorMessage: String?,
+    testTag: String,
+    errorTestTag: String,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .selectableGroup()
+            .testTag(testTag),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        content = content,
+    )
+    errorMessage?.let { message ->
+        ExtensionSettingErrorText(
+            message = message,
+            modifier = Modifier.testTag(errorTestTag),
+        )
+    }
+}
+
+@Composable
+internal fun ExtensionSettingChoiceRow(
+    selected: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    label: String,
+    contentDescription: String,
+    testTag: String,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        color = if (selected) {
+            MaterialTheme.colorScheme.secondaryContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceContainerLow
+        },
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 56.dp)
+                .selectable(
+                    selected = selected,
+                    enabled = enabled,
+                    role = Role.RadioButton,
+                    onClick = onClick,
+                )
+                .testTag(testTag)
+                .semantics {
+                    this.contentDescription = contentDescription
+                }
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            RadioButton(
+                selected = selected,
+                onClick = null,
+                enabled = enabled,
+                modifier = Modifier.clearAndSetSemantics {},
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+@Composable
 private fun ExtensionSettingInputError.message(): String = stringResource(
     when (this) {
         ExtensionSettingInputError.REQUIRED -> string.feat_setting_provider_error_required
@@ -641,12 +695,15 @@ private fun ExtensionSettingInputError.message(): String = stringResource(
 )
 
 @Composable
-private fun ExtensionSettingErrorText(message: String) {
+private fun ExtensionSettingErrorText(
+    message: String,
+    modifier: Modifier = Modifier,
+) {
     Text(
         text = message,
         color = MaterialTheme.colorScheme.error,
         style = MaterialTheme.typography.bodySmall,
-        modifier = Modifier.semantics {
+        modifier = modifier.semantics {
             error(message)
             liveRegion = LiveRegionMode.Polite
         },
