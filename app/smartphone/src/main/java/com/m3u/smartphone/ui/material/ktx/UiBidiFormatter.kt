@@ -28,6 +28,14 @@ internal class UiBidiFormatter(isRtlContext: Boolean) {
         value.safeDisplayText(),
         TextDirectionHeuristicsCompat.LTR,
     )
+
+    /**
+     * Sanitizes a standalone technical value without adding bidirectional formatting controls.
+     *
+     * The returned plain text keeps its original character order and full sanitized length, so it
+     * can be displayed with an LTR text direction and copied without hidden formatter markers.
+     */
+    fun standaloneTechnical(value: String): String = value.withoutBidiControls()
 }
 
 internal fun String.safeDisplayText(
