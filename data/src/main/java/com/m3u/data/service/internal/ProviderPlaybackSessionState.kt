@@ -78,6 +78,12 @@ internal class ProviderPlaybackSessionState {
         current.session
     }
 
+    fun session(generation: Long): ProviderPlaybackSession? = synchronized(lock) {
+        activeSession
+            ?.takeIf { owned -> owned.generation == generation }
+            ?.session
+    }
+
     private data class GenerationSession(
         val generation: Long,
         val session: ProviderPlaybackSession,

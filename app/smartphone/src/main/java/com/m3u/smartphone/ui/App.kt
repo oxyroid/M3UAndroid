@@ -70,6 +70,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.testTag
@@ -78,6 +79,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -88,6 +90,10 @@ import com.m3u.business.playlist.ChannelWithProgramme
 import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
 import com.m3u.core.foundation.architecture.preferences.ThemeStyle
 import com.m3u.core.foundation.architecture.preferences.preferenceOf
+import com.m3u.core.foundation.wrapper.Resource
+import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.MediaOpenAction
+import com.m3u.data.database.model.SeriesEpisode
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.tv.model.RemoteDirection
 import com.m3u.i18n.R.string
@@ -99,6 +105,7 @@ import com.m3u.smartphone.ui.common.connect.RemoteControlSheetValue
 import com.m3u.smartphone.ui.common.helper.LocalHelper
 import com.m3u.smartphone.ui.common.helper.Metadata
 import com.m3u.smartphone.ui.material.components.Destination
+import com.m3u.smartphone.ui.material.components.EpisodesBottomSheet
 import com.m3u.smartphone.ui.material.components.SnackHost
 import com.m3u.smartphone.ui.material.components.withEditorialVoice
 import com.m3u.smartphone.ui.material.model.LocalThemeStyle
@@ -126,10 +133,18 @@ fun App(
     viewModel: AppViewModel = hiltViewModel(),
 ) {
     val navController = rememberNavController()
+    val series by viewModel.series.collectAsStateWithLifecycle()
+    val episodes by viewModel.episodes.collectAsStateWithLifecycle()
 
     AppImpl(
         navController = navController,
         channels = viewModel.channels,
+        series = series,
+        episodes = episodes,
+        resolveOpenAction = viewModel::resolveOpenAction,
+        onBrowseSeries = { viewModel.series.value = it },
+        onRefreshSeries = { viewModel.seriesReplay.value += 1 },
+        onDismissSeries = { viewModel.series.value = null },
         onSearchQuery = { query -> viewModel.searchQuery.value = query },
         isRemoteControlSheetVisible = viewModel.isConnectSheetVisible,
         remoteControlSheetValue = viewModel.remoteControlSheetValue,
@@ -151,6 +166,12 @@ fun App(
 private fun AppImpl(
     navController: NavHostController,
     channels: Flow<PagingData<ChannelWithProgramme>>,
+    series: Channel?,
+    episodes: Resource<List<SeriesEpisode>>,
+    resolveOpenAction: suspend (Channel) -> MediaOpenAction,
+    onBrowseSeries: (Channel) -> Unit,
+    onRefreshSeries: () -> Unit,
+    onDismissSeries: () -> Unit,
     onSearchQuery: (String) -> Unit,
     isRemoteControlSheetVisible: Boolean,
     remoteControlSheetValue: RemoteControlSheetValue,
@@ -281,6 +302,19 @@ private fun AppImpl(
             )
         }
     }
+    val onSearchResultClick: (Channel) -> Unit = { channel ->
+        coroutineScope.launch {
+            when (resolveOpenAction(channel)) {
+                MediaOpenAction.BROWSE -> onBrowseSeries(channel)
+                MediaOpenAction.PLAY -> {
+                    helper.play(MediaCommand.Common(channel.id))
+                    navigateToChannel()
+                }
+
+                MediaOpenAction.UNSUPPORTED -> Unit
+            }
+        }
+    }
     val movableAppContent = remember {
         movableContentOf<AppContentArguments> { arguments ->
             AppContent(
@@ -293,6 +327,7 @@ private fun AppImpl(
                 contentPadding = arguments.contentPadding,
                 showBottomEdgeBlur = arguments.showBottomEdgeBlur,
                 showContextualTopBar = arguments.showContextualTopBar,
+                onSearchResultClick = arguments.onSearchResultClick,
                 onNestedDetailVisibilityChanged =
                     arguments.onNestedDetailVisibilityChanged,
             )
@@ -311,6 +346,7 @@ private fun AppImpl(
             isRootPlaylistConfiguration = isRootPlaylistConfiguration,
             isNestedDetailVisible = nestedDetailVisible,
         ),
+        onSearchResultClick = onSearchResultClick,
         onNestedDetailVisibilityChanged = onNestedDetailVisibilityChanged,
     )
 
@@ -448,6 +484,25 @@ private fun AppImpl(
             onRemoteDirection = onRemoteDirection,
             onDismissRequest = onDismissRequest,
         )
+        EpisodesBottomSheet(
+            series = series,
+            episodes = episodes,
+            onEpisodeClick = { episode ->
+                coroutineScope.launch {
+                    series?.let { selectedSeries ->
+                        helper.play(
+                            MediaCommand.Episode(
+                                channelId = selectedSeries.id,
+                                episode = episode,
+                            ),
+                        )
+                        navigateToChannel()
+                    }
+                }
+            },
+            onRefresh = onRefreshSeries,
+            onDismissRequest = onDismissSeries,
+        )
     }
 }
 
@@ -461,6 +516,7 @@ private class AppContentArguments(
     val contentPadding: PaddingValues,
     val showBottomEdgeBlur: Boolean,
     val showContextualTopBar: Boolean,
+    val onSearchResultClick: (Channel) -> Unit,
     val onNestedDetailVisibilityChanged: (Boolean) -> Unit,
 )
 
@@ -476,11 +532,12 @@ private fun AppContent(
     contentPadding: PaddingValues,
     showBottomEdgeBlur: Boolean,
     showContextualTopBar: Boolean,
+    onSearchResultClick: (Channel) -> Unit,
     onNestedDetailVisibilityChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val helper = LocalHelper.current
     val coroutineScope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
     val contextualTitleStyle = if (LocalThemeStyle.current == ThemeStyle.WARM_EDITORIAL) {
         MaterialTheme.typography.titleLarge.withEditorialVoice()
     } else {
@@ -580,10 +637,8 @@ private fun AppContent(
                     recently = false,
                     isVodOrSeriesPlaylist = false,
                     onClick = { channel ->
-                        coroutineScope.launch {
-                            helper.play(MediaCommand.Common(channel.id))
-                            navigateToChannel()
-                        }
+                        focusManager.clearFocus()
+                        onSearchResultClick(channel)
                     },
                     onLongClick = {},
                     reloadThumbnail = { null },

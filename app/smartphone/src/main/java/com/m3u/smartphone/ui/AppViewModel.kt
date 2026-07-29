@@ -15,7 +15,14 @@ import androidx.paging.insertHeaderItem
 import androidx.paging.map as pagingMap
 import androidx.work.WorkManager
 import com.m3u.business.playlist.ChannelWithProgramme
+import com.m3u.core.foundation.wrapper.Resource
+import com.m3u.core.foundation.wrapper.mapResource
+import com.m3u.core.foundation.wrapper.resource
 import com.m3u.data.api.TvApiDelegate
+import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.MediaOpenAction
+import com.m3u.data.database.model.SeriesEpisode
+import com.m3u.data.database.model.openAction
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.extension.ExtensionContributionRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
@@ -30,7 +37,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -113,6 +122,27 @@ class AppViewModel @Inject constructor(
             )
         }
     }.cachedIn(viewModelScope)
+
+    val series = MutableStateFlow<Channel?>(null)
+    val seriesReplay = MutableStateFlow(0)
+    val episodes: StateFlow<Resource<List<SeriesEpisode>>> = series
+        .combine(seriesReplay) { selectedSeries, _ -> selectedSeries }
+        .flatMapLatest { selectedSeries ->
+            if (selectedSeries == null) {
+                flow { }
+            } else {
+                resource { playlistRepository.readEpisodesOrThrow(selectedSeries) }
+                    .mapResource { it }
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Lazily,
+            initialValue = Resource.Loading,
+        )
+
+    suspend fun resolveOpenAction(channel: Channel): MediaOpenAction =
+        channel.openAction(playlistRepository.get(channel.playlistUrl))
 
     private fun refreshProgrammes() {
         viewModelScope.launch {

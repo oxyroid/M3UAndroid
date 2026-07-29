@@ -6,8 +6,10 @@ This page defines what may ship from the current branch. Implementation instruct
 
 ## Release boundary
 
-- The built-in Emby/Jellyfin extension follows the normal product release gate.
+- The built-in Emby/Jellyfin extension follows the normal smartphone product release gate for
+  phone and tablet layouts.
 - External APK extensions remain an opt-in developer preview behind the developer switch.
+- TV exposes and invokes no extension capability; it supports only M3U and Xtream.
 - Keep the switch until the external-opening gates are green and every unresolved decision in the
   published [external APK threat model](threat-model.md) has a recorded outcome.
 
@@ -17,14 +19,15 @@ This page defines what may ship from the current branch. Implementation instruct
 | --- | --- | --- |
 | Contract and runtime | Typed, versioned Hook contracts; each call receives only the current Hook's declared and approved capabilities; per-extension and host-wide admission caps; one deadline across preparation, queueing, execution, response validation, and broker requests; cumulative broker request-count, encoded request-byte, and encoded response-byte limits; cancellation, health, and failure isolation | `WireGoldenFixtureTest`, `ExtensionContractTest`, `ExtensionRuntimeTest`, `InvocationBudgetPropagationTest`, and `ExtensionHostBridgeTest`. One serialized conformance suite runs against the built-in runtime, SDK backend, and standalone reference APK. |
 | SDK distribution | `1.0.0-alpha01` publishes API, Android protocol, typed SDK, sources, conformance code, and golden fixtures into a versioned Maven repository zip with a SHA-256 file. Hello is an independent Gradle consumer project that resolves the SDK group only from that repository. | `verifyExtensionSdkBundle`, `verifyExtensionSdkRepository`, and `testing/bin/verify-extension-sdk-distribution.sh`. Both workflows are configured to upload the zip and checksum; the first Actions run is still required as remote evidence. |
-| Built-in provider | Emby and Jellyfin are selectable variants of one built-in extension; the hidden automatic kind remains only as a compatibility value for existing accounts and is not offered for new subscriptions | `EmbyCompatibleProviderIntegrationTest`, `EmbyCompatibleProviderLocalizationTest`, and `SubscriptionProviderRepositoryIntegrationTest` |
+| Built-in provider | Emby and Jellyfin are selectable variants of one built-in extension in the smartphone app | `EmbyCompatibleProviderIntegrationTest`, `EmbyCompatibleProviderLocalizationTest`, and `SubscriptionProviderRepositoryIntegrationTest` |
+| Complete provider contract | Every built-in and external provider implements `Discover`, `Validate`, `Refresh`, `Browse`, `ResolvePlayback`, `UpdatePlayback`, and `ClosePlayback`. `Browse` exposes bounded root/child pages with extensible media kinds and stable references. `UpdatePlayback` reports bounded session events. | `SubscriptionProviderContractsTest`, `ExtensionContractTest`, `ExtensionNetworkOriginContractTest`, `WireGoldenFixtureTest`, and provider product-flow tests |
 | Provider credentials | External login returns a one-time host receipt. Post-validation scopes resolve references only into requests for the approved origin; the host does not directly serialize resolved values back to the extension. | `HostNetworkBrokerSecurityTest`, `ExtensionHostBridgeTest`, `ProviderBrokerScopeStoreTest`, and `CredentialVaultTest` |
 | General Hook network access | Settings, search, metadata, EPG, and background Hooks can use the host broker when that Hook declares and receives `network`. Search/metadata/EPG use an account scope when their request has an account; other calls use approved manifest and explicitly saved setting origins. Discover stays offline. | `ExtensionNetworkOriginContractTest`, `ExtensionBrokerScopeRuntimeTest`, `ExtensionHookBrokerScopeStoreTest`, and `ExtensionHostBridgeTest` |
 | Provider persistence | New and restored subscriptions use `DataSource.Provider`; generic provider accounts, backup without tokens, reauthentication state, WorkManager refresh, and restart session cleanup share one path | Migration, provider repository, worker, restore, and session cleanup tests |
 | External lifecycle | Discovery, identity and certificate trust, review-bound enable/reauthorize tokens, enable/disable, capability and fixed-origin authorization, reconnect, clear data, diagnostics, file-backed large-payload transfer, and cancellation | Transport tests, `ExtensionPluginRepositoryLifecycleTest`, and `ExternalExtensionIpcTest` |
 | Extension settings | Manifest and dynamic schemas, ordinary values, encrypted secret handles, network-origin approval, and review-bound field edits. Dynamic state is bound to one runtime registration and stays hidden after failure, disablement, or replacement until the current registration verifies it. | `ExtensionSettingsRepositoryTest`, `ExtensionPluginRepositoryLifecycleTest`, and `ExtensionHookBrokerScopeProviderTest` |
-| External reference provider | A standalone reference APK crosses Binder/PFD for rejected and successful login, subscription, Room import, WorkManager refresh, credential-backed playback resolve, real PlayerManager/Media3 readiness, and session close. It uses the same repository as built-in providers. | `ExternalProviderEndToEndTest` |
-| Provider UI | Phone and TV use descriptor-driven provider lists and forms; Emby and Jellyfin remain separate choices, while external choices retain visible provider identity | `SubscriptionSourceSelectionTest`, `TvProviderAccessibilityTest`, and `ResourceContractTest`; connected UI tests currently require an explicit device run |
+| External reference provider | A standalone reference APK crosses Binder/PFD for rejected and successful login, subscription, Room import, WorkManager refresh, media browse, credential-backed playback resolve/update, real PlayerManager/Media3 readiness, and session close. It uses the same repository as built-in providers. | `ExternalProviderEndToEndTest` |
+| Provider UI | The smartphone app's phone and tablet layouts use descriptor-driven provider lists and forms; Emby and Jellyfin remain separate choices, while external choices retain visible provider identity | `SubscriptionSourceSelectionTest` and `ResourceContractTest`; connected UI tests currently require an explicit device run |
 | Other Hooks | Settings, search, metadata enrichment, and EPG refresh have typed SDK handlers and product callers | SDK, contribution repository/importer, and IPC tests |
 | Background task | Manifest task declarations are reconciled into periodic WorkManager jobs when an extension is enabled, reauthorized, or restored. Disablement or missing grants cancels them; network tasks use a connected constraint. | `ExtensionBackgroundTaskSchedulerTest`, Worker tests, and `ExtensionPluginRepositoryLifecycleTest` |
 
@@ -33,13 +36,13 @@ This page defines what may ship from the current branch. Implementation instruct
 A CI gate is run by `.github/workflows/android.yml`. A connected UI check is repeatable, but
 currently needs an explicit device run. A device check is a recorded one-off run.
 `ResourceContractTest` validates resource structure, not native-language quality.
-CI syntax-checks the phone matrix runner and compiles the data, phone, and TV connected-test
+CI syntax-checks the smartphone matrix runner and compiles the data and smartphone connected-test
 harnesses. Its external-extension gate starts and health-checks the local reference server, then
 runs `HostileExternalExtensionIpcTest`, `ExternalExtensionConformanceIpcTest`,
 `ExternalProviderEndToEndTest`, and `DebugDefaultLibraryBootstrapTest` with the standalone
 reference APK on the `hostileApi34` build-managed device. The reference server supplies a
-deterministic PCM WAV fixture for the real-player check. This gate does not run the phone, tablet,
-or TV UI matrices.
+deterministic PCM WAV fixture for the real-player check. This gate does not run the phone or tablet
+UI matrices.
 
 Latest hostile IPC run, 2026-07-29:
 
@@ -74,8 +77,7 @@ Latest external provider production-path run, 2026-07-29:
   completed with the same two-channel result.
 - Playback path: the real `PlayerManager` and Media3 reached `STATE_READY` with the deterministic
   WAV fixture. Both explicit close and player release closed their server-side sessions.
-- Not covered: the full external-provider flow on TV and cold-start recovery of an open persisted
-  playback session.
+- Not covered: cold-start recovery of an open persisted playback session.
 
 Latest connected phone run, 2026-07-29:
 
@@ -99,11 +101,6 @@ Latest connected tablet run, 2026-07-29:
   external-plugin management lifecycle with the Settings side rail present and selected.
   The medium case also verifies the single-pane header, back navigation, and its 48dp touch target.
 
-The latest TV evidence remains the 2026-07-28 API 34 run at 1280×720:
-`TvProviderAccessibilityTest` passed 1/1 in English LTR and 1/1 in actual `ar-XB` RTL with
-the rail on the right, including DPad entry, provider-form open/close, accessible naming,
-and focus return to Emby. TV was not rerun as part of the phone command below.
-
 Repeat the phone matrix on a disposable, booted API 33 or newer phone emulator with:
 
 ```shell
@@ -119,11 +116,11 @@ settings and removes the test packages when it finishes.
 ## Before shipping the built-in provider path
 
 - Run the complete migration chain from every supported starting schema through the current
-  database version, currently 21→26.
+  database version, currently 21→22.
 - Run M3U, EPG, Xtream, ordinary playback, and DLNA regressions after provider or playback changes.
-- Run the phone, tablet, and TV connected UI checks with the requested configuration asserted by
-  the test: LTR and RTL, large text, compact and ≥600dp layouts, provider selection/forms, and TV
-  DPad return focus. Record the device or AVD, locale, font scale, width, command, and result.
+- Run the phone and tablet connected UI checks with the requested configuration asserted by the
+  test: LTR and RTL, large text, compact and ≥600dp layouts, and provider selection/forms. Record
+  the device or AVD, locale, font scale, width, command, and result.
 - Treat `ResourceContractTest` as a structural gate for keys, placeholders, plurals, and bidi
   controls. Native-speaker review of provider, sign-in, authorization, error, and destructive
   action copy is still required before a locale is called complete.
@@ -135,14 +132,11 @@ settings and removes the test packages when it finishes.
   [external APK threat model](threat-model.md#what-remains-open), including HTTP/LAN policy,
   resolved-address handling, approved-server cooperation, Hook disclosure, and package admission.
 - Keep `ExternalProviderEndToEndTest` green for rejected login, subscription, WorkManager refresh,
-  real-player readiness, and session close.
-- Add the same complete external-provider flow on TV. The phone production-path gate does not prove
-  the TV player and focus lifecycle.
+  media browse, playback updates, real-player readiness, and session close.
 - Add a cold-start device test that leaves an external playback session open, restarts the host,
   and verifies idempotent remote close plus local session removal.
-- Add CI-runnable connected UI automation for external authorization, reauthorization, settings,
-  error states, destructive confirmations, and TV focus restoration. The built-in provider DPad
-  test does not satisfy this gate.
+- Add CI-runnable smartphone UI automation for external authorization, reauthorization, settings,
+  error states, and destructive confirmations on phone and tablet layouts.
 - Keep the process-level hostile fixture green for blocked or late calls, ignored cancellation,
   process death, malformed or oversized output, retained broker access, stale signer trust, and
   extension-ID collision.

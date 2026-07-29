@@ -18,8 +18,7 @@ internal object BackupOrRestoreContracts {
     }
 
     fun unwrapProviderAccount(wrapped: String): String? = wrapped.unwrap("A,")
-    fun unwrapPlaybackReference(wrapped: String): String? =
-        wrapped.unwrap("Q,") ?: wrapped.unwrap("R,")
+    fun unwrapPlaybackReference(wrapped: String): String? = wrapped.unwrap("Q,")
 
     private fun String.unwrap(prefix: String): String? {
         val trimmed = trim()

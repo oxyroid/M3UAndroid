@@ -12,7 +12,7 @@ class ExtensionProtocolTest {
     @Test
     fun `malformed wire contracts are classified as incompatible`() {
         assertFailsWith<ExtensionTransportIncompatibleException> {
-            decodeExtensionHandshake("""{"transportVersion":4""", json)
+            decodeExtensionHandshake("""{"transportVersion":1""", json)
         }
         assertFailsWith<ExtensionTransportIncompatibleException> {
             decodeExtensionManifest("""{"id":"missing-required-fields"}""", json)

@@ -15,6 +15,7 @@ import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.ProviderAccount
 import com.m3u.data.database.model.ProviderCredentialEntity
+import com.m3u.data.database.model.SeriesEpisode
 import com.m3u.data.parser.m3u.M3UParserImpl
 import com.m3u.data.parser.xtream.XtreamChannelInfo
 import com.m3u.data.parser.xtream.XtreamData
@@ -34,6 +35,7 @@ import com.m3u.data.repository.provider.DiscoveredSubscriptionProvider
 import com.m3u.data.repository.provider.ProviderAccountSummary
 import com.m3u.data.repository.provider.ProviderLifecycleCoordinator
 import com.m3u.data.repository.provider.ProviderPlaybackCloseReason
+import com.m3u.data.repository.provider.ProviderPlaybackEvent
 import com.m3u.data.repository.provider.ProviderPlaybackSession
 import com.m3u.data.repository.provider.ProviderPlaybackSource
 import com.m3u.data.repository.provider.ProviderSessionCleanupResult
@@ -43,6 +45,8 @@ import com.m3u.data.repository.provider.SubscriptionProviderRepository
 import com.m3u.data.worker.hashedWorkTag
 import com.m3u.data.worker.playlistWorkTag
 import com.m3u.extension.api.security.CredentialHandle
+import com.m3u.extension.api.subscription.PlaybackPreferences
+import com.m3u.extension.api.subscription.PlaybackReference
 import com.m3u.extension.api.subscription.SubscriptionRefreshReason
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
@@ -518,7 +522,7 @@ class PlaylistRepositoryProviderRestoreTest {
             val providerPlaylist = Playlist(
                 title = "Restored provider",
                 url = providerAccount.playlistUrl,
-                source = DataSource.Jellyfin,
+                source = DataSource.Provider,
             )
             val providerChannels = List(PROVIDER_CHANNEL_BATCH_SIZE) { index ->
                 Channel(
@@ -960,7 +964,20 @@ class PlaylistRepositoryProviderRestoreTest {
             reason: SubscriptionRefreshReason,
         ): ProviderSubscriptionResult = unused()
 
-        override suspend fun resolvePlayback(channelId: Int): ProviderPlaybackSource? = unused()
+        override suspend fun browseEpisodes(seriesChannelId: Int): List<SeriesEpisode> = unused()
+
+        override suspend fun resolvePlayback(
+            channelId: Int,
+            referenceOverride: PlaybackReference?,
+            preferences: PlaybackPreferences,
+        ): ProviderPlaybackSource? = unused()
+
+        override suspend fun updatePlayback(
+            session: ProviderPlaybackSession,
+            event: ProviderPlaybackEvent,
+            positionTicks: Long,
+            isPaused: Boolean,
+        ): Boolean = unused()
 
         override suspend fun closePlayback(
             session: ProviderPlaybackSession,

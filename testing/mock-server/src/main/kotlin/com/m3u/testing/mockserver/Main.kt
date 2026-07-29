@@ -3,6 +3,7 @@ package com.m3u.testing.mockserver
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.call
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
@@ -33,6 +34,12 @@ private const val DEFAULT_PORT = 8080
 private const val DEFAULT_USERNAME = "m3u"
 private const val DEFAULT_PASSWORD = "m3u"
 private const val EMBY_ACCESS_TOKEN = "mock-emby-access-token"
+private const val EMBY_SERVER_ID = "mock-server-id"
+private const val EMBY_USER_ID = "mock-user-id"
+private const val EMBY_VOD_SERIES_ID = "mock.series.orbit"
+private const val EMBY_VOD_EPISODE_ID = "mock.episode.orbit.s01e01"
+private const val EMBY_VOD_FIELDS =
+    "Overview,Genres,ProductionYear,SeriesName,ParentIndexNumber,IndexNumber"
 private const val REFERENCE_PASSWORD = "reference-password"
 private const val REFERENCE_ACCESS_TOKEN = "mock-reference-access-token"
 private const val REFERENCE_SERVER_ID = "reference-server-id"
@@ -46,6 +53,14 @@ private const val REFERENCE_WAV_TONE_FREQUENCY = 500
 private val referenceChannelIds = setOf("reference.news", "reference.sports")
 private val referenceSessions = ConcurrentHashMap<String, ReferenceSession>()
 private val referenceWavFixture by lazy(::createReferenceWavFixture)
+private val embyVodPlayableItemIds = setOf(
+    "mock.movie.harbor",
+    "mock.movie.signal",
+    EMBY_VOD_EPISODE_ID,
+    "mock.episode.orbit.s01e02",
+    "mock.episode.orbit.s02e01",
+)
+private val embyVodSessions = ConcurrentHashMap<String, EmbyVodSession>()
 
 private val json = Json {
     prettyPrint = true
@@ -125,10 +140,58 @@ internal fun Application.mockServerModule() {
                 playSessionId = "reference-play-session-$itemId",
                 liveStreamId = "reference-live-stream-$itemId",
                 closed = false,
+                closeCount = 0,
+                lastCloseReason = null,
+                updateCount = 0,
+                lastPositionTicks = 0L,
+                lastEvent = null,
             )
             referenceSessions[session.playSessionId] = session
             call.respondText(
                 text = json.encodeToString(referencePlayback(call.baseUrl(), session)),
+                contentType = ContentType.Application.Json,
+            )
+        }
+
+        post("/reference-provider/sessions/update") {
+            if (!call.referencePlaybackAuthenticated()) {
+                call.respond(HttpStatusCode.Unauthorized, "missing reference playback headers")
+                return@post
+            }
+            if (!call.isJsonRequest()) {
+                call.respond(HttpStatusCode.BadRequest, "reference update must be JSON")
+                return@post
+            }
+            val update = call.receiveJsonObjectOrNull().toReferenceSessionUpdate()
+            if (update == null) {
+                call.respond(HttpStatusCode.BadRequest, "invalid reference update payload")
+                return@post
+            }
+            val session = referenceSessions[update.playSessionId]
+            if (
+                session == null ||
+                session.itemId != update.itemId ||
+                session.liveStreamId != update.liveStreamId
+            ) {
+                call.respond(HttpStatusCode.NotFound, "reference session was not found")
+                return@post
+            }
+            if (session.closed) {
+                call.respond(HttpStatusCode.Conflict, "reference session is already closed")
+                return@post
+            }
+            if (!update.hasConsistentPauseState()) {
+                call.respond(HttpStatusCode.BadRequest, "invalid reference update state")
+                return@post
+            }
+            val updatedSession = session.copy(
+                updateCount = session.updateCount + 1,
+                lastPositionTicks = update.positionTicks,
+                lastEvent = update.event,
+            )
+            referenceSessions[session.playSessionId] = updatedSession
+            call.respondText(
+                text = json.encodeToString(referenceSessionUpdateResult(updatedSession)),
                 contentType = ContentType.Application.Json,
             )
         }
@@ -165,7 +228,11 @@ internal fun Application.mockServerModule() {
                 call.respond(HttpStatusCode.NotFound, "reference session was not found")
                 return@post
             }
-            referenceSessions[playSessionId] = session.copy(closed = true)
+            referenceSessions[playSessionId] = session.copy(
+                closed = true,
+                closeCount = session.closeCount + 1,
+                lastCloseReason = reason,
+            )
             call.respondText(
                 text = json.encodeToString(buildJsonObject { put("closed", true) }),
                 contentType = ContentType.Application.Json,
@@ -272,15 +339,130 @@ internal fun Application.mockServerModule() {
             )
         }
 
-        get("/Items/{item}/PlaybackInfo") {
-            if (!call.embyAuthenticated()) {
-                call.respond(HttpStatusCode.Unauthorized, "missing media server token")
+        get("/Users/{user}/Items") {
+            val userId = call.parameters["user"].orEmpty()
+            if (!call.embyVodAuthenticated(userId)) {
+                call.respond(HttpStatusCode.Unauthorized, "invalid Emby VOD user")
                 return@get
             }
-            val itemId = call.parameters["item"].orEmpty()
+            val pagination = call.embyBrowsePagination(
+                expectedParameters = mapOf(
+                    "Recursive" to "true",
+                    "IncludeItemTypes" to "Movie,Series",
+                    "EnableImages" to "true",
+                    "EnableImageTypes" to "Primary",
+                    "Fields" to EMBY_VOD_FIELDS,
+                    "SortBy" to "SortName,ProductionYear",
+                    "SortOrder" to "Ascending",
+                ),
+            )
+            val items = embyVodRootItems()
+            if (pagination == null || pagination.startIndex > items.size) {
+                call.respond(HttpStatusCode.BadRequest, "invalid Emby VOD browse query")
+                return@get
+            }
             call.respondText(
-                text = json.encodeToString(embyPlaybackInfo(call.baseUrl(), itemId)),
-                contentType = ContentType.Application.Json
+                text = json.encodeToString(
+                    embyContentPage(
+                        items = items,
+                        pagination = pagination,
+                    ),
+                ),
+                contentType = ContentType.Application.Json,
+            )
+        }
+
+        get("/Shows/{series}/Episodes") {
+            if (!call.embyVodAuthenticated(call.request.queryParameters["UserId"])) {
+                call.respond(HttpStatusCode.Unauthorized, "invalid Emby episode user")
+                return@get
+            }
+            if (call.parameters["series"] != EMBY_VOD_SERIES_ID) {
+                call.respond(HttpStatusCode.NotFound, "unknown Emby series")
+                return@get
+            }
+            val pagination = call.embyBrowsePagination(
+                expectedParameters = mapOf(
+                    "UserId" to EMBY_USER_ID,
+                    "EnableImages" to "true",
+                    "EnableImageTypes" to "Primary",
+                    "Fields" to EMBY_VOD_FIELDS,
+                ),
+            )
+            val items = embyVodEpisodes()
+            if (pagination == null || pagination.startIndex > items.size) {
+                call.respond(HttpStatusCode.BadRequest, "invalid Emby episode browse query")
+                return@get
+            }
+            call.respondText(
+                text = json.encodeToString(
+                    embyContentPage(
+                        items = items,
+                        pagination = pagination,
+                    ),
+                ),
+                contentType = ContentType.Application.Json,
+            )
+        }
+
+        post("/Items/{item}/PlaybackInfo") {
+            val itemId = call.parameters["item"].orEmpty()
+            if (!call.embyAuthenticated()) {
+                call.respond(HttpStatusCode.Unauthorized, "invalid Emby playback user")
+                return@post
+            }
+            if (call.request.queryParameters.names().isNotEmpty()) {
+                call.respond(HttpStatusCode.BadRequest, "Emby playback query must be empty")
+                return@post
+            }
+            val livePlayback = itemId !in embyVodPlayableItemIds
+            if (itemId == EMBY_VOD_SERIES_ID) {
+                call.respond(HttpStatusCode.NotFound, "series is not directly playable")
+                return@post
+            }
+            val body = call.receiveJsonObjectOrNull()
+            if (
+                !call.isJsonRequest() ||
+                !body.isValidEmbyPlaybackInfoRequest(
+                    expectedAutoOpenLiveStream = livePlayback,
+                )
+            ) {
+                call.respond(HttpStatusCode.BadRequest, "invalid Emby playback payload")
+                return@post
+            }
+            if (livePlayback) {
+                call.respondText(
+                    text = json.encodeToString(embyPlaybackInfo(call.baseUrl(), itemId)),
+                    contentType = ContentType.Application.Json,
+                )
+                return@post
+            }
+            val requestedMediaSourceId = body?.string("MediaSourceId")
+            val expectedMediaSourceId = embyVodMediaSourceId(itemId)
+            if (
+                requestedMediaSourceId != null &&
+                requestedMediaSourceId != expectedMediaSourceId
+            ) {
+                call.respond(HttpStatusCode.BadRequest, "unknown Emby VOD media source")
+                return@post
+            }
+            val session = EmbyVodSession(
+                itemId = itemId,
+                mediaSourceId = expectedMediaSourceId,
+                playSessionId = embyVodPlaySessionId(itemId),
+                state = EmbyVodSessionState.Resolved,
+                startCount = 0,
+                progressCount = 0,
+                stopCount = 0,
+                lastPositionTicks = 0L,
+                isPaused = false,
+                playMethod = null,
+                lastEventName = null,
+            )
+            embyVodSessions[session.playSessionId] = session
+            call.respondText(
+                text = json.encodeToString(embyVodPlaybackInfo(session)),
+                contentType = ContentType.Application.Json,
             )
         }
 
@@ -295,12 +477,156 @@ internal fun Application.mockServerModule() {
             )
         }
 
+        get("/Videos/{item}/stream") {
+            val itemId = call.parameters["item"].orEmpty()
+            if (!call.embyVodAuthenticatedFromHeader()) {
+                call.respond(HttpStatusCode.Unauthorized, "invalid Emby VOD stream user")
+                return@get
+            }
+            if (itemId !in embyVodPlayableItemIds) {
+                call.respond(HttpStatusCode.NotFound, "unknown Emby VOD item")
+                return@get
+            }
+            val expectedMediaSourceId = embyVodMediaSourceId(itemId)
+            val expectedPlaySessionId = embyVodPlaySessionId(itemId)
+            if (
+                !call.hasExactQueryParameters(
+                    expected = mapOf(
+                        "static" to "true",
+                        "MediaSourceId" to expectedMediaSourceId,
+                        "PlaySessionId" to expectedPlaySessionId,
+                    ),
+                ) ||
+                embyVodSessions[expectedPlaySessionId]?.itemId != itemId
+            ) {
+                call.respond(HttpStatusCode.BadRequest, "invalid Emby VOD stream reference")
+                return@get
+            }
+            call.respondBytes(
+                bytes = referenceWavFixture,
+                contentType = ContentType.parse("audio/wav"),
+            )
+        }
+
+        post("/Sessions/Playing") {
+            if (!call.embyAuthenticated()) {
+                call.respond(HttpStatusCode.Unauthorized, "missing media server token")
+                return@post
+            }
+            val body = call.receiveJsonObjectOrNull()
+            if (!body.targetsKnownEmbyVodSession()) {
+                call.respond(HttpStatusCode.NoContent)
+                return@post
+            }
+            if (!call.embyVodAuthenticatedFromHeader()) {
+                call.respond(HttpStatusCode.Unauthorized, "invalid Emby playback user")
+                return@post
+            }
+            val update = body?.toEmbyPlaybackUpdate(requireEventName = false)
+            val session = update?.let { embyVodSessions[it.playSessionId] }
+            if (
+                !call.isJsonRequest() ||
+                update == null ||
+                session == null ||
+                !update.matches(session) ||
+                session.state != EmbyVodSessionState.Resolved
+            ) {
+                call.respond(HttpStatusCode.BadRequest, "invalid Emby playback start")
+                return@post
+            }
+            embyVodSessions[session.playSessionId] = session.copy(
+                state = EmbyVodSessionState.Playing,
+                startCount = session.startCount + 1,
+                lastPositionTicks = update.positionTicks,
+                isPaused = update.isPaused,
+                playMethod = update.playMethod,
+            )
+            call.respond(HttpStatusCode.NoContent)
+        }
+
+        post("/Sessions/Playing/Progress") {
+            if (!call.embyAuthenticated()) {
+                call.respond(HttpStatusCode.Unauthorized, "missing media server token")
+                return@post
+            }
+            val body = call.receiveJsonObjectOrNull()
+            if (!body.targetsKnownEmbyVodSession()) {
+                call.respond(HttpStatusCode.NoContent)
+                return@post
+            }
+            if (!call.embyVodAuthenticatedFromHeader()) {
+                call.respond(HttpStatusCode.Unauthorized, "invalid Emby playback user")
+                return@post
+            }
+            val update = body?.toEmbyPlaybackUpdate(requireEventName = true)
+            val session = update?.let { embyVodSessions[it.playSessionId] }
+            if (
+                !call.isJsonRequest() ||
+                update == null ||
+                session == null ||
+                !update.matches(session) ||
+                session.state != EmbyVodSessionState.Playing ||
+                !update.hasConsistentPauseState()
+            ) {
+                call.respond(HttpStatusCode.BadRequest, "invalid Emby playback progress")
+                return@post
+            }
+            embyVodSessions[session.playSessionId] = session.copy(
+                progressCount = session.progressCount + 1,
+                lastPositionTicks = update.positionTicks,
+                isPaused = update.isPaused,
+                playMethod = update.playMethod,
+                lastEventName = update.eventName,
+            )
+            call.respond(HttpStatusCode.NoContent)
+        }
+
         post("/Sessions/Playing/Stopped") {
             if (!call.embyAuthenticated()) {
                 call.respond(HttpStatusCode.Unauthorized, "missing media server token")
                 return@post
             }
+            val body = call.receiveJsonObjectOrNull()
+            if (body.targetsKnownEmbyVodSession()) {
+                if (!call.embyVodAuthenticatedFromHeader()) {
+                    call.respond(HttpStatusCode.Unauthorized, "invalid Emby playback user")
+                    return@post
+                }
+                val stopped = body?.toEmbyPlaybackStopped()
+                val session = stopped?.let { embyVodSessions[it.playSessionId] }
+                if (
+                    !call.isJsonRequest() ||
+                    stopped == null ||
+                    session == null ||
+                    !stopped.matches(session) ||
+                    session.state != EmbyVodSessionState.Playing
+                ) {
+                    call.respond(HttpStatusCode.BadRequest, "invalid Emby playback stop")
+                    return@post
+                }
+                embyVodSessions[session.playSessionId] = session.copy(
+                    state = EmbyVodSessionState.Stopped,
+                    stopCount = session.stopCount + 1,
+                    lastPositionTicks = stopped.positionTicks,
+                )
+            }
             call.respond(HttpStatusCode.NoContent)
+        }
+
+        get("/mock/emby/sessions/{session}") {
+            if (!call.embyVodAuthenticatedFromHeader()) {
+                call.respond(HttpStatusCode.Unauthorized, "invalid Emby playback user")
+                return@get
+            }
+            val session = embyVodSessions[call.parameters["session"].orEmpty()]
+            if (session == null) {
+                call.respond(HttpStatusCode.NotFound, "Emby VOD session was not found")
+                return@get
+            }
+            call.respondText(
+                text = json.encodeToString(embyVodSessionState(session)),
+                contentType = ContentType.Application.Json,
+            )
         }
 
         post("/LiveStreams/Close") {
@@ -347,12 +673,23 @@ internal fun Application.mockServerModule() {
             )
         }
 
-        get("/jellyfin/Items/{item}/PlaybackInfo") {
+        post("/jellyfin/Items/{item}/PlaybackInfo") {
             if (!call.jellyfinAuthenticated()) {
                 call.respond(HttpStatusCode.Unauthorized, "missing media server token")
-                return@get
+                return@post
             }
             val itemId = call.parameters["item"].orEmpty()
+            val body = call.receiveJsonObjectOrNull()
+            if (
+                call.request.queryParameters.names().isNotEmpty() ||
+                !call.isJsonRequest() ||
+                !body.isValidEmbyPlaybackInfoRequest(
+                    expectedAutoOpenLiveStream = true,
+                )
+            ) {
+                call.respond(HttpStatusCode.BadRequest, "invalid Jellyfin playback payload")
+                return@post
+            }
             call.respondText(
                 text = json.encodeToString(
                     embyPlaybackInfo("${call.baseUrl()}/jellyfin", itemId)
@@ -485,15 +822,90 @@ private data class ReferenceSession(
     val playSessionId: String,
     val liveStreamId: String,
     val closed: Boolean,
+    val closeCount: Int,
+    val lastCloseReason: String?,
+    val updateCount: Int,
+    val lastPositionTicks: Long,
+    val lastEvent: String?,
 )
 
-private fun io.ktor.server.application.ApplicationCall.xtreamAuth(): XtreamAuth {
+private data class ReferenceSessionUpdate(
+    val itemId: String,
+    val playSessionId: String,
+    val liveStreamId: String,
+    val event: String,
+    val positionTicks: Long,
+    val playMethod: String,
+    val isPaused: Boolean,
+)
+
+private data class EmbyPagination(
+    val startIndex: Int,
+    val limit: Int,
+)
+
+private enum class EmbyVodSessionState(val wireValue: String) {
+    Resolved("resolved"),
+    Playing("playing"),
+    Stopped("stopped"),
+}
+
+private data class EmbyVodSession(
+    val itemId: String,
+    val mediaSourceId: String,
+    val playSessionId: String,
+    val state: EmbyVodSessionState,
+    val startCount: Int,
+    val progressCount: Int,
+    val stopCount: Int,
+    val lastPositionTicks: Long,
+    val isPaused: Boolean,
+    val playMethod: String?,
+    val lastEventName: String?,
+)
+
+private data class EmbyPlaybackUpdate(
+    val itemId: String,
+    val mediaSourceId: String,
+    val playSessionId: String,
+    val positionTicks: Long,
+    val isPaused: Boolean,
+    val playMethod: String,
+    val eventName: String?,
+) {
+    fun matches(session: EmbyVodSession): Boolean =
+        itemId == session.itemId &&
+            mediaSourceId == session.mediaSourceId &&
+            playSessionId == session.playSessionId &&
+            (session.playMethod == null || playMethod == session.playMethod)
+
+    fun hasConsistentPauseState(): Boolean = when (eventName) {
+        "pause" -> isPaused
+        "unpause" -> !isPaused
+        "timeupdate" -> true
+        else -> false
+    }
+}
+
+private data class EmbyPlaybackStopped(
+    val itemId: String,
+    val mediaSourceId: String,
+    val playSessionId: String,
+    val positionTicks: Long,
+) {
+    fun matches(session: EmbyVodSession): Boolean =
+        itemId == session.itemId &&
+            mediaSourceId == session.mediaSourceId &&
+            playSessionId == session.playSessionId
+}
+
+private fun ApplicationCall.xtreamAuth(): XtreamAuth {
     val username = parameters["username"] ?: request.queryParameters["username"]
     val password = parameters["password"] ?: request.queryParameters["password"]
     return XtreamAuth(username == DEFAULT_USERNAME && password == DEFAULT_PASSWORD)
 }
 
-private fun io.ktor.server.application.ApplicationCall.baseUrl(): String {
+private fun ApplicationCall.baseUrl(): String {
     val forwardedProto = request.headers["X-Forwarded-Proto"]
     val scheme = forwardedProto ?: request.local.scheme
     val host = request.host()
@@ -502,27 +914,304 @@ private fun io.ktor.server.application.ApplicationCall.baseUrl(): String {
     return if (includePort) "$scheme://$host:$port" else "$scheme://$host"
 }
 
-private fun io.ktor.server.application.ApplicationCall.embyIdentityAuthenticated(): Boolean =
+private fun ApplicationCall.embyIdentityAuthenticated(): Boolean =
     request.headers["Authorization"]?.startsWith("Emby ") == true &&
         request.headers["X-Emby-Authorization"] == null
 
-private fun io.ktor.server.application.ApplicationCall.embyAuthenticated(): Boolean =
+private fun ApplicationCall.embyAuthenticated(): Boolean =
     embyIdentityAuthenticated() && request.headers["X-Emby-Token"] == EMBY_ACCESS_TOKEN
 
-private fun io.ktor.server.application.ApplicationCall.jellyfinIdentityAuthenticated(): Boolean =
+private fun ApplicationCall.embyVodAuthenticated(userId: String?): Boolean =
+    userId == EMBY_USER_ID && embyVodAuthenticatedFromHeader()
+
+private fun ApplicationCall.embyVodAuthenticatedFromHeader(): Boolean =
+    embyAuthenticated() &&
+        "UserId=\"$EMBY_USER_ID\"" in request.headers["Authorization"].orEmpty()
+
+private fun ApplicationCall.embyBrowsePagination(
+    expectedParameters: Map<String, String>,
+): EmbyPagination? {
+    val startIndexValue = request.queryParameters["StartIndex"] ?: return null
+    val limitValue = request.queryParameters["Limit"] ?: return null
+    if (
+        !hasExactQueryParameters(
+            expected = expectedParameters + mapOf(
+                "StartIndex" to startIndexValue,
+                "Limit" to limitValue,
+            ),
+        )
+    ) {
+        return null
+    }
+    val startIndex = startIndexValue.toIntOrNull()?.takeIf { it >= 0 } ?: return null
+    val limit = limitValue.toIntOrNull()?.takeIf { it in 1..200 } ?: return null
+    return EmbyPagination(startIndex = startIndex, limit = limit)
+}
+
+private fun ApplicationCall.hasExactQueryParameters(
+    expected: Map<String, String>,
+    optional: Set<String> = emptySet(),
+): Boolean {
+    val parameters = request.queryParameters
+    val names = parameters.names()
+    if (!names.containsAll(expected.keys) || names.any { it !in expected.keys && it !in optional }) {
+        return false
+    }
+    if (expected.any { (name, value) -> parameters.getAll(name) != listOf(value) }) {
+        return false
+    }
+    return optional.all { name ->
+        name !in names || parameters.getAll(name)?.size == 1
+    }
+}
+
+private fun ApplicationCall.isJsonRequest(): Boolean =
+    request.headers["Content-Type"]
+        ?.substringBefore(';')
+        ?.trim()
+        ?.equals(ContentType.Application.Json.toString(), ignoreCase = true) == true
+
+private suspend fun ApplicationCall.receiveJsonObjectOrNull(): JsonObject? = runCatching {
+    Json.parseToJsonElement(receiveText()).jsonObject
+}.getOrNull()
+
+private fun JsonObject.toEmbyPlaybackUpdate(
+    requireEventName: Boolean,
+): EmbyPlaybackUpdate? {
+    val expectedKeys = buildSet {
+        add("ItemId")
+        add("MediaSourceId")
+        add("PlaySessionId")
+        add("PositionTicks")
+        add("IsPaused")
+        add("PlayMethod")
+        if (requireEventName) add("EventName")
+    }
+    if (keys != expectedKeys) return null
+    val eventName = string("EventName")
+    if (requireEventName && eventName !in embyProgressEventNames) return null
+    val itemId = string("ItemId") ?: return null
+    if (itemId !in embyVodPlayableItemIds) return null
+    val playMethod = string("PlayMethod")
+        ?.takeIf { it in embyPlayMethods }
+        ?: return null
+    return EmbyPlaybackUpdate(
+        itemId = itemId,
+        mediaSourceId = string("MediaSourceId") ?: return null,
+        playSessionId = string("PlaySessionId") ?: return null,
+        positionTicks = long("PositionTicks")?.takeIf { it >= 0L } ?: return null,
+        isPaused = boolean("IsPaused") ?: return null,
+        playMethod = playMethod,
+        eventName = eventName,
+    )
+}
+
+private fun JsonObject?.isValidEmbyPlaybackInfoRequest(
+    expectedAutoOpenLiveStream: Boolean,
+): Boolean {
+    val body = this ?: return false
+    val requiredKeys = setOf(
+        "UserId",
+        "StartTimeTicks",
+        "IsPlayback",
+        "AutoOpenLiveStream",
+        "EnableDirectPlay",
+        "EnableDirectStream",
+        "EnableTranscoding",
+        "AllowVideoStreamCopy",
+        "AllowAudioStreamCopy",
+        "DeviceProfile",
+    )
+    val optionalKeys = setOf("MediaSourceId", "MaxStreamingBitrate")
+    if (!body.keys.containsAll(requiredKeys) || body.keys.any { it !in requiredKeys + optionalKeys }) {
+        return false
+    }
+    val maxStreamingBitrate = body.long("MaxStreamingBitrate")
+    val validMaxBitrate = "MaxStreamingBitrate" !in body ||
+        maxStreamingBitrate in 1L..Int.MAX_VALUE.toLong()
+    return body.string("UserId") == EMBY_USER_ID &&
+        body.long("StartTimeTicks")?.let { it >= 0L } == true &&
+        body.boolean("IsPlayback") == true &&
+        body.boolean("AutoOpenLiveStream") == expectedAutoOpenLiveStream &&
+        body.boolean("EnableDirectPlay") == true &&
+        body.boolean("EnableDirectStream") == true &&
+        body.boolean("EnableTranscoding") != null &&
+        body.boolean("AllowVideoStreamCopy") == true &&
+        body.boolean("AllowAudioStreamCopy") == true &&
+        validMaxBitrate &&
+        (body["DeviceProfile"] as? JsonObject)
+            .isValidMedia3DeviceProfile(maxStreamingBitrate)
+}
+
+private fun JsonObject?.isValidMedia3DeviceProfile(
+    expectedMaxStreamingBitrate: Long?,
+): Boolean {
+    val profile = this ?: return false
+    val requiredKeys = setOf(
+        "Name",
+        "SupportedMediaTypes",
+        "DirectPlayProfiles",
+        "TranscodingProfiles",
+        "ContainerProfiles",
+        "CodecProfiles",
+        "SubtitleProfiles",
+    )
+    val optionalKeys = setOf("MaxStreamingBitrate")
+    if (
+        !profile.keys.containsAll(requiredKeys) ||
+        profile.keys.any { it !in requiredKeys + optionalKeys }
+    ) {
+        return false
+    }
+    if (
+        profile.string("Name") != "M3UAndroid Media3" ||
+        profile.string("SupportedMediaTypes") != "Video" ||
+        profile.long("MaxStreamingBitrate") != expectedMaxStreamingBitrate
+    ) {
+        return false
+    }
+    val directPlay = (profile["DirectPlayProfiles"] as? JsonArray)
+        ?.singleOrNull() as? JsonObject
+        ?: return false
+    if (
+        directPlay.string("Container") != "mp4,m4v,mov,mkv,ts,mpegts" ||
+        directPlay.string("AudioCodec") != "aac,mp3" ||
+        directPlay.string("VideoCodec") != "h264" ||
+        directPlay.string("Type") != "Video"
+    ) {
+        return false
+    }
+    val transcoding = (profile["TranscodingProfiles"] as? JsonArray)
+        ?.singleOrNull() as? JsonObject
+        ?: return false
+    if (
+        transcoding.string("Container") != "ts" ||
+        transcoding.string("Type") != "Video" ||
+        transcoding.string("VideoCodec") != "h264" ||
+        transcoding.string("AudioCodec") != "aac" ||
+        transcoding.string("Protocol") != "hls" ||
+        transcoding.string("Context") != "Streaming" ||
+        transcoding.boolean("CopyTimestamps") != false ||
+        transcoding.string("MaxAudioChannels") != "2"
+    ) {
+        return false
+    }
+    val codecProfiles = profile["CodecProfiles"] as? JsonArray ?: return false
+    val videoProfile = codecProfiles.getOrNull(0) as? JsonObject ?: return false
+    val audioProfile = codecProfiles.getOrNull(1) as? JsonObject ?: return false
+    return codecProfiles.size == 2 &&
+        videoProfile.string("Type") == "Video" &&
+        videoProfile.string("Codec") == "h264" &&
+        (videoProfile["Conditions"] as? JsonArray)?.size == 5 &&
+        audioProfile.string("Type") == "VideoAudio" &&
+        (audioProfile["Conditions"] as? JsonArray)?.singleOrNull() != null &&
+        (profile["ContainerProfiles"] as? JsonArray)?.isEmpty() == true &&
+        (profile["SubtitleProfiles"] as? JsonArray)?.isEmpty() == true
+}
+
+private fun JsonObject.toEmbyPlaybackStopped(): EmbyPlaybackStopped? {
+    if (keys != setOf("ItemId", "MediaSourceId", "PlaySessionId", "PositionTicks")) {
+        return null
+    }
+    val itemId = string("ItemId") ?: return null
+    if (itemId !in embyVodPlayableItemIds) return null
+    return EmbyPlaybackStopped(
+        itemId = itemId,
+        mediaSourceId = string("MediaSourceId") ?: return null,
+        playSessionId = string("PlaySessionId") ?: return null,
+        positionTicks = long("PositionTicks")?.takeIf { it >= 0L } ?: return null,
+    )
+}
+
+private fun JsonObject.string(name: String): String? =
+    (this[name] as? JsonPrimitive)?.content?.takeIf(String::isNotBlank)
+
+private fun JsonObject.long(name: String): Long? =
+    (this[name] as? JsonPrimitive)?.content?.toLongOrNull()
+
+private fun JsonObject.boolean(name: String): Boolean? =
+    (this[name] as? JsonPrimitive)?.content?.toBooleanStrictOrNull()
+
+private fun JsonObject?.toReferenceSessionUpdate(): ReferenceSessionUpdate? {
+    val body = this ?: return null
+    if (body.keys.toList() != referenceUpdateFieldOrder) return null
+    val event = body.strictString("event")
+        ?.takeIf(referencePlaybackEvents::contains)
+        ?: return null
+    val playMethod = body.strictString("play_method")
+        ?.takeIf { value -> value == "direct_play" }
+        ?: return null
+    return ReferenceSessionUpdate(
+        itemId = body.strictString("item_id")
+            ?.takeIf(referenceChannelIds::contains)
+            ?: return null,
+        playSessionId = body.strictString("play_session_id") ?: return null,
+        liveStreamId = body.strictString("live_stream_id") ?: return null,
+        event = event,
+        positionTicks = body.strictLong("position_ticks")
+            ?.takeIf { value -> value >= 0L }
+            ?: return null,
+        playMethod = playMethod,
+        isPaused = body.strictBoolean("is_paused") ?: return null,
+    )
+}
+
+private fun JsonObject.strictString(name: String): String? =
+    (this[name] as? JsonPrimitive)
+        ?.takeIf(JsonPrimitive::isString)
+        ?.content
+        ?.takeIf(String::isNotBlank)
+
+private fun JsonObject.strictLong(name: String): Long? =
+    (this[name] as? JsonPrimitive)
+        ?.takeUnless(JsonPrimitive::isString)
+        ?.content
+        ?.toLongOrNull()
+
+private fun JsonObject.strictBoolean(name: String): Boolean? =
+    (this[name] as? JsonPrimitive)
+        ?.takeUnless(JsonPrimitive::isString)
+        ?.content
+        ?.toBooleanStrictOrNull()
+
+private fun ReferenceSessionUpdate.hasConsistentPauseState(): Boolean =
+    when (event) {
+        "paused" -> isPaused
+        "started", "resumed" -> !isPaused
+        else -> true
+    }
+
+private fun JsonObject?.targetsKnownEmbyVodSession(): Boolean =
+    this?.string("ItemId") in embyVodPlayableItemIds ||
+        this?.string("PlaySessionId")?.let(embyVodSessions::containsKey) == true
+
+private fun ApplicationCall.jellyfinIdentityAuthenticated(): Boolean =
     request.headers["Authorization"]?.startsWith("MediaBrowser ") == true &&
         request.headers["X-Emby-Authorization"] == null &&
         request.headers["X-Emby-Token"] == null
 
-private fun io.ktor.server.application.ApplicationCall.jellyfinAuthenticated(): Boolean =
+private fun ApplicationCall.jellyfinAuthenticated(): Boolean =
     jellyfinIdentityAuthenticated() &&
         "Token=\"$EMBY_ACCESS_TOKEN\"" in request.headers["Authorization"].orEmpty()
 
-private fun io.ktor.server.application.ApplicationCall.referenceAuthenticated(): Boolean =
+private fun ApplicationCall.referenceAuthenticated(): Boolean =
     request.headers["X-Emby-Token"] == REFERENCE_ACCESS_TOKEN
 
-private fun io.ktor.server.application.ApplicationCall.referencePlaybackAuthenticated(): Boolean =
+private fun ApplicationCall.referencePlaybackAuthenticated(): Boolean =
     referenceAuthenticated() && request.headers["X-Reference-User"] == REFERENCE_USER_ID
+
+private val embyPlayMethods = setOf("DirectPlay", "DirectStream", "Transcode")
+private val embyProgressEventNames = setOf("timeupdate", "pause", "unpause")
+private val referencePlaybackEvents = setOf("started", "progress", "paused", "resumed")
+private val referenceUpdateFieldOrder = listOf(
+    "item_id",
+    "play_session_id",
+    "live_stream_id",
+    "event",
+    "position_ticks",
+    "play_method",
+    "is_paused",
+)
 
 private fun endpointIndex(baseUrl: String): String = json.encodeToString(
     buildJsonObject {
@@ -643,17 +1332,30 @@ private fun referenceSessionState(session: ReferenceSession): JsonObject = build
     put("play_session_id", session.playSessionId)
     put("live_stream_id", session.liveStreamId)
     put("state", if (session.closed) "closed" else "open")
+    put("close_count", session.closeCount)
+    session.lastCloseReason?.let { reason -> put("last_close_reason", reason) }
+    put("update_count", session.updateCount)
+    put("last_position_ticks", session.lastPositionTicks)
+    session.lastEvent?.let { event -> put("last_event", event) }
 }
 
+private fun referenceSessionUpdateResult(session: ReferenceSession): JsonObject =
+    buildJsonObject {
+        put("accepted", true)
+        put("update_count", session.updateCount)
+        put("last_position_ticks", session.lastPositionTicks)
+        put("last_event", requireNotNull(session.lastEvent))
+    }
+
 private fun embySystemInfo(): JsonObject = buildJsonObject {
-    put("Id", "mock-server-id")
+    put("Id", EMBY_SERVER_ID)
     put("ServerName", "M3U Mock Emby")
     put("Version", "4.9.0.0")
     put("ProductName", "Emby Server")
 }
 
 private fun jellyfinSystemInfo(): JsonObject = buildJsonObject {
-    put("Id", "mock-server-id")
+    put("Id", EMBY_SERVER_ID)
     put("ServerName", "M3U Mock Jellyfin")
     put("Version", "10.11.0")
     put("ProductName", "Jellyfin Server")
@@ -661,9 +1363,9 @@ private fun jellyfinSystemInfo(): JsonObject = buildJsonObject {
 
 private fun embyAuthentication(): JsonObject = buildJsonObject {
     put("AccessToken", EMBY_ACCESS_TOKEN)
-    put("ServerId", "mock-server-id")
+    put("ServerId", EMBY_SERVER_ID)
     putJsonObject("User") {
-        put("Id", "mock-user-id")
+        put("Id", EMBY_USER_ID)
         put("Name", DEFAULT_USERNAME)
     }
 }
@@ -701,6 +1403,9 @@ private fun embyPlaybackInfo(baseUrl: String, itemId: String): JsonObject = buil
             buildJsonObject {
                 put("Id", "mock-media-source-$itemId")
                 put("Path", "$baseUrl/emby-stream/$itemId/index.m3u8")
+                put("SupportsDirectPlay", true)
+                put("SupportsDirectStream", true)
+                put("SupportsTranscoding", true)
                 put("LiveStreamId", "mock-live-stream-$itemId")
                 putJsonObject("RequiredHttpHeaders") {
                     put("X-Mock-Playback", "allowed")
@@ -708,6 +1413,118 @@ private fun embyPlaybackInfo(baseUrl: String, itemId: String): JsonObject = buil
             }
         )
     }
+}
+
+private fun embyVodRootItems(): List<JsonObject> = listOf(
+    buildJsonObject {
+        put("Id", "mock.movie.harbor")
+        put("Name", "Harbor of Glass")
+        put("Type", "Movie")
+        putJsonObject("ImageTags") { put("Primary", "harbor-poster-v1") }
+        putJsonArray("Genres") {
+            add(JsonPrimitive("Drama"))
+            add(JsonPrimitive("Mystery"))
+        }
+        put("Overview", "A cartographer follows a fictional signal across a quiet harbor.")
+        put("ProductionYear", 2024)
+    },
+    buildJsonObject {
+        put("Id", EMBY_VOD_SERIES_ID)
+        put("Name", "Orbital Letters")
+        put("Type", "Series")
+        putJsonObject("ImageTags") { put("Primary", "orbit-series-poster-v1") }
+        putJsonArray("Genres") { add(JsonPrimitive("Science Fiction")) }
+        put("Overview", "Fictional couriers exchange letters between research stations.")
+        put("ProductionYear", 2025)
+    },
+    buildJsonObject {
+        put("Id", "mock.movie.signal")
+        put("Name", "Signal Garden")
+        put("Type", "Movie")
+        putJsonObject("ImageTags") { put("Primary", "signal-poster-v1") }
+        putJsonArray("Genres") { add(JsonPrimitive("Adventure")) }
+        put("Overview", "An entirely fictional radio garden wakes after the first rain.")
+        put("ProductionYear", 2023)
+    },
+)
+
+private fun embyVodEpisodes(): List<JsonObject> = listOf(
+    buildJsonObject {
+        put("Id", EMBY_VOD_EPISODE_ID)
+        put("Name", "The First Envelope")
+        put("Type", "Episode")
+        putJsonObject("ImageTags") { put("Primary", "orbit-s01e01-v1") }
+        put("SeriesName", "Orbital Letters")
+        put("Overview", "A fictional courier receives an envelope with no return orbit.")
+        put("ProductionYear", 2025)
+        put("ParentIndexNumber", 1)
+        put("IndexNumber", 1)
+    },
+    buildJsonObject {
+        put("Id", "mock.episode.orbit.s01e02")
+        put("Name", "Relay at Dawn")
+        put("Type", "Episode")
+        putJsonObject("ImageTags") { put("Primary", "orbit-s01e02-v1") }
+        put("SeriesName", "Orbital Letters")
+        put("Overview", "A fictional relay station answers before sunrise.")
+        put("ProductionYear", 2025)
+        put("ParentIndexNumber", 1)
+        put("IndexNumber", 2)
+    },
+    buildJsonObject {
+        put("Id", "mock.episode.orbit.s02e01")
+        put("Name", "A New Constellation")
+        put("Type", "Episode")
+        putJsonObject("ImageTags") { put("Primary", "orbit-s02e01-v1") }
+        put("SeriesName", "Orbital Letters")
+        put("Overview", "The fictional route map gains one impossible constellation.")
+        put("ProductionYear", 2026)
+        put("ParentIndexNumber", 2)
+        put("IndexNumber", 1)
+    },
+)
+
+private fun embyContentPage(
+    items: List<JsonObject>,
+    pagination: EmbyPagination,
+): JsonObject = buildJsonObject {
+    put(
+        "Items",
+        JsonArray(items.drop(pagination.startIndex).take(pagination.limit)),
+    )
+    put("TotalRecordCount", items.size)
+}
+
+private fun embyVodMediaSourceId(itemId: String): String = "mock-vod-media-$itemId"
+
+private fun embyVodPlaySessionId(itemId: String): String = "mock-vod-session-$itemId"
+
+private fun embyVodPlaybackInfo(session: EmbyVodSession): JsonObject = buildJsonObject {
+    put("PlaySessionId", session.playSessionId)
+    putJsonArray("MediaSources") {
+        add(
+            buildJsonObject {
+                put("Id", session.mediaSourceId)
+                put("SupportsDirectPlay", true)
+                put("SupportsDirectStream", false)
+                put("SupportsTranscoding", true)
+            },
+        )
+    }
+}
+
+private fun embyVodSessionState(session: EmbyVodSession): JsonObject = buildJsonObject {
+    put("item_id", session.itemId)
+    put("media_source_id", session.mediaSourceId)
+    put("play_session_id", session.playSessionId)
+    put("state", session.state.wireValue)
+    put("start_count", session.startCount)
+    put("progress_count", session.progressCount)
+    put("stop_count", session.stopCount)
+    put("last_position_ticks", session.lastPositionTicks)
+    put("is_paused", session.isPaused)
+    session.playMethod?.let { put("play_method", it) }
+    session.lastEventName?.let { put("last_event_name", it) }
 }
 
 private fun livePlaylist(baseUrl: String): String = """

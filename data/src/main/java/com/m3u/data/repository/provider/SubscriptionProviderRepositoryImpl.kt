@@ -9,7 +9,10 @@ import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.ProviderAccount
 import com.m3u.data.database.model.ProviderCredentialEntity
 import com.m3u.data.database.model.ProviderPlaybackSessionEntity
+import com.m3u.data.database.model.SeriesEpisode
+import com.m3u.data.database.model.SeriesEpisodeSource
 import com.m3u.data.extension.SubscriptionProviderImporter
+import com.m3u.data.extension.artwork.ProviderArtworkReferences
 import com.m3u.data.extension.security.ActiveExtensionPrincipalRegistry
 import com.m3u.data.extension.security.BrokerValueResolutionBudget
 import com.m3u.data.extension.security.CredentialVault
@@ -40,6 +43,11 @@ import com.m3u.extension.api.subscription.PlaybackSessionCloseReason
 import com.m3u.extension.api.subscription.PlaybackSessionCloseRequest
 import com.m3u.extension.api.subscription.PlaybackSessionCloseResult
 import com.m3u.extension.api.subscription.PlaybackSessionDescriptor
+import com.m3u.extension.api.subscription.PlaybackSessionEvents
+import com.m3u.extension.api.subscription.PlaybackSessionUpdateRequest
+import com.m3u.extension.api.subscription.PlaybackSessionUpdateResult
+import com.m3u.extension.api.subscription.PlaybackMethod
+import com.m3u.extension.api.subscription.PlaybackPreferences
 import com.m3u.extension.api.subscription.PlaybackSourceResolveRequest
 import com.m3u.extension.api.subscription.PlaybackSourceResolveResult
 import com.m3u.extension.api.subscription.ProviderAccountReference
@@ -49,6 +57,9 @@ import com.m3u.extension.api.subscription.ProviderKind
 import com.m3u.extension.api.subscription.ProviderValidationEvidence
 import com.m3u.extension.api.subscription.SubscriptionContentRefreshRequest
 import com.m3u.extension.api.subscription.SubscriptionContentRefreshResult
+import com.m3u.extension.api.subscription.SubscriptionContentBrowseRequest
+import com.m3u.extension.api.subscription.SubscriptionContentBrowseResult
+import com.m3u.extension.api.subscription.SubscriptionContentItemDescriptor
 import com.m3u.extension.api.subscription.SubscriptionProviderValidateRequest
 import com.m3u.extension.api.subscription.SubscriptionProviderValidateResult
 import com.m3u.extension.api.subscription.SubscriptionProviderDescriptor
@@ -120,6 +131,9 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
             }
         val attempts = candidates.map { extension ->
             async {
+                if (!extension.boundHooks.supportsCompleteProviderLifecycle()) {
+                    return@async ProviderDiscoveryAttempt.Failed
+                }
                 try {
                     val descriptor = runtime.invoke(
                         extensionId = extension.manifest.id,
@@ -190,6 +204,7 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
         val registration = runtime.registeredExtensions().singleOrNull { extension ->
             extension.manifest.id == request.providerId
         } ?: throw ProviderOperationException("Subscription provider is unavailable")
+        registration.boundHooks.requireCompleteProviderLifecycle()
         val principalLease = when (registration.executionKind) {
             ExtensionExecutionKind.BUILT_IN -> null
             ExtensionExecutionKind.EXTERNAL -> activePrincipalRegistry.captureLease(request.providerId)
@@ -332,6 +347,7 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
                 )
                 val accessToken: String
                 val refresh: SubscriptionContentRefreshResult
+                val catalogItems: List<SubscriptionContentItemDescriptor>
                 if (principal == null) {
                     accessToken = credentialVault.consume(validatedCredential)
                         ?: throw ProviderOperationException("Provider credential capture expired")
@@ -339,6 +355,10 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
                         account = accountReference,
                         credentialHandle = credentialVault.stage(accessToken),
                         reason = SubscriptionRefreshReason.Initial,
+                    )
+                    catalogItems = browseCatalog(
+                        account = accountReference,
+                        credentialHandle = { credentialVault.stage(accessToken) },
                     )
                 } else {
                     val authenticationScope = checkNotNull(activeScope)
@@ -353,8 +373,18 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
                         reason = SubscriptionRefreshReason.Initial,
                         brokerScope = activeScope,
                     )
-                    accessToken = providerBrokerScopeStore.completeInitialRefresh(
+                    activeScope = providerBrokerScopeStore.advanceInitialRefreshToBrowse(
                         refreshScope = checkNotNull(activeScope),
+                        principal = principal,
+                        capturedHandle = validatedCredential,
+                    )
+                    catalogItems = browseCatalog(
+                        account = accountReference,
+                        credentialHandle = { validatedCredential },
+                        brokerScope = activeScope,
+                    )
+                    accessToken = providerBrokerScopeStore.completeInitialBrowse(
+                        browseScope = checkNotNull(activeScope),
                         principal = principal,
                         capturedHandle = validatedCredential,
                     )
@@ -374,6 +404,7 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
                             account = account,
                             accessToken = accessToken,
                             refresh = refresh,
+                            catalogItems = catalogItems,
                         )
                     }
                 }
@@ -473,6 +504,10 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
         reason: SubscriptionRefreshReason,
     ): ProviderSubscriptionResult {
         val playlistUrl = account.playlistUrl
+        val registration = runtime.registeredExtensions().singleOrNull { extension ->
+            extension.manifest.id.value == account.providerId
+        } ?: throw ProviderOperationException("Subscription provider is unavailable")
+        registration.boundHooks.requireCompleteProviderLifecycle()
         val principalLease = requireActiveOwner(account)
         val principal = principalLease?.principal
         val credential = requireAuthenticatedCredential(account, principalLease)
@@ -500,11 +535,34 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
         } finally {
             brokerScope?.let(providerBrokerScopeStore::close)
         }
+        val browseScope = principal?.let { externalPrincipal ->
+            mintAccountBrokerScope(
+                principal = externalPrincipal,
+                hook = SubscriptionHookSpecs.Browse.hook,
+                account = account,
+                credential = credential,
+                principalLease = principalLease,
+            )
+        }
+        val catalogItems = try {
+            withAuthenticationFailureInvalidation(account, principalLease) {
+                browseCatalog(
+                    account = account.toReference(),
+                    credentialHandle = {
+                        CredentialHandle(credential.credentialHandle)
+                    },
+                    brokerScope = browseScope,
+                )
+            }
+        } finally {
+            browseScope?.let(providerBrokerScopeStore::close)
+        }
         val count = extensionContributionRunCoordinator.withPlaylist(playlistUrl) {
             commitProviderPersistence(principalLease) {
                 refreshProviderSnapshot(
                     account = account,
                     refresh = refresh,
+                    catalogItems = catalogItems,
                 )
             }
         }
@@ -525,7 +583,86 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun resolvePlayback(channelId: Int): ProviderPlaybackSource? {
+    override suspend fun browseEpisodes(
+        seriesChannelId: Int,
+    ): List<SeriesEpisode> {
+        val initialReference = providerDao.getPlaybackReference(seriesChannelId) ?: return emptyList()
+        return lifecycleCoordinator.withAccount(initialReference.accountId) {
+            val reference = providerDao.getPlaybackReference(seriesChannelId)
+                ?: return@withAccount emptyList()
+            if (reference.accountId != initialReference.accountId) {
+                throw ProviderOperationException(
+                    message = "Provider browse reference changed before content could be loaded",
+                    code = "provider.account_changed",
+                    recoverable = true,
+                )
+            }
+            val account = providerDao.getAccount(reference.accountId)
+                ?: throw ProviderOperationException("Provider account was not found")
+            if (reference.providerId != account.providerId) {
+                throw ProviderOperationException("Provider browse reference is inconsistent")
+            }
+            val registration = runtime.registeredExtensions().singleOrNull { extension ->
+                extension.manifest.id.value == account.providerId
+            } ?: throw ProviderOperationException("Subscription provider is unavailable")
+            registration.boundHooks.requireCompleteProviderLifecycle()
+            val principalLease = requireActiveOwner(account)
+            val principal = principalLease?.principal
+            val credential = requireAuthenticatedCredential(account, principalLease)
+            val brokerScope = principal?.let { externalPrincipal ->
+                mintAccountBrokerScope(
+                    principal = externalPrincipal,
+                    hook = SubscriptionHookSpecs.Browse.hook,
+                    account = account,
+                    credential = credential,
+                    principalLease = principalLease,
+                )
+            }
+            try {
+                withAuthenticationFailureInvalidation(account, principalLease) {
+                    browseCatalog(
+                        account = account.toReference(),
+                        credentialHandle = {
+                            CredentialHandle(credential.credentialHandle)
+                        },
+                        parentReference = reference.toContract(),
+                        brokerScope = brokerScope,
+                    ).map { item ->
+                        require(item.playable) {
+                            "Provider series children must be directly playable"
+                        }
+                        SeriesEpisode(
+                            id = item.reference.itemId,
+                            title = item.title,
+                            seasonNumber = item.seasonNumber,
+                            episodeNumber = item.episodeNumber,
+                            artworkUrl = ProviderArtworkReferences.create(
+                                account = account,
+                                remoteUrl = item.imageUrl,
+                            ),
+                            source = SeriesEpisodeSource.Provider(item.reference),
+                        )
+                    }
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: IllegalArgumentException) {
+                throw ProviderOperationException(
+                    message = "Provider returned invalid series content",
+                    code = "provider.invalid_browse_result",
+                    cause = error,
+                )
+            } finally {
+                brokerScope?.let(providerBrokerScopeStore::close)
+            }
+        }
+    }
+
+    override suspend fun resolvePlayback(
+        channelId: Int,
+        referenceOverride: PlaybackReference?,
+        preferences: PlaybackPreferences,
+    ): ProviderPlaybackSource? {
         val initialReference = providerDao.getPlaybackReference(channelId) ?: return null
         return lifecycleCoordinator.withAccount(initialReference.accountId) {
             val reference = providerDao.getPlaybackReference(channelId) ?: return@withAccount null
@@ -541,13 +678,30 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
             if (reference.providerId != account.providerId) {
                 throw ProviderOperationException("Provider playback reference is inconsistent")
             }
-            resolvePlaybackLocked(reference, account)
+            val effectiveReference = referenceOverride?.let { override ->
+                if (override.providerId.value != reference.providerId) {
+                    throw ProviderOperationException(
+                        "Provider playback override belongs to another provider"
+                    )
+                }
+                reference.copy(
+                    itemId = override.itemId,
+                    mediaSourceId = override.mediaSourceId,
+                    sourceType = override.sourceType,
+                )
+            } ?: reference
+            resolvePlaybackLocked(
+                reference = effectiveReference,
+                account = account,
+                preferences = preferences,
+            )
         }
     }
 
     private suspend fun resolvePlaybackLocked(
         reference: ChannelPlaybackReference,
         account: ProviderAccount,
+        preferences: PlaybackPreferences,
     ): ProviderPlaybackSource {
         val principalLease = requireActiveOwner(account)
         val principal = principalLease?.principal
@@ -574,6 +728,7 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
                                 CredentialHandle(credential.credentialHandle)
                             ),
                             reference = reference.toContract(),
+                            preferences = preferences,
                         ),
                         brokerScope = brokerScope,
                     ).payloadOrThrow<PlaybackSourceResolveResult>()
@@ -591,6 +746,7 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
                     sourceType = reference.sourceType,
                     playSessionId = providerSession.playSessionId,
                     liveStreamId = providerSession.liveStreamId,
+                    playMethod = payload.playMethod.value,
                 )
             }
             val playbackContext = PlaybackCloseContext(
@@ -641,6 +797,7 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
                     headers = resolvedHeaders,
                     session = session,
                     allowCrossOriginRequests = principal == null,
+                    playMethod = payload.playMethod.value,
                 )
             } catch (cancelled: CancellationException) {
                 retainCancelledPlaybackSessionForRecovery(session)
@@ -654,6 +811,102 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
             }
         } finally {
             releasePlaybackSessionReservation(reservation)
+        }
+    }
+
+    override suspend fun updatePlayback(
+        session: ProviderPlaybackSession,
+        event: ProviderPlaybackEvent,
+        positionTicks: Long,
+        isPaused: Boolean,
+    ): Boolean {
+        require(positionTicks >= 0L)
+        return lifecycleCoordinator.withAccount(session.accountId) {
+            val persisted = providerDao.getPlaybackSession(session.id) ?: return@withAccount false
+            if (persisted.toModel() != session) {
+                throw ProviderOperationException(
+                    "Playback session does not match the persisted provider session"
+                )
+            }
+            val registration = runtime.registeredExtensions().singleOrNull { extension ->
+                extension.manifest.id.value == session.providerId
+            } ?: return@withAccount false
+            registration.boundHooks.requireCompleteProviderLifecycle()
+            check(providerDao.updatePlaybackPosition(session.id, positionTicks) == 1) {
+                "Provider playback session disappeared while updating its position"
+            }
+            val context = activePlaybackContexts[session] ?: run {
+                val account = providerDao.getAccount(session.accountId) ?: return@withAccount false
+                val principalLease = requireActiveOwner(account)
+                val credential = requireAuthenticatedCredential(account, principalLease)
+                PlaybackCloseContext(account = account, credential = credential)
+            }
+            updatePlaybackWithContext(
+                session = session,
+                event = event,
+                positionTicks = positionTicks,
+                isPaused = isPaused,
+                context = context,
+            )
+        }
+    }
+
+    private suspend fun updatePlaybackWithContext(
+        session: ProviderPlaybackSession,
+        event: ProviderPlaybackEvent,
+        positionTicks: Long,
+        isPaused: Boolean,
+        context: PlaybackCloseContext,
+    ): Boolean {
+        val currentAccount = providerDao.getAccount(context.account.id) ?: return false
+        if (currentAccount != context.account) {
+            throw ProviderOperationException(
+                message = "Provider account changed before playback progress could be updated",
+                code = "provider.account_changed",
+                recoverable = true,
+            )
+        }
+        val principalLease = requireActiveOwner(currentAccount)
+        val principal = principalLease?.principal
+        val credential = requireAuthenticatedCredential(currentAccount, principalLease)
+        if (credential != context.credential) {
+            throw ProviderOperationException(
+                message = "Provider credential changed before playback progress could be updated",
+                code = "provider.account_changed",
+                recoverable = true,
+            )
+        }
+        val brokerScope = principal?.let { externalPrincipal ->
+            mintAccountBrokerScope(
+                principal = externalPrincipal,
+                hook = SubscriptionHookSpecs.UpdatePlayback.hook,
+                account = currentAccount,
+                credential = credential,
+                principalLease = principalLease,
+            )
+        }
+        return try {
+            withAuthenticationFailureInvalidation(currentAccount, principalLease) {
+                runtime.invoke(
+                    extensionId = ExtensionId(session.providerId),
+                    spec = SubscriptionHookSpecs.UpdatePlayback,
+                    request = PlaybackSessionUpdateRequest(
+                        account = currentAccount.toReference(),
+                        credential = ProviderCredential(
+                            CredentialHandle(credential.credentialHandle)
+                        ),
+                        reference = session.toPlaybackReference(),
+                        session = session.toContractDescriptor(),
+                        event = event.toContract(),
+                        positionTicks = positionTicks,
+                        playMethod = PlaybackMethod(session.playMethod),
+                        isPaused = isPaused,
+                    ),
+                    brokerScope = brokerScope,
+                ).payloadOrThrow<PlaybackSessionUpdateResult>().accepted
+            }
+        } finally {
+            brokerScope?.let(providerBrokerScopeStore::close)
         }
     }
 
@@ -779,11 +1032,11 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
                             mediaSourceId = session.mediaSourceId,
                             sourceType = session.sourceType,
                         ),
-                        session = PlaybackSessionDescriptor(
-                            playSessionId = session.playSessionId,
-                            liveStreamId = session.liveStreamId,
-                        ),
+                        session = session.toContractDescriptor(),
                         reason = reason.toContract(),
+                        positionTicks = providerDao.getPlaybackSession(session.id)
+                            ?.positionTicks
+                            ?: 0L,
                     ),
                     brokerScope = brokerScope,
                 ).payloadOrThrow<PlaybackSessionCloseResult>()
@@ -1137,6 +1390,109 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
         },
     ).payloadOrThrow()
 
+    private suspend fun browseCatalog(
+        account: ProviderAccountReference,
+        credentialHandle: () -> CredentialHandle,
+        parentReference: PlaybackReference? = null,
+        brokerScope: BrokerScopeHandle? = null,
+    ): List<SubscriptionContentItemDescriptor> {
+        if (
+            parentReference != null &&
+            parentReference.providerId != account.providerId
+        ) {
+            throw ProviderOperationException(
+                message = "Provider browse reference belongs to another provider",
+                code = "provider.invalid_browse_reference",
+            )
+        }
+        return try {
+            val items = mutableListOf<SubscriptionContentItemDescriptor>()
+            val seenItemIds = mutableSetOf<String>()
+            val seenCursors = mutableSetOf<String>()
+            var cursor: String? = null
+            var expectedTotal: Int? = null
+            var requestCount = 0
+            do {
+                if (requestCount++ >= MAX_BROWSE_PAGE_REQUESTS) {
+                    throw IllegalArgumentException(
+                        "Provider content pagination exceeded the host limit"
+                    )
+                }
+                val requestedCursor = cursor
+                val page = runtime.invoke(
+                    extensionId = account.providerId,
+                    spec = SubscriptionHookSpecs.Browse,
+                    request = SubscriptionContentBrowseRequest(
+                        account = account,
+                        credential = ProviderCredential(credentialHandle()),
+                        parentReference = parentReference,
+                        cursor = requestedCursor,
+                        limit = BROWSE_PAGE_SIZE,
+                    ),
+                    brokerScope = brokerScope,
+                    validateResponse = { response ->
+                        require(response.items.size <= BROWSE_PAGE_SIZE)
+                        importer.validateProviderCatalog(
+                            account = account,
+                            allowRemoteArtwork = brokerScope == null,
+                            items = response.items,
+                        )
+                    },
+                ).payloadOrThrow<SubscriptionContentBrowseResult>()
+                val pageTotal = page.total
+                require(pageTotal == null || pageTotal <= MAX_BROWSE_ITEMS) {
+                    "Provider content count exceeds the host limit"
+                }
+                require(expectedTotal == null || pageTotal == null || pageTotal == expectedTotal) {
+                    "Provider content count changed during pagination"
+                }
+                if (expectedTotal == null && pageTotal != null) {
+                    expectedTotal = pageTotal
+                }
+                page.items.forEach { item ->
+                    require(seenItemIds.add(item.reference.itemId)) {
+                        "Provider returned a duplicate content identifier"
+                    }
+                }
+                require(items.size + page.items.size <= MAX_BROWSE_ITEMS) {
+                    "Provider content count exceeds the host limit"
+                }
+                items += page.items
+                expectedTotal?.let { total ->
+                    require(items.size <= total) {
+                        "Provider returned more content than its reported count"
+                    }
+                }
+                val nextCursor = page.nextCursor
+                if (nextCursor != null) {
+                    require(page.items.isNotEmpty()) {
+                        "Provider returned an empty content page with a continuation"
+                    }
+                    require(nextCursor != requestedCursor && seenCursors.add(nextCursor)) {
+                        "Provider content pagination did not advance"
+                    }
+                }
+                cursor = nextCursor
+            } while (cursor != null)
+            expectedTotal?.let { total ->
+                require(items.size == total) {
+                    "Provider content pagination ended before the reported count"
+                }
+            }
+            items
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: ProviderOperationException) {
+            throw error
+        } catch (error: IllegalArgumentException) {
+            throw ProviderOperationException(
+                message = "Provider returned an invalid content page",
+                code = "provider.invalid_browse_result",
+                cause = error,
+            )
+        }
+    }
+
     private suspend fun mintAccountBrokerScope(
         principal: ExtensionPrincipal,
         hook: Hook,
@@ -1185,12 +1541,14 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
         account: ProviderAccount,
         accessToken: String,
         refresh: SubscriptionContentRefreshResult,
+        catalogItems: List<SubscriptionContentItemDescriptor>,
     ): Int = try {
         importer.importSubscription(
             title = title,
             account = account,
             accessToken = accessToken,
             refresh = refresh,
+            catalogItems = catalogItems,
         )
     } catch (cancelled: CancellationException) {
         throw cancelled
@@ -1205,10 +1563,12 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
     private suspend fun refreshProviderSnapshot(
         account: ProviderAccount,
         refresh: SubscriptionContentRefreshResult,
+        catalogItems: List<SubscriptionContentItemDescriptor>,
     ): Int = try {
         importer.refresh(
             account = account,
             refresh = refresh,
+            catalogItems = catalogItems,
         )
     } catch (cancelled: CancellationException) {
         throw cancelled
@@ -1684,6 +2044,25 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
         ProviderPlaybackCloseReason.RECOVERY -> PlaybackSessionCloseReason.Recovery
     }
 
+    private fun ProviderPlaybackEvent.toContract() = when (this) {
+        ProviderPlaybackEvent.STARTED -> PlaybackSessionEvents.Started
+        ProviderPlaybackEvent.PROGRESS -> PlaybackSessionEvents.Progress
+        ProviderPlaybackEvent.PAUSED -> PlaybackSessionEvents.Paused
+        ProviderPlaybackEvent.RESUMED -> PlaybackSessionEvents.Resumed
+    }
+
+    private fun ProviderPlaybackSession.toPlaybackReference() = PlaybackReference(
+        providerId = ExtensionId(providerId),
+        itemId = itemId,
+        mediaSourceId = mediaSourceId,
+        sourceType = sourceType,
+    )
+
+    private fun ProviderPlaybackSession.toContractDescriptor() = PlaybackSessionDescriptor(
+        playSessionId = playSessionId,
+        liveStreamId = liveStreamId,
+    )
+
     private fun ProviderPlaybackSession.toEntity() = ProviderPlaybackSessionEntity(
         id = id,
         accountId = accountId,
@@ -1694,6 +2073,8 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
         playSessionId = playSessionId,
         liveStreamId = liveStreamId,
         createdAtEpochMillis = System.currentTimeMillis(),
+        playMethod = playMethod,
+        positionTicks = 0L,
     )
 
     private fun ProviderPlaybackSessionEntity.toModel() = ProviderPlaybackSession(
@@ -1705,6 +2086,7 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
         sourceType = sourceType,
         playSessionId = playSessionId,
         liveStreamId = liveStreamId,
+        playMethod = playMethod,
     )
 
     private fun CapturedProviderAuthentication.toValidatedAccount(
@@ -1808,7 +2190,33 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
         val credential: CredentialHandle,
     )
 
+    private fun Set<Hook>.supportsCompleteProviderLifecycle(): Boolean =
+        containsAll(REQUIRED_PROVIDER_HOOKS)
+
+    private fun Set<Hook>.requireCompleteProviderLifecycle() {
+        val missingHooks = REQUIRED_PROVIDER_HOOKS - this
+        if (missingHooks.isEmpty()) return
+        throw ProviderOperationException(
+            message = "Subscription provider does not implement the complete provider lifecycle",
+            code = "provider.lifecycle_incomplete",
+            details = mapOf(
+                "missingHooks" to missingHooks
+                    .sortedBy(Hook::id)
+                    .joinToString(transform = Hook::id),
+            ),
+        )
+    }
+
     private companion object {
+        val REQUIRED_PROVIDER_HOOKS = setOf(
+            SubscriptionHookSpecs.Discover.hook,
+            SubscriptionHookSpecs.Validate.hook,
+            SubscriptionHookSpecs.Refresh.hook,
+            SubscriptionHookSpecs.Browse.hook,
+            SubscriptionHookSpecs.ResolvePlayback.hook,
+            SubscriptionHookSpecs.UpdatePlayback.hook,
+            SubscriptionHookSpecs.ClosePlayback.hook,
+        )
         const val MAX_PROVIDER_KINDS = 16
         const val MAX_PROVIDER_SETTINGS = 32
         const val MAX_PROVIDER_CREDENTIALS = 16
@@ -1824,6 +2232,9 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
         const val MAX_PLAYBACK_URL_LENGTH = 8_192
         const val MAX_PLAYBACK_HEADERS = 32
         const val MAX_PLAYBACK_HEADER_VALUE_LENGTH = 8_192
+        const val BROWSE_PAGE_SIZE = SubscriptionContentBrowseRequest.MAX_LIMIT
+        const val MAX_BROWSE_ITEMS = 50_000
+        const val MAX_BROWSE_PAGE_REQUESTS = 512
         const val MAX_SESSIONS_PER_ACCOUNT = 8
         const val MAX_SESSIONS_GLOBAL = 64
         const val MAX_SESSION_CLEANUP_BATCH = 128

@@ -23,7 +23,7 @@ value class BrokerScopeHandle(val value: String) {
 }
 
 object BrokerProtocolVersions {
-    const val Current: Int = 4
+    const val Current: Int = 1
     val Supported: Set<Int> = setOf(Current)
 
     fun negotiate(peerSupported: Set<Int>): Int? =

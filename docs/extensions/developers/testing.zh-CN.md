@@ -30,7 +30,8 @@
 
 ## 3. 从 M3UAndroid 触发 Hook
 
-让 M3UAndroid 使用当前插件构建，再操作该 Hook 所属的功能。
+让 M3UAndroid smartphone 应用使用当前插件构建，再在手机或平板布局中操作该 Hook
+所属的功能。
 
 | Hook | 验收结果 |
 | --- | --- |
@@ -41,10 +42,11 @@
 | `background.task.run` | 启用插件会调度每项声明，停用会取消任务；联网任务等待网络可用。 |
 | Provider 发现与验证 | Discover 返回一个 Descriptor。表单使用它的 Schema。合法输入完成宿主管理的认证。 |
 | Provider 刷新 | 只有首次刷新成功后才保存账号。导入的播放列表包含完整快照。 |
-| Provider 播放与关闭 | 同源 Source 使用宿主解析的 Header 播放。停止播放会关闭远端 Session。 |
+| Provider 浏览 | 根页面和子页面按顺序显示、遵守数量上限，并在空 Cursor 处结束。 |
+| Provider 解析、更新与关闭 | 同源 Source 使用宿主解析的 Header 播放；播放事件会更新远端 Session，停止播放会关闭它。 |
 
 参考 Provider 测试通过外部插件链路覆盖：发现、登录失败、登录成功、首次刷新、后续刷新、
-播放解析、Header 解析和 Session 关闭。
+根页面与子页面浏览、播放解析、进度更新、Header 解析和 Session 关闭。
 
 ## 4. 检查失败行为
 
@@ -59,7 +61,8 @@
 重定向会失败。缺少 `network` 时必须拒绝请求；请求使用 Credential Handle 时，缺少
 `credential.read` 也必须拒绝。
 
-Provider 还应覆盖凭据被拒、刷新失败后保留已有数据、无效播放 Result，以及重复关闭 Session。
+Provider 还应覆盖凭据被拒、刷新失败后保留已有数据、无效浏览或播放 Result、进度更新被拒，
+以及重复关闭 Session。
 
 ## 5. 验证更新
 

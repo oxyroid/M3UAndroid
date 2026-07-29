@@ -3,7 +3,7 @@
 [English](first-hook.md) · [插件开发指南](README.zh-CN.md)
 
 一个 Hook 就是一个可由 M3UAndroid 调用的函数。它的 `HookSpec` 固定请求类型、结果类型和
-Schema Version。以下示例根据当前界面类型返回一个设置项。
+Schema Version。以下示例为 smartphone 应用返回一个设置项。
 
 ## 1. 把 Hook 加入 Manifest
 
@@ -20,7 +20,7 @@ hooks = setOf(
 capabilities = setOf(
     ExtensionCapabilityRequest(
         capability = ExtensionCapabilityIds.SettingsContribute,
-        reason = "Add settings for the current device type",
+        reason = "Add a device-name setting",
     )
 ),
 ```
@@ -33,12 +33,7 @@ capabilities = setOf(
 
 ```kotlin
 init {
-    handle(HostHookSpecs.SettingsSchema) { request, _ ->
-        val (label, defaultValue) = when (request.surface) {
-            "phone" -> "Phone name" to "My phone"
-            "tv" -> "TV name" to "My TV"
-            else -> "Device name" to "My device"
-        }
+    handle(HostHookSpecs.SettingsSchema) { _, _ ->
         SettingsSchemaResult(
             sections = listOf(
                 ExtensionSettingSection(
@@ -49,9 +44,9 @@ init {
                         fields = listOf(
                             ExtensionSettingField(
                                 key = "name",
-                                label = label,
+                                label = "Phone name",
                                 type = ExtensionSettingType.TEXT,
-                                defaultValue = JsonPrimitive(defaultValue),
+                                defaultValue = JsonPrimitive("My phone"),
                             )
                         ),
                     ),

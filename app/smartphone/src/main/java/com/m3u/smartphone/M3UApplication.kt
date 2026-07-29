@@ -5,6 +5,10 @@ import android.content.Context
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import androidx.work.WorkManager
+import coil.Coil
+import coil.ImageLoader
+import coil.ImageLoaderFactory
+import com.m3u.data.extension.artwork.ProviderArtworkFetcherFactory
 import com.m3u.data.worker.ExtensionPluginBootstrapWorker
 import com.m3u.data.worker.PersistedUriPermissionCleanupWorker
 import com.m3u.data.worker.ProviderCredentialRecoveryWorker
@@ -29,8 +33,20 @@ class M3UApplication : Application(), Configuration.Provider {
     @Inject
     lateinit var startupTasks: Set<@JvmSuppressWildcards ApplicationStartupTask>
 
+    @Inject
+    lateinit var providerArtworkFetcherFactory: ProviderArtworkFetcherFactory
+
     override fun onCreate() {
         super.onCreate()
+        Coil.setImageLoader(
+            ImageLoaderFactory {
+                ImageLoader.Builder(this)
+                    .components {
+                        add(providerArtworkFetcherFactory)
+                    }
+                    .build()
+            }
+        )
         if (BuildConfig.DEBUG) {
             Timber.plant(DebugTree())
         }

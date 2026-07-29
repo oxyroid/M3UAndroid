@@ -20,6 +20,7 @@ import com.m3u.data.repository.extension.ExtensionSettingNetworkOrigin
 import com.m3u.data.repository.extension.ExtensionSettingStore
 import com.m3u.data.repository.extension.ExtensionSettingsRepository
 import com.m3u.data.worker.ExtensionBackgroundTaskScheduler
+import com.m3u.data.worker.ProviderRefreshWorkCanceller
 import com.m3u.data.worker.ProviderSessionCleanupWorker
 import com.m3u.extension.api.ExtensionApiVersions
 import com.m3u.extension.api.ExtensionCapabilityIds
@@ -62,6 +63,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import timber.log.Timber
 
 internal class ExtensionPluginRepositoryImpl private constructor(
     private val discovery: ExtensionPluginDiscovery,
@@ -76,6 +78,7 @@ internal class ExtensionPluginRepositoryImpl private constructor(
     private val providerBrokerScopeStore: ProviderBrokerScopeStore?,
     private val settings: Settings,
     private val backgroundTaskScheduler: ExtensionBackgroundTaskScheduler?,
+    private val providerRefreshWorkCanceller: ProviderRefreshWorkCanceller?,
     private val playlistDao: PlaylistDao?,
     private val extensionContributionScheduler: ExtensionContributionScheduler?,
     private val scheduleSessionCleanup: () -> Unit,
@@ -114,6 +117,7 @@ internal class ExtensionPluginRepositoryImpl private constructor(
         providerBrokerScopeStore: ProviderBrokerScopeStore,
         settings: Settings,
         backgroundTaskScheduler: ExtensionBackgroundTaskScheduler,
+        providerRefreshWorkCanceller: ProviderRefreshWorkCanceller,
         playlistDao: PlaylistDao,
         extensionContributionScheduler: ExtensionContributionScheduler,
         @ApplicationContext context: Context,
@@ -130,6 +134,7 @@ internal class ExtensionPluginRepositoryImpl private constructor(
         providerBrokerScopeStore = providerBrokerScopeStore,
         settings = settings,
         backgroundTaskScheduler = backgroundTaskScheduler,
+        providerRefreshWorkCanceller = providerRefreshWorkCanceller,
         playlistDao = playlistDao,
         extensionContributionScheduler = extensionContributionScheduler,
         scheduleSessionCleanup = {
@@ -193,7 +198,7 @@ internal class ExtensionPluginRepositoryImpl private constructor(
                     }
                     deactivateService(service.key)
                     extensionIdFor(service)?.let { extensionId ->
-                        cancelBackgroundTasks(extensionId)
+                        cancelExtensionWork(extensionId)
                         clearExtensionContributions(extensionId)
                         cancelContributionRefreshesIfUnused(setOf(extensionId))
                     }
@@ -203,16 +208,28 @@ internal class ExtensionPluginRepositoryImpl private constructor(
                     trustStore.setEnabled(service, false)
                     deactivateService(service.key)
                     extensionIdFor(service)?.let { extensionId ->
-                        cancelBackgroundTasks(extensionId)
+                        cancelExtensionWork(extensionId)
                         clearExtensionContributions(extensionId)
                         cancelContributionRefreshesIfUnused(setOf(extensionId))
                     }
                 }
             } else if (wasEnabled) {
-                ensureConnected(service)
+                if (ensureConnected(service) !is PluginEnableResult.Enabled) {
+                    extensionIdFor(service)?.let { extensionId ->
+                        cancelProviderRefreshes(extensionId)
+                    }
+                }
             }
             if (trusted && trustStore.isEnabled(service)) {
-                probeTransportHealth(service)
+                val health = probeTransportHealth(service)
+                if (
+                    health?.health != ExtensionTransportHealth.HEALTHY ||
+                    registeredExtension(service)?.state != ExtensionState.ENABLED
+                ) {
+                    extensionIdFor(service)?.let { extensionId ->
+                        cancelProviderRefreshes(extensionId)
+                    }
+                }
             }
             val enabled = trusted && trustStore.isEnabled(service)
             val registeredExtension = registeredExtension(service)
@@ -590,8 +607,8 @@ internal class ExtensionPluginRepositoryImpl private constructor(
                             .requiresReauthorization
                     ) {
                         trustStore.setEnabled(service, false)
-                        cancelBackgroundTasks(manifest.id.value)
                         deactivateService(service.key)
+                        cancelExtensionWork(manifest.id.value)
                         clearExtensionContributions(manifest.id.value)
                         cancelContributionRefreshesIfUnused(setOf(manifest.id.value))
                         return@runCatching PluginEnableResult.Rejected(
@@ -717,7 +734,7 @@ internal class ExtensionPluginRepositoryImpl private constructor(
                             trustStore.extensionId(service) == manifest.id.value
                         ) {
                             trustStore.setEnabled(service, false)
-                            cancelBackgroundTasks(manifest.id.value)
+                            cancelExtensionWork(manifest.id.value)
                             clearExtensionContributions(manifest.id.value)
                             cancelContributionRefreshesIfUnused(setOf(manifest.id.value))
                         }
@@ -855,7 +872,7 @@ internal class ExtensionPluginRepositoryImpl private constructor(
             )?.let { principal -> providerBrokerScopeStore?.closeAll(principal) }
         }
         activePrincipalRegistry.awaitPersistence(ExtensionId(extensionId))
-        cancelBackgroundTasks(extensionId)
+        cancelExtensionWork(extensionId)
         clearExtensionContributions(extensionId)
         cancelContributionRefreshesIfUnused(setOf(extensionId))
         removed || services.isNotEmpty()
@@ -869,7 +886,7 @@ internal class ExtensionPluginRepositoryImpl private constructor(
             }
             deactivateService(ExtensionServiceKey(packageName, serviceName))
             trustedService?.extensionId?.let { extensionId ->
-                cancelBackgroundTasks(extensionId)
+                cancelExtensionWork(extensionId)
                 activePrincipalRegistry.deactivate(
                     extensionId = ExtensionId(extensionId),
                     packageName = trustedService.packageName,
@@ -930,6 +947,7 @@ internal class ExtensionPluginRepositoryImpl private constructor(
             )
         }
         activePrincipalRegistry.invalidateAndRun(ExtensionId(extensionId)) {
+            cancelProviderRefreshes(extensionId)
             providerBrokerScopeStore?.closeAll(service.toPrincipal(ExtensionId(extensionId)))
             providerAccountOwnerStore.revoke(
                 ExtensionOwnerIdentity(
@@ -1005,7 +1023,7 @@ internal class ExtensionPluginRepositoryImpl private constructor(
         )
     }
 
-    override suspend fun restoreEnabled(): Int {
+    override suspend fun restoreEnabled(scheduleSessionCleanup: Boolean): Int {
         if (!settings[PreferencesKeys.EXTERNAL_EXTENSIONS]) {
             lifecycleMutex.withLock { suspendExternalTransports() }
             return 0
@@ -1024,14 +1042,25 @@ internal class ExtensionPluginRepositoryImpl private constructor(
             }
             .toSet()
         disabledExtensionIds.forEach { extensionId ->
+            cancelExtensionWork(extensionId)
             clearExtensionContributions(extensionId)
         }
         val restored = services
             .filter { service -> trustStore.isTrusted(service) && trustStore.isEnabled(service) }
             .mapBounded(maxConcurrentPluginInspections) { service ->
                 val result = ensureConnected(service)
-                result is PluginEnableResult.Enabled &&
-                    completeHealthyRestore(service, result.manifest)
+                val healthy = result is PluginEnableResult.Enabled &&
+                    completeHealthyRestore(
+                        service = service,
+                        manifest = result.manifest,
+                        scheduleSessionCleanup = scheduleSessionCleanup,
+                    )
+                if (!healthy) {
+                    extensionIdFor(service)?.let { extensionId ->
+                        cancelProviderRefreshes(extensionId)
+                    }
+                }
+                healthy
             }
             .count { healthy -> healthy }
         cancelContributionRefreshesIfUnused(
@@ -1043,6 +1072,7 @@ internal class ExtensionPluginRepositoryImpl private constructor(
     private suspend fun completeHealthyRestore(
         service: InstalledExtensionService,
         manifest: ExtensionManifest,
+        scheduleSessionCleanup: Boolean,
     ): Boolean {
         val probe = probeTransportHealth(service) ?: return false
         if (probe.health != ExtensionTransportHealth.HEALTHY) return false
@@ -1061,7 +1091,9 @@ internal class ExtensionPluginRepositoryImpl private constructor(
             val grantedCapabilities = trustStore.grantedCapabilities(service)
             reconcileExtensionContributionData(manifest, grantedCapabilities)
             reconcileBackgroundTasks(manifest, grantedCapabilities)
-            scheduleSessionCleanupBestEffort(manifest.id.value)
+            if (scheduleSessionCleanup) {
+                scheduleSessionCleanupBestEffort(manifest.id.value)
+            }
             true
         }
     }
@@ -1073,7 +1105,7 @@ internal class ExtensionPluginRepositoryImpl private constructor(
             .distinct()
         transports.removeAll().forEach { active -> deactivateTransport(active) }
         extensionIds.forEach { extensionId ->
-            cancelBackgroundTasks(extensionId)
+            cancelExtensionWork(extensionId)
             clearExtensionContributions(extensionId)
         }
         cancelContributionRefreshesIfUnused(extensionIds.toSet())
@@ -1094,7 +1126,7 @@ internal class ExtensionPluginRepositoryImpl private constructor(
                 deactivateTransport(active)
             }
             missingExtensionIds.forEach { extensionId ->
-                cancelBackgroundTasks(extensionId)
+                cancelExtensionWork(extensionId)
                 clearExtensionContributions(extensionId)
             }
             cancelContributionRefreshesIfUnused(
@@ -1405,7 +1437,7 @@ internal class ExtensionPluginRepositoryImpl private constructor(
         }
         deactivateService(service.key)
         extensionIdFor(service)?.let { extensionId ->
-            cancelBackgroundTasks(extensionId)
+            cancelExtensionWork(extensionId)
             clearExtensionContributions(extensionId)
             cancelContributionRefreshesIfUnused(setOf(extensionId))
         }
@@ -1415,6 +1447,11 @@ internal class ExtensionPluginRepositoryImpl private constructor(
     private fun extensionIdFor(service: InstalledExtensionService): String? =
         trustStore.extensionId(service)
 
+    private suspend fun cancelExtensionWork(extensionId: String) {
+        cancelBackgroundTasks(extensionId)
+        cancelProviderRefreshes(extensionId)
+    }
+
     private suspend fun cancelBackgroundTasks(extensionId: String) {
         try {
             backgroundTaskScheduler?.cancel(ExtensionId(extensionId))
@@ -1423,6 +1460,20 @@ internal class ExtensionPluginRepositoryImpl private constructor(
             throw cancelled
         } catch (error: Exception) {
             backgroundSchedulingFailures[extensionId] = error.javaClass.simpleName
+        }
+    }
+
+    private suspend fun cancelProviderRefreshes(extensionId: String) {
+        try {
+            providerRefreshWorkCanceller?.cancel(ExtensionId(extensionId))
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            Timber.w(
+                "Provider refresh cancellation failed for extension %s (%s)",
+                extensionId,
+                error.javaClass.simpleName,
+            )
         }
     }
 
@@ -1539,6 +1590,7 @@ internal class ExtensionPluginRepositoryImpl private constructor(
         }
         val probe = probeTransportHealth(service)
         if (probe?.health != ExtensionTransportHealth.HEALTHY) {
+            cancelProviderRefreshes(extensionId)
             return PluginEnableResult.Rejected("Extension health check failed")
         }
         return try {
@@ -1770,6 +1822,7 @@ internal class ExtensionPluginRepositoryImpl private constructor(
             providerBrokerScopeStore: ProviderBrokerScopeStore? = null,
             settings: Settings,
             backgroundTaskScheduler: ExtensionBackgroundTaskScheduler? = null,
+            providerRefreshWorkCanceller: ProviderRefreshWorkCanceller? = null,
             playlistDao: PlaylistDao? = null,
             extensionContributionScheduler: ExtensionContributionScheduler? = null,
             scheduleSessionCleanup: () -> Unit = {},
@@ -1794,6 +1847,7 @@ internal class ExtensionPluginRepositoryImpl private constructor(
             providerBrokerScopeStore = providerBrokerScopeStore,
             settings = settings,
             backgroundTaskScheduler = backgroundTaskScheduler,
+            providerRefreshWorkCanceller = providerRefreshWorkCanceller,
             playlistDao = playlistDao,
             extensionContributionScheduler = extensionContributionScheduler,
             scheduleSessionCleanup = scheduleSessionCleanup,
@@ -1946,7 +2000,7 @@ private fun newPluginAuthorizationToken(): PluginAuthorizationToken {
 
 @Serializable
 private data class PluginDiagnostics(
-    val formatVersion: Int = 3,
+    val formatVersion: Int = 1,
     val generatedAtEpochMillis: Long,
     val hostApiVersion: String,
     val packageName: String,

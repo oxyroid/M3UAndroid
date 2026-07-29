@@ -265,6 +265,7 @@ class ProviderAccountOwnerStoreTest {
                 playSessionId = "remote-$id",
                 liveStreamId = "live-$id",
                 createdAtEpochMillis = 1_000,
+                playMethod = "unknown",
             )
         )
         return SeededOwnership(

@@ -28,11 +28,14 @@ import com.m3u.extension.api.ExtensionCapabilityIds
 import com.m3u.extension.api.ExtensionCapabilityRequest
 import com.m3u.extension.api.ExtensionEntrypoint
 import com.m3u.extension.api.ExtensionError
+import com.m3u.extension.api.ExtensionErrorCode
 import com.m3u.extension.api.ExtensionHandler
 import com.m3u.extension.api.ExtensionHookDeclaration
 import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.ExtensionManifest
+import com.m3u.extension.api.ExtensionPayload
 import com.m3u.extension.api.ExtensionSemanticVersion
+import com.m3u.extension.api.HookSpec
 import com.m3u.extension.api.HookResult
 import com.m3u.extension.api.InvocationId
 import com.m3u.extension.api.SerializedExtensionEnvelope
@@ -45,11 +48,15 @@ import com.m3u.extension.api.subscription.PlaybackSessionCloseReason
 import com.m3u.extension.api.subscription.PlaybackSessionCloseRequest
 import com.m3u.extension.api.subscription.PlaybackSessionCloseResult
 import com.m3u.extension.api.subscription.PlaybackSessionDescriptor
+import com.m3u.extension.api.subscription.PlaybackSessionUpdateResult
 import com.m3u.extension.api.subscription.PlaybackSourceResolveRequest
 import com.m3u.extension.api.subscription.PlaybackSourceResolveResult
+import com.m3u.extension.api.subscription.PlaybackMethods
 import com.m3u.extension.api.subscription.PlaybackReference
 import com.m3u.extension.api.subscription.ProviderKind
 import com.m3u.extension.api.subscription.SubscriptionChannelDescriptor
+import com.m3u.extension.api.subscription.SubscriptionContentBrowseRequest
+import com.m3u.extension.api.subscription.SubscriptionContentBrowseResult
 import com.m3u.extension.api.subscription.SubscriptionContentRefreshRequest
 import com.m3u.extension.api.subscription.SubscriptionContentRefreshResult
 import com.m3u.extension.api.subscription.SubscriptionProviderErrorCodes
@@ -594,6 +601,7 @@ class SubscriptionProviderSessionCleanupTest {
     fun invalidPlaybackResultClosesReturnedSessionWithoutPersistingIt() = runBlocking {
         val invalidResult = PlaybackSourceResolveResult(
             url = "not-a-playback-url",
+            playMethod = PlaybackMethods.DirectPlay,
             session = PlaybackSessionDescriptor(
                 playSessionId = REMOTE_PLAY_SESSION_ID,
                 liveStreamId = REMOTE_LIVE_STREAM_ID,
@@ -623,6 +631,7 @@ class SubscriptionProviderSessionCleanupTest {
     fun invalidPlaybackResultWhoseCloseIsUnconfirmedPersistsSessionForRecovery() = runBlocking {
         val invalidResult = PlaybackSourceResolveResult(
             url = "not-a-playback-url",
+            playMethod = PlaybackMethods.DirectPlay,
             session = PlaybackSessionDescriptor(
                 playSessionId = REMOTE_PLAY_SESSION_ID,
                 liveStreamId = REMOTE_LIVE_STREAM_ID,
@@ -655,6 +664,7 @@ class SubscriptionProviderSessionCleanupTest {
         val credentialHandle = CredentialHandle("persistent:$ACCOUNT_ID")
         val resolvedWithCredentialHeader = PlaybackSourceResolveResult(
             url = "https://media.example.test/live.m3u8",
+            playMethod = PlaybackMethods.DirectPlay,
             headers = mapOf(
                 "Authorization" to PlaybackHeaderValue(
                     parts = listOf(
@@ -726,6 +736,7 @@ class SubscriptionProviderSessionCleanupTest {
     fun externalDisableDuringHeaderValidationKeepsTombstoneAndOriginalError() = runBlocking {
         val resultWithInvalidHeader = PlaybackSourceResolveResult(
             url = "https://media.example.test/live.m3u8",
+            playMethod = PlaybackMethods.DirectPlay,
             headers = mapOf(
                 "Host" to PlaybackHeaderValue(
                     parts = listOf(
@@ -768,6 +779,7 @@ class SubscriptionProviderSessionCleanupTest {
         runBlocking {
             val resultWithCredentialHeader = PlaybackSourceResolveResult(
                 url = "https://media.example.test/live.m3u8",
+                playMethod = PlaybackMethods.DirectPlay,
                 headers = mapOf(
                     "Authorization" to PlaybackHeaderValue(
                         parts = listOf(
@@ -1394,6 +1406,11 @@ class SubscriptionProviderSessionCleanupTest {
             return HookResult.Success(refreshResult)
         }
 
+        suspend fun browse(
+            request: SubscriptionContentBrowseRequest,
+        ): HookResult<SubscriptionContentBrowseResult> =
+            HookResult.Success(SubscriptionContentBrowseResult(items = emptyList()))
+
         override val manifest = ExtensionManifest(
             id = EXTENSION_ID,
             displayName = "Provider session test",
@@ -1403,6 +1420,25 @@ class SubscriptionProviderSessionCleanupTest {
                 maximum = ExtensionApiVersions.Current,
             ),
             hooks = setOf(
+                ExtensionHookDeclaration(
+                    hook = SubscriptionHookSpecs.Discover.hook,
+                    schemaVersion = SubscriptionHookSpecs.Discover.schemaVersion,
+                ),
+                ExtensionHookDeclaration(
+                    hook = SubscriptionHookSpecs.Validate.hook,
+                    schemaVersion = SubscriptionHookSpecs.Validate.schemaVersion,
+                    requiredCapabilities = VALIDATE_CAPABILITIES,
+                ),
+                ExtensionHookDeclaration(
+                    hook = SubscriptionHookSpecs.Refresh.hook,
+                    schemaVersion = SubscriptionHookSpecs.Refresh.schemaVersion,
+                    requiredCapabilities = REFRESH_CAPABILITIES,
+                ),
+                ExtensionHookDeclaration(
+                    hook = SubscriptionHookSpecs.Browse.hook,
+                    schemaVersion = SubscriptionHookSpecs.Browse.schemaVersion,
+                    requiredCapabilities = REFRESH_CAPABILITIES,
+                ),
                 ExtensionHookDeclaration(
                     hook = SubscriptionHookSpecs.ResolvePlayback.hook,
                     schemaVersion = SubscriptionHookSpecs.ResolvePlayback.schemaVersion,
@@ -1414,12 +1450,12 @@ class SubscriptionProviderSessionCleanupTest {
                     requiredCapabilities = PLAYBACK_CAPABILITIES,
                 ),
                 ExtensionHookDeclaration(
-                    hook = SubscriptionHookSpecs.Refresh.hook,
-                    schemaVersion = SubscriptionHookSpecs.Refresh.schemaVersion,
-                    requiredCapabilities = REFRESH_CAPABILITIES,
+                    hook = SubscriptionHookSpecs.UpdatePlayback.hook,
+                    schemaVersion = SubscriptionHookSpecs.UpdatePlayback.schemaVersion,
+                    requiredCapabilities = PLAYBACK_CAPABILITIES,
                 ),
             ),
-            capabilities = (PLAYBACK_CAPABILITIES + REFRESH_CAPABILITIES)
+            capabilities = (PLAYBACK_CAPABILITIES + REFRESH_CAPABILITIES + VALIDATE_CAPABILITIES)
                 .mapTo(mutableSetOf()) { capability ->
                     ExtensionCapabilityRequest(
                         capability = capability,
@@ -1429,6 +1465,30 @@ class SubscriptionProviderSessionCleanupTest {
         )
 
         override val handlers: Collection<ExtensionHandler<*, *>> = listOf(
+            unusedHandler(SubscriptionHookSpecs.Discover),
+            unusedHandler(SubscriptionHookSpecs.Validate),
+            object : ExtensionHandler<
+                SubscriptionContentRefreshRequest,
+                SubscriptionContentRefreshResult,
+                > {
+                override val spec = SubscriptionHookSpecs.Refresh
+
+                override suspend fun invoke(
+                    context: ExtensionCallContext,
+                    request: SubscriptionContentRefreshRequest,
+                ): HookResult<SubscriptionContentRefreshResult> = refresh(request)
+            },
+            object : ExtensionHandler<
+                SubscriptionContentBrowseRequest,
+                SubscriptionContentBrowseResult,
+                > {
+                override val spec = SubscriptionHookSpecs.Browse
+
+                override suspend fun invoke(
+                    context: ExtensionCallContext,
+                    request: SubscriptionContentBrowseRequest,
+                ): HookResult<SubscriptionContentBrowseResult> = browse(request)
+            },
             object : ExtensionHandler<PlaybackSourceResolveRequest, PlaybackSourceResolveResult> {
                 override val spec = SubscriptionHookSpecs.ResolvePlayback
 
@@ -1445,17 +1505,30 @@ class SubscriptionProviderSessionCleanupTest {
                     request: PlaybackSessionCloseRequest,
                 ): HookResult<PlaybackSessionCloseResult> = close(request)
             },
-            object : ExtensionHandler<SubscriptionContentRefreshRequest, SubscriptionContentRefreshResult> {
-                override val spec = SubscriptionHookSpecs.Refresh
-
-                override suspend fun invoke(
-                    context: ExtensionCallContext,
-                    request: SubscriptionContentRefreshRequest,
-                ): HookResult<SubscriptionContentRefreshResult> = refresh(request)
-            },
+            unusedHandler(SubscriptionHookSpecs.UpdatePlayback),
         )
 
-        private fun <T : com.m3u.extension.api.ExtensionPayload> authenticationFailure():
+        private fun <
+            Request : ExtensionPayload,
+            Response : ExtensionPayload,
+            > unusedHandler(
+            hookSpec: HookSpec<Request, Response>,
+        ): ExtensionHandler<Request, Response> = object : ExtensionHandler<Request, Response> {
+            override val spec = hookSpec
+
+            override suspend fun invoke(
+                context: ExtensionCallContext,
+                request: Request,
+            ): HookResult<Response> = HookResult.Failure(
+                ExtensionError(
+                    code = ExtensionErrorCode("provider.test_hook_unused"),
+                    message = "Unused provider test Hook",
+                    recoverable = false,
+                )
+            )
+        }
+
+        private fun <T : ExtensionPayload> authenticationFailure():
             HookResult<T> = HookResult.Failure(
                 ExtensionError(
                     code = SubscriptionProviderErrorCodes.AuthenticationFailed,
@@ -1526,6 +1599,31 @@ class SubscriptionProviderSessionCleanupTest {
 
                 is HookResult.Failure -> request.failure(result.error)
             }
+
+            SubscriptionHookSpecs.Browse.hook -> when (
+                val result = extension.browse(
+                    JSON.decodeFromJsonElement(
+                        SubscriptionHookSpecs.Browse.requestSerializer,
+                        request.payload,
+                    )
+                )
+            ) {
+                is HookResult.Success -> request.success(
+                    JSON.encodeToJsonElement(
+                        SubscriptionHookSpecs.Browse.responseSerializer,
+                        result.payload,
+                    )
+                )
+
+                is HookResult.Failure -> request.failure(result.error)
+            }
+
+            SubscriptionHookSpecs.UpdatePlayback.hook -> request.success(
+                JSON.encodeToJsonElement(
+                    SubscriptionHookSpecs.UpdatePlayback.responseSerializer,
+                    PlaybackSessionUpdateResult(accepted = true),
+                )
+            )
 
             else -> error("Unexpected Hook ${request.hook}")
         }
@@ -1615,6 +1713,10 @@ class SubscriptionProviderSessionCleanupTest {
             BROKER_CAPABILITIES + ExtensionCapabilityIds.PlaybackResolve
         val REFRESH_CAPABILITIES =
             BROKER_CAPABILITIES + ExtensionCapabilityIds.SubscriptionRead
+        val VALIDATE_CAPABILITIES = setOf(
+            ExtensionCapabilityIds.Network,
+            ExtensionCapabilityIds.CredentialWrite,
+        )
         const val ACCOUNT_ID = "account-1"
         const val PLAYLIST_URL = "m3u-provider://account/account-1/live"
         const val ITEM_ID = "item-1"
@@ -1650,6 +1752,7 @@ class SubscriptionProviderSessionCleanupTest {
             playSessionId = REMOTE_PLAY_SESSION_ID,
             liveStreamId = REMOTE_LIVE_STREAM_ID,
             createdAtEpochMillis = 1L,
+            playMethod = "unknown",
         )
 
         fun capacityTargetAccount(suffix: String) = TEST_ACCOUNT.copy(
@@ -1668,9 +1771,11 @@ class SubscriptionProviderSessionCleanupTest {
             sourceType = sourceType,
             playSessionId = playSessionId,
             liveStreamId = liveStreamId,
+            playMethod = playMethod,
         )
         val VALID_PLAYBACK_RESULT = PlaybackSourceResolveResult(
             url = "https://media.example.test/live.m3u8",
+            playMethod = PlaybackMethods.DirectPlay,
         )
         val VALID_REFRESH_RESULT = SubscriptionContentRefreshResult(
             source = SubscriptionSourceDescriptor(

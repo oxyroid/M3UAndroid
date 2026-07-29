@@ -10,8 +10,11 @@ import com.m3u.data.extension.security.CredentialResolver
 import com.m3u.extension.api.ExtensionApiVersions
 import com.m3u.extension.api.HookResult
 import com.m3u.extension.api.subscription.EmbyCompatibleProviderKinds
+import com.m3u.extension.api.subscription.PlaybackMethod
+import com.m3u.extension.api.subscription.PlaybackMethods
 import com.m3u.extension.api.subscription.PlaybackPreferences
 import com.m3u.extension.api.subscription.PlaybackReference
+import com.m3u.extension.api.subscription.PlaybackSessionEvent
 import com.m3u.extension.api.subscription.PlaybackSourceResolveRequest
 import com.m3u.extension.api.subscription.PlaybackSourceResolveResult
 import com.m3u.extension.api.subscription.ProviderAccountReference
@@ -201,6 +204,7 @@ class EmbyCompatibleProviderPlaybackFailureTest {
                         ),
                         credential = ProviderCredential(credentialHandle),
                         reference = REFERENCE,
+                        preferences = PlaybackPreferences(startPositionTicks = 0L),
                     ),
                 ).outcome
             }
@@ -219,6 +223,7 @@ class EmbyCompatibleProviderPlaybackFailureTest {
         headers = headers,
         mediaSourceId = "media-source",
         session = session,
+        playMethod = PlaybackMethods.DirectStream,
     )
 
     private class PlaybackClient(
@@ -246,6 +251,14 @@ class EmbyCompatibleProviderPlaybackFailureTest {
             accessToken: String,
         ): EmbyChannelRefresh = error("Not used")
 
+        override suspend fun browseContent(
+            account: ValidatedProviderAccount,
+            accessToken: String,
+            parentReference: PlaybackReference?,
+            cursor: String?,
+            limit: Int,
+        ): EmbyContentPage = error("Not used")
+
         override suspend fun resolvePlayback(
             account: ValidatedProviderAccount,
             accessToken: String,
@@ -253,12 +266,25 @@ class EmbyCompatibleProviderPlaybackFailureTest {
             preferences: PlaybackPreferences,
         ): EmbyPlaybackSource = source
 
+        override suspend fun updatePlayback(
+            account: ValidatedProviderAccount,
+            accessToken: String,
+            reference: PlaybackReference,
+            mediaSourceId: String?,
+            session: EmbyPlaybackSession,
+            event: PlaybackSessionEvent,
+            positionTicks: Long,
+            playMethod: PlaybackMethod,
+            isPaused: Boolean,
+        ): Boolean = error("Not used")
+
         override suspend fun closePlayback(
             account: ValidatedProviderAccount,
             accessToken: String,
             itemId: String,
             mediaSourceId: String?,
             session: EmbyPlaybackSession,
+            positionTicks: Long,
         ): Boolean {
             closeRequests += CloseRequest(
                 itemId = itemId,

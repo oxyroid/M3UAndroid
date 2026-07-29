@@ -4,6 +4,9 @@
 
 开始改代码前，先写出一条完整链路：谁发起请求、调用哪个 Hook、谁应用结果、用户在哪里看到变化。缺少宿主调用方或结果应用器的契约仍只是占位符。
 
+插件改动只面向 `app/smartphone` 的手机和平板布局。`app/tv` 不提供也不调用任何插件能力，
+只支持 M3U 与 Xtream。
+
 ## 增加或修改 Hook
 
 按这个顺序工作：
@@ -34,8 +37,9 @@ SubscriptionProviderRepositoryImpl -> SubscriptionProviderImporter
 
 新增 Provider Kind 由 Descriptor 与声明式设置驱动。通用数据源选择器、表单状态、订阅
 Repository 和 Importer 不按具体 `ProviderKind` 分支；只有 Provider 实现处理具体类型。
-新订阅统一保存为 `DataSource.Provider`，`DataSource.Emby` 与 `DataSource.Jellyfin`
-只作为历史兼容输入保留。
+Provider 订阅统一保存为 `DataSource.Provider`。每个 Provider 都必须实现 `Discover`、
+`Validate`、`Refresh`、`Browse`、`ResolvePlayback`、`UpdatePlayback` 与
+`ClosePlayback`。
 
 ## 修改 APK 发现、信任或 IPC
 
@@ -87,14 +91,13 @@ project substitution 的情况下编译 Hello。两条 CI 流水线都会上传�
 [外部 APK 插件威胁模型](threat-model.zh-CN.md)的中英文版本。写清新增暴露的资产或数据、
 负责限制它的宿主边界，以及测试通过后仍然存在的风险。
 
-## 修改手机或 TV 界面
+## 修改 smartphone 界面
 
 界面只观察 repository state 并发送操作，不直接发现或绑定 service。
 
-- 手机从 [`PlaylistManagementScreen`](../../../app/smartphone/src/main/java/com/m3u/smartphone/ui/business/setting/fragments/PlaylistManagementScreen.kt)、[`ExtensionPluginManagementScreen`](../../../app/smartphone/src/main/java/com/m3u/smartphone/ui/business/setting/fragments/ExtensionPluginManagementScreen.kt) 和 [`ExtensionSettingsScreen`](../../../app/smartphone/src/main/java/com/m3u/smartphone/ui/business/setting/fragments/ExtensionSettingsScreen.kt) 开始。
-- TV 从 [`TvHomeViewModel`](../../../app/tv/src/main/java/com/m3u/tv/TvHomeViewModel.kt) 和 [`TvScreens`](../../../app/tv/src/main/java/com/m3u/tv/TvScreens.kt) 开始。
+从 [`PlaylistManagementScreen`](../../../app/smartphone/src/main/java/com/m3u/smartphone/ui/business/setting/fragments/PlaylistManagementScreen.kt)、[`ExtensionPluginManagementScreen`](../../../app/smartphone/src/main/java/com/m3u/smartphone/ui/business/setting/fragments/ExtensionPluginManagementScreen.kt) 和 [`ExtensionSettingsScreen`](../../../app/smartphone/src/main/java/com/m3u/smartphone/ui/business/setting/fragments/ExtensionSettingsScreen.kt) 开始。
 
-手机检查整行点击、滚动授权、错误可见性和设置保存；TV 检查 DPad 顺序、聚焦态、返回行为和长文本。
+检查整行点击、滚动授权、错误可见性、设置保存，以及手机/平板自适应布局。
 
 ## 验证证据
 
@@ -108,4 +111,4 @@ project substitution 的情况下编译 Hello。两条 CI 流水线都会上传�
 | 跨进程发现、绑定、PFD、调用与取消 | [`ExternalExtensionIpcTest`](../../../app/smartphone/src/androidTest/java/com/m3u/testing/ExternalExtensionIpcTest.kt)、[`ExternalExtensionConformanceIpcTest`](../../../app/smartphone/src/androidTest/java/com/m3u/testing/ExternalExtensionConformanceIpcTest.kt)、[`extension-reference`](../../../testing/extension-reference) |
 | 外部 provider 生命周期 | [`ExternalProviderEndToEndTest`](../../../app/smartphone/src/androidTest/java/com/m3u/testing/ExternalProviderEndToEndTest.kt)、[`extension-reference`](../../../testing/extension-reference)、[`mock-server`](../../../testing/mock-server) |
 | 内置 provider 与 importer | [`EmbyCompatibleProviderIntegrationTest`](../../../data/src/androidTest/java/com/m3u/data/extension/emby/EmbyCompatibleProviderIntegrationTest.kt)、[`SubscriptionProviderRepositoryIntegrationTest`](../../../data/src/androidTest/java/com/m3u/data/repository/provider/SubscriptionProviderRepositoryIntegrationTest.kt)，以及上文链接的应用器测试 |
-| 手机或 TV 产品链路 | 对应触发入口与可见结果的产品 UI 测试 |
+| Smartphone 产品链路 | 对应触发入口与可见结果的手机或平板 UI 测试 |

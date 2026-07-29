@@ -20,7 +20,7 @@
   "hooks": [
     {
       "hook": "subscription.provider.validate",
-      "schemaVersion": 2,
+      "schemaVersion": 1,
       "requiredCapabilities": [
         "credential.write",
         "network"
@@ -28,7 +28,7 @@
     },
     {
       "hook": "background.task.run",
-      "schemaVersion": 2,
+      "schemaVersion": 1,
       "requiredCapabilities": [
         "background.task",
         "network"

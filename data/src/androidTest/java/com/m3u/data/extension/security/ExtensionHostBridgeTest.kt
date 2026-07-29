@@ -16,6 +16,7 @@ import com.m3u.extension.api.ExtensionHookDeclaration
 import com.m3u.extension.api.ExtensionHookIds
 import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.ExtensionInvocationBudget
+import com.m3u.extension.api.ExtensionSettingsSnapshot
 import com.m3u.extension.api.ExtensionManifest
 import com.m3u.extension.api.ExtensionSemanticVersion
 import com.m3u.extension.api.Hook
@@ -146,7 +147,7 @@ class ExtensionHostBridgeTest {
         val request =
             """
             {
-              "brokerProtocolVersion": 4,
+              "brokerProtocolVersion": 1,
               "operation": {
                 "type": "http",
                 "request": {
@@ -501,7 +502,7 @@ class ExtensionHostBridgeTest {
 
         val result = executeRaw(
             bridge,
-            """{"brokerProtocolVersion":4,"request":{"password":"$SECRET_FAILURE_MESSAGE"}}""",
+            """{"brokerProtocolVersion":1,"request":{"password":"$SECRET_FAILURE_MESSAGE"}}""",
         ) as BrokerInvocationResult.Failure
 
         assertEquals(BrokerErrorCodes.InvalidRequest, result.error.code)
@@ -526,7 +527,7 @@ class ExtensionHostBridgeTest {
             bridge,
             """
             {
-              "brokerProtocolVersion": 4,
+              "brokerProtocolVersion": 1,
               "operation": {
                 "type": "http",
                 "request": {
@@ -946,6 +947,7 @@ class ExtensionHostBridgeTest {
         hook = hook,
         schemaVersion = 1,
         payload = JsonObject(emptyMap()),
+        settings = ExtensionSettingsSnapshot(),
         grantedCapabilities = granted,
         brokerScope = scope,
         invocationBudget = invocationBudget,

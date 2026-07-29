@@ -165,92 +165,37 @@ class ExtensionSettingsRepositoryTest {
     }
 
     @Test
-    fun networkOriginApprovalRequiresExplicitSaveAfterFieldUpgrade() = runBlocking {
-        settingsSections = listOf(originSection(networkOrigin = false))
+    fun missingDynamicSchemaRegistryDropsUntrustedSettingsAndSecret() = runBlocking {
+        requireNotNull(repository.configuration(EXTENSION_ID, null, "phone"))
         assertTrue(
-            updateCurrent("network", "origin", "https://legacy.example", localeTag = null) is
-                ExtensionSettingUpdateResult.Updated
+            updateCurrent(
+                sectionId = "playback",
+                fieldKey = "quality",
+                rawValue = "direct",
+                localeTag = null,
+            ) is ExtensionSettingUpdateResult.Updated
         )
-        assertTrue(
-            store.approvedSettingOrigins(
-                EXTENSION_ID.value,
-                store.snapshot(EXTENSION_ID.value),
-            ).isEmpty()
+        val secretUpdate = updateCurrent(
+            sectionId = "playback",
+            fieldKey = "token",
+            rawValue = SECRET,
+            localeTag = null,
+        ) as ExtensionSettingUpdateResult.Updated
+        val secretHandle = requireNotNull(
+            secretUpdate.snapshot.credentialHandles["playback/token"]
         )
 
-        forgetDynamicSchemaRegistryToSimulateLegacyState()
-        settingsSections = listOf(originSection(networkOrigin = true))
-        val upgraded = requireNotNull(
+        context.getSharedPreferences("extension-settings", Context.MODE_PRIVATE)
+            .edit()
+            .remove("dynamic-schema-registry:${EXTENSION_ID.value}")
+            .commit()
+        val repaired = requireNotNull(
             repository.configuration(EXTENSION_ID, null, "phone")
         )
-        assertEquals(
-            JsonPrimitive("https://legacy.example"),
-            upgraded.snapshot.values["network/origin"],
-        )
-        assertEquals(
-            ExtensionNetworkOriginState.REQUIRES_APPROVAL,
-            upgraded.networkOriginState("network", "origin"),
-        )
-        assertEquals(
-            "Origin",
-            upgraded.settingNetworkOrigin("network", "origin")?.label,
-        )
-        assertTrue(
-            store.approvedSettingOrigins(EXTENSION_ID.value, upgraded.snapshot).isEmpty()
-        )
 
-        assertTrue(
-            updateCurrent("network", "origin", "https://legacy.example", localeTag = null) is
-                ExtensionSettingUpdateResult.Updated
-        )
-        assertEquals(
-            setOf("https://legacy.example:443"),
-            store.approvedSettingOrigins(
-                EXTENSION_ID.value,
-                store.snapshot(EXTENSION_ID.value),
-            ),
-        )
-        val approved = requireNotNull(
-            repository.configuration(EXTENSION_ID, null, "phone")
-        )
-        assertEquals(
-            ExtensionNetworkOriginState.APPROVED,
-            approved.networkOriginState("network", "origin"),
-        )
-
-        val changedWithoutApproval = store.snapshot(EXTENSION_ID.value).let { current ->
-            current.copy(
-                values = current.values +
-                    ("network/origin" to JsonPrimitive("https://changed.example")),
-            )
-        }
-        store.save(EXTENSION_ID.value, changedWithoutApproval)
-        assertTrue(
-            store.approvedSettingOrigins(
-                EXTENSION_ID.value,
-                changedWithoutApproval,
-            ).isEmpty()
-        )
-        val restoredOldValue = changedWithoutApproval.copy(
-            values = changedWithoutApproval.values +
-                ("network/origin" to JsonPrimitive("https://legacy.example")),
-        )
-        store.save(EXTENSION_ID.value, restoredOldValue)
-        assertTrue(
-            store.approvedSettingOrigins(
-                EXTENSION_ID.value,
-                restoredOldValue,
-            ).isEmpty()
-        )
-
-        settingsSections = emptyList()
-        repository.configuration(EXTENSION_ID, null, "phone")
-        assertTrue(
-            store.approvedSettingOrigins(
-                EXTENSION_ID.value,
-                store.snapshot(EXTENSION_ID.value),
-            ).isEmpty()
-        )
+        assertEquals(JsonPrimitive("auto"), repaired.snapshot.values["playback/quality"])
+        assertFalse(repaired.snapshot.credentialHandles.containsKey("playback/token"))
+        assertEquals(null, secretStore.resolve(EXTENSION_ID.value, secretHandle))
     }
 
     @Test
@@ -299,13 +244,13 @@ class ExtensionSettingsRepositoryTest {
     }
 
     @Test
-    fun ordinaryDraftCannotApproveFieldThatBecomesNetworkOrigin() = runBlocking {
-        settingsSections = listOf(originSection(networkOrigin = false))
+    fun staleOrdinaryDraftCannotApprovePromotedNetworkOrigin() = runBlocking {
+        settingsSections = listOf(originSection(networkOrigin = false, version = 1))
         assertTrue(
             updateCurrent(
                 sectionId = "network",
                 fieldKey = "origin",
-                rawValue = "https://legacy.example",
+                rawValue = "https://initial.example",
                 localeTag = null,
             ) is ExtensionSettingUpdateResult.Updated
         )
@@ -313,13 +258,12 @@ class ExtensionSettingsRepositoryTest {
             repository.configuration(EXTENSION_ID, null, "phone")
         )
 
-        forgetDynamicSchemaRegistryToSimulateLegacyState()
-        settingsSections = listOf(originSection(networkOrigin = true))
+        settingsSections = listOf(originSection(networkOrigin = true, version = 2))
         val update = updateFromConfiguration(
             configuration = displayedOrdinaryField,
             sectionId = "network",
             fieldKey = "origin",
-            rawValue = "https://legacy.example",
+            rawValue = "https://initial.example",
         )
 
         assertTrue(update is ExtensionSettingUpdateResult.Rejected)
@@ -333,7 +277,7 @@ class ExtensionSettingsRepositoryTest {
             configuration = displayedOrdinaryField,
             sectionId = "network",
             fieldKey = "origin",
-            rawValue = "https://legacy.example",
+            rawValue = "https://initial.example",
         )
         assertTrue(replay is ExtensionSettingUpdateResult.Rejected)
         assertTrue(
@@ -601,38 +545,6 @@ class ExtensionSettingsRepositoryTest {
             )
         )
         assertEquals("DynamicSchemaSession(opaque)", session.toString())
-    }
-
-    @Test
-    fun legacyRegistryWithRetainedValuesRevalidatesPhoneAndTvSurfaces() = runBlocking {
-        repository.configuration(EXTENSION_ID, "en-US", "phone")
-        val preferences = context.getSharedPreferences(
-            "extension-settings",
-            Context.MODE_PRIVATE,
-        )
-        val registryKey = "dynamic-schema-registry:${EXTENSION_ID.value}"
-        val encodedRegistry = requireNotNull(preferences.getString(registryKey, null))
-        val legacyRegistry = encodedRegistry
-            .replace("\"formatVersion\":2", "\"formatVersion\":1")
-            .let { replaced ->
-                if (replaced != encodedRegistry) {
-                    replaced
-                } else {
-                    "${encodedRegistry.dropLast(1)},\"formatVersion\":1}"
-                }
-            }
-        assertTrue(preferences.edit().putString(registryKey, legacyRegistry).commit())
-        val restartedStore = ExtensionSettingStore(context, secretStore)
-        val restartedRepository = ExtensionSettingsRepositoryImpl(
-            runtime,
-            restartedStore,
-            secretStore,
-        )
-
-        assertEquals(
-            setOf("phone", "tv"),
-            restartedRepository.knownDynamicSchemaSurfaces(EXTENSION_ID),
-        )
     }
 
     @Test
@@ -1242,11 +1154,12 @@ class ExtensionSettingsRepositoryTest {
     private fun originSection(
         networkOrigin: Boolean,
         label: String = "Origin",
+        version: Int = 1,
     ) = ExtensionSettingSection(
         id = "network",
         title = "Network",
         schema = ExtensionSettingSchema(
-            version = 1,
+            version = version,
             fields = listOf(
                 ExtensionSettingField(
                     key = "origin",
@@ -1316,13 +1229,6 @@ class ExtensionSettingsRepositoryTest {
             ),
         ),
     )
-
-    private fun forgetDynamicSchemaRegistryToSimulateLegacyState() {
-        context.getSharedPreferences("extension-settings", Context.MODE_PRIVATE)
-            .edit()
-            .remove("dynamic-schema-registry:${EXTENSION_ID.value}")
-            .commit()
-    }
 
     private fun registrationLease() =
         requireNotNull(runtime.captureRegistration(EXTENSION_ID)).lease

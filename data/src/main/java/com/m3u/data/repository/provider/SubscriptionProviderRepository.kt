@@ -2,9 +2,12 @@ package com.m3u.data.repository.provider
 
 import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.security.CredentialHandle
+import com.m3u.extension.api.subscription.PlaybackPreferences
 import com.m3u.extension.api.subscription.ProviderKind
+import com.m3u.extension.api.subscription.PlaybackReference
 import com.m3u.extension.api.subscription.SubscriptionProviderDescriptor
 import com.m3u.extension.api.subscription.SubscriptionRefreshReason
+import com.m3u.data.database.model.SeriesEpisode
 import kotlinx.coroutines.flow.Flow
 
 interface SubscriptionProviderRepository {
@@ -16,7 +19,20 @@ interface SubscriptionProviderRepository {
         playlistUrl: String,
         reason: SubscriptionRefreshReason = SubscriptionRefreshReason.Manual,
     ): ProviderSubscriptionResult
-    suspend fun resolvePlayback(channelId: Int): ProviderPlaybackSource?
+    suspend fun browseEpisodes(seriesChannelId: Int): List<SeriesEpisode>
+    suspend fun resolvePlayback(
+        channelId: Int,
+        referenceOverride: PlaybackReference? = null,
+        preferences: PlaybackPreferences = PlaybackPreferences(
+            startPositionTicks = 0L,
+        ),
+    ): ProviderPlaybackSource?
+    suspend fun updatePlayback(
+        session: ProviderPlaybackSession,
+        event: ProviderPlaybackEvent,
+        positionTicks: Long,
+        isPaused: Boolean,
+    ): Boolean
     suspend fun closePlayback(
         session: ProviderPlaybackSession,
         reason: ProviderPlaybackCloseReason,
@@ -105,6 +121,7 @@ data class ProviderPlaybackSource(
     val headers: Map<String, String>,
     val session: ProviderPlaybackSession?,
     val allowCrossOriginRequests: Boolean,
+    val playMethod: String,
 )
 
 data class ProviderPlaybackSession(
@@ -116,6 +133,7 @@ data class ProviderPlaybackSession(
     val sourceType: String,
     val playSessionId: String?,
     val liveStreamId: String?,
+    val playMethod: String,
 ) {
     init {
         require(itemId.isNotBlank() && itemId.encodeToByteArray().size <= 512)
@@ -124,6 +142,10 @@ data class ProviderPlaybackSession(
                 mediaSourceId.isNotBlank() && mediaSourceId.encodeToByteArray().size <= 512
         )
         require(sourceType.isNotBlank() && sourceType.encodeToByteArray().size <= 128)
+        require(
+            playMethod.matches(PLAY_METHOD_PATTERN) &&
+                playMethod.encodeToByteArray().size <= 64
+        )
         require(playSessionId != null || liveStreamId != null)
         require(
             playSessionId == null ||
@@ -134,6 +156,10 @@ data class ProviderPlaybackSession(
                 liveStreamId.isNotBlank() && liveStreamId.encodeToByteArray().size <= 512
         )
     }
+
+    private companion object {
+        val PLAY_METHOD_PATTERN = Regex("[a-z0-9]+(?:[._-][a-z0-9]+)*")
+    }
 }
 
 enum class ProviderPlaybackCloseReason {
@@ -142,6 +168,13 @@ enum class ProviderPlaybackCloseReason {
     CHANNEL_CHANGED,
     PLAYBACK_FAILED,
     RECOVERY,
+}
+
+enum class ProviderPlaybackEvent {
+    STARTED,
+    PROGRESS,
+    PAUSED,
+    RESUMED,
 }
 
 class ProviderOperationException(

@@ -33,7 +33,8 @@ import com.m3u.core.foundation.ui.thenIf
 import com.m3u.core.foundation.util.basic.title
 import com.m3u.core.foundation.wrapper.Sort
 import com.m3u.data.database.model.Channel
-import com.m3u.data.database.model.isSeries
+import com.m3u.data.database.model.MediaOpenAction
+import com.m3u.data.database.model.openAction
 import com.m3u.data.service.MediaCommand
 import com.m3u.i18n.R
 import com.m3u.smartphone.ui.business.favourite.components.FavoriteGallery
@@ -107,15 +108,17 @@ fun FavoriteRoute(
         onClickChannel = { channel ->
             coroutineScope.launch {
                 val playlist = viewModel.getPlaylist(channel.playlistUrl)
-                when {
-                    playlist?.isSeries ?: false -> {
+                when (channel.openAction(playlist)) {
+                    MediaOpenAction.BROWSE -> {
                         viewModel.series.value = channel
                     }
 
-                    else -> {
+                    MediaOpenAction.PLAY -> {
                         helper.play(MediaCommand.Common(channel.id))
                         navigateToChannel()
                     }
+
+                    MediaOpenAction.UNSUPPORTED -> Unit
                 }
             }
         },
@@ -144,7 +147,7 @@ fun FavoriteRoute(
         onEpisodeClick = { episode ->
             coroutineScope.launch {
                 series?.let {
-                    val input = MediaCommand.XtreamEpisode(
+                    val input = MediaCommand.Episode(
                         channelId = it.id,
                         episode = episode
                     )

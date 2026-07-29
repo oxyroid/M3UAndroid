@@ -26,6 +26,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.m3u.business.playlist.ChannelWithProgramme
 import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.MediaKinds
 import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
 import com.m3u.core.foundation.architecture.preferences.preferenceOf
 import com.m3u.core.foundation.components.CircularProgressIndicator
@@ -53,18 +54,30 @@ internal fun ChannelGallery(
     val spacing = LocalSpacing.current
 
     val noPictureMode by preferenceOf(PreferencesKeys.NO_PICTURE_MODE)
+    val channels = channels.collectAsLazyPagingItems()
 
-    val actualRowCount by remember(isVodOrSeriesPlaylist, rowCount) {
+    val actualRowCount by remember(isVodOrSeriesPlaylist, rowCount, channels.itemSnapshotList) {
         derivedStateOf {
+            val loadedChannels = channels.itemSnapshotList.items
+                .map(ChannelWithProgramme::channel)
+            val containsPoster = loadedChannels.any { channel ->
+                channel.mediaKind == MediaKinds.MOVIE ||
+                    channel.mediaKind == MediaKinds.SERIES
+            }
+            val containsNonPoster = loadedChannels.any { channel ->
+                channel.mediaKind != MediaKinds.MOVIE &&
+                    channel.mediaKind != MediaKinds.SERIES &&
+                    channel.mediaKind != MediaKinds.UNKNOWN
+            }
+            val posterCategory = containsPoster && !containsNonPoster ||
+                loadedChannels.isEmpty() && isVodOrSeriesPlaylist
             when {
                 noPictureMode -> rowCount
-                isVodOrSeriesPlaylist -> rowCount + 2
+                posterCategory -> rowCount + 2
                 else -> rowCount
             }
         }
     }
-
-    val channels = channels.collectAsLazyPagingItems()
 
     val currentReloadThumbnail by rememberUpdatedState(reloadThumbnail)
     val currentSyncThumbnail by rememberUpdatedState(syncThumbnail)
@@ -95,7 +108,11 @@ internal fun ChannelGallery(
                     val loadedUrl: Any? by produceState<Any?>(
                         initialValue = channel.cover,
                         key1 = channel,
+                        key2 = noPictureMode,
                     ) {
+                        if (noPictureMode || channel.url == Channel.URL_DYNAMIC) {
+                            return@produceState
+                        }
                         val default = channel.cover
                         delay(1200.milliseconds)
                         val channelUrl = channel.url

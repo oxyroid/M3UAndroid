@@ -163,7 +163,6 @@
     <string name="feat_setting_restoring">Pulihkan semua daftar putar dan saluran</string>
     <string name="feat_setting_follow_system_theme">Sesuaikan dengan tema sistem</string>
     <string name="feat_setting_data_source_provider">Penyedia</string>
-    <string name="feat_setting_provider_variant_automatic">Otomatis</string>
     <string name="feat_setting_provider_source_with_provider">%1$s — %2$s</string>
     <string name="feat_setting_provider_choice_with_identifier">%1$s · %2$s</string>
     <string name="feat_setting_provider_choice_with_identifier_description">%1$s. ID penyedia: %2$s</string>

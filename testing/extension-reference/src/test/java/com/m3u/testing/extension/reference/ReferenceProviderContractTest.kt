@@ -14,15 +14,24 @@ import com.m3u.extension.api.security.ContextReference
 import com.m3u.extension.api.security.CredentialHandle
 import com.m3u.extension.api.security.ResponseValueSource
 import com.m3u.extension.api.security.SecretReference
+import com.m3u.extension.api.subscription.PlaybackMethods
+import com.m3u.extension.api.subscription.PlaybackPreferences
 import com.m3u.extension.api.subscription.PlaybackReference
 import com.m3u.extension.api.subscription.PlaybackSessionCloseReason
 import com.m3u.extension.api.subscription.PlaybackSessionCloseRequest
 import com.m3u.extension.api.subscription.PlaybackSessionCloseResult
+import com.m3u.extension.api.subscription.PlaybackSessionDescriptor
+import com.m3u.extension.api.subscription.PlaybackSessionEvents
+import com.m3u.extension.api.subscription.PlaybackSessionUpdateRequest
+import com.m3u.extension.api.subscription.PlaybackSessionUpdateResult
 import com.m3u.extension.api.subscription.PlaybackSourceResolveRequest
 import com.m3u.extension.api.subscription.PlaybackSourceResolveResult
 import com.m3u.extension.api.subscription.ProviderAccountReference
 import com.m3u.extension.api.subscription.ProviderAuthenticationContextKeys
 import com.m3u.extension.api.subscription.ProviderCredential
+import com.m3u.extension.api.subscription.ProviderMediaKinds
+import com.m3u.extension.api.subscription.SubscriptionContentBrowseRequest
+import com.m3u.extension.api.subscription.SubscriptionContentBrowseResult
 import com.m3u.extension.api.subscription.SubscriptionContentRefreshRequest
 import com.m3u.extension.api.subscription.SubscriptionContentRefreshResult
 import com.m3u.extension.api.subscription.SubscriptionHookSpecs
@@ -37,6 +46,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -45,15 +55,21 @@ class ReferenceProviderContractTest {
 
     @Test
     fun `manifest declares typed provider hooks and provider form`() {
-        val declaredHooks = REFERENCE_MANIFEST.hooks.mapTo(mutableSetOf()) { it.hook }
+        val declarations = REFERENCE_MANIFEST.hooks.associateBy { declaration ->
+            declaration.hook
+        }
+        val providerSpecs = listOf(
+            SubscriptionHookSpecs.Discover,
+            SubscriptionHookSpecs.Validate,
+            SubscriptionHookSpecs.Refresh,
+            SubscriptionHookSpecs.Browse,
+            SubscriptionHookSpecs.ResolvePlayback,
+            SubscriptionHookSpecs.UpdatePlayback,
+            SubscriptionHookSpecs.ClosePlayback,
+        )
         assertTrue(
-            declaredHooks.containsAll(
+            declarations.keys.containsAll(
                 setOf(
-                    SubscriptionHookSpecs.Discover.hook,
-                    SubscriptionHookSpecs.Validate.hook,
-                    SubscriptionHookSpecs.Refresh.hook,
-                    SubscriptionHookSpecs.ResolvePlayback.hook,
-                    SubscriptionHookSpecs.ClosePlayback.hook,
                     HostHookSpecs.SettingsSchema.hook,
                     HostHookSpecs.SearchProvider.hook,
                     HostHookSpecs.MetadataEnrichment.hook,
@@ -62,6 +78,13 @@ class ReferenceProviderContractTest {
                 )
             )
         )
+        assertEquals(setOf(1), providerSpecs.mapTo(mutableSetOf()) { spec -> spec.schemaVersion })
+        providerSpecs.forEach { spec ->
+            assertEquals(
+                spec.schemaVersion,
+                declarations.getValue(spec.hook).schemaVersion,
+            )
+        }
         assertEquals(
             listOf(
                 SubscriptionProviderSettingKeys.BaseUrl,
@@ -76,7 +99,7 @@ class ReferenceProviderContractTest {
                 it.key == SubscriptionProviderSettingKeys.Password
             }.type,
         )
-        assertEquals(2, HostHookSpecs.BackgroundTask.schemaVersion)
+        assertEquals(1, HostHookSpecs.BackgroundTask.schemaVersion)
         assertEquals(
             listOf("settings-status"),
             REFERENCE_MANIFEST.backgroundTasks.map { declaration -> declaration.taskId },
@@ -98,7 +121,7 @@ class ReferenceProviderContractTest {
         )
         val chineseSettings = referenceDynamicSettings("zh-CN")
         assertEquals("播放", chineseSettings.sections.single().title)
-        assertEquals(2, chineseSettings.sections.single().schema.version)
+        assertEquals(1, chineseSettings.sections.single().schema.version)
         assertEquals(
             listOf("自动", "直接播放"),
             chineseSettings.sections.single().schema.fields
@@ -164,7 +187,9 @@ class ReferenceProviderContractTest {
         }
         listOf(
             SubscriptionHookSpecs.Refresh,
+            SubscriptionHookSpecs.Browse,
             SubscriptionHookSpecs.ResolvePlayback,
+            SubscriptionHookSpecs.UpdatePlayback,
             SubscriptionHookSpecs.ClosePlayback,
         ).forEach { spec ->
             val required = declarations.getValue(spec.hook).requiredCapabilities
@@ -176,8 +201,14 @@ class ReferenceProviderContractTest {
                 .getValue(SubscriptionHookSpecs.Refresh.hook)
                 .requiredCapabilities
         )
+        assertTrue(
+            ExtensionCapabilityIds.SubscriptionRead in declarations
+                .getValue(SubscriptionHookSpecs.Browse.hook)
+                .requiredCapabilities
+        )
         listOf(
             SubscriptionHookSpecs.ResolvePlayback,
+            SubscriptionHookSpecs.UpdatePlayback,
             SubscriptionHookSpecs.ClosePlayback,
         ).forEach { spec ->
             assertTrue(
@@ -256,11 +287,59 @@ class ReferenceProviderContractTest {
     }
 
     @Test
+    fun `browse uses protected broker values and returns a bounded typed page`() {
+        val request = SubscriptionContentBrowseRequest(
+            account = ACCOUNT,
+            credential = CREDENTIAL,
+            limit = 1,
+        )
+        val brokerRequest = request.referenceBrowseRequest()
+
+        assertEquals("GET", brokerRequest.method)
+        assertEquals(
+            BrokerValue.Literal("$BASE_URL/reference-provider/channels"),
+            brokerRequest.url,
+        )
+        assertProtectedHeaders(brokerRequest)
+
+        val result = BrokeredHttpResponse(
+            statusCode = 200,
+            headers = emptyMap(),
+            body = REFERENCE_CHANNELS_BODY,
+        ).referenceBrowseResult(request)
+        val page = assertIs<SubscriptionContentBrowseResult>(
+            assertIs<HookResult.Success<*>>(result).payload
+        )
+
+        assertEquals(2, page.total)
+        assertEquals("1", page.nextCursor)
+        assertEquals(listOf("reference.news"), page.items.map { item -> item.reference.itemId })
+        assertTrue(page.items.single().playable)
+        assertEquals(ProviderMediaKinds.Live, page.items.single().mediaKind)
+
+        val secondPage = assertIs<SubscriptionContentBrowseResult>(
+            assertIs<HookResult.Success<*>>(
+                BrokeredHttpResponse(
+                    statusCode = 200,
+                    headers = emptyMap(),
+                    body = REFERENCE_CHANNELS_BODY,
+                ).referenceBrowseResult(request.copy(cursor = page.nextCursor))
+            ).payload
+        )
+        assertEquals(null, secondPage.nextCursor)
+        assertEquals(
+            listOf("reference.sports"),
+            secondPage.items.map { item -> item.reference.itemId },
+        )
+    }
+
+    @Test
     fun `playback and close requests keep protected values opaque`() {
         val resolveRequest = PlaybackSourceResolveRequest(
             account = ACCOUNT,
             credential = CREDENTIAL,
             reference = PLAYBACK_REFERENCE,
+            preferences = PlaybackPreferences(startPositionTicks = 0L),
         )
         val playbackRequest = resolveRequest.referencePlaybackRequest()
 
@@ -292,12 +371,63 @@ class ReferenceProviderContractTest {
         )
         val session = requireNotNull(source.session)
 
+        val updateRequest = PlaybackSessionUpdateRequest(
+            account = ACCOUNT,
+            credential = CREDENTIAL,
+            reference = PLAYBACK_REFERENCE,
+            session = session,
+            event = PlaybackSessionEvents.Progress,
+            positionTicks = 12_345L,
+            playMethod = PlaybackMethods.DirectPlay,
+            isPaused = false,
+        )
+        val updateBrokerRequest = updateRequest.referenceUpdateRequest()
+        assertEquals("POST", updateBrokerRequest.method)
+        assertEquals(
+            BrokerValue.Literal("$BASE_URL/reference-provider/sessions/update"),
+            updateBrokerRequest.url,
+        )
+        assertProtectedHeaders(updateBrokerRequest)
+        assertEquals(
+            BrokerValue.Literal("application/json"),
+            updateBrokerRequest.headers["Content-Type"],
+        )
+        val updateBody = updateBrokerRequest.renderJsonBody()
+        assertEquals(
+            listOf(
+                "item_id",
+                "play_session_id",
+                "live_stream_id",
+                "event",
+                "position_ticks",
+                "play_method",
+                "is_paused",
+            ),
+            Json.parseToJsonElement(updateBody).jsonObject.keys.toList(),
+        )
+        assertEquals(
+            """{"item_id":"reference.news","play_session_id":"reference-play-session-reference.news","live_stream_id":"reference-live-stream-reference.news","event":"progress","position_ticks":12345,"play_method":"direct_play","is_paused":false}""",
+            updateBody,
+        )
+        assertTrue(CREDENTIAL_HANDLE.value !in updateBody)
+        val updateResult = BrokeredHttpResponse(
+            statusCode = 200,
+            headers = emptyMap(),
+            body = REFERENCE_UPDATE_RESPONSE_BODY,
+        ).referenceUpdateResult(updateRequest)
+        assertTrue(
+            assertIs<PlaybackSessionUpdateResult>(
+                assertIs<HookResult.Success<*>>(updateResult).payload
+            ).accepted
+        )
+
         val closeRequest = PlaybackSessionCloseRequest(
             account = ACCOUNT,
             credential = CREDENTIAL,
             reference = PLAYBACK_REFERENCE,
             session = session,
             reason = PlaybackSessionCloseReason.Stopped,
+            positionTicks = 0L,
         ).referenceCloseRequest()
         assertEquals("POST", closeRequest.method)
         assertEquals(
@@ -349,6 +479,27 @@ class ReferenceProviderContractTest {
             "provider.authentication_failed",
             assertIs<HookResult.Failure>(unauthorized).error.code.value,
         )
+
+        val updateRequest = PlaybackSessionUpdateRequest(
+            account = ACCOUNT,
+            credential = CREDENTIAL,
+            reference = PLAYBACK_REFERENCE,
+            session = SESSION,
+            event = PlaybackSessionEvents.Progress,
+            positionTicks = 1L,
+            playMethod = PlaybackMethods.DirectPlay,
+            isPaused = false,
+        )
+        val mismatchedUpdate = BrokeredHttpResponse(
+            statusCode = 200,
+            headers = emptyMap(),
+            body =
+                """{"accepted":true,"update_count":1,"last_position_ticks":2,"last_event":"progress"}""",
+        ).referenceUpdateResult(updateRequest)
+        assertEquals(
+            "provider.invalid_response",
+            assertIs<HookResult.Failure>(mismatchedUpdate).error.code.value,
+        )
     }
 
     @Test
@@ -384,6 +535,18 @@ class ReferenceProviderContractTest {
         )
     }
 
+    private fun BrokeredHttpRequest.renderJsonBody(): String =
+        body.joinToString(separator = "") { value ->
+            when (value) {
+                is BrokerValue.Literal -> value.value
+                is BrokerValue.Encoded -> {
+                    assertEquals(BrokerValueEncoding.JsonString, value.encoding)
+                    JsonPrimitive(assertIs<BrokerValue.Literal>(value.value).value).toString()
+                }
+                else -> error("Reference update body must contain only literal broker values")
+            }
+        }
+
     private companion object {
         const val BASE_URL = "http://127.0.0.1:8080"
         val CREDENTIAL_HANDLE = CredentialHandle("saved-access-token")
@@ -404,5 +567,13 @@ class ReferenceProviderContractTest {
             itemId = "reference.news",
             sourceType = "live",
         )
+        val SESSION = PlaybackSessionDescriptor(
+            playSessionId = "reference-play-session-reference.news",
+            liveStreamId = "reference-live-stream-reference.news",
+        )
+        const val REFERENCE_CHANNELS_BODY =
+            """{"source_id":"raw-server-id","source_title":"Reference Live TV","revision":"1","channels":[{"id":"reference.news","title":"Reference News","category":"News","epg_reference":"reference.news"},{"id":"reference.sports","title":"Reference Sports","category":"Sports","epg_reference":"reference.sports"}]}"""
+        const val REFERENCE_UPDATE_RESPONSE_BODY =
+            """{"accepted":true,"update_count":1,"last_position_ticks":12345,"last_event":"progress"}"""
     }
 }

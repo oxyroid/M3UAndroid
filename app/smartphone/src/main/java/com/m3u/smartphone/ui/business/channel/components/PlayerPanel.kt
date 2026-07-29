@@ -466,6 +466,7 @@ private fun ChannelGalleryItem(
     val spacing = LocalSpacing.current
     val helper = LocalHelper.current
     val coroutineScope = rememberCoroutineScope()
+    val canPlay = channel.playable && !channel.browsable && !isPlaying
 
     val containerColor =
         if (!isPlaying) MaterialTheme.colorScheme.surfaceColorAtElevation(spacing.medium)
@@ -481,7 +482,7 @@ private fun ChannelGalleryItem(
         )
     }
     val onClick = lambda@{
-        if (isPlaying) return@lambda
+        if (!canPlay) return@lambda
         coroutineScope.launch {
             helper.play(
                 MediaCommand.Common(channel.id)
@@ -496,6 +497,7 @@ private fun ChannelGalleryItem(
             ),
             shape = AbsoluteRoundedCornerShape(spacing.medium),
             elevation = CardDefaults.cardElevation(spacing.none),
+            enabled = canPlay,
             onClick = onClick,
             modifier = modifier
         ) {
@@ -511,7 +513,7 @@ private fun ChannelGalleryItem(
                 headlineColor = contentColor
             ),
             modifier = Modifier
-                .clickable(onClick = onClick)
+                .clickable(enabled = canPlay, onClick = onClick)
                 .then(modifier)
         )
     }

@@ -200,7 +200,6 @@
     <string name="feat_setting_provider_error_choice">请选择可用选项</string>
     <string name="feat_setting_extension_error_network_origin">请输入不含路径、查询参数、片段或通配符的精确 HTTP(S) 源站</string>
     <string name="feat_setting_data_source_provider">订阅服务</string>
-    <string name="feat_setting_provider_variant_automatic">自动检测</string>
     <string name="feat_setting_provider_source_with_provider">%1$s — %2$s</string>
     <string name="feat_setting_provider_choice_with_identifier">%1$s · %2$s</string>
     <string name="feat_setting_provider_choice_with_identifier_description">%1$s；服务标识：%2$s</string>

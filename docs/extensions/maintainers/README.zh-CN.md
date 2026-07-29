@@ -4,6 +4,9 @@
 
 从用户看到的故障开始，沿调用链找到第一处负责代码。开发独立 APK 请改看 [插件开发指南](../developers/README.zh-CN.md)。
 
+插件与内置 Provider 的产品界面只属于 smartphone 应用的手机和平板布局。TV 应用不提供
+也不调用任何插件能力，只支持 M3U 与 Xtream。
+
 ## 问题停在哪一步？
 
 一次外部插件调用只有四段：
@@ -38,6 +41,6 @@
 - 一个插件失败，不能删除另一个插件或自己上一次成功的数据。
 - 内置和 APK 插件共用同一份 Hook 契约，差别只在是否经过 Android IPC。
 
-需要追完整调用链时，阅读[当前架构与代码地图](architecture.zh-CN.md)。准备修改时，使用[按改动类型操作](change-guide.zh-CN.md)。手机、平板或 TV 的插件界面发生变化时，使用[插件界面质量门槛](ui-quality-gates.zh-CN.md)。只有判断能力是否已经开放或能否发布时，才阅读[当前状态与发布门槛](status-and-release.zh-CN.md)。
+需要追完整调用链时，阅读[当前架构与代码地图](architecture.zh-CN.md)。准备修改时，使用[按改动类型操作](change-guide.zh-CN.md)。手机或平板的插件界面发生变化时，使用[插件界面质量门槛](ui-quality-gates.zh-CN.md)。只有判断能力是否已经开放或能否发布时，才阅读[当前状态与发布门槛](status-and-release.zh-CN.md)。
 
 修改 APK 可以读取、调用或保留的内容前，先检查[外部 APK 插件威胁模型](threat-model.zh-CN.md)。

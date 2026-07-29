@@ -46,16 +46,23 @@ import com.m3u.extension.api.security.ResponseValueSource
 import com.m3u.extension.api.security.SecretReference
 import com.m3u.extension.api.subscription.PlaybackHeaderValue
 import com.m3u.extension.api.subscription.PlaybackReference
+import com.m3u.extension.api.subscription.PlaybackMethods
 import com.m3u.extension.api.subscription.PlaybackSessionCloseRequest
 import com.m3u.extension.api.subscription.PlaybackSessionCloseResult
 import com.m3u.extension.api.subscription.PlaybackSessionDescriptor
+import com.m3u.extension.api.subscription.PlaybackSessionUpdateRequest
+import com.m3u.extension.api.subscription.PlaybackSessionUpdateResult
 import com.m3u.extension.api.subscription.PlaybackSourceResolveRequest
 import com.m3u.extension.api.subscription.PlaybackSourceResolveResult
 import com.m3u.extension.api.subscription.ProviderAccountReference
 import com.m3u.extension.api.subscription.ProviderAuthenticationContextKeys
 import com.m3u.extension.api.subscription.ProviderKind
+import com.m3u.extension.api.subscription.ProviderMediaKinds
 import com.m3u.extension.api.subscription.ProviderValidationEvidence
 import com.m3u.extension.api.subscription.SubscriptionChannelDescriptor
+import com.m3u.extension.api.subscription.SubscriptionContentBrowseRequest
+import com.m3u.extension.api.subscription.SubscriptionContentBrowseResult
+import com.m3u.extension.api.subscription.SubscriptionContentItemDescriptor
 import com.m3u.extension.api.subscription.SubscriptionContentRefreshRequest
 import com.m3u.extension.api.subscription.SubscriptionContentRefreshResult
 import com.m3u.extension.api.subscription.SubscriptionHookSpecs
@@ -101,9 +108,17 @@ class ReferenceExtensionService : TypedExtensionService() {
         handleResultWithBroker(SubscriptionHookSpecs.Refresh) { request, _, broker ->
             providerBrokerResult("refresh") { refreshProvider(request, broker) }
         }
+        handleResultWithBroker(SubscriptionHookSpecs.Browse) { request, _, broker ->
+            providerBrokerResult("browse") { browseProvider(request, broker) }
+        }
         handleResultWithBroker(SubscriptionHookSpecs.ResolvePlayback) { request, _, broker ->
             providerBrokerResult("playback resolution") {
                 resolveProviderPlayback(request, broker)
+            }
+        }
+        handleResultWithBroker(SubscriptionHookSpecs.UpdatePlayback) { request, _, broker ->
+            providerBrokerResult("playback update") {
+                updateProviderPlayback(request, broker)
             }
         }
         handleResultWithBroker(SubscriptionHookSpecs.ClosePlayback) { request, _, broker ->
@@ -251,7 +266,7 @@ internal fun referenceDynamicSettings(localeTag: String?): SettingsSchemaResult 
                 id = "playback",
                 title = copy.playback,
                 schema = ExtensionSettingSchema(
-                    version = 2,
+                    version = 1,
                     fields = listOf(
                         ExtensionSettingField(
                             key = "quality",
@@ -401,25 +416,13 @@ internal fun BrokeredHttpResponse.referenceRefreshResult(
 ): HookResult<SubscriptionContentRefreshResult> =
     providerResponseResult("refresh") {
         val payload = body.decodeReferencePayload<ReferenceChannelsPayload>()
-        requireReferencePayload(payload.sourceId.matches(REFERENCE_ID_PATTERN))
-        requireReferencePayload(payload.sourceTitle.isValidProviderText())
-        requireReferencePayload(payload.revision.matches(REFERENCE_REVISION_PATTERN))
-        requireReferencePayload(payload.channels.isNotEmpty())
-        requireReferencePayload(payload.channels.size <= MAX_REFERENCE_CHANNELS)
-        requireReferencePayload(
-            payload.channels.map(ReferenceChannelPayload::id).distinct().size ==
-                payload.channels.size
-        )
+        payload.requireValidReferenceChannels()
         SubscriptionContentRefreshResult(
             source = SubscriptionSourceDescriptor(
                 remoteId = request.account.serverId,
                 providerKind = REFERENCE_PROVIDER_KIND,
             ),
             channels = payload.channels.map { channel ->
-                requireReferencePayload(channel.id.matches(REFERENCE_ID_PATTERN))
-                requireReferencePayload(channel.title.isValidProviderText())
-                requireReferencePayload(channel.category.isValidProviderText())
-                requireReferencePayload(channel.epgReference == channel.id)
                 SubscriptionChannelDescriptor(
                     remoteId = channel.id,
                     title = channel.title,
@@ -431,6 +434,55 @@ internal fun BrokeredHttpResponse.referenceRefreshResult(
                     ),
                 )
             },
+        )
+    }
+
+private suspend fun browseProvider(
+    request: SubscriptionContentBrowseRequest,
+    broker: ExtensionHostNetworkBroker,
+): HookResult<SubscriptionContentBrowseResult> =
+    broker.execute(request.referenceBrowseRequest()).referenceBrowseResult(request)
+
+internal fun SubscriptionContentBrowseRequest.referenceBrowseRequest(): BrokeredHttpRequest {
+    account.requireReferenceAccount()
+    referenceBrowseOffset()
+    return BrokeredHttpRequest(
+        method = "GET",
+        url = account.baseUrl.referenceEndpoint("channels"),
+        headers = credential.handle.referenceRequestHeaders(),
+        maximumResponseBytes = MAX_REFRESH_RESPONSE_BYTES,
+    )
+}
+
+internal fun BrokeredHttpResponse.referenceBrowseResult(
+    request: SubscriptionContentBrowseRequest,
+): HookResult<SubscriptionContentBrowseResult> =
+    providerResponseResult("browse") {
+        val payload = body.decodeReferencePayload<ReferenceChannelsPayload>()
+        payload.requireValidReferenceChannels()
+        val offset = request.referenceBrowseOffset()
+        requireReferencePayload(offset <= payload.channels.size)
+        val page = payload.channels.drop(offset).take(request.limit)
+        val nextOffset = offset + page.size
+        SubscriptionContentBrowseResult(
+            items = page.map { channel ->
+                SubscriptionContentItemDescriptor(
+                    reference = PlaybackReference(
+                        providerId = REFERENCE_EXTENSION_ID,
+                        itemId = channel.id,
+                        sourceType = REFERENCE_SOURCE_TYPE,
+                    ),
+                    mediaKind = ProviderMediaKinds.Live,
+                    title = channel.title,
+                    playable = true,
+                    browsable = false,
+                    category = channel.category,
+                )
+            },
+            nextCursor = nextOffset
+                .takeIf { value -> value < payload.channels.size }
+                ?.toString(),
+            total = payload.channels.size,
         )
     }
 
@@ -479,7 +531,66 @@ internal fun BrokeredHttpResponse.referencePlaybackResult(
                 playSessionId = payload.playSessionId,
                 liveStreamId = payload.liveStreamId,
             ),
+            playMethod = PlaybackMethods.DirectPlay,
         )
+    }
+
+private suspend fun updateProviderPlayback(
+    request: PlaybackSessionUpdateRequest,
+    broker: ExtensionHostNetworkBroker,
+): HookResult<PlaybackSessionUpdateResult> =
+    broker.execute(request.referenceUpdateRequest()).referenceUpdateResult(request)
+
+internal fun PlaybackSessionUpdateRequest.referenceUpdateRequest(): BrokeredHttpRequest {
+    account.requireReferenceAccount()
+    reference.requireReferencePlayback()
+    require(playMethod == PlaybackMethods.DirectPlay) {
+        "Reference playback updates require direct play"
+    }
+    val playSessionId = requireNotNull(session.playSessionId) {
+        "Reference playback update requires a play session ID"
+    }
+    val liveStreamId = requireNotNull(session.liveStreamId) {
+        "Reference playback update requires a live stream ID"
+    }
+    require(playSessionId.matches(REFERENCE_ID_PATTERN)) {
+        "Reference playback update play session ID is invalid"
+    }
+    require(liveStreamId.matches(REFERENCE_ID_PATTERN)) {
+        "Reference playback update live stream ID is invalid"
+    }
+    return BrokeredHttpRequest(
+        method = "POST",
+        url = account.baseUrl.referenceEndpoint("sessions/update"),
+        headers = credential.handle.referenceRequestHeaders() +
+            ("Content-Type" to BrokerValue.Literal("application/json")),
+        body = listOf(
+            BrokerValue.Literal("{\"item_id\":"),
+            reference.itemId.asJsonStringBrokerValue(),
+            BrokerValue.Literal(",\"play_session_id\":"),
+            playSessionId.asJsonStringBrokerValue(),
+            BrokerValue.Literal(",\"live_stream_id\":"),
+            liveStreamId.asJsonStringBrokerValue(),
+            BrokerValue.Literal(",\"event\":"),
+            event.value.asJsonStringBrokerValue(),
+            BrokerValue.Literal(",\"position_ticks\":$positionTicks,\"play_method\":"),
+            playMethod.value.asJsonStringBrokerValue(),
+            BrokerValue.Literal(",\"is_paused\":$isPaused}"),
+        ),
+        maximumResponseBytes = MAX_UPDATE_RESPONSE_BYTES,
+    )
+}
+
+internal fun BrokeredHttpResponse.referenceUpdateResult(
+    request: PlaybackSessionUpdateRequest,
+): HookResult<PlaybackSessionUpdateResult> =
+    providerResponseResult("playback update") {
+        val payload = body.decodeReferencePayload<ReferenceUpdateResultPayload>()
+        requireReferencePayload(payload.accepted)
+        requireReferencePayload(payload.updateCount > 0)
+        requireReferencePayload(payload.lastPositionTicks == request.positionTicks)
+        requireReferencePayload(payload.lastEvent == request.event.value)
+        PlaybackSessionUpdateResult(accepted = true)
     }
 
 private suspend fun closeProviderPlayback(
@@ -629,6 +740,36 @@ private fun PlaybackReference.requireReferencePlayback() {
     }
 }
 
+private fun SubscriptionContentBrowseRequest.referenceBrowseOffset(): Int {
+    require(parentReference == null) {
+        "Reference provider does not expose browsable child collections"
+    }
+    val currentCursor = cursor ?: return 0
+    require(currentCursor.matches(REFERENCE_CURSOR_PATTERN)) {
+        "Reference provider browse cursor is invalid"
+    }
+    return requireNotNull(currentCursor.toIntOrNull()) {
+        "Reference provider browse cursor is too large"
+    }
+}
+
+private fun ReferenceChannelsPayload.requireValidReferenceChannels() {
+    requireReferencePayload(sourceId.matches(REFERENCE_ID_PATTERN))
+    requireReferencePayload(sourceTitle.isValidProviderText())
+    requireReferencePayload(revision.matches(REFERENCE_REVISION_PATTERN))
+    requireReferencePayload(channels.isNotEmpty())
+    requireReferencePayload(channels.size <= MAX_REFERENCE_CHANNELS)
+    requireReferencePayload(
+        channels.map(ReferenceChannelPayload::id).distinct().size == channels.size
+    )
+    channels.forEach { channel ->
+        requireReferencePayload(channel.id.matches(REFERENCE_ID_PATTERN))
+        requireReferencePayload(channel.title.isValidProviderText())
+        requireReferencePayload(channel.category.isValidProviderText())
+        requireReferencePayload(channel.epgReference == channel.id)
+    }
+}
+
 private fun CredentialHandle.referenceRequestHeaders(): Map<String, BrokerValue> = mapOf(
     REFERENCE_TOKEN_HEADER to BrokerValue.Secret(SecretReference(this)),
     REFERENCE_USER_HEADER to BrokerValue.Context(
@@ -646,6 +787,12 @@ private fun CredentialHandle.referencePlaybackHeaders(): Map<String, PlaybackHea
         ),
     ),
 )
+
+private fun String.asJsonStringBrokerValue(): BrokerValue =
+    BrokerValue.Encoded(
+        value = BrokerValue.Literal(this),
+        encoding = BrokerValueEncoding.JsonString,
+    )
 
 private fun BrokerAuthenticationResponse.providerFailure(operation: String): HookResult.Failure? =
     statusCode.providerFailure(operation)
@@ -796,6 +943,17 @@ private data class ReferenceCloseResultPayload(
     val closed: Boolean,
 )
 
+@Serializable
+private data class ReferenceUpdateResultPayload(
+    val accepted: Boolean,
+    @SerialName("update_count")
+    val updateCount: Int,
+    @SerialName("last_position_ticks")
+    val lastPositionTicks: Long,
+    @SerialName("last_event")
+    val lastEvent: String,
+)
+
 internal val REFERENCE_EXTENSION_ID = ExtensionId("com.m3u.reference.provider")
 internal val REFERENCE_PROVIDER_KIND = ProviderKind("reference")
 const val LARGE_RESULT_ITEM_COUNT = 25_000
@@ -807,6 +965,7 @@ private val referenceJson = Json {
     explicitNulls = true
 }
 private val REFERENCE_ID_PATTERN = Regex("[a-z0-9]+(?:[._-][a-z0-9]+)*")
+private val REFERENCE_CURSOR_PATTERN = Regex("0|[1-9][0-9]*")
 private val REFERENCE_REVISION_PATTERN = Regex("[0-9]{1,18}")
 private const val REFERENCE_SOURCE_TYPE = "live"
 private const val REFERENCE_TOKEN_HEADER = "X-Emby-Token"
@@ -815,6 +974,7 @@ private const val MAX_REFERENCE_TEXT_LENGTH = 256
 private const val MAX_REFERENCE_CHANNELS = 1_000
 private const val MAX_REFRESH_RESPONSE_BYTES = 512 * 1_024
 private const val MAX_PLAYBACK_RESPONSE_BYTES = 32 * 1_024
+private const val MAX_UPDATE_RESPONSE_BYTES = 8 * 1_024
 private const val MAX_CLOSE_RESPONSE_BYTES = 8 * 1_024
 private const val REFERENCE_SEARCH_PROBE_ORIGIN = "https://reference.invalid"
 private const val INVOCATION_GATE_RESET_REFERENCE = "test.invocation-gate.reset"
@@ -852,8 +1012,26 @@ internal val REFERENCE_MANIFEST = ExtensionManifest(
             ),
         ),
         ExtensionHookDeclaration(
+            hook = SubscriptionHookSpecs.Browse.hook,
+            schemaVersion = SubscriptionHookSpecs.Browse.schemaVersion,
+            requiredCapabilities = setOf(
+                ExtensionCapabilityIds.SubscriptionRead,
+                ExtensionCapabilityIds.Network,
+                ExtensionCapabilityIds.CredentialRead,
+            ),
+        ),
+        ExtensionHookDeclaration(
             hook = SubscriptionHookSpecs.ResolvePlayback.hook,
             schemaVersion = SubscriptionHookSpecs.ResolvePlayback.schemaVersion,
+            requiredCapabilities = setOf(
+                ExtensionCapabilityIds.PlaybackResolve,
+                ExtensionCapabilityIds.Network,
+                ExtensionCapabilityIds.CredentialRead,
+            ),
+        ),
+        ExtensionHookDeclaration(
+            hook = SubscriptionHookSpecs.UpdatePlayback.hook,
+            schemaVersion = SubscriptionHookSpecs.UpdatePlayback.schemaVersion,
             requiredCapabilities = setOf(
                 ExtensionCapabilityIds.PlaybackResolve,
                 ExtensionCapabilityIds.Network,
@@ -914,11 +1092,11 @@ internal val REFERENCE_MANIFEST = ExtensionManifest(
         ),
         ExtensionCapabilityRequest(
             ExtensionCapabilityIds.SubscriptionRead,
-            "Refresh the reference provider subscription",
+            "Refresh and browse the reference provider subscription",
         ),
         ExtensionCapabilityRequest(
             ExtensionCapabilityIds.PlaybackResolve,
-            "Resolve and close reference playback sessions",
+            "Resolve, update, and close reference playback sessions",
         ),
         ExtensionCapabilityRequest(
             ExtensionCapabilityIds.SearchRead,

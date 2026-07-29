@@ -83,8 +83,6 @@ val Playlist.refreshable: Boolean
         )
 
         DataSource.Xtream,
-        DataSource.Emby,
-        DataSource.Jellyfin,
         DataSource.Provider -> true
         else -> false
     }
@@ -141,10 +139,6 @@ sealed class DataSource(
         const val TYPE_SERIES = "series"
     }
 
-    object Emby : DataSource(R.string.feat_setting_data_source_emby, "emby", true)
-
-    object Jellyfin : DataSource(R.string.feat_setting_data_source_jellyfin, "jellyfin", true)
-
     object Provider : DataSource(R.string.feat_setting_data_source_provider, "provider", true)
 
     object Dropbox : DataSource(R.string.feat_setting_data_source_dropbox, "dropbox")
@@ -156,8 +150,6 @@ sealed class DataSource(
             "m3u" -> M3U
             "epg" -> EPG
             "xtream" -> Xtream
-            "emby" -> Emby
-            "jellyfin" -> Jellyfin
             "provider" -> Provider
             "dropbox" -> Dropbox
             else -> throw UnsupportedOperationException()

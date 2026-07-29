@@ -164,7 +164,6 @@
     <string name="feat_setting_restoring">ripristino in corso di tutte le playlist e canali</string>
     <string name="feat_setting_follow_system_theme">segui tema di sistema</string>
     <string name="feat_setting_data_source_provider">Provider</string>
-    <string name="feat_setting_provider_variant_automatic">Automatico</string>
     <string name="feat_setting_provider_source_with_provider">%1$s — %2$s</string>
     <string name="feat_setting_provider_choice_with_identifier">%1$s · %2$s</string>
     <string name="feat_setting_provider_choice_with_identifier_description">%1$s. ID del provider: %2$s</string>

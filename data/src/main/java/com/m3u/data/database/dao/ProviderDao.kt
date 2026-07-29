@@ -251,6 +251,10 @@ interface ProviderDao {
         )
         OR NULLIF(TRIM(source_type), '') IS NULL
         OR LENGTH(CAST(source_type AS BLOB)) > 128
+        OR NULLIF(TRIM(play_method), '') IS NULL
+        OR LENGTH(CAST(play_method AS BLOB)) > 64
+        OR play_method GLOB '*[^a-z0-9._-]*'
+        OR position_ticks < 0
         OR (
             NULLIF(TRIM(play_session_id), '') IS NULL
             AND NULLIF(TRIM(live_stream_id), '') IS NULL
@@ -293,6 +297,15 @@ interface ProviderDao {
 
     @Query("SELECT * FROM provider_playback_sessions WHERE id = :sessionId")
     suspend fun getPlaybackSession(sessionId: String): ProviderPlaybackSessionEntity?
+
+    @Query(
+        """
+        UPDATE provider_playback_sessions
+        SET position_ticks = :positionTicks
+        WHERE id = :sessionId
+        """
+    )
+    suspend fun updatePlaybackPosition(sessionId: String, positionTicks: Long): Int
 
     @Query("DELETE FROM provider_playback_sessions WHERE id = :sessionId")
     suspend fun deletePlaybackSession(sessionId: String)

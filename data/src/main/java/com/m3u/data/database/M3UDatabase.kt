@@ -36,7 +36,7 @@ import com.m3u.data.database.model.ProviderPlaybackSessionEntity
         ChannelMetadataBase::class,
         ExtensionChannelMetadataOverlay::class,
     ],
-    version = 26,
+    version = 22,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(
@@ -75,8 +75,6 @@ import com.m3u.data.database.model.ProviderPlaybackSessionEntity
             spec = DatabaseMigrations.AutoMigrate19To20::class
         ),
         AutoMigration(from = 20, to = 21),
-        AutoMigration(from = 21, to = 22),
-        AutoMigration(from = 23, to = 24),
     ]
 )
 @TypeConverters(Converters::class)

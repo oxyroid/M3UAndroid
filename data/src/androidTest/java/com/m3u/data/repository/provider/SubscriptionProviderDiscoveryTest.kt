@@ -18,6 +18,8 @@ import com.m3u.data.repository.extension.ExtensionContributionRunCoordinator
 import com.m3u.extension.api.ExtensionApiRange
 import com.m3u.extension.api.ExtensionApiVersions
 import com.m3u.extension.api.ExtensionCallContext
+import com.m3u.extension.api.ExtensionCapabilityIds
+import com.m3u.extension.api.ExtensionCapabilityRequest
 import com.m3u.extension.api.ExtensionEntrypoint
 import com.m3u.extension.api.ExtensionError
 import com.m3u.extension.api.ExtensionErrorCodes
@@ -25,10 +27,12 @@ import com.m3u.extension.api.ExtensionHandler
 import com.m3u.extension.api.ExtensionHookDeclaration
 import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.ExtensionManifest
+import com.m3u.extension.api.ExtensionPayload
 import com.m3u.extension.api.ExtensionSemanticVersion
 import com.m3u.extension.api.ExtensionSettingField
 import com.m3u.extension.api.ExtensionSettingSchema
 import com.m3u.extension.api.ExtensionSettingType
+import com.m3u.extension.api.HookSpec
 import com.m3u.extension.api.HookResult
 import com.m3u.extension.api.subscription.ProviderKind
 import com.m3u.extension.api.subscription.SubscriptionHookSpecs
@@ -294,9 +298,64 @@ class SubscriptionProviderDiscoveryTest {
                 ExtensionHookDeclaration(
                     hook = SubscriptionHookSpecs.Discover.hook,
                     schemaVersion = SubscriptionHookSpecs.Discover.schemaVersion,
-                )
+                ),
+                ExtensionHookDeclaration(
+                    hook = SubscriptionHookSpecs.Validate.hook,
+                    schemaVersion = SubscriptionHookSpecs.Validate.schemaVersion,
+                    requiredCapabilities = setOf(
+                        ExtensionCapabilityIds.CredentialWrite,
+                    ),
+                ),
+                ExtensionHookDeclaration(
+                    hook = SubscriptionHookSpecs.Refresh.hook,
+                    schemaVersion = SubscriptionHookSpecs.Refresh.schemaVersion,
+                    requiredCapabilities = setOf(
+                        ExtensionCapabilityIds.SubscriptionRead,
+                    ),
+                ),
+                ExtensionHookDeclaration(
+                    hook = SubscriptionHookSpecs.Browse.hook,
+                    schemaVersion = SubscriptionHookSpecs.Browse.schemaVersion,
+                    requiredCapabilities = setOf(
+                        ExtensionCapabilityIds.SubscriptionRead,
+                    ),
+                ),
+                ExtensionHookDeclaration(
+                    hook = SubscriptionHookSpecs.ResolvePlayback.hook,
+                    schemaVersion = SubscriptionHookSpecs.ResolvePlayback.schemaVersion,
+                    requiredCapabilities = setOf(
+                        ExtensionCapabilityIds.PlaybackResolve,
+                    ),
+                ),
+                ExtensionHookDeclaration(
+                    hook = SubscriptionHookSpecs.UpdatePlayback.hook,
+                    schemaVersion = SubscriptionHookSpecs.UpdatePlayback.schemaVersion,
+                    requiredCapabilities = setOf(
+                        ExtensionCapabilityIds.PlaybackResolve,
+                    ),
+                ),
+                ExtensionHookDeclaration(
+                    hook = SubscriptionHookSpecs.ClosePlayback.hook,
+                    schemaVersion = SubscriptionHookSpecs.ClosePlayback.schemaVersion,
+                    requiredCapabilities = setOf(
+                        ExtensionCapabilityIds.PlaybackResolve,
+                    ),
+                ),
             ),
-            capabilities = emptySet(),
+            capabilities = setOf(
+                ExtensionCapabilityRequest(
+                    capability = ExtensionCapabilityIds.CredentialWrite,
+                    reason = "Validate the provider fixture",
+                ),
+                ExtensionCapabilityRequest(
+                    capability = ExtensionCapabilityIds.SubscriptionRead,
+                    reason = "Refresh and browse the provider fixture",
+                ),
+                ExtensionCapabilityRequest(
+                    capability = ExtensionCapabilityIds.PlaybackResolve,
+                    reason = "Exercise the complete provider lifecycle",
+                ),
+            ),
         )
         override val handlers = listOf(
             object : ExtensionHandler<
@@ -309,7 +368,33 @@ class SubscriptionProviderDiscoveryTest {
                     context: ExtensionCallContext,
                     request: SubscriptionProviderDiscoverRequest,
                 ): HookResult<SubscriptionProviderDiscoverResult> = handlerBlock(context, request)
-            }
+            },
+            unusedHandler(SubscriptionHookSpecs.Validate),
+            unusedHandler(SubscriptionHookSpecs.Refresh),
+            unusedHandler(SubscriptionHookSpecs.Browse),
+            unusedHandler(SubscriptionHookSpecs.ResolvePlayback),
+            unusedHandler(SubscriptionHookSpecs.UpdatePlayback),
+            unusedHandler(SubscriptionHookSpecs.ClosePlayback),
+        )
+    }
+
+    private fun <
+        Request : ExtensionPayload,
+        Response : ExtensionPayload,
+        > unusedHandler(
+        hookSpec: HookSpec<Request, Response>,
+    ): ExtensionHandler<Request, Response> = object : ExtensionHandler<Request, Response> {
+        override val spec = hookSpec
+
+        override suspend fun invoke(
+            context: ExtensionCallContext,
+            request: Request,
+        ): HookResult<Response> = HookResult.Failure(
+            ExtensionError(
+                code = ExtensionErrorCodes.InvocationFailed,
+                message = "Unused provider test Hook",
+                recoverable = false,
+            )
         )
     }
 

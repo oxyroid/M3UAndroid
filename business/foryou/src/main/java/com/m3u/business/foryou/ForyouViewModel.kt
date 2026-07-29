@@ -13,7 +13,7 @@ import com.m3u.core.foundation.wrapper.mapResource
 import com.m3u.core.foundation.wrapper.resource
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
-import com.m3u.data.parser.xtream.XtreamEpisodeInfo
+import com.m3u.data.database.model.SeriesEpisode
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.programme.ProgrammeRepository
@@ -97,7 +97,7 @@ class ForyouViewModel @Inject constructor(
         channelRepository.observePlayedRecently(),
     ) { channels, playedRecently ->
         listOfNotNull<Recommend.Spec>(
-            playedRecently?.let { Recommend.CwSpec(it, playerManager.getCwPosition(it.url)) },
+            playedRecently?.let { Recommend.CwSpec(it, playerManager.getCwPosition(it)) },
             *(channels.map { channel -> Recommend.UnseenSpec(channel) }.take(8).toTypedArray())
         )
     }
@@ -116,7 +116,7 @@ class ForyouViewModel @Inject constructor(
 
     val series = MutableStateFlow<Channel?>(null)
     val seriesReplay = MutableStateFlow(0)
-    val episodes: StateFlow<Resource<List<XtreamEpisodeInfo>>> = series
+    val episodes: StateFlow<Resource<List<SeriesEpisode>>> = series
         .combine(seriesReplay) { series, _ -> series }
         .flatMapLatest { series ->
             if (series == null) flow { }

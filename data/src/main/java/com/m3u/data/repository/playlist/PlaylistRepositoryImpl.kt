@@ -25,11 +25,12 @@ import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithChannels
 import com.m3u.data.database.model.ProviderAccount
+import com.m3u.data.database.model.SeriesEpisode
+import com.m3u.data.database.model.SeriesEpisodeSource
 import com.m3u.data.database.model.refreshable
 import com.m3u.data.database.model.toMap
 import com.m3u.data.parser.m3u.M3UParser
 import com.m3u.data.parser.m3u.toChannel
-import com.m3u.data.parser.xtream.XtreamEpisodeInfo
 import com.m3u.data.parser.xtream.XtreamInput
 import com.m3u.data.parser.xtream.XtreamLive
 import com.m3u.data.parser.xtream.XtreamParser
@@ -598,7 +599,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                 )
             }
 
-            DataSource.Emby, DataSource.Jellyfin, DataSource.Provider -> {
+            DataSource.Provider -> {
                 ProviderRefreshWorker.enqueue(
                     workManager = workManager,
                     playlistUrl = url,
@@ -1147,14 +1148,27 @@ internal class PlaylistRepositoryImpl @Inject constructor(
             .map { it.toMap() }
             .catch { emit(emptyMap()) }
 
-    override suspend fun readEpisodesOrThrow(series: Channel): List<XtreamEpisodeInfo> {
+    override suspend fun readEpisodesOrThrow(series: Channel): List<SeriesEpisode> {
         val playlist = checkNotNull(get(series.playlistUrl)) { "playlist is not exist" }
+        if (playlist.source == DataSource.Provider) {
+            return subscriptionProviderRepository.browseEpisodes(series.id)
+        }
         val seriesInfo = xtreamParser.getSeriesInfoOrThrow(
             input = XtreamInput.decodeFromPlaylistUrl(playlist.url),
             seriesId = Url(series.url).rawSegments.last().toInt()
         )
-        // fixme: do not flatmap
-        return seriesInfo.episodes.flatMap { it.value }.map { it.toXtreamEpisodeInfo() }
+        return seriesInfo.episodes.entries.flatMap { (season, episodes) ->
+            episodes.mapIndexed { index, episode ->
+                val item = episode.toXtreamEpisodeInfo()
+                SeriesEpisode(
+                    id = item.id ?: "${season.orEmpty()}:$index",
+                    title = item.title.orEmpty(),
+                    seasonNumber = season.toIntOrNull(),
+                    episodeNumber = item.episodeNum?.toIntOrNull(),
+                    source = SeriesEpisodeSource.Xtream(item),
+                )
+            }
+        }
     }
 
     override suspend fun deleteEpgPlaylistAndProgrammes(

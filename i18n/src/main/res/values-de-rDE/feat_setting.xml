@@ -162,7 +162,6 @@
     <string name="feat_setting_restoring">Wiederherstellen von Playlisten und Kanäle</string>
     <string name="feat_setting_follow_system_theme">Benutze System-Theme</string>
     <string name="feat_setting_data_source_provider">Anbieter</string>
-    <string name="feat_setting_provider_variant_automatic">Automatisch</string>
     <string name="feat_setting_provider_source_with_provider">%1$s — %2$s</string>
     <string name="feat_setting_provider_choice_with_identifier">%1$s · %2$s</string>
     <string name="feat_setting_provider_choice_with_identifier_description">%1$s. Anbieter-ID: %2$s</string>

@@ -21,8 +21,10 @@ import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.ExtensionProgramme
 import com.m3u.extension.api.security.CredentialHandle
 import com.m3u.extension.api.subscription.PlaybackReference
+import com.m3u.extension.api.subscription.ProviderMediaKinds
 import com.m3u.extension.api.subscription.ProviderKind
 import com.m3u.extension.api.subscription.SubscriptionChannelDescriptor
+import com.m3u.extension.api.subscription.SubscriptionContentItemDescriptor
 import com.m3u.extension.api.subscription.SubscriptionContentRefreshResult
 import com.m3u.extension.api.subscription.SubscriptionSourceDescriptor
 import kotlinx.coroutines.flow.first
@@ -30,6 +32,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -119,6 +122,7 @@ class ExtensionContributionImporterTest {
                     playSessionId = "remote-session-1",
                     liveStreamId = "live-stream-1",
                     createdAtEpochMillis = 1_000,
+                    playMethod = "unknown",
                 )
             )
         }
@@ -483,6 +487,38 @@ class ExtensionContributionImporterTest {
         importer.clearExtensionEpg(EXTENSION_ID)
 
         assertProviderOwnershipIsPresent()
+    }
+
+    @Test
+    fun providerCatalogAllowsLfOnlyInOverview() = runBlocking {
+        val account = requireNotNull(database.providerDao().getAccount(PROVIDER_ACCOUNT_ID))
+        val item = SubscriptionContentItemDescriptor(
+            reference = PlaybackReference(
+                providerId = EXTENSION_ID,
+                itemId = "movie-1",
+                sourceType = "movie",
+            ),
+            mediaKind = ProviderMediaKinds.Movie,
+            title = "Movie",
+            playable = true,
+            browsable = false,
+            overview = "First line\nSecond line",
+        )
+
+        importer.validateProviderCatalog(account, listOf(item))
+
+        assertThrows(IllegalArgumentException::class.java) {
+            importer.validateProviderCatalog(
+                account,
+                listOf(item.copy(overview = "First line\rSecond line")),
+            )
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            importer.validateProviderCatalog(
+                account,
+                listOf(item.copy(title = "Movie\nInjected title")),
+            )
+        }
     }
 
     private suspend fun assertProviderOwnershipIsPresent() {

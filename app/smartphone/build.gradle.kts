@@ -26,6 +26,9 @@ extensions.configure<KotlinAndroidProjectExtension> {
 }
 
 val m3uMockServerUrl = providers.gradleProperty("m3uMockServerUrl").orElse("http://10.0.2.2:8080")
+val useAndroidTestOrchestrator = providers.gradleProperty("m3uUseTestOrchestrator")
+    .map(String::toBoolean)
+    .orElse(false)
 
 android {
     namespace = "com.m3u.smartphone"
@@ -95,11 +98,18 @@ android {
     packaging {
         resources.excludes += "META-INF/**"
     }
-    testOptions.managedDevices.allDevices {
-        create<ManagedVirtualDevice>("hostileApi34") {
-            device = "Pixel 6 Pro"
-            apiLevel = 34
-            systemImageSource = "aosp"
+    testOptions {
+        execution = if (useAndroidTestOrchestrator.get()) {
+            "ANDROID_TEST_ORCHESTRATOR"
+        } else {
+            "HOST"
+        }
+        managedDevices.allDevices {
+            create<ManagedVirtualDevice>("hostileApi34") {
+                device = "Pixel 6 Pro"
+                apiLevel = 34
+                systemImageSource = "aosp"
+            }
         }
     }
 }
@@ -212,6 +222,7 @@ dependencies {
     androidTestImplementation(project(":extension:conformance"))
     androidTestImplementation(project(":extension:runtime"))
     androidTestImplementation(project(":extension:transport-android"))
+    "androidTestUtil"(libs.androidx.test.orchestrator)
     "androidTestUtil"(
         project(
             path = ":testing:extension-reference",

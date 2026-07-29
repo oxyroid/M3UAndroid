@@ -28,7 +28,10 @@ The maintainer pages are canonical: architecture, change workflow, and current r
 5. Test the smallest affected module, then the cross-process or app path when relevant.
 6. Update the support matrix and both language versions of every affected extension page.
 
-For contract changes, include golden serialization, schema negotiation, and both transport paths. For phone or TV extension changes, verify the product trigger and visible result on the affected surface.
+For contract changes, include golden serialization, schema negotiation, and both transport paths.
+Extension product surfaces exist only in the smartphone app, so verify the trigger and visible
+result on its affected phone or tablet layout. TV exposes and invokes no extension capability; it
+supports only M3U and Xtream.
 
 ## Validation evidence
 

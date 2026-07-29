@@ -26,7 +26,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 
-private const val DYNAMIC_SCHEMA_REGISTRY_VERSION = 2
+private const val DYNAMIC_SCHEMA_REGISTRY_VERSION = 1
 
 internal class DynamicSchemaSession internal constructor(
     internal val extensionId: String,
@@ -355,16 +355,6 @@ internal class ExtensionSettingStore @Inject constructor(
     @Synchronized
     fun knownDynamicSchemaSurfaces(extensionId: String): Set<String> =
         dynamicSchemaRegistry(extensionId).surfaces.keys.toSortedSet()
-
-    @Synchronized
-    fun hasRetainedDynamicSettings(extensionId: String): Boolean {
-        val stored = storedSnapshot(extensionId)
-        return stored.schemaVersions.keys.any { sectionId -> sectionId != MANIFEST_SECTION_ID } ||
-            stored.values.keys.any { key -> !key.startsWith("$MANIFEST_SECTION_ID/") } ||
-            stored.credentialHandles.keys.any { key ->
-                !key.startsWith("$MANIFEST_SECTION_ID/")
-            }
-    }
 
     @Synchronized
     fun revalidateDynamicSchemas(
@@ -1017,7 +1007,10 @@ internal class ExtensionSettingStore @Inject constructor(
             val fieldsByKey = descriptor.fields.associateBy { field ->
                 ExtensionSettingKeys.qualified(descriptor.id, field.key)
             }
-            if (current.schemaVersions[descriptor.id] != descriptor.version) {
+            if (
+                descriptor.id !in previousSectionIds ||
+                current.schemaVersions[descriptor.id] != descriptor.version
+            ) {
                 removedHandles += current.credentialHandles
                     .filterKeys { key -> key.startsWith(prefix) }
                     .values

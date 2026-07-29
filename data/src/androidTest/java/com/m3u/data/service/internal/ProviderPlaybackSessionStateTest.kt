@@ -105,5 +105,6 @@ class ProviderPlaybackSessionStateTest {
         sourceType = "live",
         playSessionId = "remote-$id",
         liveStreamId = null,
+        playMethod = "unknown",
     )
 }

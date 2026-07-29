@@ -111,6 +111,7 @@ class ProviderPersistenceLifecycleGateTest {
                 playSessionId = "remote-session",
                 liveStreamId = "remote-stream",
                 createdAtEpochMillis = 1_000L,
+                playMethod = "unknown",
             )
         )
         val staleLease = checkNotNull(registry.captureLease(EXTENSION_ID))

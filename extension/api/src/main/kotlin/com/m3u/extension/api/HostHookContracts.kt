@@ -142,25 +142,25 @@ object HostHookSpecs {
     )
     val EpgRefresh = HookSpec(
         ExtensionHookIds.EpgContentRefresh,
-        4,
+        1,
         EpgRefreshRequest.serializer(),
         EpgRefreshResult.serializer(),
     )
     val MetadataEnrichment = HookSpec(
         ExtensionHookIds.MetadataChannelEnrich,
-        3,
+        1,
         MetadataEnrichmentRequest.serializer(),
         MetadataEnrichmentResult.serializer(),
     )
     val SearchProvider = HookSpec(
         ExtensionHookIds.SearchProviderQuery,
-        4,
+        1,
         SearchProviderRequest.serializer(),
         SearchProviderResult.serializer(),
     )
     val BackgroundTask = HookSpec(
         ExtensionHookIds.BackgroundTaskRun,
-        2,
+        1,
         BackgroundTaskRequest.serializer(),
         BackgroundTaskResult.serializer(),
     )

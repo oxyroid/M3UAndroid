@@ -39,4 +39,8 @@ data class ProviderPlaybackSessionEntity(
     val liveStreamId: String?,
     @ColumnInfo(name = "created_at_epoch_millis")
     val createdAtEpochMillis: Long,
+    @ColumnInfo(name = "play_method", defaultValue = "'unknown'")
+    val playMethod: String,
+    @ColumnInfo(name = "position_ticks", defaultValue = "0")
+    val positionTicks: Long = 0L,
 )

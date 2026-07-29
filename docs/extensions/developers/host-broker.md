@@ -2,24 +2,28 @@
 
 [简体中文](host-broker.zh-CN.md) · [Developer guide](README.md)
 
-A subscription provider supplies a connection form and five typed Hooks. M3UAndroid displays the
-form, stores the account, schedules refreshes, imports channels, and recovers playback sessions.
+A subscription provider supplies a connection form and implements seven typed Hooks. All seven are
+required: discover, validate the subscription, refresh, browse, resolve playback, update playback,
+and close playback. M3UAndroid displays the form, stores the account, schedules refreshes, imports
+media, and recovers playback sessions in the smartphone app.
 
 The complete example is [`ReferenceExtensionService`](../../../testing/extension-reference/src/main/java/com/m3u/testing/extension/reference/ReferenceExtensionService.kt).
 
-## The five Hooks
+## Provider Hooks
 
 | HookSpec | Schema | Base capability | Request and result |
 | --- | --- | --- | --- |
-| `SubscriptionHookSpecs.Discover` | 4 | None | Locale → one Provider descriptor |
-| `SubscriptionHookSpecs.Validate` | 2 | `credential.write` | Submitted values → host authentication receipt |
-| `SubscriptionHookSpecs.Refresh` | 4 | `subscription.read` | Account and refresh reason → source and complete channel snapshot |
-| `SubscriptionHookSpecs.ResolvePlayback` | 4 | `playback.resolve` | Account and playback reference → URL, headers, and optional session |
-| `SubscriptionHookSpecs.ClosePlayback` | 3 | `playback.resolve` | Account, playback reference, and session → close result |
+| `SubscriptionHookSpecs.Discover` | 1 | None | Locale → one Provider descriptor |
+| `SubscriptionHookSpecs.Validate` | 1 | `credential.write` | Submitted values → subscription validation and host authentication receipt |
+| `SubscriptionHookSpecs.Refresh` | 1 | `subscription.read` | Account and refresh reason → source and complete channel snapshot |
+| `SubscriptionHookSpecs.Browse` | 1 | `subscription.read` | Account, optional parent, cursor, and limit → one media page |
+| `SubscriptionHookSpecs.ResolvePlayback` | 1 | `playback.resolve` | Account and playback reference → URL, headers, and optional session |
+| `SubscriptionHookSpecs.UpdatePlayback` | 1 | `playback.resolve` | Account, playback session, event, and position → acceptance |
+| `SubscriptionHookSpecs.ClosePlayback` | 1 | `playback.resolve` | Account, playback reference, and session → close result |
 
-Register every `HookSpec` with `TypedExtensionService`, then declare the same Hook and schema
-version in `ExtensionManifest`. Four Hooks make server requests and therefore use broker-backed
-handlers:
+Built-in and external providers use this same complete contract. Register every `HookSpec` with
+`TypedExtensionService`, then declare the same Hook and schema version in `ExtensionManifest`.
+Networked Hooks use broker-backed handlers:
 
 ```kotlin
 init {
@@ -32,8 +36,14 @@ init {
     handleResultWithBroker(SubscriptionHookSpecs.Refresh) { request, _, broker ->
         refreshProvider(request, broker)
     }
+    handleResultWithBroker(SubscriptionHookSpecs.Browse) { request, _, broker ->
+        browseProvider(request, broker)
+    }
     handleResultWithBroker(SubscriptionHookSpecs.ResolvePlayback) { request, _, broker ->
         resolvePlayback(request, broker)
+    }
+    handleResultWithBroker(SubscriptionHookSpecs.UpdatePlayback) { request, _, broker ->
+        updatePlayback(request, broker)
     }
     handleResultWithBroker(SubscriptionHookSpecs.ClosePlayback) { request, _, broker ->
         closePlayback(request, broker)
@@ -41,15 +51,15 @@ init {
 }
 ```
 
-`Discover` is offline. The other four Hooks declare `network`. Add `credential.read` when a broker
-request uses a submitted or saved credential handle.
+All seven handlers are required. `Discover` is offline. Every other provider Hook that makes a
+server request declares `network`. Add `credential.read` when a broker request uses a submitted or
+saved credential handle.
 
 ## 1. Describe the provider and its form
 
 `Discover` returns one `SubscriptionProviderDescriptor`. Keep `providerId` and every
-`ProviderKind` stable between releases. List variants in display order and include every field
-needed for login. Set `userSelectable = false` only for a compatibility kind that existing accounts
-still need. M3UAndroid omits that kind from new-subscription choices.
+`ProviderKind` stable between releases. List every supported variant in display order and include
+every field needed for login.
 
 ```kotlin
 private fun discoverProvider(localeTag: String?): SubscriptionProviderDiscoverResult {
@@ -79,7 +89,7 @@ fallback to the extension's default language. Return plain text in natural readi
 insert bidi control characters; the host handles RTL isolation. Text should make sense when read
 aloud. IDs, URLs, and handles remain untranslated.
 
-## 2. Authenticate the account
+## 2. Authenticate and subscribe the account
 
 `Validate` sends the login exchange through `broker.authenticate(...)`. Tell the broker where the
 returned access credential is located and which server or user IDs M3UAndroid should keep to
@@ -124,8 +134,8 @@ capabilities, and errors.
 
 ## 3. Return a complete refresh snapshot
 
-Return one `SubscriptionSourceDescriptor` and the complete channel snapshot. In schema 4 the source
-contains only `remoteId` and `providerKind`; it has no title.
+Return one `SubscriptionSourceDescriptor` and the complete channel snapshot. The source contains
+only `remoteId` and `providerKind`; it has no title.
 
 ```kotlin
 SubscriptionSourceDescriptor(
@@ -139,22 +149,57 @@ reference. Resolve URLs, tokens, and cookies in `ResolvePlayback`.
 
 M3UAndroid compares this snapshot with stored provider data and preserves host-owned local channel state.
 
-## 4. Resolve and close playback
+## 4. Browse movies and series
+
+`Browse` is paged. Omit both `parentReference` and `cursor` for the first root page. Pass the
+selected item's required `reference` back as `parentReference` to open a series, season, or other
+browsable item. Treat `cursor` as an opaque, non-secret continuation value. A page requests at
+most 200 items and the result must not exceed that bound.
+
+Each `SubscriptionContentItemDescriptor` has an extensible `ProviderMediaKind`. The SDK publishes
+`unknown`, `live`, `movie`, `series`, `season`, and `episode` as common values; a host must not
+assume that this list is closed. Set at least one of `playable` or `browsable` to true:
+
+- A movie or episode is normally playable.
+- A series or season may be `playable = false` and `browsable = true`.
+- An item that can both open children and play directly sets both to true.
+
+The `reference` is required even for a browse-only item. It is the stable value used for the next
+browse request and, when `playable` is true, for `ResolvePlayback`. Do not put a URL, token, or
+cookie in it.
+
+`imageUrl`, `category`, `subtitle`, `overview`, `productionYear`, `seasonNumber`, and
+`episodeNumber` are optional presentation data. Keep them concise; the contract enforces byte and
+number bounds. `nextCursor` and `total` are optional. Return `nextCursor = null` after the final
+page.
+
+## 5. Resolve, update, and close playback
 
 `ResolvePlayback` returns the playable URL, required headers, selected media source ID, and an
-optional `PlaybackSessionDescriptor`. Use `BrokerValue` references for saved credentials and
-captured account values; M3UAndroid resolves them when making the request or opening the media.
+optional `PlaybackSessionDescriptor`. It also returns an extensible `PlaybackMethod`. Use
+`direct_play`, `direct_stream`, or `transcode` when known. Use `BrokerValue` references for saved
+credentials and captured account values; M3UAndroid resolves them when making the request or
+opening the media.
+
+M3UAndroid sends `started`, `progress`, `paused`, or `resumed` through
+`PlaybackSessionUpdateRequest`. The event vocabulary is extensible.
+`positionTicks` is non-negative and one tick is 100 nanoseconds. Echo the method selected by
+`ResolvePlayback`, set `isPaused` to the current state, and return whether the remote service
+accepted the update. Progress rejection must not make the media URL invalid.
 
 When a session is returned, `ClosePlayback` receives the same descriptor and its own account-scoped
-broker. Closing must be idempotent. Return success when the remote session is already closed.
+broker. It also receives the final non-negative `positionTicks`. Closing must be idempotent.
+Return success when the remote session is already closed.
 
 ## Acceptance
 
 1. `Discover` returns one descriptor and every variant opens its form.
-2. Valid values complete host-managed authentication.
-3. Initial refresh imports one complete snapshot and creates the account.
-4. A channel resolves and plays with host-resolved headers.
-5. Stopping playback closes the remote session. Repeated close also succeeds.
+2. `Validate` completes host-managed subscription authentication.
+3. `Refresh` imports one complete snapshot and creates the account.
+4. Root and child `Browse` pages honor the requested limit and terminate with a null cursor.
+5. `ResolvePlayback` returns media that plays with host-resolved headers.
+6. `UpdatePlayback` reports playback state; a rejected update does not interrupt local playback.
+7. `ClosePlayback` closes the remote session and succeeds when repeated.
 
 Next: [send authenticated requests through the host broker](reference/provider-broker.md), then
 [test the extension](testing.md).

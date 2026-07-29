@@ -3,7 +3,8 @@
 [简体中文](ui-quality-gates.zh-CN.md) · [Maintainer guide](README.md)
 
 Use this checklist for extension discovery, plugin lists, details, authorization, settings, and
-provider entry points. A UI change is not release-ready until every applicable gate passes.
+provider entry points in the smartphone app's phone and tablet layouts. A UI change is not
+release-ready until every applicable gate passes.
 
 ## Official Android baseline
 
@@ -44,7 +45,7 @@ The rules in this section are project gates. They are not claims about the Mater
 - Status is communicated with text or semantics as well as color. Secrets and tokens are never
   rendered; package names, service names, certificate fingerprints, and origins remain readable
   and use safe bidirectional formatting.
-- A drag, swipe, or long-press interaction has an equivalent tap, keyboard, or D-pad action.
+- A drag, swipe, or long-press interaction has an equivalent tap or keyboard action.
 
 ### Layout behavior
 
@@ -57,8 +58,6 @@ The rules in this section are project gates. They are not claims about the Mater
   system safe area.
 - A text-input screen handles the IME with window insets. Do not reuse navigation padding as
   keyboard avoidance, and do not double-apply consumed insets.
-- TV keeps D-pad navigation: initial focus is intentional, focus is visible without relying only
-  on color, every action is reachable, and Back returns focus to the item that opened the page.
 
 ## Required test matrix
 
@@ -68,7 +67,7 @@ full Cartesian product. Cover every value and always run the compact RTL + 200% 
 | Dimension | Required values |
 | --- | --- |
 | Available width | 360, 599, 600, 839, and 840 dp |
-| Constrained height | 480 dp, plus the normal portrait or TV height |
+| Constrained height | 480 dp and the normal portrait height |
 | Font | 100% and 200% |
 | Direction and language | English LTR, Simplified Chinese, `en-XA`, and `ar-XB` RTL |
 | Theme | Light and dark; include dynamic color when available |
@@ -79,7 +78,7 @@ full Cartesian product. Cover every value and always run the compact RTL + 200% 
 | Text | Short copy, longest localized copy, and long identity/origin values |
 
 Run phone cases on a phone profile and large-window cases on a tablet or resizable large-screen
-profile. TV evidence must come from a TV profile with D-pad input.
+profile.
 
 ## What the checks must prove
 

@@ -22,8 +22,10 @@ Search, metadata, and EPG calls may include a provider account. In that case, th
 is limited to that account. Calls without an account use the extension's approved origins.
 Read [Use the host network broker](reference/provider-broker.md) before making a request.
 
-Subscription providers use a separate five-Hook lifecycle described in
-[Build a subscription provider](host-broker.md). Its `Discover` Hook is always offline.
+Subscription providers must implement all seven Hooks described in
+[Build a subscription provider](host-broker.md): `Discover`, `Validate`, `Refresh`, `Browse`,
+`ResolvePlayback`, `UpdatePlayback`, and `ClosePlayback`. `Validate` completes the subscription
+authentication flow. `Discover` is always offline.
 
 ## What each Hook receives and returns
 

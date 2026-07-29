@@ -134,13 +134,15 @@ fun MediaSheet(
                                     onDismissRequest()
                                 }
                             )
-                            MediaSheetItem(
-                                stringRes = string.feat_playlist_dialog_create_shortcut_title,
-                                onClick = {
-                                    onCreateShortcut(it)
-                                    onDismissRequest()
-                                }
-                            )
+                            if (it.playable && !it.browsable) {
+                                MediaSheetItem(
+                                    stringRes = string.feat_playlist_dialog_create_shortcut_title,
+                                    onClick = {
+                                        onCreateShortcut(it)
+                                        onDismissRequest()
+                                    }
+                                )
+                            }
                             MediaSheetItem(
                                 stringRes = string.feat_playlist_dialog_save_picture_title,
                                 onClick = {
@@ -161,13 +163,15 @@ fun MediaSheet(
                                     onDismissRequest()
                                 }
                             )
-                            MediaSheetItem(
-                                stringRes = string.feat_playlist_dialog_create_shortcut_title,
-                                onClick = {
-                                    onCreateShortcut(it)
-                                    onDismissRequest()
-                                }
-                            )
+                            if (it.playable && !it.browsable) {
+                                MediaSheetItem(
+                                    stringRes = string.feat_playlist_dialog_create_shortcut_title,
+                                    onClick = {
+                                        onCreateShortcut(it)
+                                        onDismissRequest()
+                                    }
+                                )
+                            }
                         }
                     }
                 }

@@ -174,6 +174,7 @@ dependencies {
     androidTestImplementation(libs.androidx.test.core)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.squareup.okhttp3.mockwebserver)
+    androidTestImplementation(libs.squareup.okhttp3.tls)
 }
 
 tasks.matching { task ->

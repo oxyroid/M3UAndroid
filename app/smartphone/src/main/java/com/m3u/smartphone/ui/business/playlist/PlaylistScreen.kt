@@ -72,6 +72,8 @@ import com.m3u.core.foundation.wrapper.Event
 import com.m3u.core.foundation.wrapper.Sort
 import com.m3u.core.foundation.wrapper.eventOf
 import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.MediaOpenAction
+import com.m3u.data.database.model.openAction
 import com.m3u.data.database.model.isSeries
 import com.m3u.data.database.model.isVod
 import com.m3u.data.service.MediaCommand
@@ -188,13 +190,14 @@ internal fun PlaylistRoute(
             onHideCategory = { viewModel.onHideCategory(it) },
             onSort = { viewModel.sort(it) },
             onPlayChannel = { channel ->
-                if (!isSeriesPlaylist) {
-                    coroutineScope.launch {
+                when (channel.openAction(playlist)) {
+                    MediaOpenAction.PLAY -> coroutineScope.launch {
                         helper.play(MediaCommand.Common(channel.id))
                         navigateToChannel()
                     }
-                } else {
-                    viewModel.series.value = channel
+
+                    MediaOpenAction.BROWSE -> viewModel.series.value = channel
+                    MediaOpenAction.UNSUPPORTED -> Unit
                 }
             },
             onScrollUp = { viewModel.scrollUp.value = eventOf(Unit) },
@@ -251,14 +254,14 @@ internal fun PlaylistRoute(
             .then(modifier)
     )
 
-    if (isSeriesPlaylist) {
+    if (series != null) {
         EpisodesBottomSheet(
             series = series,
             episodes = episodes,
             onEpisodeClick = { episode ->
                 coroutineScope.launch {
                     series?.let {
-                        val input = MediaCommand.XtreamEpisode(
+                        val input = MediaCommand.Episode(
                             channelId = it.id,
                             episode = episode
                         )

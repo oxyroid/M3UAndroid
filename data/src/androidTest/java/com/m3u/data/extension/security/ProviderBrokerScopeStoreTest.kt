@@ -174,16 +174,86 @@ class ProviderBrokerScopeStoreTest {
             )
         }
 
-        val material = ProviderCredentialMaterial.decode(
-            store.completeInitialRefresh(refreshScope, principal, capturedToken)
+        assertTrue(store.close(refreshScope))
+    }
+
+    @Test
+    fun initialRefreshCanNarrowItsCapturedCredentialToContentBrowse() {
+        val vault = FakeCredentialVault()
+        val registry = ActiveExtensionPrincipalRegistry()
+        val principal = principal()
+        registry.activate(principal)
+        val store = store(vault, registry)
+        val authenticationScope = store.mintAuthenticationScope(
+            principal = principal,
+            approvedBaseUrl = "https://media.example.test",
+            transientCredentials = mapOf("password" to vault.stage("password")),
         )
-        assertEquals("server-token", material.primaryCredential)
-        assertEquals(mapOf("user_id" to "remote-user"), material.opaqueContexts)
+        val receipt = store.recordAuthentication(
+            scope = authenticationScope,
+            principal = principal,
+            hook = ExtensionHookIds.SubscriptionProviderValidate,
+            primaryCredential = "server-token",
+            opaqueContexts = mapOf("user_id" to "remote-user"),
+        )
+        val capturedToken = store.consumeAuthenticationReceipt(
+            scope = authenticationScope,
+            principal = principal,
+            receipt = receipt,
+        ).credentialHandle
+        val refreshScope = store.advanceToInitialRefresh(
+            authenticationScope = authenticationScope,
+            principal = principal,
+            capturedHandle = capturedToken,
+        )
+
+        val browseScope = store.advanceInitialRefreshToBrowse(
+            refreshScope = refreshScope,
+            principal = principal,
+            capturedHandle = capturedToken,
+        )
+
         expectFailure<SecurityException> {
             store.authorize(
                 refreshScope,
                 principal,
                 ExtensionHookIds.SubscriptionContentRefresh,
+            )
+        }
+        val access = store.authorize(
+            browseScope,
+            principal,
+            ExtensionHookIds.SubscriptionContentBrowse,
+        )
+        assertEquals(ProviderBrokerScopeKind.INITIAL_BROWSE, access.kind)
+        assertEquals(setOf(capturedToken), access.credentialHandles)
+        assertEquals(
+            "server-token",
+            store.resolveCredential(
+                browseScope,
+                principal,
+                ExtensionHookIds.SubscriptionContentBrowse,
+                capturedToken,
+            ),
+        )
+        expectFailure<SecurityException> {
+            store.authorize(
+                browseScope,
+                principal,
+                ExtensionHookIds.SubscriptionContentRefresh,
+            )
+        }
+
+        val material = ProviderCredentialMaterial.decode(
+            store.completeInitialBrowse(browseScope, principal, capturedToken)
+        )
+        assertEquals("server-token", material.primaryCredential)
+        assertEquals(mapOf("user_id" to "remote-user"), material.opaqueContexts)
+        expectFailure<SecurityException> {
+            store.authorize(
+                browseScope,
+                principal,
+                ExtensionHookIds.SubscriptionContentBrowse,
             )
         }
     }
@@ -294,7 +364,9 @@ class ProviderBrokerScopeStoreTest {
                 ContextReference("user_id"),
             ),
         )
-        assertEquals("legacy-secret", ProviderCredentialMaterial.decode("legacy-secret").primaryCredential)
+        expectFailure<IllegalArgumentException> {
+            ProviderCredentialMaterial.decode("unversioned-secret")
+        }
         expectFailure<IllegalStateException> {
             store.recordAuthentication(
                 scope = scope,

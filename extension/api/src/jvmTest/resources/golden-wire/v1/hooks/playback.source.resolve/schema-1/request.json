@@ -21,6 +21,7 @@
   },
   "preferences": {
     "maxStreamingBitrate": 8000000,
-    "allowTranscoding": false
+    "allowTranscoding": false,
+    "startPositionTicks": 123000000
   }
 }

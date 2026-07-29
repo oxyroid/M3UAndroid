@@ -33,10 +33,11 @@ import com.m3u.core.foundation.wrapper.handledEvent
 import com.m3u.core.foundation.wrapper.mapResource
 import com.m3u.core.foundation.wrapper.resource
 import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.MediaOpenAction
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Programme
-import com.m3u.data.database.model.isSeries
-import com.m3u.data.parser.xtream.XtreamEpisodeInfo
+import com.m3u.data.database.model.SeriesEpisode
+import com.m3u.data.database.model.openAction
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.media.MediaRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
@@ -210,6 +211,8 @@ class PlaylistViewModel @Inject constructor(
         val shortcutId = "channel_$id"
         viewModelScope.launch {
             val channel = channelRepository.get(id) ?: return@launch
+            val playlist = playlistRepository.get(channel.playlistUrl)
+            if (channel.openAction(playlist) != MediaOpenAction.PLAY) return@launch
             val bitmap = channel.cover?.let { mediaRepository.loadDrawable(it)?.toBitmap() }
             val shortcutInfo = ShortcutInfoCompat.Builder(context, shortcutId)
                 .setShortLabel(channel.title)
@@ -406,10 +409,10 @@ class PlaylistViewModel @Inject constructor(
             val playlist = playlistRepository.get(channel.playlistUrl)
             savedStateHandle[PlaylistNavigation.TYPE_URL] = channel.playlistUrl
 
-            if (playlist?.isSeries == false) {
-                onPlayMediaCommand(MediaCommand.Common(channel.id))
-            } else {
-                series.value = channel
+            when (channel.openAction(playlist)) {
+                MediaOpenAction.PLAY -> onPlayMediaCommand(MediaCommand.Common(channel.id))
+                MediaOpenAction.BROWSE -> series.value = channel
+                MediaOpenAction.UNSUPPORTED -> Unit
             }
         }
     }
@@ -425,7 +428,7 @@ class PlaylistViewModel @Inject constructor(
     val series = MutableStateFlow<Channel?>(null)
     val seriesReplay = MutableStateFlow(0)
 
-    val episodes: StateFlow<Resource<List<XtreamEpisodeInfo>>> = series
+    val episodes: StateFlow<Resource<List<SeriesEpisode>>> = series
         .combine(seriesReplay) { series, _ -> series }
         .flatMapLatest { series ->
             if (series == null) flow {}

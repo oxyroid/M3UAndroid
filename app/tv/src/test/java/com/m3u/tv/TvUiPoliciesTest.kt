@@ -14,8 +14,6 @@ class TvUiPoliciesTest {
         assertTrue(tvSupportsPlaylistSource(DataSource.Xtream))
         listOf(
             DataSource.EPG,
-            DataSource.Emby,
-            DataSource.Jellyfin,
             DataSource.Provider,
             DataSource.Dropbox,
         ).forEach { source ->

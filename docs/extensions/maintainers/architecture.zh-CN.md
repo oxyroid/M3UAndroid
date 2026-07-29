@@ -26,6 +26,9 @@ Runtime 负责完成一次调用。功能 repository 负责解释 result，并�
 
 两条路径使用相同的 `HookSpec<Request, Result>` 和 runtime 策略。
 
+包括内置 Provider 在内，所有插件产品调用点都位于 `app/smartphone`，覆盖手机和平板布局。
+`app/tv` 没有插件界面或调用入口，只提供 M3U 与 Xtream 数据源。
+
 `ExtensionContractCatalog` 是宿主唯一的契约目录。每一项把一个受支持的 Hook/schema
 组合与官方类型化序列化器、基础 capability 绑定。内置插件注册和宿主调用必须使用目录中的
 同一个 `HookSpec`；外部插件的 manifest 也会在 transport 注册前按同一目录和规则校验。
@@ -45,7 +48,7 @@ Runtime 负责完成一次调用。功能 repository 负责解释 result，并�
 | 设置生命周期 | 已显示的 Schema、保存值、Secret Handle 与编辑授权 | [`ExtensionSettingsRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/extension/ExtensionSettingsRepositoryImpl.kt) |
 | 网络作用域 | 为一次外部 Hook 调用选择已批准的 Origin 与凭据 | [`ExtensionHookBrokerScopeProvider`](../../../data/src/main/java/com/m3u/data/extension/security/ExtensionHookBrokerScopeProvider.kt) |
 | 网络执行 | 检查作用域、URL、重定向、值、大小和超时，然后发送 HTTP | [`HostNetworkBrokerImpl`](../../../data/src/main/java/com/m3u/data/extension/security/HostNetworkBrokerImpl.kt) |
-| Provider 流程 | Discover、Validate、Refresh、播放解析与 Session 关闭 | [`SubscriptionProviderRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/provider/SubscriptionProviderRepositoryImpl.kt) |
+| Provider 流程 | Discover、订阅验证、Refresh、媒体浏览、播放解析/更新与 Session 关闭 | [`SubscriptionProviderRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/provider/SubscriptionProviderRepositoryImpl.kt)、[`SubscriptionHookSpecs`](../../../extension/api/src/main/kotlin/com/m3u/extension/api/subscription/SubscriptionProviderContracts.kt) |
 | Result 应用 | 校验所有权并写入宿主数据，或把结果映射到界面/播放器 | [`data/extension`](../../../data/src/main/java/com/m3u/data/extension)、[`data/repository/extension`](../../../data/src/main/java/com/m3u/data/repository/extension) |
 | 后台任务 | 对齐周期任务声明，并由 WorkManager 调用任务 Hook | [`ExtensionBackgroundTaskScheduler`](../../../data/src/main/java/com/m3u/data/worker/ExtensionBackgroundTaskScheduler.kt)、[`ExtensionBackgroundTaskWorker`](../../../data/src/main/java/com/m3u/data/worker/ProviderWorker.kt) |
 
@@ -79,13 +82,13 @@ Runtime 的宿主侧截止时间为准。
 
 ## 网络作用域如何选择
 
-外部 Broker 支持 Provider Validate/Refresh/Resolve/Close、设置、搜索、Metadata、EPG 和后台
-任务。Provider `Discover` 始终离线。
+外部 Broker 支持 Provider Validate/Refresh/Browse/Resolve/Update/Close，以及设置、搜索、
+Metadata、EPG 和后台任务。Provider `Discover` 始终离线。
 
 | Request | 作用域来源 |
 | --- | --- |
 | Provider `Validate` | 从本次提交的 Provider Origin 创建认证作用域。 |
-| Provider `Refresh`、`ResolvePlayback`、`ClosePlayback` | Provider repository 创建账号作用域。 |
+| Provider `Refresh`、`Browse`、`ResolvePlayback`、`UpdatePlayback`、`ClosePlayback` | Provider repository 创建账号作用域。 |
 | 带 `account + credential` 的搜索、Metadata 或 EPG | 从匹配的已保存 Provider 账号创建账号作用域。 |
 | 设置、后台任务，或不带账号的搜索、Metadata、EPG | 从已批准的 manifest 与设置 Origin 创建 Hook 作用域。 |
 
@@ -137,12 +140,23 @@ ProviderWorker 或用户刷新
 
 Importer 只更新当前账号，并保留宿主管理的频道本地状态。外部 Provider 与
 Emby/Jellyfin 共用同一个 Repository 和 Importer；只有 Handler 调用会经过 Android IPC。
-手机和 TV 从 Descriptor 中可选择的 Variant 生成新订阅入口。不可选择的 Variant 仍可用于
-已有账号，但不会出现在新订阅列表。新建或恢复的 Provider Playlist 统一保存为
-`DataSource.Provider`；旧 Emby/Jellyfin Source 只用于解码和迁移。
+smartphone 应用从 Provider Descriptor 生成新订阅入口。所有 Provider Playlist 都保存为
+`DataSource.Provider`。
 
 Broker 可以防止宿主直接泄露凭据，但无法阻止恶意插件与用户已批准的 Origin 串谋。这项
 剩余风险是外部插件仍放在开发者开关后的原因之一。
+
+每个内置或外部 Provider 都必须实现完整的七 Hook 契约：`Discover`、`Validate`、
+`Refresh`、`Browse`、`ResolvePlayback`、`UpdatePlayback` 与 `ClosePlayback`。
+`Validate` 负责订阅操作中的认证。
+
+- `Browse` 返回一页有数量上限、带稳定引用的媒体；根页面和子页面使用同一契约，不需要把
+  剧集或季容器塞进可播放频道快照；
+- `UpdatePlayback` 上报可扩展的 Session 事件、非负的 100 纳秒 Tick 位置、实际播放方式
+  与暂停状态。
+
+内置 Provider 直接绑定全部七个 Hook；外部 Provider 通过同一套 SDK 声明全部七个 Hook，
+联网调用使用账号作用域 Broker。
 
 ## 后台任务链路
 

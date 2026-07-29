@@ -7,6 +7,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 
 class SubscriptionProviderContractsTest {
     @Test
@@ -205,6 +208,14 @@ class SubscriptionProviderContractsTest {
         assertEquals(90_000_000L, close.positionTicks)
         assertFailsWith<IllegalArgumentException> {
             close.copy(positionTicks = -1L)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            PlaybackPreferences(startPositionTicks = -1L)
+        }
+        assertFailsWith<SerializationException> {
+            Json.decodeFromString<PlaybackPreferences>(
+                """{"allowTranscoding":true}"""
+            )
         }
     }
 

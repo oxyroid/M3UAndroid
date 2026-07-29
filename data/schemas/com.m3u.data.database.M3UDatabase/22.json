@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 22,
-    "identityHash": "6de5b9a6edd9bf3c22877dbd24b317e5",
+    "identityHash": "c690bfff926647699e71ee6403d1141d",
     "entities": [
       {
         "tableName": "playlists",
@@ -71,7 +71,7 @@
       },
       {
         "tableName": "streams",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`url` TEXT NOT NULL, `group` TEXT NOT NULL, `title` TEXT NOT NULL, `cover` TEXT, `playlist_url` TEXT NOT NULL, `license_type` TEXT DEFAULT NULL, `license_key` TEXT DEFAULT NULL, `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `favourite` INTEGER NOT NULL, `hidden` INTEGER NOT NULL DEFAULT 0, `seen` INTEGER NOT NULL DEFAULT 0, `relation_id` TEXT DEFAULT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`url` TEXT NOT NULL, `group` TEXT NOT NULL, `title` TEXT NOT NULL, `cover` TEXT, `playlist_url` TEXT NOT NULL, `license_type` TEXT DEFAULT NULL, `license_key` TEXT DEFAULT NULL, `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `favourite` INTEGER NOT NULL, `hidden` INTEGER NOT NULL DEFAULT 0, `seen` INTEGER NOT NULL DEFAULT 0, `media_kind` TEXT NOT NULL DEFAULT 'unknown', `playable` INTEGER NOT NULL DEFAULT 1, `browsable` INTEGER NOT NULL DEFAULT 0, `relation_id` TEXT DEFAULT NULL, `subtitle` TEXT DEFAULT NULL, `overview` TEXT DEFAULT NULL, `production_year` INTEGER DEFAULT NULL)",
         "fields": [
           {
             "fieldPath": "url",
@@ -141,9 +141,48 @@
             "defaultValue": "0"
           },
           {
+            "fieldPath": "mediaKind",
+            "columnName": "media_kind",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'unknown'"
+          },
+          {
+            "fieldPath": "playable",
+            "columnName": "playable",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "1"
+          },
+          {
+            "fieldPath": "browsable",
+            "columnName": "browsable",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
             "fieldPath": "relationId",
             "columnName": "relation_id",
             "affinity": "TEXT",
+            "defaultValue": "NULL"
+          },
+          {
+            "fieldPath": "subtitle",
+            "columnName": "subtitle",
+            "affinity": "TEXT",
+            "defaultValue": "NULL"
+          },
+          {
+            "fieldPath": "overview",
+            "columnName": "overview",
+            "affinity": "TEXT",
+            "defaultValue": "NULL"
+          },
+          {
+            "fieldPath": "productionYear",
+            "columnName": "production_year",
+            "affinity": "INTEGER",
             "defaultValue": "NULL"
           }
         ],
@@ -334,7 +373,7 @@
       },
       {
         "tableName": "provider_accounts",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `provider_id` TEXT NOT NULL, `provider_kind` TEXT NOT NULL, `base_url` TEXT NOT NULL, `server_id` TEXT NOT NULL, `server_name` TEXT NOT NULL, `server_version` TEXT NOT NULL, `user_id` TEXT NOT NULL, `username` TEXT NOT NULL, `playlist_url` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`playlist_url`) REFERENCES `playlists`(`url`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `provider_id` TEXT NOT NULL, `provider_kind` TEXT NOT NULL, `base_url` TEXT NOT NULL, `server_id` TEXT NOT NULL, `server_name` TEXT NOT NULL, `server_version` TEXT NOT NULL, `user_id` TEXT NOT NULL, `username` TEXT NOT NULL, `playlist_url` TEXT NOT NULL, `requires_reauthentication` INTEGER NOT NULL DEFAULT 0, `owner_package_name` TEXT, `owner_service_name` TEXT, `owner_certificate_sha256` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`playlist_url`) REFERENCES `playlists`(`url`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -395,6 +434,28 @@
             "columnName": "playlist_url",
             "affinity": "TEXT",
             "notNull": true
+          },
+          {
+            "fieldPath": "requiresReauthentication",
+            "columnName": "requires_reauthentication",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "ownerPackageName",
+            "columnName": "owner_package_name",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "ownerServiceName",
+            "columnName": "owner_service_name",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "ownerCertificateSha256",
+            "columnName": "owner_certificate_sha256",
+            "affinity": "TEXT"
           }
         ],
         "primaryKey": {
@@ -441,7 +502,7 @@
       },
       {
         "tableName": "provider_credentials",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`account_id` TEXT NOT NULL, `access_token` TEXT NOT NULL, PRIMARY KEY(`account_id`), FOREIGN KEY(`account_id`) REFERENCES `provider_accounts`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`account_id` TEXT NOT NULL, `credential_handle` TEXT NOT NULL, `ciphertext` TEXT NOT NULL, `nonce` TEXT NOT NULL, `key_version` INTEGER NOT NULL, PRIMARY KEY(`account_id`), FOREIGN KEY(`account_id`) REFERENCES `provider_accounts`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "accountId",
@@ -450,9 +511,27 @@
             "notNull": true
           },
           {
-            "fieldPath": "accessToken",
-            "columnName": "access_token",
+            "fieldPath": "credentialHandle",
+            "columnName": "credential_handle",
             "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ciphertext",
+            "columnName": "ciphertext",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nonce",
+            "columnName": "nonce",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "keyVersion",
+            "columnName": "key_version",
+            "affinity": "INTEGER",
             "notNull": true
           }
         ],
@@ -478,7 +557,7 @@
       },
       {
         "tableName": "channel_playback_references",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`channel_id` INTEGER NOT NULL, `account_id` TEXT NOT NULL, `provider_id` TEXT NOT NULL, `item_id` TEXT NOT NULL, `media_source_id` TEXT, `source_type` TEXT NOT NULL, `fallback_direct_url` TEXT, PRIMARY KEY(`channel_id`), FOREIGN KEY(`channel_id`) REFERENCES `streams`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`account_id`) REFERENCES `provider_accounts`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`channel_id` INTEGER NOT NULL, `account_id` TEXT NOT NULL, `provider_id` TEXT NOT NULL, `item_id` TEXT NOT NULL, `media_source_id` TEXT, `source_type` TEXT NOT NULL, PRIMARY KEY(`channel_id`), FOREIGN KEY(`channel_id`) REFERENCES `streams`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`account_id`) REFERENCES `provider_accounts`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "channelId",
@@ -514,11 +593,6 @@
             "columnName": "source_type",
             "affinity": "TEXT",
             "notNull": true
-          },
-          {
-            "fieldPath": "fallbackDirectUrl",
-            "columnName": "fallback_direct_url",
-            "affinity": "TEXT"
           }
         ],
         "primaryKey": {
@@ -562,11 +636,251 @@
             ]
           }
         ]
+      },
+      {
+        "tableName": "provider_playback_sessions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `account_id` TEXT NOT NULL, `provider_id` TEXT NOT NULL, `item_id` TEXT NOT NULL, `media_source_id` TEXT, `source_type` TEXT NOT NULL, `play_session_id` TEXT, `live_stream_id` TEXT, `created_at_epoch_millis` INTEGER NOT NULL, `play_method` TEXT NOT NULL DEFAULT 'unknown', `position_ticks` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`id`), FOREIGN KEY(`account_id`) REFERENCES `provider_accounts`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "accountId",
+            "columnName": "account_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "providerId",
+            "columnName": "provider_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "itemId",
+            "columnName": "item_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mediaSourceId",
+            "columnName": "media_source_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "sourceType",
+            "columnName": "source_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "playSessionId",
+            "columnName": "play_session_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "liveStreamId",
+            "columnName": "live_stream_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "createdAtEpochMillis",
+            "columnName": "created_at_epoch_millis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "playMethod",
+            "columnName": "play_method",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'unknown'"
+          },
+          {
+            "fieldPath": "positionTicks",
+            "columnName": "position_ticks",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_provider_playback_sessions_account_id",
+            "unique": false,
+            "columnNames": [
+              "account_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_provider_playback_sessions_account_id` ON `${TABLE_NAME}` (`account_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "provider_accounts",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "account_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "channel_metadata_bases",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`playlist_url` TEXT NOT NULL, `channel_reference` TEXT NOT NULL, `title` TEXT NOT NULL, `category` TEXT NOT NULL, PRIMARY KEY(`playlist_url`, `channel_reference`), FOREIGN KEY(`playlist_url`) REFERENCES `playlists`(`url`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "playlistUrl",
+            "columnName": "playlist_url",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "channelReference",
+            "columnName": "channel_reference",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "playlist_url",
+            "channel_reference"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_channel_metadata_bases_playlist_url",
+            "unique": false,
+            "columnNames": [
+              "playlist_url"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_channel_metadata_bases_playlist_url` ON `${TABLE_NAME}` (`playlist_url`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "playlists",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "playlist_url"
+            ],
+            "referencedColumns": [
+              "url"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "extension_channel_metadata_overlays",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`playlist_url` TEXT NOT NULL, `channel_reference` TEXT NOT NULL, `extension_id` TEXT NOT NULL, `title` TEXT, `category` TEXT, PRIMARY KEY(`playlist_url`, `channel_reference`, `extension_id`), FOREIGN KEY(`playlist_url`, `channel_reference`) REFERENCES `channel_metadata_bases`(`playlist_url`, `channel_reference`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "playlistUrl",
+            "columnName": "playlist_url",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "channelReference",
+            "columnName": "channel_reference",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "extensionId",
+            "columnName": "extension_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "playlist_url",
+            "channel_reference",
+            "extension_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_extension_channel_metadata_overlays_playlist_url_channel_reference",
+            "unique": false,
+            "columnNames": [
+              "playlist_url",
+              "channel_reference"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_extension_channel_metadata_overlays_playlist_url_channel_reference` ON `${TABLE_NAME}` (`playlist_url`, `channel_reference`)"
+          },
+          {
+            "name": "index_extension_channel_metadata_overlays_extension_id",
+            "unique": false,
+            "columnNames": [
+              "extension_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_extension_channel_metadata_overlays_extension_id` ON `${TABLE_NAME}` (`extension_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "channel_metadata_bases",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "playlist_url",
+              "channel_reference"
+            ],
+            "referencedColumns": [
+              "playlist_url",
+              "channel_reference"
+            ]
+          }
+        ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6de5b9a6edd9bf3c22877dbd24b317e5')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c690bfff926647699e71ee6403d1141d')"
     ]
   }
 }

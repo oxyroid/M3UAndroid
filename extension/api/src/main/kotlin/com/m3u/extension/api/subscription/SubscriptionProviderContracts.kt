@@ -388,14 +388,24 @@ data class SubscriptionContentBrowseResult(
 data class PlaybackPreferences(
     val maxStreamingBitrate: Long? = null,
     val allowTranscoding: Boolean = true,
-)
+    val startPositionTicks: Long,
+) {
+    init {
+        require(maxStreamingBitrate == null || maxStreamingBitrate > 0L) {
+            "Maximum streaming bitrate must be positive"
+        }
+        require(startPositionTicks >= 0L) {
+            "Playback start position must not be negative"
+        }
+    }
+}
 
 @Serializable
 data class PlaybackSourceResolveRequest(
     val account: ProviderAccountReference,
     val credential: ProviderCredential,
     val reference: PlaybackReference,
-    val preferences: PlaybackPreferences = PlaybackPreferences(),
+    val preferences: PlaybackPreferences,
 ) : ExtensionPayload
 
 @Serializable
@@ -578,19 +588,19 @@ data class PlaybackSessionCloseResult(
 object SubscriptionHookSpecs {
     val Discover = HookSpec(
         hook = ExtensionHookIds.SubscriptionProviderDiscover,
-        schemaVersion = 4,
+        schemaVersion = 1,
         requestSerializer = SubscriptionProviderDiscoverRequest.serializer(),
         responseSerializer = SubscriptionProviderDiscoverResult.serializer(),
     )
     val Validate = HookSpec(
         hook = ExtensionHookIds.SubscriptionProviderValidate,
-        schemaVersion = 2,
+        schemaVersion = 1,
         requestSerializer = SubscriptionProviderValidateRequest.serializer(),
         responseSerializer = SubscriptionProviderValidateResult.serializer(),
     )
     val Refresh = HookSpec(
         hook = ExtensionHookIds.SubscriptionContentRefresh,
-        schemaVersion = 4,
+        schemaVersion = 1,
         requestSerializer = SubscriptionContentRefreshRequest.serializer(),
         responseSerializer = SubscriptionContentRefreshResult.serializer(),
     )
@@ -602,7 +612,7 @@ object SubscriptionHookSpecs {
     )
     val ResolvePlayback = HookSpec(
         hook = ExtensionHookIds.PlaybackSourceResolve,
-        schemaVersion = 4,
+        schemaVersion = 1,
         requestSerializer = PlaybackSourceResolveRequest.serializer(),
         responseSerializer = PlaybackSourceResolveResult.serializer(),
     )
@@ -614,7 +624,7 @@ object SubscriptionHookSpecs {
     )
     val ClosePlayback = HookSpec(
         hook = ExtensionHookIds.PlaybackSessionClose,
-        schemaVersion = 3,
+        schemaVersion = 1,
         requestSerializer = PlaybackSessionCloseRequest.serializer(),
         responseSerializer = PlaybackSessionCloseResult.serializer(),
     )

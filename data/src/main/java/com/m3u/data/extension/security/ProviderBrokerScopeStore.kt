@@ -365,28 +365,56 @@ internal class ProviderBrokerScopeStore private constructor(
         newScope
     }
 
-    fun completeInitialRefresh(
+    fun advanceInitialRefreshToBrowse(
         refreshScope: BrokerScopeHandle,
         principal: ExtensionPrincipal,
         capturedHandle: CredentialHandle,
-    ): String = synchronized(lock) {
+        ttlMillis: Long = defaultTtlMillis,
+    ): BrokerScopeHandle = synchronized(lock) {
         val record = requireScopeLocked(
             refreshScope,
             principal,
             ExtensionHookIds.SubscriptionContentRefresh,
         )
         check(record.kind == ProviderBrokerScopeKind.INITIAL_REFRESH) {
-            "Only an initial refresh scope can be completed"
+            "Only an initial refresh scope can advance to initial browse"
         }
         check(capturedHandle in record.capturedHandles) {
-            "Initial refresh credential was not captured by its authentication scope"
+            "Initial browse requires a credential captured by its authentication scope"
+        }
+        val expiresAt = expiresAt(clock(), ttlMillis)
+        val newScope = nextScopeHandleLocked(excluding = refreshScope)
+        scopes.remove(refreshScope)
+        scopes[newScope] = record.copy(
+            kind = ProviderBrokerScopeKind.INITIAL_BROWSE,
+            allowedHook = ExtensionHookIds.SubscriptionContentBrowse,
+            expiresAtEpochMillis = expiresAt,
+        )
+        newScope
+    }
+
+    fun completeInitialBrowse(
+        browseScope: BrokerScopeHandle,
+        principal: ExtensionPrincipal,
+        capturedHandle: CredentialHandle,
+    ): String = synchronized(lock) {
+        val record = requireScopeLocked(
+            browseScope,
+            principal,
+            ExtensionHookIds.SubscriptionContentBrowse,
+        )
+        check(record.kind == ProviderBrokerScopeKind.INITIAL_BROWSE) {
+            "Only an initial browse scope can be completed"
+        }
+        check(capturedHandle in record.capturedHandles) {
+            "Initial browse credential was not captured by its authentication scope"
         }
         val secret = checkNotNull(record.credentials[capturedHandle])
         val material = ProviderCredentialMaterial(
             primaryCredential = secret,
             opaqueContexts = record.opaqueContexts,
         ).encode()
-        scopes.remove(refreshScope)
+        scopes.remove(browseScope)
         material
     }
 
@@ -527,6 +555,7 @@ internal data class CapturedProviderAuthentication(
 internal enum class ProviderBrokerScopeKind {
     AUTHENTICATION,
     INITIAL_REFRESH,
+    INITIAL_BROWSE,
     ACCOUNT,
     HOOK,
 }
@@ -554,12 +583,12 @@ internal data class ProviderCredentialMaterial(
     }
 
     companion object {
-        fun decode(value: String): ProviderCredentialMaterial =
-            if (value.startsWith(MATERIAL_PREFIX)) {
-                MATERIAL_JSON.decodeFromString(value.removePrefix(MATERIAL_PREFIX))
-            } else {
-                ProviderCredentialMaterial(primaryCredential = value)
+        fun decode(value: String): ProviderCredentialMaterial {
+            require(value.startsWith(MATERIAL_PREFIX)) {
+                "Provider credential material uses an unsupported format"
             }
+            return MATERIAL_JSON.decodeFromString(value.removePrefix(MATERIAL_PREFIX))
+        }
 
         private const val MATERIAL_PREFIX = "m3u-provider-material:v1:"
         private const val MAXIMUM_MATERIAL_BYTES = 64 * 1024

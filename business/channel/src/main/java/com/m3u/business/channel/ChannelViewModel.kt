@@ -21,11 +21,13 @@ import com.m3u.core.foundation.wrapper.Sort
 import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.DataSource
+import com.m3u.data.database.model.MediaOpenAction
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.Programme
 import com.m3u.data.database.model.ProgrammeRange
 import com.m3u.data.database.model.isSeries
 import com.m3u.data.database.model.isVod
+import com.m3u.data.database.model.openAction
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.programme.ProgrammeRepository
@@ -241,19 +243,20 @@ class ChannelViewModel @Inject constructor(
 
     fun getPreviousChannel() {
         viewModelScope.launch {
-            val previousChannelId = adjacentChannels.value?.prevId
-            if (adjacentChannels.value != null && previousChannelId != null) {
-                playerManager.play(MediaCommand.Common(previousChannelId))
-            }
+            adjacentChannels.value?.prevId?.let { playChannelIfSupported(it) }
         }
     }
 
     fun getNextChannel() {
         viewModelScope.launch {
-            val nextChannelId = adjacentChannels.value?.nextId
-            if (adjacentChannels.value != null && nextChannelId != null) {
-                playerManager.play(MediaCommand.Common(nextChannelId))
-            }
+            adjacentChannels.value?.nextId?.let { playChannelIfSupported(it) }
+        }
+    }
+
+    private suspend fun playChannelIfSupported(channelId: Int) {
+        val target = channelRepository.get(channelId) ?: return
+        if (target.openAction(playlist.value) == MediaOpenAction.PLAY) {
+            playerManager.play(MediaCommand.Common(target.id))
         }
     }
 

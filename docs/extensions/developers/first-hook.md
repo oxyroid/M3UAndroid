@@ -2,7 +2,7 @@
 
 [简体中文](first-hook.zh-CN.md) · [Developer guide](README.md)
 
-A Hook is one function M3UAndroid can call. Its `HookSpec` fixes the request type, result type, and schema version. This example adds one setting based on the current UI surface.
+A Hook is one function M3UAndroid can call. Its `HookSpec` fixes the request type, result type, and schema version. This example adds one setting to the smartphone app.
 
 ## 1. Add the Hook to the manifest
 
@@ -19,7 +19,7 @@ hooks = setOf(
 capabilities = setOf(
     ExtensionCapabilityRequest(
         capability = ExtensionCapabilityIds.SettingsContribute,
-        reason = "Add settings for the current device type",
+        reason = "Add a device-name setting",
     )
 ),
 ```
@@ -32,12 +32,7 @@ Register handlers in the `TypedExtensionService` initializer:
 
 ```kotlin
 init {
-    handle(HostHookSpecs.SettingsSchema) { request, _ ->
-        val (label, defaultValue) = when (request.surface) {
-            "phone" -> "Phone name" to "My phone"
-            "tv" -> "TV name" to "My TV"
-            else -> "Device name" to "My device"
-        }
+    handle(HostHookSpecs.SettingsSchema) { _, _ ->
         SettingsSchemaResult(
             sections = listOf(
                 ExtensionSettingSection(
@@ -48,9 +43,9 @@ init {
                         fields = listOf(
                             ExtensionSettingField(
                                 key = "name",
-                                label = label,
+                                label = "Phone name",
                                 type = ExtensionSettingType.TEXT,
-                                defaultValue = JsonPrimitive(defaultValue),
+                                defaultValue = JsonPrimitive("My phone"),
                             )
                         ),
                     ),

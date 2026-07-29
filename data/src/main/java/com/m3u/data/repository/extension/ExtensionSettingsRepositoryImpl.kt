@@ -207,11 +207,7 @@ internal class ExtensionSettingsRepositoryImpl @Inject constructor(
     }
 
     override fun knownDynamicSchemaSurfaces(extensionId: ExtensionId): Set<String> =
-        store.knownDynamicSchemaSurfaces(extensionId.value).ifEmpty {
-            LEGACY_DYNAMIC_SCHEMA_SURFACES.takeIf {
-                store.hasRetainedDynamicSettings(extensionId.value)
-            }.orEmpty()
-        }
+        store.knownDynamicSchemaSurfaces(extensionId.value)
 
     override suspend fun revalidateDynamicSchemas(
         extensionId: ExtensionId,
@@ -599,7 +595,6 @@ internal class ExtensionSettingsRepositoryImpl @Inject constructor(
         const val SCHEMA_CHANGED_MESSAGE = "Settings schema changed; reload and try again"
         const val VALIDATION_FIELD_KEY = "field"
         const val EDIT_TOKEN_TTL_NANOS = 10L * 60L * 1_000_000_000L
-        val LEGACY_DYNAMIC_SCHEMA_SURFACES = setOf("phone", "tv")
     }
 
     private data class EditGrant(

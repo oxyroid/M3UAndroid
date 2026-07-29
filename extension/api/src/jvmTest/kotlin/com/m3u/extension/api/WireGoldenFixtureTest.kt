@@ -30,15 +30,15 @@ class WireGoldenFixtureTest {
     private val hookFixtureCatalog = listOf(
         hookFixture(
             spec = SubscriptionHookSpecs.Discover,
-            directory = "hooks/subscription.provider.discover/schema-4",
+            directory = "hooks/subscription.provider.discover/schema-1",
         ),
         hookFixture(
             spec = SubscriptionHookSpecs.Validate,
-            directory = "hooks/subscription.provider.validate/schema-2",
+            directory = "hooks/subscription.provider.validate/schema-1",
         ),
         hookFixture(
             spec = SubscriptionHookSpecs.Refresh,
-            directory = "hooks/subscription.content.refresh/schema-4",
+            directory = "hooks/subscription.content.refresh/schema-1",
         ),
         hookFixture(
             spec = SubscriptionHookSpecs.Browse,
@@ -46,7 +46,7 @@ class WireGoldenFixtureTest {
         ),
         hookFixture(
             spec = SubscriptionHookSpecs.ResolvePlayback,
-            directory = "hooks/playback.source.resolve/schema-4",
+            directory = "hooks/playback.source.resolve/schema-1",
         ),
         hookFixture(
             spec = SubscriptionHookSpecs.UpdatePlayback,
@@ -54,7 +54,7 @@ class WireGoldenFixtureTest {
         ),
         hookFixture(
             spec = SubscriptionHookSpecs.ClosePlayback,
-            directory = "hooks/playback.session.close/schema-3",
+            directory = "hooks/playback.session.close/schema-1",
         ),
         hookFixture(
             spec = HostHookSpecs.SettingsSchema,
@@ -62,19 +62,19 @@ class WireGoldenFixtureTest {
         ),
         hookFixture(
             spec = HostHookSpecs.EpgRefresh,
-            directory = "hooks/epg.content.refresh/schema-4",
+            directory = "hooks/epg.content.refresh/schema-1",
         ),
         hookFixture(
             spec = HostHookSpecs.MetadataEnrichment,
-            directory = "hooks/metadata.channel.enrich/schema-3",
+            directory = "hooks/metadata.channel.enrich/schema-1",
         ),
         hookFixture(
             spec = HostHookSpecs.SearchProvider,
-            directory = "hooks/search.provider.query/schema-4",
+            directory = "hooks/search.provider.query/schema-1",
         ),
         hookFixture(
             spec = HostHookSpecs.BackgroundTask,
-            directory = "hooks/background.task.run/schema-2",
+            directory = "hooks/background.task.run/schema-1",
         ),
     )
 
@@ -218,14 +218,20 @@ class WireGoldenFixtureTest {
 
     @Test
     fun `playback fixtures contain the current required lifecycle fields`() {
+        val resolveRequest = decodeFixture(
+            "hooks/playback.source.resolve/schema-1/request.json",
+            SubscriptionHookSpecs.ResolvePlayback.requestSerializer,
+        )
+        assertEquals(123_000_000L, resolveRequest.preferences.startPositionTicks)
+
         val resolve = decodeFixture(
-            "hooks/playback.source.resolve/schema-4/result.json",
+            "hooks/playback.source.resolve/schema-1/result.json",
             SubscriptionHookSpecs.ResolvePlayback.responseSerializer,
         )
         assertEquals(PlaybackMethods.DirectPlay, resolve.playMethod)
 
         val close = decodeFixture(
-            "hooks/playback.session.close/schema-3/request.json",
+            "hooks/playback.session.close/schema-1/request.json",
             SubscriptionHookSpecs.ClosePlayback.requestSerializer,
         )
         assertEquals(90_000_000L, close.positionTicks)

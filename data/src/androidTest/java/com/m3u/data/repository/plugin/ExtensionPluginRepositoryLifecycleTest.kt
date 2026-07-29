@@ -38,8 +38,10 @@ import com.m3u.data.repository.extension.ExtensionSettingsConfiguration
 import com.m3u.data.repository.extension.ExtensionSettingsRepository
 import com.m3u.data.worker.ExtensionBackgroundTaskScheduler
 import com.m3u.data.worker.ExtensionBackgroundWorkOperations
+import com.m3u.data.worker.ProviderRefreshWorkCanceller
 import com.m3u.data.worker.extensionBackgroundWorkName
 import com.m3u.data.worker.extensionBackgroundWorkTag
+import com.m3u.data.worker.providerRefreshWorkName
 import com.m3u.extension.api.ChannelMetadataPatch
 import com.m3u.extension.api.ExtensionApiRange
 import com.m3u.extension.api.ExtensionApiVersions
@@ -261,6 +263,43 @@ class ExtensionPluginRepositoryLifecycleTest {
             runCatching { principalRegistry.commit(queuedLease) { Unit } }
                 .exceptionOrNull() is InactiveExtensionPrincipalLeaseException
         )
+    }
+
+    @Test
+    fun destructiveLifecycleActionsCancelOnlyTheExtensionsProviderRefreshWork() = runBlocking {
+        val playlistUrl = "m3u-provider://account/lifecycle"
+        val otherPlaylistUrl = "m3u-provider://account/other"
+        val cancelledWork = mutableListOf<String>()
+        val repository = repository(
+            connector = ExtensionPluginTransportConnector { FakePluginTransport(MANIFEST) },
+            providerRefreshWorkCanceller = ProviderRefreshWorkCanceller(
+                providerPlaylistUrls = { extensionId ->
+                    when (extensionId) {
+                        EXTENSION_ID.value -> listOf(playlistUrl)
+                        else -> listOf(otherPlaylistUrl)
+                    }
+                },
+                cancelUniqueWork = { workName -> cancelledWork += workName },
+            ),
+        )
+        assertTrue(
+            repository.enable(SERVICE.packageName, SERVICE.serviceName) is
+                PluginEnableResult.Enabled
+        )
+
+        assertTrue(repository.disable(EXTENSION_ID.value))
+        assertEquals(listOf(providerRefreshWorkName(playlistUrl)), cancelledWork)
+
+        cancelledWork.clear()
+        assertTrue(
+            repository.clearData(SERVICE.packageName, SERVICE.serviceName) is
+                PluginDataClearResult.Cleared
+        )
+        assertEquals(listOf(providerRefreshWorkName(playlistUrl)), cancelledWork)
+
+        cancelledWork.clear()
+        repository.revoke(SERVICE.packageName, SERVICE.serviceName)
+        assertEquals(listOf(providerRefreshWorkName(playlistUrl)), cancelledWork)
     }
 
     @Test
@@ -635,6 +674,32 @@ class ExtensionPluginRepositoryLifecycleTest {
         )
         assertTrue(workOperations.enqueued.isEmpty())
         assertEquals(0, sessionCleanupRequests)
+    }
+
+    @Test
+    fun sessionCleanupRestoreDoesNotEnqueueItselfButOrdinaryRestoreStillDoes() = runBlocking {
+        var sessionCleanupRequests = 0
+        val repository = repository(
+            connector = ExtensionPluginTransportConnector {
+                FakePluginTransport(MANIFEST)
+            },
+            scheduleSessionCleanup = { sessionCleanupRequests++ },
+        )
+
+        assertTrue(
+            repository.enable(SERVICE.packageName, SERVICE.serviceName) is
+                PluginEnableResult.Enabled
+        )
+        assertEquals(1, sessionCleanupRequests)
+
+        assertEquals(
+            1,
+            repository.restoreEnabled(scheduleSessionCleanup = false),
+        )
+        assertEquals(1, sessionCleanupRequests)
+
+        assertEquals(1, repository.restoreEnabled())
+        assertEquals(2, sessionCleanupRequests)
     }
 
     @Test
@@ -1854,6 +1919,7 @@ class ExtensionPluginRepositoryLifecycleTest {
         activePrincipalRegistry: ActiveExtensionPrincipalRegistry =
             ActiveExtensionPrincipalRegistry(),
         backgroundTaskScheduler: ExtensionBackgroundTaskScheduler? = null,
+        providerRefreshWorkCanceller: ProviderRefreshWorkCanceller? = null,
         extensionContributionScheduler: ExtensionContributionScheduler? = null,
         scheduleSessionCleanup: () -> Unit = {},
         observeSettingsChanges: Boolean = false,
@@ -1899,6 +1965,7 @@ class ExtensionPluginRepositoryLifecycleTest {
             ),
             settings = settings,
             backgroundTaskScheduler = backgroundTaskScheduler,
+            providerRefreshWorkCanceller = providerRefreshWorkCanceller,
             playlistDao = database.playlistDao(),
             extensionContributionScheduler = extensionContributionScheduler,
             scheduleSessionCleanup = scheduleSessionCleanup,

@@ -21,7 +21,12 @@ interface ExtensionPluginRepository {
     suspend fun revoke(packageName: String, serviceName: String)
     suspend fun clearData(packageName: String, serviceName: String): PluginDataClearResult
     suspend fun diagnostics(extensionId: String): String?
-    suspend fun restoreEnabled(): Int
+
+    /**
+     * Restores trusted enabled extensions. The session-cleanup worker disables follow-up cleanup
+     * scheduling so restoring an extension cannot enqueue another copy of the worker running it.
+     */
+    suspend fun restoreEnabled(scheduleSessionCleanup: Boolean = true): Int
 }
 
 sealed interface PluginDataClearResult {

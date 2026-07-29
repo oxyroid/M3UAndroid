@@ -41,9 +41,10 @@ import com.m3u.core.foundation.ui.thenIf
 import com.m3u.core.foundation.util.basic.title
 import com.m3u.core.foundation.wrapper.Resource
 import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.MediaOpenAction
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithCount
-import com.m3u.data.database.model.isSeries
+import com.m3u.data.database.model.openAction
 import com.m3u.data.service.MediaCommand
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.business.foryou.components.HeadlineBackground
@@ -117,15 +118,17 @@ fun ForyouRoute(
             onPlayChannel = { channel ->
                 coroutineScope.launch {
                     val playlist = viewModel.getPlaylist(channel.playlistUrl)
-                    when {
-                        playlist?.isSeries == true -> {
+                    when (channel.openAction(playlist)) {
+                        MediaOpenAction.BROWSE -> {
                             viewModel.series.value = channel
                         }
 
-                        else -> {
+                        MediaOpenAction.PLAY -> {
                             helper.play(MediaCommand.Common(channel.id))
                             navigateToChannel()
                         }
+
+                        MediaOpenAction.UNSUPPORTED -> Unit
                     }
                 }
             },
@@ -150,7 +153,7 @@ fun ForyouRoute(
             onEpisodeClick = { episode ->
                 coroutineScope.launch {
                     series?.let { channel ->
-                        val input = MediaCommand.XtreamEpisode(
+                        val input = MediaCommand.Episode(
                             channelId = channel.id,
                             episode = episode
                         )

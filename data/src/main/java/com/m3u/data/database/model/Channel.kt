@@ -51,6 +51,15 @@ data class Channel(
     @ColumnInfo(name = "seen", defaultValue = "0")
     @Exclude
     val seen: Long = 0L,
+    @ColumnInfo(name = "media_kind", defaultValue = "'unknown'")
+    @Exclude
+    val mediaKind: String = MediaKinds.UNKNOWN,
+    @ColumnInfo(name = "playable", defaultValue = "1")
+    @Exclude
+    val playable: Boolean = true,
+    @ColumnInfo(name = "browsable", defaultValue = "0")
+    @Exclude
+    val browsable: Boolean = false,
     @ColumnInfo(name = "relation_id", defaultValue = "NULL")
     @Exclude
     /**
@@ -63,16 +72,64 @@ data class Channel(
      * if it is xtream vod, it may be streamId.
      * if it is xtream series, it may be seriesId.
      */
-    val relationId: String? = null
+    val relationId: String? = null,
+    @ColumnInfo(name = "subtitle", defaultValue = "NULL")
+    val subtitle: String? = null,
+    @ColumnInfo(name = "overview", defaultValue = "NULL")
+    val overview: String? = null,
+    @ColumnInfo(name = "production_year", defaultValue = "NULL")
+    val productionYear: Int? = null,
 ) {
+    init {
+        require(mediaKind.matches(MEDIA_KIND_PATTERN)) {
+            "Media kind must be a lowercase identifier"
+        }
+        require(playable || browsable) {
+            "A media item must be playable, browsable, or both"
+        }
+        require(productionYear == null || productionYear in 1..9_999) {
+            "Production year is out of range"
+        }
+    }
+
     companion object {
         const val URL_DYNAMIC = "dynamic"
         const val LICENSE_TYPE_WIDEVINE = "com.widevine.alpha"
         const val LICENSE_TYPE_CLEAR_KEY = "clearkey"
         const val LICENSE_TYPE_CLEAR_KEY_2 = "org.w3.clearkey"
         const val LICENSE_TYPE_PLAY_READY = "com.microsoft.playready"
+        private val MEDIA_KIND_PATTERN = Regex("[a-z0-9]+(?:[._-][a-z0-9]+)*")
     }
 }
+
+object MediaKinds {
+    const val UNKNOWN = "unknown"
+    const val LIVE = "live"
+    const val MOVIE = "movie"
+    const val SERIES = "series"
+    const val EPISODE = "episode"
+}
+
+enum class MediaOpenAction {
+    PLAY,
+    BROWSE,
+    UNSUPPORTED,
+}
+
+fun Channel.openAction(playlist: Playlist?): MediaOpenAction = when {
+    browsable -> MediaOpenAction.BROWSE
+    playable -> {
+        if (playlist?.isSeries == true) MediaOpenAction.BROWSE else MediaOpenAction.PLAY
+    }
+    else -> MediaOpenAction.UNSUPPORTED
+}
+
+fun Channel.stablePlaybackKey(): String =
+    if (url != Channel.URL_DYNAMIC) {
+        url
+    } else {
+        "dynamic:$playlistUrl:${relationId ?: id}"
+    }
 
 fun Channel.copyXtreamEpisode(episode: XtreamEpisodeInfo): Channel {
     val url = Url(url)

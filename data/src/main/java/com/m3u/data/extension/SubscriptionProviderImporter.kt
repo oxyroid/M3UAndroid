@@ -10,10 +10,13 @@ import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.ChannelPlaybackReference
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.ExtensionChannelMetadataOverlay
+import com.m3u.data.database.model.MediaKinds
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.ProviderAccount
 import com.m3u.data.database.model.ProviderCredentialEntity
 import com.m3u.data.database.model.Programme
+import com.m3u.data.extension.artwork.ProviderArtworkReferences
+import com.m3u.data.extension.emby.EmbyCompatibleProvider
 import com.m3u.data.extension.security.CredentialVault
 import com.m3u.data.repository.extension.ExtensionEpgRefreshContribution
 import com.m3u.data.repository.extension.ExtensionMetadataRefreshContribution
@@ -23,6 +26,7 @@ import com.m3u.extension.api.subscription.ProviderKind
 import com.m3u.extension.api.subscription.ProviderAccountReference
 import com.m3u.extension.api.subscription.PlaybackReference
 import com.m3u.extension.api.subscription.SubscriptionContentRefreshResult
+import com.m3u.extension.api.subscription.SubscriptionContentItemDescriptor
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import javax.inject.Inject
@@ -53,8 +57,11 @@ internal class SubscriptionProviderImporter @Inject constructor(
         account: ProviderAccount,
         accessToken: String,
         refresh: SubscriptionContentRefreshResult,
+        catalogItems: List<SubscriptionContentItemDescriptor> = emptyList(),
     ): Int {
         validateProviderSnapshot(account, refresh)
+        validateProviderCatalog(account, catalogItems)
+        validateDistinctContentIdentities(refresh, catalogItems)
         return database.withTransaction {
             val existingPlaylist = playlistDao.get(account.playlistUrl)
             if (existingPlaylist == null) {
@@ -81,26 +88,30 @@ internal class SubscriptionProviderImporter @Inject constructor(
                     credentialHandle = existingCredential?.credentialHandle,
                 )
             )
-            importChannels(account, refresh)
+            importChannels(account, refresh, catalogItems)
         }
     }
 
     suspend fun refresh(
         account: ProviderAccount,
         refresh: SubscriptionContentRefreshResult,
+        catalogItems: List<SubscriptionContentItemDescriptor> = emptyList(),
     ): Int {
         validateProviderSnapshot(account, refresh)
+        validateProviderCatalog(account, catalogItems)
+        validateDistinctContentIdentities(refresh, catalogItems)
         return database.withTransaction {
             require(providerDao.getAccount(account.id) == account) {
                 "Provider account changed before its snapshot was imported"
             }
-            importChannels(account, refresh)
+            importChannels(account, refresh, catalogItems)
         }
     }
 
     private suspend fun importChannels(
         account: ProviderAccount,
         refresh: SubscriptionContentRefreshResult,
+        catalogItems: List<SubscriptionContentItemDescriptor>,
     ): Int {
         val existingChannels = repairDuplicateProviderChannels(
             account = account,
@@ -118,17 +129,55 @@ internal class SubscriptionProviderImporter @Inject constructor(
                     url = Channel.URL_DYNAMIC,
                     category = descriptor.category,
                     title = descriptor.title,
-                    // External artwork stays untrusted until it has a brokered host-owned path.
-                    cover = descriptor.logoUrl.takeIf { account.ownerPackageName == null },
+                    cover = ProviderArtworkReferences.create(account, descriptor.logoUrl),
                     playlistUrl = account.playlistUrl,
                     id = existing?.id ?: 0,
                     favourite = existing?.favourite ?: false,
                     hidden = existing?.hidden ?: false,
                     seen = existing?.seen ?: 0L,
+                    mediaKind = MediaKinds.LIVE,
+                    playable = true,
+                    browsable = false,
                     relationId = descriptor.remoteId,
                 )
             ).toInt()
             val reference = descriptor.playbackReference
+            providerDao.insertOrReplace(
+                ChannelPlaybackReference(
+                    channelId = channelId,
+                    accountId = account.id,
+                    providerId = reference.providerId.value,
+                    itemId = reference.itemId,
+                    mediaSourceId = reference.mediaSourceId,
+                    sourceType = reference.sourceType,
+                )
+            )
+        }
+        catalogItems.forEach { descriptor ->
+            val relationId = descriptor.catalogRelationId
+            refreshedRemoteIds += relationId
+            val existing = existingByRemoteId[relationId]
+            val channelId = channelDao.insertOrReplace(
+                Channel(
+                    url = Channel.URL_DYNAMIC,
+                    category = descriptor.category.orEmpty(),
+                    title = descriptor.title,
+                    cover = ProviderArtworkReferences.create(account, descriptor.imageUrl),
+                    playlistUrl = account.playlistUrl,
+                    id = existing?.id ?: 0,
+                    favourite = existing?.favourite ?: false,
+                    hidden = existing?.hidden ?: false,
+                    seen = existing?.seen ?: 0L,
+                    mediaKind = descriptor.mediaKind.value,
+                    playable = descriptor.playable,
+                    browsable = descriptor.browsable,
+                    relationId = relationId,
+                    subtitle = descriptor.subtitle,
+                    overview = descriptor.overview,
+                    productionYear = descriptor.productionYear,
+                )
+            ).toInt()
+            val reference = descriptor.reference
             providerDao.insertOrReplace(
                 ChannelPlaybackReference(
                     channelId = channelId,
@@ -147,7 +196,7 @@ internal class SubscriptionProviderImporter @Inject constructor(
             }
             .forEach { channel -> channelDao.delete(channel) }
         channelDao.deleteOrphanedMetadata(account.playlistUrl)
-        return refresh.channels.size
+        return refresh.channels.size + catalogItems.size
     }
 
     private suspend fun repairDuplicateProviderChannels(
@@ -224,6 +273,29 @@ internal class SubscriptionProviderImporter @Inject constructor(
         refresh = refresh,
     )
 
+    internal fun validateProviderCatalog(
+        account: ProviderAccount,
+        items: List<SubscriptionContentItemDescriptor>,
+    ) = validateProviderCatalog(
+        accountId = account.id,
+        providerId = account.providerId,
+        baseUrl = account.baseUrl,
+        allowRemoteArtwork = account.ownerPackageName == null,
+        items = items,
+    )
+
+    internal fun validateProviderCatalog(
+        account: ProviderAccountReference,
+        allowRemoteArtwork: Boolean,
+        items: List<SubscriptionContentItemDescriptor>,
+    ) = validateProviderCatalog(
+        accountId = account.accountId,
+        providerId = account.providerId.value,
+        baseUrl = account.baseUrl,
+        allowRemoteArtwork = allowRemoteArtwork,
+        items = items,
+    )
+
     internal fun validateProviderSnapshot(
         account: ProviderAccountReference,
         allowRemoteArtwork: Boolean,
@@ -271,11 +343,13 @@ internal class SubscriptionProviderImporter @Inject constructor(
                 )
             )
             if (allowRemoteArtwork) {
-                require(descriptor.logoUrl?.isApprovedUrl(
-                    approvedOrigin = approvedOrigin,
-                    restrictOrigin = false,
-                    requireStableValue = true,
-                ) ?: true)
+                require(
+                    descriptor.logoUrl?.isApprovedProviderArtworkUrl(
+                        baseUrl = baseUrl,
+                        approvedOrigin = approvedOrigin,
+                        providerId = providerId,
+                    ) ?: true
+                )
             }
             val reference = descriptor.playbackReference
             require(reference.providerId.value == providerId)
@@ -284,6 +358,65 @@ internal class SubscriptionProviderImporter @Inject constructor(
             require(reference.mediaSourceId?.length?.let { it <= MAX_ID_LENGTH } ?: true)
         }
     }
+
+    private fun validateProviderCatalog(
+        accountId: String,
+        providerId: String,
+        baseUrl: String,
+        allowRemoteArtwork: Boolean,
+        items: List<SubscriptionContentItemDescriptor>,
+    ) {
+        require(accountId.isNotBlank() && accountId.length <= MAX_ID_LENGTH)
+        require(providerId.isNotBlank() && providerId.length <= MAX_ID_LENGTH)
+        require(baseUrl.toHttpUrlOrNull() != null)
+        require(items.size <= MAX_CATALOG_ITEMS)
+        require(items.map { descriptor -> descriptor.catalogRelationId }.distinct().size ==
+            items.size)
+        val approvedOrigin = baseUrl.toHttpUrlOrNull()?.origin
+        items.forEach { descriptor ->
+            require(descriptor.title.isSafeExtensionText(MAX_TITLE_LENGTH))
+            require(
+                descriptor.category?.isSafeExtensionText(MAX_TITLE_LENGTH) ?: true
+            )
+            require(
+                descriptor.subtitle?.isSafeExtensionText(MAX_TITLE_LENGTH) ?: true
+            )
+            require(
+                descriptor.overview?.isSafeExtensionText(
+                    maximumLength = MAX_OVERVIEW_LENGTH,
+                    allowLineBreaks = true,
+                ) ?: true
+            )
+            if (allowRemoteArtwork) {
+                require(
+                    descriptor.imageUrl?.isApprovedProviderArtworkUrl(
+                        baseUrl = baseUrl,
+                        approvedOrigin = approvedOrigin,
+                        providerId = providerId,
+                    ) ?: true
+                )
+            }
+            val reference = descriptor.reference
+            require(reference.providerId.value == providerId)
+            require(reference.itemId.isNotBlank() && reference.itemId.length <= MAX_ID_LENGTH)
+            require(reference.sourceType.isNotBlank() && reference.sourceType.length <= MAX_ID_LENGTH)
+            require(reference.mediaSourceId?.length?.let { it <= MAX_ID_LENGTH } ?: true)
+        }
+    }
+
+    private fun validateDistinctContentIdentities(
+        refresh: SubscriptionContentRefreshResult,
+        catalogItems: List<SubscriptionContentItemDescriptor>,
+    ) {
+        val liveIds = refresh.channels
+            .mapTo(mutableSetOf()) { descriptor -> descriptor.remoteId }
+        require(catalogItems.none { descriptor -> descriptor.catalogRelationId in liveIds }) {
+            "Provider live and catalog content identities overlap"
+        }
+    }
+
+    private val SubscriptionContentItemDescriptor.catalogRelationId: String
+        get() = "$CATALOG_RELATION_PREFIX${reference.itemId}"
 
     private fun String.isApprovedUrl(
         approvedOrigin: String?,
@@ -296,6 +429,24 @@ internal class SubscriptionProviderImporter @Inject constructor(
         if (requireStableValue && (url.query != null || url.fragment != null)) return false
         return !restrictOrigin || url.origin == approvedOrigin
     }
+
+    private fun String.isApprovedProviderArtworkUrl(
+        baseUrl: String,
+        approvedOrigin: String?,
+        providerId: String,
+    ): Boolean =
+        if (providerId == EmbyCompatibleProvider.ID.value) {
+            ProviderArtworkReferences.isValidRemoteUrl(
+                baseUrl = baseUrl,
+                remoteUrl = this,
+            )
+        } else {
+            isApprovedUrl(
+                approvedOrigin = approvedOrigin,
+                restrictOrigin = false,
+                requireStableValue = true,
+            )
+        }
 
     private val HttpUrl.origin: String
         get() = "$scheme://$host:$port"
@@ -527,9 +678,12 @@ internal class SubscriptionProviderImporter @Inject constructor(
     private companion object {
         const val EXTENSION_EPG_SCHEME = "m3u-extension-epg://"
         const val MAX_CHANNELS_PER_REFRESH = 50_000
+        const val MAX_CATALOG_ITEMS = 50_000
         const val MAX_ID_LENGTH = 512
         const val MAX_TITLE_LENGTH = 1_024
+        const val MAX_OVERVIEW_LENGTH = 8_192
         const val MAX_URL_LENGTH = 8_192
+        const val CATALOG_RELATION_PREFIX = "content:"
         fun extensionEpgSource(extensionId: ExtensionId, encodedPlaylist: String): String =
             "$EXTENSION_EPG_SCHEME${extensionId.value}/$encodedPlaylist"
     }

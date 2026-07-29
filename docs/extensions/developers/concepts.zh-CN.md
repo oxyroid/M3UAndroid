@@ -85,7 +85,7 @@ settingsSchema = ExtensionSettingSchema(
 )
 ```
 
-M3UAndroid 负责显示和保存这些值。如果字段取决于 Hook 请求，例如 `request.surface`，
+M3UAndroid 负责显示和保存这些值。如果字段取决于 Hook 请求，例如 `request.localeTag`，
 应由设置 Hook 返回。
 
 发布更新时必须保持插件身份稳定，具体字段见[准备发布或更新](reference/compatibility.zh-CN.md)。

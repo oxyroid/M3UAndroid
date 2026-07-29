@@ -4,6 +4,9 @@
 
 Before editing code, write the complete path: who creates the request, which Hook is called, who applies the result, and where the user sees the change. A contract with no host caller or result applier is still a placeholder.
 
+Extension changes target only `app/smartphone`, including its phone and tablet layouts. `app/tv`
+exposes and invokes no extension capability; it supports only M3U and Xtream.
+
 ## Add or change a Hook
 
 Work in this order:
@@ -34,8 +37,9 @@ Start in [`EmbyCompatibleProviderIntegrationTest`](../../../data/src/androidTest
 
 New provider kinds are driven by descriptors and declarative settings. The generic source selector,
 form state, subscription repository, and importer do not branch on concrete `ProviderKind`; only
-the provider implementation does. New subscriptions are stored as `DataSource.Provider`.
-`DataSource.Emby` and `DataSource.Jellyfin` remain legacy compatibility inputs.
+the provider implementation does. Provider subscriptions are stored as `DataSource.Provider`.
+Every provider implements `Discover`, `Validate`, `Refresh`, `Browse`, `ResolvePlayback`,
+`UpdatePlayback`, and `ClosePlayback`.
 
 ## Change APK discovery, trust, or IPC
 
@@ -88,14 +92,14 @@ Any change to a Hook request, capability, trust rule, broker scope, or persisted
 update both versions of the [external APK threat model](threat-model.md). Record the newly exposed
 asset or data, the enforcing host boundary, and any risk that remains after the test passes.
 
-## Change phone or TV UI
+## Change smartphone UI
 
 UI observes repository state and sends operations; it does not discover or bind services directly.
 
-- On phone, start with [`PlaylistManagementScreen`](../../../app/smartphone/src/main/java/com/m3u/smartphone/ui/business/setting/fragments/PlaylistManagementScreen.kt), [`ExtensionPluginManagementScreen`](../../../app/smartphone/src/main/java/com/m3u/smartphone/ui/business/setting/fragments/ExtensionPluginManagementScreen.kt), and [`ExtensionSettingsScreen`](../../../app/smartphone/src/main/java/com/m3u/smartphone/ui/business/setting/fragments/ExtensionSettingsScreen.kt).
-- On TV, start with [`TvHomeViewModel`](../../../app/tv/src/main/java/com/m3u/tv/TvHomeViewModel.kt) and [`TvScreens`](../../../app/tv/src/main/java/com/m3u/tv/TvScreens.kt).
+Start with [`PlaylistManagementScreen`](../../../app/smartphone/src/main/java/com/m3u/smartphone/ui/business/setting/fragments/PlaylistManagementScreen.kt), [`ExtensionPluginManagementScreen`](../../../app/smartphone/src/main/java/com/m3u/smartphone/ui/business/setting/fragments/ExtensionPluginManagementScreen.kt), and [`ExtensionSettingsScreen`](../../../app/smartphone/src/main/java/com/m3u/smartphone/ui/business/setting/fragments/ExtensionSettingsScreen.kt).
 
-Check full-row clicks, scrollable authorization, visible errors, and settings persistence on phone. Check DPad order, focus contrast, back behavior, and long text on TV.
+Check full-row clicks, scrollable authorization, visible errors, settings persistence, and adaptive
+phone/tablet layouts.
 
 ## Validation evidence
 
@@ -109,4 +113,4 @@ Check full-row clicks, scrollable authorization, visible errors, and settings pe
 | Cross-process discovery, binding, PFD, invocation, and cancellation | [`ExternalExtensionIpcTest`](../../../app/smartphone/src/androidTest/java/com/m3u/testing/ExternalExtensionIpcTest.kt), [`ExternalExtensionConformanceIpcTest`](../../../app/smartphone/src/androidTest/java/com/m3u/testing/ExternalExtensionConformanceIpcTest.kt), [`extension-reference`](../../../testing/extension-reference) |
 | External provider lifecycle | [`ExternalProviderEndToEndTest`](../../../app/smartphone/src/androidTest/java/com/m3u/testing/ExternalProviderEndToEndTest.kt), [`extension-reference`](../../../testing/extension-reference), [`mock-server`](../../../testing/mock-server) |
 | Built-in provider and importer | [`EmbyCompatibleProviderIntegrationTest`](../../../data/src/androidTest/java/com/m3u/data/extension/emby/EmbyCompatibleProviderIntegrationTest.kt), [`SubscriptionProviderRepositoryIntegrationTest`](../../../data/src/androidTest/java/com/m3u/data/repository/provider/SubscriptionProviderRepositoryIntegrationTest.kt), and the applier tests linked above |
-| Phone or TV product flow | The product UI test for the changed trigger and visible result |
+| Smartphone product flow | The phone or tablet UI test for the changed trigger and visible result |

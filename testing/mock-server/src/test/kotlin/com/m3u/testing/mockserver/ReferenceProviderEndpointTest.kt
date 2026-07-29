@@ -83,13 +83,75 @@ class ReferenceProviderEndpointTest {
             assertEquals(200, media.statusCode)
             assertEquals("audio/wav", media.contentType)
             media.assertReferenceWav()
+            val openSession = request(
+                "$baseUrl/reference-provider/sessions/$playSessionId",
+                headers = authorization,
+            ).jsonBody()
+            assertEquals("open", openSession["state"]?.jsonPrimitive?.content)
+            assertEquals(0, openSession["close_count"]?.jsonPrimitive?.content?.toInt())
+            assertEquals(0, openSession["update_count"]?.jsonPrimitive?.content?.toInt())
             assertEquals(
-                "open",
-                request(
-                    "$baseUrl/reference-provider/sessions/$playSessionId",
-                    headers = authorization,
-                ).jsonBody()["state"]?.jsonPrimitive?.content,
+                0L,
+                openSession["last_position_ticks"]?.jsonPrimitive?.content?.toLong(),
             )
+            assertEquals(null, openSession["last_event"])
+
+            val updateBody =
+                """{"item_id":"reference.news","play_session_id":"$playSessionId","live_stream_id":"$liveStreamId","event":"progress","position_ticks":12345,"play_method":"direct_play","is_paused":false}"""
+            assertEquals(
+                401,
+                request(
+                    url = "$baseUrl/reference-provider/sessions/update",
+                    method = "POST",
+                    headers = authorization - "X-Reference-User" +
+                        ("Content-Type" to "application/json"),
+                    body = updateBody,
+                ).statusCode,
+            )
+            assertEquals(
+                400,
+                request(
+                    url = "$baseUrl/reference-provider/sessions/update",
+                    method = "POST",
+                    headers = authorization + ("Content-Type" to "application/json"),
+                    body =
+                        """{"play_session_id":"$playSessionId","item_id":"reference.news","live_stream_id":"$liveStreamId","event":"progress","position_ticks":12345,"play_method":"direct_play","is_paused":false}""",
+                ).statusCode,
+            )
+            assertEquals(
+                400,
+                request(
+                    url = "$baseUrl/reference-provider/sessions/update",
+                    method = "POST",
+                    headers = authorization + ("Content-Type" to "application/json"),
+                    body = updateBody.dropLast(1) + ""","unexpected":true}""",
+                ).statusCode,
+            )
+            val update = request(
+                url = "$baseUrl/reference-provider/sessions/update",
+                method = "POST",
+                headers = authorization + ("Content-Type" to "application/json"),
+                body = updateBody,
+            )
+            assertEquals(200, update.statusCode)
+            val updateResult = update.jsonBody()
+            assertEquals(true, updateResult["accepted"]?.jsonPrimitive?.content?.toBoolean())
+            assertEquals(1, updateResult["update_count"]?.jsonPrimitive?.content?.toInt())
+            assertEquals(
+                12_345L,
+                updateResult["last_position_ticks"]?.jsonPrimitive?.content?.toLong(),
+            )
+            assertEquals("progress", updateResult["last_event"]?.jsonPrimitive?.content)
+            val updatedSession = request(
+                "$baseUrl/reference-provider/sessions/$playSessionId",
+                headers = authorization,
+            ).jsonBody()
+            assertEquals(1, updatedSession["update_count"]?.jsonPrimitive?.content?.toInt())
+            assertEquals(
+                12_345L,
+                updatedSession["last_position_ticks"]?.jsonPrimitive?.content?.toLong(),
+            )
+            assertEquals("progress", updatedSession["last_event"]?.jsonPrimitive?.content)
 
             val close = request(
                 url = "$baseUrl/reference-provider/sessions/close",
@@ -99,12 +161,30 @@ class ReferenceProviderEndpointTest {
             )
             assertEquals(200, close.statusCode)
             assertEquals(true, close.jsonBody()["closed"]?.jsonPrimitive?.content?.toBoolean())
+            val closedSession = request(
+                "$baseUrl/reference-provider/sessions/$playSessionId",
+                headers = authorization,
+            ).jsonBody()
+            assertEquals("closed", closedSession["state"]?.jsonPrimitive?.content)
+            assertEquals(1, closedSession["close_count"]?.jsonPrimitive?.content?.toInt())
             assertEquals(
-                "closed",
+                "stopped",
+                closedSession["last_close_reason"]?.jsonPrimitive?.content,
+            )
+            assertEquals(1, closedSession["update_count"]?.jsonPrimitive?.content?.toInt())
+            assertEquals(
+                12_345L,
+                closedSession["last_position_ticks"]?.jsonPrimitive?.content?.toLong(),
+            )
+            assertEquals("progress", closedSession["last_event"]?.jsonPrimitive?.content)
+            assertEquals(
+                409,
                 request(
-                    "$baseUrl/reference-provider/sessions/$playSessionId",
-                    headers = authorization,
-                ).jsonBody()["state"]?.jsonPrimitive?.content,
+                    url = "$baseUrl/reference-provider/sessions/update",
+                    method = "POST",
+                    headers = authorization + ("Content-Type" to "application/json"),
+                    body = updateBody,
+                ).statusCode,
             )
         } finally {
             server.stop(gracePeriodMillis = 100, timeoutMillis = 1_000)

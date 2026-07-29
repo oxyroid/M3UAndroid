@@ -152,7 +152,7 @@ data class ExtensionCapabilityRequest(
 @Serializable
 data class ExtensionHookDeclaration(
     val hook: Hook,
-    val schemaVersion: Int = 1,
+    val schemaVersion: Int,
     val requiredCapabilities: Set<Capability> = emptySet(),
 ) {
     init {

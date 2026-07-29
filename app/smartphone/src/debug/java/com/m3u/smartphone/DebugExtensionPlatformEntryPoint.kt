@@ -1,5 +1,6 @@
 package com.m3u.smartphone
 
+import com.m3u.data.database.dao.ProviderDao
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.plugin.ExtensionPluginRepository
 import com.m3u.data.repository.provider.SubscriptionProviderRepository
@@ -11,6 +12,7 @@ import dagger.hilt.components.SingletonComponent
 @EntryPoint
 @InstallIn(SingletonComponent::class)
 interface DebugExtensionPlatformEntryPoint {
+    fun providerDao(): ProviderDao
     fun pluginRepository(): ExtensionPluginRepository
     fun providerRepository(): SubscriptionProviderRepository
     fun playlistRepository(): PlaylistRepository

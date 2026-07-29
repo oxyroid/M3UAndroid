@@ -21,8 +21,8 @@ class GoldenFixturePackagingTest {
             "golden-wire/v1/envelopes/invocation-current.json",
             "golden-wire/v1/envelopes/result-success.json",
             "golden-wire/v1/manifests/complete.json",
-            "golden-wire/v1/hooks/background.task.run/schema-2/request.json",
-            "golden-wire/v1/hooks/background.task.run/schema-2/result.json",
+            "golden-wire/v1/hooks/background.task.run/schema-1/request.json",
+            "golden-wire/v1/hooks/background.task.run/schema-1/result.json",
         )
     }
 }

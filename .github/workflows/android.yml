@@ -103,6 +103,17 @@ jobs:
             -Pandroid.experimental.androidTest.numManagedDeviceShards=1 \
             -Pandroid.experimental.testOptions.managedDevices.maxConcurrentDevices=1
 
+      - name: Verify external provider cold-start session recovery
+        run: |
+          ./gradlew :app:smartphone:hostileApi34DebugAndroidTest \
+            -Pm3uMockServerUrl=http://10.0.2.2:8080 \
+            -Pm3uUseTestOrchestrator=true \
+            -Pandroid.testInstrumentationRunnerArguments.class=com.m3u.testing.ExternalProviderColdStartSessionRecoveryTest \
+            -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect \
+            -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true \
+            -Pandroid.experimental.androidTest.numManagedDeviceShards=1 \
+            -Pandroid.experimental.testOptions.managedDevices.maxConcurrentDevices=1
+
       - name: Stop provider mock server
         if: always()
         run: ./gradlew :testing:mock-server:stopMockServer

@@ -25,10 +25,15 @@ import com.m3u.extension.api.subscription.PlaybackSessionCloseRequest
 import com.m3u.extension.api.subscription.PlaybackSessionCloseResult
 import com.m3u.extension.api.subscription.PlaybackHeaderValue
 import com.m3u.extension.api.subscription.PlaybackSessionDescriptor
+import com.m3u.extension.api.subscription.PlaybackSessionUpdateRequest
+import com.m3u.extension.api.subscription.PlaybackSessionUpdateResult
+import com.m3u.extension.api.subscription.PlaybackReference
 import com.m3u.extension.api.subscription.PlaybackSourceResolveRequest
 import com.m3u.extension.api.subscription.PlaybackSourceResolveResult
 import com.m3u.extension.api.subscription.ProviderAccountReference
 import com.m3u.extension.api.subscription.ProviderValidationEvidence
+import com.m3u.extension.api.subscription.SubscriptionContentBrowseRequest
+import com.m3u.extension.api.subscription.SubscriptionContentBrowseResult
 import com.m3u.extension.api.subscription.SubscriptionContentRefreshRequest
 import com.m3u.extension.api.subscription.SubscriptionContentRefreshResult
 import com.m3u.extension.api.subscription.SubscriptionProviderDescriptor
@@ -93,8 +98,26 @@ internal class EmbyCompatibleProvider @Inject constructor(
                 ),
             ),
             ExtensionHookDeclaration(
+                hook = SubscriptionHookSpecs.Browse.hook,
+                schemaVersion = SubscriptionHookSpecs.Browse.schemaVersion,
+                requiredCapabilities = setOf(
+                    ExtensionCapabilityIds.Network,
+                    ExtensionCapabilityIds.CredentialRead,
+                    ExtensionCapabilityIds.SubscriptionRead,
+                ),
+            ),
+            ExtensionHookDeclaration(
                 hook = SubscriptionHookSpecs.ResolvePlayback.hook,
                 schemaVersion = SubscriptionHookSpecs.ResolvePlayback.schemaVersion,
+                requiredCapabilities = setOf(
+                    ExtensionCapabilityIds.Network,
+                    ExtensionCapabilityIds.CredentialRead,
+                    ExtensionCapabilityIds.PlaybackResolve,
+                ),
+            ),
+            ExtensionHookDeclaration(
+                hook = SubscriptionHookSpecs.UpdatePlayback.hook,
+                schemaVersion = SubscriptionHookSpecs.UpdatePlayback.schemaVersion,
                 requiredCapabilities = setOf(
                     ExtensionCapabilityIds.Network,
                     ExtensionCapabilityIds.CredentialRead,
@@ -126,11 +149,11 @@ internal class EmbyCompatibleProvider @Inject constructor(
             ),
             ExtensionCapabilityRequest(
                 capability = ExtensionCapabilityIds.SubscriptionRead,
-                reason = "Refresh a configured subscription account",
+                reason = "Refresh and browse a configured subscription account",
             ),
             ExtensionCapabilityRequest(
                 capability = ExtensionCapabilityIds.PlaybackResolve,
-                reason = "Resolve and close dynamic playback sessions",
+                reason = "Resolve, report, and close dynamic playback sessions",
             ),
         ),
     )
@@ -139,7 +162,9 @@ internal class EmbyCompatibleProvider @Inject constructor(
         boundHandler(SubscriptionHookSpecs.Discover, ::discover),
         boundHandler(SubscriptionHookSpecs.Validate, ::validate),
         boundHandler(SubscriptionHookSpecs.Refresh, ::refresh),
+        boundHandler(SubscriptionHookSpecs.Browse, ::browse),
         boundHandler(SubscriptionHookSpecs.ResolvePlayback, ::resolvePlayback),
+        boundHandler(SubscriptionHookSpecs.UpdatePlayback, ::updatePlayback),
         boundHandler(SubscriptionHookSpecs.ClosePlayback, ::closePlayback),
     )
 
@@ -164,7 +189,7 @@ internal class EmbyCompatibleProvider @Inject constructor(
             ?: return failure(INVALID_PAYLOAD, "Username is required")
         val password = request.credentialHandles[SubscriptionProviderSettingKeys.Password]
             ?: return failure(INVALID_PAYLOAD, "Password is required")
-        return providerCall {
+        return providerCall(authenticationOperation = true) {
             val result = client.validate(
                 baseUrl = baseUrl,
                 requestedKind = request.providerKind,
@@ -189,7 +214,15 @@ internal class EmbyCompatibleProvider @Inject constructor(
             val account = request.account.toValidatedAccount()
             val accessToken = credentialResolver.resolve(request.credential.handle)
                 ?: throw CredentialUnavailableException()
-            val result = client.refreshChannels(account, accessToken)
+            val result = try {
+                client.refreshChannels(account, accessToken)
+            } catch (failure: EmbyHttpException) {
+                if (failure.statusCode != HTTP_FORBIDDEN) throw failure
+                EmbyChannelRefresh(
+                    channels = emptyList(),
+                    totalRecordCount = 0,
+                )
+            }
             SubscriptionContentRefreshResult(
                 source = SubscriptionSourceDescriptor(
                     remoteId = request.account.serverId,
@@ -205,6 +238,7 @@ internal class EmbyCompatibleProvider @Inject constructor(
         request: PlaybackSourceResolveRequest,
     ): HookResult<PlaybackSourceResolveResult> {
         return providerCall {
+            request.reference.requireOwnedReference()
             val account = request.account.toValidatedAccount()
             val accessToken = credentialResolver.resolve(request.credential.handle)
                 ?: throw CredentialUnavailableException()
@@ -238,6 +272,7 @@ internal class EmbyCompatibleProvider @Inject constructor(
                             liveStreamId = session.liveStreamId,
                         )
                     },
+                    playMethod = source.playMethod,
                 )
                 val responseSize = WIRE_JSON
                     .encodeToString(PlaybackSourceResolveResult.serializer(), result)
@@ -267,11 +302,69 @@ internal class EmbyCompatibleProvider @Inject constructor(
         }
     }
 
+    private suspend fun browse(
+        context: ExtensionCallContext,
+        request: SubscriptionContentBrowseRequest,
+    ): HookResult<SubscriptionContentBrowseResult> {
+        return providerCall {
+            val page = client.browseContent(
+                account = request.account.toValidatedAccount(),
+                accessToken = credentialResolver.resolve(request.credential.handle)
+                    ?: throw CredentialUnavailableException(),
+                parentReference = request.parentReference,
+                cursor = request.cursor,
+                limit = request.limit,
+            )
+            val result = SubscriptionContentBrowseResult(
+                items = page.items,
+                nextCursor = page.nextCursor,
+                total = page.total,
+            )
+            val responseSize = WIRE_JSON
+                .encodeToString(SubscriptionContentBrowseResult.serializer(), result)
+                .encodeToByteArray()
+                .size
+            if (responseSize > invocationPolicy.maxPayloadBytes) {
+                throw EmbyProtocolException(
+                    "Provider browse response exceeds the host limit"
+                )
+            }
+            result
+        }
+    }
+
+    private suspend fun updatePlayback(
+        context: ExtensionCallContext,
+        request: PlaybackSessionUpdateRequest,
+    ): HookResult<PlaybackSessionUpdateResult> {
+        return providerCall {
+            request.reference.requireOwnedReference()
+            PlaybackSessionUpdateResult(
+                accepted = client.updatePlayback(
+                    account = request.account.toValidatedAccount(),
+                    accessToken = credentialResolver.resolve(request.credential.handle)
+                        ?: throw CredentialUnavailableException(),
+                    reference = request.reference,
+                    mediaSourceId = request.reference.mediaSourceId,
+                    session = EmbyPlaybackSession(
+                        playSessionId = request.session.playSessionId,
+                        liveStreamId = request.session.liveStreamId,
+                    ),
+                    event = request.event,
+                    positionTicks = request.positionTicks,
+                    playMethod = request.playMethod,
+                    isPaused = request.isPaused,
+                )
+            )
+        }
+    }
+
     private suspend fun closePlayback(
         context: ExtensionCallContext,
         request: PlaybackSessionCloseRequest,
     ): HookResult<PlaybackSessionCloseResult> {
         return providerCall {
+            request.reference.requireOwnedReference()
             PlaybackSessionCloseResult(
                 closed = client.closePlayback(
                     account = request.account.toValidatedAccount(),
@@ -283,6 +376,7 @@ internal class EmbyCompatibleProvider @Inject constructor(
                         playSessionId = request.session.playSessionId,
                         liveStreamId = request.session.liveStreamId,
                     ),
+                    positionTicks = request.positionTicks,
                 )
             )
         }
@@ -303,11 +397,13 @@ internal class EmbyCompatibleProvider @Inject constructor(
                 itemId = itemId,
                 mediaSourceId = mediaSourceId,
                 session = session,
+                positionTicks = 0L,
             )
         }
     }
 
     private suspend fun <Response : com.m3u.extension.api.ExtensionPayload> providerCall(
+        authenticationOperation: Boolean = false,
         block: suspend () -> Response,
     ): HookResult<Response> =
         try {
@@ -316,10 +412,12 @@ internal class EmbyCompatibleProvider @Inject constructor(
             throw cancellation
         } catch (exception: EmbyHttpException) {
             failure(
-                code = if (exception.statusCode == 401 || exception.statusCode == 403) {
-                    SubscriptionProviderErrorCodes.AuthenticationFailed
-                } else {
-                    PROVIDER_REQUEST_FAILED
+                code = when {
+                    exception.statusCode == HTTP_UNAUTHORIZED ||
+                        authenticationOperation && exception.statusCode == HTTP_FORBIDDEN ->
+                        SubscriptionProviderErrorCodes.AuthenticationFailed
+                    exception.statusCode == HTTP_FORBIDDEN -> PROVIDER_PERMISSION_DENIED
+                    else -> PROVIDER_REQUEST_FAILED
                 },
                 message = exception.message ?: "Provider request failed",
                 recoverable = exception.statusCode >= 500,
@@ -365,7 +463,11 @@ internal class EmbyCompatibleProvider @Inject constructor(
         ): HookResult<Response> = block(context, request)
     }
 
-    private fun ProviderAccountReference.toValidatedAccount(): ValidatedProviderAccount = ValidatedProviderAccount(
+    private fun ProviderAccountReference.toValidatedAccount(): ValidatedProviderAccount {
+        if (providerId != ID) {
+            throw EmbyProtocolException("Provider account does not belong to this extension")
+        }
+        return ValidatedProviderAccount(
             normalizedBaseUrl = baseUrl,
             detectedKind = providerKind,
             serverId = serverId,
@@ -374,6 +476,13 @@ internal class EmbyCompatibleProvider @Inject constructor(
             userId = userId,
             username = username,
         )
+    }
+
+    private fun PlaybackReference.requireOwnedReference() {
+        if (providerId != ID) {
+            throw EmbyProtocolException("Playback reference does not belong to this extension")
+        }
+    }
 
     companion object {
         val ID = ExtensionId("com.m3u.provider.emby-compatible")
@@ -394,11 +503,6 @@ internal class EmbyCompatibleProvider @Inject constructor(
                     SubscriptionProviderVariant(
                         kind = EmbyCompatibleProviderKinds.Jellyfin,
                         displayName = "Jellyfin",
-                    ),
-                    SubscriptionProviderVariant(
-                        kind = EmbyCompatibleProviderKinds.Auto,
-                        displayName = labels.automatic,
-                        userSelectable = false,
                     ),
                 ),
                 settingsSchema = ExtensionSettingSchema(
@@ -449,9 +553,6 @@ internal class EmbyCompatibleProvider @Inject constructor(
                 password = localizedContext.getString(
                     R.string.feat_setting_placeholder_password
                 ).let(::wireSafeDisplayText),
-                automatic = localizedContext.getString(
-                    R.string.feat_setting_provider_variant_automatic
-                ).let(::wireSafeDisplayText),
             )
         }
 
@@ -478,12 +579,15 @@ internal class EmbyCompatibleProvider @Inject constructor(
             val serverUrl: String,
             val username: String,
             val password: String,
-            val automatic: String,
         )
 
         private const val MANIFEST_DISPLAY_NAME = "Emby Compatible"
         private val INVALID_PAYLOAD = ExtensionErrorCode("provider.invalid_payload")
+        private val PROVIDER_PERMISSION_DENIED =
+            ExtensionErrorCode("provider.permission_denied")
         private val PROVIDER_REQUEST_FAILED = ExtensionErrorCode("provider.request_failed")
+        private const val HTTP_UNAUTHORIZED = 401
+        private const val HTTP_FORBIDDEN = 403
         private val WIRE_JSON = Json {
             ignoreUnknownKeys = true
             explicitNulls = false

@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Rect
 import android.net.Uri
+import android.os.Looper
 import androidx.core.net.toUri
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -58,23 +59,29 @@ import com.m3u.data.api.OkhttpClient
 import com.m3u.data.api.ProviderOkhttpClient
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
-import com.m3u.data.database.model.copyXtreamEpisode
+import com.m3u.data.database.model.SeriesEpisodeSource
+import com.m3u.data.database.model.copySeriesEpisode
 import com.m3u.data.database.model.copyXtreamSeries
+import com.m3u.data.database.model.stablePlaybackKey
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.providerAccountIdOrNull
 import com.m3u.data.repository.provider.ProviderOperationException
 import com.m3u.data.repository.provider.ProviderPlaybackCloseReason
+import com.m3u.data.repository.provider.ProviderPlaybackEvent
 import com.m3u.data.repository.provider.ProviderPlaybackSession
 import com.m3u.data.repository.provider.SubscriptionProviderRepository
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.PlayerManager
+import com.m3u.extension.api.subscription.PlaybackMethods
+import com.m3u.extension.api.subscription.PlaybackPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
@@ -91,6 +98,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -100,6 +108,7 @@ import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 
@@ -132,12 +141,19 @@ class PlayerManagerImpl @Inject constructor(
     private val playbackLifecycleMutex = Mutex()
     private val providerSessionState = ProviderPlaybackSessionState()
     private val providerSessionCloseQueue = ProviderSessionCloseQueue(ioCoroutineScope)
+    private val providerPlaybackReportQueue = ProviderPlaybackReportQueue(ioCoroutineScope)
     private val playerLifecycleLock = Any()
     private var activePlayerListener: Player.Listener? = null
     private var activePlayerGeneration: Long? = null
     private var activeRequestHeaders: Map<String, String> = emptyMap()
     private var activeProviderPlayback = false
     private var activeProviderPlaybackAllowsCrossOrigin = false
+    private var activePlaybackPreferenceKey = ""
+    private var providerPlaybackStartedGeneration: Long? = null
+    private var providerPlaybackReportedPaused = false
+    private var providerProgressJob: Job? = null
+    private val providerPlaybackSnapshotState = ProviderPlaybackSnapshotState()
+    private val activePlaybackPositionOffsetMillis = AtomicLong(0L)
 
     override val playlist: StateFlow<Playlist?> = mediaCommand.flatMapLatest { command ->
         when (command) {
@@ -146,7 +162,7 @@ class PlayerManagerImpl @Inject constructor(
                 channel?.let { playlistRepository.observe(it.playlistUrl) } ?: flow { }
             }
 
-            is MediaCommand.XtreamEpisode -> {
+            is MediaCommand.Episode -> {
                 val channel = channelRepository.get(command.channelId)
                 channel?.let {
                     playlistRepository
@@ -165,13 +181,15 @@ class PlayerManagerImpl @Inject constructor(
         )
 
     override val channel: StateFlow<Channel?> = mediaCommand
-        .onEach { timber.d("received media command: $it") }
+        .onEach { command ->
+            timber.d("received media command: %s", command.toPlaybackLogSummary())
+        }
         .flatMapLatest { command ->
             when (command) {
                 is MediaCommand.Common -> channelRepository.observe(command.channelId)
-                is MediaCommand.XtreamEpisode -> channelRepository
+                is MediaCommand.Episode -> channelRepository
                     .observe(command.channelId)
-                    .map { it?.copyXtreamEpisode(command.episode) }
+                    .map { it?.copySeriesEpisode(command.episode) }
 
                 else -> flowOf(null)
             }
@@ -211,7 +229,18 @@ class PlayerManagerImpl @Inject constructor(
         mainCoroutineScope.launch {
             while (true) {
                 ensureActive()
-                playbackPosition.value = player.value?.currentPosition ?: -1L
+                val activePlayer = player.value
+                val relativePosition = activePlayer?.currentPosition ?: -1L
+                val absolutePosition = relativePosition.toAbsolutePlaybackPositionMillis(
+                    offsetMillis = activePlaybackPositionOffsetMillis.get(),
+                )
+                playbackPosition.value = absolutePosition
+                if (activePlayer != null) {
+                    providerPlaybackSnapshotState.update(
+                        positionMillis = absolutePosition,
+                        isPaused = activePlayer.playWhenReady == false,
+                    )
+                }
                 delay(1.seconds)
             }
         }
@@ -253,9 +282,9 @@ class PlayerManagerImpl @Inject constructor(
         if (!commandAccepted) return
         val channel = when (command) {
             is MediaCommand.Common -> channelRepository.get(command.channelId)
-            is MediaCommand.XtreamEpisode -> channelRepository
+            is MediaCommand.Episode -> channelRepository
                 .get(command.channelId)
-                ?.copyXtreamEpisode(command.episode)
+                ?.copySeriesEpisode(command.episode)
         }
         if (!providerSessionState.isCurrent(generation)) return
         if (channel != null) {
@@ -263,11 +292,33 @@ class PlayerManagerImpl @Inject constructor(
                 providerSessionCloseQueue.awaitDrained(accountId)
                 if (!providerSessionState.isCurrent(generation)) return
             }
-            val providerSource = subscriptionProviderRepository.resolvePlayback(channel.id)
+            val providerReference = (command as? MediaCommand.Episode)
+                ?.episode
+                ?.source
+                ?.let { source ->
+                    (source as? SeriesEpisodeSource.Provider)?.reference
+                }
+            val playbackPreferenceKey = channel.stablePlaybackKey()
+            val startPositionMillis = if (applyContinueWatching) {
+                getCwPosition(playbackPreferenceKey).coerceAtLeast(0L)
+            } else {
+                0L
+            }
+            val providerSource = subscriptionProviderRepository.resolvePlayback(
+                channelId = channel.id,
+                referenceOverride = providerReference,
+                preferences = PlaybackPreferences(
+                    startPositionTicks = startPositionMillis.toPlaybackTicks(),
+                ),
+            )
             if (!providerSessionState.isCurrent(generation)) {
                 closeProviderSessionAsync(
                     session = providerSource?.session,
                     reason = ProviderPlaybackCloseReason.CHANNEL_CHANGED,
+                    snapshot = ProviderPlaybackSnapshot(
+                        positionMillis = 0L,
+                        isPaused = false,
+                    ),
                 )
                 return
             }
@@ -283,11 +334,22 @@ class PlayerManagerImpl @Inject constructor(
                 reason = ProviderPlaybackCloseReason.CHANNEL_CHANGED,
             )
             if (!attachment.accepted) return
+            val playbackPositionOffsetMillis = startPositionMillis.takeIf {
+                applyContinueWatching &&
+                    providerSource?.playMethod == PlaybackMethods.Transcode.value &&
+                    it > 0L
+            } ?: 0L
             val sourceAccepted = providerSessionState.runIfCurrent(generation) {
                 activeRequestHeaders = providerSource?.headers.orEmpty()
                 activeProviderPlayback = providerSource != null
                 activeProviderPlaybackAllowsCrossOrigin =
                     providerSource?.allowCrossOriginRequests == true
+                activePlaybackPreferenceKey = playbackPreferenceKey
+                activePlaybackPositionOffsetMillis.set(playbackPositionOffsetMillis)
+                providerPlaybackSnapshotState.update(
+                    positionMillis = playbackPositionOffsetMillis,
+                    isPaused = false,
+                )
             }
             if (!sourceAccepted) return
             try {
@@ -319,14 +381,20 @@ class PlayerManagerImpl @Inject constructor(
                     requestHeaders = activeRequestHeaders,
                     licenseType = licenseType,
                     licenseKey = licenseKey,
-                    applyContinueWatching = applyContinueWatching
+                    serverResolvedStartPositionMillis =
+                        playbackPositionOffsetMillis.takeIf { it > 0L },
+                    applyContinueWatching = applyContinueWatching &&
+                        providerSource?.playMethod != PlaybackMethods.Transcode.value,
                 )
             } catch (exception: Exception) {
                 val failedSession = providerSessionState.detach(generation)
+                val failedSnapshot = currentPlaybackSnapshot()
                 withContext(NonCancellable) {
                     closeProviderSession(
                         session = failedSession,
                         reason = ProviderPlaybackCloseReason.PLAYBACK_FAILED,
+                        positionTicks = failedSnapshot.positionMillis.toPlaybackTicks(),
+                        isPaused = failedSnapshot.isPaused,
                     )
                 }
                 if (providerSessionState.isCurrent(generation)) {
@@ -347,6 +415,7 @@ class PlayerManagerImpl @Inject constructor(
         providerPlaybackAllowsCrossOrigin: Boolean = activeProviderPlaybackAllowsCrossOrigin,
         licenseType: String = channel.value?.licenseType.orEmpty(),
         licenseKey: String = channel.value?.licenseKey.orEmpty(),
+        serverResolvedStartPositionMillis: Long? = null,
         applyContinueWatching: Boolean
     ) {
         if (!providerSessionState.isCurrent(generation)) return
@@ -370,6 +439,7 @@ class PlayerManagerImpl @Inject constructor(
                     providerPlaybackAllowsCrossOrigin = providerPlaybackAllowsCrossOrigin,
                     licenseType = licenseType,
                     licenseKey = licenseKey,
+                    serverResolvedStartPositionMillis = serverResolvedStartPositionMillis,
                     applyContinueWatching = applyContinueWatching,
                 )
             }
@@ -454,7 +524,12 @@ class PlayerManagerImpl @Inject constructor(
         mainCoroutineScope.launch {
             if (!providerSessionState.isCurrent(generation)) return@launch
             if (applyContinueWatching) {
-                restoreContinueWatching(preparedPlayer, url)
+                restoreContinueWatching(
+                    preparedPlayer,
+                    activePlaybackPreferenceKey.ifEmpty { url },
+                )
+            } else if (serverResolvedStartPositionMillis != null) {
+                cwPosition.emit(serverResolvedStartPositionMillis)
             } else {
                 cwPosition.emit(-1L)
             }
@@ -513,10 +588,17 @@ class PlayerManagerImpl @Inject constructor(
 
     private fun releasePlayer() {
         synchronized(playerLifecycleLock) {
+            providerProgressJob?.cancel()
+            providerProgressJob = null
+            providerPlaybackStartedGeneration = null
+            providerPlaybackReportedPaused = false
+            providerPlaybackSnapshotState.reset()
+            activePlaybackPositionOffsetMillis.set(0L)
             extractor = null
             activeRequestHeaders = emptyMap()
             activeProviderPlayback = false
             activeProviderPlaybackAllowsCrossOrigin = false
+            activePlaybackPreferenceKey = ""
             mediaCommand.value = null
             size.value = Rect()
             playbackState.value = Player.STATE_IDLE
@@ -614,6 +696,7 @@ class PlayerManagerImpl @Inject constructor(
         tunneling: Boolean,
         listener: Player.Listener,
     ): ExoPlayer = ExoPlayer.Builder(context)
+        .setLooper(Looper.getMainLooper())
         .setMediaSourceFactory(mediaSourceFactory)
         .setRenderersFactory(renderersFactory)
         .setTrackSelector(createTrackSelector(tunneling))
@@ -649,6 +732,12 @@ class PlayerManagerImpl @Inject constructor(
                         timber.d("player instance updated")
                         activePlayerListener = listener
                         activePlayerGeneration = generation
+                        providerPlaybackSnapshotState.update(
+                            positionMillis = 0L.toAbsolutePlaybackPositionMillis(
+                                offsetMillis = activePlaybackPositionOffsetMillis.get(),
+                            ),
+                            isPaused = false,
+                        )
                         player.value = createdPlayer
                     }
                 }
@@ -683,6 +772,18 @@ class PlayerManagerImpl @Inject constructor(
 
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 handleIsPlayingChanged(generation, isPlaying)
+            }
+
+            override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                handlePlayWhenReadyChanged(generation, playWhenReady)
+            }
+
+            override fun onPositionDiscontinuity(
+                oldPosition: Player.PositionInfo,
+                newPosition: Player.PositionInfo,
+                reason: Int,
+            ) {
+                handlePositionDiscontinuity(generation, newPosition.positionMs)
             }
         }
 
@@ -827,7 +928,10 @@ class PlayerManagerImpl @Inject constructor(
 
                 else -> {
                     if (exception != null) {
-                        timber.e(exception, PlaybackException.getErrorCodeName(exception.errorCode))
+                        timber.e(
+                            exception.toPlaybackLogThrowable(),
+                            PlaybackException.getErrorCodeName(exception.errorCode),
+                        )
                         closeProviderSessionForGenerationAsync(
                             generation = generation,
                             reason = ProviderPlaybackCloseReason.PLAYBACK_FAILED,
@@ -854,6 +958,33 @@ class PlayerManagerImpl @Inject constructor(
     ) {
         providerSessionState.runIfCurrent(generation) {
             this.isPlaying.value = isPlaying
+        }
+    }
+
+    private fun handlePlayWhenReadyChanged(
+        generation: Long,
+        playWhenReady: Boolean,
+    ) {
+        providerSessionState.runIfCurrent(generation) {
+            val isPaused = !playWhenReady
+            providerPlaybackSnapshotState.updatePaused(isPaused)
+            reportProviderPauseTransition(
+                generation = generation,
+                paused = isPaused,
+            )
+        }
+    }
+
+    private fun handlePositionDiscontinuity(
+        generation: Long,
+        positionMillis: Long,
+    ) {
+        providerSessionState.runIfCurrent(generation) {
+            providerPlaybackSnapshotState.updatePosition(
+                positionMillis.toAbsolutePlaybackPositionMillis(
+                    offsetMillis = activePlaybackPositionOffsetMillis.get(),
+                )
+            )
         }
     }
 
@@ -938,7 +1069,10 @@ class PlayerManagerImpl @Inject constructor(
                                 exportException: ExportException
                             ) {
                                 super.onError(composition, exportResult, exportException)
-                                timber.e(exportException, "transformer, onError")
+                                timber.e(
+                                    exportException.toPlaybackLogThrowable(),
+                                    "transformer, onError",
+                                )
                             }
 
                             override fun onFallbackApplied(
@@ -972,7 +1106,10 @@ class PlayerManagerImpl @Inject constructor(
 
     override suspend fun onResetPlayback(channelUrl: String) {
         cwPosition.emit(-1L)
-        resetContinueWatching(channelUrl, ignorePositionCondition = true)
+        resetContinueWatching(
+            activePlaybackPreferenceKey.ifEmpty { channelUrl },
+            ignorePositionCondition = true,
+        )
         val currentPlayer = player.value ?: return
         if (currentPlayer.isCommandAvailable(Player.COMMAND_SEEK_TO_DEFAULT_POSITION)) {
             currentPlayer.seekToDefaultPosition()
@@ -984,15 +1121,19 @@ class PlayerManagerImpl @Inject constructor(
         return channelPreference?.cwPosition ?: -1L
     }
 
+    override suspend fun getCwPosition(channel: Channel): Long =
+        getCwPosition(channel.stablePlaybackKey())
+
     private suspend fun onPlaybackIdle() {}
     private suspend fun onPlaybackBuffering() {}
 
     private suspend fun onPlaybackReady(generation: Long) {
         if (!providerSessionState.isCurrent(generation)) return
-        timber.d("onPlaybackReady, trying the playChain $chain")
+        timber.d("onPlaybackReady, trying the playChain %s", chain)
+        startProviderPlaybackReporting(generation)
         when (val chain = chain) {
             is MimetypeChain.Remembered -> {
-                storeContinueWatching(chain.url)
+                storeContinueWatching(activePlaybackPreferenceKey.ifEmpty { chain.url })
             }
 
             is MimetypeChain.Trying -> {
@@ -1003,7 +1144,7 @@ class PlayerManagerImpl @Inject constructor(
                     channelPreference?.copy(mineType = chain.mimetype)
                         ?: ChannelPreference(mineType = chain.mimetype)
                 )
-                storeContinueWatching(chain.url)
+                storeContinueWatching(activePlaybackPreferenceKey.ifEmpty { chain.url })
             }
 
             else -> {}
@@ -1012,7 +1153,7 @@ class PlayerManagerImpl @Inject constructor(
 
     private suspend fun onPlaybackEnded(generation: Long) {
         if (!providerSessionState.isCurrent(generation)) return
-        val channelUrl = chain.url
+        val channelUrl = activePlaybackPreferenceKey.ifEmpty { chain.url }
         if (
             settings[PreferencesKeys.RECONNECT_MODE] == ReconnectMode.RECONNECT &&
             providerSessionState.isCurrent(generation)
@@ -1048,24 +1189,158 @@ class PlayerManagerImpl @Inject constructor(
     private fun closeProviderSessionAsync(
         session: ProviderPlaybackSession?,
         reason: ProviderPlaybackCloseReason,
+        snapshot: ProviderPlaybackSnapshot = currentPlaybackSnapshot(),
     ) {
         if (session == null) return
+        val positionTicks = snapshot.positionMillis.toPlaybackTicks()
         providerSessionCloseQueue.enqueue(session.accountId) {
-            closeProviderSession(session, reason)
+            closeProviderSession(
+                session = session,
+                reason = reason,
+                positionTicks = positionTicks,
+                isPaused = snapshot.isPaused,
+            )
         }
     }
 
     private suspend fun closeProviderSession(
         session: ProviderPlaybackSession?,
         reason: ProviderPlaybackCloseReason,
+        positionTicks: Long,
+        isPaused: Boolean,
     ) {
         if (session == null) return
+        providerPlaybackReportQueue.sealAndAwaitDrained(session.id)
+        runCatching {
+            subscriptionProviderRepository.updatePlayback(
+                session = session,
+                event = ProviderPlaybackEvent.PROGRESS,
+                positionTicks = positionTicks,
+                isPaused = isPaused,
+            )
+        }.onFailure { exception ->
+            timber.w(
+                exception.toPlaybackLogThrowable(),
+                "Failed to report final provider playback progress",
+            )
+        }
         runCatching {
             subscriptionProviderRepository.closePlayback(session, reason)
         }.onFailure { exception ->
-            timber.w(exception, "Failed to close provider playback session")
+            timber.w(
+                exception.toPlaybackLogThrowable(),
+                "Failed to close provider playback session",
+            )
         }
     }
+
+    private fun startProviderPlaybackReporting(generation: Long) {
+        val session = providerSessionState.session(generation) ?: return
+        val shouldStart = synchronized(playerLifecycleLock) {
+            if (providerPlaybackStartedGeneration == generation) {
+                false
+            } else {
+                providerPlaybackStartedGeneration = generation
+                providerPlaybackReportedPaused = currentPlaybackSnapshot().isPaused
+                providerProgressJob?.cancel()
+                true
+            }
+        }
+        if (!shouldStart) return
+        reportProviderPlaybackAsync(
+            generation = generation,
+            session = session,
+            event = ProviderPlaybackEvent.STARTED,
+        )
+        providerProgressJob = ioCoroutineScope.launch {
+            while (providerSessionState.isCurrent(generation)) {
+                delay(PROVIDER_PROGRESS_INTERVAL)
+                val currentSession = providerSessionState.session(generation) ?: break
+                val snapshot = currentPlaybackSnapshot()
+                providerPlaybackReportQueue.enqueue(currentSession.id) {
+                    reportProviderPlayback(
+                        session = currentSession,
+                        event = ProviderPlaybackEvent.PROGRESS,
+                        positionMillis = snapshot.positionMillis,
+                        isPaused = snapshot.isPaused,
+                    )
+                }?.join() ?: break
+            }
+        }
+    }
+
+    private fun reportProviderPauseTransition(
+        generation: Long,
+        paused: Boolean,
+    ) {
+        val session = providerSessionState.session(generation) ?: return
+        val event = synchronized(playerLifecycleLock) {
+            if (
+                providerPlaybackStartedGeneration != generation ||
+                providerPlaybackReportedPaused == paused
+            ) {
+                null
+            } else {
+                providerPlaybackReportedPaused = paused
+                if (paused) {
+                    ProviderPlaybackEvent.PAUSED
+                } else {
+                    ProviderPlaybackEvent.RESUMED
+                }
+            }
+        } ?: return
+        reportProviderPlaybackAsync(
+            generation = generation,
+            session = session,
+            event = event,
+        )
+    }
+
+    private fun reportProviderPlaybackAsync(
+        generation: Long,
+        session: ProviderPlaybackSession,
+        event: ProviderPlaybackEvent,
+    ) {
+        val snapshot = currentPlaybackSnapshot()
+        if (!providerSessionState.isCurrent(generation)) return
+        providerPlaybackReportQueue.enqueue(session.id) {
+            reportProviderPlayback(
+                session = session,
+                event = event,
+                positionMillis = snapshot.positionMillis,
+                isPaused = snapshot.isPaused,
+            )
+        }
+    }
+
+    private suspend fun reportProviderPlayback(
+        session: ProviderPlaybackSession,
+        event: ProviderPlaybackEvent,
+        positionMillis: Long,
+        isPaused: Boolean,
+    ) {
+        runCatching {
+            subscriptionProviderRepository.updatePlayback(
+                session = session,
+                event = event,
+                positionTicks = positionMillis.toPlaybackTicks(),
+                isPaused = isPaused,
+            )
+        }.onFailure { exception ->
+            timber.w(
+                exception.toPlaybackLogThrowable(),
+                "Failed to report provider playback progress",
+            )
+        }
+    }
+
+    private fun currentPlaybackSnapshot(): ProviderPlaybackSnapshot =
+        providerPlaybackSnapshotState.read()
+
+    private fun Long.toPlaybackTicks(): Long =
+        coerceAtLeast(0L)
+            .coerceAtMost(Long.MAX_VALUE / TICKS_PER_MILLISECOND) *
+            TICKS_PER_MILLISECOND
 
     @OptIn(FlowPreview::class)
     private suspend fun storeContinueWatching(channelUrl: String) {
@@ -1112,7 +1387,10 @@ class PlayerManagerImpl @Inject constructor(
         channelUrl: String,
         ignorePositionCondition: Boolean = false
     ) {
-        timber.d("resetContinueWatching, channelUrl=$channelUrl, ignorePositionCondition=$ignorePositionCondition")
+        timber.d(
+            "resetContinueWatching, ignorePositionCondition=%s",
+            ignorePositionCondition,
+        )
         val channelPreference = getChannelPreference(channelUrl)
         val player = this@PlayerManagerImpl.player.value
         withContext(Dispatchers.Main) {
@@ -1186,6 +1464,63 @@ private data class PlaybackStateEvent(
     val state: @Player.State Int,
 )
 
+internal data class ProviderPlaybackSnapshot(
+    val positionMillis: Long,
+    val isPaused: Boolean,
+)
+
+internal class ProviderPlaybackSnapshotState {
+    private val state = MutableStateFlow(DEFAULT_SNAPSHOT)
+
+    fun read(): ProviderPlaybackSnapshot = state.value
+
+    fun update(
+        positionMillis: Long,
+        isPaused: Boolean,
+    ) {
+        state.value = ProviderPlaybackSnapshot(
+            positionMillis = positionMillis.coerceAtLeast(0L),
+            isPaused = isPaused,
+        )
+    }
+
+    fun updatePosition(positionMillis: Long) {
+        state.update { snapshot ->
+            snapshot.copy(positionMillis = positionMillis.coerceAtLeast(0L))
+        }
+    }
+
+    fun updatePaused(isPaused: Boolean) {
+        state.update { snapshot -> snapshot.copy(isPaused = isPaused) }
+    }
+
+    fun reset() {
+        state.value = DEFAULT_SNAPSHOT
+    }
+
+    private companion object {
+        val DEFAULT_SNAPSHOT = ProviderPlaybackSnapshot(
+            positionMillis = 0L,
+            isPaused = false,
+        )
+    }
+}
+
+internal fun Long.toAbsolutePlaybackPositionMillis(
+    offsetMillis: Long,
+): Long {
+    if (this < 0L) return -1L
+    val safeOffset = offsetMillis.coerceAtLeast(0L)
+    return if (this > Long.MAX_VALUE - safeOffset) {
+        Long.MAX_VALUE
+    } else {
+        this + safeOffset
+    }
+}
+
+private val PROVIDER_PROGRESS_INTERVAL = 10.seconds
+private const val TICKS_PER_MILLISECOND = 10_000L
+
 private sealed class MimetypeChain(val url: String) {
     class Remembered(
         url: String,
@@ -1206,10 +1541,10 @@ private sealed class MimetypeChain(val url: String) {
     }
 
     override fun toString(): String = when (this) {
-        is Unspecified -> "Unspecified[$url]"
-        is Trying -> "Trying[$url, $mimetype]"
-        is Remembered -> "Remembered[$url, $mimeType]"
-        is Unsupported -> "Unsupported[$url]"
+        is Unspecified -> playbackChainLogSummary(state = "Unspecified")
+        is Trying -> playbackChainLogSummary(state = "Trying", mimeType = mimetype)
+        is Remembered -> playbackChainLogSummary(state = "Remembered", mimeType = mimeType)
+        is Unsupported -> playbackChainLogSummary(state = "Unsupported")
     }
 
     operator fun hasNext(): Boolean = this !is Unsupported

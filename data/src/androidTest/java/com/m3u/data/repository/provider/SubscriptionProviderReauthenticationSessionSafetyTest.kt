@@ -34,6 +34,7 @@ import com.m3u.extension.api.ExtensionSemanticVersion
 import com.m3u.extension.api.ExtensionSettingField
 import com.m3u.extension.api.ExtensionSettingSchema
 import com.m3u.extension.api.ExtensionSettingType
+import com.m3u.extension.api.HookSpec
 import com.m3u.extension.api.HookResult
 import com.m3u.extension.api.security.CredentialHandle
 import com.m3u.extension.api.subscription.PlaybackSessionCloseReason
@@ -41,6 +42,8 @@ import com.m3u.extension.api.subscription.PlaybackSessionCloseRequest
 import com.m3u.extension.api.subscription.PlaybackSessionCloseResult
 import com.m3u.extension.api.subscription.ProviderKind
 import com.m3u.extension.api.subscription.ProviderValidationEvidence
+import com.m3u.extension.api.subscription.SubscriptionContentBrowseRequest
+import com.m3u.extension.api.subscription.SubscriptionContentBrowseResult
 import com.m3u.extension.api.subscription.SubscriptionContentRefreshRequest
 import com.m3u.extension.api.subscription.SubscriptionContentRefreshResult
 import com.m3u.extension.api.subscription.SubscriptionHookSpecs
@@ -334,6 +337,33 @@ class SubscriptionProviderReauthenticationSessionSafetyTest {
                     ),
                 ),
                 ExtensionHookDeclaration(
+                    hook = SubscriptionHookSpecs.Browse.hook,
+                    schemaVersion = SubscriptionHookSpecs.Browse.schemaVersion,
+                    requiredCapabilities = setOf(
+                        ExtensionCapabilityIds.Network,
+                        ExtensionCapabilityIds.CredentialRead,
+                        ExtensionCapabilityIds.SubscriptionRead,
+                    ),
+                ),
+                ExtensionHookDeclaration(
+                    hook = SubscriptionHookSpecs.ResolvePlayback.hook,
+                    schemaVersion = SubscriptionHookSpecs.ResolvePlayback.schemaVersion,
+                    requiredCapabilities = setOf(
+                        ExtensionCapabilityIds.Network,
+                        ExtensionCapabilityIds.CredentialRead,
+                        ExtensionCapabilityIds.PlaybackResolve,
+                    ),
+                ),
+                ExtensionHookDeclaration(
+                    hook = SubscriptionHookSpecs.UpdatePlayback.hook,
+                    schemaVersion = SubscriptionHookSpecs.UpdatePlayback.schemaVersion,
+                    requiredCapabilities = setOf(
+                        ExtensionCapabilityIds.Network,
+                        ExtensionCapabilityIds.CredentialRead,
+                        ExtensionCapabilityIds.PlaybackResolve,
+                    ),
+                ),
+                ExtensionHookDeclaration(
                     hook = SubscriptionHookSpecs.ClosePlayback.hook,
                     schemaVersion = SubscriptionHookSpecs.ClosePlayback.schemaVersion,
                     requiredCapabilities = setOf(
@@ -424,6 +454,22 @@ class SubscriptionProviderReauthenticationSessionSafetyTest {
             },
             object :
                 ExtensionHandler<
+                    SubscriptionContentBrowseRequest,
+                    SubscriptionContentBrowseResult,
+                    > {
+                override val spec = SubscriptionHookSpecs.Browse
+
+                override suspend fun invoke(
+                    context: ExtensionCallContext,
+                    request: SubscriptionContentBrowseRequest,
+                ) = HookResult.Success(
+                    SubscriptionContentBrowseResult(items = emptyList())
+                )
+            },
+            unusedHandler(SubscriptionHookSpecs.ResolvePlayback),
+            unusedHandler(SubscriptionHookSpecs.UpdatePlayback),
+            object :
+                ExtensionHandler<
                     PlaybackSessionCloseRequest,
                     PlaybackSessionCloseResult,
                     > {
@@ -462,6 +508,26 @@ class SubscriptionProviderReauthenticationSessionSafetyTest {
                 }
             },
         )
+
+        private fun <
+            Request : ExtensionPayload,
+            Response : ExtensionPayload,
+            > unusedHandler(
+            hookSpec: HookSpec<Request, Response>,
+        ): ExtensionHandler<Request, Response> = object : ExtensionHandler<Request, Response> {
+            override val spec = hookSpec
+
+            override suspend fun invoke(
+                context: ExtensionCallContext,
+                request: Request,
+            ): HookResult<Response> = HookResult.Failure(
+                ExtensionError(
+                    code = ExtensionErrorCode("provider.test_hook_unused"),
+                    message = "Unused provider test Hook",
+                    recoverable = false,
+                )
+            )
+        }
 
         private suspend fun resolveCredential(handle: CredentialHandle): String? {
             credentialVault.consume(handle)?.let { return it }
@@ -616,6 +682,7 @@ class SubscriptionProviderReauthenticationSessionSafetyTest {
             playSessionId = REMOTE_PLAY_SESSION_ID,
             liveStreamId = "remote-live-stream-1",
             createdAtEpochMillis = 1L,
+            playMethod = "unknown",
         )
         val REFRESH_RESULT = SubscriptionContentRefreshResult(
             source = SubscriptionSourceDescriptor(

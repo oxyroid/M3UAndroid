@@ -28,7 +28,8 @@ Run the plugin project's normal build:
 
 ## 3. Trigger the Hook from M3UAndroid
 
-Run the current extension build with M3UAndroid, then use the feature that owns the Hook.
+Run the current extension build with the M3UAndroid smartphone app, then use the feature that owns
+the Hook on a phone or tablet layout.
 
 | Hook | Acceptance result |
 | --- | --- |
@@ -39,10 +40,12 @@ Run the current extension build with M3UAndroid, then use the feature that owns 
 | `background.task.run` | Enabling the extension schedules each declaration. Disabling it cancels the work. A network task waits for a connection. |
 | Provider discover and validate | Discover returns one descriptor. The form uses its schema. Valid input completes host-managed authentication. |
 | Provider refresh | The account is saved only after initial refresh succeeds. The imported playlist contains the complete snapshot. |
-| Provider playback and close | A same-origin source plays with host-resolved headers. Stopping playback closes the remote session. |
+| Provider browse | Root and child pages display in order, respect the item limit, and stop at a null cursor. |
+| Provider resolve, update, and close | A same-origin source plays with host-resolved headers. Playback events update the remote session. Stopping playback closes it. |
 
 The reference provider test covers discovery, rejected and successful login, initial and later
-refresh, playback resolution, header resolution, and session close through the external transport.
+refresh, root and child browsing, playback resolution, progress updates, header resolution, and
+session close through the external transport.
 
 ## 4. Check failure behavior
 
@@ -58,7 +61,7 @@ cross-origin redirect fail. Missing `network` must be rejected; when a request u
 handle, missing `credential.read` must also be rejected.
 
 Provider tests should also cover rejected credentials, a failed refresh that preserves stored data,
-an invalid playback result, and repeated session close.
+an invalid browse or playback result, a rejected progress update, and repeated session close.
 
 ## 5. Verify an update
 

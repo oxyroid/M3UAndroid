@@ -11,7 +11,7 @@ import androidx.media3.common.TrackGroup
 import androidx.media3.common.Tracks
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
-import com.m3u.data.parser.xtream.XtreamEpisodeInfo
+import com.m3u.data.database.model.SeriesEpisode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
@@ -50,6 +50,7 @@ interface PlayerManager {
     val cwPosition: SharedFlow<Long>
     suspend fun onResetPlayback(channelUrl: String)
     suspend fun getCwPosition(channelUrl: String): Long
+    suspend fun getCwPosition(channel: Channel): Long
     suspend fun reloadThumbnail(channelUrl: String): Uri?
     suspend fun syncThumbnail(channelUrl: String): Uri?
 }
@@ -65,9 +66,9 @@ data class PlayerTrack(
 @Immutable
 sealed class MediaCommand(open val channelId: Int) {
     data class Common(override val channelId: Int) : MediaCommand(channelId)
-    data class XtreamEpisode(
+    data class Episode(
         override val channelId: Int,
-        val episode: XtreamEpisodeInfo
+        val episode: SeriesEpisode,
     ) : MediaCommand(channelId)
 }
 

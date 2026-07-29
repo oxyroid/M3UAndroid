@@ -27,6 +27,10 @@ There are two implementations:
 
 Both use the same `HookSpec<Request, Result>` and runtime policy.
 
+All extension product callers, including the built-in provider, live in `app/smartphone` and cover
+phone and tablet layouts. `app/tv` has no extension UI or caller and exposes only M3U and Xtream
+sources.
+
 `ExtensionContractCatalog` is the host's single contract list. Each entry binds one supported
 Hook/schema pair to its official typed serializers and base capabilities. Built-in registration
 and host calls must use that exact `HookSpec`; external manifests are checked against the same
@@ -47,7 +51,7 @@ entries and registration rules before a transport is admitted.
 | Settings lifecycle | Rendered schema, saved values, secret handles, and edit authorization | [`ExtensionSettingsRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/extension/ExtensionSettingsRepositoryImpl.kt) |
 | Network scope | Choose approved origins and credentials for one external Hook call | [`ExtensionHookBrokerScopeProvider`](../../../data/src/main/java/com/m3u/data/extension/security/ExtensionHookBrokerScopeProvider.kt) |
 | Network execution | Validate scope, URL, redirect, values, size, and timeout; then send HTTP | [`HostNetworkBrokerImpl`](../../../data/src/main/java/com/m3u/data/extension/security/HostNetworkBrokerImpl.kt) |
-| Provider flow | Discover, validate, refresh, playback resolve, and session close | [`SubscriptionProviderRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/provider/SubscriptionProviderRepositoryImpl.kt) |
+| Provider flow | Discover, subscription validation, refresh, media browse, playback resolve/update, and session close | [`SubscriptionProviderRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/provider/SubscriptionProviderRepositoryImpl.kt), [`SubscriptionHookSpecs`](../../../extension/api/src/main/kotlin/com/m3u/extension/api/subscription/SubscriptionProviderContracts.kt) |
 | Result application | Validate ownership and write host data, or map a result to UI/player | [`data/extension`](../../../data/src/main/java/com/m3u/data/extension), [`data/repository/extension`](../../../data/src/main/java/com/m3u/data/repository/extension) |
 | Background tasks | Reconcile periodic declarations and invoke the task Hook from WorkManager | [`ExtensionBackgroundTaskScheduler`](../../../data/src/main/java/com/m3u/data/worker/ExtensionBackgroundTaskScheduler.kt), [`ExtensionBackgroundTaskWorker`](../../../data/src/main/java/com/m3u/data/worker/ProviderWorker.kt) |
 
@@ -84,13 +88,13 @@ result, but broker operations fail.
 
 ## How network scope is chosen
 
-The external broker supports provider Validate/Refresh/Resolve/Close, settings, search, metadata,
-EPG, and background tasks. Provider `Discover` is always offline.
+The external broker supports provider Validate/Refresh/Browse/Resolve/Update/Close, settings,
+search, metadata, EPG, and background tasks. Provider `Discover` is always offline.
 
 | Request | Scope source |
 | --- | --- |
 | Provider `Validate` | Authentication scope created from the submitted provider origin. |
-| Provider `Refresh`, `ResolvePlayback`, `ClosePlayback` | Account scope created by the provider repository. |
+| Provider `Refresh`, `Browse`, `ResolvePlayback`, `UpdatePlayback`, `ClosePlayback` | Account scope created by the provider repository. |
 | Search, metadata, or EPG with `account + credential` | Account scope created from the matching stored provider account. |
 | Settings, background, or search/metadata/EPG without an account | Hook scope created from approved manifest and setting origins. |
 
@@ -145,14 +149,24 @@ ProviderWorker or user refresh
 
 The importer updates only the current account and preserves host-owned local channel state. An
 external provider uses the same repository and importer as Emby/Jellyfin; only the handler call
-crosses Android IPC. Phone and TV build their new-subscription choices from selectable descriptor
-variants. A non-selectable variant remains valid for an existing account but is not offered for a
-new subscription. Every new or restored provider playlist is stored as `DataSource.Provider`;
-the older Emby/Jellyfin source values are decode-and-migrate inputs only.
+crosses Android IPC. The smartphone app builds new-subscription choices from the provider
+descriptor. Every provider playlist is stored as `DataSource.Provider`.
 
 The broker prevents direct host-side credential disclosure. It cannot stop a malicious extension
 from colluding with an origin that the user approved. That remaining threat is one reason external
 extensions stay behind the developer switch.
+
+Every built-in and external provider implements the complete seven-Hook contract:
+`Discover`, `Validate`, `Refresh`, `Browse`, `ResolvePlayback`, `UpdatePlayback`, and
+`ClosePlayback`. `Validate` performs authentication for the subscription operation.
+
+- `Browse` returns one bounded page of referenceable media. It supports root pages and child pages
+  without forcing a series or season container into the playable channel snapshot.
+- `UpdatePlayback` reports an extensible session event, a non-negative 100-nanosecond position,
+  the selected playback method, and paused state.
+
+Built-in providers bind all seven Hooks directly. External providers declare all seven through the
+SDK and use the account-scoped broker for networked calls.
 
 ## Background task path
 

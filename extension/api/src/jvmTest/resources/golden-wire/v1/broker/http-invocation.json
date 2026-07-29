@@ -1,5 +1,5 @@
 {
-  "brokerProtocolVersion": 4,
+  "brokerProtocolVersion": 1,
   "operation": {
     "type": "http",
     "request": {

@@ -33,6 +33,7 @@ import com.m3u.extension.api.security.CredentialHandle
 import com.m3u.extension.api.subscription.ProviderAuthenticationContextKeys
 import com.m3u.extension.api.subscription.ProviderKind
 import com.m3u.extension.api.subscription.ProviderValidationEvidence
+import com.m3u.extension.api.subscription.SubscriptionContentBrowseResult
 import com.m3u.extension.api.subscription.SubscriptionContentRefreshRequest
 import com.m3u.extension.api.subscription.SubscriptionContentRefreshResult
 import com.m3u.extension.api.subscription.SubscriptionHookSpecs
@@ -410,6 +411,13 @@ class SubscriptionProviderRestoredOwnerClaimTest {
                 )
             }
 
+            SubscriptionHookSpecs.Browse.hook -> request.success(
+                JSON.encodeToJsonElement(
+                    SubscriptionContentBrowseResult.serializer(),
+                    SubscriptionContentBrowseResult(items = emptyList()),
+                )
+            )
+
             else -> error("Unexpected Hook ${request.hook}")
         }
 
@@ -583,6 +591,42 @@ class SubscriptionProviderRestoredOwnerClaimTest {
                         ExtensionCapabilityIds.SubscriptionRead,
                     ),
                 ),
+                ExtensionHookDeclaration(
+                    hook = SubscriptionHookSpecs.Browse.hook,
+                    schemaVersion = SubscriptionHookSpecs.Browse.schemaVersion,
+                    requiredCapabilities = setOf(
+                        ExtensionCapabilityIds.Network,
+                        ExtensionCapabilityIds.CredentialRead,
+                        ExtensionCapabilityIds.SubscriptionRead,
+                    ),
+                ),
+                ExtensionHookDeclaration(
+                    hook = SubscriptionHookSpecs.ResolvePlayback.hook,
+                    schemaVersion = SubscriptionHookSpecs.ResolvePlayback.schemaVersion,
+                    requiredCapabilities = setOf(
+                        ExtensionCapabilityIds.Network,
+                        ExtensionCapabilityIds.CredentialRead,
+                        ExtensionCapabilityIds.PlaybackResolve,
+                    ),
+                ),
+                ExtensionHookDeclaration(
+                    hook = SubscriptionHookSpecs.UpdatePlayback.hook,
+                    schemaVersion = SubscriptionHookSpecs.UpdatePlayback.schemaVersion,
+                    requiredCapabilities = setOf(
+                        ExtensionCapabilityIds.Network,
+                        ExtensionCapabilityIds.CredentialRead,
+                        ExtensionCapabilityIds.PlaybackResolve,
+                    ),
+                ),
+                ExtensionHookDeclaration(
+                    hook = SubscriptionHookSpecs.ClosePlayback.hook,
+                    schemaVersion = SubscriptionHookSpecs.ClosePlayback.schemaVersion,
+                    requiredCapabilities = setOf(
+                        ExtensionCapabilityIds.Network,
+                        ExtensionCapabilityIds.CredentialRead,
+                        ExtensionCapabilityIds.PlaybackResolve,
+                    ),
+                ),
             ),
             capabilities = setOf(
                 ExtensionCapabilityRequest(
@@ -599,7 +643,11 @@ class SubscriptionProviderRestoredOwnerClaimTest {
                 ),
                 ExtensionCapabilityRequest(
                     capability = ExtensionCapabilityIds.SubscriptionRead,
-                    reason = "Refresh provider content",
+                    reason = "Refresh and browse provider content",
+                ),
+                ExtensionCapabilityRequest(
+                    capability = ExtensionCapabilityIds.PlaybackResolve,
+                    reason = "Exercise the complete provider lifecycle",
                 ),
             ),
         )

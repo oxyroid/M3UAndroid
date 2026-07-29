@@ -276,7 +276,13 @@ interface ChannelDao {
             stream.favourite AS favourite,
             stream.hidden AS hidden,
             stream.seen AS seen,
-            stream.relation_id AS relation_id
+            stream.media_kind AS media_kind,
+            stream.playable AS playable,
+            stream.browsable AS browsable,
+            stream.relation_id AS relation_id,
+            stream.subtitle AS subtitle,
+            stream.overview AS overview,
+            stream.production_year AS production_year
         FROM streams AS stream
         LEFT JOIN channel_metadata_bases AS base
             ON base.playlist_url = stream.playlist_url

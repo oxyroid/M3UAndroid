@@ -23,14 +23,9 @@ class EmbyCompatibleProviderLocalizationTest {
         assertEquals("Emby / Jellyfin", descriptor.displayName)
         assertEquals("Emby", variants[EmbyCompatibleProviderKinds.Emby])
         assertEquals("Jellyfin", variants[EmbyCompatibleProviderKinds.Jellyfin])
-        assertEquals("自动检测", variants[EmbyCompatibleProviderKinds.Auto])
         assertEquals(
             setOf(EmbyCompatibleProviderKinds.Emby, EmbyCompatibleProviderKinds.Jellyfin),
-            descriptor.variants.filter { it.userSelectable }.mapTo(mutableSetOf()) { it.kind },
-        )
-        assertEquals(
-            false,
-            descriptor.variants.single { it.kind == EmbyCompatibleProviderKinds.Auto }.userSelectable,
+            descriptor.variants.mapTo(mutableSetOf()) { it.kind },
         )
         assertEquals("订阅地址", fields[SubscriptionProviderSettingKeys.BaseUrl])
         assertEquals("用户名", fields[SubscriptionProviderSettingKeys.Username])
@@ -46,7 +41,6 @@ class EmbyCompatibleProviderLocalizationTest {
         assertEquals("Emby / Jellyfin", descriptor.displayName)
         assertEquals("Emby", variants[EmbyCompatibleProviderKinds.Emby])
         assertEquals("Jellyfin", variants[EmbyCompatibleProviderKinds.Jellyfin])
-        assertEquals("Automatic", variants[EmbyCompatibleProviderKinds.Auto])
         assertEquals("address", fields[SubscriptionProviderSettingKeys.BaseUrl])
         assertEquals("username", fields[SubscriptionProviderSettingKeys.Username])
         assertEquals("password", fields[SubscriptionProviderSettingKeys.Password])

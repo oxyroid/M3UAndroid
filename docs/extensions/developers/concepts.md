@@ -85,7 +85,8 @@ settingsSchema = ExtensionSettingSchema(
 )
 ```
 
-M3UAndroid renders and stores these values. Use the settings Hook instead when fields depend on its request, such as `request.surface`.
+M3UAndroid renders and stores these values. Use the settings Hook instead when fields depend on
+its request, such as `request.localeTag`.
 
 Keep the extension identity stable when publishing an update. The exact identity fields are listed in [Prepare a release or update](reference/compatibility.md).
 

@@ -27,62 +27,6 @@ class DebugDefaultLibraryStateTest {
     }
 
     @Test
-    fun `legacy imported state requests one canonical update`() {
-        val legacy = checkNotNull(
-            DebugDefaultLibraryBootstrapStateCodec.decodeOrNull("imported")
-        )
-
-        assertTrue(
-            legacy.needsAssetUpdate(
-                targetRevision = "2026-07-29.2",
-                targetPlaylistSha256 = TEST_PLAYLIST_SHA256,
-            )
-        )
-    }
-
-    @Test
-    fun `schema one state without content hash requests one canonical update`() {
-        val legacy = checkNotNull(
-            DebugDefaultLibraryBootstrapStateCodec.decodeOrNull(
-                """
-                    {
-                      "schemaVersion": 1,
-                      "status": "imported",
-                      "revision": "2026-07-29.2",
-                      "playlistUrl": "file:///sample.m3u"
-                    }
-                """.trimIndent()
-            )
-        )
-
-        assertTrue(
-            legacy.needsAssetUpdate(
-                targetRevision = "2026-07-29.2",
-                targetPlaylistSha256 = TEST_PLAYLIST_SHA256,
-            )
-        )
-    }
-
-    @Test
-    fun `legacy state never claims a same titled user playlist`() {
-        val legacy = checkNotNull(
-            DebugDefaultLibraryBootstrapStateCodec.decodeOrNull("imported")
-        )
-        val userPlaylist = Playlist(
-            title = "Debug playback samples",
-            url = "https://user.example/playlist.m3u",
-            source = DataSource.M3U,
-        )
-
-        assertNull(
-            selectTrackedDefaultLibraryPlaylist(
-                state = legacy,
-                currentPlaylists = listOf(userPlaylist),
-            )
-        )
-    }
-
-    @Test
     fun `canonical state selects only its recorded playlist identity`() {
         val ownedPlaylist = Playlist(
             title = "Renamed samples",
@@ -168,7 +112,8 @@ class DebugDefaultLibraryStateTest {
     }
 
     @Test
-    fun `invalid or partial canonical state is rejected`() {
+    fun `draft and partial state formats are rejected`() {
+        assertNull(DebugDefaultLibraryBootstrapStateCodec.decodeOrNull("imported"))
         assertNull(
             DebugDefaultLibraryBootstrapStateCodec.decodeOrNull(
                 """{"schemaVersion":1,"status":"imported","revision":"test.2"}"""
@@ -186,7 +131,7 @@ class DebugDefaultLibraryStateTest {
                       "schemaVersion": 2,
                       "status": "imported",
                       "revision": "test.2",
-                      "playlistSha256": "not-a-sha256",
+                      "playlistSha256": "$TEST_PLAYLIST_SHA256",
                       "playlistUrl": "file:///sample.m3u"
                     }
                 """.trimIndent()

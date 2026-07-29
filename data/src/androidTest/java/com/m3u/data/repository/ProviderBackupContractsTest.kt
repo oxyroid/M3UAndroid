@@ -128,7 +128,7 @@ class ProviderBackupContractsTest {
         val playlist = Playlist(
             title = "Media",
             url = "m3u-provider://account/account/live",
-            source = DataSource.Emby,
+            source = DataSource.Provider,
             userAgent = "token-agent",
             epgUrls = listOf("https://example.com/epg?token=secret"),
         ).toProviderBackupCopy()
@@ -157,16 +157,22 @@ class ProviderBackupContractsTest {
     }
 
     @Test
-    fun everyLegacyProviderSourceIsNormalizedBeforeItCanBeWrittenAgain() {
-        listOf(DataSource.Emby, DataSource.Jellyfin, DataSource.Provider).forEach { source ->
-            val normalized = Playlist(
-                title = "Media",
-                url = "m3u-provider://account/account/live",
-                source = source,
-            ).toProviderBackupCopy()
-
-            assertEquals(DataSource.Provider, normalized.source)
+    fun onlyGenericProviderSourceIsRecognizedAsSubscriptionProvider() {
+        assertTrue(DataSource.Provider.isSubscriptionProvider)
+        listOf(
+            DataSource.M3U,
+            DataSource.EPG,
+            DataSource.Xtream,
+            DataSource.Dropbox,
+        ).forEach { source ->
+            assertFalse(source.isSubscriptionProvider)
         }
+    }
+
+    @Test
+    fun standaloneEmbyAndJellyfinSourceValuesAreNotAccepted() {
+        assertNull(DataSource.ofOrNull("emby"))
+        assertNull(DataSource.ofOrNull("jellyfin"))
     }
 
     @Test
@@ -279,12 +285,12 @@ class ProviderBackupContractsTest {
     }
 
     @Test
-    fun newReferencePrefixDoesNotMasqueradeAsLegacyReference() {
+    fun playbackReferenceUsesOnlyTheCurrentPrefix() {
         val wrapped = BackupOrRestoreContracts.wrapPlaybackReference("{}")
 
         assertTrue(wrapped.startsWith("Q,"))
         assertEquals("{}", BackupOrRestoreContracts.unwrapPlaybackReference(wrapped))
-        assertEquals("{}", BackupOrRestoreContracts.unwrapPlaybackReference("R,{}"))
+        assertNull(BackupOrRestoreContracts.unwrapPlaybackReference("R,{}"))
     }
 
     @Test

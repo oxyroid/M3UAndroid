@@ -4,19 +4,21 @@ package com.m3u.data.extension
  * Validates untrusted extension text before it reaches host-owned UI or persistence.
  *
  * This deliberately rejects direction-formatting and line-separator code points instead of
- * rewriting them. Natural RTL text remains valid because ordinary Arabic and Hebrew characters
- * are not formatting controls.
+ * rewriting them. A multiline field may explicitly allow LF; CR and every other control remain
+ * invalid. Natural RTL text remains valid because ordinary Arabic and Hebrew characters are not
+ * formatting controls.
  */
 internal fun String.isSafeExtensionText(
     maximumLength: Int,
     maximumUtf8Bytes: Int = Int.MAX_VALUE,
     allowBlank: Boolean = false,
+    allowLineBreaks: Boolean = false,
 ): Boolean =
     (allowBlank || isNotBlank()) &&
         length <= maximumLength &&
         encodeToByteArray().size <= maximumUtf8Bytes &&
         none { character ->
-            character.isISOControl() ||
+            (character.isISOControl() && !(allowLineBreaks && character == '\n')) ||
                 character.code == ARABIC_LETTER_MARK ||
                 character.code in BIDI_EMBEDDING_AND_OVERRIDE_RANGE ||
                 character.code in BIDI_ISOLATE_RANGE ||

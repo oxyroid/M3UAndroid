@@ -507,8 +507,6 @@ fun playlistRefreshWorkTag(
     DataSource.EPG -> hashedWorkTag(namespace = "subscription-epg", value = url)
     DataSource.Xtream ->
         hashedWorkTag(namespace = "subscription-xtream-playlist", value = url)
-    DataSource.Emby,
-    DataSource.Jellyfin,
     DataSource.Provider ->
         hashedWorkTag(namespace = "provider-refresh", value = url)
     else -> hashedWorkTag(

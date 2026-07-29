@@ -41,16 +41,16 @@ private const val TRANSACTION_RESULT_SUCCESS = IBinder.FIRST_CALL_TRANSACTION + 
 private const val TRANSACTION_RESULT_FAILURE = IBinder.FIRST_CALL_TRANSACTION + 1
 private const val TRANSACTION_EXECUTE_HTTP = IBinder.FIRST_CALL_TRANSACTION + 0
 
-private const val TRANSPORT_VERSION = 4
+private const val TRANSPORT_VERSION = 1
 
 private fun booleanString(value: Boolean): String =
     if (value) "true" else "false"
 
-private const val BROKER_PROTOCOL_VERSION = 4
+private const val BROKER_PROTOCOL_VERSION = 1
 private const val API_MAJOR = 1
 private const val API_MINOR = 0
 private const val BACKGROUND_TASK_HOOK = "background.task.run"
-private const val BACKGROUND_TASK_SCHEMA_VERSION = 2
+private const val BACKGROUND_TASK_SCHEMA_VERSION = 1
 private const val BACKGROUND_TASK_CAPABILITY = "background.task"
 private const val NETWORK_CAPABILITY = "network"
 

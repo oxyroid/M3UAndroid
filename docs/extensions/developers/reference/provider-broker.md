@@ -12,7 +12,7 @@ timeout before sending it.
 | --- | --- |
 | `SubscriptionHookSpecs.Discover` | None. Discovery is offline. |
 | Provider `Validate` | The origin submitted for this login. |
-| Provider `Refresh`, `ResolvePlayback`, or `ClosePlayback` | The current account's base origin. |
+| Provider `Refresh`, `Browse`, `ResolvePlayback`, `UpdatePlayback`, or `ClosePlayback` | The current account's base origin. |
 | Search, metadata, or EPG with a provider account | That account's base origin. |
 | Settings, background work, or a search/metadata/EPG call without an account | Origins approved for the extension. |
 
@@ -168,8 +168,7 @@ when the transport dispatches the call; Binder transfer and decoding continue to
 It is not a fresh allowance for each broker call. All `execute(...)` and `authenticate(...)` calls
 made by that invocation share the deadline. They also share the budget's cumulative limits for
 request count, encoded request bytes, and encoded response bytes. Splitting work into more calls or
-pages does not reset those limits. The field may be `null` for compatibility with an older host;
-`null` does not mean unlimited work. Keep pagination bounded and stop work when cancellation or
+pages does not reset those limits. Keep pagination bounded and stop work when cancellation or
 `timeout` is reported. The host-side invocation deadline is always authoritative.
 
 The first URL and every redirect must keep an approved scheme, host, and port. A different origin

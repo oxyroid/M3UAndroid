@@ -164,7 +164,6 @@
     <string name="feat_setting_restoring">restaurando todos los canales y listas</string>
     <string name="feat_setting_follow_system_theme">seguir tema del sistema</string>
     <string name="feat_setting_data_source_provider">Proveedor</string>
-    <string name="feat_setting_provider_variant_automatic">Automático</string>
     <string name="feat_setting_provider_source_with_provider">%1$s — %2$s</string>
     <string name="feat_setting_provider_choice_with_identifier">%1$s · %2$s</string>
     <string name="feat_setting_provider_choice_with_identifier_description">%1$s. ID del proveedor: %2$s</string>

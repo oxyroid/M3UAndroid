@@ -161,7 +161,6 @@
     <string name="feat_setting_restoring">Restaurando todas as playlists e canais</string>
     <string name="feat_setting_follow_system_theme">Tema padrão do sistema</string>
     <string name="feat_setting_data_source_provider">Provedor</string>
-    <string name="feat_setting_provider_variant_automatic">Automático</string>
     <string name="feat_setting_provider_source_with_provider">%1$s — %2$s</string>
     <string name="feat_setting_provider_choice_with_identifier">%1$s · %2$s</string>
     <string name="feat_setting_provider_choice_with_identifier_description">%1$s. ID do provedor: %2$s</string>

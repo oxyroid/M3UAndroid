@@ -725,11 +725,7 @@ private fun PlaylistDetailsSection(
         ?: stringResource(playlist.source.resId)
     val sourceIcon = playlist.source.configurationIcon()
     val displayReference = remember(playlist.url, playlist.source) {
-        if (
-            playlist.source == DataSource.Provider ||
-            playlist.source == DataSource.Emby ||
-            playlist.source == DataSource.Jellyfin
-        ) {
+        if (playlist.source == DataSource.Provider) {
             null
         } else {
             playlist.url.safeSourceReference()
@@ -907,7 +903,6 @@ private fun DataSource.configurationIcon(): ImageVector = when (this) {
     DataSource.M3U -> Icons.Rounded.Link
     DataSource.EPG -> Icons.Rounded.DateRange
     DataSource.Xtream -> Icons.Rounded.Cloud
-    DataSource.Emby, DataSource.Jellyfin, DataSource.Provider ->
-        Icons.Rounded.Extension
+    DataSource.Provider -> Icons.Rounded.Extension
     else -> Icons.AutoMirrored.Rounded.List
 }

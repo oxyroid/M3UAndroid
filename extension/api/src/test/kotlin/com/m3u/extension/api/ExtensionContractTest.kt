@@ -197,6 +197,7 @@ class ExtensionContractTest {
             hooks = setOf(
                 ExtensionHookDeclaration(
                     hook = ExtensionHookIds.PlaybackSourceResolve,
+                    schemaVersion = SubscriptionHookSpecs.ResolvePlayback.schemaVersion,
                     requiredCapabilities = setOf(ExtensionCapabilityIds.PlaybackResolve),
                 )
             ),
@@ -226,6 +227,7 @@ class ExtensionContractTest {
                 hooks = setOf(
                     ExtensionHookDeclaration(
                         hook = ExtensionHookIds.PlaybackSourceResolve,
+                        schemaVersion = SubscriptionHookSpecs.ResolvePlayback.schemaVersion,
                         requiredCapabilities = setOf(ExtensionCapabilityIds.PlaybackResolve),
                     )
                 ),
@@ -352,7 +354,7 @@ class ExtensionContractTest {
         val result = BackgroundTaskResult(output = mapOf("synced" to "true"))
 
         assertEquals("""{"output":{"synced":"true"}}""", json.encodeToString(result))
-        assertEquals(2, HostHookSpecs.BackgroundTask.schemaVersion)
+        assertEquals(1, HostHookSpecs.BackgroundTask.schemaVersion)
         assertEquals(
             setOf(HostHookSpecs.BackgroundTask.schemaVersion),
             ExtensionContractCatalog.SupportedHookSchemaVersions
@@ -419,7 +421,7 @@ class ExtensionContractTest {
     }
 
     @Test
-    fun `broker v4 invocation requires the current protocol and rejects legacy shape`() {
+    fun `broker v1 invocation requires the current protocol and rejects an invalid shape`() {
         val json = Json { ignoreUnknownKeys = true }
         val request = BrokeredHttpRequest(
             method = "GET",
@@ -438,20 +440,26 @@ class ExtensionContractTest {
         }
         assertFailsWith<IllegalArgumentException> {
             BrokerInvocation(
-                brokerProtocolVersion = 2,
+                brokerProtocolVersion = BrokerProtocolVersions.Current + 1,
                 operation = BrokerOperation.Http(request),
             )
         }
         assertFailsWith<IllegalArgumentException> { BrokerScopeHandle(" ") }
         assertEquals(
             BrokerProtocolVersions.Current,
-            BrokerProtocolVersions.negotiate(setOf(2, BrokerProtocolVersions.Current)),
+            BrokerProtocolVersions.negotiate(
+                setOf(BrokerProtocolVersions.Current + 1, BrokerProtocolVersions.Current)
+            ),
         )
-        assertNull(BrokerProtocolVersions.negotiate(setOf(1, 2)))
+        assertNull(
+            BrokerProtocolVersions.negotiate(
+                setOf(BrokerProtocolVersions.Current + 1)
+            )
+        )
     }
 
     @Test
-    fun `broker v4 result round trips success and failure`() {
+    fun `broker v1 result round trips success and failure`() {
         val json = Json { ignoreUnknownKeys = true }
         val success: BrokerInvocationResult = BrokerInvocationResult.Success(
             BrokerOperationResult.Http(
@@ -482,7 +490,7 @@ class ExtensionContractTest {
     }
 
     @Test
-    fun `broker v4 authentication is typed and returns no response plaintext`() {
+    fun `broker v1 authentication is typed and returns no response plaintext`() {
         val json = Json { ignoreUnknownKeys = true }
         val contextUrl = BrokerValue.Concatenated(
             listOf(
@@ -636,7 +644,7 @@ class ExtensionContractTest {
 
         assertEquals(result, json.decodeFromString(encoded))
         assertTrue(encoded.contains("provider-token"))
-        assertEquals(4, SubscriptionHookSpecs.ResolvePlayback.schemaVersion)
+        assertEquals(1, SubscriptionHookSpecs.ResolvePlayback.schemaVersion)
         assertEquals(
             setOf(SubscriptionHookSpecs.ResolvePlayback.schemaVersion),
             ExtensionContractCatalog.SupportedHookSchemaVersions
@@ -686,12 +694,12 @@ class ExtensionContractTest {
                 .variants
                 .map { variant -> variant.kind.value },
         )
-        assertEquals(4, SubscriptionHookSpecs.Discover.schemaVersion)
-        assertEquals(4, SubscriptionHookSpecs.Refresh.schemaVersion)
+        assertEquals(1, SubscriptionHookSpecs.Discover.schemaVersion)
+        assertEquals(1, SubscriptionHookSpecs.Refresh.schemaVersion)
         assertEquals(1, SubscriptionHookSpecs.Browse.schemaVersion)
         assertEquals(1, SubscriptionHookSpecs.UpdatePlayback.schemaVersion)
         assertEquals(
-            setOf(4),
+            setOf(1),
             ExtensionContractCatalog.SupportedHookSchemaVersions
                 .getValue(SubscriptionHookSpecs.Discover.hook),
         )

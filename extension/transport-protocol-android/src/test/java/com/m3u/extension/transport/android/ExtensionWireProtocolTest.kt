@@ -12,14 +12,14 @@ class ExtensionWireProtocolTest {
     private val json = Json { explicitNulls = false }
 
     @Test
-    fun `transport v4 handshake carries broker negotiation`() {
+    fun `transport v1 handshake carries broker negotiation`() {
         val request = ExtensionHandshakeRequest(
             transportVersion = ExtensionProtocol.TRANSPORT_VERSION,
             hostApiVersion = ExtensionApiVersion(1, 0),
             supportedBrokerProtocolVersions = BrokerProtocolVersions.Supported,
         )
         assertEquals(
-            """{"transportVersion":4,"hostApiVersion":{"major":1,"minor":0},"supportedBrokerProtocolVersions":[4]}""",
+            """{"transportVersion":1,"hostApiVersion":{"major":1,"minor":0},"supportedBrokerProtocolVersions":[1]}""",
             json.encodeToString(request),
         )
 
@@ -32,7 +32,7 @@ class ExtensionWireProtocolTest {
             brokerProtocolVersion = BrokerProtocolVersions.Current,
         )
         assertEquals(
-            """{"transportVersion":4,"extensionApiRange":{"minimum":{"major":1,"minor":0},"maximum":{"major":1,"minor":0}},"brokerProtocolVersion":4}""",
+            """{"transportVersion":1,"extensionApiRange":{"minimum":{"major":1,"minor":0},"maximum":{"major":1,"minor":0}},"brokerProtocolVersion":1}""",
             json.encodeToString(response),
         )
 
@@ -45,7 +45,7 @@ class ExtensionWireProtocolTest {
             ),
         )
         assertEquals(
-            """{"transportVersion":4,"extensionApiRange":{"minimum":{"major":1,"minor":0},"maximum":{"major":1,"minor":0}},"error":{"code":"broker.incompatible","message":"No shared broker protocol"}}""",
+            """{"transportVersion":1,"extensionApiRange":{"minimum":{"major":1,"minor":0},"maximum":{"major":1,"minor":0}},"error":{"code":"broker.incompatible","message":"No shared broker protocol"}}""",
             json.encodeToString(rejected),
         )
     }

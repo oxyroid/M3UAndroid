@@ -20,8 +20,9 @@
 不带账号时，使用插件已获批准的 Origin。发起请求前请阅读
 [使用宿主网络 Broker](reference/provider-broker.zh-CN.md)。
 
-订阅 Provider 使用另一组五个 Hook，见[开发订阅 Provider](host-broker.zh-CN.md)。其中
-`Discover` 始终离线运行。
+订阅 Provider 必须实现[开发订阅 Provider](host-broker.zh-CN.md)中的全部七个 Hook：
+`Discover`、`Validate`、`Refresh`、`Browse`、`ResolvePlayback`、`UpdatePlayback` 与
+`ClosePlayback`。`Validate` 完成订阅认证；`Discover` 始终离线运行。
 
 ## 每个 Hook 的输入与输出
 

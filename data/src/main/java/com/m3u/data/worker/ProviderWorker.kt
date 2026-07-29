@@ -24,7 +24,6 @@ import com.m3u.data.repository.extension.ExtensionContributionRunCoordinator
 import com.m3u.data.repository.extension.EXTENSION_CONTRIBUTION_INPUT_WORK_KEY
 import com.m3u.data.repository.extension.extensionContributionWorkKey
 import com.m3u.data.database.dao.PlaylistDao
-import com.m3u.data.database.model.DataSource
 import com.m3u.extension.api.subscription.SubscriptionRefreshReason
 import com.m3u.extension.api.BackgroundTaskRequest
 import com.m3u.extension.api.BackgroundTaskResult
@@ -86,10 +85,7 @@ class ProviderRefreshWorker @AssistedInject constructor(
             playlistUrl: String,
             reason: SubscriptionRefreshReason,
         ): UUID {
-            val workTag = playlistRefreshWorkTag(
-                source = DataSource.Provider,
-                url = playlistUrl,
-            )
+            val workTag = providerRefreshWorkName(playlistUrl)
             val request = OneTimeWorkRequestBuilder<ProviderRefreshWorker>()
                 .setInputData(providerRefreshInputData(playlistUrl, reason))
                 .setConstraints(
@@ -140,7 +136,7 @@ class ProviderSessionCleanupWorker @AssistedInject constructor(
             return Result.failure()
         }
         return try {
-            pluginRepository.restoreEnabled()
+            pluginRepository.restoreEnabled(scheduleSessionCleanup = false)
             val cleanup = repository.closeOrphanedPlaybackSessions(
                 afterCreatedAtEpochMillis = afterCreatedAtEpochMillis,
                 afterSessionId = afterSessionId,

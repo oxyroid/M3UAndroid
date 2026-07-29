@@ -4,6 +4,8 @@
 
 插件接收 M3UAndroid 发出的类型化请求，并返回类型化结果。外部插件目前属于开发者预览。
 当前代码可以生成 `1.0.0-alpha01` SDK 压缩包；其中包含一份可直接引用的本地 Maven 仓库。
+插件只在 smartphone 应用的手机和平板布局中运行。TV 应用不加载插件，只支持 M3U 与
+Xtream。
 
 ## 从这里开始
 
@@ -11,7 +13,8 @@
 - [运行 Hello](quickstart.zh-CN.md)：先得到可运行结果，再阅读契约细节。
 - [定义 Manifest](concepts.zh-CN.md)：填写插件身份、Hook、capability（能力授权）和设置。
 - [注册类型化 Hook](first-hook.zh-CN.md)：为插件增加一个可调用功能。
-- [开发订阅 Provider](host-broker.zh-CN.md)：实现登录、刷新、播放解析和 Session 关闭。
+- [开发订阅 Provider](host-broker.zh-CN.md)：实现完整的发现、订阅、刷新、媒体浏览、
+  播放解析、播放更新和 Session 关闭契约。
 - [选择 Hook](hooks.zh-CN.md)：查找每项受支持功能的请求、结果、capability 和触发时机。
 
 最小模板见

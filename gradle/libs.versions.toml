@@ -51,6 +51,7 @@ kotlin-symbol-processor = "2.3.10"
 androidx-test-ext-junit = "1.3.0"
 androidx-test-core = "1.7.0"
 androidx-test-runner = "1.7.0"
+androidx-test-orchestrator = "1.6.1"
 espresso-core = "3.7.0"
 com-google-android-material = "1.13.0"
 androidx-test-uiautomator = "2.3.0"
@@ -148,6 +149,7 @@ kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoet" }
 kotlinpoet-ksp = { module = "com.squareup:kotlinpoet-ksp", version.ref = "kotlinpoet" }
 squareup-retrofit2 = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "squareup-retrofit2" }
 squareup-okhttp3-mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver3", version.ref = "squareup-okhttp" }
+squareup-okhttp3-tls = { group = "com.squareup.okhttp3", name = "okhttp-tls", version.ref = "squareup-okhttp" }
 squareup-leakcanary = { group = "com.squareup.leakcanary", name = "leakcanary-android", version.ref = "squareup-leakcanary" }
 
 ktor-server-netty = { group = "io.ktor", name = "ktor-server-netty", version.ref = "ktor-server" }
@@ -173,6 +175,7 @@ airbnb-lottie-compose = { group = "com.airbnb.android", name = "lottie-compose",
 androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-ext-junit" }
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidx-test-core" }
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidx-test-runner" }
+androidx-test-orchestrator = { group = "androidx.test", name = "orchestrator", version.ref = "androidx-test-orchestrator" }
 androidx-test-espresso-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso-core" }
 androidx-test-uiautomator-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "androidx-test-uiautomator" }
 androidx-benchmark-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "androidx-benchmark" }

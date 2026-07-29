@@ -5,8 +5,10 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -47,6 +49,7 @@ import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
 import com.m3u.core.foundation.architecture.preferences.preferenceOf
 import com.m3u.core.foundation.components.CircularProgressIndicator
 import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.MediaKinds
 import com.m3u.data.database.model.Programme
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.TimeUtils.formatEOrSh
@@ -83,6 +86,9 @@ internal fun ChannelItem(
     val neverPlayedString = stringResource(string.ui_sort_never_played)
 
     val noPictureMode by preferenceOf(PreferencesKeys.NO_PICTURE_MODE)
+    val usesPosterLayout = channel.mediaKind == MediaKinds.MOVIE ||
+        channel.mediaKind == MediaKinds.SERIES ||
+        channel.mediaKind == MediaKinds.UNKNOWN && isVodOrSeriesPlaylist
 
     val star = remember(favourite) {
         movableContentOf {
@@ -108,8 +114,8 @@ internal fun ChannelItem(
         shape = AbsoluteSmoothCornerShape(spacing.medium, 65)
     ) {
         when {
-            !noPictureMode && isVodOrSeriesPlaylist -> {
-                Box(
+            !noPictureMode && usesPosterLayout -> {
+                Column(
                     modifier = Modifier
                         .combinedClickable(
                             onClick = onClick,
@@ -117,53 +123,82 @@ internal fun ChannelItem(
                         )
                         .then(modifier)
                 ) {
-                    SubcomposeAsyncImage(
-                        model = remember(cover) {
-                            ImageRequest.Builder(context)
-                                .data(cover)
-                                .size(Size.ORIGINAL)
-                                .build()
-                        },
-                        contentDescription = channel.title,
-                        contentScale = ContentScale.FillWidth,
-                        loading = {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .aspectRatio(1f)
-                            ) {
-                                CircularProgressIndicator()
-                            }
-                        },
-                        error = {
-                            Column(
-                                verticalArrangement = Arrangement.SpaceAround,
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .aspectRatio(3 / 4f)
-                                    .padding(spacing.medium)
-                            ) {
-                                Text(
-                                    text = channel.title,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                Icon(
-                                    imageVector = Icons.Rounded.BrokenImage,
-                                    contentDescription = null
-                                )
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    if (favourite) {
-                        Box(
+                    Box {
+                        SubcomposeAsyncImage(
+                            model = remember(cover) {
+                                ImageRequest.Builder(context)
+                                    .data(cover)
+                                    .size(Size.ORIGINAL)
+                                    .build()
+                            },
+                            contentDescription = channel.title,
+                            contentScale = ContentScale.Crop,
+                            loading = {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .aspectRatio(2 / 3f)
+                                ) {
+                                    CircularProgressIndicator()
+                                }
+                            },
+                            error = {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .aspectRatio(2 / 3f)
+                                        .padding(spacing.medium)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.BrokenImage,
+                                        contentDescription = null
+                                    )
+                                }
+                            },
                             modifier = Modifier
-                                .padding(spacing.small)
-                                .align(Alignment.BottomEnd)
-                        ) { star() }
+                                .fillMaxWidth()
+                                .aspectRatio(2 / 3f)
+                        )
+                        if (favourite) {
+                            Box(
+                                modifier = Modifier
+                                    .padding(spacing.small)
+                                    .align(Alignment.BottomEnd)
+                            ) { star() }
+                        }
+                    }
+                    Text(
+                        text = channel.title.trim(),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(
+                            start = spacing.small,
+                            top = spacing.small,
+                            end = spacing.small,
+                        ),
+                    )
+                    val supportingText = channel.subtitle
+                        ?: channel.productionYear?.toString()
+                    if (!supportingText.isNullOrBlank()) {
+                        Text(
+                            text = supportingText,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = LocalContentColor.current.copy(alpha = 0.7f),
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(
+                                start = spacing.small,
+                                top = 2.dp,
+                                end = spacing.small,
+                                bottom = spacing.small,
+                            ),
+                        )
+                    } else {
+                        Spacer(modifier = Modifier.height(spacing.small))
                     }
                 }
             }

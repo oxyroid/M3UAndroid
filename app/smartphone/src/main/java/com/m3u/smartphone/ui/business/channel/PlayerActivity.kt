@@ -14,7 +14,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.m3u.business.channel.ChannelViewModel
 import com.m3u.core.foundation.Contracts
-import com.m3u.data.database.model.isSeries
+import com.m3u.data.database.model.MediaOpenAction
+import com.m3u.data.database.model.openAction
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.service.MediaCommand
@@ -82,12 +83,13 @@ class PlayerActivity : ComponentActivity() {
         lifecycleScope.launch {
             val channel = channelRepository.get(channelId) ?: return@launch
             val playlist = playlistRepository.get(channel.playlistUrl)
-            when {
-                // series can not be played from shortcuts
-                playlist?.isSeries == true -> {}
-                else -> {
+            when (channel.openAction(playlist)) {
+                MediaOpenAction.PLAY -> {
                     helper.play(MediaCommand.Common(channel.id))
                 }
+
+                MediaOpenAction.BROWSE,
+                MediaOpenAction.UNSUPPORTED -> finish()
             }
         }
     }

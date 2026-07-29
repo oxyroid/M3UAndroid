@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -23,39 +24,36 @@ import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
+import com.m3u.core.foundation.components.CircularProgressIndicator
 import com.m3u.core.foundation.wrapper.Resource
 import com.m3u.data.database.model.Channel
-import com.m3u.data.parser.xtream.XtreamEpisodeInfo
-import androidx.compose.material3.IconButton
-import com.m3u.core.foundation.components.CircularProgressIndicator
+import com.m3u.data.database.model.SeriesEpisode
+import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.material.model.LocalSpacing
-import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 
 @Composable
 fun EpisodesBottomSheet(
     series: Channel?,
-    episodes: Resource<List<XtreamEpisodeInfo>>,
+    episodes: Resource<List<SeriesEpisode>>,
     onRefresh: () -> Unit,
-    onEpisodeClick: (XtreamEpisodeInfo) -> Unit,
+    onEpisodeClick: (SeriesEpisode) -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
     val sheetState = rememberModalBottomSheetState()
-    val currentOnRefresh by rememberUpdatedState(onRefresh)
 
     val visible = series != null
     val loading = episodes == Resource.Loading
-
-    LaunchedEffect(series) { currentOnRefresh() }
 
     LaunchedEffect(episodes is Resource.Success) {
         if (loading) sheetState.partialExpand()
@@ -89,7 +87,7 @@ fun EpisodesBottomSheet(
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Refresh,
-                                contentDescription = null,
+                                contentDescription = stringResource(string.ui_action_refresh),
                             )
                         }
                     }
@@ -127,7 +125,7 @@ fun EpisodesBottomSheet(
                 when (episodes) {
                     is Resource.Success -> {
                         items(episodes.data) { episode ->
-                            XtreamEpisodeItem(
+                            SeriesEpisodeItem(
                                 episode = episode,
                                 onClick = { onEpisodeClick(episode) },
                                 modifier = Modifier.padding(horizontal = spacing.medium)
@@ -145,8 +143,8 @@ fun EpisodesBottomSheet(
 }
 
 @Composable
-private fun XtreamEpisodeItem(
-    episode: XtreamEpisodeInfo,
+private fun SeriesEpisodeItem(
+    episode: SeriesEpisode,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -157,32 +155,38 @@ private fun XtreamEpisodeItem(
     ) {
         ListItem(
             trailingContent = {
-                Box(
-                    modifier = Modifier
-                        .clip(AbsoluteSmoothCornerShape(spacing.medium, 65))
-                        .background(MaterialTheme.colorScheme.primary),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        text = episode.episodeNum.toString(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(
-                            start = spacing.small,
-                            end = spacing.small,
-                            bottom = 2.dp,
-                        ),
-                        softWrap = false,
-                        textAlign = TextAlign.Center
-                    )
+                episode.sequenceLabel?.let { sequenceLabel ->
+                    Box(
+                        modifier = Modifier
+                            .clip(AbsoluteSmoothCornerShape(spacing.medium, 65))
+                            .background(MaterialTheme.colorScheme.primary),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            text = sequenceLabel,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                textDirection = TextDirection.Ltr,
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(
+                                start = spacing.small,
+                                end = spacing.small,
+                                bottom = 2.dp,
+                            ),
+                            softWrap = false,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             },
             headlineContent = {
                 Text(
-                    text = episode.title.orEmpty(),
-                    style = MaterialTheme.typography.bodyMedium
+                    text = episode.title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                 )
             },
             modifier = Modifier.clickable { onClick() }

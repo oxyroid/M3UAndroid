@@ -74,7 +74,7 @@ class EmbyCompatibleProviderIntegrationTest {
             account = validation.account,
             accessToken = validation.accessToken,
             reference = reference,
-            preferences = PlaybackPreferences(),
+            preferences = PlaybackPreferences(startPositionTicks = 0L),
         )
         assertFalse(playback.url.contains(validation.accessToken))
         assertEquals("allowed", playback.headers["X-Mock-Playback"])
@@ -98,6 +98,7 @@ class EmbyCompatibleProviderIntegrationTest {
                 itemId = reference.itemId,
                 mediaSourceId = playback.mediaSourceId,
                 session = requireNotNull(playback.session),
+                positionTicks = 0L,
             )
         )
     }
