@@ -27,6 +27,7 @@ import com.m3u.extension.api.security.SecretReference
 import com.m3u.extension.api.security.referencesCredential
 import com.m3u.extension.api.security.referencesOpaqueContext
 import com.m3u.extension.api.subscription.PlaybackHeaderValue
+import com.m3u.extension.api.subscription.PlaybackMethods
 import com.m3u.extension.api.subscription.PlaybackSourceResolveResult
 import com.m3u.extension.api.subscription.ProviderKind
 import com.m3u.extension.api.subscription.SubscriptionProviderDescriptor
@@ -629,6 +630,7 @@ class ExtensionContractTest {
                     )
                 )
             ),
+            playMethod = PlaybackMethods.DirectPlay,
         )
         val encoded = json.encodeToString(result)
 

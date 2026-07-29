@@ -13,7 +13,6 @@ class SubscriptionProviderContractsTest {
     fun `compatible provider exposes distinct user facing kinds`() {
         assertEquals("emby", EmbyCompatibleProviderKinds.Emby.value)
         assertEquals("jellyfin", EmbyCompatibleProviderKinds.Jellyfin.value)
-        assertEquals("auto", EmbyCompatibleProviderKinds.Auto.value)
     }
 
     @Test
@@ -33,8 +32,8 @@ class SubscriptionProviderContractsTest {
         assertEquals(
             false,
             SubscriptionProviderVariant(
-                kind = EmbyCompatibleProviderKinds.Auto,
-                displayName = "Automatic",
+                kind = ProviderKind("private"),
+                displayName = "Private",
                 userSelectable = false,
             ).userSelectable,
         )
@@ -205,10 +204,13 @@ class SubscriptionProviderContractsTest {
     }
 
     @Test
-    fun `playback additions preserve defaults for existing providers`() {
+    fun `playback lifecycle requires current method and position fields`() {
         assertEquals(
-            PlaybackMethods.Unknown,
-            PlaybackSourceResolveResult("https://media.example.test/item").playMethod,
+            PlaybackMethods.DirectPlay,
+            PlaybackSourceResolveResult(
+                url = "https://media.example.test/item",
+                playMethod = PlaybackMethods.DirectPlay,
+            ).playMethod,
         )
         val close = PlaybackSessionCloseRequest(
             account = account(),
@@ -216,9 +218,10 @@ class SubscriptionProviderContractsTest {
             reference = reference("movie-1", "movie"),
             session = PlaybackSessionDescriptor(playSessionId = "session-1"),
             reason = PlaybackSessionCloseReason.Stopped,
+            positionTicks = 90_000_000L,
         )
 
-        assertEquals(0L, close.positionTicks)
+        assertEquals(90_000_000L, close.positionTicks)
         assertFailsWith<IllegalArgumentException> {
             close.copy(positionTicks = -1L)
         }

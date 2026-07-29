@@ -25,8 +25,8 @@ class WireGoldenFixtureTest {
     }
 
     /*
-     * Keep every supported schema version in this explicit catalog. When a Hook gains a schema,
-     * append its fixtures without removing the older entry.
+     * Keep the current supported schema for every Hook in this explicit catalog. Until the SDK is
+     * published, an incompatible draft schema is replaced instead of retained.
      */
     private val hookFixtureCatalog = listOf(
         hookFixture(
@@ -239,18 +239,18 @@ class WireGoldenFixtureTest {
     }
 
     @Test
-    fun `existing playback fixtures decode additive VOD defaults`() {
+    fun `playback fixtures contain the current required lifecycle fields`() {
         val resolve = decodeFixture(
             "hooks/playback.source.resolve/schema-4/result.json",
             SubscriptionHookSpecs.ResolvePlayback.responseSerializer,
         )
-        assertEquals(PlaybackMethods.Unknown, resolve.playMethod)
+        assertEquals(PlaybackMethods.DirectPlay, resolve.playMethod)
 
         val close = decodeFixture(
             "hooks/playback.session.close/schema-3/request.json",
             SubscriptionHookSpecs.ClosePlayback.requestSerializer,
         )
-        assertEquals(0L, close.positionTicks)
+        assertEquals(90_000_000L, close.positionTicks)
     }
 
     @Test

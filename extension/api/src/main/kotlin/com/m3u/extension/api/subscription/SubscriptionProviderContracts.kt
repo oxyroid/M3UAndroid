@@ -40,7 +40,6 @@ value class ProviderKind(val value: String) {
 object EmbyCompatibleProviderKinds {
     val Emby = ProviderKind("emby")
     val Jellyfin = ProviderKind("jellyfin")
-    val Auto = ProviderKind("auto")
 }
 
 @Serializable
@@ -471,7 +470,7 @@ data class PlaybackSourceResolveResult(
     val headers: Map<String, PlaybackHeaderValue> = emptyMap(),
     val mediaSourceId: String? = null,
     val session: PlaybackSessionDescriptor? = null,
-    val playMethod: PlaybackMethod = PlaybackMethods.Unknown,
+    val playMethod: PlaybackMethod,
 ) : ExtensionPayload {
     init {
         require(url.isNotBlank() && url.encodeToByteArray().size <= MAX_URL_UTF8_BYTES) {
@@ -563,7 +562,7 @@ data class PlaybackSessionCloseRequest(
     val reference: PlaybackReference,
     val session: PlaybackSessionDescriptor,
     val reason: PlaybackSessionCloseReason,
-    val positionTicks: Long = 0L,
+    val positionTicks: Long,
 ) : ExtensionPayload {
     init {
         require(positionTicks >= 0L) {

@@ -23,5 +23,6 @@
     "playSessionId": "play-session-1",
     "liveStreamId": "live-stream-1"
   },
-  "reason": "stopped"
+  "reason": "stopped",
+  "positionTicks": 90000000
 }

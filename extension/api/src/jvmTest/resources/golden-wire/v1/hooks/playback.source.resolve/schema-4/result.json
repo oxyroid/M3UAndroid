@@ -20,5 +20,6 @@
   "session": {
     "playSessionId": "play-session-1",
     "liveStreamId": "live-stream-1"
-  }
+  },
+  "playMethod": "direct_play"
 }
