@@ -27,11 +27,16 @@ There are two implementations:
 
 Both use the same `HookSpec<Request, Result>` and runtime policy.
 
+`ExtensionContractCatalog` is the host's single contract list. Each entry binds one supported
+Hook/schema pair to its official typed serializers and base capabilities. Built-in registration
+and host calls must use that exact `HookSpec`; external manifests are checked against the same
+entries and registration rules before a transport is admitted.
+
 ## Ownership by layer
 
 | Owner | Responsibility | Start here |
 | --- | --- | --- |
-| API contract | Extension identity, manifest, settings, Hook request/result, wire fields | [`:extension:api`](../../../extension/api/src/main/kotlin/com/m3u/extension/api) |
+| API contract | Extension identity, manifest, settings, Hook request/result, wire fields, supported contract catalog | [`:extension:api`](../../../extension/api/src/main/kotlin/com/m3u/extension/api), [`ExtensionContractCatalog`](../../../extension/api/src/main/kotlin/com/m3u/extension/api/ExtensionContractCatalog.kt) |
 | Runtime | Registration, API/schema negotiation, per-Hook capabilities, payload limits, per-extension and host-wide invocation admission caps, one invocation deadline, cancellation, health | [`ExtensionRuntime`](../../../extension/runtime/src/main/kotlin/com/m3u/extension/runtime/ExtensionRuntime.kt) |
 | Android transport | Service discovery, identity, binding, handshake, file-backed JSON payloads over `ParcelFileDescriptor`, Binder death | [`:extension:transport-android`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android) |
 | External SDK | Decode a call and run the registered typed handler | [`TypedExtensionService`](../../../extension/sdk-android/src/main/java/com/m3u/extension/sdk/android/TypedExtensionService.kt) |

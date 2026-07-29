@@ -136,53 +136,6 @@ object ExtensionCapabilityIds {
     )
 }
 
-object ExtensionContractCatalog {
-    val SupportedHookSchemaVersions: Map<Hook, Set<Int>> = mapOf(
-        ExtensionHookIds.SubscriptionProviderDiscover to setOf(4),
-        ExtensionHookIds.SubscriptionProviderValidate to setOf(2),
-        ExtensionHookIds.SubscriptionContentRefresh to setOf(4),
-        ExtensionHookIds.PlaybackSourceResolve to setOf(4),
-        ExtensionHookIds.PlaybackSessionClose to setOf(3),
-        ExtensionHookIds.MetadataChannelEnrich to setOf(3),
-        ExtensionHookIds.EpgContentRefresh to setOf(4),
-        ExtensionHookIds.SettingsSchemaContribute to setOf(1),
-        ExtensionHookIds.SearchProviderQuery to setOf(4),
-        ExtensionHookIds.BackgroundTaskRun to setOf(2),
-    )
-
-    val SupportedCapabilities: Set<Capability> = ExtensionCapabilityIds.All
-
-    val RequiredCapabilitiesByHook: Map<Hook, Set<Capability>> = mapOf(
-        ExtensionHookIds.SubscriptionProviderValidate to setOf(
-            ExtensionCapabilityIds.CredentialWrite,
-        ),
-        ExtensionHookIds.SubscriptionContentRefresh to setOf(
-            ExtensionCapabilityIds.SubscriptionRead,
-        ),
-        ExtensionHookIds.PlaybackSourceResolve to setOf(
-            ExtensionCapabilityIds.PlaybackResolve,
-        ),
-        ExtensionHookIds.PlaybackSessionClose to setOf(
-            ExtensionCapabilityIds.PlaybackResolve,
-        ),
-        ExtensionHookIds.MetadataChannelEnrich to setOf(
-            ExtensionCapabilityIds.MetadataWrite,
-        ),
-        ExtensionHookIds.EpgContentRefresh to setOf(
-            ExtensionCapabilityIds.EpgRead,
-        ),
-        ExtensionHookIds.SettingsSchemaContribute to setOf(
-            ExtensionCapabilityIds.SettingsContribute,
-        ),
-        ExtensionHookIds.SearchProviderQuery to setOf(
-            ExtensionCapabilityIds.SearchRead,
-        ),
-        ExtensionHookIds.BackgroundTaskRun to setOf(
-            ExtensionCapabilityIds.BackgroundTask,
-        ),
-    )
-}
-
 @Serializable
 data class ExtensionCapabilityRequest(
     val capability: Capability,
@@ -274,9 +227,10 @@ data class ExtensionManifest(
             "Hook capabilities must also be requested by the extension manifest: $undeclaredCapabilities"
         }
         val missingHookCapabilities = hooks.mapNotNull { declaration ->
-            val missing = ExtensionContractCatalog.RequiredCapabilitiesByHook[
-                declaration.hook
-            ].orEmpty() - declaration.requiredCapabilities
+            val missing = ExtensionContractCatalog
+                .contract(declaration.hook, declaration.schemaVersion)
+                ?.requiredCapabilities
+                .orEmpty() - declaration.requiredCapabilities
             missing.takeIf(Set<Capability>::isNotEmpty)?.let { capabilities ->
                 declaration.hook to capabilities
             }

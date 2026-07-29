@@ -1,6 +1,7 @@
 package com.m3u.extension.sdk.android
 
 import com.m3u.extension.api.ExtensionCallContext
+import com.m3u.extension.api.ExtensionContractCatalog
 import com.m3u.extension.api.ExtensionError
 import com.m3u.extension.api.ExtensionErrorCodes
 import com.m3u.extension.api.ExtensionManifest
@@ -135,6 +136,9 @@ internal class TypedHookRegistry {
         ) -> HookResult<Response>,
     ) {
         check(!sealed) { "Hooks cannot be registered after the transport is created" }
+        require(ExtensionContractCatalog.containsCanonical(spec)) {
+            "Hook ${spec.hook.id}@${spec.schemaVersion} must use its canonical HookSpec"
+        }
         check(spec.hook !in bindings) { "Hook ${spec.hook} is already registered" }
         require(!requiresBroker || HostNetworkBrokerHooks.supports(spec.hook)) {
             "Host network broker is not available to Hook ${spec.hook.id}"

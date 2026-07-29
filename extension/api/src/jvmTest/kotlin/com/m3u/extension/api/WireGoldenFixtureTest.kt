@@ -29,74 +29,44 @@ class WireGoldenFixtureTest {
      */
     private val hookFixtureCatalog = listOf(
         hookFixture(
-            hook = SubscriptionHookSpecs.Discover.hook,
-            schemaVersion = 4,
+            spec = SubscriptionHookSpecs.Discover,
             directory = "hooks/subscription.provider.discover/schema-4",
-            requestSerializer = SubscriptionHookSpecs.Discover.requestSerializer,
-            resultSerializer = SubscriptionHookSpecs.Discover.responseSerializer,
         ),
         hookFixture(
-            hook = SubscriptionHookSpecs.Validate.hook,
-            schemaVersion = 2,
+            spec = SubscriptionHookSpecs.Validate,
             directory = "hooks/subscription.provider.validate/schema-2",
-            requestSerializer = SubscriptionHookSpecs.Validate.requestSerializer,
-            resultSerializer = SubscriptionHookSpecs.Validate.responseSerializer,
         ),
         hookFixture(
-            hook = SubscriptionHookSpecs.Refresh.hook,
-            schemaVersion = 4,
+            spec = SubscriptionHookSpecs.Refresh,
             directory = "hooks/subscription.content.refresh/schema-4",
-            requestSerializer = SubscriptionHookSpecs.Refresh.requestSerializer,
-            resultSerializer = SubscriptionHookSpecs.Refresh.responseSerializer,
         ),
         hookFixture(
-            hook = SubscriptionHookSpecs.ResolvePlayback.hook,
-            schemaVersion = 4,
+            spec = SubscriptionHookSpecs.ResolvePlayback,
             directory = "hooks/playback.source.resolve/schema-4",
-            requestSerializer = SubscriptionHookSpecs.ResolvePlayback.requestSerializer,
-            resultSerializer = SubscriptionHookSpecs.ResolvePlayback.responseSerializer,
         ),
         hookFixture(
-            hook = SubscriptionHookSpecs.ClosePlayback.hook,
-            schemaVersion = 3,
+            spec = SubscriptionHookSpecs.ClosePlayback,
             directory = "hooks/playback.session.close/schema-3",
-            requestSerializer = SubscriptionHookSpecs.ClosePlayback.requestSerializer,
-            resultSerializer = SubscriptionHookSpecs.ClosePlayback.responseSerializer,
         ),
         hookFixture(
-            hook = HostHookSpecs.SettingsSchema.hook,
-            schemaVersion = 1,
+            spec = HostHookSpecs.SettingsSchema,
             directory = "hooks/settings.schema.contribute/schema-1",
-            requestSerializer = HostHookSpecs.SettingsSchema.requestSerializer,
-            resultSerializer = HostHookSpecs.SettingsSchema.responseSerializer,
         ),
         hookFixture(
-            hook = HostHookSpecs.EpgRefresh.hook,
-            schemaVersion = 4,
+            spec = HostHookSpecs.EpgRefresh,
             directory = "hooks/epg.content.refresh/schema-4",
-            requestSerializer = HostHookSpecs.EpgRefresh.requestSerializer,
-            resultSerializer = HostHookSpecs.EpgRefresh.responseSerializer,
         ),
         hookFixture(
-            hook = HostHookSpecs.MetadataEnrichment.hook,
-            schemaVersion = 3,
+            spec = HostHookSpecs.MetadataEnrichment,
             directory = "hooks/metadata.channel.enrich/schema-3",
-            requestSerializer = HostHookSpecs.MetadataEnrichment.requestSerializer,
-            resultSerializer = HostHookSpecs.MetadataEnrichment.responseSerializer,
         ),
         hookFixture(
-            hook = HostHookSpecs.SearchProvider.hook,
-            schemaVersion = 4,
+            spec = HostHookSpecs.SearchProvider,
             directory = "hooks/search.provider.query/schema-4",
-            requestSerializer = HostHookSpecs.SearchProvider.requestSerializer,
-            resultSerializer = HostHookSpecs.SearchProvider.responseSerializer,
         ),
         hookFixture(
-            hook = HostHookSpecs.BackgroundTask.hook,
-            schemaVersion = 2,
+            spec = HostHookSpecs.BackgroundTask,
             directory = "hooks/background.task.run/schema-2",
-            requestSerializer = HostHookSpecs.BackgroundTask.requestSerializer,
-            resultSerializer = HostHookSpecs.BackgroundTask.responseSerializer,
         ),
     )
 
@@ -159,10 +129,17 @@ class WireGoldenFixtureTest {
     @Test
     fun `fixture catalog explicitly covers every supported Hook schema`() {
         val fixtureSchemas = hookFixtureCatalog
-            .groupBy(HookFixture::hook)
-            .mapValues { (_, fixtures) -> fixtures.mapTo(mutableSetOf(), HookFixture::schemaVersion) }
+            .groupBy { fixture -> fixture.spec.hook }
+            .mapValues { (_, fixtures) ->
+                fixtures.mapTo(mutableSetOf()) { fixture -> fixture.spec.schemaVersion }
+            }
 
         assertEquals(ExtensionContractCatalog.SupportedHookSchemaVersions, fixtureSchemas)
+        assertTrue(
+            hookFixtureCatalog.all { fixture ->
+                ExtensionContractCatalog.containsCanonical(fixture.spec)
+            }
+        )
         hookFixtureCatalog.flatMap(HookFixture::fixtures).forEach { fixture ->
             fixture.verify()
         }
@@ -315,18 +292,14 @@ class WireGoldenFixtureTest {
     }
 
     private fun <Request : ExtensionPayload, Result : ExtensionPayload> hookFixture(
-        hook: Hook,
-        schemaVersion: Int,
+        spec: HookSpec<Request, Result>,
         directory: String,
-        requestSerializer: KSerializer<Request>,
-        resultSerializer: KSerializer<Result>,
     ): HookFixture {
         return HookFixture(
-            hook = hook,
-            schemaVersion = schemaVersion,
+            spec = spec,
             fixtures = listOf(
-                stableFixture("$directory/request.json", requestSerializer),
-                stableFixture("$directory/result.json", resultSerializer),
+                stableFixture("$directory/request.json", spec.requestSerializer),
+                stableFixture("$directory/result.json", spec.responseSerializer),
             ),
         )
     }
@@ -363,8 +336,7 @@ class WireGoldenFixtureTest {
         }.readText()
 
     private data class HookFixture(
-        val hook: Hook,
-        val schemaVersion: Int,
+        val spec: HookSpec<*, *>,
         val fixtures: List<GoldenFixture>,
     )
 

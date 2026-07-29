@@ -9,7 +9,7 @@
 按这个顺序工作：
 
 1. 在 [`:extension:api`](../../../extension/api/src/main/kotlin/com/m3u/extension/api) 定义 request、result 和 `HookSpec`。通用能力放在 `HostHookContracts.kt`，provider 能力放在 `subscription/`。
-2. 在 [`ExtensionContractCatalog`](../../../extension/api/src/main/kotlin/com/m3u/extension/api/ExtensionContract.kt) 登记宿主支持的 schema version 和 capability。
+2. 把官方 `HookSpec` 与基础 capability 加到唯一的 [`ExtensionContractCatalog`](../../../extension/api/src/main/kotlin/com/m3u/extension/api/ExtensionContractCatalog.kt) 条目列表。支持的 schema 与 capability 视图都由这份列表生成。
 3. 在 [`ExtensionRuntimeTest`](../../../extension/runtime/src/test/kotlin/com/m3u/extension/runtime/ExtensionRuntimeTest.kt) 覆盖注册、版本、能力、错误、大小、超时和取消中受影响的行为。
 4. 增加真实宿主调用点；manifest 声明只表示该 Hook 可用。
 5. 增加范围明确的宿主应用器，并测试错误结果、超限结果、部分失败和成功空结果。

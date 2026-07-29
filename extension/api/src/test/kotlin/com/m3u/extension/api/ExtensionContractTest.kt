@@ -38,12 +38,97 @@ import kotlin.test.assertFalse
 import kotlin.test.assertFails
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 
 class ExtensionContractTest {
+    @Test
+    fun `contract catalog owns every supported typed HookSpec`() {
+        val expectedSpecs = listOf(
+            SubscriptionHookSpecs.Discover,
+            SubscriptionHookSpecs.Validate,
+            SubscriptionHookSpecs.Refresh,
+            SubscriptionHookSpecs.ResolvePlayback,
+            SubscriptionHookSpecs.ClosePlayback,
+            HostHookSpecs.MetadataEnrichment,
+            HostHookSpecs.EpgRefresh,
+            HostHookSpecs.SettingsSchema,
+            HostHookSpecs.SearchProvider,
+            HostHookSpecs.BackgroundTask,
+        )
+
+        assertEquals(expectedSpecs, ExtensionContractCatalog.SupportedHookSpecs)
+        expectedSpecs.forEach { spec ->
+            val contract = ExtensionContractCatalog.contract(
+                hook = spec.hook,
+                schemaVersion = spec.schemaVersion,
+            )
+
+            assertSame(spec, contract?.spec)
+            assertTrue(ExtensionContractCatalog.containsCanonical(spec))
+        }
+    }
+
+    @Test
+    fun `contract catalog rejects a reconstructed HookSpec with the same wire key`() {
+        val official = HostHookSpecs.SettingsSchema
+        val reconstructed = HookSpec(
+            hook = official.hook,
+            schemaVersion = official.schemaVersion,
+            requestSerializer = official.requestSerializer,
+            responseSerializer = official.responseSerializer,
+        )
+
+        assertEquals(official, reconstructed)
+        assertFalse(ExtensionContractCatalog.containsCanonical(reconstructed))
+    }
+
+    @Test
+    fun `contract sets reject duplicate schemas and unsupported capabilities`() {
+        val contract = ExtensionHookContract(HostHookSpecs.SettingsSchema)
+
+        assertFailsWith<IllegalArgumentException> {
+            ExtensionContractSet(
+                contracts = listOf(contract, contract),
+                supportedCapabilities = ExtensionCapabilityIds.All,
+            )
+        }
+        assertFailsWith<IllegalArgumentException> {
+            ExtensionContractSet(
+                contracts = listOf(
+                    ExtensionHookContract(
+                        spec = HostHookSpecs.SettingsSchema,
+                        requiredCapabilities = setOf(Capability("future.capability")),
+                    )
+                ),
+                supportedCapabilities = ExtensionCapabilityIds.All,
+            )
+        }
+        val nextSchema = HookSpec(
+            hook = HostHookSpecs.SettingsSchema.hook,
+            schemaVersion = HostHookSpecs.SettingsSchema.schemaVersion + 1,
+            requestSerializer = HostHookSpecs.SettingsSchema.requestSerializer,
+            responseSerializer = HostHookSpecs.SettingsSchema.responseSerializer,
+        )
+        assertFailsWith<IllegalArgumentException> {
+            ExtensionContractSet(
+                contracts = listOf(
+                    contract,
+                    ExtensionHookContract(
+                        spec = nextSchema,
+                        requiredCapabilities = setOf(
+                            ExtensionCapabilityIds.SettingsContribute
+                        ),
+                    ),
+                ),
+                supportedCapabilities = ExtensionCapabilityIds.All,
+            )
+        }
+    }
+
     @Test
     fun `number settings reject non-finite defaults`() {
         listOf(Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY).forEach { value ->
@@ -148,31 +233,38 @@ class ExtensionContractTest {
 
     @Test
     fun `every privileged hook declares its base capability`() {
-        ExtensionContractCatalog.RequiredCapabilitiesByHook.forEach { (hook, required) ->
-            assertFailsWith<IllegalArgumentException>(hook.id) {
-                ExtensionManifest(
-                    id = ExtensionId("com.example.${hook.id.replace('.', '-')}"),
-                    displayName = "Capability example",
-                    extensionVersion = ExtensionSemanticVersion(1, 0, 0),
-                    apiRange = ExtensionApiRange(
-                        minimum = ExtensionApiVersions.Current,
-                        maximum = ExtensionApiVersions.Current,
-                    ),
-                    hooks = setOf(
-                        ExtensionHookDeclaration(
-                            hook = hook,
-                            requiredCapabilities = emptySet(),
-                        )
-                    ),
-                    capabilities = required.mapTo(mutableSetOf()) { capability ->
-                        ExtensionCapabilityRequest(
-                            capability = capability,
-                            reason = "Use ${capability.id}",
-                        )
-                    },
-                )
+        ExtensionContractCatalog.ContractSet.contracts
+            .filter { contract -> contract.requiredCapabilities.isNotEmpty() }
+            .forEach { contract ->
+                assertFailsWith<IllegalArgumentException>(contract.spec.hook.id) {
+                    ExtensionManifest(
+                        id = ExtensionId(
+                            "com.example.${contract.spec.hook.id.replace('.', '-')}"
+                        ),
+                        displayName = "Capability example",
+                        extensionVersion = ExtensionSemanticVersion(1, 0, 0),
+                        apiRange = ExtensionApiRange(
+                            minimum = ExtensionApiVersions.Current,
+                            maximum = ExtensionApiVersions.Current,
+                        ),
+                        hooks = setOf(
+                            ExtensionHookDeclaration(
+                                hook = contract.spec.hook,
+                                schemaVersion = contract.spec.schemaVersion,
+                                requiredCapabilities = emptySet(),
+                            )
+                        ),
+                        capabilities = contract.requiredCapabilities.mapTo(
+                            mutableSetOf()
+                        ) { capability ->
+                            ExtensionCapabilityRequest(
+                                capability = capability,
+                                reason = "Use ${capability.id}",
+                            )
+                        },
+                    )
+                }
             }
-        }
     }
 
     @Test

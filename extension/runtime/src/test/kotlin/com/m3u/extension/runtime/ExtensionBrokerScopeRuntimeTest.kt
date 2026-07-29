@@ -4,11 +4,13 @@ import com.m3u.extension.api.ExtensionApiRange
 import com.m3u.extension.api.ExtensionApiVersions
 import com.m3u.extension.api.ExtensionCapabilityIds
 import com.m3u.extension.api.ExtensionCapabilityRequest
+import com.m3u.extension.api.ExtensionContractSet
 import com.m3u.extension.api.ExtensionEntrypoint
 import com.m3u.extension.api.ExtensionErrorCodes
 import com.m3u.extension.api.ExtensionHandler
 import com.m3u.extension.api.ExtensionHookDeclaration
 import com.m3u.extension.api.ExtensionHookIds
+import com.m3u.extension.api.ExtensionHookContract
 import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.ExtensionManifest
 import com.m3u.extension.api.ExtensionPayload
@@ -363,6 +365,7 @@ class ExtensionBrokerScopeRuntimeTest {
         invocationPolicy = invocationPolicy,
         monotonicNanos = monotonicNanos,
         settingsProvider = settingsProvider,
+        contractSet = CONTRACT_SET,
     )
 
     private fun transport(
@@ -428,6 +431,15 @@ class ExtensionBrokerScopeRuntimeTest {
             schemaVersion = 4,
             requestSerializer = ScopePayload.serializer(),
             responseSerializer = ScopePayload.serializer(),
+        )
+        val CONTRACT_SET = ExtensionContractSet(
+            contracts = listOf(
+                ExtensionHookContract(
+                    spec = SPEC,
+                    requiredCapabilities = setOf(ExtensionCapabilityIds.SearchRead),
+                )
+            ),
+            supportedCapabilities = ExtensionCapabilityIds.All,
         )
         val MANIFEST = ExtensionManifest(
             id = EXTENSION_ID,

@@ -26,11 +26,15 @@ Runtime 负责完成一次调用。功能 repository 负责解释 result，并�
 
 两条路径使用相同的 `HookSpec<Request, Result>` 和 runtime 策略。
 
+`ExtensionContractCatalog` 是宿主唯一的契约目录。每一项把一个受支持的 Hook/schema
+组合与官方类型化序列化器、基础 capability 绑定。内置插件注册和宿主调用必须使用目录中的
+同一个 `HookSpec`；外部插件的 manifest 也会在 transport 注册前按同一目录和规则校验。
+
 ## 每一层负责什么
 
 | 负责人 | 职责 | 从这里开始 |
 | --- | --- | --- |
-| API 契约 | 插件身份、manifest、设置、Hook request/result 与 wire 字段 | [`:extension:api`](../../../extension/api/src/main/kotlin/com/m3u/extension/api) |
+| API 契约 | 插件身份、manifest、设置、Hook request/result、wire 字段与受支持契约目录 | [`:extension:api`](../../../extension/api/src/main/kotlin/com/m3u/extension/api)、[`ExtensionContractCatalog`](../../../extension/api/src/main/kotlin/com/m3u/extension/api/ExtensionContractCatalog.kt) |
 | Runtime | 注册、API/schema 协商、按 Hook 分配 capability、payload 限制、单插件与宿主级调用准入上限、一次调用的截止时间、取消与健康状态 | [`ExtensionRuntime`](../../../extension/runtime/src/main/kotlin/com/m3u/extension/runtime/ExtensionRuntime.kt) |
 | Android transport | Service 发现、身份、绑定、handshake、通过 `ParcelFileDescriptor` 传输的文件承载 JSON payload 与 Binder death | [`:extension:transport-android`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android) |
 | 外部 SDK | 解码调用并运行已注册的类型化 handler | [`TypedExtensionService`](../../../extension/sdk-android/src/main/java/com/m3u/extension/sdk/android/TypedExtensionService.kt) |

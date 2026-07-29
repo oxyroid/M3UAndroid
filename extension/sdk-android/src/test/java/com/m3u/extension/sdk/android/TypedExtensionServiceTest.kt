@@ -19,6 +19,7 @@ import com.m3u.extension.api.ExtensionSettingSection
 import com.m3u.extension.api.ExtensionSettingsSnapshot
 import com.m3u.extension.api.ExtensionSettingType
 import com.m3u.extension.api.HookResult
+import com.m3u.extension.api.HookSpec
 import com.m3u.extension.api.HostHookSpecs
 import com.m3u.extension.api.InvocationId
 import com.m3u.extension.api.SerializedExtensionEnvelope
@@ -144,6 +145,22 @@ class TypedExtensionServiceTest {
             }
         }
         registry.handle(HostHookSpecs.SettingsSchema) { _, _ -> HookResult.Success(SETTINGS_RESULT) }
+    }
+
+    @Test
+    fun `typed registry rejects a reconstructed HookSpec`() {
+        val reconstructed = HookSpec(
+            hook = HostHookSpecs.SettingsSchema.hook,
+            schemaVersion = HostHookSpecs.SettingsSchema.schemaVersion,
+            requestSerializer = HostHookSpecs.SettingsSchema.requestSerializer,
+            responseSerializer = HostHookSpecs.SettingsSchema.responseSerializer,
+        )
+
+        assertFailsWith<IllegalArgumentException> {
+            TypedHookRegistry().handle(reconstructed) { _, _ ->
+                HookResult.Success(SETTINGS_RESULT)
+            }
+        }
     }
 
     @Test

@@ -2,12 +2,15 @@ package com.m3u.extension.runtime
 
 import com.m3u.extension.api.Capability
 import com.m3u.extension.api.ExtensionApiVersion
-import com.m3u.extension.api.ExtensionContractCatalog
 import com.m3u.extension.api.ExtensionCallContext
+import com.m3u.extension.api.ExtensionCapabilityRequest
+import com.m3u.extension.api.ExtensionContractCatalog
+import com.m3u.extension.api.ExtensionContractSet
 import com.m3u.extension.api.ExtensionEntrypoint
 import com.m3u.extension.api.ExtensionError
 import com.m3u.extension.api.ExtensionErrorCodes
 import com.m3u.extension.api.ExtensionHandler
+import com.m3u.extension.api.ExtensionHookDeclaration
 import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.ExtensionInvocationBudget
 import com.m3u.extension.api.ExtensionManifest
@@ -175,6 +178,35 @@ class ExtensionRuntime(
     },
     private val monotonicNanos: () -> Long = System::nanoTime,
 ) : ExtensionCatalog {
+    private var contractSet: ExtensionContractSet = ExtensionContractCatalog.ContractSet
+
+    internal constructor(
+        hostApiVersion: ExtensionApiVersion,
+        contractSet: ExtensionContractSet,
+        invocationIdFactory: InvocationIdFactory = UuidInvocationIdFactory(),
+        capabilityPolicy: CapabilityPolicy = DeclaredCapabilityPolicy,
+        settingsProvider: ExtensionSettingsProvider = EmptyExtensionSettingsProvider,
+        brokerScopeProvider: ExtensionBrokerScopeProvider =
+            EmptyExtensionBrokerScopeProvider,
+        invocationPolicy: InvocationPolicy = InvocationPolicy(),
+        json: Json = Json {
+            ignoreUnknownKeys = true
+            explicitNulls = false
+        },
+        monotonicNanos: () -> Long = System::nanoTime,
+    ) : this(
+        hostApiVersion = hostApiVersion,
+        invocationIdFactory = invocationIdFactory,
+        capabilityPolicy = capabilityPolicy,
+        settingsProvider = settingsProvider,
+        brokerScopeProvider = brokerScopeProvider,
+        invocationPolicy = invocationPolicy,
+        json = json,
+        monotonicNanos = monotonicNanos,
+    ) {
+        this.contractSet = contractSet
+    }
+
     private val registrations = ConcurrentHashMap<ExtensionId, Registration>()
     private val externalFailureTrackers =
         ConcurrentHashMap<ExtensionId, ExternalFailureTracker>()
@@ -184,10 +216,7 @@ class ExtensionRuntime(
 
     fun register(entrypoint: ExtensionEntrypoint): ExtensionRegistrationResult {
         val manifest = entrypoint.manifest
-        if (!isApiMajorCompatible(manifest)) {
-            return ExtensionRegistrationResult.Rejected(incompatibleApiError(manifest))
-        }
-        validateManifestBounds(manifest)?.let { error ->
+        validateManifestCompatibility(manifest)?.let { error ->
             return ExtensionRegistrationResult.Rejected(error)
         }
         val handlers = entrypoint.handlers.toList()
@@ -197,6 +226,21 @@ class ExtensionRuntime(
             .keys
         if (duplicateHooks.isNotEmpty()) {
             return invalidRegistration(manifest, "Extension binds a hook more than once", duplicateHooks)
+        }
+        val nonCanonicalHooks = handlers
+            .filterNot { handler -> contractSet.containsCanonical(handler.spec) }
+            .mapTo(mutableSetOf()) { handler -> handler.spec.hook }
+        if (nonCanonicalHooks.isNotEmpty()) {
+            return ExtensionRegistrationResult.Rejected(
+                ExtensionError(
+                    code = ExtensionErrorCodes.SchemaIncompatible,
+                    message = "Extension binds a non-canonical Hook contract",
+                    recoverable = false,
+                    details = mapOf(
+                        "hooks" to nonCanonicalHooks.joinToString(transform = Hook::id)
+                    ),
+                )
+            )
         }
         val declarations = manifest.hooks.associateBy { declaration -> declaration.hook }
         val boundHooks = handlers.mapTo(mutableSetOf()) { handler -> handler.spec.hook }
@@ -352,9 +396,7 @@ class ExtensionRuntime(
     }
 
     fun validateExternalManifest(manifest: ExtensionManifest): ExtensionError? {
-        if (!isApiMajorCompatible(manifest)) return incompatibleApiError(manifest)
-        validateManifestBounds(manifest)?.let { return it }
-        return externalManifestError(manifest)
+        return validateManifestCompatibility(manifest)
     }
 
     override fun extensionsSupporting(hook: Hook): List<RegisteredExtension> = registrations.values
@@ -374,6 +416,16 @@ class ExtensionRuntime(
             ?: return failure(invocationId, extensionId, spec, ExtensionErrorCodes.ExtensionNotFound, "Extension $extensionId is not registered", true)
         val registration = registrationSnapshot.registration
         val registrationLease = registrationSnapshot.lease
+        if (!contractSet.containsCanonical(spec)) {
+            return failure(
+                invocationId = invocationId,
+                extensionId = extensionId,
+                spec = spec,
+                code = ExtensionErrorCodes.SchemaIncompatible,
+                message = "Host invocation uses a non-canonical Hook contract",
+                recoverable = false,
+            )
+        }
         if (!registration.enabled) {
             return failure(invocationId, extensionId, spec, ExtensionErrorCodes.ExtensionDisabled, "Extension $extensionId is disabled", true)
         }
@@ -710,9 +762,16 @@ class ExtensionRuntime(
         manifest.apiRange.minimum.major == hostApiVersion.major &&
             manifest.apiRange.maximum.major == hostApiVersion.major
 
-    private fun externalManifestError(manifest: ExtensionManifest): ExtensionError? {
+    private fun validateManifestCompatibility(manifest: ExtensionManifest): ExtensionError? {
+        if (!isApiMajorCompatible(manifest)) return incompatibleApiError(manifest)
+        validateManifestBounds(manifest)?.let { return it }
+        return contractManifestError(manifest)
+    }
+
+    private fun contractManifestError(manifest: ExtensionManifest): ExtensionError? {
         val unsupportedHooks = manifest.hooks.filter { declaration ->
-            declaration.schemaVersion !in ExtensionContractCatalog.SupportedHookSchemaVersions[declaration.hook].orEmpty()
+            declaration.schemaVersion !in
+                contractSet.supportedHookSchemaVersions[declaration.hook].orEmpty()
         }
         if (unsupportedHooks.isNotEmpty()) {
             return ExtensionError(
@@ -726,15 +785,48 @@ class ExtensionRuntime(
                 ),
             )
         }
-        val unknownRequiredCapabilities = manifest.capabilities
-            .filter { request -> request.required && request.capability !in ExtensionContractCatalog.SupportedCapabilities }
+        val hooksMissingBaseCapabilities = manifest.hooks.mapNotNull { declaration ->
+            val missingCapabilities = contractSet
+                .contract(declaration.hook, declaration.schemaVersion)
+                ?.requiredCapabilities
+                .orEmpty() - declaration.requiredCapabilities
+            missingCapabilities
+                .takeIf(Set<Capability>::isNotEmpty)
+                ?.let { capabilities -> declaration to capabilities }
+        }
+        if (hooksMissingBaseCapabilities.isNotEmpty()) {
+            return ExtensionError(
+                code = ExtensionErrorCodes.RegistrationInvalid,
+                message = "Extension Hook declaration omits host-required capabilities",
+                recoverable = false,
+                details = mapOf(
+                    "hooks" to hooksMissingBaseCapabilities.joinToString { missing ->
+                        "${missing.first.hook.id}@${missing.first.schemaVersion}: " +
+                            missing.second.joinToString(transform = Capability::id)
+                    }
+                ),
+            )
+        }
+        val explicitlyRequiredCapabilities = manifest.capabilities
+            .filter(ExtensionCapabilityRequest::required)
+            .mapTo(mutableSetOf(), ExtensionCapabilityRequest::capability)
+        val hookRequiredCapabilities = manifest.hooks
+            .flatMapTo(mutableSetOf(), ExtensionHookDeclaration::requiredCapabilities)
+        val unknownRequiredCapabilities =
+            (explicitlyRequiredCapabilities + hookRequiredCapabilities)
+                .filterNot { capability ->
+                    capability in contractSet.supportedCapabilities
+                }
         if (unknownRequiredCapabilities.isNotEmpty()) {
             return ExtensionError(
                 code = ExtensionErrorCodes.CapabilityDenied,
                 message = "Extension requires capabilities unknown to this host",
                 recoverable = false,
                 details = mapOf(
-                    "capabilities" to unknownRequiredCapabilities.joinToString { it.capability.id }
+                    "capabilities" to
+                        unknownRequiredCapabilities.joinToString(
+                            transform = Capability::id
+                        )
                 ),
             )
         }

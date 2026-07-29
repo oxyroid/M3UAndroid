@@ -8,12 +8,14 @@ import com.m3u.extension.api.ExtensionApiVersions
 import com.m3u.extension.api.ExtensionCallContext
 import com.m3u.extension.api.ExtensionCapabilityIds
 import com.m3u.extension.api.ExtensionCapabilityRequest
+import com.m3u.extension.api.ExtensionContractSet
 import com.m3u.extension.api.ExtensionError
 import com.m3u.extension.api.ExtensionErrorCode
 import com.m3u.extension.api.ExtensionErrorCodes
 import com.m3u.extension.api.ExtensionHandler
 import com.m3u.extension.api.ExtensionHookDeclaration
 import com.m3u.extension.api.ExtensionHookIds
+import com.m3u.extension.api.ExtensionHookContract
 import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.ExtensionInvocationBudget
 import com.m3u.extension.api.ExtensionManifest
@@ -194,6 +196,89 @@ class ExtensionRuntimeTest {
         }
 
     @Test
+    fun `built in registration rejects a reconstructed HookSpec`() {
+        val original = entrypoint()
+        val runtime = runtime()
+        val reconstructed = HookSpec(
+            hook = TEST_SPEC.hook,
+            schemaVersion = TEST_SPEC.schemaVersion,
+            requestSerializer = TEST_SPEC.requestSerializer,
+            responseSerializer = TEST_SPEC.responseSerializer,
+        )
+        val forgedEntrypoint = object : ExtensionEntrypoint {
+            override val manifest = original.manifest
+            override val handlers = listOf(
+                object : ExtensionHandler<TestPayload, TestPayload> {
+                    override val spec = reconstructed
+
+                    override suspend fun invoke(
+                        context: ExtensionCallContext,
+                        request: TestPayload,
+                    ): HookResult<TestPayload> = HookResult.Success(request)
+                }
+            )
+        }
+
+        val rejected = assertIs<ExtensionRegistrationResult.Rejected>(
+            runtime.register(forgedEntrypoint)
+        )
+
+        assertEquals(ExtensionErrorCodes.SchemaIncompatible, rejected.error.code)
+        assertTrue(runtime.registeredExtensions().isEmpty())
+    }
+
+    @Test
+    fun `external invocation rejects a reconstructed HookSpec before transport dispatch`() =
+        runBlocking {
+            var transportInvoked = false
+            val runtime = runtime()
+            val extensionManifest = entrypoint().manifest
+            val external = object : ExtensionTransport {
+                override val manifest = extensionManifest
+
+                override suspend fun invoke(
+                    request: SerializedExtensionEnvelope,
+                ): SerializedExtensionResult {
+                    transportInvoked = true
+                    return SerializedExtensionResult(
+                        invocationId = request.invocationId,
+                        extensionId = request.extensionId,
+                        hook = request.hook,
+                        schemaVersion = request.schemaVersion,
+                        payload = Json.encodeToJsonElement(
+                            TEST_SPEC.responseSerializer,
+                            TestPayload("unexpected"),
+                        ),
+                    )
+                }
+
+                override suspend fun cancel(invocationId: InvocationId) = Unit
+
+                override suspend fun health(): ExtensionTransportHealth =
+                    ExtensionTransportHealth.HEALTHY
+            }
+            runtime.register(external)
+            val reconstructed = HookSpec(
+                hook = TEST_SPEC.hook,
+                schemaVersion = TEST_SPEC.schemaVersion,
+                requestSerializer = TEST_SPEC.requestSerializer,
+                responseSerializer = TEST_SPEC.responseSerializer,
+            )
+
+            val result = runtime.invoke(
+                extensionId = extensionManifest.id,
+                spec = reconstructed,
+                request = TestPayload("request"),
+            )
+
+            assertEquals(
+                ExtensionErrorCodes.SchemaIncompatible,
+                assertIs<HookResult.Failure>(result.outcome).error.code,
+            )
+            assertFalse(transportInvoked)
+        }
+
+    @Test
     fun `runtime derives and rejects missing capabilities from policy`() = runBlocking {
         val runtime = runtime(capabilityPolicy = CapabilityPolicy { _, _ -> emptySet() })
         val entrypoint = entrypoint()
@@ -225,7 +310,10 @@ class ExtensionRuntimeTest {
 
     @Test
     fun `runtime negotiates hook schemas across API minor versions`() {
-        val runtime = ExtensionRuntime(hostApiVersion = ExtensionApiVersion(major = 1, minor = 9))
+        val runtime = ExtensionRuntime(
+            hostApiVersion = ExtensionApiVersion(major = 1, minor = 9),
+            contractSet = TEST_CONTRACT_SET,
+        )
         val entrypoint = entrypoint(
             apiRange = ExtensionApiRange(
                 minimum = ExtensionApiVersion(major = 1, minor = 0),
@@ -1084,21 +1172,23 @@ class ExtensionRuntimeTest {
     }
 
     @Test
-    fun `external transport rejects unsupported hook schema`() {
+    fun `built in and external registrations reject unsupported hook schema`() {
         val baseManifest = entrypoint().manifest
         val manifest = baseManifest.copy(
             hooks = setOf(baseManifest.hooks.single().copy(schemaVersion = 99))
         )
 
-        val rejected = assertIs<ExtensionRegistrationResult.Rejected>(
-            runtime().register(transport(manifest))
-        )
-
-        assertEquals(ExtensionErrorCodes.SchemaIncompatible, rejected.error.code)
+        listOf(
+            runtime().register(entrypointWithManifest(manifest)),
+            runtime().register(transport(manifest)),
+        ).forEach { result ->
+            val rejected = assertIs<ExtensionRegistrationResult.Rejected>(result)
+            assertEquals(ExtensionErrorCodes.SchemaIncompatible, rejected.error.code)
+        }
     }
 
     @Test
-    fun `external transport rejects unknown required capability but ignores optional one`() {
+    fun `built in and external registrations share unknown capability policy`() {
         val unknown = Capability("future.capability")
         val requiredManifest = entrypoint().manifest.copy(
             capabilities = entrypoint().manifest.capabilities +
@@ -1110,11 +1200,61 @@ class ExtensionRuntimeTest {
             }
         )
 
-        val rejected = assertIs<ExtensionRegistrationResult.Rejected>(
-            runtime().register(transport(requiredManifest))
+        listOf(
+            runtime().register(entrypointWithManifest(requiredManifest)),
+            runtime().register(transport(requiredManifest)),
+        ).forEach { result ->
+            val rejected = assertIs<ExtensionRegistrationResult.Rejected>(result)
+            assertEquals(ExtensionErrorCodes.CapabilityDenied, rejected.error.code)
+        }
+        listOf(
+            runtime().register(entrypointWithManifest(optionalManifest)),
+            runtime().register(transport(optionalManifest)),
+        ).forEach { result ->
+            assertIs<ExtensionRegistrationResult.Registered>(result)
+        }
+
+        val requiredByHookManifest = optionalManifest.copy(
+            hooks = optionalManifest.hooks.mapTo(mutableSetOf()) { declaration ->
+                declaration.copy(
+                    requiredCapabilities = declaration.requiredCapabilities + unknown
+                )
+            }
         )
-        assertEquals(ExtensionErrorCodes.CapabilityDenied, rejected.error.code)
-        assertIs<ExtensionRegistrationResult.Registered>(runtime().register(transport(optionalManifest)))
+        listOf(
+            runtime().register(entrypointWithManifest(requiredByHookManifest)),
+            runtime().register(transport(requiredByHookManifest)),
+        ).forEach { result ->
+            val rejected = assertIs<ExtensionRegistrationResult.Rejected>(result)
+            assertEquals(ExtensionErrorCodes.CapabilityDenied, rejected.error.code)
+        }
+    }
+
+    @Test
+    fun `runtime validates base capabilities against its active contract set`() {
+        val stricterContractSet = ExtensionContractSet(
+            contracts = listOf(
+                ExtensionHookContract(
+                    spec = TEST_SPEC,
+                    requiredCapabilities = setOf(
+                        ExtensionCapabilityIds.PlaybackResolve,
+                        ExtensionCapabilityIds.SearchRead,
+                    ),
+                )
+            ),
+            supportedCapabilities = ExtensionCapabilityIds.All,
+        )
+        val runtime = ExtensionRuntime(
+            hostApiVersion = ExtensionApiVersions.Current,
+            contractSet = stricterContractSet,
+        )
+
+        val rejected = assertIs<ExtensionRegistrationResult.Rejected>(
+            runtime.register(entrypoint())
+        )
+
+        assertEquals(ExtensionErrorCodes.RegistrationInvalid, rejected.error.code)
+        assertTrue(runtime.registeredExtensions().isEmpty())
     }
 
     @Test
@@ -1351,6 +1491,7 @@ class ExtensionRuntimeTest {
         settingsProvider = settingsProvider,
         invocationPolicy = invocationPolicy,
         monotonicNanos = monotonicNanos,
+        contractSet = TEST_CONTRACT_SET,
     )
 
     private fun entrypoint(
@@ -1390,6 +1531,16 @@ class ExtensionRuntimeTest {
         )
     }
 
+    private fun entrypointWithManifest(
+        manifest: ExtensionManifest,
+    ): ExtensionEntrypoint {
+        val original = entrypoint()
+        return object : ExtensionEntrypoint {
+            override val manifest = manifest
+            override val handlers = original.handlers
+        }
+    }
+
     @Serializable
     private data class TestPayload(val value: String) : ExtensionPayload
 
@@ -1402,6 +1553,17 @@ class ExtensionRuntimeTest {
             schemaVersion = 4,
             requestSerializer = TestPayload.serializer(),
             responseSerializer = TestPayload.serializer(),
+        )
+        val TEST_CONTRACT_SET = ExtensionContractSet(
+            contracts = listOf(
+                ExtensionHookContract(
+                    spec = TEST_SPEC,
+                    requiredCapabilities = setOf(
+                        ExtensionCapabilityIds.PlaybackResolve,
+                    ),
+                )
+            ),
+            supportedCapabilities = ExtensionCapabilityIds.All,
         )
     }
 }

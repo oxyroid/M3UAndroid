@@ -9,7 +9,7 @@ Before editing code, write the complete path: who creates the request, which Hoo
 Work in this order:
 
 1. Define request, result, and `HookSpec` in [`:extension:api`](../../../extension/api/src/main/kotlin/com/m3u/extension/api). Put general features in `HostHookContracts.kt` and provider features under `subscription/`.
-2. Register host-supported schema versions and capabilities in [`ExtensionContractCatalog`](../../../extension/api/src/main/kotlin/com/m3u/extension/api/ExtensionContract.kt).
+2. Add that official `HookSpec` and its base capabilities to the single [`ExtensionContractCatalog`](../../../extension/api/src/main/kotlin/com/m3u/extension/api/ExtensionContractCatalog.kt) entry list. Its supported-schema and capability views are derived from this list.
 3. Cover affected registration, version, capability, error, size, timeout, and cancellation behavior in [`ExtensionRuntimeTest`](../../../extension/runtime/src/test/kotlin/com/m3u/extension/runtime/ExtensionRuntimeTest.kt).
 4. Add a real host caller; the manifest declaration only advertises that the Hook is available.
 5. Add a scoped host applier and test errors, oversized results, partial failure, and successful empty results.
