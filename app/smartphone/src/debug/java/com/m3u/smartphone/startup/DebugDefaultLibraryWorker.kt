@@ -8,6 +8,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithChannels
 import com.m3u.data.repository.playlist.PlaylistRepository
@@ -33,11 +34,20 @@ internal class DebugDefaultLibraryWorker @AssistedInject constructor(
     private val playlistRepository: PlaylistRepository,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result = try {
-        when (readBootstrapState()) {
-            BootstrapState.IMPORTED,
-            BootstrapState.OPTED_OUT -> Result.success()
-            BootstrapState.PENDING -> resumePendingImport()
-            null -> beginFirstImport()
+        val state = readBootstrapState()
+        when (state?.status) {
+            DebugDefaultLibraryBootstrapStatus.OPTED_OUT -> Result.success()
+            DebugDefaultLibraryBootstrapStatus.IMPORTED -> {
+                val manifest = loadManifest()
+                if (state.needsAssetUpdate(manifest.revision)) {
+                    updateImportedLibrary(state, manifest)
+                } else {
+                    Result.success()
+                }
+            }
+            DebugDefaultLibraryBootstrapStatus.PENDING ->
+                resumePendingImport(loadManifest())
+            null -> beginFirstImport(loadManifest())
         }
     } catch (cancelled: CancellationException) {
         throw cancelled
@@ -51,57 +61,93 @@ internal class DebugDefaultLibraryWorker @AssistedInject constructor(
         }
     }
 
-    private suspend fun beginFirstImport(): Result {
+    private suspend fun beginFirstImport(
+        manifest: DebugDefaultLibraryManifest,
+    ): Result {
         if (playlistRepository.getAll().isNotEmpty()) {
-            writeBootstrapState(BootstrapState.OPTED_OUT)
+            writeBootstrapState(optedOutState())
             return Result.success()
         }
-        writeBootstrapState(BootstrapState.PENDING)
-        return resumePendingImport()
+        writeBootstrapState(
+            DebugDefaultLibraryBootstrapState(
+                status = DebugDefaultLibraryBootstrapStatus.PENDING,
+                revision = manifest.revision,
+            )
+        )
+        return resumePendingImport(manifest)
     }
 
-    private suspend fun resumePendingImport(): Result {
-        val manifest = loadManifest()
+    private suspend fun resumePendingImport(
+        manifest: DebugDefaultLibraryManifest,
+    ): Result {
         val currentPlaylists = playlistRepository.getAll()
         if (currentPlaylists.isNotEmpty()) {
-            writeBootstrapState(
-                if (currentPlaylists.containsDefaultLibrary(manifest)) {
-                    BootstrapState.IMPORTED
-                } else {
-                    BootstrapState.OPTED_OUT
-                }
-            )
+            val imported = currentPlaylists.findDefaultLibrary(manifest)
+            writeBootstrapState(imported?.toImportedState(manifest) ?: optedOutState())
             return Result.success()
         }
 
         val playlistFile = installPlaylistAsset(manifest)
         if (playlistRepository.getAll().isNotEmpty()) {
-            writeBootstrapState(BootstrapState.OPTED_OUT)
+            writeBootstrapState(optedOutState())
             return Result.success()
         }
-        val playlistUri = FileProvider.getUriForFile(
-            applicationContext,
-            "${applicationContext.packageName}.provider",
-            playlistFile,
-        )
         playlistRepository.m3uOrThrow(
             title = manifest.title,
-            url = playlistUri.toString(),
+            url = playlistFile.contentUri(),
         )
-        writeBootstrapState(BootstrapState.IMPORTED)
+        val imported = playlistRepository.getAll().findDefaultLibrary(manifest)
+            ?: throw DebugDefaultLibraryFormatException(
+                "The bundled default library import did not commit its expected channels"
+            )
+        writeBootstrapState(imported.toImportedState(manifest))
         return Result.success()
     }
 
-    private suspend fun List<Playlist>.containsDefaultLibrary(
+    private suspend fun updateImportedLibrary(
+        state: DebugDefaultLibraryBootstrapState,
         manifest: DebugDefaultLibraryManifest,
-    ): Boolean = any { playlist ->
-        if (playlist.title != manifest.title) {
-            false
-        } else {
-            playlistRepository.getPlaylistWithChannels(playlist.url)
-                ?.matches(manifest)
-                ?: false
+    ): Result {
+        val currentPlaylists = playlistRepository.getAll()
+        val tracked = state.playlistUrl
+            ?.let { playlistUrl ->
+                currentPlaylists.singleOrNull { playlist ->
+                    playlist.url == playlistUrl
+                }
+            }
+            ?: currentPlaylists.singleOrNull { playlist ->
+                playlist.source == DataSource.M3U &&
+                    playlist.title == manifest.title
+            }
+        if (tracked == null) {
+            writeBootstrapState(optedOutState())
+            return Result.success()
         }
+
+        val playlistFile = installPlaylistAsset(manifest)
+        playlistRepository.m3uOrThrow(
+            title = tracked.title,
+            url = playlistFile.contentUri(),
+        )
+        val updated = playlistRepository.getPlaylistWithChannels(tracked.url)
+        if (updated?.matches(manifest) != true) {
+            throw DebugDefaultLibraryFormatException(
+                "The bundled default library update did not commit its expected channels"
+            )
+        }
+        writeBootstrapState(tracked.toImportedState(manifest))
+        return Result.success()
+    }
+
+    private suspend fun List<Playlist>.findDefaultLibrary(
+        manifest: DebugDefaultLibraryManifest,
+    ): Playlist? = firstOrNull { playlist ->
+        playlist.source == DataSource.M3U &&
+            playlist.title == manifest.title &&
+            (
+                playlistRepository.getPlaylistWithChannels(playlist.url)
+                    ?.matches(manifest) == true
+            )
     }
 
     private fun PlaylistWithChannels.matches(
@@ -110,6 +156,26 @@ internal class DebugDefaultLibraryWorker @AssistedInject constructor(
         channels.mapNotNullTo(mutableSetOf()) { channel ->
             channel.relationId
         } == manifest.expectedChannelIds
+
+    private fun Playlist.toImportedState(
+        manifest: DebugDefaultLibraryManifest,
+    ): DebugDefaultLibraryBootstrapState =
+        DebugDefaultLibraryBootstrapState(
+            status = DebugDefaultLibraryBootstrapStatus.IMPORTED,
+            revision = manifest.revision,
+            playlistUrl = url,
+        )
+
+    private fun optedOutState(): DebugDefaultLibraryBootstrapState =
+        DebugDefaultLibraryBootstrapState(
+            status = DebugDefaultLibraryBootstrapStatus.OPTED_OUT,
+        )
+
+    private fun File.contentUri(): String = FileProvider.getUriForFile(
+        applicationContext,
+        "${applicationContext.packageName}.provider",
+        this,
+    ).toString()
 
     private suspend fun loadManifest(): DebugDefaultLibraryManifest =
         withContext(Dispatchers.IO) {
@@ -153,19 +219,21 @@ internal class DebugDefaultLibraryWorker @AssistedInject constructor(
         destination
     }
 
-    private suspend fun readBootstrapState(): BootstrapState? =
+    private suspend fun readBootstrapState(): DebugDefaultLibraryBootstrapState? =
         withContext(Dispatchers.IO) {
             val stateFile = bootstrapStateFile()
             if (!stateFile.exists()) {
                 null
             } else {
-                BootstrapState.entries.singleOrNull { state ->
-                    state.serializedValue == stateFile.readText().trim()
-                } ?: BootstrapState.OPTED_OUT
+                DebugDefaultLibraryBootstrapStateCodec.decodeOrNull(
+                    stateFile.readText()
+                ) ?: optedOutState()
             }
         }
 
-    private suspend fun writeBootstrapState(state: BootstrapState) {
+    private suspend fun writeBootstrapState(
+        state: DebugDefaultLibraryBootstrapState,
+    ) {
         withContext(NonCancellable + Dispatchers.IO) {
             val destination = bootstrapStateFile()
             val directory = checkNotNull(destination.parentFile)
@@ -174,7 +242,9 @@ internal class DebugDefaultLibraryWorker @AssistedInject constructor(
             }
             val temporary = File(directory, "${destination.name}.tmp")
             FileOutputStream(temporary).use { output ->
-                output.write(state.serializedValue.toByteArray())
+                output.write(
+                    DebugDefaultLibraryBootstrapStateCodec.encode(state).toByteArray()
+                )
                 output.fd.sync()
             }
             temporary.moveReplacing(destination)
@@ -220,12 +290,6 @@ internal class DebugDefaultLibraryWorker @AssistedInject constructor(
             totalBytes += count
         }
         return output.toByteArray()
-    }
-
-    private enum class BootstrapState(val serializedValue: String) {
-        PENDING("pending"),
-        IMPORTED("imported"),
-        OPTED_OUT("opted-out"),
     }
 
     companion object {
