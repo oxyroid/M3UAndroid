@@ -21,6 +21,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
@@ -48,6 +49,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.m3u.business.setting.ExtensionSettingInputError
@@ -306,21 +308,30 @@ private fun ExtensionSettingControl(
     modifier: Modifier = Modifier,
 ) {
     val requiredDescription = stringResource(string.feat_setting_provider_error_required)
-    val plainFieldLabel = field.label.withoutBidiControls()
+    val semanticFieldLabelText = extensionSettingSemanticText(
+        value = field.label,
+        bidiFormatter = bidiFormatter,
+    )
+    val semanticFieldDescriptionText = field.description
+        ?.takeIf(String::isNotBlank)
+        ?.let { description ->
+            extensionSettingSemanticText(
+                value = description,
+                bidiFormatter = bidiFormatter,
+            )
+        }
     val semanticFieldLabel = if (field.required) {
         stringResource(
             string.feat_setting_extension_field_required_description,
-            plainFieldLabel,
+            semanticFieldLabelText,
             requiredDescription,
         )
     } else {
-        plainFieldLabel
+        semanticFieldLabelText
     }
     val semanticFieldDescription = listOfNotNull(
         semanticFieldLabel,
-        field.description
-            ?.takeIf(String::isNotBlank)
-            ?.withoutBidiControls(),
+        semanticFieldDescriptionText,
     ).joinToString(separator = "\n")
     val inputError = field.extensionSettingInputError(
         rawValue = rawValue,
@@ -335,12 +346,12 @@ private fun ExtensionSettingControl(
     val saveDescription = stringResource(
         string.feat_setting_extension_action_field_description,
         saveLabel,
-        bidiFormatter.natural(field.label),
+        semanticFieldLabelText,
     )
     val clearDescription = stringResource(
         string.feat_setting_extension_action_field_description,
         clearLabel,
-        bidiFormatter.natural(field.label),
+        semanticFieldLabelText,
     )
     val focusManager = LocalFocusManager.current
     Column(
@@ -396,25 +407,27 @@ private fun ExtensionSettingControl(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     field.choices.forEach { choice ->
+                        val semanticChoiceLabel = extensionSettingSemanticText(
+                            value = choice.label,
+                            bidiFormatter = bidiFormatter,
+                        )
                         val choiceDescription = if (field.required) {
                             stringResource(
                                 string.feat_setting_extension_choice_field_required_description,
-                                choice.label.withoutBidiControls(),
-                                plainFieldLabel,
+                                semanticChoiceLabel,
+                                semanticFieldLabelText,
                                 requiredDescription,
                             )
                         } else {
                             stringResource(
                                 string.feat_setting_extension_choice_field_description,
-                                choice.label.withoutBidiControls(),
-                                plainFieldLabel,
+                                semanticChoiceLabel,
+                                semanticFieldLabelText,
                             )
                         }
                         val choiceControlDescription = listOfNotNull(
                             choiceDescription,
-                            field.description
-                                ?.takeIf(String::isNotBlank)
-                                ?.withoutBidiControls(),
+                            semanticFieldDescriptionText,
                         ).joinToString(separator = "\n")
                         FilterChip(
                             selected = rawValue == choice.value,
@@ -448,6 +461,7 @@ private fun ExtensionSettingControl(
             ExtensionSettingType.SECRET -> {
                 val singleLineInput =
                     field.type != ExtensionSettingType.TEXT || field.networkOrigin
+                val textDirection = extensionSettingInputTextDirection(field)
                 fun commitInput(): Boolean {
                     onValidationRequested()
                     if (inputError != null) return false
@@ -481,6 +495,9 @@ private fun ExtensionSettingControl(
                     } else {
                         VisualTransformation.None
                     },
+                    textStyle = LocalTextStyle.current.copy(
+                        textDirection = textDirection,
+                    ),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = if (field.type == ExtensionSettingType.NUMBER) {
                             KeyboardType.Decimal
@@ -617,4 +634,20 @@ private fun SettingLabel(
 private fun Any?.primitiveContent(): String = when (this) {
     is JsonPrimitive -> booleanOrNull?.toString() ?: contentOrNull.orEmpty()
     else -> ""
+}
+
+internal fun extensionSettingSemanticText(
+    value: String,
+    bidiFormatter: UiBidiFormatter,
+): String = bidiFormatter.natural(value.withoutBidiControls())
+
+internal fun extensionSettingInputTextDirection(
+    field: ExtensionSettingField,
+): TextDirection = if (
+    field.type == ExtensionSettingType.NUMBER ||
+        field.networkOrigin
+) {
+    TextDirection.Ltr
+} else {
+    TextDirection.ContentOrLtr
 }
