@@ -457,7 +457,7 @@ internal fun BrokeredHttpResponse.referencePlaybackResult(
     providerResponseResult("playback resolution") {
         val payload = body.decodeReferencePayload<ReferencePlaybackPayload>()
         val expectedStreamUrl = request.account.baseUrl.referenceEndpoint(
-            "stream/${request.reference.itemId}/index.m3u8"
+            "stream/${request.reference.itemId}/sample.wav"
         )
         requireReferencePayload(payload.url == expectedStreamUrl)
         requireReferencePayload(

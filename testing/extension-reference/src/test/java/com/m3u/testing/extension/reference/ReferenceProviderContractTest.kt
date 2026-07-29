@@ -274,10 +274,14 @@ class ReferenceProviderContractTest {
             statusCode = 200,
             headers = emptyMap(),
             body =
-                """{"url":"$BASE_URL/reference-provider/stream/reference.news/index.m3u8","media_source_id":"reference-media-reference.news","play_session_id":"reference-play-session-reference.news","live_stream_id":"reference-live-stream-reference.news"}""",
+                """{"url":"$BASE_URL/reference-provider/stream/reference.news/sample.wav","media_source_id":"reference-media-reference.news","play_session_id":"reference-play-session-reference.news","live_stream_id":"reference-live-stream-reference.news"}""",
         ).referencePlaybackResult(resolveRequest)
         val playback = assertIs<HookResult.Success<*>>(playbackResult).payload
         val source = assertIs<PlaybackSourceResolveResult>(playback)
+        assertEquals(
+            "$BASE_URL/reference-provider/stream/reference.news/sample.wav",
+            source.url,
+        )
         assertEquals(
             BrokerValue.Secret(SecretReference(CREDENTIAL_HANDLE)),
             source.headers.getValue("X-Emby-Token").parts.single(),

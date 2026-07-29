@@ -14,7 +14,7 @@ import kotlinx.serialization.json.jsonPrimitive
 
 class ReferenceProviderEndpointTest {
     @Test
-    fun `reference provider enforces token and tracks session lifecycle`() {
+    fun `reference provider serves authenticated deterministic media and tracks sessions`() {
         val port = ServerSocket(0).use { socket -> socket.localPort }
         val server = embeddedServer(
             factory = Netty,
@@ -66,9 +66,23 @@ class ReferenceProviderEndpointTest {
                 playbackJson["live_stream_id"]?.jsonPrimitive?.content
             )
             val streamUrl = requireNotNull(playbackJson["url"]?.jsonPrimitive?.content)
+            assertEquals(
+                "$baseUrl/reference-provider/stream/reference.news/sample.wav",
+                streamUrl,
+            )
 
             assertEquals(401, request(streamUrl).statusCode)
-            assertEquals(200, request(streamUrl, headers = authorization).statusCode)
+            assertEquals(
+                401,
+                request(
+                    streamUrl,
+                    headers = mapOf("X-Emby-Token" to requireNotNull(token)),
+                ).statusCode,
+            )
+            val media = request(streamUrl, headers = authorization)
+            assertEquals(200, media.statusCode)
+            assertEquals("audio/wav", media.contentType)
+            media.assertReferenceWav()
             assertEquals(
                 "open",
                 request(
@@ -117,16 +131,56 @@ class ReferenceProviderEndpointTest {
             }
             val statusCode = connection.responseCode
             val stream = if (statusCode >= 400) connection.errorStream else connection.inputStream
-            HttpResponse(statusCode, stream?.bufferedReader()?.use { it.readText() }.orEmpty())
+            HttpResponse(
+                statusCode = statusCode,
+                contentType = connection.contentType?.substringBefore(';'),
+                body = stream?.use { it.readBytes() } ?: byteArrayOf(),
+            )
         } finally {
             connection.disconnect()
         }
     }
 
-    private fun HttpResponse.jsonBody() = Json.parseToJsonElement(body).jsonObject
+    private fun HttpResponse.jsonBody() = Json.parseToJsonElement(body.decodeToString()).jsonObject
+
+    private fun HttpResponse.assertReferenceWav() {
+        assertEquals(160_044, body.size)
+        assertEquals("RIFF", body.ascii(offset = 0, length = 4))
+        assertEquals(body.size - 8, body.littleEndianInt(offset = 4))
+        assertEquals("WAVE", body.ascii(offset = 8, length = 4))
+        assertEquals("fmt ", body.ascii(offset = 12, length = 4))
+        assertEquals(16, body.littleEndianInt(offset = 16))
+        assertEquals(1, body.littleEndianShort(offset = 20))
+        assertEquals(1, body.littleEndianShort(offset = 22))
+        assertEquals(8_000, body.littleEndianInt(offset = 24))
+        assertEquals(16_000, body.littleEndianInt(offset = 28))
+        assertEquals(2, body.littleEndianShort(offset = 32))
+        assertEquals(16, body.littleEndianShort(offset = 34))
+        assertEquals("data", body.ascii(offset = 36, length = 4))
+        assertEquals(body.size - 44, body.littleEndianInt(offset = 40))
+        assertEquals(64, body.littleEndianSignedShort(offset = 44))
+        assertEquals(-64, body.littleEndianSignedShort(offset = 60))
+    }
+
+    private fun ByteArray.ascii(offset: Int, length: Int): String =
+        copyOfRange(offset, offset + length).decodeToString()
+
+    private fun ByteArray.littleEndianInt(offset: Int): Int =
+        (this[offset].toInt() and 0xff) or
+            ((this[offset + 1].toInt() and 0xff) shl 8) or
+            ((this[offset + 2].toInt() and 0xff) shl 16) or
+            ((this[offset + 3].toInt() and 0xff) shl 24)
+
+    private fun ByteArray.littleEndianShort(offset: Int): Int =
+        (this[offset].toInt() and 0xff) or
+            ((this[offset + 1].toInt() and 0xff) shl 8)
+
+    private fun ByteArray.littleEndianSignedShort(offset: Int): Int =
+        littleEndianShort(offset).toShort().toInt()
 
     private data class HttpResponse(
         val statusCode: Int,
-        val body: String,
+        val contentType: String?,
+        val body: ByteArray,
     )
 }

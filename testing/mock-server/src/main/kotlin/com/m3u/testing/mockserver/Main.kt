@@ -37,9 +37,15 @@ private const val REFERENCE_PASSWORD = "reference-password"
 private const val REFERENCE_ACCESS_TOKEN = "mock-reference-access-token"
 private const val REFERENCE_SERVER_ID = "reference-server-id"
 private const val REFERENCE_USER_ID = "reference-user-id"
+private const val REFERENCE_WAV_SAMPLE_RATE = 8_000
+private const val REFERENCE_WAV_DURATION_SECONDS = 10
+private const val REFERENCE_WAV_CHANNEL_COUNT = 1
+private const val REFERENCE_WAV_BITS_PER_SAMPLE = 16
+private const val REFERENCE_WAV_TONE_FREQUENCY = 500
 
 private val referenceChannelIds = setOf("reference.news", "reference.sports")
 private val referenceSessions = ConcurrentHashMap<String, ReferenceSession>()
+private val referenceWavFixture by lazy(::createReferenceWavFixture)
 
 private val json = Json {
     prettyPrint = true
@@ -183,9 +189,9 @@ internal fun Application.mockServerModule() {
             )
         }
 
-        get("/reference-provider/stream/{item}/index.m3u8") {
-            if (!call.referenceAuthenticated()) {
-                call.respond(HttpStatusCode.Unauthorized, "missing reference provider token")
+        get("/reference-provider/stream/{item}/sample.wav") {
+            if (!call.referencePlaybackAuthenticated()) {
+                call.respond(HttpStatusCode.Unauthorized, "missing reference playback headers")
                 return@get
             }
             val itemId = call.parameters["item"].orEmpty()
@@ -193,26 +199,9 @@ internal fun Application.mockServerModule() {
                 call.respond(HttpStatusCode.NotFound, "unknown reference channel")
                 return@get
             }
-            call.respondText(
-                text = hlsPlaylist(itemId),
-                contentType = ContentType.parse("application/vnd.apple.mpegurl"),
-            )
-        }
-
-        get("/reference-provider/stream/{item}/segment-{number}.ts") {
-            if (!call.referenceAuthenticated()) {
-                call.respond(HttpStatusCode.Unauthorized, "missing reference provider token")
-                return@get
-            }
-            val itemId = call.parameters["item"].orEmpty()
-            val number = call.parameters["number"]?.toIntOrNull()
-            if (itemId !in referenceChannelIds || number == null) {
-                call.respond(HttpStatusCode.NotFound, "unknown reference stream segment")
-                return@get
-            }
             call.respondBytes(
-                bytes = transportStreamPlaceholder(itemId, number),
-                contentType = ContentType.parse("video/mp2t"),
+                bytes = referenceWavFixture,
+                contentType = ContentType.parse("audio/wav"),
             )
         }
 
@@ -532,6 +521,9 @@ private fun io.ktor.server.application.ApplicationCall.jellyfinAuthenticated(): 
 private fun io.ktor.server.application.ApplicationCall.referenceAuthenticated(): Boolean =
     request.headers["X-Emby-Token"] == REFERENCE_ACCESS_TOKEN
 
+private fun io.ktor.server.application.ApplicationCall.referencePlaybackAuthenticated(): Boolean =
+    referenceAuthenticated() && request.headers["X-Reference-User"] == REFERENCE_USER_ID
+
 private fun endpointIndex(baseUrl: String): String = json.encodeToString(
     buildJsonObject {
         put("name", "M3U mock server")
@@ -582,12 +574,69 @@ private fun referencePlayback(baseUrl: String, session: ReferenceSession): JsonO
     buildJsonObject {
         put(
             "url",
-            "$baseUrl/reference-provider/stream/${session.itemId}/index.m3u8",
+            "$baseUrl/reference-provider/stream/${session.itemId}/sample.wav",
         )
         put("media_source_id", "reference-media-${session.itemId}")
         put("play_session_id", session.playSessionId)
         put("live_stream_id", session.liveStreamId)
     }
+
+private fun createReferenceWavFixture(): ByteArray {
+    val bytesPerSample = REFERENCE_WAV_BITS_PER_SAMPLE / Byte.SIZE_BITS
+    val sampleCount = REFERENCE_WAV_SAMPLE_RATE * REFERENCE_WAV_DURATION_SECONDS
+    val dataSize = sampleCount * REFERENCE_WAV_CHANNEL_COUNT * bytesPerSample
+    val fixture = ByteArray(WAV_HEADER_SIZE + dataSize)
+    val byteRate = REFERENCE_WAV_SAMPLE_RATE * REFERENCE_WAV_CHANNEL_COUNT * bytesPerSample
+    val blockAlign = REFERENCE_WAV_CHANNEL_COUNT * bytesPerSample
+
+    fixture.writeAscii(offset = 0, value = "RIFF")
+    fixture.writeLittleEndianInt(offset = 4, value = fixture.size - 8)
+    fixture.writeAscii(offset = 8, value = "WAVE")
+    fixture.writeAscii(offset = 12, value = "fmt ")
+    fixture.writeLittleEndianInt(offset = 16, value = 16)
+    fixture.writeLittleEndianShort(offset = 20, value = 1)
+    fixture.writeLittleEndianShort(offset = 22, value = REFERENCE_WAV_CHANNEL_COUNT)
+    fixture.writeLittleEndianInt(offset = 24, value = REFERENCE_WAV_SAMPLE_RATE)
+    fixture.writeLittleEndianInt(offset = 28, value = byteRate)
+    fixture.writeLittleEndianShort(offset = 32, value = blockAlign)
+    fixture.writeLittleEndianShort(offset = 34, value = REFERENCE_WAV_BITS_PER_SAMPLE)
+    fixture.writeAscii(offset = 36, value = "data")
+    fixture.writeLittleEndianInt(offset = 40, value = dataSize)
+
+    val halfPeriodSamples = REFERENCE_WAV_SAMPLE_RATE / (REFERENCE_WAV_TONE_FREQUENCY * 2)
+    repeat(sampleCount) { sampleIndex ->
+        val sample = if ((sampleIndex / halfPeriodSamples) % 2 == 0) {
+            REFERENCE_WAV_AMPLITUDE
+        } else {
+            -REFERENCE_WAV_AMPLITUDE
+        }
+        fixture.writeLittleEndianShort(
+            offset = WAV_HEADER_SIZE + sampleIndex * bytesPerSample,
+            value = sample,
+        )
+    }
+    return fixture
+}
+
+private fun ByteArray.writeAscii(offset: Int, value: String) {
+    value.encodeToByteArray().copyInto(this, destinationOffset = offset)
+}
+
+private fun ByteArray.writeLittleEndianInt(offset: Int, value: Int) {
+    repeat(Int.SIZE_BYTES) { index ->
+        this[offset + index] = (value ushr (index * Byte.SIZE_BITS)).toByte()
+    }
+}
+
+private fun ByteArray.writeLittleEndianShort(offset: Int, value: Int) {
+    repeat(Short.SIZE_BYTES) { index ->
+        this[offset + index] = (value ushr (index * Byte.SIZE_BITS)).toByte()
+    }
+}
+
+private const val WAV_HEADER_SIZE = 44
+// Keep physical-device runs effectively silent while retaining deterministic non-zero PCM.
+private const val REFERENCE_WAV_AMPLITUDE = 64
 
 private fun referenceSessionState(session: ReferenceSession): JsonObject = buildJsonObject {
     put("item_id", session.itemId)

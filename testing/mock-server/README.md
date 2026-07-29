@@ -72,7 +72,8 @@ physical device:
 - `GET /reference-provider/playback/{item}` requires the token and opens a deterministic session.
 - `POST /reference-provider/sessions/close` requires the token and closes that session.
 - `GET /reference-provider/sessions/{playSessionId}` requires the token and returns `open` or `closed`.
-- `/reference-provider/stream/{item}/index.m3u8` and its segments require the token.
+- `/reference-provider/stream/{item}/sample.wav` returns a deterministic ten-second, 8 kHz mono,
+  16-bit PCM WAV and requires both resolved reference playback headers.
 
 The default Xtream and Emby-compatible credentials are `m3u` / `m3u`.
 The reference provider uses `m3u` / `reference-password` and returns `mock-reference-access-token`.
