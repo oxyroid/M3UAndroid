@@ -73,7 +73,7 @@ class PlaylistAdaptiveLayoutTest {
         val pasteBounds = composeRule.onNode(pasteAction)
             .fetchSemanticsNode()
             .boundsInWindow
-        val density = composeRule.activity.resources.displayMetrics.density
+        val density = composeRule.density.density
 
         assertTrue(
             "Submit action escaped the 320dp window: $submitBounds",
@@ -247,7 +247,7 @@ class PlaylistAdaptiveLayoutTest {
                     ).fetchSemanticsNodes().isEmpty(),
                 )
             }
-            val density = composeRule.activity.resources.displayMetrics.density
+            val density = composeRule.density.density
 
             assertTrue(
                 "EPG delete action must keep a 48dp touch target: $deleteBounds",
@@ -307,7 +307,7 @@ class PlaylistAdaptiveLayoutTest {
         val overviewBounds = composeRule.onNodeWithTag(OVERVIEW_TAG)
             .fetchSemanticsNode()
             .boundsInWindow
-        val density = composeRule.activity.resources.displayMetrics.density
+        val density = composeRule.density.density
         assertTrue(
             "Playlist content did not leave space for the side rail: " +
                 "overview=$overviewBounds",
@@ -348,15 +348,16 @@ class PlaylistAdaptiveLayoutTest {
             substring = false,
             ignoreCase = true,
         ) and hasClickAction()
-        val backBounds = composeRule.onAllNodes(back)
+        val backNode = composeRule.onAllNodes(back)
             .fetchSemanticsNodes()
-            .map { node -> node.boundsInWindow }
-            .firstOrNull { bounds -> bounds.isHeaderFor(contentBounds) }
+            .firstOrNull { node -> node.boundsInWindow.isHeaderFor(contentBounds) }
             ?: error(
                 "Playlist pane back action was not found above $contentTag: " +
                     "content=$contentBounds",
             )
-        val density = composeRule.activity.resources.displayMetrics.density
+        val backBounds = backNode.boundsInWindow
+        val touchBounds = backNode.touchBoundsInRoot
+        val touchDensity = backNode.layoutInfo.density.density
 
         assertTrue(
             "Pane heading overlaps content: heading=$headingBounds, " +
@@ -364,9 +365,9 @@ class PlaylistAdaptiveLayoutTest {
             headingBounds.bottom <= contentBounds.top + BOUNDS_TOLERANCE_PX,
         )
         assertTrue(
-            "Pane back action must keep a 48dp touch target: $backBounds",
-            backBounds.width >= MINIMUM_TOUCH_TARGET_DP * density &&
-                backBounds.height >= MINIMUM_TOUCH_TARGET_DP * density,
+            "Pane back action must keep a 48dp touch target: $touchBounds",
+            touchBounds.width >= MINIMUM_TOUCH_TARGET_DP * touchDensity &&
+                touchBounds.height >= MINIMUM_TOUCH_TARGET_DP * touchDensity,
         )
         assertFalse(
             "Pane heading overlaps its back action: " +

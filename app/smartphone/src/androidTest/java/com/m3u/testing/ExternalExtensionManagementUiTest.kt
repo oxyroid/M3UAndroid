@@ -279,7 +279,7 @@ class ExternalExtensionManagementUiTest {
         composeRule.enableAccessibilityChecks()
         composeRule.onRoot().tryPerformAccessibilityChecks()
         composeRule.disableAccessibilityChecks()
-        waitUntilTagGone(FLOATING_NAVIGATION_TAG)
+        assertAdaptiveNavigation(nestedDetailVisible = true)
         waitUntilTagExists(pluginListItemTag())
         composeRule.onNodeWithTag(pluginListItemTag())
             .assertMinimumTouchTarget()
@@ -538,7 +538,7 @@ class ExternalExtensionManagementUiTest {
         waitUntilTagExists(pluginListItemTag())
         navigateBack()
         waitUntilTagExists(EXTENSION_ENTRY_TAG)
-        waitUntilTagExists(FLOATING_NAVIGATION_TAG)
+        assertAdaptiveNavigation(nestedDetailVisible = false)
     }
 
     private fun openSettings() {
@@ -691,6 +691,22 @@ class ExternalExtensionManagementUiTest {
                 "actual=${configuration.screenWidthDp}",
             configuration.screenWidthDp in COMPACT_WIDTH_RANGE,
         )
+    }
+
+    private fun assertAdaptiveNavigation(nestedDetailVisible: Boolean) {
+        val usesSideRail =
+            composeRule.activity.resources.configuration.screenWidthDp >=
+                SIDE_RAIL_MINIMUM_WIDTH_DP
+        if (usesSideRail) {
+            waitUntilTagGone(FLOATING_NAVIGATION_TAG)
+            waitUntilTagExists(SIDE_NAVIGATION_SETTING_TAG)
+            composeRule.onNodeWithTag(SIDE_NAVIGATION_SETTING_TAG)
+                .assertIsSelected()
+        } else if (nestedDetailVisible) {
+            waitUntilTagGone(FLOATING_NAVIGATION_TAG)
+        } else {
+            waitUntilTagExists(FLOATING_NAVIGATION_TAG)
+        }
     }
 
     private fun scrollDetailTo(tag: String) {
@@ -860,6 +876,7 @@ class ExternalExtensionManagementUiTest {
         const val REFERENCE_CAPABILITY_ID = "background.task"
         const val EXTENSION_ENTRY_TAG = "extension-entry"
         const val FLOATING_NAVIGATION_TAG = "floating-app-navigation"
+        const val SIDE_NAVIGATION_SETTING_TAG = "side-navigation-item:Setting"
         const val PLUGIN_LIST_TAG = "extension-list"
         const val PLUGIN_DETAIL_LOADING_TAG = "extension-plugin-detail-loading"
         const val PLUGIN_FAILURE_TAG = "extension-plugin-failure"
@@ -902,6 +919,7 @@ class ExternalExtensionManagementUiTest {
         const val MATRIX_CASE_COMPACT_RTL_LARGE = "compact-rtl-large"
         const val LOCALE_RTL_TEST = "ar-XB"
         const val LARGE_TEXT_MINIMUM_SCALE = 1.95f
+        const val SIDE_RAIL_MINIMUM_WIDTH_DP = 600
         const val REFERENCE_EXTENSION_ID = "com.m3u.reference.provider"
         const val LONG_REFERENCE_VERSION =
             "1.0.0-reference-preview.20260729"

@@ -72,6 +72,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -363,6 +364,9 @@ private fun AppImpl(
                                 selected = selected,
                                 onClick = { navigateToDestination(destination) },
                                 alwaysShowLabel = false,
+                                modifier = Modifier.testTag(
+                                    "side-navigation-item:${destination.name}"
+                                ),
                             )
                         }
                     },
