@@ -36,6 +36,7 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.SettingsRemote
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -223,14 +224,10 @@ private fun FloatingRemoteControlAction(
         ),
         label = "floating-remote-control-press",
     )
-    val isDarkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
-    val surfaceColor = MaterialTheme.colorScheme.surfaceContainer.copy(
-        alpha = if (useBackdropEffects) 0.40f else 0.94f,
+    val glassTokens = resolveFloatingNavigationGlassTokens(
+        colorScheme = MaterialTheme.colorScheme,
+        useBackdropEffects = useBackdropEffects,
     )
-    val outlineColor = MaterialTheme.colorScheme.outlineVariant.copy(
-        alpha = if (isDarkTheme) 0.72f else 0.86f,
-    )
-    val highlightAlpha = if (isDarkTheme) 0.38f else 0.54f
     val actionSizePx = with(density) { FLOATING_REMOTE_CONTROL_SIZE.toPx() }
     val blurRadiusPx = with(density) { (FLOATING_NAVIGATION_INNER_PADDING * 2).toPx() }
     val surfaceModifier = if (useBackdropEffects) {
@@ -247,14 +244,17 @@ private fun FloatingRemoteControlAction(
                 )
             },
             highlight = {
-                Highlight.Default.copy(alpha = highlightAlpha)
+                Highlight.Default.copy(alpha = glassTokens.highlightAlpha)
+            },
+            shadow = {
+                Shadow.Default.copy(color = glassTokens.shadowColor)
             },
             layerBlock = {
                 scaleX = pressScale
                 scaleY = pressScale
             },
             onDrawSurface = {
-                drawRect(surfaceColor)
+                drawRect(glassTokens.surfaceColor)
             },
         )
     } else {
@@ -268,7 +268,7 @@ private fun FloatingRemoteControlAction(
                 shape = CircleShape,
                 clip = false,
             )
-            .background(surfaceColor, CircleShape)
+            .background(glassTokens.surfaceColor, CircleShape)
     }
     val label = stringResource(string.feat_setting_remote_control)
     val interactionModifier = if (enabled) {
@@ -295,7 +295,7 @@ private fun FloatingRemoteControlAction(
             .then(surfaceModifier)
             .border(
                 width = 1.dp,
-                color = outlineColor,
+                color = glassTokens.outlineColor,
                 shape = CircleShape,
             )
             .clip(CircleShape)
@@ -456,19 +456,10 @@ internal fun FloatingAppNavigationBar(
         }
     }
 
-    val isDarkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
-    val shellSurfaceColor = MaterialTheme.colorScheme.surfaceContainer.copy(
-        alpha = if (useBackdropEffects) 0.40f else 0.94f,
+    val glassTokens = resolveFloatingNavigationGlassTokens(
+        colorScheme = MaterialTheme.colorScheme,
+        useBackdropEffects = useBackdropEffects,
     )
-    val shellOutlineColor = MaterialTheme.colorScheme.outlineVariant.copy(
-        alpha = if (isDarkTheme) 0.72f else 0.86f,
-    )
-    val shellHighlightAlpha = if (isDarkTheme) 0.38f else 0.54f
-    val idleIndicatorColor = if (isDarkTheme) {
-        Color.White.copy(alpha = 0.10f)
-    } else {
-        Color.Black.copy(alpha = 0.10f)
-    }
 
     BoxWithConstraints(
         modifier = modifier.fillMaxWidth(),
@@ -552,7 +543,10 @@ internal fun FloatingAppNavigationBar(
                     )
                 },
                 highlight = {
-                    Highlight.Default.copy(alpha = shellHighlightAlpha)
+                    Highlight.Default.copy(alpha = glassTokens.highlightAlpha)
+                },
+                shadow = {
+                    Shadow.Default.copy(color = glassTokens.shadowColor)
                 },
                 layerBlock = {
                     translationX = panelOffsetPx
@@ -560,11 +554,11 @@ internal fun FloatingAppNavigationBar(
                     scaleY = shellScaleY
                 },
                 onDrawSurface = {
-                    drawRect(shellSurfaceColor)
+                    drawRect(glassTokens.surfaceColor)
                 },
             )
         } else {
-            Modifier.background(shellSurfaceColor, CircleShape)
+            Modifier.background(glassTokens.surfaceColor, CircleShape)
         }
         val indicatorSurfaceModifier = if (useBackdropEffects) {
             Modifier.drawBackdrop(
@@ -597,7 +591,7 @@ internal fun FloatingAppNavigationBar(
                 },
                 onDrawSurface = {
                     drawRect(
-                        color = idleIndicatorColor,
+                        color = glassTokens.idleIndicatorColor,
                         alpha = 1f - indicatorMorph.pressureProgress,
                     )
                     drawRect(
@@ -610,10 +604,12 @@ internal fun FloatingAppNavigationBar(
             )
         } else {
             Modifier
-                .background(idleIndicatorColor, CircleShape)
+                .background(glassTokens.idleIndicatorColor, CircleShape)
                 .border(
                     width = 1.dp,
-                    color = shellOutlineColor.copy(alpha = FALLBACK_INDICATOR_BORDER_ALPHA),
+                    color = glassTokens.outlineColor.copy(
+                        alpha = FALLBACK_INDICATOR_BORDER_ALPHA,
+                    ),
                     shape = CircleShape,
                 )
         }
@@ -662,7 +658,7 @@ internal fun FloatingAppNavigationBar(
                     .then(shellSurfaceModifier)
                     .border(
                         width = 1.dp,
-                        color = shellOutlineColor,
+                        color = glassTokens.outlineColor,
                         shape = CircleShape,
                     )
                     .padding(FLOATING_NAVIGATION_INNER_PADDING),
@@ -703,7 +699,7 @@ internal fun FloatingAppNavigationBar(
                                 translationX = panelOffsetPx
                             },
                             onDrawSurface = {
-                                drawRect(shellSurfaceColor)
+                                drawRect(glassTokens.surfaceColor)
                             },
                         )
                         .height(FLOATING_NAVIGATION_INDICATOR_HEIGHT)
@@ -1023,6 +1019,57 @@ private fun NavigationGlassContent(
     }
 }
 
+internal data class FloatingNavigationGlassTokens(
+    val surfaceColor: Color,
+    val outlineColor: Color,
+    val highlightAlpha: Float,
+    val shadowColor: Color,
+    val idleIndicatorColor: Color,
+)
+
+internal fun resolveFloatingNavigationGlassTokens(
+    colorScheme: ColorScheme,
+    useBackdropEffects: Boolean,
+): FloatingNavigationGlassTokens {
+    val isDarkTheme = colorScheme.background.luminance() < 0.5f
+    val surface = if (isDarkTheme) {
+        colorScheme.surfaceContainer
+    } else {
+        colorScheme.surfaceContainerLowest
+    }
+    return FloatingNavigationGlassTokens(
+        surfaceColor = surface.copy(
+            alpha = if (useBackdropEffects) {
+                GLASS_SURFACE_ALPHA
+            } else {
+                GLASS_FALLBACK_SURFACE_ALPHA
+            },
+        ),
+        outlineColor = if (isDarkTheme) {
+            colorScheme.outlineVariant.copy(alpha = DARK_GLASS_OUTLINE_ALPHA)
+        } else {
+            colorScheme.outline.copy(alpha = LIGHT_GLASS_OUTLINE_ALPHA)
+        },
+        highlightAlpha = if (isDarkTheme) {
+            DARK_GLASS_HIGHLIGHT_ALPHA
+        } else {
+            LIGHT_GLASS_HIGHLIGHT_ALPHA
+        },
+        shadowColor = Color.Black.copy(
+            alpha = if (isDarkTheme) {
+                DARK_GLASS_SHADOW_ALPHA
+            } else {
+                LIGHT_GLASS_SHADOW_ALPHA
+            },
+        ),
+        idleIndicatorColor = if (isDarkTheme) {
+            Color.White.copy(alpha = IDLE_INDICATOR_ALPHA)
+        } else {
+            Color.Black.copy(alpha = IDLE_INDICATOR_ALPHA)
+        },
+    )
+}
+
 private val FLOATING_NAVIGATION_HEIGHT = 64.dp
 private val FLOATING_NAVIGATION_INNER_PADDING = 4.dp
 private val FLOATING_REMOTE_CONTROL_SIZE = 64.dp
@@ -1039,5 +1086,14 @@ private const val INDICATOR_REFRACTION_HEIGHT_SHARE = 0.22f
 private const val INDICATOR_REFRACTION_AMOUNT_SHARE = 0.18f
 private const val INDICATOR_DEPTH_OVERLAY_ALPHA = 0.025f
 private const val FALLBACK_INDICATOR_BORDER_ALPHA = 0.52f
+private const val GLASS_SURFACE_ALPHA = 0.40f
+private const val GLASS_FALLBACK_SURFACE_ALPHA = 0.94f
+private const val LIGHT_GLASS_OUTLINE_ALPHA = 0.56f
+private const val DARK_GLASS_OUTLINE_ALPHA = 0.72f
+private const val LIGHT_GLASS_HIGHLIGHT_ALPHA = 0.75f
+private const val DARK_GLASS_HIGHLIGHT_ALPHA = 0.38f
+private const val LIGHT_GLASS_SHADOW_ALPHA = 0.10f
+private const val DARK_GLASS_SHADOW_ALPHA = 0.20f
+private const val IDLE_INDICATOR_ALPHA = 0.10f
 private const val INDICATOR_EXPAND_DURATION_MILLIS = 110
 private const val INDICATOR_COLLAPSE_DURATION_MILLIS = 190
