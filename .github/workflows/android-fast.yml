@@ -1,0 +1,79 @@
+name: Android Fast Build
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-fast-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: zulu
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-home-cache-cleanup: true
+
+      - name: Verify fast contracts
+        run: |
+          ./gradlew \
+            :extension:api:jvmTest \
+            :extension:runtime:test \
+            :i18n:testDebugUnitTest
+
+      - name: Build debug APKs
+        run: |
+          ./gradlew \
+            :app:smartphone:assembleDebug \
+            :app:tv:assembleDebug \
+            :testing:extension-reference:assembleDebug
+
+      - name: Verify 16 KB native compatibility
+        run: |
+          testing/bin/verify-android-16kb.sh \
+            app/smartphone/build/outputs/apk/debug/*.apk \
+            app/tv/build/outputs/apk/debug/*.apk \
+            testing/extension-reference/build/outputs/apk/debug/*.apk
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-debug-apks
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            app/smartphone/build/outputs/apk/debug/*.apk
+            app/tv/build/outputs/apk/debug/*.apk
+            testing/extension-reference/build/outputs/apk/debug/*.apk
+
+      - name: Upload To Telegram
+        uses: xireiki/channel-post@890c1d09635ae629aeffbed4f9716a5473eac896 # v1.0.10
+        with:
+          bot_token: ${{ secrets.BOT_TOKEN }}
+          chat_id: ${{ secrets.CHAT_ID }}
+          api_id: ${{ secrets.API_ID }}
+          api_hash: ${{ secrets.API_HASH }}
+          large_file: true
+          method: sendFile
+          path: |
+            app/smartphone/build/outputs/apk/debug/*.apk
+            app/tv/build/outputs/apk/debug/*.apk
+            testing/extension-reference/build/outputs/apk/debug/*.apk

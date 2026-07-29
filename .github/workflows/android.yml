@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.ref }}
+  group: android-release-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -67,11 +67,15 @@ jobs:
       - name: Build TV release APK
         run: ./gradlew :app:tv:assembleRelease
 
+      - name: Build reference extension release APK
+        run: ./gradlew :testing:extension-reference:assembleRelease
+
       - name: Verify 16 KB native compatibility
         run: |
           testing/bin/verify-android-16kb.sh \
             app/smartphone/build/outputs/published-apk/release/*.apk \
-            app/tv/build/outputs/published-apk/release/*.apk
+            app/tv/build/outputs/published-apk/release/*.apk \
+            testing/extension-reference/build/outputs/apk/release/*.apk
 
       - name: Upload
         uses: actions/upload-artifact@v4
@@ -80,6 +84,7 @@ jobs:
           path: |
             app/smartphone/build/outputs/published-apk/release/*.apk
             app/tv/build/outputs/published-apk/release/*.apk
+            testing/extension-reference/build/outputs/apk/release/*.apk
 
       - name: Upload To Telegram
         if: github.event_name != 'pull_request'
@@ -94,3 +99,4 @@ jobs:
           path: |
             app/smartphone/build/outputs/published-apk/release/*.apk
             app/tv/build/outputs/published-apk/release/*.apk
+            testing/extension-reference/build/outputs/apk/release/*.apk
