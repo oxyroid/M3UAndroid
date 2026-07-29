@@ -1,4 +1,8 @@
+@file:Suppress("UnstableApiUsage")
+
+import com.android.build.api.dsl.ManagedVirtualDevice
 import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     alias(libs.plugins.com.android.application)
@@ -91,6 +95,13 @@ android {
     packaging {
         resources.excludes += "META-INF/**"
     }
+    testOptions.managedDevices.allDevices {
+        create<ManagedVirtualDevice>("hostileApi34") {
+            device = "Pixel 6 Pro"
+            apiLevel = 34
+            systemImageSource = "aosp"
+        }
+    }
 }
 
 tasks.matching { task ->
@@ -103,6 +114,12 @@ tasks.matching { task ->
 tasks.matching { task -> task.name == "connectedDebugAndroidTest" }.configureEach {
     dependsOn(":testing:extension-reference:installDebug")
     finalizedBy(":testing:extension-reference:uninstallDebug")
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+    if (name == "compileDebugAndroidTestKotlin") {
+        compilerOptions.freeCompilerArgs.add("-Xno-param-assertions")
+    }
 }
 
 hilt {

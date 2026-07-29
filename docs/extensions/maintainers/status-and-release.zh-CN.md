@@ -31,7 +31,15 @@
 CI 门禁指 `.github/workflows/android.yml` 自动执行的检查。Connected UI 检查可重复，但目前
 需要显式设备运行；设备检查指有记录的一次性实测。`ResourceContractTest` 验证资源结构，
 不代表母语文案质量。CI 会检查手机矩阵脚本的语法，并编译 data、手机与 TV 的
-Connected Test，但不会执行这些设备矩阵。
+Connected Test。CI 还会在 `hostileApi34` 构建托管设备上运行
+`HostileExternalExtensionIpcTest`，但不会执行手机、平板或 TV 的界面矩阵。
+
+最近一次恶意 IPC Fixture 实测（2026-07-29）：
+
+- 设备：`emulator-5558` 上的 Pixel 6 Pro API 36。
+- 结果：1/1 通过；Fixture 位于测试 APK，使用不同 UID 和独立 `:hostile` 进程。
+- 覆盖：重复畸形输出、合法但超限的结果、忽略取消与迟到回调、同一个宿主 Bridge
+  在授权期内可用且撤销后拒绝调用、进程死亡，以及以新 PID 重连。
 
 最近一次手机 Connected 实测（2026-07-29）：
 

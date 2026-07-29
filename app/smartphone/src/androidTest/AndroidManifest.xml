@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <service
+            android:name="com.m3u.testing.hostile.HostileExtensionService"
+            android:exported="true"
+            android:permission="com.m3u.permission.BIND_EXTENSION_HOST"
+            android:process=":hostile">
+            <intent-filter>
+                <action android:name="com.m3u.extension.action.BIND_EXTENSION" />
+            </intent-filter>
+        </service>
+    </application>
+
+</manifest>

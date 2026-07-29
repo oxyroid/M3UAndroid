@@ -33,7 +33,17 @@ A CI gate is run by `.github/workflows/android.yml`. A connected UI check is rep
 currently needs an explicit device run. A device check is a recorded one-off run.
 `ResourceContractTest` validates resource structure, not native-language quality.
 CI syntax-checks the phone matrix runner and compiles the data, phone, and TV connected-test
-harnesses; it does not execute the device matrices.
+harnesses. It also runs `HostileExternalExtensionIpcTest` on the `hostileApi34` build-managed
+device; it does not execute the phone, tablet, or TV UI matrices.
+
+Latest hostile IPC run, 2026-07-29:
+
+- Device: Pixel 6 Pro API 36 on `emulator-5558`.
+- Result: 1/1 passed with the fixture in the instrumentation APK, a different UID, and a dedicated
+  `:hostile` process.
+- Coverage: repeated malformed output, a valid oversized result, ignored cancellation and a late
+  callback, the same host bridge working while scoped and rejecting use after revocation, process
+  death, and reconnect with a new PID.
 
 Latest connected phone run, 2026-07-29:
 

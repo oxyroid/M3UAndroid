@@ -42,6 +42,16 @@ jobs:
       - name: Clean GMD
         run: ./gradlew cleanManagedDevices --unused-only
 
+      - name: Enable KVM
+        run: |
+          if [ ! -e /dev/kvm ]; then
+            echo "/dev/kvm is not available on this runner"
+            exit 1
+          fi
+          sudo chown root:$(id -gn) /dev/kvm
+          sudo chmod 660 /dev/kvm
+          ls -l /dev/kvm
+
       - name: Verify extension contracts
         run: |
           ./gradlew \
@@ -60,6 +70,15 @@ jobs:
             :data:assembleDebugAndroidTest \
             :app:smartphone:assembleDebugAndroidTest \
             :app:tv:assembleDebugAndroidTest
+
+      - name: Verify hostile extension isolation
+        run: |
+          ./gradlew :app:smartphone:hostileApi34DebugAndroidTest \
+            -Pandroid.testInstrumentationRunnerArguments.class=com.m3u.testing.HostileExternalExtensionIpcTest \
+            -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect \
+            -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true \
+            -Pandroid.experimental.androidTest.numManagedDeviceShards=1 \
+            -Pandroid.experimental.testOptions.managedDevices.maxConcurrentDevices=1
 
       - name: Build smartphone release APK
         run: ./gradlew :app:smartphone:assembleRelease
