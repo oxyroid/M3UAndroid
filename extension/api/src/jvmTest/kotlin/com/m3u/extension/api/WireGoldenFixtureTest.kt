@@ -13,7 +13,6 @@ import com.m3u.extension.api.subscription.SubscriptionHookSpecs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
@@ -81,18 +80,6 @@ class WireGoldenFixtureTest {
 
     private val protocolFixtureCatalog = listOf(
         stableFixture("manifests/complete.json", ExtensionManifest.serializer()),
-        stableFixture(
-            "hooks/subscription.provider.discover/schema-3/request.json",
-            SubscriptionHookSpecs.Discover.requestSerializer,
-        ),
-        stableFixture(
-            "hooks/subscription.provider.discover/schema-3/result.json",
-            SubscriptionHookSpecs.Discover.responseSerializer,
-        ),
-        stableFixture(
-            "envelopes/invocation-legacy.json",
-            SerializedExtensionEnvelope.serializer(),
-        ),
         stableFixture(
             "envelopes/invocation-current.json",
             SerializedExtensionEnvelope.serializer(),
@@ -177,16 +164,7 @@ class WireGoldenFixtureTest {
     }
 
     @Test
-    fun `envelope fixtures preserve defaults and ignore future optional fields`() {
-        val legacy = decodeFixture(
-            "envelopes/invocation-legacy.json",
-            SerializedExtensionEnvelope.serializer(),
-        )
-        assertTrue(legacy.settings.values.isEmpty())
-        assertTrue(legacy.grantedCapabilities.isEmpty())
-        assertNull(legacy.brokerScope)
-        assertNull(legacy.invocationBudget)
-
+    fun `envelope fixtures preserve current fields and ignore future optional fields`() {
         val current = decodeFixture(
             "envelopes/invocation-current.json",
             SerializedExtensionEnvelope.serializer(),

@@ -94,7 +94,6 @@ data class SubscriptionProviderDiscoverRequest(
 data class SubscriptionProviderVariant(
     val kind: ProviderKind,
     val displayName: String,
-    val userSelectable: Boolean = true,
 ) {
     init {
         require(displayName.isNotBlank()) { "Provider variant display name must not be blank" }

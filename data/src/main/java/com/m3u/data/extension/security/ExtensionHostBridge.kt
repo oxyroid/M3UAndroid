@@ -5,7 +5,6 @@ import android.os.ParcelFileDescriptor
 import android.os.SystemClock
 import com.m3u.extension.api.Capability
 import com.m3u.extension.api.ExtensionCapabilityIds
-import com.m3u.extension.api.ExtensionInvocationBudget
 import com.m3u.extension.api.ExtensionManifest
 import com.m3u.extension.api.SerializedExtensionEnvelope
 import com.m3u.extension.api.security.BrokerAuthenticationRequest
@@ -68,7 +67,7 @@ internal class ExtensionHostBridge(
     private val hook = envelope.hook
     private val brokerScope = envelope.brokerScope
     private val grantedCapabilities = envelope.grantedCapabilities.toSet()
-    private val invocationBudget = envelope.invocationBudget ?: LEGACY_INVOCATION_BUDGET
+    private val invocationBudget = envelope.invocationBudget
     private val responseTooLargeEnvelope = json.encodeToString(
         BrokerInvocationResult.serializer(),
         BrokerInvocationResult.Failure(
@@ -513,12 +512,6 @@ internal class ExtensionHostBridge(
         const val MAX_RESPONSE_ENVELOPE_BYTES = 5 * 1024 * 1024
         const val MAX_BROKER_REQUEST_ID_LENGTH = 64
         const val MAX_ACTIVE_BROKER_REQUESTS = 4
-        val LEGACY_INVOCATION_BUDGET = ExtensionInvocationBudget(
-            remainingTimeMillis = 30_000,
-            maxBrokerRequests = 16,
-            maxBrokerRequestBytes = 4L * 1024 * 1024,
-            maxBrokerResponseBytes = 16L * 1024 * 1024,
-        )
         val SAFE_ERROR_MESSAGES = mapOf(
             BrokerErrorCodes.InvalidRequest to "The broker request is invalid",
             BrokerErrorCodes.CapabilityDenied to "The broker capability is not granted",

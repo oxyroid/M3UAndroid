@@ -186,39 +186,6 @@ class ProviderSubscriptionFormTest {
     }
 
     @Test
-    fun `hidden compatibility kind remains usable for account reauthentication`() {
-        val descriptor = reauthenticationDescriptor().copy(
-            variants = listOf(
-                SubscriptionProviderVariant(KIND_ALPHA, "Alpha"),
-                SubscriptionProviderVariant(
-                    kind = KIND_LEGACY,
-                    displayName = "Legacy",
-                    userSelectable = false,
-                ),
-            )
-        )
-        val account = ProviderAccountSummary(
-            playlistTitle = "Restored account",
-            playlistUrl = "m3u-provider://account/legacy/live",
-            providerId = PROVIDER_ID,
-            providerKind = KIND_LEGACY,
-            baseUrl = "https://media.example.test",
-            username = "viewer",
-            serverName = "Home server",
-            requiresReauthentication = true,
-        )
-
-        val form = ProviderSubscriptionForm.createForReauthentication(descriptor, account)
-            .update("password", "new secret")
-        val request = assertIs<ProviderSubscriptionFormBuildResult.Ready>(
-            form.buildRequest(account.playlistTitle) { CredentialHandle("credential") }
-        ).request
-
-        assertEquals(KIND_LEGACY, request.providerKind)
-        assertEquals(account.playlistUrl, request.reauthenticationPlaylistUrl)
-    }
-
-    @Test
     fun `creating another provider or kind starts with a clean schema state`() {
         val edited = ProviderSubscriptionForm.create(descriptor(), KIND_ALPHA)
             .update("optional_text", "old value")
@@ -433,6 +400,5 @@ class ProviderSubscriptionFormTest {
         val PROVIDER_ID = ExtensionId("com.example.provider")
         val KIND_ALPHA = ProviderKind("alpha")
         val KIND_BETA = ProviderKind("beta")
-        val KIND_LEGACY = ProviderKind("legacy")
     }
 }

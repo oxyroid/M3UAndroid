@@ -1014,7 +1014,7 @@ class ExtensionRuntime(
                 throw HostInvocationDeadlineExceededException()
             }
             val effectiveContext = context.copy(
-                invocationBudget = context.invocationBudget?.copy(
+                invocationBudget = context.invocationBudget.copy(
                     remainingTimeMillis = remainingTimeMillis
                 )
             )

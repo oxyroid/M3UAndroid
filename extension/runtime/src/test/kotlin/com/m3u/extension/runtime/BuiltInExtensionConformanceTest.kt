@@ -92,14 +92,10 @@ private class BuiltInConformanceDriver(
                     ): ExtensionSettingsSnapshot = envelope.settings
                 },
                 invocationPolicy = InvocationPolicy(
-                    timeoutMillis =
-                        requestedBudget?.remainingTimeMillis ?: CONFORMANCE_TIMEOUT_MILLIS,
-                    maxBrokerRequestsPerInvocation =
-                        requestedBudget?.maxBrokerRequests ?: DEFAULT_MAX_BROKER_REQUESTS,
-                    maxBrokerRequestBytesPerInvocation =
-                        requestedBudget?.maxBrokerRequestBytes ?: DEFAULT_MAX_BROKER_REQUEST_BYTES,
-                    maxBrokerResponseBytesPerInvocation =
-                        requestedBudget?.maxBrokerResponseBytes ?: DEFAULT_MAX_BROKER_RESPONSE_BYTES,
+                    timeoutMillis = requestedBudget.remainingTimeMillis,
+                    maxBrokerRequestsPerInvocation = requestedBudget.maxBrokerRequests,
+                    maxBrokerRequestBytesPerInvocation = requestedBudget.maxBrokerRequestBytes,
+                    maxBrokerResponseBytesPerInvocation = requestedBudget.maxBrokerResponseBytes,
                 ),
                 json = json,
             )
@@ -156,9 +152,5 @@ private class BuiltInConformanceDriver(
     }
 
     private companion object {
-        const val CONFORMANCE_TIMEOUT_MILLIS = 5_000L
-        const val DEFAULT_MAX_BROKER_REQUESTS = 16
-        const val DEFAULT_MAX_BROKER_REQUEST_BYTES = 4_194_304L
-        const val DEFAULT_MAX_BROKER_RESPONSE_BYTES = 16_777_216L
     }
 }

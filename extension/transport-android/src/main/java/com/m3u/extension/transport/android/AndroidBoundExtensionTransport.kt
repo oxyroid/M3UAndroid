@@ -47,7 +47,7 @@ import kotlinx.serialization.json.Json
 internal fun SerializedExtensionEnvelope.afterTransportElapsed(
     elapsedMillis: Long,
 ): SerializedExtensionEnvelope {
-    val budget = invocationBudget ?: return this
+    val budget = invocationBudget
     val safeElapsedMillis = elapsedMillis.coerceAtLeast(0)
     if (safeElapsedMillis >= budget.remainingTimeMillis) {
         throw HostInvocationDeadlineExceededException()
@@ -148,8 +148,7 @@ class AndroidBoundExtensionTransport private constructor(
                             expectedUid = serviceUid,
                             requestPermits = brokerRequestPermits,
                             maxRequestAttempts = dispatchRequest.invocationBudget
-                                ?.maxBrokerRequests
-                                ?: DEFAULT_MAX_BROKER_REQUEST_ATTEMPTS,
+                                .maxBrokerRequests,
                         )
                         check(record.attachBridge(bridge)) {
                             "Extension invocation was cancelled"
@@ -296,7 +295,6 @@ class AndroidBoundExtensionTransport private constructor(
         private const val MAX_OUTSTANDING_BROKER_REQUESTS = 4
         private const val MAX_OUTSTANDING_REMOTE_CANCELS = 4
         private const val MAX_PROCESS_BINDER_INVOCATIONS = 16
-        private const val DEFAULT_MAX_BROKER_REQUEST_ATTEMPTS = 16
         private val PROCESS_BINDER_INVOCATION_PERMITS =
             Semaphore(MAX_PROCESS_BINDER_INVOCATIONS, true)
 

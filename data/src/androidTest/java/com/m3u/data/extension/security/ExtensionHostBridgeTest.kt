@@ -885,33 +885,6 @@ class ExtensionHostBridgeTest {
     }
 
     @Test
-    fun legacyInvocationWithoutBudgetStillHasABoundedRequestCount() {
-        val fixture = scopeFixture()
-        val broker = RecordingBroker(fixture.store)
-        val bridge = bridge(
-            broker = broker,
-            granted = setOf(ExtensionCapabilityIds.Network),
-            scope = fixture.scope,
-            invocationBudget = null,
-        )
-
-        repeat(16) { index ->
-            executeSuccess(
-                bridge,
-                BrokeredHttpRequest(method = "GET", url = "$BASE_URL/items/$index"),
-            )
-        }
-        val error = executeFailure(
-            bridge,
-            BrokeredHttpRequest(method = "GET", url = "$BASE_URL/items/overflow"),
-        )
-
-        assertEquals(BrokerErrorCodes.InvalidRequest, error.code)
-        assertEquals(16, broker.calls)
-        bridge.close()
-    }
-
-    @Test
     fun brokerProtocolMustMatchTheNegotiatedHostVersion() {
         val fixture = scopeFixture()
         val broker = RecordingBroker(fixture.store)
@@ -948,7 +921,7 @@ class ExtensionHostBridgeTest {
         principal: ExtensionPrincipal = PRINCIPAL,
         hook: Hook = HOOK,
         hookRequiresNetwork: Boolean = true,
-        invocationBudget: ExtensionInvocationBudget? = null,
+        invocationBudget: ExtensionInvocationBudget = invocationBudget(),
         brokerProtocolVersion: Int = BrokerProtocolVersions.Current,
         elapsedRealtimeMillis: () -> Long = SystemClock::elapsedRealtime,
     ): ExtensionHostBridge = ExtensionHostBridge(
@@ -965,7 +938,7 @@ class ExtensionHostBridgeTest {
         granted: Set<Capability>,
         scope: BrokerScopeHandle?,
         hook: Hook,
-        invocationBudget: ExtensionInvocationBudget?,
+        invocationBudget: ExtensionInvocationBudget,
     ) = SerializedExtensionEnvelope(
         apiVersion = ExtensionApiVersion(1, 0),
         invocationId = InvocationId("invocation-1"),

@@ -31,7 +31,5 @@ Hook Fixture 目录当前明确保留以下 API 1 Schema 版本：
 `WireGoldenFixtureTest` 会解码每个规范 Fixture，并确认重新编码后得到相同的 JSON 结构。
 未知字段样例只用于解码，因为当前编码器不会输出自己不认识的字段。
 
-引入新 Hook Schema 时，不要替换已有 Fixture。新建相邻的 `schema-<version>` 目录，并保留
-旧 Fixture 供兼容性测试使用。
-保留的 Discover Schema 3 Fixture 早于强制执行的 `userSelectable` 字段，仅用于历史
-兼容审查，当前宿主不再接受该 Schema。
+首个公开 SDK 发布前，每个 Hook 只保留当前规范 Fixture。SDK 公开发布后，若旧 Schema
+仍受支持，再新增相邻的 `schema-<version>` 目录。

@@ -226,10 +226,10 @@ data class SerializedExtensionEnvelope(
     val hook: Hook,
     val schemaVersion: Int,
     val payload: JsonElement,
-    val settings: ExtensionSettingsSnapshot = ExtensionSettingsSnapshot(),
-    val grantedCapabilities: Set<Capability> = emptySet(),
+    val settings: ExtensionSettingsSnapshot,
+    val grantedCapabilities: Set<Capability>,
+    val invocationBudget: ExtensionInvocationBudget,
     val brokerScope: BrokerScopeHandle? = null,
-    val invocationBudget: ExtensionInvocationBudget? = null,
 )
 
 @Serializable
@@ -268,8 +268,8 @@ data class ExtensionCallContext(
     val invocationId: InvocationId,
     val extensionId: ExtensionId,
     val grantedCapabilities: Set<Capability>,
-    val settings: ExtensionSettingsSnapshot = ExtensionSettingsSnapshot(),
-    val invocationBudget: ExtensionInvocationBudget? = null,
+    val settings: ExtensionSettingsSnapshot,
+    val invocationBudget: ExtensionInvocationBudget,
 )
 
 sealed interface HookResult<out Response : ExtensionPayload> {

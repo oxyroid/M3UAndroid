@@ -64,7 +64,7 @@ object ExtensionConformanceFixtures {
         settings = Settings,
         invocationBudget = Budget,
         validateSuccess = { result, envelope ->
-            val budget = checkNotNull(envelope.invocationBudget)
+            val budget = envelope.invocationBudget
             val remainingTimeMillis = checkNotNull(
                 result.output["remainingTimeMillis"]?.toLongOrNull()
             )
@@ -166,16 +166,16 @@ class ExtensionConformanceFixtureState {
                 "invocationId" to context.invocationId.value,
                 "extensionId" to context.extensionId.value,
                 "remainingTimeMillis" to context.invocationBudget
-                    ?.remainingTimeMillis
+                    .remainingTimeMillis
                     .toString(),
                 "maxBrokerRequests" to context.invocationBudget
-                    ?.maxBrokerRequests
+                    .maxBrokerRequests
                     .toString(),
                 "maxBrokerRequestBytes" to context.invocationBudget
-                    ?.maxBrokerRequestBytes
+                    .maxBrokerRequestBytes
                     .toString(),
                 "maxBrokerResponseBytes" to context.invocationBudget
-                    ?.maxBrokerResponseBytes
+                    .maxBrokerResponseBytes
                     .toString(),
             )
         )

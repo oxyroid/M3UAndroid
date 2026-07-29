@@ -8,9 +8,8 @@
         "displayName": "Example"
       },
       {
-        "kind": "legacy",
-        "displayName": "Legacy",
-        "userSelectable": false
+        "kind": "secondary",
+        "displayName": "Secondary"
       }
     ],
     "settingsSchema": {

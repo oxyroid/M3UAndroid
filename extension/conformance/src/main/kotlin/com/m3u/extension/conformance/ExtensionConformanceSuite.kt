@@ -48,7 +48,7 @@ data class ExtensionConformanceCase<
     val request: Request,
     val grantedCapabilities: Set<Capability>,
     val settings: ExtensionSettingsSnapshot = ExtensionSettingsSnapshot(),
-    val invocationBudget: ExtensionInvocationBudget? = null,
+    val invocationBudget: ExtensionInvocationBudget,
     val validateSuccess: (Response, SerializedExtensionEnvelope) -> Unit = { _, _ -> },
 )
 

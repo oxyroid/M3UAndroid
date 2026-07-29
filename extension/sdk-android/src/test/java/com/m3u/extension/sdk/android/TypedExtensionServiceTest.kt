@@ -349,7 +349,7 @@ class TypedExtensionServiceTest {
         grantedCapabilities: Set<Capability> = setOf(
             ExtensionCapabilityIds.SettingsContribute
         ),
-        invocationBudget: ExtensionInvocationBudget? = null,
+        invocationBudget: ExtensionInvocationBudget = TEST_INVOCATION_BUDGET,
     ) = SerializedExtensionEnvelope(
         apiVersion = apiVersion,
         invocationId = invocationId,
@@ -374,10 +374,12 @@ class TypedExtensionServiceTest {
             SubscriptionHookSpecs.Validate.requestSerializer,
             SubscriptionProviderValidateRequest(ProviderKind("test")),
         ),
+        settings = ExtensionSettingsSnapshot(),
         grantedCapabilities = setOf(
             ExtensionCapabilityIds.Network,
             ExtensionCapabilityIds.CredentialWrite,
         ),
+        invocationBudget = TEST_INVOCATION_BUDGET,
         brokerScope = brokerScope,
     )
 
@@ -438,6 +440,12 @@ class TypedExtensionServiceTest {
 
     private companion object {
         val EXTENSION_ID = ExtensionId("com.example.typed")
+        val TEST_INVOCATION_BUDGET = ExtensionInvocationBudget(
+            remainingTimeMillis = 30_000,
+            maxBrokerRequests = 16,
+            maxBrokerRequestBytes = 4L * 1024 * 1024,
+            maxBrokerResponseBytes = 16L * 1024 * 1024,
+        )
         val SETTINGS_RESULT = SettingsSchemaResult(
             sections = listOf(
                 ExtensionSettingSection(

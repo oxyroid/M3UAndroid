@@ -40,7 +40,6 @@ fun ProviderDiscoveryState.subscriptionSources(): List<ProviderSubscriptionSourc
         .orEmpty()
         .flatMap { provider ->
             provider.descriptor.variants
-                .filter { variant -> variant.userSelectable }
                 .map { variant ->
                     ProviderSubscriptionSource(
                         providerId = provider.descriptor.providerId,
@@ -62,8 +61,7 @@ fun ProviderDiscoveryState.supports(
         .any { provider ->
             provider.descriptor.providerId == form.providerId &&
                 provider.descriptor.variants.any { variant ->
-                    variant.kind == form.providerKind &&
-                        (variant.userSelectable || form.reauthenticationPlaylistUrl != null)
+                    variant.kind == form.providerKind
                 }
         }
 }
@@ -74,7 +72,7 @@ internal fun List<DiscoveredSubscriptionProvider>.reconcileSubscriptionForm(
     if (current == null) {
         val (descriptor, kind) = firstNotNullOfOrNull { provider ->
             provider.descriptor.variants
-                .firstOrNull { variant -> variant.userSelectable }
+                .firstOrNull()
                 ?.let { variant -> provider.descriptor to variant.kind }
         } ?: return null
         return ProviderSubscriptionForm.create(

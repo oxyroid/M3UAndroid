@@ -13,7 +13,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ProviderDiscoveryStateTest {
@@ -36,11 +35,6 @@ class ProviderDiscoveryStateTest {
             variants = listOf(
                 SubscriptionProviderVariant(ProviderKind("alpha"), "Alpha"),
                 SubscriptionProviderVariant(ProviderKind("beta"), "Beta"),
-                SubscriptionProviderVariant(
-                    kind = ProviderKind("legacy"),
-                    displayName = "Legacy",
-                    userSelectable = false,
-                ),
             ),
         )
         val external = provider(
@@ -88,26 +82,21 @@ class ProviderDiscoveryStateTest {
 
     @Test
     fun `availability requires the exact provider and kind in a ready catalog`() {
-        val legacyKind = ProviderKind("legacy")
+        val providerKind = ProviderKind("current")
         val discovered = provider(
             id = "com.example.provider",
             executionKind = SubscriptionProviderExecutionKind.EXTERNAL,
             variants = listOf(
                 SubscriptionProviderVariant(
-                    kind = legacyKind,
-                    displayName = "Legacy",
-                    userSelectable = false,
+                    kind = providerKind,
+                    displayName = "Current",
                 )
             ),
         )
-        val form = ProviderSubscriptionForm.create(discovered.descriptor, legacyKind)
-        val reauthenticationForm = form.copy(
-            reauthenticationPlaylistUrl = "m3u-provider://account/legacy/live",
-        )
+        val form = ProviderSubscriptionForm.create(discovered.descriptor, providerKind)
         val ready = ProviderDiscoveryState.Ready(listOf(discovered))
 
-        assertFalse(ready.supports(form))
-        assertTrue(ready.supports(reauthenticationForm))
+        assertTrue(ready.supports(form))
         assertFalse(ProviderDiscoveryState.Loading.supports(form))
         assertFalse(ProviderDiscoveryState.Empty.supports(form))
         assertFalse(ProviderDiscoveryState.Failed(1).supports(form))
@@ -115,38 +104,22 @@ class ProviderDiscoveryStateTest {
     }
 
     @Test
-    fun `default reconciliation only creates a selectable provider form`() {
-        val hiddenKind = ProviderKind("hidden")
-        val visibleKind = ProviderKind("visible")
+    fun `default reconciliation creates a form for the first provider variant`() {
+        val firstKind = ProviderKind("first")
+        val secondKind = ProviderKind("second")
         val mixed = provider(
             id = "com.example.mixed",
             executionKind = SubscriptionProviderExecutionKind.BUILT_IN,
             variants = listOf(
-                SubscriptionProviderVariant(
-                    kind = hiddenKind,
-                    displayName = "Hidden",
-                    userSelectable = false,
-                ),
-                SubscriptionProviderVariant(visibleKind, "Visible"),
-            ),
-        )
-        val hiddenOnly = provider(
-            id = "com.example.hidden",
-            executionKind = SubscriptionProviderExecutionKind.BUILT_IN,
-            variants = listOf(
-                SubscriptionProviderVariant(
-                    kind = hiddenKind,
-                    displayName = "Hidden",
-                    userSelectable = false,
-                )
+                SubscriptionProviderVariant(firstKind, "First"),
+                SubscriptionProviderVariant(secondKind, "Second"),
             ),
         )
 
         assertEquals(
-            visibleKind,
+            firstKind,
             listOf(mixed).reconcileSubscriptionForm(current = null)?.providerKind,
         )
-        assertNull(listOf(hiddenOnly).reconcileSubscriptionForm(current = null))
     }
 
     @Test

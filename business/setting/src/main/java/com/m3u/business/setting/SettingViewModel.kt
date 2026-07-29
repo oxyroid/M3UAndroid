@@ -275,7 +275,7 @@ class SettingViewModel @Inject constructor(
             provider.descriptor.providerId.value == providerId
         }?.descriptor ?: return
         val kind = descriptor.variants.firstOrNull { variant ->
-            variant.kind.value == kindValue && variant.userSelectable
+            variant.kind.value == kindValue
         }?.kind ?: return
         val current = _providerSubscriptionForm.value
         if (current.matchesNewSubscription(descriptor, kind)) {

@@ -14,6 +14,8 @@ import com.m3u.extension.api.ChannelMetadataSnapshot
 import com.m3u.extension.api.ExtensionApiVersions
 import com.m3u.extension.api.ExtensionCapabilityIds
 import com.m3u.extension.api.ExtensionId
+import com.m3u.extension.api.ExtensionInvocationBudget
+import com.m3u.extension.api.ExtensionSettingsSnapshot
 import com.m3u.extension.api.HostHookSpecs
 import com.m3u.extension.api.Hook
 import com.m3u.extension.api.InvocationId
@@ -124,7 +126,14 @@ class ExtensionInvocationGateBinderTest {
                 )
             ),
         ),
+        settings = ExtensionSettingsSnapshot(),
         grantedCapabilities = setOf(ExtensionCapabilityIds.MetadataWrite),
+        invocationBudget = ExtensionInvocationBudget(
+            remainingTimeMillis = 30_000,
+            maxBrokerRequests = 16,
+            maxBrokerRequestBytes = 4L * 1024 * 1024,
+            maxBrokerResponseBytes = 16L * 1024 * 1024,
+        ),
     )
 
     private suspend fun ExtensionPluginTransport.probeCount(

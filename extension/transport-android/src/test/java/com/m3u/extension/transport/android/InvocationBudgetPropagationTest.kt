@@ -4,6 +4,7 @@ import com.m3u.extension.api.ExtensionApiVersion
 import com.m3u.extension.api.ExtensionHookIds
 import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.ExtensionInvocationBudget
+import com.m3u.extension.api.ExtensionSettingsSnapshot
 import com.m3u.extension.api.InvocationId
 import com.m3u.extension.api.SerializedExtensionEnvelope
 import com.m3u.extension.runtime.HostInvocationDeadlineExceededException
@@ -11,7 +12,6 @@ import kotlinx.serialization.json.JsonObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertSame
 
 class InvocationBudgetPropagationTest {
     @Test
@@ -27,10 +27,10 @@ class InvocationBudgetPropagationTest {
 
         val dispatched = request.afterTransportElapsed(1_250)
 
-        assertEquals(3_750L, dispatched.invocationBudget?.remainingTimeMillis)
-        assertEquals(8, dispatched.invocationBudget?.maxBrokerRequests)
-        assertEquals(4_096L, dispatched.invocationBudget?.maxBrokerRequestBytes)
-        assertEquals(8_192L, dispatched.invocationBudget?.maxBrokerResponseBytes)
+        assertEquals(3_750L, dispatched.invocationBudget.remainingTimeMillis)
+        assertEquals(8, dispatched.invocationBudget.maxBrokerRequests)
+        assertEquals(4_096L, dispatched.invocationBudget.maxBrokerRequestBytes)
+        assertEquals(8_192L, dispatched.invocationBudget.maxBrokerResponseBytes)
     }
 
     @Test
@@ -52,15 +52,8 @@ class InvocationBudgetPropagationTest {
         }
     }
 
-    @Test
-    fun `legacy request without a budget remains unchanged`() {
-        val request = envelope(invocationBudget = null)
-
-        assertSame(request, request.afterTransportElapsed(500))
-    }
-
     private fun envelope(
-        invocationBudget: ExtensionInvocationBudget?,
+        invocationBudget: ExtensionInvocationBudget,
     ) = SerializedExtensionEnvelope(
         apiVersion = ExtensionApiVersion(1, 0),
         invocationId = InvocationId("invocation-budget-test"),
@@ -68,6 +61,8 @@ class InvocationBudgetPropagationTest {
         hook = ExtensionHookIds.PlaybackSourceResolve,
         schemaVersion = 1,
         payload = JsonObject(emptyMap()),
+        settings = ExtensionSettingsSnapshot(),
+        grantedCapabilities = emptySet(),
         invocationBudget = invocationBudget,
     )
 }

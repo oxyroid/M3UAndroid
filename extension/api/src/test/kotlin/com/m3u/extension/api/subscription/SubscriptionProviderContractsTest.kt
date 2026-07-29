@@ -21,25 +21,6 @@ class SubscriptionProviderContractsTest {
     }
 
     @Test
-    fun `provider variants are selectable unless declared as compatibility-only`() {
-        assertEquals(
-            true,
-            SubscriptionProviderVariant(
-                kind = EmbyCompatibleProviderKinds.Emby,
-                displayName = "Emby",
-            ).userSelectable,
-        )
-        assertEquals(
-            false,
-            SubscriptionProviderVariant(
-                kind = ProviderKind("private"),
-                displayName = "Private",
-                userSelectable = false,
-            ).userSelectable,
-        )
-    }
-
-    @Test
     fun `provider media kinds keep known values without closing the wire vocabulary`() {
         assertEquals("unknown", ProviderMediaKinds.Unknown.value)
         assertEquals("live", ProviderMediaKinds.Live.value)

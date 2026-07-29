@@ -33,7 +33,5 @@ The Hook fixture catalog currently retains these explicit API 1 schema versions:
 value produces the same JSON structure. The unknown-field example is decode-only because a
 current encoder does not emit fields it does not know.
 
-Do not replace an existing Hook fixture when introducing a new schema. Add a sibling
-`schema-<version>` directory and keep the older fixture for compatibility tests.
-The retained Discover schema 3 fixture predates the enforced `userSelectable` flag and is
-historical, not accepted by the current host.
+Until the first public SDK release, each Hook keeps only its current canonical fixture. After the
+SDK is public, add a sibling `schema-<version>` directory when retaining an older supported schema.
