@@ -113,6 +113,28 @@ data class RegisteredExtension(
     val consecutiveFailures: Int,
 )
 
+/**
+ * Opaque identity for one concrete runtime registration.
+ *
+ * A new lease is created every time an extension is registered, including when the same built-in
+ * entrypoint or external transport reconnects with an unchanged manifest.
+ */
+class ExtensionRegistrationLease private constructor() {
+    override fun toString(): String = "ExtensionRegistrationLease(opaque)"
+
+    companion object {
+        internal fun create(): ExtensionRegistrationLease = ExtensionRegistrationLease()
+    }
+}
+
+/**
+ * A host-side, point-in-time view of one registered extension and its registration identity.
+ */
+data class ExtensionRegistrationSnapshot(
+    val extension: RegisteredExtension,
+    val lease: ExtensionRegistrationLease,
+)
+
 enum class ExtensionExecutionKind {
     BUILT_IN,
     EXTERNAL,
@@ -297,6 +319,33 @@ class ExtensionRuntime(
         .map(Registration::publicModel)
         .sortedBy { extension -> extension.manifest.id.value }
 
+    /**
+     * Atomically captures the current registration model and its opaque identity.
+     */
+    fun captureRegistration(extensionId: ExtensionId): ExtensionRegistrationSnapshot? =
+        synchronized(registrationLifecycleLock) {
+            registrations[extensionId]?.snapshot()
+        }
+
+    fun captureRegistration(
+        extensionId: ExtensionId,
+        registrationToken: ExtensionRegistrationToken,
+    ): ExtensionRegistrationSnapshot? = synchronized(registrationLifecycleLock) {
+        registrations[extensionId]
+            ?.takeIf { registration -> registration.matches(registrationToken) }
+            ?.snapshot()
+    }
+
+    /**
+     * Returns true only while [lease] still identifies the current registration for [extensionId].
+     */
+    fun isRegistrationCurrent(
+        extensionId: ExtensionId,
+        lease: ExtensionRegistrationLease,
+    ): Boolean = synchronized(registrationLifecycleLock) {
+        registrations[extensionId]?.matches(lease) == true
+    }
+
     fun validateExternalManifest(manifest: ExtensionManifest): ExtensionError? {
         if (!isApiMajorCompatible(manifest)) return incompatibleApiError(manifest)
         validateManifestBounds(manifest)?.let { return it }
@@ -316,8 +365,10 @@ class ExtensionRuntime(
         validateResponse: (Response) -> Unit = {},
     ): ExtensionResult<Response> {
         val invocationId = invocationIdFactory.create()
-        val registration = registrations[extensionId]
+        val registrationSnapshot = captureRegistrationState(extensionId)
             ?: return failure(invocationId, extensionId, spec, ExtensionErrorCodes.ExtensionNotFound, "Extension $extensionId is not registered", true)
+        val registration = registrationSnapshot.registration
+        val registrationLease = registrationSnapshot.lease
         if (!registration.enabled) {
             return failure(invocationId, extensionId, spec, ExtensionErrorCodes.ExtensionDisabled, "Extension $extensionId is disabled", true)
         }
@@ -349,7 +400,11 @@ class ExtensionRuntime(
         val invocation = try {
             withTimeout(invocationPolicy.timeoutMillis) {
                 val settings = try {
-                    settingsProvider.snapshot(registration.manifest)
+                    synchronized(registrationLifecycleLock) {
+                        registrations[extensionId]
+                            ?.takeIf { current -> current.matches(registrationLease) }
+                            ?.let { settingsProvider.snapshot(registration.manifest) }
+                    } ?: return@withTimeout staleRegistrationAttempt()
                 } catch (cancellation: CancellationException) {
                     throw cancellation
                 } catch (_: Exception) {
@@ -386,6 +441,9 @@ class ExtensionRuntime(
                 }
                 registration.semaphore.withPermit {
                     hostInvocationSemaphore.withPermit hostPermit@{
+                        if (!isRegistrationCurrent(extensionId, registrationLease)) {
+                            return@hostPermit staleRegistrationAttempt()
+                        }
                         val managedBrokerScope = if (
                             brokerScope == null &&
                             registration.isExternal
@@ -419,6 +477,9 @@ class ExtensionRuntime(
                             null
                         }
                         withManagedBrokerScope(managedBrokerScope) {
+                            if (!isRegistrationCurrent(extensionId, registrationLease)) {
+                                return@withManagedBrokerScope staleRegistrationAttempt()
+                            }
                             val remainingTimeMillis =
                                 remainingTimeMillis(invocationStartedNanos)
                             if (remainingTimeMillis <= 0) {
@@ -496,6 +557,30 @@ class ExtensionRuntime(
         }
         return ExtensionResult(invocationId, extensionId, spec, invocation.outcome)
     }
+
+    private fun captureRegistrationState(
+        extensionId: ExtensionId,
+    ): CapturedRegistration? = synchronized(registrationLifecycleLock) {
+        registrations[extensionId]?.let { registration ->
+            CapturedRegistration(
+                registration = registration,
+                lease = registration.lease,
+            )
+        }
+    }
+
+    private fun <Response : ExtensionPayload> staleRegistrationAttempt() =
+        InvocationAttempt<Response>(
+            outcome = HookResult.Failure(
+                ExtensionError(
+                    code = ExtensionErrorCodes.InvocationFailed,
+                    message = "Extension registration changed during invocation",
+                    recoverable = true,
+                )
+            ),
+            runtimeFailure = false,
+            affectsHealth = false,
+        )
 
     private fun <Response : ExtensionPayload> normalizeInvocationAttempt(
         invocation: InvocationAttempt<Response>,
@@ -809,6 +894,7 @@ class ExtensionRuntime(
         val transportHealth: AtomicReference<ExtensionTransportHealth> =
             AtomicReference(ExtensionTransportHealth.HEALTHY),
         @Volatile var enabled: Boolean = true,
+        val lease: ExtensionRegistrationLease = ExtensionRegistrationLease.create(),
     ) {
         suspend fun <Request : ExtensionPayload, Response : ExtensionPayload> invoke(
             spec: HookSpec<Request, Response>,
@@ -911,6 +997,8 @@ class ExtensionRuntime(
         fun matches(token: ExtensionRegistrationToken): Boolean =
             isExternal && registrationToken === token
 
+        fun matches(candidate: ExtensionRegistrationLease): Boolean = lease === candidate
+
         fun deactivate() {
             val token = registrationToken
             val tracker = externalFailureTracker
@@ -963,7 +1051,17 @@ class ExtensionRuntime(
             },
             consecutiveFailures = consecutiveFailures,
         )
+
+        fun snapshot() = ExtensionRegistrationSnapshot(
+            extension = publicModel(),
+            lease = lease,
+        )
     }
+
+    private data class CapturedRegistration(
+        val registration: Registration,
+        val lease: ExtensionRegistrationLease,
+    )
 
     private class ExternalFailureTracker {
         private var activeToken: ExtensionRegistrationToken? = null

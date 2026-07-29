@@ -53,6 +53,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
+import kotlin.test.assertNotSame
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -90,6 +91,78 @@ class ExtensionRuntimeTest {
 
         assertEquals(InvocationId("invocation-1"), result.invocationId)
         assertEquals(TestPayload("resolved-stable-reference"), assertIs<HookResult.Success<TestPayload>>(result.outcome).payload)
+    }
+
+    @Test
+    fun `registration lease identifies one built in registration instance`() {
+        val runtime = runtime()
+        val entrypoint = entrypoint()
+        val registered = assertIs<ExtensionRegistrationResult.Registered>(
+            runtime.register(entrypoint)
+        )
+
+        val first = assertNotNull(runtime.captureRegistration(entrypoint.manifest.id))
+
+        assertEquals(registered.extension, first.extension)
+        assertTrue(runtime.isRegistrationCurrent(entrypoint.manifest.id, first.lease))
+        assertEquals("ExtensionRegistrationLease(opaque)", first.lease.toString())
+
+        runtime.unregister(entrypoint.manifest.id)
+        assertFalse(runtime.isRegistrationCurrent(entrypoint.manifest.id, first.lease))
+        assertIs<ExtensionRegistrationResult.Registered>(runtime.register(entrypoint))
+        val replacement = assertNotNull(runtime.captureRegistration(entrypoint.manifest.id))
+
+        assertNotSame(first.lease, replacement.lease)
+        assertFalse(runtime.isRegistrationCurrent(entrypoint.manifest.id, first.lease))
+        assertTrue(runtime.isRegistrationCurrent(entrypoint.manifest.id, replacement.lease))
+    }
+
+    @Test
+    fun `external token stays compatible while every reconnect gets a new registration lease`() {
+        val runtime = runtime()
+        val manifest = entrypoint().manifest
+        val first = assertIs<ExtensionRegistrationResult.Registered>(
+            runtime.register(transport(manifest))
+        )
+        val firstToken = assertNotNull(first.registrationToken)
+        val firstSnapshot = assertNotNull(
+            runtime.captureRegistration(manifest.id, firstToken)
+        )
+
+        assertNotNull(
+            runtime.recordTransportHealth(
+                manifest.id,
+                firstToken,
+                ExtensionTransportHealth.HEALTHY,
+            )
+        )
+        runtime.unregister(manifest.id)
+        val replacement = assertIs<ExtensionRegistrationResult.Registered>(
+            runtime.register(transport(manifest))
+        )
+        val replacementToken = assertNotNull(replacement.registrationToken)
+        val replacementSnapshot = assertNotNull(
+            runtime.captureRegistration(manifest.id, replacementToken)
+        )
+
+        assertNotSame(firstSnapshot.lease, replacementSnapshot.lease)
+        assertFalse(runtime.isRegistrationCurrent(manifest.id, firstSnapshot.lease))
+        assertTrue(runtime.isRegistrationCurrent(manifest.id, replacementSnapshot.lease))
+        assertNull(runtime.captureRegistration(manifest.id, firstToken))
+        assertNull(
+            runtime.recordTransportHealth(
+                manifest.id,
+                firstToken,
+                ExtensionTransportHealth.HEALTHY,
+            )
+        )
+        assertNotNull(
+            runtime.recordTransportHealth(
+                manifest.id,
+                replacementToken,
+                ExtensionTransportHealth.HEALTHY,
+            )
+        )
     }
 
     @Test

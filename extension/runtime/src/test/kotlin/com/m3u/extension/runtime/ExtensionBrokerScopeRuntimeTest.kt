@@ -13,6 +13,7 @@ import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.ExtensionManifest
 import com.m3u.extension.api.ExtensionPayload
 import com.m3u.extension.api.ExtensionSemanticVersion
+import com.m3u.extension.api.ExtensionSettingsSnapshot
 import com.m3u.extension.api.HookResult
 import com.m3u.extension.api.HookSpec
 import com.m3u.extension.api.InvocationId
@@ -245,6 +246,101 @@ class ExtensionBrokerScopeRuntimeTest {
         assertEquals(2, openedScopes)
     }
 
+    @Test
+    fun `registration replaced during preparation never opens a broker scope`() = runBlocking {
+        var scopeOpenCount = 0
+        var oldTransportInvoked = false
+        var replacementTransportInvoked = false
+        lateinit var runtime: ExtensionRuntime
+        val replacement = transport(
+            manifest = MANIFEST.copy(
+                extensionVersion = ExtensionSemanticVersion(2, 0, 0),
+            )
+        ) { request ->
+            replacementTransportInvoked = true
+            request.success(ScopePayload("replacement"))
+        }
+        runtime = runtime(
+            brokerScopeProvider = ExtensionBrokerScopeProvider {
+                scopeOpenCount += 1
+                TestLease()
+            },
+            settingsProvider = ExtensionSettingsProvider {
+                runtime.unregister(EXTENSION_ID)
+                runtime.registerHealthy(replacement)
+                ExtensionSettingsSnapshot()
+            },
+        )
+        runtime.registerHealthy(
+            transport { request ->
+                oldTransportInvoked = true
+                request.success(ScopePayload("old"))
+            }
+        )
+
+        val result = runtime.invoke(EXTENSION_ID, SPEC, ScopePayload("request"))
+
+        assertEquals(
+            ExtensionErrorCodes.InvocationFailed,
+            assertIs<HookResult.Failure>(result.outcome).error.code,
+        )
+        assertEquals(0, scopeOpenCount)
+        assertFalse(oldTransportInvoked)
+        assertFalse(replacementTransportInvoked)
+        assertEquals(
+            ExtensionSemanticVersion(2, 0, 0),
+            runtime.captureRegistration(EXTENSION_ID)?.extension?.manifest?.extensionVersion,
+        )
+    }
+
+    @Test
+    fun `registration replaced while broker opens closes scope without dispatching`() =
+        runBlocking {
+            val lease = TestLease()
+            var oldTransportInvoked = false
+            var replacementTransportInvoked = false
+            lateinit var runtime: ExtensionRuntime
+            val replacement = transport(
+                manifest = MANIFEST.copy(
+                    extensionVersion = ExtensionSemanticVersion(2, 0, 0),
+                )
+            ) { request ->
+                replacementTransportInvoked = true
+                request.success(ScopePayload("replacement"))
+            }
+            runtime = runtime(
+                brokerScopeProvider = ExtensionBrokerScopeProvider { request ->
+                    assertEquals(
+                        ExtensionSemanticVersion(1, 0, 0),
+                        request.manifest.extensionVersion,
+                    )
+                    runtime.unregister(EXTENSION_ID)
+                    runtime.registerHealthy(replacement)
+                    lease
+                }
+            )
+            runtime.registerHealthy(
+                transport { request ->
+                    oldTransportInvoked = true
+                    request.success(ScopePayload("old"))
+                }
+            )
+
+            val result = runtime.invoke(EXTENSION_ID, SPEC, ScopePayload("request"))
+
+            assertEquals(
+                ExtensionErrorCodes.InvocationFailed,
+                assertIs<HookResult.Failure>(result.outcome).error.code,
+            )
+            assertFalse(oldTransportInvoked)
+            assertFalse(replacementTransportInvoked)
+            assertTrue(lease.closed)
+            assertEquals(
+                ExtensionSemanticVersion(2, 0, 0),
+                runtime.captureRegistration(EXTENSION_ID)?.extension?.manifest?.extensionVersion,
+            )
+        }
+
     private fun ExtensionRuntime.registerHealthy(transport: ExtensionTransport) {
         val registration = assertIs<ExtensionRegistrationResult.Registered>(
             register(transport)
@@ -260,17 +356,20 @@ class ExtensionBrokerScopeRuntimeTest {
         brokerScopeProvider: ExtensionBrokerScopeProvider,
         invocationPolicy: InvocationPolicy = InvocationPolicy(),
         monotonicNanos: () -> Long = System::nanoTime,
+        settingsProvider: ExtensionSettingsProvider = EmptyExtensionSettingsProvider,
     ) = ExtensionRuntime(
         hostApiVersion = ExtensionApiVersions.Current,
         brokerScopeProvider = brokerScopeProvider,
         invocationPolicy = invocationPolicy,
         monotonicNanos = monotonicNanos,
+        settingsProvider = settingsProvider,
     )
 
     private fun transport(
+        manifest: ExtensionManifest = MANIFEST,
         invoke: suspend (SerializedExtensionEnvelope) -> SerializedExtensionResult,
     ) = object : ExtensionTransport {
-        override val manifest: ExtensionManifest = MANIFEST
+        override val manifest: ExtensionManifest = manifest
 
         override suspend fun invoke(
             request: SerializedExtensionEnvelope,
