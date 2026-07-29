@@ -19,7 +19,9 @@ The Hook fixture catalog currently retains these explicit API 1 schema versions:
 | `subscription.provider.discover` | 4 |
 | `subscription.provider.validate` | 2 |
 | `subscription.content.refresh` | 4 |
+| `subscription.content.browse` | 1 |
 | `playback.source.resolve` | 4 |
+| `playback.session.update` | 1 |
 | `playback.session.close` | 3 |
 | `settings.schema.contribute` | 1 |
 | `epg.content.refresh` | 4 |

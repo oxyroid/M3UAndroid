@@ -7,6 +7,7 @@ import com.m3u.extension.api.security.BrokerOperationResult
 import com.m3u.extension.api.security.BrokerValue
 import com.m3u.extension.api.security.BrokeredHttpRequest
 import com.m3u.extension.api.security.ResponseValueSource
+import com.m3u.extension.api.subscription.PlaybackMethods
 import com.m3u.extension.api.subscription.ProviderValidationEvidence
 import com.m3u.extension.api.subscription.SubscriptionHookSpecs
 import kotlin.test.Test
@@ -41,8 +42,16 @@ class WireGoldenFixtureTest {
             directory = "hooks/subscription.content.refresh/schema-4",
         ),
         hookFixture(
+            spec = SubscriptionHookSpecs.Browse,
+            directory = "hooks/subscription.content.browse/schema-1",
+        ),
+        hookFixture(
             spec = SubscriptionHookSpecs.ResolvePlayback,
             directory = "hooks/playback.source.resolve/schema-4",
+        ),
+        hookFixture(
+            spec = SubscriptionHookSpecs.UpdatePlayback,
+            directory = "hooks/playback.session.update/schema-1",
         ),
         hookFixture(
             spec = SubscriptionHookSpecs.ClosePlayback,
@@ -227,6 +236,21 @@ class WireGoldenFixtureTest {
                 ProviderValidationEvidence.serializer(),
             )
         )
+    }
+
+    @Test
+    fun `existing playback fixtures decode additive VOD defaults`() {
+        val resolve = decodeFixture(
+            "hooks/playback.source.resolve/schema-4/result.json",
+            SubscriptionHookSpecs.ResolvePlayback.responseSerializer,
+        )
+        assertEquals(PlaybackMethods.Unknown, resolve.playMethod)
+
+        val close = decodeFixture(
+            "hooks/playback.session.close/schema-3/request.json",
+            SubscriptionHookSpecs.ClosePlayback.requestSerializer,
+        )
+        assertEquals(0L, close.positionTicks)
     }
 
     @Test

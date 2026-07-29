@@ -124,7 +124,9 @@ class ExtensionNetworkOriginContractTest {
         listOf(
             ExtensionHookIds.SubscriptionProviderValidate,
             ExtensionHookIds.SubscriptionContentRefresh,
+            ExtensionHookIds.SubscriptionContentBrowse,
             ExtensionHookIds.PlaybackSourceResolve,
+            ExtensionHookIds.PlaybackSessionUpdate,
             ExtensionHookIds.PlaybackSessionClose,
             ExtensionHookIds.MetadataChannelEnrich,
             ExtensionHookIds.EpgContentRefresh,

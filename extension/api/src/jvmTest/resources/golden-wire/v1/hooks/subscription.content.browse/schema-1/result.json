@@ -1,0 +1,41 @@
+{
+  "items": [
+    {
+      "reference": {
+        "providerId": "com.example.provider",
+        "itemId": "series-2",
+        "sourceType": "series"
+      },
+      "mediaKind": "series",
+      "title": "Example Series",
+      "playable": false,
+      "browsable": true,
+      "imageUrl": "https://media.example.test/items/series-2/image",
+      "category": "Drama",
+      "subtitle": "3 seasons",
+      "overview": "A series returned by the provider.",
+      "productionYear": 2026
+    },
+    {
+      "reference": {
+        "providerId": "com.example.provider",
+        "itemId": "episode-21",
+        "mediaSourceId": "source-main",
+        "sourceType": "episode"
+      },
+      "mediaKind": "episode",
+      "title": "A New Beginning",
+      "playable": true,
+      "browsable": false,
+      "imageUrl": "https://media.example.test/items/episode-21/image",
+      "category": "Example Series",
+      "subtitle": "S02 E01",
+      "overview": "The second season begins.",
+      "productionYear": 2026,
+      "seasonNumber": 2,
+      "episodeNumber": 1
+    }
+  ],
+  "nextCursor": "page-3",
+  "total": 120
+}

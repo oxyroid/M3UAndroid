@@ -51,7 +51,9 @@ class ExtensionContractTest {
             SubscriptionHookSpecs.Discover,
             SubscriptionHookSpecs.Validate,
             SubscriptionHookSpecs.Refresh,
+            SubscriptionHookSpecs.Browse,
             SubscriptionHookSpecs.ResolvePlayback,
+            SubscriptionHookSpecs.UpdatePlayback,
             SubscriptionHookSpecs.ClosePlayback,
             HostHookSpecs.MetadataEnrichment,
             HostHookSpecs.EpgRefresh,
@@ -605,6 +607,12 @@ class ExtensionContractTest {
             HostNetworkBrokerHooks.supports(ExtensionHookIds.SubscriptionProviderValidate)
         )
         assertTrue(
+            HostNetworkBrokerHooks.supports(ExtensionHookIds.SubscriptionContentBrowse)
+        )
+        assertTrue(
+            HostNetworkBrokerHooks.supports(ExtensionHookIds.PlaybackSessionUpdate)
+        )
+        assertTrue(
             HostNetworkBrokerHooks.supports(ExtensionHookIds.SearchProviderQuery)
         )
         assertEquals(composedHeader, json.decodeFromString(json.encodeToString(composedHeader)))
@@ -678,6 +686,8 @@ class ExtensionContractTest {
         )
         assertEquals(4, SubscriptionHookSpecs.Discover.schemaVersion)
         assertEquals(4, SubscriptionHookSpecs.Refresh.schemaVersion)
+        assertEquals(1, SubscriptionHookSpecs.Browse.schemaVersion)
+        assertEquals(1, SubscriptionHookSpecs.UpdatePlayback.schemaVersion)
         assertEquals(
             setOf(4),
             ExtensionContractCatalog.SupportedHookSchemaVersions

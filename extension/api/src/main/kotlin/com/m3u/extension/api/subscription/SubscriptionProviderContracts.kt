@@ -14,6 +14,9 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 
 private val PROVIDER_KIND_PATTERN = Regex("[a-z0-9]+(?:[._-][a-z0-9]+)*")
+private val PROVIDER_MEDIA_KIND_PATTERN = Regex("[a-z0-9]+(?:[._-][a-z0-9]+)*")
+private val PLAYBACK_METHOD_PATTERN = Regex("[a-z0-9]+(?:[._-][a-z0-9]+)*")
+private val PLAYBACK_SESSION_EVENT_PATTERN = Regex("[a-z0-9]+(?:[._-][a-z0-9]+)*")
 
 @Serializable
 @JvmInline
@@ -38,6 +41,34 @@ object EmbyCompatibleProviderKinds {
     val Emby = ProviderKind("emby")
     val Jellyfin = ProviderKind("jellyfin")
     val Auto = ProviderKind("auto")
+}
+
+@Serializable
+@JvmInline
+value class ProviderMediaKind(val value: String) {
+    init {
+        require(
+            value.length <= MAX_LENGTH &&
+                value.matches(PROVIDER_MEDIA_KIND_PATTERN)
+        ) {
+            "Provider media kind must be a lowercase identifier"
+        }
+    }
+
+    override fun toString(): String = value
+
+    companion object {
+        const val MAX_LENGTH = 64
+    }
+}
+
+object ProviderMediaKinds {
+    val Unknown = ProviderMediaKind("unknown")
+    val Live = ProviderMediaKind("live")
+    val Movie = ProviderMediaKind("movie")
+    val Series = ProviderMediaKind("series")
+    val Season = ProviderMediaKind("season")
+    val Episode = ProviderMediaKind("episode")
 }
 
 object SubscriptionProviderSettingKeys {
@@ -224,6 +255,138 @@ data class SubscriptionContentRefreshResult(
 ) : ExtensionPayload
 
 @Serializable
+data class SubscriptionContentBrowseRequest(
+    val account: ProviderAccountReference,
+    val credential: ProviderCredential,
+    val parentReference: PlaybackReference? = null,
+    val cursor: String? = null,
+    val limit: Int = DEFAULT_LIMIT,
+) : ExtensionPayload {
+    init {
+        require(
+            cursor == null ||
+                cursor.isNotBlank() &&
+                cursor.encodeToByteArray().size <= MAX_CURSOR_UTF8_BYTES
+        ) {
+            "Browse cursor is blank or too large"
+        }
+        require(limit in 1..MAX_LIMIT) {
+            "Browse limit must be between 1 and $MAX_LIMIT"
+        }
+    }
+
+    companion object {
+        const val DEFAULT_LIMIT = 100
+        const val MAX_LIMIT = 200
+        const val MAX_CURSOR_UTF8_BYTES = 512
+    }
+}
+
+@Serializable
+data class SubscriptionContentItemDescriptor(
+    val reference: PlaybackReference,
+    val mediaKind: ProviderMediaKind,
+    val title: String,
+    val playable: Boolean,
+    val browsable: Boolean,
+    val imageUrl: String? = null,
+    val category: String? = null,
+    val subtitle: String? = null,
+    val overview: String? = null,
+    val productionYear: Int? = null,
+    val seasonNumber: Int? = null,
+    val episodeNumber: Int? = null,
+) {
+    init {
+        require(playable || browsable) {
+            "Provider media item must be playable, browsable, or both"
+        }
+        require(
+            title.isNotBlank() &&
+                title.encodeToByteArray().size <= MAX_TITLE_UTF8_BYTES
+        ) {
+            "Provider media title is blank or too large"
+        }
+        require(
+            imageUrl == null ||
+                imageUrl.isNotBlank() &&
+                imageUrl.encodeToByteArray().size <= MAX_IMAGE_URL_UTF8_BYTES
+        ) {
+            "Provider media image URL is blank or too large"
+        }
+        require(
+            category == null ||
+                category.isNotBlank() &&
+                category.encodeToByteArray().size <= MAX_CATEGORY_UTF8_BYTES
+        ) {
+            "Provider media category is blank or too large"
+        }
+        require(
+            subtitle == null ||
+                subtitle.isNotBlank() &&
+                subtitle.encodeToByteArray().size <= MAX_SUBTITLE_UTF8_BYTES
+        ) {
+            "Provider media subtitle is blank or too large"
+        }
+        require(
+            overview == null ||
+                overview.isNotBlank() &&
+                overview.encodeToByteArray().size <= MAX_OVERVIEW_UTF8_BYTES
+        ) {
+            "Provider media overview is blank or too large"
+        }
+        require(productionYear == null || productionYear in 1..MAX_PRODUCTION_YEAR) {
+            "Provider media production year is out of range"
+        }
+        require(seasonNumber == null || seasonNumber in 0..MAX_INDEX_NUMBER) {
+            "Provider media season number is out of range"
+        }
+        require(episodeNumber == null || episodeNumber in 0..MAX_INDEX_NUMBER) {
+            "Provider media episode number is out of range"
+        }
+    }
+
+    companion object {
+        const val MAX_TITLE_UTF8_BYTES = 1_024
+        const val MAX_IMAGE_URL_UTF8_BYTES = 8_192
+        const val MAX_CATEGORY_UTF8_BYTES = 1_024
+        const val MAX_SUBTITLE_UTF8_BYTES = 1_024
+        const val MAX_OVERVIEW_UTF8_BYTES = 8_192
+        const val MAX_PRODUCTION_YEAR = 9_999
+        const val MAX_INDEX_NUMBER = 1_000_000
+    }
+}
+
+@Serializable
+data class SubscriptionContentBrowseResult(
+    val items: List<SubscriptionContentItemDescriptor>,
+    val nextCursor: String? = null,
+    val total: Int? = null,
+) : ExtensionPayload {
+    init {
+        require(items.size <= MAX_ITEMS_PER_PAGE) {
+            "Provider media page contains too many items"
+        }
+        require(
+            nextCursor == null ||
+                nextCursor.isNotBlank() &&
+                nextCursor.encodeToByteArray().size <= MAX_CURSOR_UTF8_BYTES
+        ) {
+            "Next browse cursor is blank or too large"
+        }
+        require(total == null || total >= 0) {
+            "Provider media total must not be negative"
+        }
+    }
+
+    companion object {
+        const val MAX_ITEMS_PER_PAGE = SubscriptionContentBrowseRequest.MAX_LIMIT
+        const val MAX_CURSOR_UTF8_BYTES =
+            SubscriptionContentBrowseRequest.MAX_CURSOR_UTF8_BYTES
+    }
+}
+
+@Serializable
 data class PlaybackPreferences(
     val maxStreamingBitrate: Long? = null,
     val allowTranscoding: Boolean = true,
@@ -262,6 +425,32 @@ data class PlaybackSessionDescriptor(
 }
 
 @Serializable
+@JvmInline
+value class PlaybackMethod(val value: String) {
+    init {
+        require(
+            value.length <= MAX_LENGTH &&
+                value.matches(PLAYBACK_METHOD_PATTERN)
+        ) {
+            "Playback method must be a lowercase identifier"
+        }
+    }
+
+    override fun toString(): String = value
+
+    companion object {
+        const val MAX_LENGTH = 64
+    }
+}
+
+object PlaybackMethods {
+    val Unknown = PlaybackMethod("unknown")
+    val DirectPlay = PlaybackMethod("direct_play")
+    val DirectStream = PlaybackMethod("direct_stream")
+    val Transcode = PlaybackMethod("transcode")
+}
+
+@Serializable
 data class PlaybackHeaderValue(
     val parts: List<BrokerValue>,
 ) {
@@ -282,6 +471,7 @@ data class PlaybackSourceResolveResult(
     val headers: Map<String, PlaybackHeaderValue> = emptyMap(),
     val mediaSourceId: String? = null,
     val session: PlaybackSessionDescriptor? = null,
+    val playMethod: PlaybackMethod = PlaybackMethods.Unknown,
 ) : ExtensionPayload {
     init {
         require(url.isNotBlank() && url.encodeToByteArray().size <= MAX_URL_UTF8_BYTES) {
@@ -300,6 +490,55 @@ data class PlaybackSourceResolveResult(
         const val MAX_URL_UTF8_BYTES = 8_192
     }
 }
+
+@Serializable
+@JvmInline
+value class PlaybackSessionEvent(val value: String) {
+    init {
+        require(
+            value.length <= MAX_LENGTH &&
+                value.matches(PLAYBACK_SESSION_EVENT_PATTERN)
+        ) {
+            "Playback session event must be a lowercase identifier"
+        }
+    }
+
+    override fun toString(): String = value
+
+    companion object {
+        const val MAX_LENGTH = 64
+    }
+}
+
+object PlaybackSessionEvents {
+    val Started = PlaybackSessionEvent("started")
+    val Progress = PlaybackSessionEvent("progress")
+    val Paused = PlaybackSessionEvent("paused")
+    val Resumed = PlaybackSessionEvent("resumed")
+}
+
+@Serializable
+data class PlaybackSessionUpdateRequest(
+    val account: ProviderAccountReference,
+    val credential: ProviderCredential,
+    val reference: PlaybackReference,
+    val session: PlaybackSessionDescriptor,
+    val event: PlaybackSessionEvent,
+    val positionTicks: Long,
+    val playMethod: PlaybackMethod,
+    val isPaused: Boolean,
+) : ExtensionPayload {
+    init {
+        require(positionTicks >= 0L) {
+            "Playback position must not be negative"
+        }
+    }
+}
+
+@Serializable
+data class PlaybackSessionUpdateResult(
+    val accepted: Boolean,
+) : ExtensionPayload
 
 @Serializable
 @JvmInline
@@ -324,7 +563,14 @@ data class PlaybackSessionCloseRequest(
     val reference: PlaybackReference,
     val session: PlaybackSessionDescriptor,
     val reason: PlaybackSessionCloseReason,
-) : ExtensionPayload
+    val positionTicks: Long = 0L,
+) : ExtensionPayload {
+    init {
+        require(positionTicks >= 0L) {
+            "Playback position must not be negative"
+        }
+    }
+}
 
 @Serializable
 data class PlaybackSessionCloseResult(
@@ -350,11 +596,23 @@ object SubscriptionHookSpecs {
         requestSerializer = SubscriptionContentRefreshRequest.serializer(),
         responseSerializer = SubscriptionContentRefreshResult.serializer(),
     )
+    val Browse = HookSpec(
+        hook = ExtensionHookIds.SubscriptionContentBrowse,
+        schemaVersion = 1,
+        requestSerializer = SubscriptionContentBrowseRequest.serializer(),
+        responseSerializer = SubscriptionContentBrowseResult.serializer(),
+    )
     val ResolvePlayback = HookSpec(
         hook = ExtensionHookIds.PlaybackSourceResolve,
         schemaVersion = 4,
         requestSerializer = PlaybackSourceResolveRequest.serializer(),
         responseSerializer = PlaybackSourceResolveResult.serializer(),
+    )
+    val UpdatePlayback = HookSpec(
+        hook = ExtensionHookIds.PlaybackSessionUpdate,
+        schemaVersion = 1,
+        requestSerializer = PlaybackSessionUpdateRequest.serializer(),
+        responseSerializer = PlaybackSessionUpdateResult.serializer(),
     )
     val ClosePlayback = HookSpec(
         hook = ExtensionHookIds.PlaybackSessionClose,

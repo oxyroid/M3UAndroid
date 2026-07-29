@@ -95,7 +95,15 @@ object ExtensionContractCatalog {
                 setOf(ExtensionCapabilityIds.SubscriptionRead),
             ),
             ExtensionHookContract(
+                SubscriptionHookSpecs.Browse,
+                setOf(ExtensionCapabilityIds.SubscriptionRead),
+            ),
+            ExtensionHookContract(
                 SubscriptionHookSpecs.ResolvePlayback,
+                setOf(ExtensionCapabilityIds.PlaybackResolve),
+            ),
+            ExtensionHookContract(
+                SubscriptionHookSpecs.UpdatePlayback,
                 setOf(ExtensionCapabilityIds.PlaybackResolve),
             ),
             ExtensionHookContract(

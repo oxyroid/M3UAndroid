@@ -18,7 +18,9 @@ Hook Fixture 目录当前明确保留以下 API 1 Schema 版本：
 | `subscription.provider.discover` | 4 |
 | `subscription.provider.validate` | 2 |
 | `subscription.content.refresh` | 4 |
+| `subscription.content.browse` | 1 |
 | `playback.source.resolve` | 4 |
+| `playback.session.update` | 1 |
 | `playback.session.close` | 3 |
 | `settings.schema.contribute` | 1 |
 | `epg.content.refresh` | 4 |
