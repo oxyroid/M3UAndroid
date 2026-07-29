@@ -41,7 +41,8 @@ the provider implementation does. New subscriptions are stored as `DataSource.Pr
 
 | Change | Main files |
 | --- | --- |
-| Service action, discovery, and package identity | [`ExtensionProtocol`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android/ExtensionProtocol.kt), [`AndroidExtensionDiscovery`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android/AndroidExtensionDiscovery.kt) |
+| AIDL, handshake, callback, or PFD wire behavior | [`:extension:transport-protocol-android`](../../../extension/transport-protocol-android) |
+| Service discovery and package identity | [`AndroidExtensionDiscovery`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android/AndroidExtensionDiscovery.kt) |
 | Explicit binding, handshake, PFD, and calls | [`AndroidBoundExtensionTransport`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android/AndroidBoundExtensionTransport.kt) |
 | APK-side Binder implementation | [`ExtensionService`](../../../extension/sdk-android/src/main/java/com/m3u/extension/sdk/android/ExtensionService.kt) |
 | APK-side typed Hook registration | [`TypedExtensionService`](../../../extension/sdk-android/src/main/java/com/m3u/extension/sdk/android/TypedExtensionService.kt) |

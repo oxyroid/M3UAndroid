@@ -26,6 +26,7 @@ include(":core", ":core:foundation")
 include(
     ":extension:api",
     ":extension:runtime",
+    ":extension:transport-protocol-android",
     ":extension:transport-android",
     ":extension:sdk-android",
 )

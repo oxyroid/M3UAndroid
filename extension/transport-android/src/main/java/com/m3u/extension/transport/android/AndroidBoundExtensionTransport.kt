@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -396,7 +397,7 @@ class AndroidBoundExtensionTransport private constructor(
                             }.onFailure { error ->
                                 resultDispatcher.close(error)
                                 runCatching { appContext.unbindService(connection) }
-                                continuation.resumeFailure(error)
+                                continuation.resumeTransportFailure(error)
                             }
                             connectionScope.cancel()
                         }
@@ -438,7 +439,9 @@ class AndroidBoundExtensionTransport private constructor(
                 if (!appContext.bindService(intent, connection, Context.BIND_AUTO_CREATE)) {
                     connectionScope.cancel()
                     resultDispatcher.close()
-                    continuation.resumeFailure(IllegalStateException("Unable to bind extension service"))
+                    continuation.resumeTransportFailure(
+                        IllegalStateException("Unable to bind extension service")
+                    )
                 }
                 continuation.invokeOnCancellation {
                     connectionScope.cancel()
@@ -457,7 +460,7 @@ class AndroidBoundExtensionTransport private constructor(
         ) {
             connectionScope.cancel()
             runCatching { context.unbindService(connection) }
-            continuation.resumeFailure(IllegalStateException(message))
+            continuation.resumeTransportFailure(IllegalStateException(message))
         }
     }
 }
@@ -818,4 +821,8 @@ private inline fun <reified T> decodeExtensionWireValue(
         "Extension $valueName is malformed",
         error,
     )
+}
+
+private fun <T> CancellableContinuation<T>.resumeTransportFailure(failure: Throwable) {
+    if (isActive) runCatching { resumeWithException(failure) }
 }

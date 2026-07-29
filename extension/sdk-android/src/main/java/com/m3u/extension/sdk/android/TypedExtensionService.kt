@@ -13,8 +13,6 @@ import com.m3u.extension.api.InvocationId
 import com.m3u.extension.api.SerializedExtensionEnvelope
 import com.m3u.extension.api.SerializedExtensionResult
 import com.m3u.extension.api.security.HostNetworkBrokerHooks
-import com.m3u.extension.runtime.ExtensionTransport
-import com.m3u.extension.runtime.ExtensionTransportHealth
 import java.util.concurrent.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
@@ -31,24 +29,19 @@ abstract class TypedExtensionService : ExtensionService() {
     protected abstract val extensionManifest: ExtensionManifest
 
     private val registry = TypedHookRegistry()
-    private val transportDelegate = lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
-        registry.createTransport(extensionManifest, json)
+    private val backendDelegate = lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        registry.createBackend(extensionManifest, json)
     }
 
-    final override val transport: ExtensionTransport
-        get() = transportDelegate.value
-
-    final override suspend fun invoke(
-        envelope: SerializedExtensionEnvelope,
-        hostNetworkBroker: ExtensionHostNetworkBroker,
-    ): SerializedExtensionResult = transportDelegate.value.invoke(envelope, hostNetworkBroker)
+    internal final override val serviceBackend: ExtensionServiceBackend
+        get() = backendDelegate.value
 
     /** Register a handler that returns a successful typed response. */
     protected fun <Request : ExtensionPayload, Response : ExtensionPayload> handle(
         spec: HookSpec<Request, Response>,
         handler: suspend (request: Request, context: ExtensionCallContext) -> Response,
     ) {
-        check(!transportDelegate.isInitialized()) {
+        check(!backendDelegate.isInitialized()) {
             "Hooks must be registered before the extension service is bound"
         }
         registry.handle(spec) { request, context ->
@@ -61,7 +54,7 @@ abstract class TypedExtensionService : ExtensionService() {
         spec: HookSpec<Request, Response>,
         handler: suspend (request: Request, context: ExtensionCallContext) -> HookResult<Response>,
     ) {
-        check(!transportDelegate.isInitialized()) {
+        check(!backendDelegate.isInitialized()) {
             "Hooks must be registered before the extension service is bound"
         }
         registry.handle(spec, handler)
@@ -76,7 +69,7 @@ abstract class TypedExtensionService : ExtensionService() {
             broker: ExtensionHostNetworkBroker,
         ) -> Response,
     ) {
-        check(!transportDelegate.isInitialized()) {
+        check(!backendDelegate.isInitialized()) {
             "Hooks must be registered before the extension service is bound"
         }
         registry.handleWithBroker(spec) { request, context, broker ->
@@ -93,7 +86,7 @@ abstract class TypedExtensionService : ExtensionService() {
             broker: ExtensionHostNetworkBroker,
         ) -> HookResult<Response>,
     ) {
-        check(!transportDelegate.isInitialized()) {
+        check(!backendDelegate.isInitialized()) {
             "Hooks must be registered before the extension service is bound"
         }
         registry.handleWithBroker(spec, handler)
@@ -146,12 +139,12 @@ internal class TypedHookRegistry {
         bindings[spec.hook] = TypedHookBindingImpl(spec, requiresBroker, handler)
     }
 
-    fun createTransport(
+    fun createBackend(
         manifest: ExtensionManifest,
         json: Json,
-    ): BrokerAwareExtensionTransport {
+    ): ExtensionServiceBackend {
         sealed = true
-        return TypedExtensionTransport(manifest, bindings.values.toList(), json)
+        return TypedExtensionServiceBackend(manifest, bindings.values.toList(), json)
     }
 }
 
@@ -225,18 +218,11 @@ private sealed interface TypedHookOutcome {
     data class Failure(val error: ExtensionError) : TypedHookOutcome
 }
 
-internal interface BrokerAwareExtensionTransport : ExtensionTransport {
-    suspend fun invoke(
-        request: SerializedExtensionEnvelope,
-        hostNetworkBroker: ExtensionHostNetworkBroker?,
-    ): SerializedExtensionResult
-}
-
-private class TypedExtensionTransport(
+private class TypedExtensionServiceBackend(
     override val manifest: ExtensionManifest,
     bindings: Collection<TypedHookBinding>,
     private val json: Json,
-) : BrokerAwareExtensionTransport {
+) : ExtensionServiceBackend {
     private val bindings = bindings.associateBy { binding -> binding.spec.hook }
     private val invocations = InvocationRegistry()
 
@@ -259,13 +245,11 @@ private class TypedExtensionTransport(
         }
     }
 
-    override suspend fun invoke(request: SerializedExtensionEnvelope): SerializedExtensionResult =
-        invoke(request, hostNetworkBroker = null)
-
     override suspend fun invoke(
-        request: SerializedExtensionEnvelope,
+        envelope: SerializedExtensionEnvelope,
         hostNetworkBroker: ExtensionHostNetworkBroker?,
     ): SerializedExtensionResult {
+        val request = envelope
         validate(request)?.let { error -> return request.errorResult(error) }
         val binding = bindings.getValue(request.hook)
         val declaredCapabilities = manifest.capabilities
@@ -342,7 +326,7 @@ private class TypedExtensionTransport(
         invocations.cancel(invocationId)
     }
 
-    override suspend fun health(): ExtensionTransportHealth = ExtensionTransportHealth.HEALTHY
+    override suspend fun healthWireValue(): String = HEALTHY_WIRE_VALUE
 
     private fun validate(request: SerializedExtensionEnvelope): ExtensionError? {
         if (request.extensionId != manifest.id) {
@@ -397,6 +381,10 @@ private class TypedExtensionTransport(
         schemaVersion = schemaVersion,
         error = extensionError,
     )
+
+    private companion object {
+        const val HEALTHY_WIRE_VALUE = "healthy"
+    }
 }
 
 private enum class InvocationRegistration {

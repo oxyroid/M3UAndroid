@@ -38,7 +38,6 @@ import com.m3u.extension.api.subscription.ProviderValidationEvidence
 import com.m3u.extension.api.subscription.SubscriptionHookSpecs
 import com.m3u.extension.api.subscription.SubscriptionProviderValidateRequest
 import com.m3u.extension.api.subscription.SubscriptionProviderValidateResult
-import com.m3u.extension.runtime.ExtensionTransportHealth
 import java.util.concurrent.CancellationException
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -81,7 +80,7 @@ class TypedExtensionServiceTest {
                 HookResult.Success(SETTINGS_RESULT)
             }
         }
-        val transport = registry.createTransport(manifest(), json)
+        val transport = registry.createBackend(manifest(), json)
         val settings = ExtensionSettingsSnapshot(
             schemaVersions = mapOf("manifest" to 1),
             values = mapOf("manifest/greeting" to JsonPrimitive("Hello")),
@@ -110,7 +109,7 @@ class TypedExtensionServiceTest {
                 requireNotNull(result.payload),
             ),
         )
-        assertEquals(ExtensionTransportHealth.HEALTHY, transport.health())
+        assertEquals("healthy", transport.healthWireValue())
     }
 
     @Test
@@ -122,7 +121,7 @@ class TypedExtensionServiceTest {
                 HookResult.Success(SETTINGS_RESULT)
             }
         }
-        val transport = registry.createTransport(manifest(), json)
+        val transport = registry.createBackend(manifest(), json)
         val invocationBudget = ExtensionInvocationBudget(
             remainingTimeMillis = 12_000,
             maxBrokerRequests = 3,
@@ -185,7 +184,7 @@ class TypedExtensionServiceTest {
                 )
             }
         }
-        val transport = registry.createTransport(providerManifest(), json)
+        val transport = registry.createBackend(providerManifest(), json)
         val broker = ExtensionHostNetworkBroker.forTesting { operation ->
             assertTrue(operation is BrokerOperation.Authenticate)
             BrokerOperationResult.Authentication(
@@ -226,7 +225,7 @@ class TypedExtensionServiceTest {
                 )
             }
         }
-        val transport = registry.createTransport(providerManifest(), json)
+        val transport = registry.createBackend(providerManifest(), json)
 
         val result = transport.invoke(providerEnvelope(brokerScope = null))
 
@@ -244,7 +243,7 @@ class TypedExtensionServiceTest {
                 HookResult.Success(SETTINGS_RESULT)
             }
         }
-        val transport = registry.createTransport(manifest(), json)
+        val transport = registry.createBackend(manifest(), json)
 
         val result = transport.invoke(envelope(grantedCapabilities = emptySet()))
 
@@ -259,7 +258,7 @@ class TypedExtensionServiceTest {
                 error("secret=must-not-escape")
             }
         }
-        val transport = registry.createTransport(manifest(), json)
+        val transport = registry.createBackend(manifest(), json)
 
         val invalidPayload = transport.invoke(
             envelope(payload = JsonObject(emptyMap()))
@@ -283,7 +282,7 @@ class TypedExtensionServiceTest {
                 awaitCancellation()
             }
         }
-        val transport = registry.createTransport(manifest(), json)
+        val transport = registry.createBackend(manifest(), json)
         val invocation = async { transport.invoke(envelope()) }
         started.await()
 
@@ -302,7 +301,7 @@ class TypedExtensionServiceTest {
                 HookResult.Success(SETTINGS_RESULT)
             }
         }
-        val transport = registry.createTransport(manifest(), json)
+        val transport = registry.createBackend(manifest(), json)
 
         transport.cancel(InvocationId("call-1"))
         val invocation = async { transport.invoke(envelope()) }
@@ -316,7 +315,7 @@ class TypedExtensionServiceTest {
         val registry = TypedHookRegistry().apply {
             handle(HostHookSpecs.SettingsSchema) { _, _ -> HookResult.Success(SETTINGS_RESULT) }
         }
-        val transport = registry.createTransport(
+        val transport = registry.createBackend(
             manifest(
                 apiRange = ExtensionApiRange(
                     minimum = ExtensionApiVersion(major = 1, minor = 0),

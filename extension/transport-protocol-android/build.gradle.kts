@@ -4,15 +4,12 @@ plugins {
 }
 
 android {
-    namespace = "com.m3u.extension.transport.android"
+    namespace = "com.m3u.extension.transport.protocol.android"
     buildFeatures { aidl = true }
 }
 
 dependencies {
     api(project(":extension:api"))
-    api(project(":extension:runtime"))
-    api(project(":extension:transport-protocol-android"))
-    implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
     testImplementation(kotlin("test-junit"))

@@ -7,7 +7,7 @@ android { namespace = "com.m3u.extension.sdk.android" }
 
 dependencies {
     api(project(":extension:api"))
-    api(project(":extension:transport-android"))
+    implementation(project(":extension:transport-protocol-android"))
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
     testImplementation(kotlin("test-junit"))

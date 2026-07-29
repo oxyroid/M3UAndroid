@@ -5,11 +5,11 @@ import android.content.Intent
 import android.os.IBinder
 import android.os.ParcelFileDescriptor
 import com.m3u.extension.api.ExtensionApiRange
+import com.m3u.extension.api.ExtensionManifest
 import com.m3u.extension.api.InvocationId
 import com.m3u.extension.api.SerializedExtensionEnvelope
 import com.m3u.extension.api.SerializedExtensionResult
 import com.m3u.extension.api.security.BrokerProtocolVersions
-import com.m3u.extension.runtime.ExtensionTransport
 import com.m3u.extension.transport.android.ExtensionHandshakeRequest
 import com.m3u.extension.transport.android.ExtensionHandshakeError
 import com.m3u.extension.transport.android.ExtensionHandshakeResponse
@@ -32,8 +32,21 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
+internal interface ExtensionServiceBackend {
+    val manifest: ExtensionManifest
+
+    suspend fun invoke(
+        envelope: SerializedExtensionEnvelope,
+        hostNetworkBroker: ExtensionHostNetworkBroker? = null,
+    ): SerializedExtensionResult
+
+    suspend fun cancel(invocationId: InvocationId)
+
+    suspend fun healthWireValue(): String
+}
+
 abstract class ExtensionService : Service() {
-    protected abstract val transport: ExtensionTransport
+    internal abstract val serviceBackend: ExtensionServiceBackend
     protected open val json: Json = Json { ignoreUnknownKeys = true; explicitNulls = false }
     @Volatile
     private var negotiatedBrokerProtocolVersion: Int? = null
@@ -42,12 +55,6 @@ abstract class ExtensionService : Service() {
     private val activeInvocations = ConcurrentHashMap<String, Job>()
     private val invocationLock = Any()
     private val cancelledInvocationIds = LinkedHashSet<String>()
-
-    /** Override when a hook needs the host broker. The default delegates to [transport]. */
-    protected open suspend fun invoke(
-        envelope: SerializedExtensionEnvelope,
-        hostNetworkBroker: ExtensionHostNetworkBroker,
-    ): SerializedExtensionResult = transport.invoke(envelope)
 
     private val binder = object : IExtensionService.Stub() {
         override fun handshake(
@@ -65,7 +72,7 @@ abstract class ExtensionService : Service() {
                 val handshake = json.decodeFromString<ExtensionHandshakeRequest>(
                     ParcelFileCodec.readInterruptibly(ownedRequest, MAX_HANDSHAKE_BYTES)
                 )
-                val extensionApiRange = transport.manifest.apiRange
+                val extensionApiRange = serviceBackend.manifest.apiRange
                 val brokerProtocolVersion = BrokerProtocolVersions.negotiate(
                     handshake.supportedBrokerProtocolVersions
                 )
@@ -125,7 +132,7 @@ abstract class ExtensionService : Service() {
             respond(safeRequestId, callback) {
                 ParcelFileCodec.write(
                     this@ExtensionService,
-                    json.encodeToString(transport.manifest),
+                    json.encodeToString(serviceBackend.manifest),
                 )
             }
         }
@@ -178,11 +185,12 @@ abstract class ExtensionService : Service() {
                         ParcelFileCodec.write(
                             this@ExtensionService,
                             json.encodeToString(
-                                if (envelope.brokerScope == null) {
-                                    transport.invoke(envelope)
-                                } else {
-                                    invoke(envelope, broker)
-                                }
+                                serviceBackend.invoke(
+                                    envelope = envelope,
+                                    hostNetworkBroker = broker.takeIf {
+                                        envelope.brokerScope != null
+                                    },
+                                )
                             ),
                         )
                     } finally {
@@ -232,7 +240,7 @@ abstract class ExtensionService : Service() {
                 CancellationException("Invocation was cancelled by the host")
             )
             serviceScope.launch {
-                runCatching { transport.cancel(InvocationId(safeInvocationId)) }
+                runCatching { serviceBackend.cancel(InvocationId(safeInvocationId)) }
             }
         }
 
@@ -245,7 +253,7 @@ abstract class ExtensionService : Service() {
             respond(safeRequestId, callback) {
                 ParcelFileCodec.write(
                     this@ExtensionService,
-                    transport.health().name.lowercase(),
+                    serviceBackend.healthWireValue(),
                 )
             }
         }
@@ -261,7 +269,7 @@ abstract class ExtensionService : Service() {
             cancelledInvocationIds.clear()
         }
         serviceScope.cancel()
-        (transport as? Closeable)?.let { closeable -> runCatching { closeable.close() } }
+        (serviceBackend as? Closeable)?.let { closeable -> runCatching { closeable.close() } }
         super.onDestroy()
     }
 

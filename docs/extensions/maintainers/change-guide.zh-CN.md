@@ -41,7 +41,8 @@ Repository 和 Importer 不按具体 `ProviderKind` 分支；只有 Provider 实
 
 | 改动 | 主要文件 |
 | --- | --- |
-| service action、发现与 package 身份 | [`ExtensionProtocol`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android/ExtensionProtocol.kt)、[`AndroidExtensionDiscovery`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android/AndroidExtensionDiscovery.kt) |
+| AIDL、Handshake、Callback 或 PFD Wire 行为 | [`:extension:transport-protocol-android`](../../../extension/transport-protocol-android) |
+| Service 发现与 Package 身份 | [`AndroidExtensionDiscovery`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android/AndroidExtensionDiscovery.kt) |
 | 显式绑定、handshake、PFD 和调用 | [`AndroidBoundExtensionTransport`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android/AndroidBoundExtensionTransport.kt) |
 | APK 侧 Binder 实现 | [`ExtensionService`](../../../extension/sdk-android/src/main/java/com/m3u/extension/sdk/android/ExtensionService.kt) |
 | APK 侧类型化 Hook 注册 | [`TypedExtensionService`](../../../extension/sdk-android/src/main/java/com/m3u/extension/sdk/android/TypedExtensionService.kt) |

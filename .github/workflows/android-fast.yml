@@ -37,6 +37,8 @@ jobs:
           ./gradlew \
             :extension:api:jvmTest \
             :extension:runtime:test \
+            :extension:transport-protocol-android:testDebugUnitTest \
+            :extension:sdk-android:testDebugUnitTest \
             :i18n:testDebugUnitTest
 
       - name: Build debug APKs

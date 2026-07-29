@@ -12,8 +12,6 @@ import com.m3u.extension.api.ExtensionSemanticVersion
 import com.m3u.extension.api.InvocationId
 import com.m3u.extension.api.SerializedExtensionEnvelope
 import com.m3u.extension.api.SerializedExtensionResult
-import com.m3u.extension.runtime.ExtensionTransport
-import com.m3u.extension.runtime.ExtensionTransportHealth
 import com.m3u.extension.transport.android.ExtensionProtocol
 import com.m3u.extension.transport.android.ParcelFileCodec
 import com.m3u.extension.transport.android.ipc.IExtensionService
@@ -42,27 +40,28 @@ class ExtensionServiceNullableBoundaryTest {
     }
 
     private class NullableBoundaryExtensionService : ExtensionService() {
-        override val transport: ExtensionTransport = object : ExtensionTransport {
-            override val manifest = ExtensionManifest(
-                id = ExtensionId("com.example.nullable-boundary"),
-                displayName = "Nullable boundary test",
-                extensionVersion = ExtensionSemanticVersion(1, 0, 0),
-                apiRange = ExtensionApiRange(
-                    minimum = ExtensionApiVersions.Current,
-                    maximum = ExtensionApiVersions.Current,
-                ),
-                hooks = emptySet(),
-                capabilities = emptySet(),
-            )
+        override val serviceBackend: ExtensionServiceBackend =
+            object : ExtensionServiceBackend {
+                override val manifest = ExtensionManifest(
+                    id = ExtensionId("com.example.nullable-boundary"),
+                    displayName = "Nullable boundary test",
+                    extensionVersion = ExtensionSemanticVersion(1, 0, 0),
+                    apiRange = ExtensionApiRange(
+                        minimum = ExtensionApiVersions.Current,
+                        maximum = ExtensionApiVersions.Current,
+                    ),
+                    hooks = emptySet(),
+                    capabilities = emptySet(),
+                )
 
-            override suspend fun invoke(
-                request: SerializedExtensionEnvelope,
-            ): SerializedExtensionResult = error("Not used")
+                override suspend fun invoke(
+                    envelope: SerializedExtensionEnvelope,
+                    hostNetworkBroker: ExtensionHostNetworkBroker?,
+                ): SerializedExtensionResult = error("Not used")
 
-            override suspend fun cancel(invocationId: InvocationId) = Unit
+                override suspend fun cancel(invocationId: InvocationId) = Unit
 
-            override suspend fun health(): ExtensionTransportHealth =
-                ExtensionTransportHealth.HEALTHY
-        }
+                override suspend fun healthWireValue(): String = "healthy"
+            }
     }
 }

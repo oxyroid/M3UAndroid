@@ -44,11 +44,3 @@ data class ExtensionHandshakeError(
         require(message.isNotBlank()) { "Handshake error message must not be blank" }
     }
 }
-
-data class InstalledExtensionService(
-    val packageName: String,
-    val serviceName: String,
-    val certificateSha256: String,
-    val uid: Int,
-    val incompatibilityReason: String? = null,
-)
