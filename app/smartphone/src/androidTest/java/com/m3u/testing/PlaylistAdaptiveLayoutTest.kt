@@ -216,18 +216,16 @@ class PlaylistAdaptiveLayoutTest {
                 .fetchSemanticsNode()
                 .boundsInWindow
             val titleBounds = composeRule.onNode(
-                hasText(
-                    TEST_EPG_TITLE,
+                hasTextIgnoringBidiControls(
+                    expected = TEST_EPG_TITLE,
                     substring = false,
-                    ignoreCase = false,
                 ),
                 useUnmergedTree = true,
             ).fetchSemanticsNode().boundsInWindow
             val urlBounds = composeRule.onNode(
-                hasText(
-                    TEST_EPG_DISPLAY_REFERENCE,
+                hasTextIgnoringBidiControls(
+                    expected = TEST_EPG_DISPLAY_REFERENCE,
                     substring = true,
-                    ignoreCase = false,
                 ),
                 useUnmergedTree = true,
             ).fetchSemanticsNode().boundsInWindow
@@ -417,6 +415,35 @@ class PlaylistAdaptiveLayoutTest {
         composeRule.waitUntil(UI_TIMEOUT_MILLIS) {
             composeRule.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty()
         }
+    }
+
+    private fun hasTextIgnoringBidiControls(
+        expected: String,
+        substring: Boolean,
+    ): SemanticsMatcher {
+        val normalizedExpected = expected.withoutBidiControls()
+        return SemanticsMatcher(
+            "Text matches '$normalizedExpected' after removing bidi controls",
+        ) { node ->
+            node.config
+                .getOrElse(SemanticsProperties.Text) { emptyList() }
+                .any { text ->
+                    val normalizedActual = text.text.withoutBidiControls()
+                    if (substring) {
+                        normalizedActual.contains(normalizedExpected)
+                    } else {
+                        normalizedActual == normalizedExpected
+                    }
+                }
+        }
+    }
+
+    private fun String.withoutBidiControls(): String = filterNot { character ->
+        character == '\u061C' ||
+            character == '\u200E' ||
+            character == '\u200F' ||
+            character in '\u202A'..'\u202E' ||
+            character in '\u2066'..'\u2069'
     }
 
     private fun tagExists(tag: String): Boolean =
