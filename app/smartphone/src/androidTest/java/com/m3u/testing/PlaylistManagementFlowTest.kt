@@ -3,6 +3,7 @@ package com.m3u.testing
 import android.Manifest
 import android.net.Uri
 import android.os.Build
+import android.os.SystemClock
 import android.view.View
 import androidx.annotation.StringRes
 import androidx.compose.ui.test.SemanticsMatcher
@@ -27,6 +28,9 @@ import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.text.AnnotatedString
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import androidx.work.WorkManager
@@ -192,6 +196,7 @@ class PlaylistManagementFlowTest {
         editorField(string.feat_setting_placeholder_url)
             .performTextReplacement("https://example.invalid/discarded.m3u")
 
+        hideIme()
         device.pressBack()
         waitUntilTagExists(SOURCE_PICKER_TAG)
         composeRule.onNodeWithTag(M3U_SOURCE_TAG)
@@ -236,6 +241,7 @@ class PlaylistManagementFlowTest {
                 performClick()
             }
 
+            waitForPlaylistWorkRegistration(playlistUrl)
             waitUntilTagExists(OVERVIEW_TAG)
             waitUntilTagGone(M3U_EDITOR_TAG)
             waitUntilTagGone(SOURCE_PICKER_TAG)
@@ -457,11 +463,80 @@ class PlaylistManagementFlowTest {
         }
     }
 
+    private fun hideIme() {
+        fun imeBottom(): Int {
+            var bottom = 0
+            composeRule.runOnIdle {
+                bottom = ViewCompat.getRootWindowInsets(
+                    composeRule.activity.window.decorView
+                )
+                    ?.getInsets(WindowInsetsCompat.Type.ime())
+                    ?.bottom
+                    ?: 0
+            }
+            return bottom
+        }
+
+        composeRule.waitForIdle()
+        composeRule.runOnIdle {
+            WindowCompat.getInsetsController(
+                composeRule.activity.window,
+                composeRule.activity.window.decorView,
+            ).hide(WindowInsetsCompat.Type.ime())
+        }
+        val deadlineMillis =
+            SystemClock.uptimeMillis() + IME_DISMISS_TIMEOUT_MILLIS
+        var stableSamples = 0
+        do {
+            stableSamples = if (imeBottom() == 0) {
+                stableSamples + 1
+            } else {
+                0
+            }
+            if (stableSamples >= IME_HIDDEN_STABLE_SAMPLE_COUNT) return
+            SystemClock.sleep(WORK_QUIESCENCE_POLL_MILLIS)
+        } while (SystemClock.uptimeMillis() < deadlineMillis)
+        throw AssertionError("IME remained visible before navigating back")
+    }
+
+    private fun waitForPlaylistWorkRegistration(playlistUrl: String) {
+        val workManager = WorkManager.getInstance(context)
+        val workTag = playlistWorkTag(playlistUrl)
+        val deadlineNanos = System.nanoTime() +
+            TimeUnit.SECONDS.toNanos(WORK_QUIESCENCE_TIMEOUT_SECONDS)
+        do {
+            val workRegistered = workManager
+                .getWorkInfosByTag(workTag)
+                .get(WORK_OPERATION_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .isNotEmpty()
+            if (workRegistered) return
+            Thread.sleep(WORK_QUIESCENCE_POLL_MILLIS)
+        } while (System.nanoTime() < deadlineNanos)
+        throw AssertionError("Playlist work was not registered: $workTag")
+    }
+
     private fun cancelPlaylistWork(playlistUrl: String) {
-        WorkManager.getInstance(context)
-            .cancelAllWorkByTag(playlistWorkTag(playlistUrl))
+        val workManager = WorkManager.getInstance(context)
+        val workTag = playlistWorkTag(playlistUrl)
+        workManager
+            .cancelAllWorkByTag(workTag)
             .result
             .get(WORK_OPERATION_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+
+        val deadlineNanos = System.nanoTime() +
+            TimeUnit.SECONDS.toNanos(WORK_QUIESCENCE_TIMEOUT_SECONDS)
+        do {
+            val allWorkFinished = workManager
+                .getWorkInfosByTag(workTag)
+                .get(WORK_OPERATION_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .all { workInfo -> workInfo.state.isFinished }
+            if (allWorkFinished) return
+            Thread.sleep(WORK_QUIESCENCE_POLL_MILLIS)
+        } while (System.nanoTime() < deadlineNanos)
+
+        throw AssertionError(
+            "Playlist work did not reach a terminal state during test cleanup: $workTag"
+        )
     }
 
     private fun removePlaylistIfPresent(playlistUrl: String) {
@@ -530,7 +605,11 @@ class PlaylistManagementFlowTest {
 
     private companion object {
         const val UI_TIMEOUT_MILLIS = 15_000L
+        const val IME_DISMISS_TIMEOUT_MILLIS = 5_000L
+        const val IME_HIDDEN_STABLE_SAMPLE_COUNT = 3
         const val WORK_OPERATION_TIMEOUT_SECONDS = 5L
+        const val WORK_QUIESCENCE_TIMEOUT_SECONDS = 10L
+        const val WORK_QUIESCENCE_POLL_MILLIS = 50L
         const val ARG_ACCESSIBILITY_MATRIX_CASE = "accessibilityMatrixCase"
         const val MATRIX_CASE_WIDE_LTR = "wide-ltr"
         const val WIDE_LIST_DETAIL_MINIMUM_DP = 840
