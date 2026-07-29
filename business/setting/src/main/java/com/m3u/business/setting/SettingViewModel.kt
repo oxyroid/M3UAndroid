@@ -1,8 +1,10 @@
 package com.m3u.business.setting
 
 import android.net.Uri
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkInfo
@@ -12,8 +14,14 @@ import androidx.work.workDataOf
 import com.m3u.core.foundation.architecture.Publisher
 import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
 import com.m3u.core.foundation.architecture.preferences.Settings
+import com.m3u.core.foundation.architecture.preferences.ThemePreference
+import com.m3u.core.foundation.architecture.preferences.ThemePreset
+import com.m3u.core.foundation.architecture.preferences.ThemeStyle
+import com.m3u.core.foundation.architecture.preferences.applyThemePreference
 import com.m3u.core.foundation.architecture.preferences.flowOf
 import com.m3u.core.foundation.architecture.preferences.set
+import com.m3u.core.foundation.util.basic.PlaylistInputKind
+import com.m3u.core.foundation.util.basic.normalizePlaylistInputForSubmission
 import com.m3u.core.foundation.util.basic.startWithHttpScheme
 import com.m3u.data.api.TvApiDelegate
 import com.m3u.data.codec.CodecPackInstallResult
@@ -45,6 +53,8 @@ import com.m3u.data.service.Messager
 import com.m3u.data.worker.BackupWorker
 import com.m3u.data.worker.RestoreWorker
 import com.m3u.data.worker.SubscriptionWorker
+import com.m3u.data.worker.enqueuePersistedUriWork
+import com.m3u.data.worker.persistedUriPermissionTag
 import com.m3u.extension.api.ExtensionId
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
@@ -59,14 +69,17 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.UUID
 import javax.inject.Inject
-import kotlin.time.Clock
 
 @HiltViewModel
 class SettingViewModel @Inject constructor(
@@ -81,6 +94,7 @@ class SettingViewModel @Inject constructor(
     private val tvRepository: TvRepository,
     private val tvApi: TvApiDelegate,
     private val codecPackRepository: CodecPackRepository,
+    private val savedStateHandle: SavedStateHandle,
     publisher: Publisher,
     // FIXME: do not use dao in viewmodel
     private val colorSchemeDao: ColorSchemeDao,
@@ -92,6 +106,7 @@ class SettingViewModel @Inject constructor(
     private var providerDiscoveryGeneration = 0L
     private var providerLocaleTag: String? = null
     private var providerReauthenticationJob: Job? = null
+    private val subscriptionDraftSession = SubscriptionDraftSession()
     private var extensionSettingsLoadJob: Job? = null
     private var extensionSettingsRequestedId: ExtensionId? = null
     private var extensionSettingsGeneration = 0L
@@ -119,6 +134,59 @@ class SettingViewModel @Inject constructor(
 
     private val _extensionDiagnostics = MutableSharedFlow<String>(extraBufferCapacity = 1)
     val extensionDiagnostics = _extensionDiagnostics.asSharedFlow()
+
+    private val _subscriptionAccepted = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val subscriptionAccepted = _subscriptionAccepted.asSharedFlow()
+
+    private val trackedPlaylistSubscription = combine(
+        savedStateHandle.getStateFlow(PLAYLIST_SUBSCRIPTION_TITLE_KEY, ""),
+        savedStateHandle.getStateFlow(PLAYLIST_SUBSCRIPTION_SOURCE_KEY, ""),
+        savedStateHandle.getStateFlow(PLAYLIST_SUBSCRIPTION_WORK_ID_KEY, ""),
+    ) { title, sourceValue, workIdValue ->
+        restorePlaylistSubscriptionTracking(
+            title = title,
+            sourceValue = sourceValue,
+            workIdValue = workIdValue,
+        )
+    }
+
+    val playlistSubscriptionState: StateFlow<PlaylistSubscriptionState> =
+        trackedPlaylistSubscription
+            .flatMapLatest { tracking ->
+                if (tracking == null) {
+                    flowOf(PlaylistSubscriptionState.Idle)
+                } else {
+                    workManager.getWorkInfoByIdFlow(tracking.workId)
+                        .map { workInfo ->
+                            resolvePlaylistSubscriptionState(
+                                tracking = tracking,
+                                workState = workInfo?.state,
+                            )
+                        }
+                        .catch { error ->
+                            if (error is CancellationException) throw error
+                            emit(
+                                resolvePlaylistSubscriptionState(
+                                    tracking = tracking,
+                                    workState = WorkInfo.State.FAILED,
+                                )
+                            )
+                        }
+                }
+            }
+            .distinctUntilChanged()
+            .stateIn(
+                scope = viewModelScope,
+                initialValue = currentPlaylistSubscriptionTracking()
+                    ?.let { tracking ->
+                        resolvePlaylistSubscriptionState(
+                            tracking = tracking,
+                            workState = null,
+                        )
+                    }
+                    ?: PlaylistSubscriptionState.Idle,
+                started = SharingStarted.Eagerly,
+            )
 
     private val _providerDiscoveryState = MutableStateFlow<ProviderDiscoveryState>(
         ProviderDiscoveryState.Loading
@@ -212,6 +280,16 @@ class SettingViewModel @Inject constructor(
             return
         }
         _providerSubscriptionForm.value = ProviderSubscriptionForm.create(descriptor, kind)
+    }
+
+    fun beginSubscriptionDraft(
+        draftKey: String,
+        source: DataSource,
+    ) {
+        if (source !in SUBSCRIPTION_DRAFT_SOURCES) return
+        if (!subscriptionDraftSession.begin(draftKey)) return
+        resetAllInputs()
+        properties.selectedState.value = source
     }
 
     fun updateSubscriptionProviderSetting(fieldKey: String, value: String?) {
@@ -645,6 +723,35 @@ class SettingViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000L)
         )
 
+    val playlists: StateFlow<Map<Playlist, Int>?> = playlistRepository
+        .observeAllCounts()
+        .map<Map<Playlist, Int>, Map<Playlist, Int>?> { counts -> counts }
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = null,
+            started = SharingStarted.WhileSubscribed(5_000L),
+        )
+
+    val playlistSubscriptionInProgress: StateFlow<Boolean> = workManager
+        .getWorkInfosFlow(
+            WorkQuery.fromStates(
+                WorkInfo.State.RUNNING,
+                WorkInfo.State.ENQUEUED,
+            )
+        )
+        .map { infos ->
+            infos.any { info ->
+                SubscriptionWorker.TAG in info.tags &&
+                    DataSource.EPG.value !in info.tags
+            }
+        }
+        .flowOn(Dispatchers.Default)
+        .stateIn(
+            scope = viewModelScope,
+            initialValue = false,
+            started = SharingStarted.WhileSubscribed(5_000L),
+        )
+
     val hiddenChannels: StateFlow<List<Channel>> = channelRepository
         .observeAllHidden()
         .stateIn(
@@ -727,10 +834,12 @@ class SettingViewModel @Inject constructor(
         )
     }
 
-    val colorSchemes: StateFlow<List<ColorScheme>> = combine(
-        colorSchemeDao.observeAll().catch { emit(emptyList()) },
-        settings.flowOf(PreferencesKeys.FOLLOW_SYSTEM_THEME)
-    ) { all, followSystemTheme -> if (followSystemTheme) all.filter { !it.isDark } else all }
+    val colorSchemes: StateFlow<List<ColorScheme>> = colorSchemeDao
+        .observeAll()
+        .catch { emit(emptyList()) }
+        .map { stored ->
+            stored.filterNot(ColorScheme::isLegacyWarmPresetRecord)
+        }
         .flowOn(Dispatchers.Default)
         .stateIn(
             scope = viewModelScope,
@@ -739,23 +848,29 @@ class SettingViewModel @Inject constructor(
         )
 
     fun onClipboard(url: String) {
-        val title = run {
-            val filePath = url.split("/")
-            val fileSplit = filePath.lastOrNull()?.split(".") ?: emptyList()
-            fileSplit.firstOrNull() ?: "Playlist_${System.currentTimeMillis()}"
-        }
-        properties.titleState.value = Uri.decode(title)
-        properties.urlState.value = Uri.decode(url)
-        when (properties.selectedState.value) {
-            is DataSource.Xtream -> {
-                val input = XtreamInput.decodeFromPlaylistUrlOrNull(url) ?: return
-                properties.basicUrlState.value = input.basicUrl
-                properties.usernameState.value = input.username
-                properties.passwordState.value = input.password
-                properties.titleState.value = Uri.decode("Xtream_${Clock.System.now().toEpochMilliseconds()}")
+        val source = properties.selectedState.value
+        val input = ClipboardPlaylistInput.parse(
+            rawUrl = url,
+            source = source,
+        )
+        properties.titleState.value = input.title
+        properties.urlState.value = input.m3uUrl.orEmpty()
+        properties.basicUrlState.value = ""
+        properties.usernameState.value = ""
+        properties.passwordState.value = ""
+        properties.xtreamPlaylistTypeState.value = null
+        when (source) {
+            DataSource.M3U -> Unit
+            DataSource.Xtream -> {
+                val xtreamInput = input.xtreamInput ?: return
+                properties.basicUrlState.value = xtreamInput.basicUrl
+                properties.usernameState.value = xtreamInput.username
+                properties.passwordState.value = xtreamInput.password
+                properties.xtreamPlaylistTypeState.value = xtreamInput.type
+                    ?.takeIf { type -> type in SUPPORTED_XTREAM_PLAYLIST_TYPES }
             }
 
-            else -> {}
+            else -> Unit
         }
     }
 
@@ -769,29 +884,76 @@ class SettingViewModel @Inject constructor(
     }
 
     fun subscribe() {
-        val title = properties.titleState.value
-        val url = properties.urlState.value
+        val title = properties.titleState.value.normalizePlaylistInputForSubmission(
+            PlaylistInputKind.TITLE
+        )
+        val url = properties.urlState.value.normalizePlaylistInputForSubmission(
+            PlaylistInputKind.URL
+        )
         val uri = properties.uriState.value
-        val inputBasicUrl = properties.basicUrlState.value
-        val username = properties.usernameState.value
-        val password = properties.passwordState.value
-        val epg = properties.epgState.value
+        val inputBasicUrl = properties.basicUrlState.value.normalizePlaylistInputForSubmission(
+            PlaylistInputKind.BASE_URL
+        )
+        val username = properties.usernameState.value.normalizePlaylistInputForSubmission(
+            PlaylistInputKind.USERNAME
+        )
+        val password = properties.passwordState.value.normalizePlaylistInputForSubmission(
+            PlaylistInputKind.PASSWORD
+        )
+        val epg = properties.epgState.value.normalizePlaylistInputForSubmission(
+            PlaylistInputKind.EPG_URL
+        )
+        val xtreamPlaylistType = properties.xtreamPlaylistTypeState.value
+            ?.takeIf { type -> type in SUPPORTED_XTREAM_PLAYLIST_TYPES }
         val selected = properties.selectedState.value
         val localStorage = properties.localStorageState.value
         val forTv = properties.forTvState.value
-        val urlOrUri = uri
+        properties.titleState.value = title
+        properties.urlState.value = url
+        properties.basicUrlState.value = inputBasicUrl
+        properties.usernameState.value = username
+        properties.passwordState.value = password
+        properties.epgState.value = epg
+        properties.xtreamPlaylistTypeState.value = xtreamPlaylistType
+
+        val xtreamPlaylistUrl = buildXtreamPlaylistUrlOrEmpty(
+            basicUrl = inputBasicUrl,
+            username = username,
+            password = password,
+            type = xtreamPlaylistType,
+        )
+
+        val localUriReference = uri
             .takeIf { uri != Uri.EMPTY }?.toString().orEmpty()
+        val normalizedLocalUriReference = localUriReference
+            .normalizePlaylistInputForSubmission(PlaylistInputKind.URL)
+        val localUriReferenceIsValid =
+            localUriReference.isNotBlank() &&
+                localUriReference == normalizedLocalUriReference
+        val m3uUrlOrUri = normalizedLocalUriReference
             .takeIf { localStorage }
             ?: url
+        val submittedUrl = when (selected) {
+            DataSource.M3U -> m3uUrlOrUri
+            DataSource.Xtream -> xtreamPlaylistUrl
+            else -> ""
+        }
 
         val basicUrl = if (inputBasicUrl.startWithHttpScheme()) inputBasicUrl
         else "http://$inputBasicUrl"
+
+        if (
+            currentPlaylistSubscriptionTracking() != null ||
+            playlistSubscriptionInProgress.value
+        ) {
+            return
+        }
 
         if (forTv && selected.supportsRemoteTvSubscription()) {
             subscribeForTv(
                 selected = selected,
                 title = title,
-                url = url,
+                url = submittedUrl,
                 basicUrl = basicUrl,
                 username = username,
                 password = password,
@@ -805,7 +967,7 @@ class SettingViewModel @Inject constructor(
 
         when (selected) {
                 DataSource.M3U -> {
-                    if (title.isEmpty()) {
+                    if (title.isBlank()) {
                         messager.emit(SettingMessage.EmptyTitle)
                         return
                     }
@@ -814,45 +976,92 @@ class SettingViewModel @Inject constructor(
                             messager.emit(SettingMessage.EmptyFile)
                             return
                         }
+                        if (!localUriReferenceIsValid) {
+                            messager.emit(SettingMessage.FileAccessFailed)
+                            return
+                        }
                     } else {
                         if (url.isBlank()) {
                             messager.emit(SettingMessage.EmptyUrl)
                             return
                         }
                     }
-                    SubscriptionWorker.m3u(workManager, title, urlOrUri)
+                    val workId = runCatching {
+                        SubscriptionWorker.m3u(
+                            workManager = workManager,
+                            title = title,
+                            url = m3uUrlOrUri,
+                        )
+                    }.getOrElse {
+                        messager.emit(SettingMessage.PlaylistOperationFailed)
+                        return
+                    }
+                    rememberPlaylistSubscription(
+                        title = title,
+                        source = DataSource.M3U,
+                        workId = workId,
+                    )
                     messager.emit(SettingMessage.Enqueued)
+                    _subscriptionAccepted.tryEmit(Unit)
                 }
 
                 DataSource.EPG -> {
-                    if (title.isEmpty()) {
+                    if (title.isBlank()) {
                         messager.emit(SettingMessage.EmptyEpgTitle)
                         return
                     }
-                    if (epg.isEmpty()) {
+                    if (epg.isBlank()) {
                         messager.emit(SettingMessage.EmptyEpg)
                         return
                     }
                     viewModelScope.launch {
-                        playlistRepository.insertEpgAsPlaylist(title, epg)
+                        runCatching {
+                            playlistRepository.insertEpgAsPlaylist(title, epg)
+                        }.fold(
+                            onSuccess = {
+                                messager.emit(SettingMessage.EpgAdded)
+                                _subscriptionAccepted.emit(Unit)
+                            },
+                            onFailure = { error ->
+                                if (error is CancellationException) throw error
+                                messager.emit(SettingMessage.PlaylistOperationFailed)
+                            },
+                        )
                     }
-                    messager.emit(SettingMessage.EpgAdded)
                 }
 
                 DataSource.Xtream -> {
-                    if (title.isEmpty()) {
+                    if (title.isBlank()) {
                         messager.emit(SettingMessage.EmptyTitle)
                         return
                     }
-                    SubscriptionWorker.xtream(
-                        workManager,
-                        title,
-                        urlOrUri,
-                        basicUrl,
-                        username,
-                        password
+                    if (inputBasicUrl.isBlank()) {
+                        messager.emit(SettingMessage.EmptyUrl)
+                        return
+                    }
+                    if (username.isBlank() || password.isBlank()) {
+                        return
+                    }
+                    val workId = runCatching {
+                        SubscriptionWorker.xtream(
+                            workManager = workManager,
+                            title = title,
+                            url = xtreamPlaylistUrl,
+                            basicUrl = basicUrl,
+                            username = username,
+                            password = password,
+                        )
+                    }.getOrElse {
+                        messager.emit(SettingMessage.PlaylistOperationFailed)
+                        return
+                    }
+                    rememberPlaylistSubscription(
+                        title = title,
+                        source = DataSource.Xtream,
+                        workId = workId,
                     )
                     messager.emit(SettingMessage.Enqueued)
+                    _subscriptionAccepted.tryEmit(Unit)
                 }
 
                 DataSource.Provider -> {
@@ -885,6 +1094,46 @@ class SettingViewModel @Inject constructor(
                 else -> return
             }
         resetAllInputs()
+    }
+
+    fun cancelPlaylistSubscription() {
+        currentPlaylistSubscriptionTracking()
+            ?.workId
+            ?.let(workManager::cancelWorkById)
+    }
+
+    fun dismissPlaylistSubscriptionStatus() {
+        if (!playlistSubscriptionState.value.isTerminal) return
+        clearPlaylistSubscriptionTracking()
+    }
+
+    private fun rememberPlaylistSubscription(
+        title: String,
+        source: DataSource,
+        workId: UUID,
+    ) {
+        val tracking = createPlaylistSubscriptionTracking(
+            title = title,
+            source = source,
+            workId = workId,
+        ) ?: return
+        savedStateHandle[PLAYLIST_SUBSCRIPTION_WORK_ID_KEY] = ""
+        savedStateHandle[PLAYLIST_SUBSCRIPTION_TITLE_KEY] = tracking.title
+        savedStateHandle[PLAYLIST_SUBSCRIPTION_SOURCE_KEY] = tracking.source.value
+        savedStateHandle[PLAYLIST_SUBSCRIPTION_WORK_ID_KEY] = tracking.workId.toString()
+    }
+
+    private fun currentPlaylistSubscriptionTracking(): PlaylistSubscriptionTracking? =
+        restorePlaylistSubscriptionTracking(
+            title = savedStateHandle[PLAYLIST_SUBSCRIPTION_TITLE_KEY] ?: "",
+            sourceValue = savedStateHandle[PLAYLIST_SUBSCRIPTION_SOURCE_KEY] ?: "",
+            workIdValue = savedStateHandle[PLAYLIST_SUBSCRIPTION_WORK_ID_KEY] ?: "",
+        )
+
+    private fun clearPlaylistSubscriptionTracking() {
+        savedStateHandle[PLAYLIST_SUBSCRIPTION_WORK_ID_KEY] = ""
+        savedStateHandle[PLAYLIST_SUBSCRIPTION_TITLE_KEY] = ""
+        savedStateHandle[PLAYLIST_SUBSCRIPTION_SOURCE_KEY] = ""
     }
 
     private fun enqueueProviderSubscription(
@@ -921,6 +1170,7 @@ class SettingViewModel @Inject constructor(
                         if (providerInputSnapshot() == submittedInputs) {
                             resetAllInputs()
                         }
+                        _subscriptionAccepted.emit(Unit)
                     },
                     onFailure = {
                         messager.emit(SettingMessage.ProviderSubscriptionFailed)
@@ -953,7 +1203,7 @@ class SettingViewModel @Inject constructor(
 
         when (selected) {
             DataSource.M3U -> {
-                if (title.isEmpty()) {
+                if (title.isBlank()) {
                     messager.emit(SettingMessage.EmptyTitle)
                     return
                 }
@@ -964,19 +1214,26 @@ class SettingViewModel @Inject constructor(
             }
 
             DataSource.EPG -> {
-                if (title.isEmpty()) {
+                if (title.isBlank()) {
                     messager.emit(SettingMessage.EmptyEpgTitle)
                     return
                 }
-                if (epg.isEmpty()) {
+                if (epg.isBlank()) {
                     messager.emit(SettingMessage.EmptyEpg)
                     return
                 }
             }
 
             DataSource.Xtream -> {
-                if (title.isEmpty()) {
+                if (title.isBlank()) {
                     messager.emit(SettingMessage.EmptyTitle)
+                    return
+                }
+                if (basicUrl.removePrefix("http://").isBlank()) {
+                    messager.emit(SettingMessage.EmptyUrl)
+                    return
+                }
+                if (username.isBlank() || password.isBlank()) {
                     return
                 }
             }
@@ -999,6 +1256,7 @@ class SettingViewModel @Inject constructor(
             if (result?.result == true) {
                 messager.emit(SettingMessage.RemoteTvSubscribeSent)
                 resetAllInputs()
+                _subscriptionAccepted.emit(Unit)
             } else {
                 messager.emit(SettingMessage.RemoteTvSubscribeFailed)
             }
@@ -1035,7 +1293,6 @@ class SettingViewModel @Inject constructor(
         )
 
     fun backup(uri: Uri) {
-        workManager.cancelAllWorkByTag(BackupWorker.TAG)
         val request = OneTimeWorkRequestBuilder<BackupWorker>()
             .setInputData(
                 workDataOf(
@@ -1043,14 +1300,23 @@ class SettingViewModel @Inject constructor(
                 )
             )
             .addTag(BackupWorker.TAG)
+            .addTag(persistedUriPermissionTag(uri))
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .build()
-        workManager.enqueue(request)
+        enqueuePersistedUriWork(
+            workManager = workManager,
+            permissionTag = persistedUriPermissionTag(uri),
+        ) {
+            workManager.enqueueUniqueWork(
+                BackupWorker.UNIQUE_WORK_NAME,
+                ExistingWorkPolicy.REPLACE,
+                request,
+            )
+        }
         messager.emit(SettingMessage.BackingUp)
     }
 
     fun restore(uri: Uri) {
-        workManager.cancelAllWorkByTag(RestoreWorker.TAG)
         val request = OneTimeWorkRequestBuilder<RestoreWorker>()
             .setInputData(
                 workDataOf(
@@ -1058,9 +1324,19 @@ class SettingViewModel @Inject constructor(
                 )
             )
             .addTag(RestoreWorker.TAG)
+            .addTag(persistedUriPermissionTag(uri))
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .build()
-        workManager.enqueue(request)
+        enqueuePersistedUriWork(
+            workManager = workManager,
+            permissionTag = persistedUriPermissionTag(uri),
+        ) {
+            workManager.enqueueUniqueWork(
+                RestoreWorker.UNIQUE_WORK_NAME,
+                ExistingWorkPolicy.REPLACE,
+                request,
+            )
+        }
         messager.emit(SettingMessage.Restoring)
     }
 
@@ -1073,6 +1349,7 @@ class SettingViewModel @Inject constructor(
             usernameState.value = ""
             passwordState.value = ""
             epgState.value = ""
+            xtreamPlaylistTypeState.value = null
         }
         _providerSubscriptionForm.value = _providerSubscriptionForm.value?.let { form ->
             val descriptor = currentSubscriptionProviders().firstOrNull { provider ->
@@ -1094,6 +1371,7 @@ class SettingViewModel @Inject constructor(
             username = usernameState.value,
             password = passwordState.value,
             epg = epgState.value,
+            xtreamPlaylistType = xtreamPlaylistTypeState.value,
             providerForm = _providerSubscriptionForm.value?.inputSnapshot(),
         )
     }
@@ -1104,6 +1382,12 @@ class SettingViewModel @Inject constructor(
         }
     }
 
+    fun selectTheme(theme: ThemePreference) {
+        viewModelScope.launch {
+            settings.applyThemePreference(theme)
+        }
+    }
+
     @OptIn(ExperimentalStdlibApi::class)
     fun applyColor(
         prev: ColorScheme?,
@@ -1111,15 +1395,20 @@ class SettingViewModel @Inject constructor(
         isDark: Boolean
     ) {
         viewModelScope.launch {
-            settings[PreferencesKeys.DARK_MODE] = isDark
-            if (prev != null) {
-                colorSchemeDao.delete(prev)
-            }
-            colorSchemeDao.insert(
-                ColorScheme(
+            colorSchemeDao.replace(
+                previous = prev,
+                replacement = ColorScheme(
                     argb = argb,
                     isDark = isDark,
                     name = "#${argb.toHexString(HexFormat.UpperCase)}"
+                ),
+            )
+            settings.applyThemePreference(
+                ThemePreference(
+                    presetId = ThemePreset.MATERIAL,
+                    argb = argb,
+                    isDark = isDark,
+                    style = ThemeStyle.MATERIAL,
                 )
             )
         }
@@ -1139,6 +1428,20 @@ class SettingViewModel @Inject constructor(
 
     private companion object {
         const val PHONE_SETTINGS_SURFACE = "phone"
+        const val PLAYLIST_SUBSCRIPTION_TITLE_KEY = "playlist_subscription_title"
+        const val PLAYLIST_SUBSCRIPTION_SOURCE_KEY = "playlist_subscription_source"
+        const val PLAYLIST_SUBSCRIPTION_WORK_ID_KEY = "playlist_subscription_work_id"
+        val SUBSCRIPTION_DRAFT_SOURCES = setOf(
+            DataSource.M3U,
+            DataSource.EPG,
+            DataSource.Xtream,
+            DataSource.Provider,
+        )
+        val SUPPORTED_XTREAM_PLAYLIST_TYPES = setOf(
+            DataSource.Xtream.TYPE_LIVE,
+            DataSource.Xtream.TYPE_SERIES,
+            DataSource.Xtream.TYPE_VOD,
+        )
     }
 }
 
@@ -1153,6 +1456,7 @@ private data class ProviderInputSnapshot(
     val username: String,
     val password: String,
     val epg: String,
+    val xtreamPlaylistType: String?,
     val providerForm: ProviderFormInputSnapshot?,
 )
 
@@ -1187,6 +1491,45 @@ private fun DataSource.supportsRemoteTvSubscription(): Boolean = when (this) {
     DataSource.Xtream -> true
 
     else -> false
+}
+
+private val LEGACY_WARM_PRESET_NAMES = setOf("parchment", "ink")
+
+private fun ColorScheme.isLegacyWarmPresetRecord(): Boolean =
+    argb == ThemePreset.WARM_EDITORIAL_SEED &&
+        name in LEGACY_WARM_PRESET_NAMES
+
+internal fun buildXtreamPlaylistUrlOrEmpty(
+    basicUrl: String,
+    username: String,
+    password: String,
+    type: String?,
+): String {
+    if (type == null) return ""
+    val resolvedBasicUrl = if (basicUrl.startWithHttpScheme()) {
+        basicUrl
+    } else {
+        "http://$basicUrl"
+    }
+    val protocol = if (resolvedBasicUrl.startsWith("https://", ignoreCase = true)) {
+        "https"
+    } else {
+        "http"
+    }
+    val encoded = runCatching {
+        XtreamInput.encodeToPlaylistUrl(
+            input = XtreamInput(
+                basicUrl = resolvedBasicUrl,
+                username = username,
+                password = password,
+                type = type,
+            ),
+            serverProtocol = protocol,
+        )
+    }.getOrNull() ?: return ""
+    return encoded.takeIf {
+        it == it.normalizePlaylistInputForSubmission(PlaylistInputKind.URL)
+    }.orEmpty()
 }
 
 private fun List<DiscoveredSubscriptionProvider>.providerFor(

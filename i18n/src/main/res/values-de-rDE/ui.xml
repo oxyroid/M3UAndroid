@@ -8,8 +8,8 @@
     <string name="ui_destination_setting">Einstellungen</string>
     <string name="ui_error_unknown">unbekannter Fehler</string>
     <string name="ui_cd_top_bar_on_back_pressed">zurück</string>
-    <string name="ui_theme_card_left">ho</string>
-    <string name="ui_theme_card_right">la</string>
+    <string name="ui_theme_card_left">Wusstest du?</string>
+    <string name="ui_theme_card_right">Wir speichern deinen Wiedergabefortschritt und setzen ihn beim nächsten Abspielen fort.</string>
     <string name="ui_sort">Sortieren</string>
     <string name="ui_sort_asc">A-Z</string>
     <string name="ui_sort_desc">Z-A</string>
@@ -23,4 +23,5 @@
     <string name="ui_connect">Verbinden</string>
     <string name="ui_remote_control_pair_title">Code vom Fernseher eingeben</string>
     <string name="ui_remote_control_pair_subtitle">Stelle sicher, dass Du mit dem selben WLAN verbunden bist</string>
+    <string name="ui_action_delete_epg">EPG löschen</string>
 </resources>

@@ -1595,6 +1595,8 @@ private fun providerFieldErrorMessage(error: ProviderSettingFieldError): String 
             ProviderSettingFieldError.INVALID_NUMBER -> string.feat_setting_provider_error_number
             ProviderSettingFieldError.INVALID_BOOLEAN -> string.feat_setting_provider_error_boolean
             ProviderSettingFieldError.INVALID_CHOICE -> string.feat_setting_provider_error_choice
+            ProviderSettingFieldError.UNSAFE_VALUE ->
+                string.feat_setting_provider_error_unsafe_value
         }
     )
 

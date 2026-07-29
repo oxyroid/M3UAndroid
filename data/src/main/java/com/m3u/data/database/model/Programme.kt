@@ -5,6 +5,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 import kotlin.time.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
@@ -20,6 +21,7 @@ import kotlin.time.toDuration
     ]
 )
 @Immutable
+@Serializable
 // epg programme
 data class Programme(
     // m3u tvg-id

@@ -13,6 +13,8 @@ import com.m3u.business.playlist.configuration.PlaylistConfigurationNavigation
 
 fun NavGraphBuilder.playlistConfigurationScreen(
     contentPadding: PaddingValues = PaddingValues(),
+    onBack: () -> Unit,
+    onPlaylistRemoved: () -> Unit,
 ) {
     composable(
         route = PlaylistConfigurationNavigation.PLAYLIST_CONFIGURATION_ROUTE,
@@ -27,7 +29,10 @@ fun NavGraphBuilder.playlistConfigurationScreen(
         popExitTransition = { slideOutVertically { it } }
     ) {
         PlaylistConfigurationRoute(
-            contentPadding = contentPadding
+            contentPadding = contentPadding,
+            manageAppChrome = true,
+            onBack = onBack,
+            onPlaylistRemoved = onPlaylistRemoved,
         )
     }
 }

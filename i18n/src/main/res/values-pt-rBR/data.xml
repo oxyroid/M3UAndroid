@@ -7,4 +7,10 @@
     <string name="data_worker_subscription_action_cancel">Cancelar</string>
     <string name="data_worker_subscription_action_retry">Tentar novamente</string>
     <string name="data_worker_subscription_content_channel_progress">%d Canais foram baixados</string>
+    <string name="data_worker_backup_notification_title">Fazendo backup</string>
+    <string name="data_worker_backup_notification_channel_name">Backup</string>
+    <string name="data_worker_backup_notification_channel_description">Mostra o progresso do backup</string>
+    <string name="data_worker_restore_notification_title">Restaurando</string>
+    <string name="data_worker_restore_notification_channel_name">Restauração</string>
+    <string name="data_worker_restore_notification_channel_description">Mostra o progresso da restauração</string>
 </resources>

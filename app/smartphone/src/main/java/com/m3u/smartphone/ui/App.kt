@@ -82,8 +82,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
 import androidx.paging.PagingData
+import com.m3u.business.playlist.configuration.PlaylistConfigurationNavigation
 import com.m3u.business.playlist.ChannelWithProgramme
 import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
+import com.m3u.core.foundation.architecture.preferences.ThemeStyle
 import com.m3u.core.foundation.architecture.preferences.preferenceOf
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.tv.model.RemoteDirection
@@ -97,10 +99,12 @@ import com.m3u.smartphone.ui.common.helper.LocalHelper
 import com.m3u.smartphone.ui.common.helper.Metadata
 import com.m3u.smartphone.ui.material.components.Destination
 import com.m3u.smartphone.ui.material.components.SnackHost
+import com.m3u.smartphone.ui.material.components.withEditorialVoice
+import com.m3u.smartphone.ui.material.model.LocalThemeStyle
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.smartphone.ui.navigation.AppContentInsets
 import com.m3u.smartphone.ui.navigation.AppNavigationMode
-import com.m3u.smartphone.ui.navigation.FloatingAppNavigationBar
+import com.m3u.smartphone.ui.navigation.FloatingAppNavigationDock
 import com.m3u.smartphone.ui.navigation.calculateContentBottomPadding
 import com.m3u.smartphone.ui.navigation.calculateLayoutPadding
 import com.m3u.smartphone.ui.navigation.resolveAppNavigationMode
@@ -177,6 +181,9 @@ private fun AppImpl(
             Destination.of(entry?.destination?.route)
         }
     }
+    val isRootPlaylistConfiguration =
+        entry?.destination?.route ==
+            PlaylistConfigurationNavigation.PLAYLIST_CONFIGURATION_ROUTE
     val navigationMode = resolveAppNavigationMode(
         with(density) {
             LocalWindowInfo.current.containerSize.width.toDp()
@@ -213,6 +220,7 @@ private fun AppImpl(
     val remoteControlVisible = remoteControl &&
         !searchActive &&
         !imeVisible &&
+        !isRootPlaylistConfiguration &&
         (navigationMode != AppNavigationMode.BottomOverlay || !nestedDetailVisible)
 
     var measuredNavigationHeight by remember { mutableStateOf(64.dp) }
@@ -228,7 +236,10 @@ private fun AppImpl(
         isTopLevelRoute = bottomNavigationOccupiesSpace,
         safeBottomInset = safeBottomInset,
         measuredNavigationHeight = measuredNavigationHeight,
-        floatingUtilityHeight = if (remoteControlVisible) {
+        floatingUtilityHeight = if (
+            navigationMode == AppNavigationMode.SideRail &&
+            remoteControlVisible
+        ) {
             REMOTE_CONTROL_FAB_SIZE
         } else {
             0.dp
@@ -292,7 +303,11 @@ private fun AppImpl(
         contentPadding = contentInsets.contentPadding,
         showBottomEdgeBlur = shouldShowBottomEdgeBlur(navigationMode),
         showContextualTopBar =
-            navigationMode == AppNavigationMode.BottomOverlay && nestedDetailVisible,
+            isRootPlaylistConfiguration ||
+                (
+                    navigationMode == AppNavigationMode.BottomOverlay &&
+                        nestedDetailVisible
+                    ),
         onNestedDetailVisibilityChanged = onNestedDetailVisibilityChanged,
     )
 
@@ -376,7 +391,7 @@ private fun AppImpl(
 
         if (navigationMode == AppNavigationMode.BottomOverlay) {
             AppUtilityLayer(
-                remoteControlVisible = remoteControlVisible,
+                remoteControlVisible = false,
                 bottomNavigationVisible = bottomNavigationOccupiesSpace,
                 navigationClearance = contentInsets.navigationClearance,
                 safeBottomInset = safeBottomInset,
@@ -405,12 +420,14 @@ private fun AppImpl(
                         bottom = safeBottomInset + FLOATING_NAVIGATION_BOTTOM_GAP,
                     ),
             ) {
-                FloatingAppNavigationBar(
+                FloatingAppNavigationDock(
                     selectedDestination = currentDestination,
                     backdrop = navigationBackdrop,
                     useBackdropEffects = supportsBackdropEffects,
                     enabled = showBottomNavigation,
+                    remoteControlVisible = remoteControlVisible,
                     onDestinationSelected = navigateToDestination,
+                    onOpenRemoteControl = openRemoteControlSheet,
                     onHeightChanged = { measuredNavigationHeight = it },
                 )
             }
@@ -458,6 +475,11 @@ private fun AppContent(
 ) {
     val helper = LocalHelper.current
     val coroutineScope = rememberCoroutineScope()
+    val contextualTitleStyle = if (LocalThemeStyle.current == ThemeStyle.WARM_EDITORIAL) {
+        MaterialTheme.typography.titleLarge.withEditorialVoice()
+    } else {
+        MaterialTheme.typography.titleLarge
+    }
     val inputField = @Composable {
         SearchBarDefaults.InputField(
             searchBarState = searchBarState,
@@ -496,6 +518,7 @@ private fun AppContent(
                 title = {
                     Text(
                         text = Metadata.title,
+                        style = contextualTitleStyle,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )

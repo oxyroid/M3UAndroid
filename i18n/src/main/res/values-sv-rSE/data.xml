@@ -9,4 +9,10 @@
     <string name="data_worker_subscription_content_completed">Slutförd (+%d)</string>
     <string name="data_worker_subscription_content_channel_progress">%d kanaler har laddats ner</string>
     <string name="data_worker_subscription_content_programme_progress">%d program har laddats ner</string>
+    <string name="data_worker_backup_notification_title">Säkerhetskopierar</string>
+    <string name="data_worker_backup_notification_channel_name">Säkerhetskopiering</string>
+    <string name="data_worker_backup_notification_channel_description">Visar förloppet för säkerhetskopieringen</string>
+    <string name="data_worker_restore_notification_title">Återställer</string>
+    <string name="data_worker_restore_notification_channel_name">Återställning</string>
+    <string name="data_worker_restore_notification_channel_description">Visar förloppet för återställningen</string>
 </resources>

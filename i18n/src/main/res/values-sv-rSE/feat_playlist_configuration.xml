@@ -2,6 +2,10 @@
 <resources>
     <string name="feat_playlist_configuration_title">titel</string>
     <string name="feat_playlist_configuration_user_agent">user agent</string>
+    <string name="feat_playlist_configuration_updates">Uppdateringar</string>
+    <string name="feat_playlist_configuration_refresh_playlist">Uppdatera kanaler</string>
+    <string name="feat_playlist_configuration_cancel_refresh_playlist">Avbryt kanaluppdatering</string>
+    <string name="feat_playlist_configuration_refresh_playlist_description">Hämta de senaste kanalerna från den här källan</string>
     <string name="feat_playlist_configuration_enabled_epgs">aktiverade EPG:er</string>
     <string name="feat_playlist_configuration_sync_programmes">synkronisera program</string>
     <string name="feat_playlist_configuration_cancel_sync_programmes">avbryt synkronisering av program</string>
@@ -9,4 +13,15 @@
     <string name="feat_playlist_configuration_programmes_expired">Cachade program är föråldrade</string>
     <string name="feat_playlist_configuration_auto_refresh_programmes">Uppdatera program automatiskt</string>
     <string name="feat_playlist_configuration_auto_refresh_programmes_description">Vid appstart</string>
+    <string name="feat_playlist_configuration_remove_section">Ta bort källa</string>
+    <string name="feat_playlist_configuration_remove_playlist">Ta bort spellista</string>
+    <string name="feat_playlist_configuration_remove_playlist_description">Ta bort den här källan och dess importerade kanaler från enheten</string>
+    <string name="feat_playlist_configuration_remove_playlist_title">Ta bort spellistan?</string>
+    <string name="feat_playlist_configuration_remove_playlist_message">Ta bort ”%1$s” och alla tillhörande importerade kanaler från enheten? Åtgärden kan inte ångras.</string>
+    <string name="feat_playlist_configuration_unavailable_title">Spellistan är inte tillgänglig</string>
+    <string name="feat_playlist_configuration_unavailable_description">Spellistan finns inte längre på den här enheten. Gå tillbaka till spellistehanteringen för att välja en annan källa.</string>
+    <string name="feat_playlist_configuration_return_to_management">Tillbaka till spellistehanteringen</string>
+    <string name="feat_playlist_configuration_xtream_trial">Provperiod</string>
+    <string name="feat_playlist_configuration_update_succeeded">Uppdateringen är klar</string>
+    <string name="feat_playlist_configuration_update_failed">Uppdateringen misslyckades. Försök igen.</string>
 </resources>

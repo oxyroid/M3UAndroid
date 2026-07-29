@@ -9,4 +9,10 @@
     <string name="data_worker_subscription_content_completed">Tamamlandı (+%d)</string>
     <string name="data_worker_subscription_content_channel_progress">%d kanal indirildi</string>
     <string name="data_worker_subscription_content_programme_progress">%d program indirildi</string>
+    <string name="data_worker_backup_notification_title">Yedekleniyor</string>
+    <string name="data_worker_backup_notification_channel_name">Yedekleme</string>
+    <string name="data_worker_backup_notification_channel_description">Yedekleme ilerlemesini gösterir</string>
+    <string name="data_worker_restore_notification_title">Geri yükleniyor</string>
+    <string name="data_worker_restore_notification_channel_name">Geri yükleme</string>
+    <string name="data_worker_restore_notification_channel_description">Geri yükleme ilerlemesini gösterir</string>
 </resources>

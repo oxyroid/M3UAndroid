@@ -1,10 +1,13 @@
 package com.m3u.data.repository.programme
 
+import android.content.Context
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
+import androidx.room.withTransaction
 import com.m3u.core.foundation.util.basic.letIf
 import com.m3u.data.api.OkhttpClient
+import com.m3u.data.database.M3UDatabase
 import com.m3u.data.database.dao.ChannelDao
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.ProgrammeDao
@@ -14,9 +17,20 @@ import com.m3u.data.database.model.epgUrlsOrXtreamXmlUrl
 import com.m3u.data.parser.epg.EpgParser
 import com.m3u.data.parser.epg.EpgProgramme
 import com.m3u.data.parser.epg.toProgramme
+import com.m3u.data.repository.BoundedJsonlRecordStaging
+import com.m3u.data.repository.playlist.EpgDataMaintenanceCoordinator
+import com.m3u.data.repository.playlist.PlaylistDataMaintenanceCoordinator
+import dagger.hilt.android.qualifiers.ApplicationContext
+import java.io.File
+import java.io.IOException
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.zip.GZIPInputStream
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.channelFlow
@@ -25,21 +39,23 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import timber.log.Timber
-import java.util.zip.GZIPInputStream
-import javax.inject.Inject
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 
 internal class ProgrammeRepositoryImpl @Inject constructor(
+    private val database: M3UDatabase,
     private val playlistDao: PlaylistDao,
     private val channelDao: ChannelDao,
     private val programmeDao: ProgrammeDao,
     private val epgParser: EpgParser,
     @OkhttpClient(true) private val okHttpClient: OkHttpClient,
+    @ApplicationContext private val context: Context,
 ) : ProgrammeRepository {
     private val timber = Timber.tag("ProgrammeRepositoryImpl")
     override val refreshingEpgUrls = MutableStateFlow<List<String>>(emptyList())
@@ -89,20 +105,20 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
         vararg playlistUrls: String,
         ignoreCache: Boolean
     ): Flow<Int> = channelFlow {
-        val epgUrls = playlistUrls.flatMap { playlistUrl ->
-            val playlist = playlistDao.get(playlistUrl) ?: return@flatMap emptyList()
-            playlist.epgUrlsOrXtreamXmlUrl()
-        }
-            .toSet()
-            .toList()
-        val producer = checkOrRefreshProgrammesOrThrowImpl(
-            epgUrls = epgUrls,
-            ignoreCache = ignoreCache
-        )
-        var count = 0
-        producer.collect { programme ->
-            programmeDao.insertOrReplace(programme)
-            send(++count)
+        PlaylistDataMaintenanceCoordinator.withExclusive {
+            val ownerPlaylistUrls = playlistUrls.toList()
+            val epgUrls = ownerPlaylistUrls.flatMap { playlistUrl ->
+                val playlist = playlistDao.get(playlistUrl) ?: return@flatMap emptyList()
+                playlist.epgUrlsOrXtreamXmlUrl()
+            }
+                .toSet()
+                .toList()
+            checkOrRefreshProgrammesOrThrowImpl(
+                ownerPlaylistUrls = ownerPlaylistUrls,
+                epgUrls = epgUrls,
+                ignoreCache = ignoreCache,
+                onProgramme = { count -> send(count) },
+            ).collect {}
         }
     }
 
@@ -138,32 +154,51 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
     }
 
     private fun checkOrRefreshProgrammesOrThrowImpl(
+        ownerPlaylistUrls: List<String>,
         epgUrls: List<String>,
-        ignoreCache: Boolean
-    ): Flow<Programme> = channelFlow {
+        ignoreCache: Boolean,
+        onProgramme: suspend (Int) -> Unit,
+    ): Flow<Unit> = channelFlow {
         val now = Clock.System.now().toEpochMilliseconds()
+        val count = AtomicInteger()
         // we call it job -s because we think deferred -s is sick.
         val jobs = epgUrls.map { epgUrl ->
             async {
-                if (epgUrl in refreshingEpgUrls.value) run {
-                    timber.d("skipped! epgUrl is refreshing. [$epgUrl]")
-                    return@async
-                }
-                supervisorScope {
+                EpgDataMaintenanceCoordinator.withExclusive(epgUrl) {
+                    val stillReferenced = ownerPlaylistUrls.any { playlistUrl ->
+                        playlistDao.get(playlistUrl)
+                            ?.epgUrlsOrXtreamXmlUrl()
+                            ?.contains(epgUrl) == true
+                    }
+                    if (!stillReferenced) return@withExclusive
                     try {
-                        refreshingEpgUrls.value += epgUrl
+                        refreshingEpgUrls.update { refreshing -> refreshing + epgUrl }
                         val cacheMaxEnd = programmeDao.getMaxEndByEpgUrl(epgUrl)
                         if (!ignoreCache && cacheMaxEnd != null && cacheMaxEnd > now) run {
-                            timber.d("skipped! exist validate programmes. [$epgUrl]")
-                            return@supervisorScope
+                            timber.d("EPG refresh skipped because cached programmes are valid")
+                            return@withExclusive
                         }
 
-                        programmeDao.cleanByEpgUrl(epgUrl)
-                        downloadProgrammes(epgUrl)
-                            .map { it.toProgramme(epgUrl) }
-                            .collect { send(it) }
+                        val staging = stageProgrammes(
+                            epgUrl = epgUrl,
+                            onProgramme = {
+                                onProgramme(count.incrementAndGet())
+                            },
+                        )
+                        try {
+                            database.withTransaction {
+                                programmeDao.cleanByEpgUrl(epgUrl)
+                                staging.forEachBatch(EPG_INSERT_BATCH_SIZE) { programmes ->
+                                    programmeDao.insertOrReplaceAll(
+                                        *programmes.toTypedArray()
+                                    )
+                                }
+                            }
+                        } finally {
+                            staging.close()
+                        }
                     } finally {
-                        refreshingEpgUrls.value -= epgUrl
+                        refreshingEpgUrls.update { refreshing -> refreshing - epgUrl }
                     }
                 }
             }
@@ -171,28 +206,62 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
         jobs.awaitAll()
     }
 
+    private suspend fun stageProgrammes(
+        epgUrl: String,
+        onProgramme: suspend () -> Unit,
+    ): BoundedJsonlRecordStaging<Programme> {
+        val staging = BoundedJsonlRecordStaging.create(
+            cacheDirectory = File(context.cacheDir, EPG_STAGING_DIRECTORY),
+            limits = EPG_STAGING_LIMITS,
+            encode = { programme ->
+                EPG_STAGING_JSON.encodeToString(Programme.serializer(), programme)
+            },
+            decode = { encoded ->
+                EPG_STAGING_JSON.decodeFromString(Programme.serializer(), encoded)
+            },
+        )
+        return try {
+            withContext(Dispatchers.IO) {
+                downloadProgrammes(epgUrl)
+                    .map { it.toProgramme(epgUrl) }
+                    .collect { programme ->
+                        staging.append(programme)
+                        onProgramme()
+                    }
+                currentCoroutineContext().ensureActive()
+                staging.seal()
+            }
+            staging
+        } catch (error: Throwable) {
+            staging.close()
+            throw error
+        }
+    }
+
     private fun downloadProgrammes(epgUrl: String): Flow<EpgProgramme> = channelFlow {
         val request = Request.Builder()
             .url(epgUrl)
             .build()
 
-        val response = okHttpClient.newCall(request).execute()
-        val url = response.request.url
-        val contentType = response.header("Content-Type").orEmpty()
-
-        val isGzip = "gzip" in contentType ||
-                // soft rule, cover the situation which with wrong MIME_TYPE(text, octect etc.)
+        okHttpClient.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) {
+                throw IOException("EPG request failed with HTTP ${response.code}")
+            }
+            val url = response.request.url
+            val contentType = response.header("Content-Type").orEmpty()
+            val isGzip = "gzip" in contentType ||
+                // Some servers return a generic or incorrect MIME type.
                 url.pathSegments.lastOrNull()?.endsWith(".gz") == true
 
-        response
-            .body
-            .byteStream()
-            .letIf(isGzip) { GZIPInputStream(it).buffered() }
-            .use { input ->
-                epgParser
-                    .readProgrammes(input)
-                    .collect { send(it) }
-            }
+            response.body
+                .byteStream()
+                .letIf(isGzip) { GZIPInputStream(it).buffered() }
+                .use { input ->
+                    epgParser
+                        .readProgrammes(input)
+                        .collect { send(it) }
+                }
+        }
     }
         .flowOn(Dispatchers.IO)
 
@@ -216,5 +285,19 @@ internal class ProgrammeRepositoryImpl @Inject constructor(
         range: ProgrammeRange
     ): String? = epgUrls.firstOrNull { epgUrl ->
         programmeDao.checkEpgUrlIsValid(epgUrl, relationId, range.start, range.end)
+    }
+
+    private companion object {
+        const val EPG_INSERT_BATCH_SIZE = 1_000
+        const val EPG_STAGING_DIRECTORY = "epg-import-staging"
+        val EPG_STAGING_LIMITS = BoundedJsonlRecordStaging.Limits(
+            maximumRecords = 1_000_000,
+            maximumBytes = 512L * 1024L * 1024L,
+            maximumRecordBytes = 1024 * 1024,
+        )
+        val EPG_STAGING_JSON = Json {
+            encodeDefaults = true
+            ignoreUnknownKeys = false
+        }
     }
 }

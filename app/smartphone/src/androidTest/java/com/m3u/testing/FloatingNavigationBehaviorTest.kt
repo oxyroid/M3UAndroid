@@ -158,9 +158,11 @@ class FloatingNavigationBehaviorTest {
             ActivityScenario.launch(MainActivity::class.java).use {
                 device.waitForIdle()
                 val setting = navigationSelector(string.ui_destination_setting)
-                val subscriptionTab = By.text(
+                val playlistOverview = By.text(
                     caseInsensitive(
-                        context.getString(string.feat_setting_label_add_playlist),
+                        context.getString(
+                            string.feat_setting_playlist_content_and_guide
+                        ),
                     )
                 )
 
@@ -172,7 +174,7 @@ class FloatingNavigationBehaviorTest {
                         )
                     )
                 ).click()
-                device.findRequiredObject(subscriptionTab)
+                device.findRequiredObject(playlistOverview)
 
                 device.setOrientationLeft()
                 device.waitForWindowUpdate(context.packageName, UI_TIMEOUT_MILLIS)
@@ -181,7 +183,7 @@ class FloatingNavigationBehaviorTest {
                     "The rotated window did not cross into the side-rail layout",
                     device.displayWidth / density >= COMPACT_WIDTH_DP,
                 )
-                device.findRequiredObject(subscriptionTab)
+                device.findRequiredObject(playlistOverview)
                 device.findRequiredObject(
                     By.text(
                         caseInsensitive(
@@ -193,7 +195,7 @@ class FloatingNavigationBehaviorTest {
                 device.setOrientationNatural()
                 device.waitForWindowUpdate(context.packageName, UI_TIMEOUT_MILLIS)
                 device.waitForIdle()
-                device.findRequiredObject(subscriptionTab)
+                device.findRequiredObject(playlistOverview)
                 assertTrue(
                     "The compact navigation reappeared after the detail state moved back",
                     device.wait(Until.gone(setting), UI_TIMEOUT_MILLIS),

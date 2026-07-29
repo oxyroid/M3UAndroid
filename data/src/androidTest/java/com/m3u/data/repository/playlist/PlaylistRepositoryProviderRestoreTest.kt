@@ -2,6 +2,7 @@ package com.m3u.data.repository.playlist
 
 import android.content.Context
 import android.net.Uri
+import androidx.core.net.toUri
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -15,10 +16,18 @@ import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.ProviderAccount
 import com.m3u.data.database.model.ProviderCredentialEntity
 import com.m3u.data.parser.m3u.M3UParserImpl
+import com.m3u.data.parser.xtream.XtreamChannelInfo
+import com.m3u.data.parser.xtream.XtreamData
+import com.m3u.data.parser.xtream.XtreamInfo
+import com.m3u.data.parser.xtream.XtreamInput
+import com.m3u.data.parser.xtream.XtreamLive
+import com.m3u.data.parser.xtream.XtreamOutput
+import com.m3u.data.parser.xtream.XtreamParser
 import com.m3u.data.parser.xtream.XtreamParserImpl
 import com.m3u.data.repository.BackupOrRestoreContracts
 import com.m3u.data.repository.ProviderAccountBackup
 import com.m3u.data.repository.ProviderPlaybackReferenceBackup
+import com.m3u.data.repository.channel.ChannelRepositoryImpl
 import com.m3u.data.repository.extension.ExtensionContributionScheduler
 import com.m3u.data.repository.extension.ExtensionContributionRunCoordinator
 import com.m3u.data.repository.provider.DiscoveredSubscriptionProvider
@@ -31,11 +40,20 @@ import com.m3u.data.repository.provider.ProviderSessionCleanupResult
 import com.m3u.data.repository.provider.ProviderSubscriptionRequest
 import com.m3u.data.repository.provider.ProviderSubscriptionResult
 import com.m3u.data.repository.provider.SubscriptionProviderRepository
+import com.m3u.data.worker.hashedWorkTag
+import com.m3u.data.worker.playlistWorkTag
 import com.m3u.extension.api.security.CredentialHandle
 import com.m3u.extension.api.subscription.SubscriptionRefreshReason
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
@@ -46,10 +64,328 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
 class PlaylistRepositoryProviderRestoreTest {
     private val json = Json { ignoreUnknownKeys = true }
+
+    @Test
+    fun playlistTitleUpdatesTrimWhitespaceAndIgnoreBlank() = runBlocking {
+        withTestRepository { database, repository, _ ->
+            val playlist = Playlist(
+                title = "Original",
+                url = "https://playlist.example/live.m3u",
+                source = DataSource.M3U,
+            )
+            database.playlistDao().insertOrReplace(playlist)
+
+            repository.onUpdatePlaylistTitle(
+                url = playlist.url,
+                title = " \n Evening channels \t ",
+            )
+
+            assertEquals(
+                "Evening channels",
+                database.playlistDao().get(playlist.url)?.title,
+            )
+
+            repository.onUpdatePlaylistTitle(
+                url = playlist.url,
+                title = " \n\t ",
+            )
+
+            assertEquals(
+                "Evening channels",
+                database.playlistDao().get(playlist.url)?.title,
+            )
+        }
+    }
+
+    @Test
+    fun xtreamPlaylistRefreshEnqueuesSubscriptionWork() = runBlocking {
+        withTestRepository { database, repository, context ->
+            val input = XtreamInput(
+                basicUrl = "https://refresh.example",
+                username = "viewer",
+                password = "secret",
+                type = DataSource.Xtream.TYPE_LIVE,
+            )
+            val playlistUrl = XtreamInput.encodeToPlaylistUrl(
+                input = input,
+                serverProtocol = "https",
+                port = 443,
+            )
+            database.playlistDao().insertOrReplace(
+                Playlist(
+                    title = "Refreshable Xtream",
+                    url = playlistUrl,
+                    source = DataSource.Xtream,
+                )
+            )
+            val workManager = WorkManager.getInstance(context)
+
+            try {
+                repository.refresh(playlistUrl)
+
+                val workInfos = workManager
+                    .getWorkInfosByTag(playlistWorkTag(playlistUrl))
+                    .get(5, TimeUnit.SECONDS)
+                assertTrue(
+                    workInfos.any { workInfo ->
+                        DataSource.Xtream.value in workInfo.tags
+                    }
+                )
+            } finally {
+                workManager.cancelAllWorkByTag(playlistWorkTag(playlistUrl))
+                    .result
+                    .get(5, TimeUnit.SECONDS)
+            }
+        }
+    }
+
+    @Test
+    fun mutablePlaylistAndChannelStateWaitsForMaintenance() = runBlocking {
+        withTestRepository { database, repository, context ->
+            val playlist = Playlist(
+                title = "Original",
+                url = "https://playlist.example/live.m3u",
+                source = DataSource.M3U,
+            )
+            val epg = Playlist(
+                title = "Guide",
+                url = "https://playlist.example/guide.xml",
+                source = DataSource.EPG,
+            )
+            val channel = Channel(
+                id = 55,
+                title = "News",
+                category = "News",
+                playlistUrl = playlist.url,
+                url = "https://playlist.example/news.ts",
+                relationId = "news",
+            )
+            database.playlistDao().insertOrReplaceAll(playlist, epg)
+            database.channelDao().insertOrReplace(channel)
+            val channelRepository = ChannelRepositoryImpl(
+                channelDao = database.channelDao(),
+                playlistDao = database.playlistDao(),
+                settings = context.settings,
+            )
+            val maintenanceEntered = CompletableDeferred<Unit>()
+            val releaseMaintenance = CompletableDeferred<Unit>()
+            val maintenance = async(Dispatchers.Default) {
+                PlaylistDataMaintenanceCoordinator.withExclusive {
+                    maintenanceEntered.complete(Unit)
+                    releaseMaintenance.await()
+                }
+            }
+            maintenanceEntered.await()
+
+            val mutations = listOf(
+                async(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
+                    repository.pinOrUnpinCategory(playlist.url, "News")
+                },
+                async(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
+                    repository.hideOrUnhideCategory(playlist.url, "Sports")
+                },
+                async(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
+                    repository.onUpdatePlaylistTitle(playlist.url, "Updated")
+                },
+                async(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
+                    repository.onUpdatePlaylistUserAgent(playlist.url, "Test agent")
+                },
+                async(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
+                    repository.onUpdateEpgPlaylist(
+                        PlaylistRepository.EpgPlaylistUseCase.Check(
+                            playlistUrl = playlist.url,
+                            epgUrl = epg.url,
+                            action = true,
+                        )
+                    )
+                },
+                async(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
+                    repository.onUpdatePlaylistAutoRefreshProgrammes(playlist.url)
+                },
+                async(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
+                    channelRepository.favouriteOrUnfavourite(channel.id)
+                },
+                async(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
+                    channelRepository.hide(channel.id, target = true)
+                },
+                async(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
+                    channelRepository.reportPlayed(channel.id)
+                },
+            )
+
+            try {
+                assertEquals(playlist, database.playlistDao().get(playlist.url))
+                assertEquals(channel, database.channelDao().get(channel.id))
+                database.channelDao().delete(channel)
+                database.channelDao().insertOrReplace(
+                    channel.copy(
+                        id = 56,
+                        url = "https://playlist.example/refreshed-news.ts",
+                    )
+                )
+            } finally {
+                releaseMaintenance.complete(Unit)
+            }
+            withTimeout(5_000) {
+                mutations.awaitAll()
+                maintenance.await()
+            }
+
+            val updatedPlaylist = requireNotNull(database.playlistDao().get(playlist.url))
+            assertEquals("Updated", updatedPlaylist.title)
+            assertEquals(listOf("News"), updatedPlaylist.pinnedCategories)
+            assertEquals(listOf("Sports"), updatedPlaylist.hiddenCategories)
+            assertEquals("Test agent", updatedPlaylist.userAgent)
+            assertEquals(listOf(epg.url), updatedPlaylist.epgUrls)
+            assertTrue(updatedPlaylist.autoRefreshProgrammes)
+
+            assertNull(database.channelDao().get(channel.id))
+            val updatedChannel = requireNotNull(database.channelDao().get(56))
+            assertTrue(updatedChannel.favourite)
+            assertTrue(updatedChannel.hidden)
+            assertTrue(updatedChannel.seen > 0L)
+        }
+    }
+
+    @Test
+    fun epgAssociationRejectsDuplicatesAndDeletedSources() = runBlocking {
+        withTestRepository { database, repository, _ ->
+            val playlist = Playlist(
+                title = "Channels",
+                url = "https://playlist.example/live.m3u",
+                source = DataSource.M3U,
+            )
+            val epg = Playlist(
+                title = "Guide",
+                url = "https://playlist.example/guide.xml",
+                source = DataSource.EPG,
+            )
+            database.playlistDao().insertOrReplaceAll(playlist, epg)
+            val add = PlaylistRepository.EpgPlaylistUseCase.Check(
+                playlistUrl = playlist.url,
+                epgUrl = epg.url,
+                action = true,
+            )
+
+            repository.onUpdateEpgPlaylist(add)
+            repository.onUpdateEpgPlaylist(add)
+
+            assertEquals(
+                listOf(epg.url),
+                database.playlistDao().get(playlist.url)?.epgUrls,
+            )
+
+            repository.onUpdateEpgPlaylist(add.copy(action = false))
+            database.playlistDao().deleteByUrl(epg.url)
+            repository.onUpdateEpgPlaylist(add)
+
+            assertTrue(database.playlistDao().get(playlist.url)?.epgUrls.orEmpty().isEmpty())
+        }
+    }
+
+    @Test
+    fun failedXtreamStagingKeepsOldDataAndContributionSchedule() = runBlocking {
+        val scheduler = RecordingExtensionContributionScheduler()
+        withTestRepository(
+            xtreamParser = FailingXtreamParser,
+            extensionContributionScheduler = scheduler,
+        ) { database, repository, _ ->
+            val input = XtreamInput(
+                basicUrl = "https://provider.example",
+                username = "viewer",
+                password = "secret",
+                type = DataSource.Xtream.TYPE_LIVE,
+            )
+            val playlistUrl = XtreamInput.encodeToPlaylistUrl(
+                input = input,
+                serverProtocol = "https",
+                port = 443,
+            )
+            val playlist = Playlist(
+                title = "Existing",
+                url = playlistUrl,
+                source = DataSource.Xtream,
+            )
+            val channel = Channel(
+                id = 77,
+                title = "Existing channel",
+                category = "Live",
+                playlistUrl = playlistUrl,
+                url = "https://provider.example/live/viewer/secret/77.ts",
+                relationId = "77",
+            )
+            database.playlistDao().insertOrReplace(playlist)
+            database.channelDao().insertOrReplace(channel)
+
+            val failure = runCatching {
+                repository.xtreamOrThrow(
+                    title = "Replacement",
+                    basicUrl = input.basicUrl,
+                    username = input.username,
+                    password = input.password,
+                    type = input.type,
+                    callback = {},
+                )
+            }.exceptionOrNull()
+
+            assertNotNull(failure)
+            assertEquals(playlist, database.playlistDao().get(playlistUrl))
+            assertEquals(listOf(channel), database.channelDao().getByPlaylistUrl(playlistUrl))
+            assertTrue(scheduler.cancelledPlaylistUrls.isEmpty())
+            assertTrue(scheduler.enqueuedPlaylistUrls.isEmpty())
+        }
+    }
+
+    @Test
+    fun unsubscribeByContentUriRemovesItsMigratedCanonicalPlaylist() = runBlocking {
+        val scheduler = RecordingExtensionContributionScheduler()
+        withTestRepository(
+            extensionContributionScheduler = scheduler,
+        ) { database, repository, context ->
+            val contentUrl = "content://media/external/file/playlist-42"
+            val filename = hashedWorkTag(
+                namespace = "local-m3u-file",
+                value = contentUrl,
+            ).substringAfter(':') + ".m3u"
+            val ownedFile = File(context.filesDir, "playlists/$filename")
+            val ownedDirectory = checkNotNull(ownedFile.parentFile)
+            check(ownedDirectory.exists() || ownedDirectory.mkdirs())
+            ownedFile.writeText("#EXTM3U")
+            val canonicalUrl = ownedFile.toUri().toString()
+            val playlist = Playlist(
+                title = "Local playlist",
+                url = canonicalUrl,
+                source = DataSource.M3U,
+            )
+            val channel = Channel(
+                id = 78,
+                title = "Local channel",
+                category = "Live",
+                playlistUrl = canonicalUrl,
+                url = "https://stream.example/78",
+                relationId = "78",
+            )
+            database.playlistDao().insertOrReplace(playlist)
+            database.channelDao().insertOrReplace(channel)
+
+            val removed = repository.unsubscribe(contentUrl)
+
+            assertEquals(playlist, removed)
+            assertNull(database.playlistDao().get(canonicalUrl))
+            assertTrue(database.channelDao().getByPlaylistUrl(canonicalUrl).isEmpty())
+            assertFalse(ownedFile.exists())
+            assertEquals(
+                setOf(contentUrl, canonicalUrl),
+                scheduler.cancelledPlaylistUrls.toSet(),
+            )
+            assertTrue(scheduler.enqueuedPlaylistUrls.isEmpty())
+        }
+    }
 
     @Test
     fun ordinaryRestoreRemapsCollisionWithoutReplacingExistingProviderData() = runBlocking {
@@ -548,6 +884,9 @@ class PlaylistRepositoryProviderRestoreTest {
     }
 
     private suspend fun withTestRepository(
+        xtreamParser: XtreamParser? = null,
+        extensionContributionScheduler: ExtensionContributionScheduler =
+            NoOpExtensionContributionScheduler,
         block: suspend (M3UDatabase, PlaylistRepositoryImpl, Context) -> Unit,
     ) {
         val context = ApplicationProvider.getApplicationContext<Context>()
@@ -564,12 +903,12 @@ class PlaylistRepositoryProviderRestoreTest {
             programmeDao = database.programmeDao(),
             okHttpClient = client,
             m3uParser = M3UParserImpl(),
-            xtreamParser = XtreamParserImpl(client),
+            xtreamParser = xtreamParser ?: XtreamParserImpl(client),
             workManager = WorkManager.getInstance(context),
             context = context,
             settings = context.settings,
             subscriptionProviderRepository = UnusedSubscriptionProviderRepository,
-            extensionContributionScheduler = NoOpExtensionContributionScheduler,
+            extensionContributionScheduler = extensionContributionScheduler,
             extensionContributionRunCoordinator = ExtensionContributionRunCoordinator(),
         )
         try {
@@ -645,6 +984,49 @@ class PlaylistRepositoryProviderRestoreTest {
         override suspend fun enqueue(playlistUrl: String) = Unit
 
         override suspend fun cancel(playlistUrl: String) = Unit
+    }
+
+    private class RecordingExtensionContributionScheduler :
+        ExtensionContributionScheduler {
+        val enqueuedPlaylistUrls = mutableListOf<String>()
+        val cancelledPlaylistUrls = mutableListOf<String>()
+
+        override suspend fun enqueue(playlistUrl: String) {
+            enqueuedPlaylistUrls += playlistUrl
+        }
+
+        override suspend fun cancel(playlistUrl: String) {
+            cancelledPlaylistUrls += playlistUrl
+        }
+    }
+
+    private data object FailingXtreamParser : XtreamParser {
+        override suspend fun getSeriesInfoOrThrow(
+            input: XtreamInput,
+            seriesId: Int,
+        ): XtreamChannelInfo = error("Not used")
+
+        override fun parse(input: XtreamInput): Flow<XtreamData> = flow {
+            emit(
+                XtreamLive(
+                    categoryId = 1,
+                    epgChannelId = "new-79",
+                    name = "Partially received channel",
+                    streamIcon = null,
+                    streamId = 79,
+                    streamType = "live",
+                )
+            )
+            error("Required Xtream endpoint failed")
+        }
+
+        override suspend fun getInfo(input: XtreamInput): XtreamInfo = error("Not used")
+
+        override suspend fun getXtreamOutput(input: XtreamInput): XtreamOutput = XtreamOutput(
+            allowedOutputFormats = listOf("ts"),
+            serverProtocol = "https",
+            port = 443,
+        )
     }
 
     private companion object {

@@ -2,5 +2,26 @@
 <resources>
     <string name="feat_playlist_configuration_title">Nome</string>
     <string name="feat_playlist_configuration_user_agent">Agente de usuário</string>
+    <string name="feat_playlist_configuration_updates">Atualizações</string>
+    <string name="feat_playlist_configuration_refresh_playlist">Atualizar canais</string>
+    <string name="feat_playlist_configuration_cancel_refresh_playlist">Cancelar atualização dos canais</string>
+    <string name="feat_playlist_configuration_refresh_playlist_description">Baixar os canais mais recentes desta fonte</string>
     <string name="feat_playlist_configuration_enabled_epgs">EPGs habilitados</string>
+    <string name="feat_playlist_configuration_sync_programmes">Sincronizar programação</string>
+    <string name="feat_playlist_configuration_cancel_sync_programmes">Cancelar sincronização da programação</string>
+    <string name="feat_playlist_configuration_programmes_expired_time">Expira em: %s</string>
+    <string name="feat_playlist_configuration_programmes_expired">A programação em cache está desatualizada</string>
+    <string name="feat_playlist_configuration_auto_refresh_programmes">Atualizar programação automaticamente</string>
+    <string name="feat_playlist_configuration_auto_refresh_programmes_description">Ao iniciar o app</string>
+    <string name="feat_playlist_configuration_remove_section">Remover fonte</string>
+    <string name="feat_playlist_configuration_remove_playlist">Remover playlist</string>
+    <string name="feat_playlist_configuration_remove_playlist_description">Remover esta fonte e seus canais importados deste dispositivo</string>
+    <string name="feat_playlist_configuration_remove_playlist_title">Remover a playlist?</string>
+    <string name="feat_playlist_configuration_remove_playlist_message">Remover “%1$s” e todos os seus canais importados deste dispositivo? Esta ação não pode ser desfeita.</string>
+    <string name="feat_playlist_configuration_unavailable_title">Playlist indisponível</string>
+    <string name="feat_playlist_configuration_unavailable_description">Esta playlist não está mais neste dispositivo. Volte ao gerenciamento de playlists para escolher outra fonte.</string>
+    <string name="feat_playlist_configuration_return_to_management">Voltar ao gerenciamento de playlists</string>
+    <string name="feat_playlist_configuration_xtream_trial">Teste</string>
+    <string name="feat_playlist_configuration_update_succeeded">Atualização concluída</string>
+    <string name="feat_playlist_configuration_update_failed">Não foi possível atualizar. Tente novamente.</string>
 </resources>

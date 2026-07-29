@@ -168,6 +168,27 @@ class AppNavigationPolicyTest {
     }
 
     @Test
+    fun `trailing remote action keeps compact navigation touch targets usable`() {
+        val navigationWidth = calculateFloatingNavigationDockNavigationWidth(
+            containerWidth = 320.dp,
+            itemCount = 3,
+            trailingActionVisible = true,
+        )
+
+        assertEquals(204.dp, navigationWidth)
+        assertEquals(280.dp, navigationWidth + 76.dp)
+        assertTrue((navigationWidth - 8.dp) / 3 >= 48.dp)
+        assertEquals(
+            236.dp,
+            calculateFloatingNavigationDockNavigationWidth(
+                containerWidth = 320.dp,
+                itemCount = 3,
+                trailingActionVisible = false,
+            ),
+        )
+    }
+
+    @Test
     fun `compact top-level content clears the measured navigation and both 12 dp gaps`() {
         assertEquals(
             120.dp,
@@ -255,15 +276,14 @@ class AppNavigationPolicyTest {
     }
 
     @Test
-    fun `remote control fab adds enough clearance for the final content item`() {
+    fun `compact remote action shares the navigation clearance`() {
         assertEquals(
-            188.dp,
+            120.dp,
             calculateContentBottomPadding(
                 mode = AppNavigationMode.BottomOverlay,
                 isTopLevelRoute = true,
                 safeBottomInset = 24.dp,
                 measuredNavigationHeight = 72.dp,
-                floatingUtilityHeight = 56.dp,
             )
         )
     }

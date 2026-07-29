@@ -2,8 +2,26 @@
 <resources>
     <string name="feat_playlist_configuration_title">Titel</string>
     <string name="feat_playlist_configuration_user_agent">User-Agent</string>
+    <string name="feat_playlist_configuration_updates">Aktualisierungen</string>
+    <string name="feat_playlist_configuration_refresh_playlist">Sender aktualisieren</string>
+    <string name="feat_playlist_configuration_cancel_refresh_playlist">Senderaktualisierung abbrechen</string>
+    <string name="feat_playlist_configuration_refresh_playlist_description">Neueste Sender von dieser Quelle herunterladen</string>
     <string name="feat_playlist_configuration_enabled_epgs">aktiviere EPGs</string>
     <string name="feat_playlist_configuration_sync_programmes">Synchronisiere EPG...</string>
+    <string name="feat_playlist_configuration_cancel_sync_programmes">Programmsynchronisierung abbrechen</string>
     <string name="feat_playlist_configuration_programmes_expired_time">Ablaufdatum: %s</string>
     <string name="feat_playlist_configuration_programmes_expired">EPG ist veraltet, bitte erneut synchronisieren</string>
+    <string name="feat_playlist_configuration_auto_refresh_programmes">Programme automatisch aktualisieren</string>
+    <string name="feat_playlist_configuration_auto_refresh_programmes_description">Beim Start der App</string>
+    <string name="feat_playlist_configuration_remove_section">Quelle entfernen</string>
+    <string name="feat_playlist_configuration_remove_playlist">Playlist entfernen</string>
+    <string name="feat_playlist_configuration_remove_playlist_description">Diese Quelle und ihre importierten Sender von diesem Gerät entfernen</string>
+    <string name="feat_playlist_configuration_remove_playlist_title">Playlist entfernen?</string>
+    <string name="feat_playlist_configuration_remove_playlist_message">„%1$s“ und alle daraus importierten Sender von diesem Gerät entfernen? Dies kann nicht rückgängig gemacht werden.</string>
+    <string name="feat_playlist_configuration_unavailable_title">Playlist nicht verfügbar</string>
+    <string name="feat_playlist_configuration_unavailable_description">Diese Playlist ist auf diesem Gerät nicht mehr vorhanden. Kehre zur Playlistverwaltung zurück, um eine andere Quelle auszuwählen.</string>
+    <string name="feat_playlist_configuration_return_to_management">Zur Playlistverwaltung</string>
+    <string name="feat_playlist_configuration_xtream_trial">Testzugang</string>
+    <string name="feat_playlist_configuration_update_succeeded">Aktualisierung abgeschlossen</string>
+    <string name="feat_playlist_configuration_update_failed">Aktualisierung fehlgeschlagen. Versuche es noch einmal.</string>
 </resources>

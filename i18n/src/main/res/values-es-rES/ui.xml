@@ -9,8 +9,8 @@
     <string name="ui_destination_playlist">List. reproducción</string>
     <string name="ui_error_unknown">error desconocido</string>
     <string name="ui_cd_top_bar_on_back_pressed">atrás</string>
-    <string name="ui_theme_card_left">ho</string>
-    <string name="ui_theme_card_right">la</string>
+    <string name="ui_theme_card_left">¿Lo sabías?</string>
+    <string name="ui_theme_card_right">Guardaremos tu progreso de reproducción y continuaremos la próxima vez que reproduzcas.</string>
     <string name="ui_sort">Ordenar</string>
     <string name="ui_sort_asc">A-Z</string>
     <string name="ui_sort_desc">Z-A</string>
@@ -24,4 +24,5 @@
     <string name="ui_connect">Conectar</string>
     <string name="ui_remote_control_pair_title">ingresar el código de la televisión</string>
     <string name="ui_remote_control_pair_subtitle">Asegure de conectar en la misma red Wi-Fi</string>
+    <string name="ui_action_delete_epg">Eliminar EPG</string>
 </resources>

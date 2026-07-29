@@ -32,9 +32,9 @@ internal fun RegularPreferences(
         modifier = modifier.selectableGroup(),
     ) {
         Preference(
-            title = stringResource(string.feat_setting_playlist_management).title(),
+            title = stringResource(string.feat_setting_playlist_management),
             icon = Icons.Rounded.MusicNote,
-            selected = fragment == SettingDestination.Playlists,
+            selected = fragment.isPlaylistDestination(),
             onClick = navigateToPlaylistManagement
         )
         Preference(
@@ -65,6 +65,17 @@ internal fun RegularPreferences(
             )
         }
     }
+}
+
+private fun SettingDestination.isPlaylistDestination(): Boolean = when (this) {
+    SettingDestination.Playlists,
+    is SettingDestination.PlaylistConfiguration,
+    SettingDestination.PlaylistSourcePicker,
+    is SettingDestination.PlaylistEditor,
+    SettingDestination.PlaylistEpgSources,
+    SettingDestination.PlaylistHiddenChannels,
+    SettingDestination.PlaylistHiddenCategories -> true
+    else -> false
 }
 
 private fun SettingDestination.isExtensionPluginDestination(): Boolean = when (this) {

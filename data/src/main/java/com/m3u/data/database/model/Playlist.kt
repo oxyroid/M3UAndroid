@@ -82,7 +82,10 @@ val Playlist.refreshable: Boolean
             ignoreCase = true
         )
 
-        DataSource.Emby, DataSource.Jellyfin, DataSource.Provider -> true
+        DataSource.Xtream,
+        DataSource.Emby,
+        DataSource.Jellyfin,
+        DataSource.Provider -> true
         else -> false
     }
 

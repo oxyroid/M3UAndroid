@@ -7,6 +7,7 @@ import com.m3u.data.database.dao.ChannelDao
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.data.database.model.Channel
+import com.m3u.data.repository.playlist.PlaylistDataMaintenanceCoordinator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import javax.inject.Inject
@@ -65,17 +66,60 @@ internal class ChannelRepositoryImpl @Inject constructor(
         if (relationIds.isEmpty()) emptyList() else channelDao.getByRelationIds(relationIds)
 
     override suspend fun favouriteOrUnfavourite(id: Int) {
-        val current = channelDao.get(id)?.favourite ?: return
-        channelDao.favouriteOrUnfavourite(id, !current)
+        val selected = channelDao.get(id) ?: return
+        PlaylistDataMaintenanceCoordinator.withExclusive {
+            val current = resolveCurrentVersion(selected) ?: return@withExclusive
+            channelDao.favouriteOrUnfavourite(current.id, !current.favourite)
+        }
     }
 
     override suspend fun hide(id: Int, target: Boolean) {
-        channelDao.hide(id, target)
+        val selected = channelDao.get(id) ?: return
+        PlaylistDataMaintenanceCoordinator.withExclusive {
+            val current = resolveCurrentVersion(selected) ?: return@withExclusive
+            channelDao.hide(current.id, target)
+        }
     }
 
     override suspend fun reportPlayed(id: Int) {
-        val current = kotlin.time.Clock.System.now().toEpochMilliseconds()
-        channelDao.updateSeen(id, current)
+        val selected = channelDao.get(id) ?: return
+        PlaylistDataMaintenanceCoordinator.withExclusive {
+            val currentVersion = resolveCurrentVersion(selected) ?: return@withExclusive
+            val current = kotlin.time.Clock.System.now().toEpochMilliseconds()
+            channelDao.updateSeen(currentVersion.id, current)
+        }
+    }
+
+    private suspend fun resolveCurrentVersion(selected: Channel): Channel? {
+        val relationId = selected.relationId?.takeIf(String::isNotBlank)
+        val sameId = channelDao.get(selected.id)
+        val sameStableIdentity = if (relationId != null) {
+            sameId?.relationId == relationId
+        } else {
+            sameId?.url == selected.url
+        }
+        if (
+            sameId?.playlistUrl == selected.playlistUrl &&
+            sameStableIdentity
+        ) {
+            return sameId
+        }
+        val sameUrl = channelDao.getByPlaylistUrlAndUrl(
+            playlistUrl = selected.playlistUrl,
+            url = selected.url,
+        )
+        if (
+            sameUrl != null &&
+            (relationId == null || sameUrl.relationId == relationId)
+        ) {
+            return sameUrl
+        }
+        return relationId?.let { stableId ->
+            channelDao.getByPlaylistUrlAndRelationId(
+                playlistUrl = selected.playlistUrl,
+                relationId = stableId,
+            )
+        }
     }
 
     override suspend fun getPlayedRecently(): Channel? {

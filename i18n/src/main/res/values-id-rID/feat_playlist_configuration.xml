@@ -2,6 +2,10 @@
 <resources>
     <string name="feat_playlist_configuration_title">Judul</string>
     <string name="feat_playlist_configuration_user_agent">user agent</string>
+    <string name="feat_playlist_configuration_updates">Pembaruan</string>
+    <string name="feat_playlist_configuration_refresh_playlist">Perbarui saluran</string>
+    <string name="feat_playlist_configuration_cancel_refresh_playlist">Batalkan pembaruan saluran</string>
+    <string name="feat_playlist_configuration_refresh_playlist_description">Unduh saluran terbaru dari sumber ini</string>
     <string name="feat_playlist_configuration_enabled_epgs">EPG aktif</string>
     <string name="feat_playlist_configuration_sync_programmes">sinkronkan program</string>
     <string name="feat_playlist_configuration_cancel_sync_programmes">batalkan sinkronisasi program</string>
@@ -9,4 +13,15 @@
     <string name="feat_playlist_configuration_programmes_expired">Cache program telah kedaluwarsa</string>
     <string name="feat_playlist_configuration_auto_refresh_programmes">Muat ulang program otomatis</string>
     <string name="feat_playlist_configuration_auto_refresh_programmes_description">Saat aplikasi dimulai</string>
+    <string name="feat_playlist_configuration_remove_section">Hapus sumber</string>
+    <string name="feat_playlist_configuration_remove_playlist">Hapus playlist</string>
+    <string name="feat_playlist_configuration_remove_playlist_description">Hapus sumber ini dan semua saluran hasil impornya dari perangkat ini</string>
+    <string name="feat_playlist_configuration_remove_playlist_title">Hapus playlist?</string>
+    <string name="feat_playlist_configuration_remove_playlist_message">Hapus “%1$s” dan semua saluran hasil impornya dari perangkat ini? Tindakan ini tidak dapat dibatalkan.</string>
+    <string name="feat_playlist_configuration_unavailable_title">Playlist tidak tersedia</string>
+    <string name="feat_playlist_configuration_unavailable_description">Playlist ini sudah tidak ada di perangkat ini. Kembali ke pengelolaan playlist untuk memilih sumber lain.</string>
+    <string name="feat_playlist_configuration_return_to_management">Kembali ke pengelolaan playlist</string>
+    <string name="feat_playlist_configuration_xtream_trial">Uji coba</string>
+    <string name="feat_playlist_configuration_update_succeeded">Pembaruan selesai</string>
+    <string name="feat_playlist_configuration_update_failed">Pembaruan gagal. Coba lagi.</string>
 </resources>

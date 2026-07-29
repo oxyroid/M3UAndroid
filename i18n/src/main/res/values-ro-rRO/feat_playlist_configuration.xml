@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feat_playlist_configuration_title">Titlu</string>
+    <string name="feat_playlist_configuration_user_agent">Agent utilizator</string>
+    <string name="feat_playlist_configuration_updates">Actualizări</string>
+    <string name="feat_playlist_configuration_refresh_playlist">Actualizează canalele</string>
+    <string name="feat_playlist_configuration_cancel_refresh_playlist">Anulează actualizarea canalelor</string>
+    <string name="feat_playlist_configuration_refresh_playlist_description">Descarcă cele mai recente canale din această sursă</string>
+    <string name="feat_playlist_configuration_enabled_epgs">Surse EPG activate</string>
+    <string name="feat_playlist_configuration_sync_programmes">Sincronizează programele</string>
+    <string name="feat_playlist_configuration_cancel_sync_programmes">Anulează sincronizarea programelor</string>
+    <string name="feat_playlist_configuration_programmes_expired_time">Expiră: %s</string>
+    <string name="feat_playlist_configuration_programmes_expired">Programele din cache nu mai sunt actuale</string>
+    <string name="feat_playlist_configuration_auto_refresh_programmes">Actualizează automat programele</string>
+    <string name="feat_playlist_configuration_auto_refresh_programmes_description">La pornirea aplicației</string>
+    <string name="feat_playlist_configuration_remove_section">Elimină sursa</string>
+    <string name="feat_playlist_configuration_remove_playlist">Elimină lista de redare</string>
+    <string name="feat_playlist_configuration_remove_playlist_description">Elimină de pe acest dispozitiv sursa și canalele importate</string>
+    <string name="feat_playlist_configuration_remove_playlist_title">Elimini lista de redare?</string>
+    <string name="feat_playlist_configuration_remove_playlist_message">Elimini „%1$s” și toate canalele importate din aceasta de pe acest dispozitiv? Acțiunea nu poate fi anulată.</string>
+    <string name="feat_playlist_configuration_unavailable_title">Listă de redare indisponibilă</string>
+    <string name="feat_playlist_configuration_unavailable_description">Această listă de redare nu mai există pe acest dispozitiv. Revino la gestionarea listelor pentru a alege altă sursă.</string>
+    <string name="feat_playlist_configuration_return_to_management">Înapoi la gestionarea listelor</string>
+    <string name="feat_playlist_configuration_xtream_trial">Probă</string>
+    <string name="feat_playlist_configuration_update_succeeded">Actualizare finalizată</string>
+    <string name="feat_playlist_configuration_update_failed">Actualizarea a eșuat. Încearcă din nou.</string>
+</resources>

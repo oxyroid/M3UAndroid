@@ -76,6 +76,23 @@ internal fun calculateFloatingNavigationWidth(
     )
 }
 
+internal fun calculateFloatingNavigationDockNavigationWidth(
+    containerWidth: Dp,
+    itemCount: Int,
+    trailingActionVisible: Boolean,
+    trailingActionSlotWidth: Dp = 76.dp,
+): Dp {
+    val availableWidth = containerWidth - if (trailingActionVisible) {
+        trailingActionSlotWidth
+    } else {
+        0.dp
+    }
+    return calculateFloatingNavigationWidth(
+        containerWidth = availableWidth.coerceAtLeast(0.dp),
+        itemCount = itemCount,
+    )
+}
+
 internal fun calculateLayoutPadding(
     mode: AppNavigationMode,
     safeStartInset: Dp,

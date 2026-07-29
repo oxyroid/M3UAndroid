@@ -2,6 +2,10 @@
 <resources>
     <string name="feat_playlist_configuration_title">título</string>
     <string name="feat_playlist_configuration_user_agent">agente de usuario</string>
+    <string name="feat_playlist_configuration_updates">Actualizaciones</string>
+    <string name="feat_playlist_configuration_refresh_playlist">Actualizar canales</string>
+    <string name="feat_playlist_configuration_cancel_refresh_playlist">Cancelar actualización de canales</string>
+    <string name="feat_playlist_configuration_refresh_playlist_description">Descargar los canales más recientes de esta fuente</string>
     <string name="feat_playlist_configuration_enabled_epgs">EPGs habilitadas</string>
     <string name="feat_playlist_configuration_sync_programmes">sinc. programación</string>
     <string name="feat_playlist_configuration_cancel_sync_programmes">cancelar sinc. programación</string>
@@ -9,4 +13,15 @@
     <string name="feat_playlist_configuration_programmes_expired">la programación está desactualizada</string>
     <string name="feat_playlist_configuration_auto_refresh_programmes">Autorefrescar programación</string>
     <string name="feat_playlist_configuration_auto_refresh_programmes_description">Cuando se inicializa la app</string>
+    <string name="feat_playlist_configuration_remove_section">Eliminar fuente</string>
+    <string name="feat_playlist_configuration_remove_playlist">Eliminar lista</string>
+    <string name="feat_playlist_configuration_remove_playlist_description">Eliminar de este dispositivo esta fuente y sus canales importados</string>
+    <string name="feat_playlist_configuration_remove_playlist_title">¿Eliminar la lista?</string>
+    <string name="feat_playlist_configuration_remove_playlist_message">¿Eliminar “%1$s” y todos sus canales importados de este dispositivo? Esta acción no se puede deshacer.</string>
+    <string name="feat_playlist_configuration_unavailable_title">Lista no disponible</string>
+    <string name="feat_playlist_configuration_unavailable_description">Esta lista ya no existe en este dispositivo. Vuelve a la gestión de listas para elegir otra fuente.</string>
+    <string name="feat_playlist_configuration_return_to_management">Volver a gestionar listas</string>
+    <string name="feat_playlist_configuration_xtream_trial">Prueba</string>
+    <string name="feat_playlist_configuration_update_succeeded">Actualización completada</string>
+    <string name="feat_playlist_configuration_update_failed">No se pudo actualizar. Inténtalo de nuevo.</string>
 </resources>

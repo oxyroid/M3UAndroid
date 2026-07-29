@@ -40,9 +40,11 @@ import com.m3u.data.database.model.ColorScheme
 import com.m3u.i18n.R.string
 import androidx.compose.material3.Icon
 import com.m3u.smartphone.ui.material.ktx.createScheme
+import com.m3u.smartphone.ui.material.ktx.rememberUiBidiFormatter
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.core.foundation.ui.SugarColors
 import com.m3u.smartphone.ui.material.components.FontFamilies
+import com.m3u.smartphone.ui.material.ktx.contrastingContentColor
 
 @OptIn(ExperimentalStdlibApi::class)
 @Composable
@@ -54,6 +56,7 @@ internal fun CanvasBottomSheet(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
+    val bidiFormatter = rememberUiBidiFormatter()
     val argb = colorScheme?.argb
     val isDark = colorScheme?.isDark
     val isTemp = colorScheme?.name == ColorScheme.NAME_TEMP
@@ -86,13 +89,18 @@ internal fun CanvasBottomSheet(
                     val green by remember { derivedStateOf { color.green } }
                     val blue by remember { derivedStateOf { color.blue } }
 
-                    val colorText by remember {
-                        derivedStateOf { "#${color.toArgb().toHexString(HexFormat.UpperCase)}" }
+                    val colorText by remember(bidiFormatter) {
+                        derivedStateOf {
+                            bidiFormatter.ltr(
+                                "#${color.toArgb().toHexString(HexFormat.UpperCase)}"
+                            )
+                        }
                     }
 
                     Card(
                         colors = CardDefaults.cardColors(
                             containerColor = color,
+                            contentColor = contrastingContentColor(color),
                         )
                     ) {
                         Box(

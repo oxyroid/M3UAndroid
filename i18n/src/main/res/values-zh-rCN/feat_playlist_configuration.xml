@@ -2,9 +2,26 @@
 <resources>
     <string name="feat_playlist_configuration_title">标题</string>
     <string name="feat_playlist_configuration_user_agent">用户代理（UA）</string>
+    <string name="feat_playlist_configuration_updates">更新</string>
+    <string name="feat_playlist_configuration_refresh_playlist">刷新频道</string>
+    <string name="feat_playlist_configuration_cancel_refresh_playlist">取消刷新频道</string>
+    <string name="feat_playlist_configuration_refresh_playlist_description">从此来源下载最新频道</string>
     <string name="feat_playlist_configuration_enabled_epgs">启用的 EPG</string>
     <string name="feat_playlist_configuration_sync_programmes">同步节目</string>
+    <string name="feat_playlist_configuration_cancel_sync_programmes">取消同步节目</string>
     <string name="feat_playlist_configuration_programmes_expired_time">过期时间: %s</string>
     <string name="feat_playlist_configuration_programmes_expired">缓存的节目已经过时</string>
+    <string name="feat_playlist_configuration_auto_refresh_programmes">自动刷新节目</string>
+    <string name="feat_playlist_configuration_auto_refresh_programmes_description">应用启动时</string>
+    <string name="feat_playlist_configuration_remove_section">移除来源</string>
+    <string name="feat_playlist_configuration_remove_playlist">移除播放列表</string>
+    <string name="feat_playlist_configuration_remove_playlist_description">从此设备移除该来源及已导入的频道</string>
+    <string name="feat_playlist_configuration_remove_playlist_title">移除播放列表？</string>
+    <string name="feat_playlist_configuration_remove_playlist_message">从此设备移除“%1$s”及其全部已导入频道吗？此操作无法撤销。</string>
+    <string name="feat_playlist_configuration_unavailable_title">播放列表不可用</string>
+    <string name="feat_playlist_configuration_unavailable_description">此播放列表已不在本设备上。请返回播放列表管理并选择其他来源。</string>
+    <string name="feat_playlist_configuration_return_to_management">返回播放列表管理</string>
+    <string name="feat_playlist_configuration_update_succeeded">更新完成</string>
+    <string name="feat_playlist_configuration_update_failed">更新失败，请重试。</string>
     <string name="feat_playlist_configuration_xtream_trial">试用</string>
 </resources>

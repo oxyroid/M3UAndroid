@@ -60,6 +60,9 @@ import com.m3u.extension.api.ExtensionSettingKeys
 import com.m3u.extension.api.ExtensionSettingType
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.material.ktx.plus
+import com.m3u.smartphone.ui.material.ktx.UiBidiFormatter
+import com.m3u.smartphone.ui.material.ktx.rememberUiBidiFormatter
+import com.m3u.smartphone.ui.material.ktx.withoutBidiControls
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull

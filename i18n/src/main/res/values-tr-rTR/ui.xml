@@ -10,7 +10,7 @@
     <string name="ui_error_unknown">Bilinmeyen Hata</string>
     <string name="ui_cd_top_bar_on_back_pressed">Geri</string>
     <string name="ui_theme_card_left">Biliyor musun?</string>
-    <string name="ui_theme_card_right">İzleme ilerlemeni Kaydedeceğiz Ve Bir Sonraki İzlemede Kaldığın Yerden Devam Edeceğiz</string>
+    <string name="ui_theme_card_right">İzleme ilerlemeni kaydedip bir sonraki oynatmada kaldığın yerden devam edeceğiz.</string>
     <string name="ui_sort">Sırala</string>
     <string name="ui_sort_asc">A-Z</string>
     <string name="ui_sort_desc">Z-A</string>
@@ -25,4 +25,5 @@
     <string name="ui_connect">Bağlan</string>
     <string name="ui_remote_control_pair_title">TVden gelen kodu girin</string>
     <string name="ui_remote_control_pair_subtitle">Aynı Wi-Fi ağına bağlı olduğunuzdan emin olun</string>
+    <string name="ui_action_delete_epg">EPG’yi sil</string>
 </resources>

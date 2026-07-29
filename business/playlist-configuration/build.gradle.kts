@@ -29,4 +29,6 @@ dependencies {
     ksp(libs.google.dagger.hilt.compiler)
 
     implementation(libs.androidx.work.runtime.ktx)
+
+    testImplementation(kotlin("test-junit"))
 }

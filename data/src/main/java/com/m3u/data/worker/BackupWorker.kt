@@ -14,6 +14,7 @@ import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.i18n.R.string
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CancellationException
 
 @HiltWorker
 class BackupWorker @AssistedInject constructor(
@@ -28,6 +29,8 @@ class BackupWorker @AssistedInject constructor(
         uri ?: return Result.failure()
         try {
             playlistRepository.backupOrThrow(uri)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (_: Exception) {
             return Result.failure()
         }
@@ -60,6 +63,7 @@ class BackupWorker @AssistedInject constructor(
         private const val CHANNEL_ID = "subscribe_channel"
         private const val NOTIFICATION_ID = 1225
         const val TAG = "backup"
+        const val UNIQUE_WORK_NAME = "playlist-backup"
         const val INPUT_URI = "uri"
     }
 }

@@ -14,6 +14,9 @@ interface ProgrammeDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrReplace(programme: Programme)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertOrReplaceAll(vararg programmes: Programme)
+
     @Query("SELECT * FROM programmes WHERE id = :id")
     suspend fun getById(id: Int): Programme?
 

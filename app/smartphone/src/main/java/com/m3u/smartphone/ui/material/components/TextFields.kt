@@ -57,6 +57,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -205,6 +206,7 @@ fun PlaceholderField(
     imeAction: ImeAction = ImeAction.Done,
     keyboardActions: KeyboardActions? = null,
     icon: ImageVector? = null,
+    textDirection: TextDirection = TextDirection.Unspecified,
     onValueChange: (String) -> Unit = {},
 ) {
     val focusManager = LocalFocusManager.current
@@ -242,7 +244,8 @@ fun PlaceholderField(
                 fontFamily = MaterialTheme.typography.bodyMedium.fontFamily,
                 fontSize = fontSize,
                 color = contentColor,
-                fontWeight = fontWeight
+                fontWeight = fontWeight,
+                textDirection = textDirection,
             ),
             onValueChange = {
                 onValueChange(it)

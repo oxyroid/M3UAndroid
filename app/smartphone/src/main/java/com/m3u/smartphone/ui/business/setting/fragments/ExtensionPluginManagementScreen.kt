@@ -94,6 +94,8 @@ import com.m3u.data.repository.plugin.PluginAuthorizationToken
 import com.m3u.extension.api.ExtensionState
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.material.ktx.plus
+import com.m3u.smartphone.ui.material.ktx.UiBidiFormatter
+import com.m3u.smartphone.ui.material.ktx.rememberUiBidiFormatter
 import java.text.NumberFormat
 
 private val ExtensionPageMaxWidth = 640.dp

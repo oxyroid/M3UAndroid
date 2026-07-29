@@ -1,6 +1,7 @@
 package com.m3u.data.repository.extension
 
 import com.m3u.data.extension.security.ExtensionSecretStore
+import com.m3u.data.extension.isSafeExtensionText
 import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.ExtensionNetworkOrigin
 import com.m3u.extension.api.ExtensionSettingField
@@ -15,6 +16,8 @@ import com.m3u.extension.runtime.ExtensionRuntime
 import java.util.UUID
 import javax.inject.Inject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.doubleOrNull
 
 internal class ExtensionSettingsRepositoryImpl @Inject constructor(
     private val runtime: ExtensionRuntime,
@@ -346,24 +349,43 @@ internal class ExtensionSettingsRepositoryImpl @Inject constructor(
             choices.map { choice -> choice.value }.distinct().size == choices.size &&
             choices.all { choice ->
                 choice.label.isSafeExtensionText(MAX_SETTING_LABEL_LENGTH) &&
-                    choice.value.length <= MAX_SETTING_CHOICE_VALUE_LENGTH
+                    choice.value.isSafeExtensionText(
+                        maximumLength = MAX_SETTING_CHOICE_VALUE_LENGTH,
+                        maximumUtf8Bytes = MAX_SETTING_DEFAULT_BYTES,
+                        allowBlank = true,
+                    )
             } &&
-            (defaultValue?.toString()?.encodeToByteArray()?.size ?: 0) <=
-            MAX_SETTING_DEFAULT_BYTES
+            hasSafeDefaultValue()
 
-    private fun String.isSafeExtensionText(
-        maximumLength: Int,
-        allowBlank: Boolean = false,
-    ): Boolean =
-        (allowBlank || isNotBlank()) &&
-            length <= maximumLength &&
-            none { character ->
-                character.isISOControl() ||
-                    character.code in 0x202A..0x202E ||
-                    character.code in 0x2066..0x2069 ||
-                    character.code == 0x200E ||
-                    character.code == 0x200F
-            }
+    private fun ExtensionSettingField.hasSafeDefaultValue(): Boolean {
+        val default = defaultValue ?: return true
+        if (default.toString().encodeToByteArray().size > MAX_SETTING_DEFAULT_BYTES) {
+            return false
+        }
+        val primitive = default as? JsonPrimitive ?: return false
+        return when (type) {
+            ExtensionSettingType.TEXT -> primitive.isString &&
+                primitive.content.isSafeExtensionText(
+                    maximumLength = MAX_SETTING_DEFAULT_BYTES,
+                    maximumUtf8Bytes = MAX_SETTING_DEFAULT_BYTES,
+                    allowBlank = true,
+                )
+
+            ExtensionSettingType.SINGLE_CHOICE -> primitive.isString &&
+                primitive.content.isSafeExtensionText(
+                    maximumLength = MAX_SETTING_CHOICE_VALUE_LENGTH,
+                    maximumUtf8Bytes = MAX_SETTING_DEFAULT_BYTES,
+                    allowBlank = true,
+                ) &&
+                choices.any { choice -> choice.value == primitive.content }
+
+            ExtensionSettingType.SECRET -> false
+            ExtensionSettingType.BOOLEAN ->
+                !primitive.isString && primitive.booleanOrNull != null
+            ExtensionSettingType.NUMBER ->
+                !primitive.isString && primitive.doubleOrNull?.isFinite() == true
+        }
+    }
 
     private companion object {
         const val MAX_ACTIVE_EDIT_TOKENS = 4_096

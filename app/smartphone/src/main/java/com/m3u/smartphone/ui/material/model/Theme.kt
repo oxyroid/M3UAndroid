@@ -8,14 +8,20 @@ import androidx.compose.material3.Typography
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
-import com.m3u.smartphone.ui.material.ktx.createScheme
+import com.m3u.core.foundation.architecture.preferences.ThemeStyle
+import com.m3u.smartphone.ui.material.ktx.createAppColorScheme
+
+val LocalThemeStyle = staticCompositionLocalOf { ThemeStyle.MATERIAL }
 
 @Composable
 @SuppressLint("RestrictedApi")
 fun Theme(
     argb: Int,
+    themeStyle: Int,
     useDynamicColors: Boolean,
     useDarkTheme: Boolean = isSystemInDarkTheme(),
     typography: Typography,
@@ -23,18 +29,23 @@ fun Theme(
 ) {
     val context = LocalContext.current
     val supportsDynamicTheming = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-    val colorScheme = remember(useDynamicColors, useDarkTheme, argb, context) {
-        if (useDynamicColors && supportsDynamicTheming) {
-            if (useDarkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        } else {
-            createScheme(argb, useDarkTheme)
+    val colorScheme = if (useDynamicColors && supportsDynamicTheming) {
+        if (useDarkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    } else {
+        remember(useDarkTheme, argb, themeStyle) {
+            createAppColorScheme(argb, useDarkTheme, themeStyle)
         }
     }
+    val resolvedStyle = themeStyle.takeIf { it == ThemeStyle.WARM_EDITORIAL }
+        ?: ThemeStyle.MATERIAL
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = typography
+    CompositionLocalProvider(
+        LocalThemeStyle provides resolvedStyle,
     ) {
-        content()
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = typography,
+            content = content,
+        )
     }
 }

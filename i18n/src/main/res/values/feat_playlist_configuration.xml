@@ -1,13 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="feat_playlist_configuration_title">title</string>
-    <string name="feat_playlist_configuration_user_agent">user agent</string>
-    <string name="feat_playlist_configuration_enabled_epgs">enabled EPGs</string>
-    <string name="feat_playlist_configuration_sync_programmes">sync programmes</string>
-    <string name="feat_playlist_configuration_cancel_sync_programmes">cancel sync programmes</string>
-    <string name="feat_playlist_configuration_programmes_expired_time">Expire: %s</string>
+    <string name="feat_playlist_configuration_title">Title</string>
+    <string name="feat_playlist_configuration_user_agent">User agent</string>
+    <string name="feat_playlist_configuration_updates">Updates</string>
+    <string name="feat_playlist_configuration_refresh_playlist">Refresh channels</string>
+    <string name="feat_playlist_configuration_cancel_refresh_playlist">Cancel channel refresh</string>
+    <string name="feat_playlist_configuration_refresh_playlist_description">Download the latest channels from this source</string>
+    <string name="feat_playlist_configuration_enabled_epgs">Enabled EPG sources</string>
+    <string name="feat_playlist_configuration_sync_programmes">Sync programmes</string>
+    <string name="feat_playlist_configuration_cancel_sync_programmes">Cancel programme sync</string>
+    <string name="feat_playlist_configuration_programmes_expired_time">Expires: %s</string>
     <string name="feat_playlist_configuration_programmes_expired">Cached programmes are out of date</string>
-    <string name="feat_playlist_configuration_auto_refresh_programmes">Auto Refresh Programmes</string>
-    <string name="feat_playlist_configuration_auto_refresh_programmes_description">When App Startup</string>
+    <string name="feat_playlist_configuration_auto_refresh_programmes">Automatically refresh programmes</string>
+    <string name="feat_playlist_configuration_auto_refresh_programmes_description">At app startup</string>
+    <string name="feat_playlist_configuration_remove_section">Remove source</string>
+    <string name="feat_playlist_configuration_remove_playlist">Remove playlist</string>
+    <string name="feat_playlist_configuration_remove_playlist_description">Remove this source and its imported channels from this device</string>
+    <string name="feat_playlist_configuration_remove_playlist_title">Remove playlist?</string>
+    <string name="feat_playlist_configuration_remove_playlist_message">Remove “%1$s” and all of its imported channels from this device? This cannot be undone.</string>
+    <string name="feat_playlist_configuration_unavailable_title">Playlist unavailable</string>
+    <string name="feat_playlist_configuration_unavailable_description">This playlist is no longer on this device. Return to playlist management to choose another source.</string>
+    <string name="feat_playlist_configuration_return_to_management">Return to playlist management</string>
+    <string name="feat_playlist_configuration_update_succeeded">Update complete</string>
+    <string name="feat_playlist_configuration_update_failed">Update failed. Try again.</string>
     <string name="feat_playlist_configuration_xtream_trial">Trial</string>
 </resources>

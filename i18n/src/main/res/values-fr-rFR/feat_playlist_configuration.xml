@@ -2,6 +2,10 @@
 <resources>
     <string name="feat_playlist_configuration_title">titre</string>
     <string name="feat_playlist_configuration_user_agent">user agent</string>
+    <string name="feat_playlist_configuration_updates">Mises à jour</string>
+    <string name="feat_playlist_configuration_refresh_playlist">Actualiser les chaînes</string>
+    <string name="feat_playlist_configuration_cancel_refresh_playlist">Annuler l’actualisation des chaînes</string>
+    <string name="feat_playlist_configuration_refresh_playlist_description">Télécharger les chaînes les plus récentes de cette source</string>
     <string name="feat_playlist_configuration_enabled_epgs">EPGs activés</string>
     <string name="feat_playlist_configuration_sync_programmes">synchroniser les programmes</string>
     <string name="feat_playlist_configuration_cancel_sync_programmes">annuler la synchronisation des programmes</string>
@@ -9,4 +13,15 @@
     <string name="feat_playlist_configuration_programmes_expired">Les programmes mis en cache sont obsolètes</string>
     <string name="feat_playlist_configuration_auto_refresh_programmes">Actualiser automatiquement les programmes</string>
     <string name="feat_playlist_configuration_auto_refresh_programmes_description">Au démarrage de l\'application</string>
+    <string name="feat_playlist_configuration_remove_section">Supprimer la source</string>
+    <string name="feat_playlist_configuration_remove_playlist">Supprimer la playlist</string>
+    <string name="feat_playlist_configuration_remove_playlist_description">Supprimer de cet appareil cette source et les chaînes qui en ont été importées</string>
+    <string name="feat_playlist_configuration_remove_playlist_title">Supprimer la playlist ?</string>
+    <string name="feat_playlist_configuration_remove_playlist_message">Supprimer de cet appareil « %1$s » et toutes les chaînes qui en ont été importées ? Cette action est irréversible.</string>
+    <string name="feat_playlist_configuration_unavailable_title">Playlist indisponible</string>
+    <string name="feat_playlist_configuration_unavailable_description">Cette playlist n’existe plus sur cet appareil. Revenez à la gestion des playlists pour choisir une autre source.</string>
+    <string name="feat_playlist_configuration_return_to_management">Revenir à la gestion des playlists</string>
+    <string name="feat_playlist_configuration_xtream_trial">Essai</string>
+    <string name="feat_playlist_configuration_update_succeeded">Mise à jour terminée</string>
+    <string name="feat_playlist_configuration_update_failed">Échec de la mise à jour. Réessayez.</string>
 </resources>

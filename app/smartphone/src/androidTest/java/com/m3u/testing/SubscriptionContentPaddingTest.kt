@@ -3,9 +3,9 @@ package com.m3u.testing
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
-import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -25,21 +25,16 @@ class SubscriptionContentPaddingTest {
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun lastProviderActionCanScrollAboveTheSystemSafeArea() {
-        openSubscriptionScreen()
-        selectJellyfin()
+    fun overviewRestoreActionCanScrollAboveTheSystemSafeArea() {
+        openPlaylistManagementOverview()
 
-        val restoreAction = hasText(
-            composeRule.activity.getString(string.feat_setting_label_restore),
-            substring = true,
-            ignoreCase = true,
-        ) and hasClickAction()
-        val content = composeRule.onNodeWithTag(SUBSCRIPTION_MAIN_CONTENT_TAG)
+        val restoreAction = hasClickAction() and hasTestTag(RESTORE_ACTION_TAG)
+        val content = composeRule.onNodeWithTag(OVERVIEW_TAG)
         content.performScrollToNode(restoreAction)
         content.performTouchInput { swipeUp() }
         composeRule.waitForIdle()
 
-        val actionBounds = composeRule.onNode(restoreAction)
+        val actionBounds = composeRule.onNodeWithTag(RESTORE_ACTION_TAG)
             .fetchSemanticsNode()
             .boundsInWindow
         val rootBottom = composeRule.onRoot().fetchSemanticsNode().boundsInWindow.bottom
@@ -58,13 +53,13 @@ class SubscriptionContentPaddingTest {
         }
 
         assertTrue(
-            "The last provider action remains behind the system safe area: " +
+            "The playlist restore action remains behind the system safe area: " +
                 "action=$actionBounds, safeBottom=$safeBottom",
             actionBounds.bottom <= safeBottom,
         )
     }
 
-    private fun openSubscriptionScreen() {
+    private fun openPlaylistManagementOverview() {
         val playlistManagement =
             composeRule.activity.getString(string.feat_setting_playlist_management)
         waitUntilExists(
@@ -97,41 +92,7 @@ class SubscriptionContentPaddingTest {
             hasText(playlistManagement, substring = false, ignoreCase = true) and
                 hasClickAction()
         ).performClick()
-        waitUntilExists(
-            hasText(
-                composeRule.activity.getString(string.feat_setting_label_add_playlist),
-                substring = false,
-                ignoreCase = true,
-            )
-        )
-    }
-
-    private fun selectJellyfin() {
-        val currentSource = composeRule.activity.getString(string.feat_setting_data_source_m3u)
-        val selectorDescription = composeRule.activity.getString(
-            string.feat_setting_data_source_selector_description,
-            currentSource,
-        )
-        waitUntilExists(
-            hasContentDescription(
-                selectorDescription,
-                substring = false,
-                ignoreCase = true,
-            ) and hasClickAction()
-        )
-        composeRule.onNode(
-            hasContentDescription(
-                selectorDescription,
-                substring = false,
-                ignoreCase = true,
-            ) and hasClickAction()
-        ).performClick()
-        composeRule.onNodeWithTag(JELLYFIN_SOURCE_OPTION_TAG).performClick()
-        composeRule.waitUntil(UI_TIMEOUT_MILLIS) {
-            composeRule.onAllNodesWithTag(JELLYFIN_SOURCE_OPTION_TAG)
-                .fetchSemanticsNodes()
-                .isEmpty()
-        }
+        waitUntilExists(hasTestTag(OVERVIEW_TAG))
     }
 
     private fun waitUntilExists(matcher: SemanticsMatcher) {
@@ -143,8 +104,7 @@ class SubscriptionContentPaddingTest {
     private companion object {
         const val UI_TIMEOUT_MILLIS = 5_000L
         const val MINIMUM_PROVIDER_BOTTOM_GAP_DP = 12
-        const val SUBSCRIPTION_MAIN_CONTENT_TAG = "subscription-main-content"
-        const val JELLYFIN_SOURCE_OPTION_TAG =
-            "subscription-source-option-provider:com.m3u.provider.emby-compatible:jellyfin"
+        const val OVERVIEW_TAG = "playlist-management-overview"
+        const val RESTORE_ACTION_TAG = "playlist-restore-action"
     }
 }

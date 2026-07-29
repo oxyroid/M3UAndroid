@@ -10,7 +10,7 @@
     <string name="ui_error_unknown">kesalahan yang tidak diketahui</string>
     <string name="ui_cd_top_bar_on_back_pressed">kembali</string>
     <string name="ui_theme_card_left">Apa kamu tahu?</string>
-    <string name="ui_theme_card_right"> Kami akan mencatat **progres menonton** Anda dan melanjutkannya saat Anda memutar kembali nanti</string>
+    <string name="ui_theme_card_right">Kami akan menyimpan progres menonton Anda dan melanjutkannya saat Anda memutar kembali nanti.</string>
     <string name="ui_sort">Urutkan</string>
     <string name="ui_sort_asc">A-Z</string>
     <string name="ui_sort_desc">Z-A</string>
@@ -25,4 +25,5 @@
     <string name="ui_connect">Terhubung</string>
     <string name="ui_remote_control_pair_title">Masukkan kode dari TV</string>
     <string name="ui_remote_control_pair_subtitle">Pastikan terhubung ke Wi-Fi yang sama</string>
+    <string name="ui_action_delete_epg">Hapus EPG</string>
 </resources>

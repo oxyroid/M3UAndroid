@@ -9,4 +9,10 @@
     <string name="data_worker_subscription_content_completed">Completati (+%d)</string>
     <string name="data_worker_subscription_content_channel_progress">%d canali sono stati scaricati</string>
     <string name="data_worker_subscription_content_programme_progress">%d programmi sono stati scaricati</string>
+    <string name="data_worker_backup_notification_title">Backup in corso</string>
+    <string name="data_worker_backup_notification_channel_name">Backup</string>
+    <string name="data_worker_backup_notification_channel_description">Mostra l’avanzamento del backup</string>
+    <string name="data_worker_restore_notification_title">Ripristino in corso</string>
+    <string name="data_worker_restore_notification_channel_name">Ripristino</string>
+    <string name="data_worker_restore_notification_channel_description">Mostra l’avanzamento del ripristino</string>
 </resources>

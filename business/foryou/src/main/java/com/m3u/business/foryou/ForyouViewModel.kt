@@ -19,6 +19,7 @@ import com.m3u.data.repository.playlist.PlaylistRepository
 import com.m3u.data.repository.programme.ProgrammeRepository
 import com.m3u.data.service.PlayerManager
 import com.m3u.data.worker.SubscriptionWorker
+import com.m3u.data.worker.playlistWorkTag
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -61,10 +62,19 @@ class ForyouViewModel @Inject constructor(
                 WorkInfo.State.ENQUEUED,
             )
         )
-            .combine(playlistRepository.observePlaylistUrls()) { infos, playlistUrls ->
+            .combine(playlistRepository.observeAll()) { infos, playlists ->
+                val urlByWorkTag = playlists.associate { playlist ->
+                    playlistWorkTag(playlist.url) to playlist.url
+                }
+                val playlistUrls = playlists.mapTo(mutableSetOf(), Playlist::url)
                 infos
                     .filter { info -> SubscriptionWorker.TAG in info.tags }
-                    .mapNotNull { info -> info.tags.find { it in playlistUrls } }
+                    .mapNotNull { info ->
+                        info.tags.firstNotNullOfOrNull(urlByWorkTag::get)
+                            // Compatibility with work enqueued before hashed tags shipped.
+                            ?: info.tags.firstOrNull { tag -> tag in playlistUrls }
+                    }
+                    .distinct()
             }
             .stateIn(
                 scope = viewModelScope,

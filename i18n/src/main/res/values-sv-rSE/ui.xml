@@ -10,7 +10,7 @@
     <string name="ui_error_unknown">okänt fel</string>
     <string name="ui_cd_top_bar_on_back_pressed">tillbaka</string>
     <string name="ui_theme_card_left">Visste du?</string>
-    <string name="ui_theme_card_right">Vi kommer att spara din **visningshistorik** och återuppta nästa gång du spelar</string>
+    <string name="ui_theme_card_right">Vi sparar dina visningsframsteg och fortsätter där du slutade nästa gång.</string>
     <string name="ui_sort">Sortera</string>
     <string name="ui_sort_asc">A-Ö</string>
     <string name="ui_sort_desc">Ö-A</string>
@@ -25,4 +25,5 @@
     <string name="ui_connect">Anslut</string>
     <string name="ui_remote_control_pair_title">ange kod från TV</string>
     <string name="ui_remote_control_pair_subtitle">Se till att ansluta till samma Wi-Fi</string>
+    <string name="ui_action_delete_epg">Ta bort EPG</string>
 </resources>

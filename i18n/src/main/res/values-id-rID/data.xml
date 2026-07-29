@@ -9,4 +9,10 @@
     <string name="data_worker_subscription_content_completed">Selesai (+%d)</string>
     <string name="data_worker_subscription_content_channel_progress">%d saluran telah diunduh</string>
     <string name="data_worker_subscription_content_programme_progress">%d program telah diunduh</string>
+    <string name="data_worker_backup_notification_title">Mencadangkan</string>
+    <string name="data_worker_backup_notification_channel_name">Pencadangan</string>
+    <string name="data_worker_backup_notification_channel_description">Menampilkan progres pencadangan</string>
+    <string name="data_worker_restore_notification_title">Memulihkan</string>
+    <string name="data_worker_restore_notification_channel_name">Pemulihan</string>
+    <string name="data_worker_restore_notification_channel_description">Menampilkan progres pemulihan</string>
 </resources>

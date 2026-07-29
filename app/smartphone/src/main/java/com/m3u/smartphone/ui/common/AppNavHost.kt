@@ -80,6 +80,14 @@ fun AppNavHost(
             },
             contentPadding = contentPadding
         )
-        playlistConfigurationScreen(contentPadding)
+        playlistConfigurationScreen(
+            contentPadding = contentPadding,
+            onBack = {
+                navController.popBackStack()
+            },
+            onPlaylistRemoved = {
+                navController.popBackStack()
+            },
+        )
     }
 }

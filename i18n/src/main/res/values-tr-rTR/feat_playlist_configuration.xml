@@ -2,6 +2,10 @@
 <resources>
     <string name="feat_playlist_configuration_title">Başlık</string>
     <string name="feat_playlist_configuration_user_agent">Kullanıcı aracısı</string>
+    <string name="feat_playlist_configuration_updates">Güncellemeler</string>
+    <string name="feat_playlist_configuration_refresh_playlist">Kanalları yenile</string>
+    <string name="feat_playlist_configuration_cancel_refresh_playlist">Kanal yenilemeyi iptal et</string>
+    <string name="feat_playlist_configuration_refresh_playlist_description">Bu kaynaktan en güncel kanalları indir</string>
     <string name="feat_playlist_configuration_enabled_epgs">Etkin EPGler</string>
     <string name="feat_playlist_configuration_sync_programmes">Programları eşitle</string>
     <string name="feat_playlist_configuration_cancel_sync_programmes">Eşitlemeyi iptal et</string>
@@ -9,4 +13,15 @@
     <string name="feat_playlist_configuration_programmes_expired">Önbellekteki programların süresi dolmuş</string>
     <string name="feat_playlist_configuration_auto_refresh_programmes">Programları Otomatik Yenile</string>
     <string name="feat_playlist_configuration_auto_refresh_programmes_description">Uygulama başlatıldığında</string>
+    <string name="feat_playlist_configuration_remove_section">Kaynağı kaldır</string>
+    <string name="feat_playlist_configuration_remove_playlist">Oynatma listesini kaldır</string>
+    <string name="feat_playlist_configuration_remove_playlist_description">Bu kaynağı ve bu kaynaktan içe aktarılan kanalları cihazdan kaldır</string>
+    <string name="feat_playlist_configuration_remove_playlist_title">Oynatma listesi kaldırılsın mı?</string>
+    <string name="feat_playlist_configuration_remove_playlist_message">“%1$s” ve bu oynatma listesinden içe aktarılan tüm kanallar cihazdan kaldırılsın mı? Bu işlem geri alınamaz.</string>
+    <string name="feat_playlist_configuration_unavailable_title">Oynatma listesi kullanılamıyor</string>
+    <string name="feat_playlist_configuration_unavailable_description">Bu oynatma listesi artık bu cihazda yok. Başka bir kaynak seçmek için oynatma listesi yönetimine dönün.</string>
+    <string name="feat_playlist_configuration_return_to_management">Oynatma listesi yönetimine dön</string>
+    <string name="feat_playlist_configuration_xtream_trial">Deneme</string>
+    <string name="feat_playlist_configuration_update_succeeded">Güncelleme tamamlandı</string>
+    <string name="feat_playlist_configuration_update_failed">Güncelleme başarısız oldu. Tekrar deneyin.</string>
 </resources>

@@ -3,6 +3,7 @@ package com.m3u.data.repository.extension
 import com.m3u.data.database.dao.ChannelDao
 import com.m3u.data.database.dao.ProviderDao
 import com.m3u.data.database.model.ProviderAccount
+import com.m3u.data.extension.isSafeExtensionText
 import com.m3u.extension.api.ChannelMetadataPatch
 import com.m3u.extension.api.ChannelMetadataSnapshot
 import com.m3u.extension.api.ExtensionState
@@ -367,20 +368,6 @@ internal class ExtensionContributionRepositoryImpl @Inject constructor(
         categories.all { category ->
             category.isSafeExtensionText(MAX_CATEGORY_LENGTH)
         }
-
-    private fun String.isSafeExtensionText(
-        maximumLength: Int,
-        allowBlank: Boolean = false,
-    ): Boolean =
-        (allowBlank || isNotBlank()) &&
-            length <= maximumLength &&
-            none { character ->
-                character.isISOControl() ||
-                    character.code in 0x202A..0x202E ||
-                    character.code in 0x2066..0x2069 ||
-                    character.code == 0x200E ||
-                    character.code == 0x200F
-            }
 
     private suspend fun ProviderAccount.toInvocationBinding(): ProviderInvocationBinding? {
         if (requiresReauthentication) return null

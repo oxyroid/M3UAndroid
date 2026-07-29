@@ -1,99 +1,181 @@
 package com.m3u.smartphone.ui.business.configuration.components
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.ErrorOutline
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Sync
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
-import com.m3u.core.foundation.util.basic.title
+import com.m3u.business.playlist.configuration.PlaylistRefreshStatus
 import com.m3u.i18n.R.string
-import com.m3u.core.foundation.components.CircularProgressIndicator
-import com.m3u.smartphone.ui.material.components.SelectionsDefaults
-import com.m3u.smartphone.ui.material.model.LocalSpacing
-import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
+import com.m3u.smartphone.ui.material.ktx.rememberUiBidiFormatter
 import kotlinx.datetime.LocalDateTime
 
 @Composable
 internal fun SyncProgrammesButton(
-    subscribingOrRefreshing: Boolean,
+    status: PlaylistRefreshStatus,
     expired: LocalDateTime?,
     onSyncProgrammes: () -> Unit,
     onCancelSyncProgrammes: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val spacing = LocalSpacing.current
+    val subscribingOrRefreshing = status.isInProgress
+    val bidiFormatter = rememberUiBidiFormatter()
+    val actionLabel = stringResource(
+        if (subscribingOrRefreshing) {
+            string.feat_playlist_configuration_cancel_sync_programmes
+        } else {
+            string.feat_playlist_configuration_sync_programmes
+        }
+    )
+    val loadingDescription = stringResource(string.ui_state_loading)
+    val terminalDescription = when (status) {
+        PlaylistRefreshStatus.SUCCEEDED -> stringResource(
+            string.feat_playlist_configuration_update_succeeded
+        )
+        PlaylistRefreshStatus.FAILED -> stringResource(
+            string.feat_playlist_configuration_update_failed
+        )
+        PlaylistRefreshStatus.CANCELLED -> stringResource(
+            string.feat_setting_subscription_status_cancelled
+        )
+        else -> null
+    }
     val colorScheme = MaterialTheme.colorScheme
+
     ListItem(
         headlineContent = {
             Text(
-                text = if (!subscribingOrRefreshing) stringResource(string.feat_playlist_configuration_sync_programmes).title()
-                else stringResource(string.feat_playlist_configuration_cancel_sync_programmes).title(),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+                text = actionLabel,
             )
         },
-        supportingContent = {
-            AnimatedContent(
-                targetState = subscribingOrRefreshing,
-                transitionSpec = {
-                    fadeIn() + slideInVertically { it } togetherWith fadeOut() + slideOutVertically { it }
-                },
-                label = "sync programmes state"
-            ) { subscribingOrRefreshing ->
-                if (!subscribingOrRefreshing) {
-                    Text(
-                        text = when (expired) {
-                            null -> stringResource(string.feat_playlist_configuration_programmes_expired)
-                            else -> stringResource(
-                                string.feat_playlist_configuration_programmes_expired_time,
-                                expired.toString()
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
+        supportingContent = if (!subscribingOrRefreshing) {
+            {
+                Text(
+                    text = terminalDescription ?: when (expired) {
+                        null -> stringResource(
+                            string.feat_playlist_configuration_programmes_expired
+                        )
+
+                        else -> stringResource(
+                            string.feat_playlist_configuration_programmes_expired_time,
+                            bidiFormatter.ltr(expired.toString()),
+                        )
+                    },
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        textDirection = TextDirection.ContentOrLtr,
+                    ),
+                    color = when (status) {
+                        PlaylistRefreshStatus.FAILED -> colorScheme.error
+                        PlaylistRefreshStatus.SUCCEEDED -> colorScheme.primary
+                        else -> Color.Unspecified
+                    },
+                )
             }
+        } else {
+            null
+        },
+        leadingContent = {
+            Icon(
+                imageVector = Icons.Rounded.Sync,
+                contentDescription = null,
+            )
         },
         trailingContent = {
             if (subscribingOrRefreshing) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clearAndSetSemantics { },
+                    strokeWidth = 2.dp,
+                )
+            } else if (status == PlaylistRefreshStatus.SUCCEEDED) {
+                Icon(
+                    imageVector = Icons.Rounded.CheckCircle,
+                    contentDescription = null,
+                    tint = colorScheme.primary,
+                )
+            } else if (status == PlaylistRefreshStatus.FAILED) {
+                Icon(
+                    imageVector = Icons.Rounded.ErrorOutline,
+                    contentDescription = null,
+                    tint = colorScheme.error,
+                )
+            } else if (status == PlaylistRefreshStatus.CANCELLED) {
+                Icon(
+                    imageVector = Icons.Rounded.Info,
+                    contentDescription = null,
+                    tint = colorScheme.onSurfaceVariant,
+                )
             }
         },
         colors = ListItemDefaults.colors(
-            headlineColor = if (!subscribingOrRefreshing) LocalContentColor.current
-            else colorScheme.onTertiaryContainer,
-            supportingColor = if (!subscribingOrRefreshing) LocalContentColor.current.copy(0.38f)
-            else colorScheme.onTertiaryContainer.copy(0.38f),
-            containerColor = if (!subscribingOrRefreshing) colorScheme.surface
-            else colorScheme.tertiaryContainer
+            headlineColor = if (subscribingOrRefreshing) {
+                colorScheme.onTertiaryContainer
+            } else {
+                colorScheme.onSurface
+            },
+            supportingColor = if (subscribingOrRefreshing) {
+                colorScheme.onTertiaryContainer
+            } else {
+                colorScheme.onSurfaceVariant
+            },
+            leadingIconColor = if (subscribingOrRefreshing) {
+                colorScheme.onTertiaryContainer
+            } else {
+                colorScheme.onSurfaceVariant
+            },
+            containerColor = if (subscribingOrRefreshing) {
+                colorScheme.tertiaryContainer
+            } else {
+                Color.Transparent
+            },
         ),
-        modifier = Modifier
-            .border(
-                1.dp,
-                if (subscribingOrRefreshing) colorScheme.tertiaryContainer
-                else LocalContentColor.current.copy(0.38f),
-                SelectionsDefaults.Shape
-            )
-            .clip(AbsoluteSmoothCornerShape(spacing.medium, 65))
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = 64.dp)
             .clickable(
-                onClick = if (subscribingOrRefreshing) onCancelSyncProgrammes
-                else onSyncProgrammes,
+                role = Role.Button,
+                onClickLabel = actionLabel,
+                onClick = if (subscribingOrRefreshing) {
+                    onCancelSyncProgrammes
+                } else {
+                    onSyncProgrammes
+                },
             )
-            .then(modifier)
+            .semantics {
+                role = Role.Button
+                if (subscribingOrRefreshing) {
+                    stateDescription = loadingDescription
+                    liveRegion = LiveRegionMode.Polite
+                } else if (terminalDescription != null) {
+                    stateDescription = terminalDescription
+                    liveRegion = LiveRegionMode.Polite
+                }
+            }
+            .testTag("playlist-configuration-sync"),
     )
 }

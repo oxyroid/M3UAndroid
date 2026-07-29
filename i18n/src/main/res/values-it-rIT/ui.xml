@@ -10,7 +10,7 @@
     <string name="ui_error_unknown">errore sconosciuto</string>
     <string name="ui_cd_top_bar_on_back_pressed">indietro</string>
     <string name="ui_theme_card_left">Lo sapevi?</string>
-    <string name="ui_theme_card_right">Salveremo i tuoi **progressi di visione** e riprenderai da dove avevi lasciato</string>
+    <string name="ui_theme_card_right">Salveremo i tuoi progressi di visione e riprenderai da dove avevi lasciato.</string>
     <string name="ui_sort">Ordina</string>
     <string name="ui_sort_asc">A-Z</string>
     <string name="ui_sort_desc">Z-A</string>
@@ -25,4 +25,5 @@
     <string name="ui_connect">Connetti</string>
     <string name="ui_remote_control_pair_title">inserisci il codice dalla TV</string>
     <string name="ui_remote_control_pair_subtitle">Assicurati di essere connesso alla stessa rete Wi-Fi</string>
+    <string name="ui_action_delete_epg">Elimina EPG</string>
 </resources>

@@ -24,6 +24,7 @@ import com.m3u.data.repository.extension.ExtensionContributionRunCoordinator
 import com.m3u.data.repository.extension.EXTENSION_CONTRIBUTION_INPUT_WORK_KEY
 import com.m3u.data.repository.extension.extensionContributionWorkKey
 import com.m3u.data.database.dao.PlaylistDao
+import com.m3u.data.database.model.DataSource
 import com.m3u.extension.api.subscription.SubscriptionRefreshReason
 import com.m3u.extension.api.BackgroundTaskRequest
 import com.m3u.extension.api.BackgroundTaskResult
@@ -34,6 +35,7 @@ import com.m3u.extension.runtime.ExtensionRuntime
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import java.util.concurrent.TimeUnit
+import java.util.UUID
 import kotlinx.coroutines.CancellationException
 
 @HiltWorker
@@ -83,7 +85,11 @@ class ProviderRefreshWorker @AssistedInject constructor(
             workManager: WorkManager,
             playlistUrl: String,
             reason: SubscriptionRefreshReason,
-        ) {
+        ): UUID {
+            val workTag = playlistRefreshWorkTag(
+                source = DataSource.Provider,
+                url = playlistUrl,
+            )
             val request = OneTimeWorkRequestBuilder<ProviderRefreshWorker>()
                 .setInputData(providerRefreshInputData(playlistUrl, reason))
                 .setConstraints(
@@ -92,13 +98,15 @@ class ProviderRefreshWorker @AssistedInject constructor(
                         .build()
                 )
                 .addTag(SubscriptionWorker.TAG)
-                .addTag(playlistUrl)
+                .addTag(workTag)
+                .addTag(playlistWorkTag(playlistUrl))
                 .build()
             workManager.enqueueUniqueWork(
-                "provider-refresh:$playlistUrl",
+                workTag,
                 ExistingWorkPolicy.REPLACE,
                 request,
             )
+            return request.id
         }
     }
 }

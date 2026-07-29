@@ -11,5 +11,11 @@
         </intent>
     </queries>
 
-    <application android:usesCleartextTraffic="true" />
+    <application android:usesCleartextTraffic="true">
+        <provider
+            android:name="com.m3u.data.worker.PersistablePermissionTestProvider"
+            android:authorities="com.m3u.data.test.persistable-uri"
+            android:exported="true"
+            android:grantUriPermissions="true" />
+    </application>
 </manifest>

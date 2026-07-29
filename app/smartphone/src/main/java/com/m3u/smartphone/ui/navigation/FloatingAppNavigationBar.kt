@@ -1,11 +1,19 @@
 package com.m3u.smartphone.ui.navigation
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitHorizontalTouchSlopOrCancellation
@@ -26,6 +34,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.SettingsRemote
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -60,6 +70,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
@@ -75,6 +86,7 @@ import com.kyant.backdrop.effects.vibrancy
 import com.kyant.backdrop.highlight.Highlight
 import com.kyant.backdrop.shadow.InnerShadow
 import com.kyant.backdrop.shadow.Shadow
+import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.material.components.Destination
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
@@ -83,6 +95,7 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 internal const val FLOATING_NAVIGATION_TEST_TAG = "floating-app-navigation"
+internal const val FLOATING_REMOTE_CONTROL_TEST_TAG = "floating-remote-control-action"
 
 internal class FloatingNavigationSettleController {
     var job: Job? = null
@@ -100,6 +113,205 @@ internal class FloatingNavigationSettleController {
 }
 
 @Composable
+internal fun FloatingAppNavigationDock(
+    selectedDestination: Destination?,
+    backdrop: Backdrop,
+    useBackdropEffects: Boolean,
+    enabled: Boolean,
+    remoteControlVisible: Boolean,
+    onDestinationSelected: (Destination) -> Unit,
+    onOpenRemoteControl: () -> Unit,
+    onHeightChanged: (Dp) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    BoxWithConstraints(
+        modifier = modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center,
+    ) {
+        val showRemoteControl = enabled && remoteControlVisible
+        val targetNavigationWidth = calculateFloatingNavigationDockNavigationWidth(
+            containerWidth = maxWidth,
+            itemCount = Destination.entries.size,
+            trailingActionVisible = showRemoteControl,
+            trailingActionSlotWidth = FLOATING_REMOTE_CONTROL_SLOT_WIDTH,
+        )
+        val navigationWidth by animateDpAsState(
+            targetValue = targetNavigationWidth,
+            label = "floating-navigation-dock-width",
+        )
+        val remoteControlSlotWidth by animateDpAsState(
+            targetValue = if (showRemoteControl) {
+                FLOATING_REMOTE_CONTROL_SLOT_WIDTH
+            } else {
+                0.dp
+            },
+            label = "floating-remote-control-slot-width",
+        )
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .width(navigationWidth + remoteControlSlotWidth)
+                .height(FLOATING_NAVIGATION_HEIGHT),
+        ) {
+            FloatingAppNavigationBar(
+                selectedDestination = selectedDestination,
+                backdrop = backdrop,
+                useBackdropEffects = useBackdropEffects,
+                enabled = enabled,
+                onDestinationSelected = onDestinationSelected,
+                onHeightChanged = onHeightChanged,
+                widthResolvedByParent = true,
+                modifier = Modifier.width(navigationWidth),
+            )
+            Box(
+                contentAlignment = Alignment.CenterEnd,
+                modifier = Modifier
+                    .width(remoteControlSlotWidth)
+                    .fillMaxHeight(),
+            ) {
+                FloatingRemoteControlVisibility(
+                    visible = showRemoteControl,
+                    backdrop = backdrop,
+                    useBackdropEffects = useBackdropEffects,
+                    enabled = enabled,
+                    onClick = onOpenRemoteControl,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FloatingRemoteControlVisibility(
+    visible: Boolean,
+    backdrop: Backdrop,
+    useBackdropEffects: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn() + scaleIn(initialScale = 0.78f),
+        exit = fadeOut() + scaleOut(targetScale = 0.78f),
+    ) {
+        FloatingRemoteControlAction(
+            backdrop = backdrop,
+            useBackdropEffects = useBackdropEffects,
+            enabled = enabled,
+            onClick = onClick,
+        )
+    }
+}
+
+@Composable
+private fun FloatingRemoteControlAction(
+    backdrop: Backdrop,
+    useBackdropEffects: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val density = LocalDensity.current
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val pressScale by animateFloatAsState(
+        targetValue = if (isPressed) 0.92f else 1f,
+        animationSpec = spring(
+            dampingRatio = 0.72f,
+            stiffness = 620f,
+        ),
+        label = "floating-remote-control-press",
+    )
+    val isDarkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val surfaceColor = MaterialTheme.colorScheme.surfaceContainer.copy(
+        alpha = if (useBackdropEffects) 0.40f else 0.94f,
+    )
+    val outlineColor = MaterialTheme.colorScheme.outlineVariant.copy(
+        alpha = if (isDarkTheme) 0.72f else 0.86f,
+    )
+    val highlightAlpha = if (isDarkTheme) 0.38f else 0.54f
+    val actionSizePx = with(density) { FLOATING_REMOTE_CONTROL_SIZE.toPx() }
+    val blurRadiusPx = with(density) { (FLOATING_NAVIGATION_INNER_PADDING * 2).toPx() }
+    val surfaceModifier = if (useBackdropEffects) {
+        Modifier.drawBackdrop(
+            backdrop = backdrop,
+            shape = { CircleShape },
+            effects = {
+                vibrancy()
+                blur(blurRadiusPx)
+                lens(
+                    refractionHeight = actionSizePx * SHELL_REFRACTION_HEIGHT_SHARE,
+                    refractionAmount = actionSizePx * REMOTE_ACTION_REFRACTION_AMOUNT_SHARE,
+                    depthEffect = true,
+                )
+            },
+            highlight = {
+                Highlight.Default.copy(alpha = highlightAlpha)
+            },
+            layerBlock = {
+                scaleX = pressScale
+                scaleY = pressScale
+            },
+            onDrawSurface = {
+                drawRect(surfaceColor)
+            },
+        )
+    } else {
+        Modifier
+            .graphicsLayer {
+                scaleX = pressScale
+                scaleY = pressScale
+            }
+            .shadow(
+                elevation = 8.dp,
+                shape = CircleShape,
+                clip = false,
+            )
+            .background(surfaceColor, CircleShape)
+    }
+    val label = stringResource(string.feat_setting_remote_control)
+    val interactionModifier = if (enabled) {
+        Modifier
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                role = Role.Button,
+                onClickLabel = label,
+                onClick = onClick,
+            )
+            .semantics {
+                contentDescription = label
+                role = Role.Button
+            }
+    } else {
+        Modifier.clearAndSetSemantics {}
+    }
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .size(FLOATING_REMOTE_CONTROL_SIZE)
+            .then(surfaceModifier)
+            .border(
+                width = 1.dp,
+                color = outlineColor,
+                shape = CircleShape,
+            )
+            .clip(CircleShape)
+            .testTag(FLOATING_REMOTE_CONTROL_TEST_TAG)
+            .then(interactionModifier),
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.SettingsRemote,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(NAVIGATION_ICON_SIZE),
+        )
+    }
+}
+
+@Composable
 internal fun FloatingAppNavigationBar(
     selectedDestination: Destination?,
     backdrop: Backdrop,
@@ -107,6 +319,7 @@ internal fun FloatingAppNavigationBar(
     enabled: Boolean,
     onDestinationSelected: (Destination) -> Unit,
     onHeightChanged: (Dp) -> Unit,
+    widthResolvedByParent: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val destinations = Destination.entries
@@ -261,10 +474,14 @@ internal fun FloatingAppNavigationBar(
         modifier = modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center,
     ) {
-        val navigationWidth = calculateFloatingNavigationWidth(
-            containerWidth = maxWidth,
-            itemCount = destinations.size,
-        )
+        val navigationWidth = if (widthResolvedByParent) {
+            maxWidth
+        } else {
+            calculateFloatingNavigationWidth(
+                containerWidth = maxWidth,
+                itemCount = destinations.size,
+            )
+        }
         val itemWidth = (navigationWidth - FLOATING_NAVIGATION_INNER_PADDING * 2) /
             destinations.size
         val itemWidthPx = with(density) { itemWidth.toPx() }
@@ -808,6 +1025,8 @@ private fun NavigationGlassContent(
 
 private val FLOATING_NAVIGATION_HEIGHT = 64.dp
 private val FLOATING_NAVIGATION_INNER_PADDING = 4.dp
+private val FLOATING_REMOTE_CONTROL_SIZE = 64.dp
+private val FLOATING_REMOTE_CONTROL_SLOT_WIDTH = 76.dp
 private val FLOATING_NAVIGATION_INDICATOR_HEIGHT =
     FLOATING_NAVIGATION_HEIGHT - FLOATING_NAVIGATION_INNER_PADDING * 2
 private val NAVIGATION_ICON_SIZE = 24.dp
@@ -815,6 +1034,7 @@ private const val PANEL_DRAG_DECELERATION = 0.36f
 private const val SELECTED_ICON_MORPH_SHARE = 0.32f
 private const val SHELL_REFRACTION_HEIGHT_SHARE = 0.34f
 private const val SHELL_REFRACTION_AMOUNT_SHARE = 0.28f
+private const val REMOTE_ACTION_REFRACTION_AMOUNT_SHARE = 0.18f
 private const val INDICATOR_REFRACTION_HEIGHT_SHARE = 0.22f
 private const val INDICATOR_REFRACTION_AMOUNT_SHARE = 0.18f
 private const val INDICATOR_DEPTH_OVERLAY_ALPHA = 0.025f

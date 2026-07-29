@@ -2,6 +2,10 @@
 <resources>
     <string name="feat_playlist_configuration_title">titolo</string>
     <string name="feat_playlist_configuration_user_agent">user agent</string>
+    <string name="feat_playlist_configuration_updates">Aggiornamenti</string>
+    <string name="feat_playlist_configuration_refresh_playlist">Aggiorna canali</string>
+    <string name="feat_playlist_configuration_cancel_refresh_playlist">Annulla aggiornamento canali</string>
+    <string name="feat_playlist_configuration_refresh_playlist_description">Scarica i canali più recenti da questa fonte</string>
     <string name="feat_playlist_configuration_enabled_epgs">EPG abilitati</string>
     <string name="feat_playlist_configuration_sync_programmes">sincronizza programmi</string>
     <string name="feat_playlist_configuration_cancel_sync_programmes">annulla sincronizzazione programmi</string>
@@ -9,4 +13,15 @@
     <string name="feat_playlist_configuration_programmes_expired">I programmi memorizzati non sono aggiornati</string>
     <string name="feat_playlist_configuration_auto_refresh_programmes">Aggiorna automaticamente programmi</string>
     <string name="feat_playlist_configuration_auto_refresh_programmes_description">All\'avvio dell\'app</string>
+    <string name="feat_playlist_configuration_remove_section">Rimuovi fonte</string>
+    <string name="feat_playlist_configuration_remove_playlist">Rimuovi playlist</string>
+    <string name="feat_playlist_configuration_remove_playlist_description">Rimuovi dal dispositivo questa fonte e i relativi canali importati</string>
+    <string name="feat_playlist_configuration_remove_playlist_title">Rimuovere la playlist?</string>
+    <string name="feat_playlist_configuration_remove_playlist_message">Rimuovere dal dispositivo “%1$s” e tutti i relativi canali importati? L’operazione non può essere annullata.</string>
+    <string name="feat_playlist_configuration_unavailable_title">Playlist non disponibile</string>
+    <string name="feat_playlist_configuration_unavailable_description">Questa playlist non è più presente sul dispositivo. Torna alla gestione delle playlist per scegliere un’altra sorgente.</string>
+    <string name="feat_playlist_configuration_return_to_management">Torna alla gestione delle playlist</string>
+    <string name="feat_playlist_configuration_xtream_trial">Prova</string>
+    <string name="feat_playlist_configuration_update_succeeded">Aggiornamento completato</string>
+    <string name="feat_playlist_configuration_update_failed">Aggiornamento non riuscito. Riprova.</string>
 </resources>

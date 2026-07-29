@@ -9,4 +9,10 @@
     <string name="data_worker_subscription_content_completed">Terminé (+%d)</string>
     <string name="data_worker_subscription_content_channel_progress">%d chaînes ont été téléchargées</string>
     <string name="data_worker_subscription_content_programme_progress">%d programmes ont été téléchargés</string>
+    <string name="data_worker_backup_notification_title">Sauvegarde en cours</string>
+    <string name="data_worker_backup_notification_channel_name">Sauvegarde</string>
+    <string name="data_worker_backup_notification_channel_description">Affiche la progression de la sauvegarde</string>
+    <string name="data_worker_restore_notification_title">Restauration en cours</string>
+    <string name="data_worker_restore_notification_channel_name">Restauration</string>
+    <string name="data_worker_restore_notification_channel_description">Affiche la progression de la restauration</string>
 </resources>

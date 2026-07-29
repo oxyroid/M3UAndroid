@@ -1,12 +1,25 @@
 package com.m3u.testing
 
 import android.content.res.Configuration
-import android.graphics.Rect
 import android.os.SystemClock
 import android.view.View
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.BySelector
@@ -14,265 +27,411 @@ import androidx.test.uiautomator.StaleObjectException
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
+import com.m3u.extension.api.subscription.SubscriptionProviderSettingKeys
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.MainActivity
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
 import java.util.regex.Pattern
+import kotlin.math.abs
 
 class SubscriptionSourceSelectionTest {
+    @get:Rule
+    val composeRule = createAndroidComposeRule<MainActivity>()
+
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context = instrumentation.targetContext
     private val device = UiDevice.getInstance(instrumentation)
 
     @Test
-    fun embyAndJellyfinCanBeSelectedAcrossTheFullMenuRow() {
-        ActivityScenario.launch(MainActivity::class.java).use {
-            openSubscriptionScreen()
+    fun embyAndJellyfinCanBeSelectedAcrossTheFullSourceRow() {
+        openSourcePicker()
 
-            selectSourceAcrossFullRow(
-                currentResId = string.feat_setting_data_source_m3u,
-                targetResId = string.feat_setting_data_source_jellyfin,
-                menuSentinelResId = string.feat_setting_data_source_emby,
-            )
-            assertProviderFieldsVisible()
+        clickSourceAcrossFullRow(JELLYFIN_SOURCE_KEY)
+        assertProviderFieldsVisible(JELLYFIN_SOURCE_KEY)
 
-            selectSourceAcrossFullRow(
-                currentResId = string.feat_setting_data_source_jellyfin,
-                targetResId = string.feat_setting_data_source_emby,
-                menuSentinelResId = string.feat_setting_data_source_jellyfin,
-            )
-            assertProviderFieldsVisible()
-        }
+        device.pressBack()
+        waitUntilTagExists(SOURCE_PICKER_TAG)
+        clickSourceAcrossFullRow(EMBY_SOURCE_KEY)
+        assertProviderFieldsVisible(EMBY_SOURCE_KEY)
     }
 
     @Test
     fun builtInProviderVariantLoadsItsDescriptorFormDirectly() {
-        ActivityScenario.launch(MainActivity::class.java).use {
-            openSubscriptionScreen()
+        openSourcePicker()
 
-            selectSourceAcrossFullRow(
-                currentResId = string.feat_setting_data_source_m3u,
-                targetResId = string.feat_setting_data_source_emby,
-                menuSentinelResId = string.feat_setting_data_source_xtream,
-            )
+        clickSourceAcrossFullRow(EMBY_SOURCE_KEY)
 
-            assertProviderFieldsVisible()
-        }
+        waitUntilTagExists(editorTag(EMBY_SOURCE_KEY))
+        assertProviderFieldsVisible(EMBY_SOURCE_KEY)
     }
 
     @Test
     fun providerFormWorksInRequestedAccessibilityConfiguration() {
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            val configuration = AtomicReference<Configuration>()
-            scenario.onActivity { activity ->
-                configuration.set(Configuration(activity.resources.configuration))
-            }
-            val matrixCase = requestedAccessibilityMatrixCase()
-            assertRequestedAccessibilityConfiguration(configuration.get(), matrixCase)
+        val configuration = composeRule.runOnIdle {
+            Configuration(composeRule.activity.resources.configuration)
+        }
+        val matrixCase = requestedAccessibilityMatrixCase()
+        assertRequestedAccessibilityConfiguration(configuration, matrixCase)
 
-            openSubscriptionScreen()
-            selectSourceAcrossFullRow(
-                currentResId = string.feat_setting_data_source_m3u,
-                targetResId = string.feat_setting_data_source_jellyfin,
-                menuSentinelResId = string.feat_setting_data_source_emby,
-            )
-            assertProviderFieldsVisible()
-            assertProviderFieldEdgesAligned()
-            if (matrixCase == MATRIX_CASE_WIDE_LTR) {
-                assertWideSettingPanesAreArrangedSideBySide()
-            }
-            assertExtensionPluginListHeaderWrapsWithoutOverlap()
+        openSourcePicker()
+        assertSourceRowAccessibility(
+            sourceKey = M3U_SOURCE_KEY,
+            labelResId = string.feat_setting_data_source_m3u,
+        )
+        assertSourceRowAccessibility(
+            sourceKey = JELLYFIN_SOURCE_KEY,
+            labelResId = string.feat_setting_data_source_jellyfin,
+        )
+        clickSourceAcrossFullRow(JELLYFIN_SOURCE_KEY)
+        assertProviderFieldEdgesAligned(JELLYFIN_SOURCE_KEY)
+        if (matrixCase == MATRIX_CASE_WIDE_LTR) {
+            assertWideSettingPanesAreArrangedSideBySide(JELLYFIN_SOURCE_KEY)
         }
     }
 
     @Test
-    fun collapsedSelectorExposesItsNameAndDropdownRoleAndCanCloseAgain() {
-        ActivityScenario.launch(MainActivity::class.java).use {
-            openSubscriptionScreen()
+    fun sourceRowsExposeLocalizedNamesAndButtonRolesAndCanNavigateBack() {
+        openSourcePicker()
 
-            val currentLabel = context.getString(string.feat_setting_data_source_m3u)
-            val selector = findSourceSelector(currentLabel)
+        assertSourceRowAccessibility(
+            sourceKey = M3U_SOURCE_KEY,
+            labelResId = string.feat_setting_data_source_m3u,
+        )
+        composeRule.onNodeWithTag(sourceTag(M3U_SOURCE_KEY)).performClick()
+        waitUntilTagExists(editorTag(M3U_SOURCE_KEY))
 
-            assertEquals("android.widget.Spinner", selector.className)
-            val selectorBounds = selector.visibleBounds
-            selector.click()
-            assertTrue(
-                device.wait(
-                    Until.hasObject(
-                        By.text(
-                            caseInsensitiveContaining(
-                                context.getString(string.feat_setting_data_source_emby)
-                            )
-                        )
-                    ),
-                    UI_TIMEOUT_MILLIS,
+        device.pressBack()
+        waitUntilTagExists(SOURCE_PICKER_TAG)
+        assertSourceRowAccessibility(
+            sourceKey = M3U_SOURCE_KEY,
+            labelResId = string.feat_setting_data_source_m3u,
+        )
+    }
+
+    @Test
+    fun overviewSourcePickerAndEditorBackStackRestoreEachLevel() {
+        openSourcePicker()
+        scrollSourcePickerTo(sourceTag(JELLYFIN_SOURCE_KEY))
+        clickSourceAcrossFullRow(JELLYFIN_SOURCE_KEY)
+
+        device.pressBack()
+        waitUntilTagExists(SOURCE_PICKER_TAG)
+        composeRule.onNodeWithTag(sourceTag(JELLYFIN_SOURCE_KEY))
+            .assertHasClickAction()
+
+        device.pressBack()
+        waitUntilTagExists(OVERVIEW_TAG)
+        composeRule.onNodeWithTag(ADD_ACTION_TAG).assertHasClickAction()
+
+        device.pressBack()
+        waitUntilTagGone(OVERVIEW_TAG)
+        device.clickRequiredObject(
+            By.text(
+                caseInsensitive(
+                    context.getString(string.feat_setting_playlist_management)
                 )
             )
-
-            assertTrue(
-                device.click(selectorBounds.centerX(), selectorBounds.centerY())
-            )
-
-            assertTrue(
-                "Dropdown menu did not close after clicking its trigger again",
-                device.wait(
-                    Until.gone(
-                        By.text(
-                            caseInsensitiveContaining(
-                                context.getString(string.feat_setting_data_source_emby)
-                            )
-                        )
-                    ),
-                    UI_TIMEOUT_MILLIS,
-                ),
-            )
-        }
+        )
+        waitUntilTagExists(OVERVIEW_TAG)
+        composeRule.onNodeWithTag(ADD_ACTION_TAG).assertHasClickAction()
     }
 
     @Test
-    fun firstSubscriptionTabIsFullyVisibleAfterReturningToTheScreen() {
-        ActivityScenario.launch(MainActivity::class.java).use {
-            openSubscriptionScreen()
+    fun overviewDestinationsOpenDedicatedManagementLists() {
+        openPlaylistManagementOverview()
 
-            val firstTabSelector = By.text(
-                caseInsensitive(context.getString(string.feat_setting_label_add_playlist))
-            )
-            val alternateTabSelector = By.text(
-                caseInsensitive(context.getString(string.feat_setting_label_epg_playlists))
-            )
+        composeRule.onNodeWithTag(EPG_SOURCES_ACTION_TAG).run {
+            performScrollTo()
+            assertHasClickAction()
+            performClick()
+        }
+        waitUntilTagExists(EPG_SOURCES_LIST_TAG)
+        composeRule.onNodeWithTag(ADD_EPG_ACTION_TAG).run {
+            assertHasClickAction()
+            performClick()
+        }
+        waitUntilTagExists(editorTag(EPG_SOURCE_KEY))
+        device.pressBack()
+        waitUntilTagExists(EPG_SOURCES_LIST_TAG)
+        device.pressBack()
+        waitUntilTagExists(OVERVIEW_TAG)
+        assertOverviewDestination(
+            actionTag = HIDDEN_CHANNELS_ACTION_TAG,
+            destinationTag = HIDDEN_CHANNELS_LIST_TAG,
+        )
+        assertOverviewDestination(
+            actionTag = HIDDEN_CATEGORIES_ACTION_TAG,
+            destinationTag = HIDDEN_CATEGORIES_LIST_TAG,
+        )
 
-            device.findRequiredObject(alternateTabSelector).clickableAncestor().click()
-            device.findRequiredObject(firstTabSelector).clickableAncestor().click()
-            SystemClock.sleep(TAB_ANIMATION_SETTLE_MILLIS)
-            val fullyVisibleBounds = device.findRequiredObject(firstTabSelector).visibleBounds
-
-            val isRtl =
-                context.resources.configuration.layoutDirection == View.LAYOUT_DIRECTION_RTL
-            device.swipe(
-                if (isRtl) device.displayWidth / 4 else device.displayWidth * 3 / 4,
-                fullyVisibleBounds.centerY(),
-                if (isRtl) device.displayWidth * 3 / 4 else device.displayWidth / 4,
-                fullyVisibleBounds.centerY(),
-                TAB_ROW_SCROLL_STEPS,
-            )
-            device.waitForIdle()
-            SystemClock.sleep(TAB_ANIMATION_SETTLE_MILLIS)
-            val shiftedBounds = runCatching {
-                device.findObject(firstTabSelector)?.visibleBounds
-            }.getOrNull()
-            assertTrue(
-                "The tab-row swipe did not move the first tab, so the restoration was not tested",
-                shiftedBounds == null || shiftedBounds != fullyVisibleBounds,
-            )
-            device.pressBack()
-            device.clickRequiredObject(
-                By.text(caseInsensitive(context.getString(string.feat_setting_playlist_management)))
-            )
-            SystemClock.sleep(TAB_ANIMATION_SETTLE_MILLIS)
-
-            val restoredBounds = device.findRequiredObject(firstTabSelector).visibleBounds
-            assertTrue(
-                "The selected first tab remained clipped after re-entering subscriptions: " +
-                    "expected=$fullyVisibleBounds, actual=$restoredBounds",
-                restoredBounds.left == fullyVisibleBounds.left &&
-                    restoredBounds.width() == fullyVisibleBounds.width(),
-            )
+        composeRule.onNodeWithTag(BACKUP_ACTION_TAG).run {
+            performScrollTo()
+            assertHasClickAction()
+        }
+        composeRule.onNodeWithTag(RESTORE_ACTION_TAG).run {
+            performScrollTo()
+            assertHasClickAction()
         }
     }
 
     @Test
     fun jellyfinPasswordFieldIsBroughtAboveTheIme() {
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            openSubscriptionScreen()
+        openSourcePicker()
+        clickSourceAcrossFullRow(JELLYFIN_SOURCE_KEY)
+        val passwordField = findProviderField(
+            editorSourceKey = JELLYFIN_SOURCE_KEY,
+            fieldKey = SubscriptionProviderSettingKeys.Password,
+            labelResId = string.feat_setting_placeholder_password,
+        ).second
+        passwordField.click()
 
-            selectSourceAcrossFullRow(
-                currentResId = string.feat_setting_data_source_m3u,
-                targetResId = string.feat_setting_data_source_jellyfin,
-                menuSentinelResId = string.feat_setting_data_source_emby,
+        val imeBottom = waitForStableImeBottom()
+        device.waitForIdle()
+        SystemClock.sleep(IME_RELOCATION_SETTLE_MILLIS)
+        val focusedField = device.findRequiredObject(
+            By.clazz("android.widget.EditText").focused(true)
+        )
+        val imeTop = device.displayHeight - imeBottom
+
+        assertTrue(
+            "Focused password field ${focusedField.visibleBounds} overlaps IME top $imeTop",
+            focusedField.visibleBounds.bottom <= imeTop,
+        )
+
+        device.pressBack()
+        waitForImeHidden()
+    }
+
+    private fun openPlaylistManagementOverview() {
+        if (tagExists(OVERVIEW_TAG)) return
+
+        val settingsDestination = hasContentDescription(
+            context.getString(string.ui_destination_setting),
+            substring = false,
+            ignoreCase = true,
+        ) and hasClickAction()
+        val playlistManagement = hasText(
+            context.getString(string.feat_setting_playlist_management),
+            substring = false,
+            ignoreCase = true,
+        ) and hasClickAction()
+
+        waitUntilMatcherExists(
+            playlistManagement or settingsDestination,
+        )
+        if (composeRule.onAllNodes(playlistManagement).fetchSemanticsNodes().isEmpty()) {
+            composeRule.onNode(settingsDestination).performClick()
+        }
+        waitUntilMatcherExists(playlistManagement)
+        composeRule.onNode(playlistManagement).performClick()
+        waitUntilTagExists(OVERVIEW_TAG)
+    }
+
+    private fun openSourcePicker() {
+        openPlaylistManagementOverview()
+        composeRule.onNodeWithTag(ADD_ACTION_TAG).run {
+            performScrollTo()
+            performClick()
+        }
+        waitUntilTagExists(SOURCE_PICKER_TAG)
+    }
+
+    private fun assertOverviewDestination(
+        actionTag: String,
+        destinationTag: String,
+    ) {
+        composeRule.onNodeWithTag(actionTag).run {
+            performScrollTo()
+            assertHasClickAction()
+            performClick()
+        }
+        waitUntilTagExists(destinationTag)
+        device.pressBack()
+        waitUntilTagExists(OVERVIEW_TAG)
+    }
+
+    private fun clickSourceAcrossFullRow(sourceKey: String) {
+        val tag = sourceTag(sourceKey)
+        scrollSourcePickerTo(tag)
+        val row = composeRule.onNodeWithTag(tag)
+        row.assertHasClickAction()
+        val bounds = row.fetchSemanticsNode().boundsInWindow
+        val density = composeRule.activity.resources.displayMetrics.density
+        assertTrue(
+            "Source row $sourceKey must provide at least a 48dp touch target: $bounds",
+            bounds.height >= MINIMUM_TOUCH_TARGET_DP * density,
+        )
+
+        val isRtl =
+            context.resources.configuration.layoutDirection == View.LAYOUT_DIRECTION_RTL
+        val edgeInset = FULL_ROW_CLICK_INSET_DP * density
+        val x = if (isRtl) bounds.left + edgeInset else bounds.right - edgeInset
+        assertTrue(
+            "Could not click the logical end of source row $sourceKey at $bounds",
+            device.click(x.toInt(), bounds.center.y.toInt()),
+        )
+        waitUntilTagExists(editorTag(sourceKey))
+        composeRule.waitForIdle()
+    }
+
+    private fun assertSourceRowAccessibility(
+        sourceKey: String,
+        labelResId: Int,
+    ) {
+        val tag = sourceTag(sourceKey)
+        scrollSourcePickerTo(tag)
+        val node = composeRule.onNodeWithTag(tag)
+        node.assertHasClickAction()
+        val semanticsNode = node.fetchSemanticsNode()
+        assertEquals(
+            "Source row $sourceKey must expose a button role",
+            Role.Button,
+            semanticsNode.config[SemanticsProperties.Role],
+        )
+        val density = composeRule.activity.resources.displayMetrics.density
+        assertTrue(
+            "Source row $sourceKey has a touch target shorter than 48dp",
+            semanticsNode.boundsInWindow.height >= MINIMUM_TOUCH_TARGET_DP * density,
+        )
+
+        val localizedLabel = context.getString(labelResId).withoutBidiControls()
+        node.assertTextContains(
+            localizedLabel,
+            substring = true,
+            ignoreCase = true,
+        )
+    }
+
+    private fun scrollSourcePickerTo(tag: String) {
+        composeRule.waitUntil(UI_TIMEOUT_MILLIS) {
+            runCatching {
+                composeRule.onNodeWithTag(SOURCE_PICKER_TAG)
+                    .performScrollToNode(hasTestTag(tag))
+            }.isSuccess
+        }
+        waitUntilTagExists(tag)
+        composeRule.waitForIdle()
+    }
+
+    private fun assertProviderFieldsVisible(editorSourceKey: String) {
+        PROVIDER_FIELDS.forEach { (fieldKey, labelResId) ->
+            findProviderField(editorSourceKey, fieldKey, labelResId)
+        }
+    }
+
+    private fun assertProviderFieldEdgesAligned(editorSourceKey: String) {
+        val isRtl = context.resources.configuration.layoutDirection ==
+            View.LAYOUT_DIRECTION_RTL
+        PROVIDER_FIELDS.forEach { (fieldKey, labelResId) ->
+            val (labelNode, fieldNode) = findProviderField(
+                editorSourceKey = editorSourceKey,
+                fieldKey = fieldKey,
+                labelResId = labelResId,
             )
-            val passwordLabel = context.getString(string.feat_setting_placeholder_password)
-            device.findRequiredObject(
-                By.desc(caseInsensitiveContaining(passwordLabel))
-            ).ancestorOfClass("android.widget.EditText").click()
-
-            val imeBottom = waitForStableImeBottom(scenario)
-            device.waitForIdle()
-            SystemClock.sleep(IME_RELOCATION_SETTLE_MILLIS)
-            val focusedField = device.findRequiredObject(
-                By.clazz("android.widget.EditText").focused(true)
-            )
-            val imeTop = device.displayHeight - imeBottom
-
+            val labelEdge = if (isRtl) {
+                labelNode.visibleBounds.right
+            } else {
+                labelNode.visibleBounds.left
+            }
+            val fieldEdge = if (isRtl) {
+                fieldNode.visibleBounds.right
+            } else {
+                fieldNode.visibleBounds.left
+            }
             assertTrue(
-                "Focused password field ${focusedField.visibleBounds} overlaps IME top $imeTop",
-                focusedField.visibleBounds.bottom <= imeTop,
+                "Provider label and field are not aligned for " +
+                    "${context.getString(labelResId)}: " +
+                    "label=${labelNode.visibleBounds}, field=${fieldNode.visibleBounds}",
+                abs(labelEdge - fieldEdge) <= FIELD_EDGE_TOLERANCE_PX,
             )
-
-            device.pressBack()
-            waitForImeHidden(scenario)
         }
     }
 
-    private fun openSubscriptionScreen() {
-        val settingsDestination = By.desc(
-            caseInsensitive(context.getString(string.ui_destination_setting))
-        )
-        val playlistManagement = By.text(
-            caseInsensitive(context.getString(string.feat_setting_playlist_management))
-        )
-        val subscriptionScreen = By.text(
-            caseInsensitive(context.getString(string.feat_setting_label_add_playlist))
-        )
-
-        repeat(NAVIGATION_RETRY_COUNT) {
-            device.waitForIdle()
-
-            device.findObject(playlistManagement)?.let { row ->
-                row.clickableAncestor().click()
-                if (device.wait(Until.hasObject(subscriptionScreen), NAVIGATION_STEP_TIMEOUT_MILLIS)) {
-                    return
-                }
-            }
-
-            device.findObject(settingsDestination)?.let { destination ->
-                destination.clickableAncestor().click()
-                device.waitForIdle()
-                device.wait(
-                    Until.findObject(playlistManagement),
-                    NAVIGATION_STEP_TIMEOUT_MILLIS,
-                )?.let { row ->
-                    row.clickableAncestor().click()
-                    if (
-                        device.wait(
-                            Until.hasObject(subscriptionScreen),
-                            NAVIGATION_STEP_TIMEOUT_MILLIS,
-                        )
-                    ) {
-                        return
-                    }
-                }
-            }
-
-            device.pressBack()
+    private fun findProviderField(
+        editorSourceKey: String,
+        fieldKey: String,
+        labelResId: Int,
+    ): Pair<UiObject2, UiObject2> {
+        val label = context.getString(labelResId).withoutBidiControls()
+        val fieldTag = providerFieldTag(fieldKey)
+        composeRule.waitUntil(UI_TIMEOUT_MILLIS) {
+            runCatching {
+                composeRule.onNodeWithTag(editorTag(editorSourceKey))
+                    .performScrollToNode(hasTestTag(fieldTag))
+            }.isSuccess
         }
-
-        error("Could not navigate from the current app state to the subscription screen")
+        waitUntilTagExists(fieldTag)
+        composeRule.onNodeWithTag(fieldTag).performScrollTo()
+        composeRule.waitForIdle()
+        device.waitForIdle()
+        val deadline = SystemClock.uptimeMillis() + UI_TIMEOUT_MILLIS
+        while (SystemClock.uptimeMillis() < deadline) {
+            val labelNode = device.findObjects(
+                By.text(caseInsensitiveContaining(label))
+            ).firstOrNull { node ->
+                runCatching {
+                    node.className == "android.widget.TextView"
+                }.getOrDefault(false)
+            }
+            val fieldNode = runCatching {
+                device.findObject(
+                    By.desc(caseInsensitiveContaining(label))
+                )?.ancestorOfClass("android.widget.EditText")
+            }.getOrNull()
+            if (labelNode != null && fieldNode != null) {
+                val nodesAreStable = runCatching {
+                    !labelNode.visibleBounds.isEmpty &&
+                        !fieldNode.visibleBounds.isEmpty
+                }.getOrDefault(false)
+                if (nodesAreStable) {
+                    return labelNode to fieldNode
+                }
+            }
+            SystemClock.sleep(TAG_POLL_MILLIS)
+        }
+        error("Provider field was not exposed after scrolling to $fieldTag: $label")
     }
 
-    private fun waitForStableImeBottom(scenario: ActivityScenario<MainActivity>): Int {
+    private fun assertWideSettingPanesAreArrangedSideBySide(sourceKey: String) {
+        val editorBounds = composeRule.onNodeWithTag(editorTag(sourceKey))
+            .fetchSemanticsNode()
+            .boundsInWindow
+        val playlistLabel = context.getString(string.feat_setting_playlist_management)
+        val listPaneLabel = (
+            device.findObjects(By.text(caseInsensitive(playlistLabel))) +
+                device.findObjects(By.desc(caseInsensitive(playlistLabel)))
+            )
+            .firstOrNull { candidate ->
+                candidate.visibleBounds.right <=
+                    editorBounds.left + BOUNDS_TOLERANCE_PX
+            }
+            ?: error(
+                "Wide settings list pane was not found beside provider detail: " +
+                    "editor=$editorBounds",
+            )
+        assertTrue(
+            "Wide settings list and provider editor overlap: " +
+                "list=${listPaneLabel.visibleBounds}, editor=$editorBounds",
+            listPaneLabel.visibleBounds.right <=
+                editorBounds.left + BOUNDS_TOLERANCE_PX,
+        )
+    }
+
+    private fun waitForStableImeBottom(): Int {
         val bottom = AtomicInteger()
         val deadline = SystemClock.uptimeMillis() + UI_TIMEOUT_MILLIS
         var lastBottom = 0
         var stableSamples = 0
         while (SystemClock.uptimeMillis() < deadline) {
-            scenario.onActivity { activity ->
+            composeRule.runOnIdle {
                 bottom.set(
-                    ViewCompat.getRootWindowInsets(activity.window.decorView)
+                    ViewCompat.getRootWindowInsets(
+                        composeRule.activity.window.decorView
+                    )
                         ?.getInsets(WindowInsetsCompat.Type.ime())
                         ?.bottom
                         ?: 0
@@ -293,13 +452,15 @@ class SubscriptionSourceSelectionTest {
         error("IME did not become visible and stable; last bottom inset=${bottom.get()}")
     }
 
-    private fun waitForImeHidden(scenario: ActivityScenario<MainActivity>) {
+    private fun waitForImeHidden() {
         val bottom = AtomicInteger(Int.MAX_VALUE)
         val deadline = SystemClock.uptimeMillis() + UI_TIMEOUT_MILLIS
         while (SystemClock.uptimeMillis() < deadline) {
-            scenario.onActivity { activity ->
+            composeRule.runOnIdle {
                 bottom.set(
-                    ViewCompat.getRootWindowInsets(activity.window.decorView)
+                    ViewCompat.getRootWindowInsets(
+                        composeRule.activity.window.decorView
+                    )
                         ?.getInsets(WindowInsetsCompat.Type.ime())
                         ?.bottom
                         ?: 0
@@ -311,213 +472,13 @@ class SubscriptionSourceSelectionTest {
         error("IME remained visible after pressing Back; last bottom inset=${bottom.get()}")
     }
 
-    private fun selectSourceAcrossFullRow(
-        currentResId: Int,
-        targetResId: Int,
-        menuSentinelResId: Int,
-    ) {
-        val currentLabel = context.getString(currentResId)
-        val selected = findSourceSelector(currentLabel)
-        assertEquals("android.widget.Spinner", selected.className)
-        val selectorBounds = selected.visibleBounds
-        selected.click()
-
-        val (option, optionBounds) = waitForFullWidthOption(
-            selector = By.text(caseInsensitiveContaining(context.getString(targetResId))),
-            minimumWidth = selectorBounds.width() - ROW_WIDTH_ROUNDING_TOLERANCE_PX,
-            popupAnchorBounds = selectorBounds,
-        )
-        assertTrue(
-            "The current source is not exposed as selected to accessibility services",
-            device.findObjects(
-                By.text(caseInsensitiveContaining(currentLabel))
-            ).any { current ->
-                current.hasSelectedOrCheckedAncestor()
-            },
-        )
-        assertFalse(option.hasSelectedOrCheckedAncestor())
-        assertTrue(
-            "Dropdown option width ${optionBounds.width()} must match selector width " +
-                selectorBounds.width(),
-            optionBounds.width() + ROW_WIDTH_ROUNDING_TOLERANCE_PX >= selectorBounds.width(),
-        )
-        val isRtl = context.resources.configuration.layoutDirection == View.LAYOUT_DIRECTION_RTL
-        val rowEmptyEdgeX = if (isRtl) {
-            selectorBounds.left + ROW_END_INSET_PX
-        } else {
-            selectorBounds.right - ROW_END_INSET_PX
-        }
-        assertTrue(device.click(rowEmptyEdgeX, optionBounds.centerY()))
-
-        assertTrue(
-            "Dropdown menu did not close after selecting ${context.getString(targetResId)}",
-            device.wait(
-                Until.gone(
-                    By.text(caseInsensitiveContaining(context.getString(menuSentinelResId)))
-                ),
-                UI_TIMEOUT_MILLIS,
-            ),
-        )
-        val targetLabel = context.getString(targetResId)
-        val updatedSelection = findSourceSelector(targetLabel)
-        assertEquals("android.widget.Spinner", updatedSelection.className)
-        assertTrue(updatedSelection.visibleBounds.width() >= selectorBounds.width())
-    }
-
-    private fun findSourceSelector(expectedLabel: String): UiObject2 {
-        val selector = device.findRequiredObject(By.clazz("android.widget.Spinner"))
-        val expectedDescription = context.getString(
-            string.feat_setting_data_source_selector_description,
-            expectedLabel,
-        )
-        assertEquals(
-            "The selector must expose its localized name and current value",
-            expectedDescription.withoutBidiControls(),
-            selector.contentDescription.withoutBidiControls(),
-        )
-        return selector
-    }
-
-    private fun assertProviderFieldsVisible() {
-        device.findRequiredObject(
-            By.text(
-                caseInsensitiveContaining(
-                    context.getString(string.feat_setting_placeholder_basic_url)
-                        .withoutBidiControls()
-                )
-            )
-        )
-        device.findRequiredObject(
-            By.text(
-                caseInsensitiveContaining(
-                    context.getString(string.feat_setting_placeholder_username)
-                        .withoutBidiControls()
-                )
-            )
-        )
-        device.findRequiredObject(
-            By.text(
-                caseInsensitiveContaining(
-                    context.getString(string.feat_setting_placeholder_password)
-                        .withoutBidiControls()
-                )
-            )
-        )
-    }
-
-    private fun assertProviderFieldEdgesAligned() {
-        val isRtl = context.resources.configuration.layoutDirection == View.LAYOUT_DIRECTION_RTL
-        listOf(
-            string.feat_setting_placeholder_basic_url,
-            string.feat_setting_placeholder_username,
-            string.feat_setting_placeholder_password,
-        ).forEach { labelResId ->
-            val label = context.getString(labelResId).withoutBidiControls()
-            val labelNode = device.findObjects(
-                By.text(caseInsensitiveContaining(label))
-            ).firstOrNull { node -> node.className == "android.widget.TextView" }
-                ?: error("Provider field label was not found: $label")
-            val fieldNode = device.findRequiredObject(
-                By.desc(caseInsensitiveContaining(label))
-            ).ancestorOfClass("android.widget.EditText")
-            val labelEdge = if (isRtl) {
-                labelNode.visibleBounds.right
-            } else {
-                labelNode.visibleBounds.left
-            }
-            val fieldEdge = if (isRtl) {
-                fieldNode.visibleBounds.right
-            } else {
-                fieldNode.visibleBounds.left
-            }
-            assertTrue(
-                "Provider label and field are not aligned for $label: " +
-                    "label=${labelNode.visibleBounds}, field=${fieldNode.visibleBounds}",
-                kotlin.math.abs(labelEdge - fieldEdge) <= FIELD_EDGE_TOLERANCE_PX,
-            )
-        }
-    }
-
-    private fun assertWideSettingPanesAreArrangedSideBySide() {
-        val providerSelector = findSourceSelector(
-            context.getString(string.feat_setting_data_source_jellyfin)
-        )
-        val providerBounds = providerSelector.visibleBounds
-        val playlistLabel = context.getString(string.feat_setting_playlist_management)
-        val listPaneLabel = (
-            device.findObjects(By.text(caseInsensitive(playlistLabel))) +
-                device.findObjects(By.desc(caseInsensitive(playlistLabel)))
-            )
-            .firstOrNull { candidate ->
-                candidate.visibleBounds.right <= providerBounds.left
-            }
-            ?: error(
-                "Wide settings list pane was not found beside provider detail: " +
-                    "provider=$providerBounds",
-            )
-        assertFalse(
-            "Wide settings list and provider detail overlap: " +
-                "list=${listPaneLabel.visibleBounds}, provider=$providerBounds",
-            Rect.intersects(listPaneLabel.visibleBounds, providerBounds),
-        )
-    }
-
-    private fun assertExtensionPluginListHeaderWrapsWithoutOverlap() {
-        val extensionTitle = context.getString(string.feat_setting_extension_plugins)
-        device.pressBack()
-        device.findRequiredObject(By.text(caseInsensitive(extensionTitle)))
-            .clickableAncestor()
-            .click()
-
-        val hint = device.wait(
-            Until.findObject(
-                By.text(
-                    caseInsensitiveContaining(
-                        context.getString(string.feat_setting_extension_enable_external_hint)
-                    )
-                )
-            ),
-            UI_TIMEOUT_MILLIS,
-        ) ?: error("Extension plugins page did not become visible")
-        val heading = device.findRequiredObject(
-            By.text(
-                caseInsensitive(context.getString(string.feat_setting_extension_on_device))
-            )
-        )
-        val refresh = device.findRequiredObject(
-            By.desc(caseInsensitive(context.getString(string.ui_action_refresh)))
-        )
-        assertFalse(
-            "Extension section heading and refresh action overlap: " +
-                "heading=${heading.visibleBounds}, refresh=${refresh.visibleBounds}",
-            Rect.intersects(heading.visibleBounds, refresh.visibleBounds),
-        )
-        assertTrue(
-            "Extension hint overlaps the section header: " +
-                "heading=${heading.visibleBounds}, refresh=${refresh.visibleBounds}, " +
-                "hint=${hint.visibleBounds}",
-            maxOf(heading.visibleBounds.bottom, refresh.visibleBounds.bottom) <=
-                hint.visibleBounds.top,
-        )
-        val isRtl =
-            context.resources.configuration.layoutDirection == View.LAYOUT_DIRECTION_RTL
-        assertTrue(
-            "Extension refresh action is not aligned to the logical end: " +
-                "heading=${heading.visibleBounds}, refresh=${refresh.visibleBounds}, rtl=$isRtl",
-            if (isRtl) {
-                refresh.visibleBounds.right <= heading.visibleBounds.left
-            } else {
-                heading.visibleBounds.right <= refresh.visibleBounds.left
-            },
-        )
-    }
-
     private fun assertRequestedAccessibilityConfiguration(
         configuration: Configuration,
         matrixCase: String,
     ) {
         when (matrixCase) {
-            MATRIX_CASE_COMPACT_LTR -> {
+            MATRIX_CASE_COMPACT_LTR,
+            MATRIX_CASE_COMPACT_NARROW_LTR -> {
                 assertLocale(configuration, LOCALE_ENGLISH, matrixCase)
                 assertLayoutDirection(configuration, View.LAYOUT_DIRECTION_LTR, matrixCase)
                 assertTrue(
@@ -525,10 +486,19 @@ class SubscriptionSourceSelectionTest {
                     configuration.fontScale < LARGE_TEXT_THRESHOLD,
                 )
                 assertTrue(
-                    "Expected compact width for $matrixCase, actual=${configuration.screenWidthDp}",
+                    "Expected compact width for $matrixCase, " +
+                        "actual=${configuration.screenWidthDp}",
                     configuration.screenWidthDp < WIDE_WINDOW_MINIMUM_DP,
                 )
+                if (matrixCase == MATRIX_CASE_COMPACT_NARROW_LTR) {
+                    assertTrue(
+                        "Expected a 320dp narrow window, " +
+                            "actual=${configuration.screenWidthDp}",
+                        configuration.screenWidthDp in NARROW_WIDTH_RANGE,
+                    )
+                }
             }
+
             MATRIX_CASE_COMPACT_RTL_LARGE -> {
                 assertLocale(configuration, LOCALE_RTL_PSEUDO, matrixCase)
                 assertLayoutDirection(configuration, View.LAYOUT_DIRECTION_RTL, matrixCase)
@@ -537,10 +507,12 @@ class SubscriptionSourceSelectionTest {
                     configuration.fontScale >= LARGE_TEXT_MINIMUM_SCALE,
                 )
                 assertTrue(
-                    "Expected compact width for $matrixCase, actual=${configuration.screenWidthDp}",
+                    "Expected compact width for $matrixCase, " +
+                        "actual=${configuration.screenWidthDp}",
                     configuration.screenWidthDp < WIDE_WINDOW_MINIMUM_DP,
                 )
             }
+
             MATRIX_CASE_WIDE_LTR -> {
                 assertLocale(configuration, LOCALE_ENGLISH, matrixCase)
                 assertLayoutDirection(configuration, View.LAYOUT_DIRECTION_LTR, matrixCase)
@@ -549,14 +521,17 @@ class SubscriptionSourceSelectionTest {
                     configuration.fontScale < LARGE_TEXT_THRESHOLD,
                 )
                 assertTrue(
-                    "Expected wide width for $matrixCase, actual=${configuration.screenWidthDp}",
+                    "Expected wide width for $matrixCase, " +
+                        "actual=${configuration.screenWidthDp}",
                     configuration.screenWidthDp >= WIDE_WINDOW_MINIMUM_DP,
                 )
             }
+
             else -> error(
                 "Unknown $ARG_ACCESSIBILITY_MATRIX_CASE=$matrixCase. " +
-                    "Expected $MATRIX_CASE_COMPACT_LTR, $MATRIX_CASE_COMPACT_RTL_LARGE, " +
-                    "or $MATRIX_CASE_WIDE_LTR.",
+                    "Expected $MATRIX_CASE_COMPACT_LTR, " +
+                    "$MATRIX_CASE_COMPACT_NARROW_LTR, " +
+                    "$MATRIX_CASE_COMPACT_RTL_LARGE, or $MATRIX_CASE_WIDE_LTR.",
             )
         }
     }
@@ -565,8 +540,9 @@ class SubscriptionSourceSelectionTest {
         InstrumentationRegistry.getArguments()
             .getString(ARG_ACCESSIBILITY_MATRIX_CASE)
             ?: error(
-                "Missing required instrumentation argument $ARG_ACCESSIBILITY_MATRIX_CASE. " +
-                    "Run testing/bin/run-smartphone-provider-ui-matrix.sh.",
+                "Missing required instrumentation argument " +
+                    "$ARG_ACCESSIBILITY_MATRIX_CASE. Run " +
+                    "testing/bin/run-smartphone-provider-ui-matrix.sh.",
             )
 
     private fun assertLocale(
@@ -593,6 +569,23 @@ class SubscriptionSourceSelectionTest {
         )
     }
 
+    private fun waitUntilTagExists(tag: String) {
+        composeRule.waitUntil(UI_TIMEOUT_MILLIS) { tagExists(tag) }
+    }
+
+    private fun waitUntilTagGone(tag: String) {
+        composeRule.waitUntil(UI_TIMEOUT_MILLIS) { !tagExists(tag) }
+    }
+
+    private fun waitUntilMatcherExists(matcher: SemanticsMatcher) {
+        composeRule.waitUntil(UI_TIMEOUT_MILLIS) {
+            composeRule.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    private fun tagExists(tag: String): Boolean =
+        composeRule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty()
+
     private fun UiDevice.findRequiredObject(selector: BySelector): UiObject2 =
         wait(Until.findObject(selector), UI_TIMEOUT_MILLIS)
             ?: error("Required UI object was not found: $selector")
@@ -610,57 +603,12 @@ class SubscriptionSourceSelectionTest {
                     lastFailure = failure
                 }
             }
-            SystemClock.sleep(MENU_ANIMATION_POLL_MILLIS)
+            SystemClock.sleep(TAG_POLL_MILLIS)
         }
         throw AssertionError(
             "Required UI object could not be clicked: $selector",
             lastFailure,
         )
-    }
-
-    private fun waitForFullWidthOption(
-        selector: BySelector,
-        minimumWidth: Int,
-        popupAnchorBounds: Rect,
-    ): Pair<UiObject2, Rect> {
-        val deadline = SystemClock.uptimeMillis() + UI_TIMEOUT_MILLIS
-        var nextScrollAt = SystemClock.uptimeMillis() + MENU_SCROLL_DELAY_MILLIS
-        var lastWidth = 0
-        while (SystemClock.uptimeMillis() < deadline) {
-            val option = device.findObject(selector)
-            if (option != null) {
-                val bounds = option.clickableAncestor().visibleBounds
-                lastWidth = bounds.width()
-                if (lastWidth >= minimumWidth) {
-                    return option to bounds
-                }
-            }
-            if (SystemClock.uptimeMillis() >= nextScrollAt) {
-                scrollDropdownFromAnchor(popupAnchorBounds)
-                nextScrollAt += MENU_SCROLL_INTERVAL_MILLIS
-            }
-            SystemClock.sleep(MENU_ANIMATION_POLL_MILLIS)
-        }
-        error(
-            "Dropdown option did not settle to selector width: " +
-                "lastWidth=$lastWidth, minimumWidth=$minimumWidth",
-        )
-    }
-
-    private fun scrollDropdownFromAnchor(anchorBounds: Rect) {
-        val endY = (anchorBounds.bottom + MENU_SCROLL_EDGE_INSET_PX)
-            .coerceAtMost(device.displayHeight - MENU_SCROLL_EDGE_INSET_PX)
-        val startY = (device.displayHeight - MENU_SCROLL_EDGE_INSET_PX)
-            .coerceAtLeast(endY)
-        if (startY > endY) {
-            device.swipe(
-                anchorBounds.centerX(),
-                startY,
-                anchorBounds.centerX(),
-                endY,
-                MENU_SCROLL_STEPS,
-            )
-        }
     }
 
     private fun caseInsensitive(value: String): Pattern = Pattern.compile(
@@ -689,20 +637,6 @@ class SubscriptionSourceSelectionTest {
         return current
     }
 
-    private fun UiObject2.scrollableAncestors(): List<UiObject2> {
-        val ancestors = mutableListOf<UiObject2>()
-        var current: UiObject2? = parent
-        while (current != null) {
-            if (current.isScrollable) {
-                ancestors += current
-            }
-            current = current.parent
-        }
-        return ancestors.ifEmpty {
-            error("Object has no scrollable ancestor: $this")
-        }
-    }
-
     private fun UiObject2.ancestorOfClass(className: String): UiObject2 {
         var current: UiObject2? = this
         while (current != null) {
@@ -712,36 +646,34 @@ class SubscriptionSourceSelectionTest {
         error("Object has no $className ancestor: $this")
     }
 
-    private fun UiObject2.hasSelectedOrCheckedAncestor(): Boolean {
-        var current: UiObject2? = this
-        while (current != null) {
-            // Compose exposes radio-button selection as AccessibilityNodeInfo.checked,
-            // while tab selection is exposed as AccessibilityNodeInfo.selected.
-            if (current.isSelected || current.isChecked) return true
-            current = current.parent
-        }
-        return false
-    }
+    private fun sourceTag(sourceKey: String): String = "playlist-source:$sourceKey"
+
+    private fun editorTag(sourceKey: String): String = "playlist-editor:$sourceKey"
+
+    private fun providerFieldTag(fieldKey: String): String = "provider-field:$fieldKey"
 
     private companion object {
-        const val UI_TIMEOUT_MILLIS = 5_000L
-        const val NAVIGATION_STEP_TIMEOUT_MILLIS = 2_000L
-        const val NAVIGATION_RETRY_COUNT = 3
-        const val MENU_ANIMATION_POLL_MILLIS = 16L
-        const val MENU_SCROLL_DELAY_MILLIS = 500L
-        const val MENU_SCROLL_INTERVAL_MILLIS = 750L
-        const val MENU_SCROLL_EDGE_INSET_PX = 48
-        const val MENU_SCROLL_STEPS = 12
-        const val ROW_WIDTH_ROUNDING_TOLERANCE_PX = 1
-        const val ROW_END_INSET_PX = 24
+        val PROVIDER_FIELDS = listOf(
+            SubscriptionProviderSettingKeys.BaseUrl to
+                string.feat_setting_placeholder_basic_url,
+            SubscriptionProviderSettingKeys.Username to
+                string.feat_setting_placeholder_username,
+            SubscriptionProviderSettingKeys.Password to
+            string.feat_setting_placeholder_password,
+        )
+
+        const val UI_TIMEOUT_MILLIS = 15_000L
+        const val TAG_POLL_MILLIS = 50L
+        const val MINIMUM_TOUCH_TARGET_DP = 48
+        const val FULL_ROW_CLICK_INSET_DP = 12
+        const val BOUNDS_TOLERANCE_PX = 2
         const val FIELD_EDGE_TOLERANCE_PX = 2
-        const val TAB_ROW_SCROLL_STEPS = 24
-        const val TAB_ANIMATION_SETTLE_MILLIS = 500L
         const val IME_INSET_POLL_MILLIS = 50L
         const val IME_STABLE_SAMPLE_COUNT = 3
         const val IME_RELOCATION_SETTLE_MILLIS = 300L
         const val ARG_ACCESSIBILITY_MATRIX_CASE = "accessibilityMatrixCase"
         const val MATRIX_CASE_COMPACT_LTR = "compact-ltr"
+        const val MATRIX_CASE_COMPACT_NARROW_LTR = "compact-narrow-ltr"
         const val MATRIX_CASE_COMPACT_RTL_LARGE = "compact-rtl-large"
         const val MATRIX_CASE_WIDE_LTR = "wide-ltr"
         const val LOCALE_ENGLISH = "en"
@@ -749,5 +681,25 @@ class SubscriptionSourceSelectionTest {
         const val LARGE_TEXT_MINIMUM_SCALE = 1.95f
         const val LARGE_TEXT_THRESHOLD = 1.3f
         const val WIDE_WINDOW_MINIMUM_DP = 600
+        val NARROW_WIDTH_RANGE = 315..325
+
+        const val OVERVIEW_TAG = "playlist-management-overview"
+        const val ADD_ACTION_TAG = "playlist-add-action"
+        const val SOURCE_PICKER_TAG = "playlist-source-picker"
+        const val EPG_SOURCES_ACTION_TAG = "playlist-overview-epg-sources"
+        const val HIDDEN_CHANNELS_ACTION_TAG = "playlist-overview-hidden-channels"
+        const val HIDDEN_CATEGORIES_ACTION_TAG =
+            "playlist-overview-hidden-categories"
+        const val EPG_SOURCES_LIST_TAG = "playlist-list:epg-sources"
+        const val ADD_EPG_ACTION_TAG = "playlist-add-epg-action"
+        const val HIDDEN_CHANNELS_LIST_TAG = "playlist-list:hidden-channels"
+        const val HIDDEN_CATEGORIES_LIST_TAG = "playlist-list:hidden-categories"
+        const val BACKUP_ACTION_TAG = "playlist-backup-action"
+        const val RESTORE_ACTION_TAG = "playlist-restore-action"
+        const val M3U_SOURCE_KEY = "data-source:m3u"
+        const val EPG_SOURCE_KEY = "data-source:epg"
+        const val PROVIDER_ID = "com.m3u.provider.emby-compatible"
+        const val JELLYFIN_SOURCE_KEY = "provider:$PROVIDER_ID:jellyfin"
+        const val EMBY_SOURCE_KEY = "provider:$PROVIDER_ID:emby"
     }
 }

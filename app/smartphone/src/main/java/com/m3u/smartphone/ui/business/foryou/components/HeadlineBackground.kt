@@ -3,13 +3,11 @@ package com.m3u.smartphone.ui.business.foryou.components
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -19,6 +17,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -41,17 +40,9 @@ internal fun HeadlineBackground(modifier: Modifier = Modifier) {
     val helper = LocalHelper.current
     val colorScheme = MaterialTheme.colorScheme
 
-    val darkMode by preferenceOf(PreferencesKeys.DARK_MODE)
-    val followSystemTheme by preferenceOf(PreferencesKeys.FOLLOW_SYSTEM_THEME)
     val noPictureMode by preferenceOf(PreferencesKeys.NO_PICTURE_MODE)
 
-    val isSystemInDarkTheme = isSystemInDarkTheme()
-
-    val useDarkTheme by remember {
-        derivedStateOf {
-            darkMode || (followSystemTheme && isSystemInDarkTheme)
-        }
-    }
+    val useDarkTheme = colorScheme.background.luminance() < 0.5f
 
     val url = Metadata.headlineUrl
     val fraction = Metadata.headlineFraction

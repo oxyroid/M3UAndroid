@@ -1,5 +1,7 @@
 package com.m3u.smartphone.ui.business.setting.fragments
 
+import com.m3u.smartphone.ui.material.ktx.safeDisplayText
+import com.m3u.smartphone.ui.material.ktx.withoutBidiControls
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -27,5 +29,13 @@ class UiBidiFormatterTest {
 
         assertTrue(formatted.contains("com.example.plugin"))
         assertFalse(formatted.contains('\u2066'))
+    }
+
+    @Test
+    fun `display sanitizing removes controls without reversing rtl words`() {
+        val formatted = "العربية\u202E\nقناة\u2029".safeDisplayText()
+
+        assertEquals("العربيةقناة", formatted)
+        assertFalse(formatted.any(Char::isISOControl))
     }
 }

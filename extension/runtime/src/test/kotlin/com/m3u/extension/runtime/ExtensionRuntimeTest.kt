@@ -19,6 +19,10 @@ import com.m3u.extension.api.ExtensionInvocationBudget
 import com.m3u.extension.api.ExtensionManifest
 import com.m3u.extension.api.ExtensionPayload
 import com.m3u.extension.api.ExtensionSemanticVersion
+import com.m3u.extension.api.ExtensionSettingChoice
+import com.m3u.extension.api.ExtensionSettingField
+import com.m3u.extension.api.ExtensionSettingSchema
+import com.m3u.extension.api.ExtensionSettingType
 import com.m3u.extension.api.ExtensionState
 import com.m3u.extension.api.ExtensionSettingsSnapshot
 import com.m3u.extension.api.HookResult
@@ -1074,7 +1078,14 @@ class ExtensionRuntimeTest {
 
     @Test
     fun `runtime rejects manifest text that can spoof permission UI`() {
-        listOf("Trusted\nCertificate: forged", "Trusted\u202Eforged").forEach { displayName ->
+        listOf(
+            "Trusted\nCertificate: forged",
+            "Trusted\u061Cforged",
+            "Trusted\u202Eforged",
+            "Trusted\u2028forged",
+            "Trusted\u2029forged",
+            "Trusted\u2066forged",
+        ).forEach { displayName ->
             val rejected = assertIs<ExtensionRegistrationResult.Rejected>(
                 runtime().register(
                     transport(entrypoint().manifest.copy(displayName = displayName))
@@ -1083,6 +1094,78 @@ class ExtensionRuntimeTest {
 
             assertEquals(ExtensionErrorCodes.RegistrationInvalid, rejected.error.code)
         }
+    }
+
+    @Test
+    fun `runtime rejects unsafe setting descriptor text`() {
+        val unsafeFields = listOf(
+            ExtensionSettingField(
+                key = "description",
+                label = "Description",
+                type = ExtensionSettingType.TEXT,
+                description = "First line\u2028forged line",
+            ),
+            ExtensionSettingField(
+                key = "choice-value",
+                label = "Choice",
+                type = ExtensionSettingType.SINGLE_CHOICE,
+                choices = listOf(
+                    ExtensionSettingChoice("direct\u061Cforged", "Direct"),
+                ),
+            ),
+            ExtensionSettingField(
+                key = "choice-label",
+                label = "Choice",
+                type = ExtensionSettingType.SINGLE_CHOICE,
+                choices = listOf(
+                    ExtensionSettingChoice("direct", "Direct\u2029forged"),
+                ),
+            ),
+            ExtensionSettingField(
+                key = "default",
+                label = "Default",
+                type = ExtensionSettingType.TEXT,
+                defaultValue = JsonPrimitive("value\u2066forged"),
+            ),
+        )
+
+        unsafeFields.forEach { unsafeField ->
+            val manifest = entrypoint().manifest.copy(
+                settingsSchema = ExtensionSettingSchema(
+                    version = 1,
+                    fields = listOf(unsafeField),
+                )
+            )
+
+            val rejected = assertIs<ExtensionRegistrationResult.Rejected>(
+                runtime().register(transport(manifest))
+            )
+
+            assertEquals(ExtensionErrorCodes.RegistrationInvalid, rejected.error.code)
+        }
+    }
+
+    @Test
+    fun `runtime measures text setting defaults in UTF-8 bytes`() {
+        val manifest = entrypoint().manifest.copy(
+            settingsSchema = ExtensionSettingSchema(
+                version = 1,
+                fields = listOf(
+                    ExtensionSettingField(
+                        key = "default",
+                        label = "Default",
+                        type = ExtensionSettingType.TEXT,
+                        defaultValue = JsonPrimitive("界".repeat(1_366)),
+                    )
+                ),
+            )
+        )
+
+        val rejected = assertIs<ExtensionRegistrationResult.Rejected>(
+            runtime().register(transport(manifest))
+        )
+
+        assertEquals(ExtensionErrorCodes.RegistrationInvalid, rejected.error.code)
     }
 
     @Test

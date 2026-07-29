@@ -285,20 +285,6 @@ internal class SubscriptionProviderImporter @Inject constructor(
         }
     }
 
-    private fun String.isSafeExtensionText(
-        maximumLength: Int,
-        allowBlank: Boolean = false,
-    ): Boolean =
-        (allowBlank || isNotBlank()) &&
-            length <= maximumLength &&
-            none { character ->
-                character.isISOControl() ||
-                    character.code in 0x202A..0x202E ||
-                    character.code in 0x2066..0x2069 ||
-                    character.code == 0x200E ||
-                    character.code == 0x200F
-            }
-
     private fun String.isApprovedUrl(
         approvedOrigin: String?,
         restrictOrigin: Boolean,

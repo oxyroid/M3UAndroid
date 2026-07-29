@@ -5,6 +5,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.toFontFamily
+import androidx.compose.ui.text.TextStyle
 import com.m3u.smartphone.R
 
 object FontFamilies {
@@ -66,4 +67,9 @@ fun Typography.withFontFamily(
     bodySmall = bodySmall.copy(
         fontFamily = fontFamily
     )
+)
+
+fun TextStyle.withEditorialVoice(): TextStyle = copy(
+    fontFamily = FontFamily.Serif,
+    fontWeight = FontWeight.Medium,
 )

@@ -40,6 +40,12 @@ sealed class SettingMessage(
         resId = string.feat_setting_error_unselected_file
     )
 
+    data object FileAccessFailed : SettingMessage(
+        level = LEVEL_ERROR,
+        type = TYPE_SNACK,
+        resId = string.feat_setting_playlist_file_access_failed,
+    )
+
     data object Enqueued : SettingMessage(
         level = LEVEL_INFO,
         type = TYPE_SNACK,
@@ -68,6 +74,12 @@ sealed class SettingMessage(
         level = LEVEL_INFO,
         type = TYPE_SNACK,
         resId = string.feat_setting_epg_added
+    )
+
+    data object PlaylistOperationFailed : SettingMessage(
+        level = LEVEL_ERROR,
+        type = TYPE_SNACK,
+        resId = string.ui_error_unknown,
     )
 
     data object RemoteTvNotConnected : SettingMessage(

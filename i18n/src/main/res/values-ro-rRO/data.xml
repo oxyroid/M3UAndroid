@@ -2,4 +2,10 @@
 <resources>
     <string name="data_error_file_not_found">fisier inexistent</string>
     <string name="data_error_empty_title">nume lista necompletat</string>
+    <string name="data_worker_backup_notification_title">Se creează copia de rezervă</string>
+    <string name="data_worker_backup_notification_channel_name">Copie de rezervă</string>
+    <string name="data_worker_backup_notification_channel_description">Afișează progresul copierii de rezervă</string>
+    <string name="data_worker_restore_notification_title">Se restaurează</string>
+    <string name="data_worker_restore_notification_channel_name">Restaurare</string>
+    <string name="data_worker_restore_notification_channel_description">Afișează progresul restaurării</string>
 </resources>

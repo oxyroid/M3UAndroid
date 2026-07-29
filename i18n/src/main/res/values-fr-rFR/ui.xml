@@ -10,7 +10,7 @@
     <string name="ui_error_unknown">erreur inconnue</string>
     <string name="ui_cd_top_bar_on_back_pressed">retour</string>
     <string name="ui_theme_card_left">Le saviez-vous ?</string>
-    <string name="ui_theme_card_right">Nous enregistrerons votre **progression de visionnage** et la reprendrons la prochaine fois que vous jouerez</string>
+    <string name="ui_theme_card_right">Nous enregistrerons votre progression de visionnage et la reprendrons lors de la prochaine lecture.</string>
     <string name="ui_sort">Trier</string>
     <string name="ui_sort_asc">A-Z</string>
     <string name="ui_sort_desc">Z-A</string>
@@ -25,4 +25,5 @@
     <string name="ui_connect">Se connecter</string>
     <string name="ui_remote_control_pair_title">entrez le code depuis la TV</string>
     <string name="ui_remote_control_pair_subtitle">Assurez-vous d\'être connecté au même Wi-Fi</string>
+    <string name="ui_action_delete_epg">Supprimer l’EPG</string>
 </resources>

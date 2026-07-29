@@ -113,6 +113,17 @@ class ExtensionSettingsRepositoryTest {
     }
 
     @Test
+    fun secretSettingsPreserveLeadingAndTrailingWhitespace() = runBlocking {
+        val exactSecret = "  密钥 value  "
+
+        val update = updateCurrent("manifest", "api-key", exactSecret)
+
+        val snapshot = (update as ExtensionSettingUpdateResult.Updated).snapshot
+        val handle = requireNotNull(snapshot.credentialHandles["manifest/api-key"])
+        assertEquals(exactSecret, secretStore.resolve(EXTENSION_ID.value, handle))
+    }
+
+    @Test
     fun numberSettingsRejectNonFiniteValues() = runBlocking {
         settingsSections = listOf(
             ExtensionSettingSection(
@@ -424,6 +435,81 @@ class ExtensionSettingsRepositoryTest {
                 playbackSection(
                     id = "oversized-label",
                     title = "x".repeat(161),
+                )
+            ),
+            listOf(
+                playbackSection(
+                    id = "unsafe-section-title",
+                    title = "Playback\u061Cforged",
+                )
+            ),
+            listOf(
+                playbackSection(
+                    id = "unsafe-description",
+                    schema = ExtensionSettingSchema(
+                        version = 1,
+                        fields = listOf(
+                            ExtensionSettingField(
+                                key = "description",
+                                label = "Description",
+                                type = ExtensionSettingType.TEXT,
+                                description = "First line\u2028forged line",
+                            )
+                        ),
+                    ),
+                )
+            ),
+            listOf(
+                playbackSection(
+                    id = "unsafe-choice",
+                    schema = ExtensionSettingSchema(
+                        version = 1,
+                        fields = listOf(
+                            ExtensionSettingField(
+                                key = "choice",
+                                label = "Choice",
+                                type = ExtensionSettingType.SINGLE_CHOICE,
+                                choices = listOf(
+                                    ExtensionSettingChoice(
+                                        value = "direct\u2066forged",
+                                        label = "Direct",
+                                    )
+                                ),
+                            )
+                        ),
+                    ),
+                )
+            ),
+            listOf(
+                playbackSection(
+                    id = "unsafe-default",
+                    schema = ExtensionSettingSchema(
+                        version = 1,
+                        fields = listOf(
+                            ExtensionSettingField(
+                                key = "default",
+                                label = "Default",
+                                type = ExtensionSettingType.TEXT,
+                                defaultValue = JsonPrimitive("value\u2029forged"),
+                            )
+                        ),
+                    ),
+                )
+            ),
+            listOf(
+                playbackSection(
+                    id = "oversized-default",
+                    schema = ExtensionSettingSchema(
+                        version = 1,
+                        fields = listOf(
+                            ExtensionSettingField(
+                                key = "default",
+                                label = "Default",
+                                type = ExtensionSettingType.TEXT,
+                                defaultValue = JsonPrimitive("界".repeat(1_366)),
+                            )
+                        ),
+                    ),
                 )
             ),
         )

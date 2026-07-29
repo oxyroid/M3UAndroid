@@ -13,8 +13,16 @@ adb_command="${ADB_COMMAND:-adb}"
 test_class="com.m3u.testing.SubscriptionSourceSelectionTest"
 content_padding_test="com.m3u.testing.SubscriptionContentPaddingTest"
 extension_test="com.m3u.testing.ExternalExtensionManagementUiTest"
-full_test="$test_class,$content_padding_test,$extension_test"
-matrix_test="$test_class#providerFormWorksInRequestedAccessibilityConfiguration,$content_padding_test#lastProviderActionCanScrollAboveTheSystemSafeArea,$extension_test"
+playlist_adaptive_test="com.m3u.testing.PlaylistAdaptiveLayoutTest"
+playlist_flow_test="com.m3u.testing.PlaylistManagementFlowTest"
+playlist_flow_phone_tests="$playlist_flow_test#existingPlaylistRowOpensItsConfigurationScreen,$playlist_flow_test#blankConfigurationTitleCannotBeSaved,$playlist_flow_test#emptyM3uSubmissionShowsErrorsAndStaysOnEditor,$playlist_flow_test#reopeningM3uEditorStartsWithAFreshDraft,$playlist_flow_test#acceptedM3uSubmissionReturnsToPlaylistManagementOverview,$playlist_flow_test#removingPlaylistRequiresConfirmationAndReturnsToManagement"
+playlist_flow_tablet_tests="$playlist_flow_test#wideTabletSettingsListReturnsPlaylistEditorToManagementRoot,$playlist_flow_test#wideTabletKeepsPlaylistConfigurationInsideSettingsContext"
+full_test="$test_class,$content_padding_test,$extension_test,$playlist_flow_phone_tests"
+matrix_test="$test_class#providerFormWorksInRequestedAccessibilityConfiguration,$content_padding_test#overviewRestoreActionCanScrollAboveTheSystemSafeArea,$extension_test"
+rtl_large_test="$matrix_test,$playlist_adaptive_test#epgLeafDeleteActionDoesNotOverlapContentAtTwoHundredPercentText"
+narrow_test="$test_class#providerFormWorksInRequestedAccessibilityConfiguration,$playlist_adaptive_test#narrowWidthOverviewSourcePickerAndEditorActionsRemainUsable"
+medium_test="$playlist_adaptive_test#mediumWidthSideRailUsesSinglePlaylistPaneHeadersAndBackNavigation"
+wide_test="$matrix_test,$playlist_flow_tablet_tests"
 runner="com.m3u.smartphone.test/androidx.test.runner.AndroidJUnitRunner"
 app_package="com.m3u.smartphone"
 test_package="com.m3u.smartphone.test"
@@ -183,11 +191,30 @@ configure_case() {
       force_rtl_property=false
       ;;
     compact-rtl-large)
-      adb_for_device shell wm size 1080x2400
-      adb_for_device shell wm density 420
+      # Combine the narrowest supported phone width with 200% text and an
+      # RTL locale so layout branches run under the hardest constraints.
+      adb_for_device shell wm size 800x1800
+      adb_for_device shell wm density 400
       font_scale=2.0
       # The RTL locale must drive layout direction; Force RTL would mask
       # locale-sensitive ordering bugs.
+      force_rtl=0
+      force_rtl_property=false
+      ;;
+    compact-narrow-ltr)
+      # Exactly 320dp wide: validates the narrow-phone layout branches.
+      adb_for_device shell wm size 800x1800
+      adb_for_device shell wm density 400
+      font_scale=1.0
+      force_rtl=0
+      force_rtl_property=false
+      ;;
+    medium-ltr)
+      # 800dp wide: side navigation with a single adaptive settings pane.
+      # This case is intentionally only selected by the 6GB tablet profile.
+      adb_for_device shell wm size 1600x2400
+      adb_for_device shell wm density 320
+      font_scale=1.0
       force_rtl=0
       force_rtl_property=false
       ;;
@@ -296,15 +323,19 @@ adb_for_device install -r "$reference_extension_apk"
 case "$device_profile" in
   phone)
     run_case compact-ltr "$full_test"
-    run_case compact-rtl-large "$matrix_test"
+    run_case compact-narrow-ltr "$narrow_test"
+    run_case compact-rtl-large "$rtl_large_test"
     ;;
   tablet)
-    run_case wide-ltr "$matrix_test"
+    # Keep medium-window validation on the dedicated tablet AVD.
+    run_case medium-ltr "$medium_test"
+    run_case wide-ltr "$wide_test"
     ;;
   all)
     run_case compact-ltr "$full_test"
-    run_case compact-rtl-large "$matrix_test"
-    run_case wide-ltr "$matrix_test"
+    run_case compact-narrow-ltr "$narrow_test"
+    run_case compact-rtl-large "$rtl_large_test"
+    run_case wide-ltr "$wide_test"
     ;;
   *)
     echo "Unknown device profile: $device_profile" >&2

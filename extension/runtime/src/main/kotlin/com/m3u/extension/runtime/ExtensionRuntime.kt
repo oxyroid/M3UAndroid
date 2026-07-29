@@ -14,6 +14,8 @@ import com.m3u.extension.api.ExtensionManifest
 import com.m3u.extension.api.ExtensionPayload
 import com.m3u.extension.api.ExtensionState
 import com.m3u.extension.api.ExtensionSettingsSnapshot
+import com.m3u.extension.api.ExtensionSettingField
+import com.m3u.extension.api.ExtensionSettingType
 import com.m3u.extension.api.Hook
 import com.m3u.extension.api.HookResult
 import com.m3u.extension.api.HookSpec
@@ -35,7 +37,10 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.encodeToStream
 
@@ -663,16 +668,21 @@ class ExtensionRuntime(
                             !field.label.isSafeDisplayText(MAX_SETTING_LABEL_LENGTH) ||
                                 (
                                     field.description?.isSafeDisplayText(
-                                        MAX_SETTING_DESCRIPTION_LENGTH
+                                        maximumLength = MAX_SETTING_DESCRIPTION_LENGTH,
+                                        allowBlank = true,
                                     ) == false
                                 ) ||
                                 field.choices.size > MAX_SETTING_CHOICES ||
                                 field.choices.any { choice ->
                                     !choice.label.isSafeDisplayText(MAX_SETTING_LABEL_LENGTH) ||
-                                        choice.value.length > MAX_SETTING_CHOICE_VALUE_LENGTH
+                                        !choice.value.isSafeDisplayText(
+                                            maximumLength = MAX_SETTING_CHOICE_VALUE_LENGTH,
+                                            allowBlank = true,
+                                        ) ||
+                                        choice.value.encodeToByteArray().size >
+                                            MAX_SETTING_DEFAULT_BYTES
                                 } ||
-                                (field.defaultValue?.toString()?.encodeToByteArray()?.size ?: 0) >
-                                    MAX_SETTING_DEFAULT_BYTES
+                                !field.hasSafeDefaultValue()
                         }
                     )) ||
                 runCatching {
@@ -705,12 +715,46 @@ class ExtensionRuntime(
     private fun String.isSafeDisplayText(
         maximumLength: Int,
         measureUtf8Bytes: Boolean = false,
+        allowBlank: Boolean = false,
     ): Boolean =
-        isNotBlank() &&
+        (allowBlank || isNotBlank()) &&
             (if (measureUtf8Bytes) encodeToByteArray().size else length) <= maximumLength &&
             none { character ->
-                character.isISOControl() || character.code in BIDI_CONTROL_CODE_POINTS
+                character.isISOControl() ||
+                    character.code in BIDI_CONTROL_CODE_POINTS ||
+                    character.code == LINE_SEPARATOR ||
+                    character.code == PARAGRAPH_SEPARATOR
             }
+
+    private fun ExtensionSettingField.hasSafeDefaultValue(): Boolean {
+        val default = defaultValue ?: return true
+        if (default.toString().encodeToByteArray().size > MAX_SETTING_DEFAULT_BYTES) {
+            return false
+        }
+        val primitive = default as? JsonPrimitive ?: return false
+        return when (type) {
+            ExtensionSettingType.TEXT -> primitive.isString &&
+                primitive.content.isSafeDisplayText(
+                    maximumLength = MAX_SETTING_DEFAULT_BYTES,
+                    measureUtf8Bytes = true,
+                    allowBlank = true,
+                )
+
+            ExtensionSettingType.SINGLE_CHOICE -> primitive.isString &&
+                primitive.content.isSafeDisplayText(
+                    maximumLength = MAX_SETTING_CHOICE_VALUE_LENGTH,
+                    allowBlank = true,
+                ) &&
+                primitive.content.encodeToByteArray().size <= MAX_SETTING_DEFAULT_BYTES &&
+                choices.any { choice -> choice.value == primitive.content }
+
+            ExtensionSettingType.SECRET -> false
+            ExtensionSettingType.BOOLEAN ->
+                !primitive.isString && primitive.booleanOrNull != null
+            ExtensionSettingType.NUMBER ->
+                !primitive.isString && primitive.doubleOrNull?.isFinite() == true
+        }
+    }
 
     @OptIn(ExperimentalSerializationApi::class)
     private fun errorEnvelopeFitsPayloadLimit(error: ExtensionError): Boolean = runCatching {
@@ -1082,8 +1126,10 @@ class ExtensionRuntime(
         val BIDI_CONTROL_CODE_POINTS = (
             (0x202A..0x202E) +
                 (0x2066..0x2069) +
-                listOf(0x200E, 0x200F)
+                listOf(0x061C, 0x200E, 0x200F)
             ).toSet()
+        const val LINE_SEPARATOR = 0x2028
+        const val PARAGRAPH_SEPARATOR = 0x2029
         const val MAX_ERROR_MESSAGE_BYTES = 512
         const val MAX_ERROR_DETAILS = 16
         const val MAX_ERROR_DETAIL_KEY_BYTES = 64

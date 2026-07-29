@@ -111,7 +111,6 @@ class ExternalExtensionManagementUiTest {
         composeRule.enableAccessibilityChecks()
         composeRule.onRoot().tryPerformAccessibilityChecks()
         composeRule.disableAccessibilityChecks()
-        composeRule.onAllNodesWithTag(OLD_PLUGIN_PAGER_TAG).assertCountEquals(0)
         waitUntilTagGone(FLOATING_NAVIGATION_TAG)
         waitUntilTagExists(pluginListItemTag())
         composeRule.onNodeWithTag(pluginListItemTag())
@@ -153,6 +152,7 @@ class ExternalExtensionManagementUiTest {
         composeRule.onNodeWithTag(CAPABILITIES_DISCLOSURE_TAG)
             .performClick()
         waitUntilGone(hasText(referenceCapabilityName, substring = false))
+        scrollDetailTo(NETWORK_ORIGINS_DISCLOSURE_TAG)
         composeRule.onNodeWithTag(NETWORK_ORIGINS_DISCLOSURE_TAG)
             .assertMinimumTouchTarget()
             .assertDisclosureState(string.ui_state_collapsed)
@@ -256,6 +256,11 @@ class ExternalExtensionManagementUiTest {
             .assertMinimumTouchTarget()
             .performClick()
         waitUntilTagGone(CLEAR_DATA_DIALOG_TAG)
+        val dataClearedMessage = composeRule.activity.getString(
+            string.feat_setting_extension_data_cleared
+        )
+        waitUntilExists(hasText(dataClearedMessage, substring = false))
+        waitUntilGone(hasText(dataClearedMessage, substring = false))
         scrollDetailTo(actionTag("settings"))
 
         openSettings()
@@ -346,9 +351,11 @@ class ExternalExtensionManagementUiTest {
         secondTag: String,
     ) {
         val first = composeRule.onNodeWithTag(firstTag)
+            .performScrollTo()
             .assertIsDisplayed()
             .assertMinimumTouchTarget()
         val second = composeRule.onNodeWithTag(secondTag)
+            .performScrollTo()
             .assertIsDisplayed()
             .assertMinimumTouchTarget()
         val firstBounds = first.getUnclippedBoundsInRoot()
@@ -410,6 +417,11 @@ class ExternalExtensionManagementUiTest {
             }.isSuccess
         }
         waitUntilTagExists(tag)
+        composeRule.waitUntil(UI_TIMEOUT_MILLIS) {
+            runCatching {
+                composeRule.onNodeWithTag(tag).performScrollTo()
+            }.isSuccess
+        }
     }
 
     private fun physicallyClickAuthorization(labelResource: Int) {
@@ -500,12 +512,16 @@ class ExternalExtensionManagementUiTest {
 
     private fun SemanticsNodeInteraction.assertDisclosureState(
         stateResource: Int,
-    ): SemanticsNodeInteraction = assert(
-        SemanticsMatcher.expectValue(
+    ): SemanticsNodeInteraction {
+        val matcher = SemanticsMatcher.expectValue(
             SemanticsProperties.StateDescription,
             composeRule.activity.getString(stateResource),
         )
-    )
+        composeRule.waitUntil(UI_TIMEOUT_MILLIS) {
+            runCatching { assert(matcher) }.isSuccess
+        }
+        return this
+    }
 
     private fun waitUntilExists(matcher: SemanticsMatcher) {
         composeRule.waitUntil(UI_TIMEOUT_MILLIS) {
@@ -560,7 +576,6 @@ class ExternalExtensionManagementUiTest {
         const val REFERENCE_CAPABILITY_ID = "background.task"
         const val EXTENSION_ENTRY_TAG = "extension-entry"
         const val FLOATING_NAVIGATION_TAG = "floating-app-navigation"
-        const val OLD_PLUGIN_PAGER_TAG = "subscriptions-page-extension_plugins"
         const val PLUGIN_LIST_TAG = "extension-list"
         const val CAPABILITIES_DISCLOSURE_TAG = "extension-capabilities-disclosure"
         const val NETWORK_ORIGINS_DISCLOSURE_TAG =

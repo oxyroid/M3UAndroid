@@ -27,6 +27,7 @@ import com.m3u.data.worker.ProviderSessionCleanupWorker
 import com.m3u.extension.api.HookResult
 import com.m3u.extension.api.Hook
 import com.m3u.extension.api.ExtensionSettingType
+import com.m3u.extension.api.ExtensionSettingField
 import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.ExtensionPayload
 import com.m3u.extension.api.ExtensionResult
@@ -1559,9 +1560,13 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
                     ) ||
                     field.choices.size > MAX_SETTING_CHOICES ||
                     field.choices.any { choice ->
-                        choice.value.length > MAX_SETTING_CHOICE_VALUE_LENGTH ||
+                        !choice.value.isSafeExtensionText(
+                            maximumLength = MAX_SETTING_CHOICE_VALUE_LENGTH,
+                            allowBlank = true,
+                        ) ||
                             !choice.label.isSafeExtensionText(MAX_SETTING_LABEL_LENGTH)
-                    }
+                    } ||
+                    !field.hasSafeDefaultValue()
             }
         ) {
             return false
@@ -1629,8 +1634,33 @@ internal class SubscriptionProviderRepositoryImpl @Inject constructor(
                     character.code in 0x202A..0x202E ||
                     character.code in 0x2066..0x2069 ||
                     character.code == 0x200E ||
-                    character.code == 0x200F
+                    character.code == 0x200F ||
+                    character.code == 0x2028 ||
+                    character.code == 0x2029
             }
+
+    private fun ExtensionSettingField.hasSafeDefaultValue(): Boolean {
+        val default = defaultValue ?: return true
+        if (default.toString().encodeToByteArray().size > MAX_SETTING_VALUE_LENGTH) {
+            return false
+        }
+        val primitive = default as? JsonPrimitive ?: return false
+        return when (type) {
+            ExtensionSettingType.TEXT -> primitive.content.isSafeExtensionText(
+                maximumLength = MAX_SETTING_VALUE_LENGTH,
+                allowBlank = true,
+            ) && primitive.content.encodeToByteArray().size <= MAX_SETTING_VALUE_LENGTH
+
+            ExtensionSettingType.SINGLE_CHOICE -> primitive.content.isSafeExtensionText(
+                maximumLength = MAX_SETTING_CHOICE_VALUE_LENGTH,
+                allowBlank = true,
+            )
+
+            ExtensionSettingType.SECRET -> false
+            ExtensionSettingType.BOOLEAN,
+            ExtensionSettingType.NUMBER -> true
+        }
+    }
 
     private fun String.isSensitivePlaybackHeader(): Boolean {
         val normalized = lowercase()

@@ -2,6 +2,7 @@ package com.m3u.business.setting
 
 import com.m3u.data.repository.provider.ProviderAccountSummary
 import com.m3u.data.repository.provider.ProviderSubscriptionRequest
+import com.m3u.core.foundation.util.basic.sanitizeDisplayText
 import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.ExtensionSettingField
 import com.m3u.extension.api.ExtensionSettingType
@@ -17,6 +18,7 @@ import kotlinx.serialization.json.contentOrNull
 enum class ProviderSettingFieldError {
     REQUIRED,
     TOO_LONG,
+    UNSAFE_VALUE,
     INVALID_NUMBER,
     INVALID_BOOLEAN,
     INVALID_CHOICE,
@@ -25,6 +27,7 @@ enum class ProviderSettingFieldError {
 data class ProviderSubscriptionFormField(
     val definition: ExtensionSettingField,
     val input: String? = null,
+    val inputBoundaryError: ProviderSettingFieldError? = null,
     val error: ProviderSettingFieldError? = null,
 ) {
     val value: String?
@@ -49,7 +52,12 @@ data class ProviderSubscriptionForm(
         return copy(
             fields = fields.map { field ->
                 if (field.definition.key == fieldKey) {
-                    field.copy(input = value, error = null)
+                    val normalized = field.normalizeInput(value)
+                    field.copy(
+                        input = normalized.value,
+                        inputBoundaryError = normalized.error,
+                        error = null,
+                    )
                 } else {
                     field
                 }
@@ -80,6 +88,7 @@ data class ProviderSubscriptionForm(
                 ProviderSubscriptionFormField(
                     definition = definition,
                     input = previous?.input,
+                    inputBoundaryError = previous?.inputBoundaryError,
                 )
             },
         ).validateFields()
@@ -120,10 +129,11 @@ data class ProviderSubscriptionForm(
     private fun validateFields(): ProviderSubscriptionForm = copy(
         fields = fields.map { field ->
             field.copy(
-                error = field.definition.validationError(
-                    value = field.value,
-                    showRequired = validationRequested,
-                )
+                error = field.inputBoundaryError
+                    ?: field.definition.validationError(
+                        value = field.value,
+                        showRequired = validationRequested,
+                    )
             )
         },
     )
@@ -216,6 +226,47 @@ private fun ExtensionSettingField.validationError(
 }
 
 private const val MAX_PROVIDER_SETTING_VALUE_LENGTH = 4_096
+private const val MAX_PROVIDER_SETTING_VALUE_UTF8_BYTES = 4_096
+
+private data class NormalizedProviderInput(
+    val value: String?,
+    val error: ProviderSettingFieldError? = null,
+)
+
+private fun ProviderSubscriptionFormField.normalizeInput(
+    rawValue: String?,
+): NormalizedProviderInput {
+    rawValue ?: return NormalizedProviderInput(value = null)
+    val safeValue = rawValue.sanitizeDisplayText(
+        maximumCharacters = rawValue.length,
+        maximumUtf8Bytes = Int.MAX_VALUE,
+    )
+    if (definition.type == ExtensionSettingType.SECRET && safeValue != rawValue) {
+        return NormalizedProviderInput(
+            value = input,
+            error = ProviderSettingFieldError.UNSAFE_VALUE,
+        )
+    }
+
+    val boundedValue = safeValue.sanitizeDisplayText(
+        maximumCharacters = MAX_PROVIDER_SETTING_VALUE_LENGTH,
+        maximumUtf8Bytes = MAX_PROVIDER_SETTING_VALUE_UTF8_BYTES,
+    )
+    if (boundedValue != safeValue) {
+        return if (definition.type == ExtensionSettingType.SECRET) {
+            NormalizedProviderInput(
+                value = input,
+                error = ProviderSettingFieldError.TOO_LONG,
+            )
+        } else {
+            NormalizedProviderInput(
+                value = boundedValue,
+                error = ProviderSettingFieldError.TOO_LONG,
+            )
+        }
+    }
+    return NormalizedProviderInput(value = boundedValue)
+}
 
 private fun String.normalizedFor(type: ExtensionSettingType): String = when (type) {
     ExtensionSettingType.NUMBER -> canonicalExtensionNumberOrNull() ?: trim()

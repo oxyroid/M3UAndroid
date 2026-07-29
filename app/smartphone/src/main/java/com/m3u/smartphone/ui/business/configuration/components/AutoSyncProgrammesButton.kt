@@ -1,23 +1,24 @@
 package com.m3u.smartphone.ui.business.configuration.components
 
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.DateRange
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import com.m3u.core.foundation.util.basic.title
 import com.m3u.i18n.R
-import com.m3u.smartphone.ui.material.components.SelectionsDefaults
-import com.m3u.smartphone.ui.material.model.LocalSpacing
-import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 
 @Composable
 internal fun AutoSyncProgrammesButton(
@@ -25,41 +26,46 @@ internal fun AutoSyncProgrammesButton(
     onCheckedChange: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val spacing = LocalSpacing.current
     ListItem(
         headlineContent = {
             Text(
-                text = stringResource(R.string.feat_playlist_configuration_auto_refresh_programmes).title(),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+                text = stringResource(
+                    R.string.feat_playlist_configuration_auto_refresh_programmes
+                ),
             )
         },
         supportingContent = {
             Text(
-                text = stringResource(R.string.feat_playlist_configuration_auto_refresh_programmes_description),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+                text = stringResource(
+                    R.string.feat_playlist_configuration_auto_refresh_programmes_description
+                ),
+            )
+        },
+        leadingContent = {
+            Icon(
+                imageVector = Icons.Rounded.DateRange,
+                contentDescription = null,
             )
         },
         trailingContent = {
             Switch(
                 checked = checked,
-                onCheckedChange = null
+                onCheckedChange = null,
             )
         },
         colors = ListItemDefaults.colors(
-            supportingColor = LocalContentColor.current.copy(0.38f)
+            containerColor = Color.Transparent,
+            supportingColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            leadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
         ),
-        modifier = Modifier
-            .border(
-                1.dp,
-                LocalContentColor.current.copy(0.38f),
-                SelectionsDefaults.Shape
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = 64.dp)
+            .toggleable(
+                value = checked,
+                role = Role.Switch,
+                onValueChange = { onCheckedChange() },
             )
-            .clip(AbsoluteSmoothCornerShape(spacing.medium, 65))
-            .clickable(
-                onClick = onCheckedChange
-            )
-            .then(modifier)
+            .testTag("playlist-configuration-auto-sync"),
     )
 }
