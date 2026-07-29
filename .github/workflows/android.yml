@@ -66,7 +66,10 @@ jobs:
         run: testing/bin/verify-extension-sdk-distribution.sh
 
       - name: Verify localization contracts
-        run: ./gradlew :i18n:testDebugUnitTest
+        run: |
+          ./gradlew \
+            :app:smartphone:testDebugUnitTest \
+            :i18n:testDebugUnitTest
 
       - name: Validate connected UI harnesses
         run: |
@@ -79,7 +82,7 @@ jobs:
       - name: Verify external extension isolation and conformance
         run: |
           ./gradlew :app:smartphone:hostileApi34DebugAndroidTest \
-            -Pandroid.testInstrumentationRunnerArguments.class=com.m3u.testing.HostileExternalExtensionIpcTest,com.m3u.testing.ExternalExtensionConformanceIpcTest \
+            -Pandroid.testInstrumentationRunnerArguments.class=com.m3u.testing.HostileExternalExtensionIpcTest,com.m3u.testing.ExternalExtensionConformanceIpcTest,com.m3u.testing.DebugDefaultLibraryBootstrapTest \
             -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect \
             -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true \
             -Pandroid.experimental.androidTest.numManagedDeviceShards=1 \
@@ -87,6 +90,12 @@ jobs:
 
       - name: Build smartphone release APK
         run: ./gradlew :app:smartphone:assembleRelease
+
+      - name: Verify release default library packaging
+        run: |
+          testing/bin/verify-smartphone-default-library-assets.sh \
+            release \
+            app/smartphone/build/outputs/published-apk/release/*.apk
 
       - name: Build TV release APK
         run: ./gradlew :app:tv:assembleRelease

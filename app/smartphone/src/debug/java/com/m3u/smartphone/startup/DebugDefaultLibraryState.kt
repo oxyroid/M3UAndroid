@@ -19,11 +19,18 @@ internal enum class DebugDefaultLibraryBootstrapStatus(
 internal data class DebugDefaultLibraryBootstrapState(
     val status: DebugDefaultLibraryBootstrapStatus,
     val revision: String? = null,
+    val playlistSha256: String? = null,
     val playlistUrl: String? = null,
 ) {
-    fun needsAssetUpdate(targetRevision: String): Boolean =
+    fun needsAssetUpdate(
+        targetRevision: String,
+        targetPlaylistSha256: String,
+    ): Boolean =
         status == DebugDefaultLibraryBootstrapStatus.IMPORTED &&
-            revision != targetRevision
+            (
+                revision != targetRevision ||
+                    playlistSha256 != targetPlaylistSha256
+            )
 }
 
 internal object DebugDefaultLibraryBootstrapStateCodec {
@@ -38,7 +45,8 @@ internal object DebugDefaultLibraryBootstrapStateCodec {
         val root = runCatching {
             json.parseToJsonElement(normalized).jsonObject
         }.getOrNull() ?: return null
-        if (root["schemaVersion"]?.jsonPrimitive?.intOrNull != SCHEMA_VERSION) {
+        val schemaVersion = root["schemaVersion"]?.jsonPrimitive?.intOrNull
+        if (schemaVersion !in setOf(LEGACY_SCHEMA_VERSION, SCHEMA_VERSION)) {
             return null
         }
         val status = root["status"]
@@ -51,23 +59,33 @@ internal object DebugDefaultLibraryBootstrapStateCodec {
             }
             ?: return null
         val revision = root["revision"]?.jsonPrimitive?.contentOrNull
+        val playlistSha256 =
+            root["playlistSha256"]?.jsonPrimitive?.contentOrNull
         val playlistUrl = root["playlistUrl"]?.jsonPrimitive?.contentOrNull
         val state = DebugDefaultLibraryBootstrapState(
             status = status,
             revision = revision,
+            playlistSha256 = playlistSha256,
             playlistUrl = playlistUrl,
         )
-        return state.takeIf { candidate -> candidate.isCanonical() }
+        return state.takeIf { candidate ->
+            candidate.isCanonical(
+                requirePlaylistSha256 = schemaVersion == SCHEMA_VERSION,
+            )
+        }
     }
 
     fun encode(state: DebugDefaultLibraryBootstrapState): String {
-        require(state.isCanonical()) {
+        require(state.isCanonical(requirePlaylistSha256 = true)) {
             "The bundled default library bootstrap state is invalid"
         }
         return buildJsonObject {
             put("schemaVersion", SCHEMA_VERSION)
             put("status", state.status.serializedValue)
             state.revision?.let { revision -> put("revision", revision) }
+            state.playlistSha256?.let { sha256 ->
+                put("playlistSha256", sha256)
+            }
             state.playlistUrl?.let { playlistUrl -> put("playlistUrl", playlistUrl) }
         }.toString()
     }
@@ -79,13 +97,19 @@ internal object DebugDefaultLibraryBootstrapStateCodec {
             .singleOrNull { status -> status.serializedValue == value }
             ?.let { status -> DebugDefaultLibraryBootstrapState(status = status) }
 
-    private fun DebugDefaultLibraryBootstrapState.isCanonical(): Boolean = when (status) {
+    private fun DebugDefaultLibraryBootstrapState.isCanonical(
+        requirePlaylistSha256: Boolean,
+    ): Boolean = when (status) {
         DebugDefaultLibraryBootstrapStatus.PENDING ->
-            revision.isValidRevision() && playlistUrl == null
+            revision.isValidRevision() &&
+                playlistSha256.isValidPlaylistSha256(requirePlaylistSha256) &&
+                playlistUrl == null
         DebugDefaultLibraryBootstrapStatus.IMPORTED ->
-            revision.isValidRevision() && playlistUrl.isValidPlaylistUrl()
+            revision.isValidRevision() &&
+                playlistSha256.isValidPlaylistSha256(requirePlaylistSha256) &&
+                playlistUrl.isValidPlaylistUrl()
         DebugDefaultLibraryBootstrapStatus.OPTED_OUT ->
-            revision == null && playlistUrl == null
+            revision == null && playlistSha256 == null && playlistUrl == null
     }
 
     private fun String?.isValidRevision(): Boolean =
@@ -94,7 +118,16 @@ internal object DebugDefaultLibraryBootstrapStateCodec {
     private fun String?.isValidPlaylistUrl(): Boolean =
         this != null && this == trim() && length in 1..MAXIMUM_PLAYLIST_URL_LENGTH
 
-    private const val SCHEMA_VERSION = 1
+    private fun String?.isValidPlaylistSha256(required: Boolean): Boolean =
+        if (this == null) {
+            !required
+        } else {
+            SHA256_PATTERN.matches(this)
+        }
+
+    private const val LEGACY_SCHEMA_VERSION = 1
+    private const val SCHEMA_VERSION = 2
     private const val MAXIMUM_REVISION_LENGTH = 64
     private const val MAXIMUM_PLAYLIST_URL_LENGTH = 8 * 1024
+    private val SHA256_PATTERN = Regex("[0-9a-f]{64}")
 }

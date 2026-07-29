@@ -8,6 +8,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import androidx.work.workDataOf
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithChannels
@@ -26,6 +27,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 @HiltWorker
 internal class DebugDefaultLibraryWorker @AssistedInject constructor(
@@ -34,30 +36,40 @@ internal class DebugDefaultLibraryWorker @AssistedInject constructor(
     private val playlistRepository: PlaylistRepository,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result = try {
+        val manifest = loadManifest()
         val state = readBootstrapState()
         when (state?.status) {
             DebugDefaultLibraryBootstrapStatus.OPTED_OUT -> Result.success()
             DebugDefaultLibraryBootstrapStatus.IMPORTED -> {
-                val manifest = loadManifest()
-                if (state.needsAssetUpdate(manifest.revision)) {
+                if (
+                    state.needsAssetUpdate(
+                        targetRevision = manifest.revision,
+                        targetPlaylistSha256 = manifest.playlistSha256,
+                    )
+                ) {
                     updateImportedLibrary(state, manifest)
                 } else {
                     Result.success()
                 }
             }
             DebugDefaultLibraryBootstrapStatus.PENDING ->
-                resumePendingImport(loadManifest())
-            null -> beginFirstImport(loadManifest())
+                resumePendingImport(manifest)
+            null -> beginFirstImport(manifest)
         }
     } catch (cancelled: CancellationException) {
         throw cancelled
-    } catch (_: DebugDefaultLibraryFormatException) {
-        Result.failure()
-    } catch (_: Exception) {
+    } catch (error: DebugDefaultLibraryFormatException) {
+        failureResult(FAILURE_KIND_INVALID_ASSET, error)
+    } catch (error: Exception) {
+        Timber.tag(LOG_TAG).e(
+            error,
+            "Bundled default library import failed on attempt %d",
+            runAttemptCount + 1,
+        )
         if (runAttemptCount < MAXIMUM_RETRY_COUNT) {
             Result.retry()
         } else {
-            Result.failure()
+            failureResult(FAILURE_KIND_IMPORT, error)
         }
     }
 
@@ -72,6 +84,7 @@ internal class DebugDefaultLibraryWorker @AssistedInject constructor(
             DebugDefaultLibraryBootstrapState(
                 status = DebugDefaultLibraryBootstrapStatus.PENDING,
                 revision = manifest.revision,
+                playlistSha256 = manifest.playlistSha256,
             )
         )
         return resumePendingImport(manifest)
@@ -109,16 +122,10 @@ internal class DebugDefaultLibraryWorker @AssistedInject constructor(
         manifest: DebugDefaultLibraryManifest,
     ): Result {
         val currentPlaylists = playlistRepository.getAll()
-        val tracked = state.playlistUrl
-            ?.let { playlistUrl ->
-                currentPlaylists.singleOrNull { playlist ->
-                    playlist.url == playlistUrl
-                }
-            }
-            ?: currentPlaylists.singleOrNull { playlist ->
-                playlist.source == DataSource.M3U &&
-                    playlist.title == manifest.title
-            }
+        val tracked = selectTrackedDefaultLibraryPlaylist(
+            state = state,
+            currentPlaylists = currentPlaylists,
+        )
         if (tracked == null) {
             writeBootstrapState(optedOutState())
             return Result.success()
@@ -163,6 +170,7 @@ internal class DebugDefaultLibraryWorker @AssistedInject constructor(
         DebugDefaultLibraryBootstrapState(
             status = DebugDefaultLibraryBootstrapStatus.IMPORTED,
             revision = manifest.revision,
+            playlistSha256 = manifest.playlistSha256,
             playlistUrl = url,
         )
 
@@ -184,6 +192,23 @@ internal class DebugDefaultLibraryWorker @AssistedInject constructor(
             }
             DebugDefaultLibraryManifestParser.parse(bytes.decodeToString())
         }
+
+    private fun failureResult(
+        failureKind: String,
+        error: Exception,
+    ): Result {
+        Timber.tag(LOG_TAG).e(error, "Bundled default library import rejected")
+        val diagnostic = error.message
+            ?.take(MAXIMUM_DIAGNOSTIC_CHARACTERS)
+            ?.takeIf(String::isNotBlank)
+            ?: error::class.java.simpleName
+        return Result.failure(
+            workDataOf(
+                OUTPUT_FAILURE_KIND to failureKind,
+                OUTPUT_FAILURE_DIAGNOSTIC to diagnostic,
+            )
+        )
+    }
 
     private suspend fun installPlaylistAsset(
         manifest: DebugDefaultLibraryManifest,
@@ -303,6 +328,14 @@ internal class DebugDefaultLibraryWorker @AssistedInject constructor(
         private const val MAXIMUM_PLAYLIST_BYTES = 512 * 1024
         private const val ASSET_COPY_BUFFER_BYTES = 8 * 1024
         private const val MAXIMUM_RETRY_COUNT = 2
+        private const val MAXIMUM_DIAGNOSTIC_CHARACTERS = 512
+        private const val LOG_TAG = "DefaultLibraryBootstrap"
+        internal const val OUTPUT_FAILURE_KIND =
+            "default_library_failure_kind"
+        internal const val OUTPUT_FAILURE_DIAGNOSTIC =
+            "default_library_failure_diagnostic"
+        internal const val FAILURE_KIND_INVALID_ASSET = "invalid-asset"
+        internal const val FAILURE_KIND_IMPORT = "import-failed"
 
         fun enqueue(workManager: WorkManager) {
             workManager.enqueueUniqueWork(
@@ -311,5 +344,14 @@ internal class DebugDefaultLibraryWorker @AssistedInject constructor(
                 OneTimeWorkRequestBuilder<DebugDefaultLibraryWorker>().build(),
             )
         }
+    }
+}
+
+internal fun selectTrackedDefaultLibraryPlaylist(
+    state: DebugDefaultLibraryBootstrapState,
+    currentPlaylists: List<Playlist>,
+): Playlist? = state.playlistUrl?.let { playlistUrl ->
+    currentPlaylists.singleOrNull { playlist ->
+        playlist.url == playlistUrl
     }
 }

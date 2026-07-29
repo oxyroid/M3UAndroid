@@ -40,6 +40,7 @@ jobs:
             :extension:runtime:test \
             :extension:transport-protocol-android:testDebugUnitTest \
             :extension:sdk-android:testDebugUnitTest \
+            :app:smartphone:testDebugUnitTest \
             :i18n:testDebugUnitTest
 
       - name: Verify extension SDK distribution
@@ -51,6 +52,12 @@ jobs:
             :app:smartphone:assembleDebug \
             :app:tv:assembleDebug \
             :testing:extension-reference:assembleDebug
+
+      - name: Verify debug default library packaging
+        run: |
+          testing/bin/verify-smartphone-default-library-assets.sh \
+            debug \
+            app/smartphone/build/outputs/apk/debug/*.apk
 
       - name: Verify 16 KB native compatibility
         run: |

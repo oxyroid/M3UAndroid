@@ -5,6 +5,7 @@ import java.security.MessageDigest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 class DebugDefaultLibraryManifestTest {
     @Test
@@ -24,6 +25,31 @@ class DebugDefaultLibraryManifestTest {
         DebugDefaultLibraryManifestParser.validatePlaylist(
             rawPlaylist = playlistBytes.decodeToString(),
             manifest = manifest,
+        )
+    }
+
+    @Test
+    fun `release source sets do not contain default library samples`() {
+        val forbiddenAssets = listOf(
+            "src/main/assets/default-library/manifest.json",
+            "src/main/assets/default-library/playlist.m3u",
+            "src/release/assets/default-library/manifest.json",
+            "src/release/assets/default-library/playlist.m3u",
+            "src/snapshotChannel/assets/default-library/manifest.json",
+            "src/snapshotChannel/assets/default-library/playlist.m3u",
+        ).flatMap { relativePath ->
+            listOf(
+                File(relativePath),
+                File("app/smartphone/$relativePath"),
+            )
+        }
+
+        assertTrue(
+            forbiddenAssets.none(File::isFile),
+            "Default library samples must remain exclusive to src/debug/assets: " +
+                forbiddenAssets.filter(File::isFile).joinToString { file ->
+                    file.normalize().path
+                },
         )
     }
 

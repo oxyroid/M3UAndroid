@@ -74,6 +74,7 @@ class DebugDefaultLibraryBootstrapTest {
         )
         assertEquals(EXPECTED_CHANNEL_IDS.size, imported?.channels?.size)
 
+        waitForBootstrapWorkToFinish()
         val stateFile = context.noBackupFilesDir.resolve(
             "debug-default-library/bootstrap-state-v1"
         )
@@ -84,19 +85,35 @@ class DebugDefaultLibraryBootstrapTest {
         ).bufferedReader().use { reader ->
             JSONObject(reader.readText())
         }
-        assertEquals(1, state.getInt("schemaVersion"))
+        assertEquals(2, state.getInt("schemaVersion"))
         assertEquals("imported", state.getString("status"))
         assertEquals(manifest.getString("revision"), state.getString("revision"))
+        assertEquals(
+            manifest.getString("playlistSha256"),
+            state.getString("playlistSha256"),
+        )
         assertEquals(importedPlaylistUrl, state.getString("playlistUrl"))
 
-        waitForBootstrapWorkToFinish()
-        state.put("revision", "outdated-fixture")
+        state.put("playlistSha256", "0".repeat(64))
         stateFile.writeText(state.toString())
         DebugDefaultLibraryWorker.enqueue(WorkManager.getInstance(context))
-        waitForStateRevision(
+        waitForStateValue(
             stateFile = stateFile,
-            expectedRevision = manifest.getString("revision"),
+            key = "playlistSha256",
+            expectedValue = manifest.getString("playlistSha256"),
         )
+        waitForBootstrapWorkToFinish()
+
+        val refreshedState = JSONObject(stateFile.readText())
+        refreshedState.put("revision", "outdated-fixture")
+        stateFile.writeText(refreshedState.toString())
+        DebugDefaultLibraryWorker.enqueue(WorkManager.getInstance(context))
+        waitForStateValue(
+            stateFile = stateFile,
+            key = "revision",
+            expectedValue = manifest.getString("revision"),
+        )
+        waitForBootstrapWorkToFinish()
         assertEquals(
             "Updating bundled assets must refresh the tracked playlist in place",
             1,
@@ -123,19 +140,20 @@ class DebugDefaultLibraryBootstrapTest {
         error("The bundled default library bootstrap work did not finish")
     }
 
-    private fun waitForStateRevision(
+    private fun waitForStateValue(
         stateFile: File,
-        expectedRevision: String,
+        key: String,
+        expectedValue: String,
     ) {
         val deadline = SystemClock.uptimeMillis() + IMPORT_TIMEOUT_MILLIS
         do {
-            val revision = runCatching {
-                JSONObject(stateFile.readText()).getString("revision")
+            val actualValue = runCatching {
+                JSONObject(stateFile.readText()).getString(key)
             }.getOrNull()
-            if (revision == expectedRevision) return
+            if (actualValue == expectedValue) return
             SystemClock.sleep(IMPORT_POLL_MILLIS)
         } while (SystemClock.uptimeMillis() < deadline)
-        error("The bundled default library did not apply its updated revision")
+        error("The bundled default library did not update $key")
     }
 
     private companion object {

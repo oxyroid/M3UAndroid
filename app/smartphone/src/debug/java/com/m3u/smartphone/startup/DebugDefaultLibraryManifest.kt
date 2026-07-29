@@ -42,7 +42,7 @@ internal object DebugDefaultLibraryManifestParser {
             "Unsupported bundled default library schema: $schemaVersion"
         }
         val revision = root.requiredString("revision")
-        formatCheck(revision.length in 1..64) {
+        formatCheck(revision.length in 1..MAXIMUM_REVISION_LENGTH) {
             "The bundled default library revision is invalid"
         }
         val title = root.requiredString("title")
@@ -176,6 +176,7 @@ internal object DebugDefaultLibraryManifestParser {
 
     private const val SUPPORTED_SCHEMA_VERSION = 1
     private const val ASSET_DIRECTORY = "default-library"
+    private const val MAXIMUM_REVISION_LENGTH = 64
     private const val MAXIMUM_CHANNEL_COUNT = 64
     private const val MAXIMUM_HOST_COUNT = 16
 }
