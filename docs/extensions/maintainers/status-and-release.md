@@ -34,27 +34,34 @@ currently needs an explicit device run. A device check is a recorded one-off run
 CI syntax-checks the phone matrix runner and compiles the data, phone, and TV connected-test
 harnesses; it does not execute either device matrix.
 
-Latest connected run, 2026-07-28:
+Latest connected phone run, 2026-07-29:
 
-- Phone API 36: 7/7 passed in compact English LTR, 2/2 in compact `ar-XB` RTL with
-  200% text, and 2/2 in a 1080dp-wide English LTR layout. In addition to provider
-  selection and form semantics, the matrix verifies that the final action scrolls fully
-  above the system safe area and floating navigation.
-- TV API 34 at 1280×720: `TvProviderAccessibilityTest` passed 1/1 in English LTR and
-  1/1 in actual `ar-XB` RTL with the rail on the right, including DPad entry, provider
-  form open/close, accessible name, and focus return to Emby.
+- Device and profile: Pixel_6_Pro API 36 on `emulator-5558`, using the runner's
+  `phone` profile.
+- Results: `compact-ltr` passed 16/16, `compact-narrow-ltr` passed 2/2, and
+  `compact-rtl-large` passed 7/7 with `ar-XB` at 320dp width and 200% text.
+- Coverage includes provider selection and forms plus the new plugin-detail Loading,
+  Failure with retry, Missing, and Content states. It also verifies correct action-target
+  ownership, non-duplicated live-region semantics, non-overlapping 48dp action targets,
+  and complete version, package, service, and certificate information.
+
+This run validates only the phone profile. Tablet validation remains pending as a separate
+connected run. The latest TV evidence remains the 2026-07-28 API 34 run at 1280×720:
+`TvProviderAccessibilityTest` passed 1/1 in English LTR and 1/1 in actual `ar-XB` RTL with
+the rail on the right, including DPad entry, provider-form open/close, accessible naming,
+and focus return to Emby. TV was not rerun as part of the phone command below.
 
 Repeat the phone matrix on a disposable, booted API 33 or newer phone emulator with:
 
 ```shell
-testing/bin/run-smartphone-provider-ui-matrix.sh emulator-5554
+testing/bin/run-smartphone-provider-ui-matrix.sh emulator-5558 phone
 ```
 
-The script runs the complete provider and content-safe-area tests in compact English LTR, then
-two targeted cases in the RTL pseudolocale with 200% text and in a 1080dp-wide English window.
-Each run passes a required named instrumentation case; the test fails if the argument, app locale,
-or actual device configuration does not match. The script restores the emulator display settings
-and removes the test packages when it finishes.
+The `phone` profile runs the complete compact English LTR group, the targeted compact-narrow
+English LTR group, and the compact `ar-XB` RTL group at 320dp width and 200% text. Each run
+passes a required named instrumentation case; the test fails if the argument, profile, app
+locale, or actual device configuration does not match. The script restores the emulator display
+settings and removes the test packages when it finishes.
 
 ## Before shipping the built-in provider path
 

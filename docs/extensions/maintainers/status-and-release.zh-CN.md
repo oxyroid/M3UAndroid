@@ -33,24 +33,30 @@ CI 门禁指 `.github/workflows/android.yml` 自动执行的检查。Connected U
 不代表母语文案质量。CI 会检查手机矩阵脚本的语法，并编译 data、手机与 TV 的
 Connected Test，但不会执行设备矩阵。
 
-最近一次 Connected 实测（2026-07-28）：
+最近一次手机 Connected 实测（2026-07-29）：
 
-- 手机 API 36：紧凑英语 LTR 下为 7/7；紧凑 `ar-XB` RTL + 200% 字体下为 2/2；
-  1080dp 宽英语 LTR 布局下为 2/2。除 Provider 选择与表单语义外，还验证最后一个操作
-  可以完整滚到系统安全区与悬浮导航上方。
-- TV API 34、1280×720：`TvProviderAccessibilityTest` 在英语 LTR 与实际
-  `ar-XB` RTL（侧栏位于右侧）下分别为 1/1，覆盖 DPad 进入、打开和关闭 Provider
-  表单、可朗读名称，以及焦点返回 Emby。
+- 设备与配置：`emulator-5558` 上的 Pixel_6_Pro API 36，使用运行脚本的 `phone`
+  profile。
+- 结果：`compact-ltr` 为 16/16，`compact-narrow-ltr` 为 2/2；
+  `compact-rtl-large` 在 `ar-XB`、320dp 宽度和 200% 字体下为 7/7。
+- 覆盖 Provider 选择与表单，以及新增的插件详情 Loading、带重试操作的 Failure、
+  Missing 和 Content 状态；同时验证操作目标归属正确、live-region 语义不重复、
+  48dp 操作目标互不重叠，以及版本、包名、服务和证书信息完整。
+
+本次只验证 `phone` profile。平板仍需单独进行 Connected 实测。最近的 TV 证据仍是
+2026-07-28 在 API 34、1280×720 下的结果：`TvProviderAccessibilityTest` 在英语 LTR
+与实际 `ar-XB` RTL（侧栏位于右侧）下分别为 1/1，覆盖 DPad 进入、打开和关闭 Provider
+表单、可朗读名称，以及焦点返回 Emby。下面的手机命令没有重跑 TV。
 
 在一台已启动、可清空数据且 API 不低于 33 的手机模拟器上，用下面的命令重跑手机矩阵：
 
 ```shell
-testing/bin/run-smartphone-provider-ui-matrix.sh emulator-5554
+testing/bin/run-smartphone-provider-ui-matrix.sh emulator-5558 phone
 ```
 
-脚本会先在紧凑英语 LTR 下运行完整 Provider 与内容安全区测试，再分别在 RTL 伪语言 +
-200% 字体和 1080dp 宽英语窗口下运行两条定向用例。每次运行都会传入必填的命名配置；
-参数缺失、名称错误、App Locale 或设备实际配置不符都会使测试失败。结束后，脚本会恢复
+`phone` profile 会运行完整的紧凑英语 LTR 组、定向的窄版紧凑英语 LTR 组，以及
+320dp 宽度、200% 字体下的紧凑 `ar-XB` RTL 组。每次运行都会传入必填的命名用例；
+参数、profile、App Locale 或设备实际配置不符都会使测试失败。结束后，脚本会恢复
 模拟器显示设置并移除测试包。
 
 ## 发布内置 Provider 链路之前
