@@ -110,7 +110,6 @@ import com.m3u.smartphone.ui.common.helper.LocalHelper
 import com.m3u.smartphone.ui.material.ktx.plus
 import com.m3u.smartphone.ui.material.ktx.rememberUiBidiFormatter
 import com.m3u.smartphone.ui.material.ktx.UiBidiFormatter
-import com.m3u.smartphone.ui.material.ktx.safeDisplayText
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import kotlinx.coroutines.launch
 
@@ -1269,7 +1268,7 @@ private fun ProviderFormField(
                     modifier = Modifier
                         .fillMaxWidth()
                         .semantics {
-                            contentDescription = displayLabel.safeDisplayText()
+                            contentDescription = displayLabel
                             if (definition.required) {
                                 stateDescription = requiredDescription
                             }
@@ -1407,6 +1406,11 @@ private fun ProviderChoiceButton(
     } else {
         MaterialTheme.colorScheme.onSurfaceVariant
     }
+    val choiceDescription = stringResource(
+        string.feat_setting_extension_choice_field_description,
+        text,
+        fieldLabel,
+    )
     Surface(
         selected = selected,
         onClick = onClick,
@@ -1419,8 +1423,7 @@ private fun ProviderChoiceButton(
             .alpha(if (enabled) 1f else 0.38f)
             .semantics {
                 role = Role.RadioButton
-                contentDescription =
-                    "${fieldLabel.safeDisplayText()}, ${text.safeDisplayText()}"
+                contentDescription = choiceDescription
             },
     ) {
         Row(
@@ -1447,7 +1450,7 @@ private fun Modifier.providerChoiceGroupSemantics(
     requiredDescription: String?,
     errorMessage: String?,
 ): Modifier = semantics {
-    contentDescription = fieldLabel.safeDisplayText()
+    contentDescription = fieldLabel
     requiredDescription?.let { description ->
         stateDescription = description
     }
