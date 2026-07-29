@@ -61,16 +61,8 @@ fun App(
         surface = TvSurface.Browse
     }
 
-    val backTarget = tvAppBackTarget(
-        playerVisible = surface == TvSurface.Player,
-        providerSubscriptionVisible = state.providerSubscriptionForm != null,
-    )
-    BackHandler(enabled = backTarget != TvAppBackTarget.ACTIVITY) {
-        when (backTarget) {
-            TvAppBackTarget.PLAYER -> closePlayer()
-            TvAppBackTarget.PROVIDER_SUBSCRIPTION -> viewModel.closeProviderSubscription()
-            TvAppBackTarget.ACTIVITY -> Unit
-        }
+    BackHandler(enabled = surface == TvSurface.Player) {
+        closePlayer()
     }
 
     LaunchedEffect(view) {
@@ -106,21 +98,15 @@ fun App(
                 },
                 onRefresh = viewModel::refreshSelectedPlaylist,
                 onPlay = {
-                    viewModel.play(it)
-                    surface = TvSurface.Player
+                    if (viewModel.play(it)) {
+                        surface = TvSurface.Player
+                    }
                 },
                 onPlayRecent = {
-                    viewModel.playRecent()
-                    surface = TvSurface.Player
+                    if (viewModel.playRecent()) {
+                        surface = TvSurface.Player
+                    }
                 },
-                onRefreshProviders = viewModel::refreshSubscriptionProviders,
-                onOpenProviderSubscription = viewModel::openProviderSubscription,
-                onReauthenticateProvider = viewModel::reauthenticateProviderAccount,
-                onCloseProviderSubscription = viewModel::closeProviderSubscription,
-                onUpdateProviderTitle = viewModel::updateProviderSubscriptionTitle,
-                onSelectProviderKind = viewModel::selectProviderKind,
-                onUpdateProviderSetting = viewModel::updateProviderSetting,
-                onSubmitProviderSubscription = viewModel::submitProviderSubscription,
             )
         }
 

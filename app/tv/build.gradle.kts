@@ -72,11 +72,9 @@ baselineProfile {
 dependencies {
     implementation(project(":core:foundation"))
     implementation(project(":data"))
-    implementation(project(":extension:api"))
     // business
     implementation(project(":business:foryou"))
     implementation(project(":business:favorite"))
-    implementation(project(":business:setting"))
     implementation(project(":business:playlist"))
     implementation(project(":business:channel"))
     implementation(project(":business:playlist-configuration"))

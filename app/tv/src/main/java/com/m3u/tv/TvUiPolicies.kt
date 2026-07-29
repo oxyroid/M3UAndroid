@@ -1,11 +1,13 @@
 package com.m3u.tv
 
+import com.m3u.data.database.model.DataSource
 import kotlin.math.roundToInt
 
-internal enum class TvAppBackTarget {
-    PLAYER,
-    PROVIDER_SUBSCRIPTION,
-    ACTIVITY,
+internal fun tvSupportsPlaylistSource(source: DataSource): Boolean = when (source) {
+    DataSource.M3U,
+    DataSource.Xtream -> true
+
+    else -> false
 }
 
 internal enum class TvHeroAction {
@@ -87,93 +89,3 @@ internal fun <T> tvLeadingGradientColorStops(
         1f to trailing,
     )
 }
-
-internal fun tvAppBackTarget(
-    playerVisible: Boolean,
-    providerSubscriptionVisible: Boolean,
-): TvAppBackTarget = when {
-    playerVisible -> TvAppBackTarget.PLAYER
-    providerSubscriptionVisible -> TvAppBackTarget.PROVIDER_SUBSCRIPTION
-    else -> TvAppBackTarget.ACTIVITY
-}
-
-internal enum class TvProviderFormAvailability {
-    AVAILABLE,
-    LOADING,
-    UNAVAILABLE,
-}
-
-internal fun tvProviderFormAvailability(
-    discoveryLoading: Boolean,
-    providerSupported: Boolean,
-    providerMarkedUnavailable: Boolean,
-): TvProviderFormAvailability = when {
-    discoveryLoading -> TvProviderFormAvailability.LOADING
-    providerMarkedUnavailable || !providerSupported -> TvProviderFormAvailability.UNAVAILABLE
-    else -> TvProviderFormAvailability.AVAILABLE
-}
-
-internal fun tvProviderSubmitEnabled(
-    inProgress: Boolean,
-    availability: TvProviderFormAvailability,
-): Boolean = !inProgress && availability == TvProviderFormAvailability.AVAILABLE
-
-internal data class TvProviderChoicePresentation(
-    val variantName: String,
-    val providerName: String?,
-)
-
-internal fun tvProviderChoicePresentation(
-    providerId: String,
-    variantDisplayName: String,
-): TvProviderChoicePresentation {
-    val variantName = variantDisplayName.ifBlank { providerId }
-    return TvProviderChoicePresentation(
-        variantName = variantName,
-        providerName = null,
-    )
-}
-
-internal fun shouldRestoreTvStatusFocus(
-    panelWasVisible: Boolean,
-    panelIsVisible: Boolean,
-    hasReturnTarget: Boolean,
-): Boolean = panelWasVisible && !panelIsVisible && hasReturnTarget
-
-internal fun tvProviderReauthenticationItemIndex(
-    providerFeedbackVisible: Boolean,
-    reauthenticationIndex: Int,
-): Int {
-    require(reauthenticationIndex >= 0)
-    return 3 +
-        (if (providerFeedbackVisible) 1 else 0) +
-        reauthenticationIndex
-}
-
-internal fun tvProviderVariantItemIndex(
-    providerFeedbackVisible: Boolean,
-    reauthenticationCount: Int,
-    providerVariantIndex: Int,
-): Int {
-    require(reauthenticationCount >= 0)
-    require(providerVariantIndex >= 0)
-    return 3 +
-        (if (providerFeedbackVisible) 1 else 0) +
-        reauthenticationCount +
-        providerVariantIndex
-}
-
-internal enum class TvProviderReauthenticationFocusAnchor {
-    ACCOUNT_ACTION,
-    PROVIDER_VARIANT,
-}
-
-internal fun tvProviderReauthenticationFocusAnchor(
-    subscriptionSucceeded: Boolean,
-    accountActionVisible: Boolean,
-): TvProviderReauthenticationFocusAnchor =
-    if (subscriptionSucceeded || !accountActionVisible) {
-        TvProviderReauthenticationFocusAnchor.PROVIDER_VARIANT
-    } else {
-        TvProviderReauthenticationFocusAnchor.ACCOUNT_ACTION
-    }

@@ -1,5 +1,6 @@
 package com.m3u.tv
 
+import com.m3u.data.database.model.DataSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -7,6 +8,21 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class TvUiPoliciesTest {
+    @Test
+    fun `tv exposes only standalone playlist sources`() {
+        assertTrue(tvSupportsPlaylistSource(DataSource.M3U))
+        assertTrue(tvSupportsPlaylistSource(DataSource.Xtream))
+        listOf(
+            DataSource.EPG,
+            DataSource.Emby,
+            DataSource.Jellyfin,
+            DataSource.Provider,
+            DataSource.Dropbox,
+        ).forEach { source ->
+            assertFalse(tvSupportsPlaylistSource(source), source.value)
+        }
+    }
+
     @Test
     fun `default font scale preserves the compact tv layout`() {
         assertEquals(
@@ -135,181 +151,6 @@ class TvUiPoliciesTest {
                 middle = "middle",
                 trailing = "trailing",
                 middlePosition = 0.58f,
-            ),
-        )
-    }
-
-    @Test
-    fun `ordinary browse delegates back to the activity`() {
-        assertEquals(
-            TvAppBackTarget.ACTIVITY,
-            tvAppBackTarget(
-                playerVisible = false,
-                providerSubscriptionVisible = false,
-            ),
-        )
-    }
-
-    @Test
-    fun `provider form distinguishes loading from unavailable`() {
-        assertEquals(
-            TvProviderFormAvailability.LOADING,
-            tvProviderFormAvailability(
-                discoveryLoading = true,
-                providerSupported = false,
-                providerMarkedUnavailable = true,
-            ),
-        )
-        assertEquals(
-            TvProviderFormAvailability.UNAVAILABLE,
-            tvProviderFormAvailability(
-                discoveryLoading = false,
-                providerSupported = false,
-                providerMarkedUnavailable = false,
-            ),
-        )
-        assertEquals(
-            TvProviderFormAvailability.UNAVAILABLE,
-            tvProviderFormAvailability(
-                discoveryLoading = false,
-                providerSupported = true,
-                providerMarkedUnavailable = true,
-            ),
-        )
-        assertEquals(
-            TvProviderFormAvailability.AVAILABLE,
-            tvProviderFormAvailability(
-                discoveryLoading = false,
-                providerSupported = true,
-                providerMarkedUnavailable = false,
-            ),
-        )
-    }
-
-    @Test
-    fun `provider submit requires an available idle provider`() {
-        assertTrue(
-            tvProviderSubmitEnabled(
-                inProgress = false,
-                availability = TvProviderFormAvailability.AVAILABLE,
-            )
-        )
-        assertFalse(
-            tvProviderSubmitEnabled(
-                inProgress = true,
-                availability = TvProviderFormAvailability.AVAILABLE,
-            )
-        )
-        assertFalse(
-            tvProviderSubmitEnabled(
-                inProgress = false,
-                availability = TvProviderFormAvailability.LOADING,
-            )
-        )
-        assertFalse(
-            tvProviderSubmitEnabled(
-                inProgress = false,
-                availability = TvProviderFormAvailability.UNAVAILABLE,
-            )
-        )
-    }
-
-    @Test
-    fun `built in provider choice uses the selectable variant name`() {
-        assertEquals(
-            TvProviderChoicePresentation(
-                variantName = "Jellyfin",
-                providerName = null,
-            ),
-            tvProviderChoicePresentation(
-                providerId = "builtin.media-server",
-                variantDisplayName = "Jellyfin",
-            ),
-        )
-    }
-
-    @Test
-    fun `status focus returns only after a transient panel closes`() {
-        assertTrue(
-            shouldRestoreTvStatusFocus(
-                panelWasVisible = true,
-                panelIsVisible = false,
-                hasReturnTarget = true,
-            )
-        )
-        assertFalse(
-            shouldRestoreTvStatusFocus(
-                panelWasVisible = false,
-                panelIsVisible = false,
-                hasReturnTarget = true,
-            )
-        )
-        assertFalse(
-            shouldRestoreTvStatusFocus(
-                panelWasVisible = true,
-                panelIsVisible = false,
-                hasReturnTarget = false,
-            )
-        )
-    }
-
-    @Test
-    fun `provider return indexes account for feedback and reauthentication rows`() {
-        assertEquals(
-            5,
-            tvProviderReauthenticationItemIndex(
-                providerFeedbackVisible = true,
-                reauthenticationIndex = 1,
-            ),
-        )
-        assertEquals(
-            8,
-            tvProviderVariantItemIndex(
-                providerFeedbackVisible = true,
-                reauthenticationCount = 2,
-                providerVariantIndex = 2,
-            ),
-        )
-    }
-
-    @Test
-    fun `successful reauthentication returns to the stable provider variant`() {
-        assertEquals(
-            TvProviderReauthenticationFocusAnchor.ACCOUNT_ACTION,
-            tvProviderReauthenticationFocusAnchor(
-                subscriptionSucceeded = false,
-                accountActionVisible = true,
-            ),
-        )
-        listOf(
-            true to true,
-            false to false,
-            true to false,
-        ).forEach { (subscriptionSucceeded, accountActionVisible) ->
-            assertEquals(
-                TvProviderReauthenticationFocusAnchor.PROVIDER_VARIANT,
-                tvProviderReauthenticationFocusAnchor(
-                    subscriptionSucceeded = subscriptionSucceeded,
-                    accountActionVisible = accountActionVisible,
-                ),
-            )
-        }
-    }
-
-    @Test
-    fun `app back handler preserves overlay priority`() {
-        assertEquals(
-            TvAppBackTarget.PLAYER,
-            tvAppBackTarget(
-                playerVisible = true,
-                providerSubscriptionVisible = true,
-            ),
-        )
-        assertEquals(
-            TvAppBackTarget.PROVIDER_SUBSCRIPTION,
-            tvAppBackTarget(
-                playerVisible = false,
-                providerSubscriptionVisible = true,
             ),
         )
     }

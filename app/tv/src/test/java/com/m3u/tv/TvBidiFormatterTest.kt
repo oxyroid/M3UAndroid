@@ -7,7 +7,7 @@ import kotlin.test.assertTrue
 
 class TvBidiFormatterTest {
     @Test
-    fun `strip removes every bidi control accepted from provider metadata`() {
+    fun `strip removes every accepted bidi control`() {
         val controls = "\u061C\u200E\u200F\u202A\u202B\u202C\u202D\u202E\u2066\u2067\u2068\u2069"
 
         assertEquals("Section title", "Section${controls} title".withoutBidiControls())
@@ -15,17 +15,17 @@ class TvBidiFormatterTest {
 
     @Test
     fun `display text keeps readable content after removing spoofing controls`() {
-        val sanitized = "Provider\u202Eexe".withoutBidiControls()
+        val sanitized = "Media\u202Eexe".withoutBidiControls()
 
-        assertTrue(sanitized.contains("Providerexe"))
+        assertTrue(sanitized.contains("Mediaexe"))
         assertFalse(sanitized.contains('\u202E'))
     }
 
     @Test
     fun `technical identifier keeps its exact character order`() {
-        val sanitized = "provider.example\u2066.kind".withoutBidiControls()
+        val sanitized = "media.example\u2066.kind".withoutBidiControls()
 
-        assertEquals("provider.example.kind", sanitized)
+        assertEquals("media.example.kind", sanitized)
     }
 
     @Test

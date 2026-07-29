@@ -4,39 +4,25 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.Player
-import com.m3u.business.setting.ProviderDiscoveryState
-import com.m3u.business.setting.ProviderSubscriptionForm
-import com.m3u.business.setting.ProviderSubscriptionFormBuildResult
-import com.m3u.business.setting.supports
 import com.m3u.data.database.model.Channel
-import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
-import com.m3u.data.repository.provider.DiscoveredSubscriptionProvider
-import com.m3u.data.repository.provider.ProviderAccountSummary
-import com.m3u.data.repository.provider.ProviderDiscoveryException
-import com.m3u.data.repository.provider.SubscriptionProviderExecutionKind
-import com.m3u.data.repository.provider.SubscriptionProviderRepository
 import com.m3u.data.repository.tv.TvRepository
 import com.m3u.data.service.DPadReactionService
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.PlayerManager
-import com.m3u.extension.api.subscription.SubscriptionProviderDescriptor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.Locale
 import javax.inject.Inject
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @Immutable
 data class TvUiState(
@@ -47,23 +33,9 @@ data class TvUiState(
     val favorites: List<Channel> = emptyList(),
     val recent: Channel? = null,
     val loadingChannels: Boolean = false,
-    val providerDiscoveryState: ProviderDiscoveryState = ProviderDiscoveryState.Loading,
-    val providerAccounts: List<ProviderAccountSummary> = emptyList(),
-    val providerSubscriptionForm: ProviderSubscriptionForm? = null,
-    val providerSubscriptionDescriptor: SubscriptionProviderDescriptor? = null,
-    val providerSubscriptionUnavailable: Boolean = false,
-    val providerSubscriptionTitle: String = "",
-    val providerSubscriptionInProgress: Boolean = false,
-    val providerSubscriptionFeedback: TvProviderSubscriptionFeedback? = null,
 ) {
     val channelCount: Int get() = counts.values.sum()
     val heroChannel: Channel? get() = recent ?: channels.firstOrNull()
-}
-
-sealed interface TvProviderSubscriptionFeedback {
-    data object InvalidSettings : TvProviderSubscriptionFeedback
-    data object Failed : TvProviderSubscriptionFeedback
-    data class Added(val channelCount: Int) : TvProviderSubscriptionFeedback
 }
 
 @HiltViewModel
@@ -71,7 +43,6 @@ class TvHomeViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val channelRepository: ChannelRepository,
     private val playerManager: PlayerManager,
-    private val subscriptionProviderRepository: SubscriptionProviderRepository,
     tvRepository: TvRepository,
     dPadReactionService: DPadReactionService
 ) : ViewModel() {
@@ -85,18 +56,13 @@ class TvHomeViewModel @Inject constructor(
     val remoteControlCode: StateFlow<Int?> = tvRepository.broadcastCodeOnTv
     val remoteDirections = dPadReactionService.incoming
     private var loadChannelsJob: Job? = null
-    private var providerDiscoveryJob: Job? = null
-    private var providerDiscoveryGeneration: Long = 0L
-    private var providerReauthenticationJob: Job? = null
-    private var providerSubscriptionJob: Job? = null
-    private var providerLocaleTag: String? = null
+    private var observedFavorites: List<Channel> = emptyList()
+    private var observedRecent: Channel? = null
     @Volatile
     private var sortLocale: Locale = Locale.getDefault()
 
     fun updateLocale(localeTag: String) {
         val requestedLocaleTag = localeTag.trim().takeIf(String::isNotEmpty)
-        val providerLocaleChanged = providerLocaleTag != requestedLocaleTag
-        providerLocaleTag = requestedLocaleTag
         val locale = requestedLocaleTag
             ?.let(Locale::forLanguageTag)
             ?: Locale.getDefault()
@@ -120,45 +86,53 @@ class TvHomeViewModel @Inject constructor(
                 )
             }
         }
-        if (providerLocaleChanged) {
-            startSubscriptionProviderDiscovery(requestedLocaleTag)
-        }
     }
 
     init {
         observePlaylists()
         observeFavorites()
         observeRecent()
-        observeProviderAccounts()
-        refreshSubscriptionProviders()
     }
 
     fun selectPlaylist(playlist: Playlist) {
-        if (_state.value.selectedPlaylist?.url == playlist.url) return
-        _state.update { it.copy(selectedPlaylist = playlist) }
-        loadChannels(playlist.url)
+        val availablePlaylist = _state.value.playlists
+            .firstOrNull { candidate ->
+                candidate.url == playlist.url && tvSupportsPlaylistSource(candidate.source)
+            }
+            ?: return
+        if (_state.value.selectedPlaylist?.url == availablePlaylist.url) return
+        _state.update {
+            it.copy(
+                selectedPlaylist = availablePlaylist,
+                channels = emptyList(),
+            )
+        }
+        loadChannels(availablePlaylist)
     }
 
     fun refreshSelectedPlaylist() {
-        val playlist = state.value.selectedPlaylist ?: return
+        val playlist = state.value.selectedPlaylist
+            ?.takeIf { tvSupportsPlaylistSource(it.source) }
+            ?: return
         viewModelScope.launch {
             playlistRepository.refresh(playlist.url)
-            loadChannels(playlist.url)
+            loadChannels(playlist)
         }
     }
 
-    fun play(channel: Channel) {
+    fun play(channel: Channel): Boolean {
+        if (!_state.value.supports(channel)) return false
         viewModelScope.launch {
             playerManager.play(MediaCommand.Common(channel.id))
             channelRepository.reportPlayed(channel.id)
         }
+        return true
     }
 
-    fun playRecent() {
-        state.value.recent?.let(::play)
-    }
+    fun playRecent(): Boolean = state.value.recent?.let(::play) ?: false
 
     fun toggleFavorite(channel: Channel) {
+        if (!_state.value.supports(channel)) return
         viewModelScope.launch {
             channelRepository.favouriteOrUnfavourite(channel.id)
         }
@@ -172,303 +146,6 @@ class TvHomeViewModel @Inject constructor(
         playerManager.release()
     }
 
-    fun refreshSubscriptionProviders() {
-        startSubscriptionProviderDiscovery(providerLocaleTag)
-    }
-
-    private fun startSubscriptionProviderDiscovery(localeTag: String?): Job {
-        val previousJob = providerDiscoveryJob
-        val generation = ++providerDiscoveryGeneration
-        return viewModelScope.launch {
-            previousJob?.cancelAndJoin()
-            try {
-                loadSubscriptionProviders(localeTag)
-            } finally {
-                if (providerDiscoveryGeneration == generation) {
-                    providerDiscoveryJob = null
-                }
-            }
-        }.also { job -> providerDiscoveryJob = job }
-    }
-
-    private suspend fun awaitLatestSubscriptionProviderDiscovery(
-        forceRefresh: Boolean,
-    ) {
-        var awaitedJob = if (forceRefresh) {
-            startSubscriptionProviderDiscovery(providerLocaleTag)
-        } else {
-            providerDiscoveryJob ?: startSubscriptionProviderDiscovery(providerLocaleTag)
-        }
-        while (true) {
-            awaitedJob.join()
-            val latestJob = providerDiscoveryJob
-            if (latestJob == null || latestJob === awaitedJob) return
-            awaitedJob = latestJob
-        }
-    }
-
-    private suspend fun loadSubscriptionProviders(
-        localeTag: String?,
-    ): List<DiscoveredSubscriptionProvider>? {
-        val previousDiscoveryState = state.value.providerDiscoveryState
-        val previousProviderUnavailable = state.value.providerSubscriptionUnavailable
-        _state.update { current ->
-            current.copy(
-                providerDiscoveryState = ProviderDiscoveryState.Loading,
-                providerSubscriptionUnavailable = false,
-            )
-        }
-        return try {
-            val providers = withContext(Dispatchers.IO) {
-                subscriptionProviderRepository.discoverProviders(localeTag)
-            }.filter { provider ->
-                provider.executionKind == SubscriptionProviderExecutionKind.BUILT_IN
-            }
-            val discoveryState = if (providers.isEmpty()) {
-                ProviderDiscoveryState.Empty
-            } else {
-                ProviderDiscoveryState.Ready(providers)
-            }
-            _state.update { current ->
-                val form = current.providerSubscriptionForm
-                val matchingProvider = form?.let { activeForm ->
-                    providers.firstOrNull { provider ->
-                        provider.descriptor.providerId == activeForm.providerId &&
-                            provider.descriptor.variants.any { variant ->
-                                variant.kind == activeForm.providerKind
-                            }
-                    }
-                }
-                current.copy(
-                    providerDiscoveryState = discoveryState,
-                    providerSubscriptionForm = matchingProvider
-                        ?.descriptor
-                        ?.let { descriptor -> requireNotNull(form).updateDescriptor(descriptor) }
-                        ?: form,
-                    providerSubscriptionDescriptor = when {
-                        form == null -> null
-                        matchingProvider != null -> matchingProvider.descriptor
-                        else -> current.providerSubscriptionDescriptor
-                    },
-                    providerSubscriptionUnavailable = form != null && !discoveryState.supports(form),
-                )
-            }
-            providers
-        } catch (cancelled: CancellationException) {
-            _state.update { current ->
-                if (current.providerDiscoveryState is ProviderDiscoveryState.Loading) {
-                    current.copy(
-                        providerDiscoveryState = previousDiscoveryState,
-                        providerSubscriptionUnavailable = previousProviderUnavailable,
-                    )
-                } else {
-                    current
-                }
-            }
-            throw cancelled
-        } catch (error: Exception) {
-            _state.update { current ->
-                current.copy(
-                    providerDiscoveryState = ProviderDiscoveryState.Failed(
-                        failureCount = (error as? ProviderDiscoveryException)?.failureCount,
-                    ),
-                    providerSubscriptionUnavailable =
-                        current.providerSubscriptionForm != null,
-                )
-            }
-            null
-        }
-    }
-
-    fun openProviderSubscription(providerId: String, providerKind: String) {
-        val descriptor = currentProviders().firstOrNull { provider ->
-            provider.descriptor.providerId.value == providerId
-        }?.descriptor ?: return
-        val kind = descriptor.variants.firstOrNull { variant ->
-            variant.kind.value == providerKind && variant.userSelectable
-        }?.kind ?: return
-        _state.update { state ->
-            state.copy(
-                providerSubscriptionForm = ProviderSubscriptionForm.create(descriptor, kind),
-                providerSubscriptionDescriptor = descriptor,
-                providerSubscriptionUnavailable = false,
-                providerSubscriptionTitle = descriptor.displayName,
-                providerSubscriptionFeedback = null,
-            )
-        }
-    }
-
-    fun reauthenticateProviderAccount(playlistUrl: String) {
-        val account = state.value.providerAccounts.firstOrNull { summary ->
-            summary.playlistUrl == playlistUrl && summary.requiresReauthentication
-        } ?: return
-        providerReauthenticationJob?.cancel()
-        providerReauthenticationJob = viewModelScope.launch {
-            awaitLatestSubscriptionProviderDiscovery(forceRefresh = false)
-            var descriptor = currentProviders().providerFor(account)?.descriptor
-            if (descriptor == null) {
-                awaitLatestSubscriptionProviderDiscovery(forceRefresh = true)
-                descriptor = currentProviders().providerFor(account)?.descriptor
-            }
-            if (descriptor == null) {
-                _state.update {
-                    it.copy(providerSubscriptionFeedback = TvProviderSubscriptionFeedback.Failed)
-                }
-                return@launch
-            }
-            _state.update { current ->
-                current.copy(
-                    providerSubscriptionForm = ProviderSubscriptionForm.createForReauthentication(
-                        descriptor = descriptor,
-                        account = account,
-                    ),
-                    providerSubscriptionDescriptor = descriptor,
-                    providerSubscriptionUnavailable = false,
-                    providerSubscriptionTitle = account.playlistTitle,
-                    providerSubscriptionFeedback = null,
-                )
-            }
-        }
-    }
-
-    fun closeProviderSubscription() {
-        if (state.value.providerSubscriptionInProgress) return
-        _state.update { current ->
-            current.copy(
-                providerSubscriptionForm = null,
-                providerSubscriptionDescriptor = null,
-                providerSubscriptionUnavailable = false,
-                providerSubscriptionTitle = "",
-                providerSubscriptionFeedback = null,
-            )
-        }
-    }
-
-    fun updateProviderSubscriptionTitle(title: String) {
-        _state.update {
-            it.copy(providerSubscriptionTitle = title, providerSubscriptionFeedback = null)
-        }
-    }
-
-    fun selectProviderKind(kindValue: String) {
-        val currentState = state.value
-        if (currentState.providerSubscriptionUnavailable) return
-        val form = currentState.providerSubscriptionForm ?: return
-        val descriptor = currentState.providerSubscriptionDescriptor
-            ?.takeIf { it.providerId == form.providerId }
-            ?: return
-        val kind = descriptor.variants.firstOrNull { variant ->
-            variant.kind.value == kindValue
-        }?.kind ?: return
-        if (kind == form.providerKind) return
-        _state.update { current ->
-            current.copy(
-                providerSubscriptionForm = ProviderSubscriptionForm.create(descriptor, kind),
-                providerSubscriptionDescriptor = descriptor,
-                providerSubscriptionFeedback = null,
-            )
-        }
-    }
-
-    fun updateProviderSetting(fieldKey: String, value: String?) {
-        _state.update { current ->
-            current.copy(
-                providerSubscriptionForm = current.providerSubscriptionForm?.update(fieldKey, value),
-                providerSubscriptionFeedback = null,
-            )
-        }
-    }
-
-    fun submitProviderSubscription() {
-        if (providerSubscriptionJob?.isActive == true) return
-        val current = state.value
-        val form = current.providerSubscriptionForm ?: return
-        if (
-            current.providerSubscriptionUnavailable ||
-            !current.providerDiscoveryState.supports(form)
-        ) {
-            return
-        }
-        if (current.providerSubscriptionTitle.isBlank()) {
-            _state.update {
-                it.copy(providerSubscriptionFeedback = TvProviderSubscriptionFeedback.InvalidSettings)
-            }
-            return
-        }
-        val buildResult = runCatching {
-            form.buildRequest(
-                title = current.providerSubscriptionTitle,
-                stageCredential = subscriptionProviderRepository::stageCredential,
-            )
-        }.getOrElse {
-            _state.update {
-                it.copy(providerSubscriptionFeedback = TvProviderSubscriptionFeedback.Failed)
-            }
-            return
-        }
-        when (val result = buildResult) {
-            is ProviderSubscriptionFormBuildResult.Invalid -> {
-                _state.update {
-                    it.copy(
-                        providerSubscriptionForm = result.form,
-                        providerSubscriptionFeedback = TvProviderSubscriptionFeedback.InvalidSettings,
-                    )
-                }
-            }
-
-            is ProviderSubscriptionFormBuildResult.Ready -> {
-                providerSubscriptionJob = viewModelScope.launch {
-                    _state.update {
-                        it.copy(
-                            providerSubscriptionInProgress = true,
-                            providerSubscriptionFeedback = null,
-                        )
-                    }
-                    try {
-                        val subscription = withContext(Dispatchers.IO) {
-                            subscriptionProviderRepository.subscribe(result.request)
-                        }
-                        _state.update {
-                            it.copy(
-                                providerSubscriptionForm = null,
-                                providerSubscriptionDescriptor = null,
-                                providerSubscriptionUnavailable = false,
-                                providerSubscriptionTitle = "",
-                                providerSubscriptionInProgress = false,
-                                providerSubscriptionFeedback = TvProviderSubscriptionFeedback.Added(
-                                    subscription.channelCount
-                                ),
-                            )
-                        }
-                    } catch (cancelled: CancellationException) {
-                        _state.update { it.copy(providerSubscriptionInProgress = false) }
-                        throw cancelled
-                    } catch (_: Exception) {
-                        _state.update {
-                            it.copy(
-                                providerSubscriptionInProgress = false,
-                                providerSubscriptionFeedback = TvProviderSubscriptionFeedback.Failed,
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private fun observeProviderAccounts() {
-        viewModelScope.launch {
-            subscriptionProviderRepository.observeAccountSummaries().collect { accounts ->
-                _state.update { it.copy(providerAccounts = accounts) }
-            }
-        }
-    }
-
-    private fun currentProviders(): List<DiscoveredSubscriptionProvider> =
-        (state.value.providerDiscoveryState as? ProviderDiscoveryState.Ready)
-            ?.providers
-            .orEmpty()
-
     private fun observePlaylists() {
         viewModelScope.launch {
             playlistRepository
@@ -476,8 +153,10 @@ class TvHomeViewModel @Inject constructor(
                 .flowOn(Dispatchers.Default)
                 .collect { counts ->
                     val state = _state.value
-                    val playlists = counts.keys
-                        .filterNot { it.source == DataSource.EPG }
+                    val supportedCounts = counts.filterKeys { playlist ->
+                        tvSupportsPlaylistSource(playlist.source)
+                    }
+                    val playlists = supportedCounts.keys
                         .sortedWith(
                             localeAwareComparator(
                                 primarySelector = Playlist::title,
@@ -489,18 +168,36 @@ class TvHomeViewModel @Inject constructor(
                         ?.let { active -> playlists.firstOrNull { it.url == active.url } }
                         ?: playlists.firstOrNull()
                     val previousCount = previous?.let { playlist -> state.counts.countFor(playlist.url) }
-                    val selectedCount = selected?.let { playlist -> counts.countFor(playlist.url) }
+                    val selectedCount = selected?.let { playlist ->
+                        supportedCounts.countFor(playlist.url)
+                    }
+                    val supportedPlaylistUrls = playlists
+                        .mapTo(mutableSetOf()) { playlist -> playlist.url }
 
                     _state.update {
                         it.copy(
                             playlists = playlists,
-                            counts = counts,
-                            selectedPlaylist = selected
+                            counts = supportedCounts,
+                            selectedPlaylist = selected,
+                            channels = it.channels.filter { channel ->
+                                channel.playlistUrl == selected?.url &&
+                                    channel.playlistUrl in supportedPlaylistUrls
+                            },
+                            favorites = observedFavorites.filter { channel ->
+                                channel.playlistUrl in supportedPlaylistUrls
+                            },
+                            recent = observedRecent?.takeIf { channel ->
+                                channel.playlistUrl in supportedPlaylistUrls
+                            },
+                            loadingChannels = selected != null && it.loadingChannels,
                         )
                     }
 
                     if (selected != null && (selected.url != previous?.url || selectedCount != previousCount)) {
-                        loadChannels(selected.url)
+                        loadChannels(selected)
+                    } else if (selected == null) {
+                        loadChannelsJob?.cancel()
+                        loadChannelsJob = null
                     }
                 }
         }
@@ -509,7 +206,14 @@ class TvHomeViewModel @Inject constructor(
     private fun observeFavorites() {
         viewModelScope.launch {
             channelRepository.observeAllFavorite().collect { favorites ->
-                _state.update { it.copy(favorites = favorites) }
+                observedFavorites = favorites
+                _state.update { state ->
+                    state.copy(
+                        favorites = favorites.filter { channel ->
+                            state.supports(channel)
+                        },
+                    )
+                }
             }
         }
     }
@@ -517,18 +221,36 @@ class TvHomeViewModel @Inject constructor(
     private fun observeRecent() {
         viewModelScope.launch {
             channelRepository.observePlayedRecently().collect { recent ->
-                _state.update { it.copy(recent = recent) }
+                observedRecent = recent
+                _state.update { state ->
+                    state.copy(
+                        recent = recent?.takeIf { channel ->
+                            state.supports(channel)
+                        },
+                    )
+                }
             }
         }
     }
 
-    private fun loadChannels(url: String) {
+    private fun loadChannels(playlist: Playlist) {
+        if (!tvSupportsPlaylistSource(playlist.source)) return
+        if (_state.value.playlists.none { it.url == playlist.url }) return
+        val url = playlist.url
         loadChannelsJob?.cancel()
         loadChannelsJob = viewModelScope.launch(Dispatchers.IO) {
-            _state.update { it.copy(loadingChannels = true) }
+            _state.update { state ->
+                if (state.selectedPlaylist?.url == url) {
+                    state.copy(loadingChannels = true)
+                } else {
+                    state
+                }
+            }
             val channels = channelRepository
                 .getByPlaylistUrl(url)
-                .filterNot { it.hidden }
+                .filter { channel ->
+                    channel.playlistUrl == url && !channel.hidden
+                }
                 .sortedWith(
                     localeAwareComparator(
                         primarySelector = Channel::category,
@@ -549,16 +271,12 @@ class TvHomeViewModel @Inject constructor(
         }
     }
 
+    private fun TvUiState.supports(channel: Channel): Boolean =
+        playlists.any { playlist ->
+            playlist.url == channel.playlistUrl &&
+                tvSupportsPlaylistSource(playlist.source)
+        }
+
     private fun Map<Playlist, Int>.countFor(url: String): Int? =
         entries.firstOrNull { it.key.url == url }?.value
-
-}
-
-private fun List<DiscoveredSubscriptionProvider>.providerFor(
-    account: ProviderAccountSummary,
-): DiscoveredSubscriptionProvider? = singleOrNull { provider ->
-    provider.descriptor.providerId == account.providerId &&
-        provider.descriptor.variants.any { variant ->
-            variant.kind == account.providerKind
-        }
 }
