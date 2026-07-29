@@ -33,7 +33,7 @@ Both use the same `HookSpec<Request, Result>` and runtime policy.
 | --- | --- | --- |
 | API contract | Extension identity, manifest, settings, Hook request/result, wire fields | [`:extension:api`](../../../extension/api/src/main/kotlin/com/m3u/extension/api) |
 | Runtime | Registration, API/schema negotiation, per-Hook capabilities, payload limits, per-extension and host-wide invocation admission caps, one invocation deadline, cancellation, health | [`ExtensionRuntime`](../../../extension/runtime/src/main/kotlin/com/m3u/extension/runtime/ExtensionRuntime.kt) |
-| Android transport | Service discovery, identity, binding, handshake, streamed payloads, Binder death | [`:extension:transport-android`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android) |
+| Android transport | Service discovery, identity, binding, handshake, file-backed JSON payloads over `ParcelFileDescriptor`, Binder death | [`:extension:transport-android`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android) |
 | External SDK | Decode a call and run the registered typed handler | [`TypedExtensionService`](../../../extension/sdk-android/src/main/java/com/m3u/extension/sdk/android/TypedExtensionService.kt) |
 | Plugin lifecycle | Trust, certificate pin, enablement, grants, reconnect, reauthorization, diagnostics | [`ExtensionPluginRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/plugin/ExtensionPluginRepositoryImpl.kt) |
 | Settings lifecycle | Rendered schema, saved values, secret handles, and edit authorization | [`ExtensionSettingsRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/extension/ExtensionSettingsRepositoryImpl.kt) |

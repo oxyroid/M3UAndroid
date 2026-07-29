@@ -32,7 +32,7 @@ Runtime 负责完成一次调用。功能 repository 负责解释 result，并�
 | --- | --- | --- |
 | API 契约 | 插件身份、manifest、设置、Hook request/result 与 wire 字段 | [`:extension:api`](../../../extension/api/src/main/kotlin/com/m3u/extension/api) |
 | Runtime | 注册、API/schema 协商、按 Hook 分配 capability、payload 限制、单插件与宿主级调用准入上限、一次调用的截止时间、取消与健康状态 | [`ExtensionRuntime`](../../../extension/runtime/src/main/kotlin/com/m3u/extension/runtime/ExtensionRuntime.kt) |
-| Android transport | Service 发现、身份、绑定、handshake、流式 payload 与 Binder death | [`:extension:transport-android`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android) |
+| Android transport | Service 发现、身份、绑定、handshake、通过 `ParcelFileDescriptor` 传输的文件承载 JSON payload 与 Binder death | [`:extension:transport-android`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android) |
 | 外部 SDK | 解码调用并运行已注册的类型化 handler | [`TypedExtensionService`](../../../extension/sdk-android/src/main/java/com/m3u/extension/sdk/android/TypedExtensionService.kt) |
 | 插件生命周期 | 信任、证书固定、启停、授权、重连、重新授权与诊断 | [`ExtensionPluginRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/plugin/ExtensionPluginRepositoryImpl.kt) |
 | 设置生命周期 | 已显示的 Schema、保存值、Secret Handle 与编辑授权 | [`ExtensionSettingsRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/extension/ExtensionSettingsRepositoryImpl.kt) |

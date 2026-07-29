@@ -6,9 +6,10 @@ This page defines what may ship from the current branch. Implementation instruct
 
 ## Release boundary
 
-- The built-in Emby/Jellyfin extension is on the normal product path.
-- External extensions remain behind the developer feature switch.
-- The switch must stay in place until every item under **Before opening external extensions** is complete.
+- The built-in Emby/Jellyfin extension follows the normal product release gate.
+- External APK extensions remain an opt-in developer preview behind the developer switch.
+- Keep the switch until the external-opening gates are green and the threat model below is
+  published.
 
 ## Connected paths
 
@@ -19,7 +20,7 @@ This page defines what may ship from the current branch. Implementation instruct
 | Provider credentials | External login returns a one-time host receipt. Post-validation scopes resolve references only into requests for the approved origin; the host does not directly serialize resolved values back to the extension. | `HostNetworkBrokerSecurityTest`, `ExtensionHostBridgeTest`, `ProviderBrokerScopeStoreTest`, and `CredentialVaultTest` |
 | General Hook network access | Settings, search, metadata, EPG, and background Hooks can use the host broker when that Hook declares and receives `network`. Search/metadata/EPG use an account scope when their request has an account; other calls use approved manifest and explicitly saved setting origins. Discover stays offline. | `ExtensionNetworkOriginContractTest`, `ExtensionBrokerScopeRuntimeTest`, `ExtensionHookBrokerScopeStoreTest`, and `ExtensionHostBridgeTest` |
 | Provider persistence | New and restored subscriptions use `DataSource.Provider`; generic provider accounts, backup without tokens, reauthentication state, WorkManager refresh, and restart session cleanup share one path | Migration, provider repository, worker, restore, and session cleanup tests |
-| External lifecycle | Discovery, identity and certificate trust, review-bound enable/reauthorize tokens, enable/disable, capability and fixed-origin authorization, reconnect, clear data, diagnostics, streamed payloads, and cancellation | Transport tests, `ExtensionPluginRepositoryLifecycleTest`, and `ExternalExtensionIpcTest` |
+| External lifecycle | Discovery, identity and certificate trust, review-bound enable/reauthorize tokens, enable/disable, capability and fixed-origin authorization, reconnect, clear data, diagnostics, file-backed large-payload transfer, and cancellation | Transport tests, `ExtensionPluginRepositoryLifecycleTest`, and `ExternalExtensionIpcTest` |
 | Extension settings | Manifest and dynamic schemas, ordinary values, encrypted secret handles, network-origin approval, and review-bound field edits. Dynamic state is bound to one runtime registration and stays hidden after failure, disablement, or replacement until the current registration verifies it. | `ExtensionSettingsRepositoryTest`, `ExtensionPluginRepositoryLifecycleTest`, and `ExtensionHookBrokerScopeProviderTest` |
 | External reference provider | Discover, host-managed login, initial and later refresh, Room import, credential-backed playback resolve, header resolution, and session close cross Binder and use the same repository as built-in providers. | `ExternalProviderEndToEndTest` |
 | Provider UI | Phone and TV use descriptor-driven provider lists and forms; Emby and Jellyfin remain separate choices, while external choices retain visible provider identity | `SubscriptionSourceSelectionTest`, `TvProviderAccessibilityTest`, and `ResourceContractTest`; connected UI tests currently require an explicit device run |
@@ -32,21 +33,30 @@ A CI gate is run by `.github/workflows/android.yml`. A connected UI check is rep
 currently needs an explicit device run. A device check is a recorded one-off run.
 `ResourceContractTest` validates resource structure, not native-language quality.
 CI syntax-checks the phone matrix runner and compiles the data, phone, and TV connected-test
-harnesses; it does not execute either device matrix.
+harnesses; it does not execute the device matrices.
 
 Latest connected phone run, 2026-07-29:
 
 - Device and profile: Pixel_6_Pro API 36 on `emulator-5558`, using the runner's
   `phone` profile.
-- Results: `compact-ltr` passed 16/16, `compact-narrow-ltr` passed 2/2, and
+- Results: `compact-ltr` passed 17/17, `compact-narrow-ltr` passed 2/2, and
   `compact-rtl-large` passed 7/7 with `ar-XB` at 320dp width and 200% text.
-- Coverage includes provider selection and forms plus the new plugin-detail Loading,
+- Extension-specific coverage includes provider selection and forms plus the plugin-detail Loading,
   Failure with retry, Missing, and Content states. It also verifies correct action-target
   ownership, non-duplicated live-region semantics, non-overlapping 48dp action targets,
   and complete version, package, service, and certificate information.
 
-This run validates only the phone profile. Tablet validation remains pending as a separate
-connected run. The latest TV evidence remains the 2026-07-28 API 34 run at 1280×720:
+Latest connected tablet run, 2026-07-29:
+
+- Device and profile: `6GB_RAM_Device` API 36 on `emulator-5554`, using the runner's
+  `tablet` profile.
+- Results: `medium-ltr` passed 1/1 at 800dp and `wide-ltr` passed 6/6 at 1080dp,
+  both in English LTR with normal text size.
+- Extension-specific coverage verifies the descriptor-driven provider form and the complete
+  external-plugin management lifecycle with the Settings side rail present and selected.
+  The medium case also verifies the single-pane header, back navigation, and its 48dp touch target.
+
+The latest TV evidence remains the 2026-07-28 API 34 run at 1280×720:
 `TvProviderAccessibilityTest` passed 1/1 in English LTR and 1/1 in actual `ar-XB` RTL with
 the rail on the right, including DPad entry, provider-form open/close, accessible naming,
 and focus return to Emby. TV was not rerun as part of the phone command below.
@@ -78,7 +88,11 @@ settings and removes the test packages when it finishes.
 
 ## Before opening external extensions
 
-- Decide the published threat model. The current broker does not protect a token from a malicious extension colluding with its approved server. A stronger guarantee requires host-owned protected-response parsing and import.
+- Publish the external-extension threat model and explicitly accept or reject this residual risk:
+  the broker prevents direct credential serialization and restricts requests to approved origins,
+  but cannot stop a malicious extension from colluding with an approved server or exfiltrating
+  sensitive response data in encoded form. If that risk is not accepted, protected-response
+  parsing and import must move into the host.
 - Run the complete external provider flow on TV, through WorkManager, and through the real player rather than only the repository-level device test.
 - Add CI-runnable connected UI automation for external authorization, reauthorization, settings,
   error states, destructive confirmations, and TV focus restoration. The built-in provider DPad
@@ -89,4 +103,6 @@ settings and removes the test packages when it finishes.
 
 ## Decision rule
 
-The built-in provider path may ship when its regression list is green. External extensions may remain available as a developer preview, but the default feature switch may be removed only after the external-opening list above is green and failures leave host data and the host process safe.
+The built-in provider may ship independently when its regression gates are green. External
+extensions remain an opt-in developer preview; removing the switch requires every external-opening
+gate and the published threat-model decision.

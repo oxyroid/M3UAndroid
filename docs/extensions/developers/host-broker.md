@@ -11,7 +11,7 @@ The complete example is [`ReferenceExtensionService`](../../../testing/extension
 
 | HookSpec | Schema | Base capability | Request and result |
 | --- | --- | --- | --- |
-| `SubscriptionHookSpecs.Discover` | 3 | None | Locale → one Provider descriptor |
+| `SubscriptionHookSpecs.Discover` | 4 | None | Locale → one Provider descriptor |
 | `SubscriptionHookSpecs.Validate` | 2 | `credential.write` | Submitted values → host authentication receipt |
 | `SubscriptionHookSpecs.Refresh` | 4 | `subscription.read` | Account and refresh reason → source and complete channel snapshot |
 | `SubscriptionHookSpecs.ResolvePlayback` | 4 | `playback.resolve` | Account and playback reference → URL, headers, and optional session |
@@ -49,8 +49,7 @@ request uses a submitted or saved credential handle.
 `Discover` returns one `SubscriptionProviderDescriptor`. Keep `providerId` and every
 `ProviderKind` stable between releases. List variants in display order and include every field
 needed for login. Set `userSelectable = false` only for a compatibility kind that existing accounts
-still need but users must not choose for a new subscription. This behavior requires Discover schema
-4; the current host rejects the older schema 3 instead of silently showing the hidden kind.
+still need. M3UAndroid omits that kind from new-subscription choices.
 
 ```kotlin
 private fun discoverProvider(localeTag: String?): SubscriptionProviderDiscoverResult {

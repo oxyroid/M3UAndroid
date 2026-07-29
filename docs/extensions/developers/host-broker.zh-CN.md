@@ -11,7 +11,7 @@
 
 | HookSpec | Schema | 基础 capability | 输入与返回 |
 | --- | --- | --- | --- |
-| `SubscriptionHookSpecs.Discover` | 3 | 无 | Locale → 一个 Provider Descriptor |
+| `SubscriptionHookSpecs.Discover` | 4 | 无 | Locale → 一个 Provider Descriptor |
 | `SubscriptionHookSpecs.Validate` | 2 | `credential.write` | 提交值 → 宿主认证回执 |
 | `SubscriptionHookSpecs.Refresh` | 4 | `subscription.read` | 账号与刷新原因 → Source 和完整频道快照 |
 | `SubscriptionHookSpecs.ResolvePlayback` | 4 | `playback.resolve` | 账号与播放引用 → URL、Header 和可选 Session |
@@ -48,8 +48,7 @@ init {
 `Discover` 返回一个 `SubscriptionProviderDescriptor`。`providerId` 和每个
 `ProviderKind` 在不同版本间保持稳定。按显示顺序列出可选类型，并包含登录需要的全部
 字段。只有历史账号仍需识别、但新订阅不应再选择的兼容类型，才设置
-`userSelectable = false`。这项行为从 Discover Schema 4 开始强制执行；当前宿主会拒绝
-旧 Schema 3，不会静默显示本应隐藏的类型。
+`userSelectable = false`；M3UAndroid 不会在新订阅选项中显示该类型。
 
 ```kotlin
 private fun discoverProvider(localeTag: String?): SubscriptionProviderDiscoverResult {
