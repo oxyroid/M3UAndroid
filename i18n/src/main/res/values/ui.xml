@@ -65,7 +65,7 @@
     <string name="ui_sort_never_played">never played</string>
     <string name="ui_sort_unspecified">Unspecified</string>
     <string name="ui_connect">Connect</string>
-    <string name="ui_remote_control_pair_title">enter code from TV</string>
+    <string name="ui_remote_control_pair_title">Enter code from TV</string>
     <string name="ui_remote_control_pair_subtitle">Make sure to connect to the same Wi-Fi</string>
     <string name="ui_remote_control_pair_timeout">TV was not found. Make sure both devices are on the same network.</string>
     <string name="ui_remote_control_connect">Connect</string>

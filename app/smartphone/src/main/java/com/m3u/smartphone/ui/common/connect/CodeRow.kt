@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.m3u.i18n.R.string
+import com.m3u.smartphone.ui.material.ktx.rememberUiBidiFormatter
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 
 @Composable
@@ -35,12 +36,13 @@ internal fun CodeRow(
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
+    val bidiFormatter = rememberUiBidiFormatter()
     val element = remember(code) { code.toCharArray().map { it.toString() } }
     val pairingCodeDescription = when {
         code.isBlank() -> stringResource(string.ui_remote_control_pairing_code_empty)
         else -> stringResource(
             string.ui_remote_control_pairing_code,
-            code.toCharArray().joinToString(separator = " ")
+            bidiFormatter.ltr(code.toCharArray().joinToString(separator = " "))
         )
     }
 
