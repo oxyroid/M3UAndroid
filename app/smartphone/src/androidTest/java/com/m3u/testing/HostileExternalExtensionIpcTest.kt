@@ -4,13 +4,18 @@ import android.content.Context
 import android.os.ParcelFileDescriptor
 import android.os.Process
 import android.os.SystemClock
+import androidx.datastore.preferences.core.edit
 import androidx.test.platform.app.InstrumentationRegistry
+import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
+import com.m3u.core.foundation.architecture.preferences.settings
+import com.m3u.data.repository.plugin.PluginEnableResult
 import com.m3u.extension.api.BackgroundTaskRequest
 import com.m3u.extension.api.BackgroundTaskResult
 import com.m3u.extension.api.ExtensionApiVersions
 import com.m3u.extension.api.ExtensionErrorCode
 import com.m3u.extension.api.ExtensionErrorCodes
 import com.m3u.extension.api.ExtensionResult
+import com.m3u.extension.api.ExtensionState
 import com.m3u.extension.api.HostHookSpecs
 import com.m3u.extension.api.HookResult
 import com.m3u.extension.api.SerializedExtensionEnvelope
@@ -25,17 +30,22 @@ import com.m3u.extension.runtime.ExtensionTransportHealth
 import com.m3u.extension.runtime.InvocationPolicy
 import com.m3u.extension.transport.android.AndroidBoundExtensionTransport
 import com.m3u.extension.transport.android.AndroidExtensionDiscovery
+import com.m3u.extension.transport.android.ExtensionTrustStore
 import com.m3u.extension.transport.android.InstalledExtensionService
 import com.m3u.extension.transport.android.ipc.IExtensionHostBridge
 import com.m3u.extension.transport.android.ipc.IExtensionResultCallback
+import com.m3u.smartphone.DebugExtensionPlatformEntryPoint
 import com.m3u.testing.hostile.HostileExtensionFixtureProtocol
+import dagger.hilt.android.EntryPointAccessors
 import java.io.Closeable
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -57,6 +67,174 @@ class HostileExternalExtensionIpcTest {
         exerciseValidAndInvalidResponses(context, installed)
         exerciseIgnoredCancellationAndLateResponse(context, installed)
         exerciseProcessDeathAndReconnect(context, installed)
+    }
+
+    @Test
+    fun staleSignerPinDisablesRealServiceUntilExplicitReauthorization() = runBlocking {
+        val context = InstrumentationRegistry.getInstrumentation()
+            .targetContext
+            .applicationContext
+        val repository = EntryPointAccessors.fromApplication(
+            context,
+            DebugExtensionPlatformEntryPoint::class.java,
+        ).pluginRepository()
+        val trustStore = ExtensionTrustStore(context)
+        val installed = hostileService(context)
+        val staleService = installed.copy(certificateSha256 = STALE_CERTIFICATE_SHA256)
+        val previousExternalExtensions = context.settings.data
+            .first()[PreferencesKeys.EXTERNAL_EXTENSIONS]
+
+        try {
+            context.settings.edit { preferences ->
+                preferences[PreferencesKeys.EXTERNAL_EXTENSIONS] = true
+            }
+            repository.revoke(installed.packageName, installed.serviceName)
+            trustStore.trust(
+                service = staleService,
+                extensionId = HostileExtensionFixtureProtocol.EXTENSION_ID_VALUE,
+                capabilities = HOSTILE_CAPABILITIES,
+                displayName = HOSTILE_DISPLAY_NAME,
+                version = HOSTILE_VERSION,
+                developer = HOSTILE_DEVELOPER,
+                enabled = true,
+            )
+
+            val changed = repository.installedPlugins().single { plugin ->
+                plugin.packageName == installed.packageName &&
+                    plugin.serviceName == installed.serviceName
+            }
+            assertFalse(changed.trusted)
+            assertTrue(changed.signatureChanged)
+            assertFalse(changed.enabled)
+            assertEquals(ExtensionState.DISABLED, changed.state)
+            assertEquals(STALE_CERTIFICATE_SHA256, changed.previousCertificateSha256)
+
+            val enableResult = repository.enable(
+                changed.packageName,
+                changed.serviceName,
+                checkNotNull(changed.authorizationToken),
+            )
+            assertEquals(
+                "Extension signing certificate changed",
+                (enableResult as PluginEnableResult.Rejected).reason,
+            )
+            assertFalse(trustStore.isTrusted(installed))
+
+            val reviewed = repository.installedPlugins().single { plugin ->
+                plugin.packageName == installed.packageName &&
+                    plugin.serviceName == installed.serviceName
+            }
+            val reauthorization = repository.reauthorize(
+                reviewed.packageName,
+                reviewed.serviceName,
+                checkNotNull(reviewed.authorizationToken),
+            )
+            assertTrue(reauthorization is PluginEnableResult.Enabled)
+            assertTrue(trustStore.isTrusted(installed))
+            assertFalse(trustStore.isEnabled(installed))
+
+            val repinned = repository.installedPlugins().single { plugin ->
+                plugin.packageName == installed.packageName &&
+                    plugin.serviceName == installed.serviceName
+            }
+            assertTrue(repinned.trusted)
+            assertFalse(repinned.signatureChanged)
+            assertFalse(repinned.enabled)
+            assertEquals(ExtensionState.DISABLED, repinned.state)
+        } finally {
+            repository.revoke(installed.packageName, installed.serviceName)
+            restoreExternalExtensionsSetting(context, previousExternalExtensions)
+        }
+    }
+
+    @Test
+    fun trustedExtensionIdOwnerBlocksRealProcessClaimant() = runBlocking {
+        val context = InstrumentationRegistry.getInstrumentation()
+            .targetContext
+            .applicationContext
+        val repository = EntryPointAccessors.fromApplication(
+            context,
+            DebugExtensionPlatformEntryPoint::class.java,
+        ).pluginRepository()
+        val trustStore = ExtensionTrustStore(context)
+        val installed = hostileService(context)
+        val existingOwner = InstalledExtensionService(
+            packageName = EXISTING_OWNER_PACKAGE,
+            serviceName = EXISTING_OWNER_SERVICE,
+            certificateSha256 = EXISTING_OWNER_CERTIFICATE_SHA256,
+            uid = EXISTING_OWNER_UID,
+        )
+        val previousExternalExtensions = context.settings.data
+            .first()[PreferencesKeys.EXTERNAL_EXTENSIONS]
+
+        try {
+            context.settings.edit { preferences ->
+                preferences[PreferencesKeys.EXTERNAL_EXTENSIONS] = true
+            }
+            repository.revoke(installed.packageName, installed.serviceName)
+            repository.revoke(existingOwner.packageName, existingOwner.serviceName)
+            trustStore.trust(
+                service = existingOwner,
+                extensionId = HostileExtensionFixtureProtocol.EXTENSION_ID_VALUE,
+                capabilities = setOf("settings.contribute"),
+                displayName = "Existing trusted owner",
+                version = "1.0.0",
+                developer = "M3U identity fixture",
+                enabled = true,
+            )
+
+            val claimant = repository.installedPlugins().single { plugin ->
+                plugin.packageName == installed.packageName &&
+                    plugin.serviceName == installed.serviceName
+            }
+            assertFalse(claimant.trusted)
+            assertFalse(claimant.enabled)
+            assertEquals(ExtensionState.DISABLED, claimant.state)
+            assertFalse(claimant.canClearData)
+
+            val result = repository.enable(
+                claimant.packageName,
+                claimant.serviceName,
+                checkNotNull(claimant.authorizationToken),
+            )
+            assertEquals(
+                "Extension ID is already trusted for another service",
+                (result as PluginEnableResult.Rejected).reason,
+            )
+            assertFalse(trustStore.isTrusted(installed))
+            assertTrue(
+                trustStore.isSoleTrustedOwner(
+                    existingOwner,
+                    HostileExtensionFixtureProtocol.EXTENSION_ID_VALUE,
+                )
+            )
+            assertEquals(
+                setOf("settings.contribute"),
+                trustStore.grantedCapabilities(existingOwner),
+            )
+        } finally {
+            repository.revoke(installed.packageName, installed.serviceName)
+            repository.revoke(existingOwner.packageName, existingOwner.serviceName)
+            restoreExternalExtensionsSetting(context, previousExternalExtensions)
+        }
+    }
+
+    private fun hostileService(context: Context): InstalledExtensionService =
+        AndroidExtensionDiscovery(context).discover().singleOrNull { candidate ->
+            candidate.serviceName == HostileExtensionFixtureProtocol.SERVICE_CLASS_NAME
+        } ?: error("Hostile extension fixture was not discovered in the test APK")
+
+    private suspend fun restoreExternalExtensionsSetting(
+        context: Context,
+        previousValue: Boolean?,
+    ) {
+        context.settings.edit { preferences ->
+            if (previousValue == null) {
+                preferences.remove(PreferencesKeys.EXTERNAL_EXTENSIONS)
+            } else {
+                preferences[PreferencesKeys.EXTERNAL_EXTENSIONS] = previousValue
+            }
+        }
     }
 
     private suspend fun exerciseValidAndInvalidResponses(
@@ -459,5 +637,15 @@ class HostileExternalExtensionIpcTest {
         const val MALFORMED_RESPONSE_REPETITIONS = 17
         const val HOSTILE_FAILURE_THRESHOLD = 100
         const val ACTIVE_BRIDGE_CALLBACK_CODE = "test.active_bridge_probe"
+        const val STALE_CERTIFICATE_SHA256 = "stale-hostile-certificate"
+        const val EXISTING_OWNER_PACKAGE = "com.m3u.testing.existing.owner"
+        const val EXISTING_OWNER_SERVICE =
+            "com.m3u.testing.existing.owner.ExtensionService"
+        const val EXISTING_OWNER_CERTIFICATE_SHA256 = "existing-owner-certificate"
+        const val EXISTING_OWNER_UID = 20_001
+        const val HOSTILE_DISPLAY_NAME = "Hostile transport fixture"
+        const val HOSTILE_VERSION = "1.0.0"
+        const val HOSTILE_DEVELOPER = "M3U hostile conformance fixture"
+        val HOSTILE_CAPABILITIES = setOf("background.task", "network")
     }
 }

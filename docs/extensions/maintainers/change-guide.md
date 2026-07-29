@@ -71,6 +71,10 @@ For persistent channel, provider, and EPG work, start with [`SubscriptionProvide
 
 When changing the broker, add denial cases to [`HostNetworkBrokerSecurityTest`](../../../data/src/androidTest/java/com/m3u/data/extension/security/HostNetworkBrokerSecurityTest.kt) before implementing behavior. Changes to owner, origin, redirect, authentication headers, response size, or credential capture must also be checked against the [external extension release gates](status-and-release.md#before-opening-external-extensions).
 
+Any change to a Hook request, capability, trust rule, broker scope, or persisted result must also
+update both versions of the [external APK threat model](threat-model.md). Record the newly exposed
+asset or data, the enforcing host boundary, and any risk that remains after the test passes.
+
 ## Change phone or TV UI
 
 UI observes repository state and sends operations; it does not discover or bind services directly.

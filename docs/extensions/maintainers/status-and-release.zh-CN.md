@@ -8,7 +8,8 @@
 
 - Emby/Jellyfin 内置插件按正常产品门槛发布。
 - 外部 APK 插件仍是需要通过开发者开关主动启用的预览能力。
-- 外部开放清单完成且下方威胁模型正式确定前，保留该开关。
+- 外部开放清单完成，且已发布的[外部 APK 插件威胁模型](threat-model.zh-CN.md)中每个未决项
+  都有留档结论前，保留该开关。
 
 ## 已接通链路
 
@@ -37,9 +38,12 @@ Connected Test。CI 还会在 `hostileApi34` 构建托管设备上运行
 最近一次恶意 IPC Fixture 实测（2026-07-29）：
 
 - 设备：`emulator-5558` 上的 Pixel 6 Pro API 36。
-- 结果：1/1 通过；Fixture 位于测试 APK，使用不同 UID 和独立 `:hostile` 进程。
+- 结果：3/3 通过；Fixture 位于测试 APK，使用不同 UID 和独立 `:hostile` 进程。
 - 覆盖：重复畸形输出、合法但超限的结果、忽略取消与迟到回调、同一个宿主 Bridge
-  在授权期内可用且撤销后拒绝调用、进程死亡，以及以新 PID 重连。
+  在授权期内可用且撤销后拒绝调用、进程死亡、以新 PID 重连、过期的持久化签名固定值、
+  审阅后重新固定证书，以及真实进程冒用已由其他可信 Service 持有的 Extension ID 时被拒绝。
+- 签名用例把真实发现 Service 的当前 PackageManager 证书与测试注入的过期固定值比较；
+  它没有安装一个不同签名的替换 APK。
 
 最近一次手机 Connected 实测（2026-07-29）：
 
@@ -90,13 +94,13 @@ testing/bin/run-smartphone-provider-ui-matrix.sh emulator-5558 phone
 
 ## 开放外部插件之前
 
-- 发布外部插件威胁模型，并明确接受或拒绝这项剩余风险：Broker 会阻止宿主直接把凭据
-  序列化给插件，并把请求限制在已批准 Origin，但无法阻止恶意插件与已批准服务端串谋，
-  或编码外传响应中的敏感信息。若不接受该风险，受保护响应的解析与导入必须移到宿主。
+- 逐项解决并留档[外部 APK 插件威胁模型](threat-model.zh-CN.md#仍未解决的问题)中的未决项，
+  包括 HTTP/LAN 策略、解析后地址、已批准服务端串谋、Hook 数据披露和包准入。
 - 在 TV、WorkManager 和真实播放器中跑通完整外部 Provider 流程，而不只依赖 Repository 级设备测试；
 - 为外部插件的授权、重新授权、设置、错误状态、破坏性操作确认与 TV 回焦增加可在 CI
   运行的 Connected UI 自动化；内置 Provider 的 DPad 测试不算完成此门槛；
-- 增加进程级恶意 Fixture，覆盖调用阻塞、忽略取消、进程死亡、错误或超限输出、保留 Broker、签名变化与 Extension ID 冲突；
+- 保持进程级恶意 Fixture 门禁通过，覆盖阻塞或迟到调用、忽略取消、进程死亡、错误或超限
+  输出、保留 Broker、过期签名信任与 Extension ID 冲突；
 - 让同一套公开一致性测试同时运行于内置和外部 Transport；
 - 将 SDK Artifact 与仓库内 Golden Fixture、兼容策略一起发布。
 

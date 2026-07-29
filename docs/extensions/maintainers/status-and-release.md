@@ -8,8 +8,8 @@ This page defines what may ship from the current branch. Implementation instruct
 
 - The built-in Emby/Jellyfin extension follows the normal product release gate.
 - External APK extensions remain an opt-in developer preview behind the developer switch.
-- Keep the switch until the external-opening gates are green and the threat model below is
-  published.
+- Keep the switch until the external-opening gates are green and every unresolved decision in the
+  published [external APK threat model](threat-model.md) has a recorded outcome.
 
 ## Connected paths
 
@@ -39,11 +39,15 @@ device; it does not execute the phone, tablet, or TV UI matrices.
 Latest hostile IPC run, 2026-07-29:
 
 - Device: Pixel 6 Pro API 36 on `emulator-5558`.
-- Result: 1/1 passed with the fixture in the instrumentation APK, a different UID, and a dedicated
+- Result: 3/3 passed with the fixture in the instrumentation APK, a different UID, and a dedicated
   `:hostile` process.
 - Coverage: repeated malformed output, a valid oversized result, ignored cancellation and a late
   callback, the same host bridge working while scoped and rejecting use after revocation, process
-  death, and reconnect with a new PID.
+  death, reconnect with a new PID, a stale persisted signer pin, reviewed certificate repinning,
+  and rejection of a real process that claims an extension ID already owned by another trusted
+  service.
+- The signer case compares PackageManager's current certificate for the real discovered service
+  with a seeded stale pin. It does not install a differently signed replacement APK.
 
 Latest connected phone run, 2026-07-29:
 
@@ -98,16 +102,16 @@ settings and removes the test packages when it finishes.
 
 ## Before opening external extensions
 
-- Publish the external-extension threat model and explicitly accept or reject this residual risk:
-  the broker prevents direct credential serialization and restricts requests to approved origins,
-  but cannot stop a malicious extension from colluding with an approved server or exfiltrating
-  sensitive response data in encoded form. If that risk is not accepted, protected-response
-  parsing and import must move into the host.
+- Resolve and record every open decision in the
+  [external APK threat model](threat-model.md#what-remains-open), including HTTP/LAN policy,
+  resolved-address handling, approved-server cooperation, Hook disclosure, and package admission.
 - Run the complete external provider flow on TV, through WorkManager, and through the real player rather than only the repository-level device test.
 - Add CI-runnable connected UI automation for external authorization, reauthorization, settings,
   error states, destructive confirmations, and TV focus restoration. The built-in provider DPad
   test does not satisfy this gate.
-- Add process-level hostile fixtures for a blocked call, ignored cancellation, process death, malformed or oversized output, retained broker access, signer change, and extension-ID collision.
+- Keep the process-level hostile fixture green for blocked or late calls, ignored cancellation,
+  process death, malformed or oversized output, retained broker access, stale signer trust, and
+  extension-ID collision.
 - Run the same published conformance suite against built-in and external transports.
 - Publish the SDK artifact together with the checked-in golden fixtures and compatibility policy.
 

@@ -37,3 +37,5 @@
 - 内置和 APK 插件共用同一份 Hook 契约，差别只在是否经过 Android IPC。
 
 需要追完整调用链时，阅读[当前架构与代码地图](architecture.zh-CN.md)。准备修改时，使用[按改动类型操作](change-guide.zh-CN.md)。手机、平板或 TV 的插件界面发生变化时，使用[插件界面质量门槛](ui-quality-gates.zh-CN.md)。只有判断能力是否已经开放或能否发布时，才阅读[当前状态与发布门槛](status-and-release.zh-CN.md)。
+
+修改 APK 可以读取、调用或保留的内容前，先检查[外部 APK 插件威胁模型](threat-model.zh-CN.md)。

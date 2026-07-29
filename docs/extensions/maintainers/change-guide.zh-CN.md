@@ -71,6 +71,10 @@ Repository 和 Importer 不按具体 `ProviderKind` 分支；只有 Provider 实
 
 修改 broker 时，从 [`HostNetworkBrokerSecurityTest`](../../../data/src/androidTest/java/com/m3u/data/extension/security/HostNetworkBrokerSecurityTest.kt) 增加拒绝场景，再实现行为。涉及 owner、origin、redirect、认证 header、响应大小或凭据 capture 的改动也必须检查[外部插件发布门槛](status-and-release.zh-CN.md#开放外部插件之前)。
 
+修改 Hook Request、Capability、信任规则、Broker 作用域或持久化结果时，还必须同步更新
+[外部 APK 插件威胁模型](threat-model.zh-CN.md)的中英文版本。写清新增暴露的资产或数据、
+负责限制它的宿主边界，以及测试通过后仍然存在的风险。
+
 ## 修改手机或 TV 界面
 
 界面只观察 repository state 并发送操作，不直接发现或绑定 service。
