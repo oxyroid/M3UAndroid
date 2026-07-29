@@ -413,6 +413,9 @@ class ExternalExtensionManagementUiTest {
         val notConfiguredOriginState = composeRule.activity.getString(
             string.feat_setting_extension_network_origin_state_not_configured
         )
+        composeRule.onNodeWithTag(SETTINGS_SCREEN_TAG)
+            .performScrollToNode(hasTestTag(API_ORIGIN_FIELD_TAG))
+        waitUntilTagExists(API_ORIGIN_FIELD_TAG)
         composeRule.onNodeWithTag(API_ORIGIN_STATE_TAG, useUnmergedTree = true)
             .performScrollTo()
             .assertTextContains(notConfiguredOriginState, substring = false)
@@ -478,6 +481,9 @@ class ExternalExtensionManagementUiTest {
         openSettings()
         composeRule.onNodeWithTag(choiceTag("auto")).performScrollTo().assertIsSelected()
         waitUntilTagGone(API_KEY_CLEAR_TAG)
+        composeRule.onNodeWithTag(SETTINGS_SCREEN_TAG)
+            .performScrollToNode(hasTestTag(API_ORIGIN_FIELD_TAG))
+        waitUntilTagExists(API_ORIGIN_FIELD_TAG)
         composeRule.onNodeWithTag(API_ORIGIN_STATE_TAG, useUnmergedTree = true)
             .performScrollTo()
             .assertTextContains(notConfiguredOriginState, substring = false)
@@ -500,7 +506,7 @@ class ExternalExtensionManagementUiTest {
         composeRule.onNodeWithTag(actionTag("disable"))
             .assertMinimumTouchTarget()
             .performClick()
-        waitUntilTagExists(actionTag("enable"))
+        scrollDetailTo(actionTag("enable"))
         waitUntilTagEnabled(actionTag("enable"))
         composeRule.onNodeWithTag(actionTag("enable"))
             .assertMinimumTouchTarget()
