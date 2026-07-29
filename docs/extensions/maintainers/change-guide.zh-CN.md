@@ -55,6 +55,13 @@ Repository 和 Importer 不按具体 `ProviderKind` 分支；只有 Provider 实
 [`ExtensionConformanceSuite`](../../../extension/conformance/src/main/kotlin/com/m3u/extension/conformance/ExtensionConformanceSuite.kt)，
 并保持内置 Runtime、SDK Backend 与独立参考 APK 三个适配器全部通过。
 
+## 修改已发布 SDK
+
+根工程与独立 Hello 的 SDK 版本必须一致。运行
+`testing/bin/verify-extension-sdk-distribution.sh`；该命令会生成本地 Maven 仓库，检查最终
+压缩包与校验值，拒绝发布元数据中的宿主模块引用，抽查必要的 Fixture，并在不使用
+project substitution 的情况下编译 Hello。两条 CI 流水线都会上传压缩包与 SHA-256 文件。
+
 ## 修改结果应用器
 
 应用器需要明确三件事：本次请求范围、结果所有者、旧数据替换范围。
@@ -84,7 +91,7 @@ Repository 和 Importer 不按具体 `ProviderKind` 分支；只有 Provider 实
 
 界面只观察 repository state 并发送操作，不直接发现或绑定 service。
 
-- 手机从 [`SubscriptionsFragment`](../../../app/smartphone/src/main/java/com/m3u/smartphone/ui/business/setting/fragments/SubscriptionsFragment.kt) 和 [`ExtensionSettingsDialog`](../../../app/smartphone/src/main/java/com/m3u/smartphone/ui/business/setting/fragments/ExtensionSettingsDialog.kt) 开始。
+- 手机从 [`PlaylistManagementScreen`](../../../app/smartphone/src/main/java/com/m3u/smartphone/ui/business/setting/fragments/PlaylistManagementScreen.kt)、[`ExtensionPluginManagementScreen`](../../../app/smartphone/src/main/java/com/m3u/smartphone/ui/business/setting/fragments/ExtensionPluginManagementScreen.kt) 和 [`ExtensionSettingsScreen`](../../../app/smartphone/src/main/java/com/m3u/smartphone/ui/business/setting/fragments/ExtensionSettingsScreen.kt) 开始。
 - TV 从 [`TvHomeViewModel`](../../../app/tv/src/main/java/com/m3u/tv/TvHomeViewModel.kt) 和 [`TvScreens`](../../../app/tv/src/main/java/com/m3u/tv/TvScreens.kt) 开始。
 
 手机检查整行点击、滚动授权、错误可见性和设置保存；TV 检查 DPad 顺序、聚焦态、返回行为和长文本。
@@ -95,6 +102,7 @@ Repository 和 Importer 不按具体 `ProviderKind` 分支；只有 Provider 实
 | --- | --- |
 | API 或 runtime | [`ExtensionContractTest`](../../../extension/api/src/test/kotlin/com/m3u/extension/api/ExtensionContractTest.kt)、[`ExtensionRuntimeTest`](../../../extension/runtime/src/test/kotlin/com/m3u/extension/runtime/ExtensionRuntimeTest.kt) |
 | APK SDK 与类型化 handler | [`TypedExtensionServiceTest`](../../../extension/sdk-android/src/test/java/com/m3u/extension/sdk/android/TypedExtensionServiceTest.kt)、[`hello-extension`](../../../samples/hello-extension) |
+| SDK 压缩包内容、发布元数据与依赖边界 | `verifyExtensionSdkBundle`、`verifyExtensionSdkRepository`、[`verify-extension-sdk-distribution.sh`](../../../testing/bin/verify-extension-sdk-distribution.sh) |
 | 内置与 APK Handler 共用行为 | [`BuiltInExtensionConformanceTest`](../../../extension/runtime/src/test/kotlin/com/m3u/extension/runtime/BuiltInExtensionConformanceTest.kt)、[`TypedExtensionConformanceTest`](../../../extension/sdk-android/src/test/java/com/m3u/extension/sdk/android/TypedExtensionConformanceTest.kt)、[`ExternalExtensionConformanceIpcTest`](../../../app/smartphone/src/androidTest/java/com/m3u/testing/ExternalExtensionConformanceIpcTest.kt) |
 | 证书信任与连接状态 | [`CertificateSetFingerprintTest`](../../../extension/transport-android/src/test/java/com/m3u/extension/transport/android/CertificateSetFingerprintTest.kt)、[`ExtensionTrustStoreTest`](../../../extension/transport-android/src/androidTest/java/com/m3u/extension/transport/android/ExtensionTrustStoreTest.kt)、[`ExtensionConnectionStateTest`](../../../extension/transport-android/src/androidTest/java/com/m3u/extension/transport/android/ExtensionConnectionStateTest.kt) |
 | 跨进程发现、绑定、PFD、调用与取消 | [`ExternalExtensionIpcTest`](../../../app/smartphone/src/androidTest/java/com/m3u/testing/ExternalExtensionIpcTest.kt)、[`ExternalExtensionConformanceIpcTest`](../../../app/smartphone/src/androidTest/java/com/m3u/testing/ExternalExtensionConformanceIpcTest.kt)、[`extension-reference`](../../../testing/extension-reference) |

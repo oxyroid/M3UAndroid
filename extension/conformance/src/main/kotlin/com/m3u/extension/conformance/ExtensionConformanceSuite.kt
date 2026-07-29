@@ -163,7 +163,17 @@ class ExtensionConformanceSuite(
             description = "${slowCase.name} did not start",
             predicate = handlerStarted,
         )
-        driver.cancel(envelope.invocationId)
+        try {
+            withTimeout(CANCELLATION_COMPLETION_TIMEOUT_MILLIS) {
+                driver.cancel(envelope.invocationId)
+            }
+        } catch (timeout: TimeoutCancellationException) {
+            invocation.cancel()
+            throw ExtensionConformanceFailure(
+                "${slowCase.name} cancel request did not complete",
+                timeout,
+            )
+        }
         val completion = runCatching {
             withTimeout(CANCELLATION_COMPLETION_TIMEOUT_MILLIS) {
                 invocation.await()
@@ -196,6 +206,12 @@ class ExtensionConformanceSuite(
         )
     }
 
+    /**
+     * Verifies the standard fixture exposed by [ExtensionConformanceFixtures].
+     *
+     * The driver manifest and handler must implement that Background Task fixture. This method is
+     * intended for platform adapters and reference extensions, not arbitrary production plugins.
+     */
     suspend fun verifyStandardBehavior(driver: ExtensionConformanceDriver) {
         verifySuccessfulInvocation(driver, ExtensionConformanceFixtures.ResetCase)
         verifySuccessfulInvocation(driver, ExtensionConformanceFixtures.ContextCase)

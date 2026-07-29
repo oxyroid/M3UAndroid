@@ -16,6 +16,7 @@
 | 范围 | 当前行为 | 证据 |
 | --- | --- | --- |
 | 契约与 Runtime | 类型化、带版本的 Hook 契约；每次调用只获得当前 Hook 已声明且已批准的 Capability；限制单插件与宿主级调用准入；Request 准备、排队、执行、Response 校验与 Broker 请求共用一个截止时间；累计限制 Broker 请求次数、编码后的请求总字节数和响应总字节数；传播取消；记录健康状态并隔离连续失败 | `WireGoldenFixtureTest`、`ExtensionContractTest`、`ExtensionRuntimeTest`、`InvocationBudgetPropagationTest` 与 `ExtensionHostBridgeTest`。同一套序列化一致性测试会分别运行于内置 Runtime、SDK Backend 与独立参考 APK。 |
+| SDK 分发 | `1.0.0-alpha01` 会把 API、Android 协议、类型化 SDK、源码、一致性测试库和 Golden Fixture 发布为带版本的 Maven 仓库压缩包，并生成 SHA-256 文件。Hello 是独立的 Gradle 引用工程，只从该仓库解析 SDK group。 | `verifyExtensionSdkBundle`、`verifyExtensionSdkRepository` 与 `testing/bin/verify-extension-sdk-distribution.sh`。两条流水线都已配置上传压缩包与校验值，仍需首次 Actions 成功结果作为远端证据。 |
 | 内置 Provider | Emby 和 Jellyfin 是同一个内置插件中可供新订阅选择的两个类型；隐藏的自动识别类型只作为已有账号的兼容值保留，不提供给新订阅选择 | `EmbyCompatibleProviderIntegrationTest`、`EmbyCompatibleProviderLocalizationTest` 与 `SubscriptionProviderRepositoryIntegrationTest` |
 | Provider 凭据 | 外部登录只返回一次性宿主回执。验证后的作用域只会把引用解析进发往批准 Origin 的请求；宿主不会把解析值直接序列化回插件。 | `HostNetworkBrokerSecurityTest`、`ExtensionHostBridgeTest`、`ProviderBrokerScopeStoreTest` 与 `CredentialVaultTest` |
 | 通用 Hook 联网 | 设置、搜索、Metadata、EPG 和后台任务 Hook 在自身声明并获得 `network` 后可以使用宿主 Broker。搜索、Metadata、EPG request 带账号时使用账号作用域；其他调用使用已批准的 manifest Origin 与用户明确保存的设置 Origin。Discover 保持离线。 | `ExtensionNetworkOriginContractTest`、`ExtensionBrokerScopeRuntimeTest`、`ExtensionHookBrokerScopeStoreTest` 与 `ExtensionHostBridgeTest` |
@@ -32,9 +33,9 @@
 CI 门禁指 `.github/workflows/android.yml` 自动执行的检查。Connected UI 检查可重复，但目前
 需要显式设备运行；设备检查指有记录的一次性实测。`ResourceContractTest` 验证资源结构，
 不代表母语文案质量。CI 会检查手机矩阵脚本的语法，并编译 data、手机与 TV 的
-Connected Test。CI 会在 `hostileApi34` 构建托管设备上安装独立参考 APK，并运行
-`HostileExternalExtensionIpcTest` 与 `ExternalExtensionConformanceIpcTest`；不会执行
-手机、平板或 TV 的界面矩阵。
+Connected Test。流水线已配置为在 `hostileApi34` 构建托管设备上安装独立参考 APK，
+并运行 `HostileExternalExtensionIpcTest` 与 `ExternalExtensionConformanceIpcTest`；
+不会执行手机、平板或 TV 的界面矩阵。
 
 最近一次恶意 IPC Fixture 实测（2026-07-29）：
 
@@ -50,8 +51,9 @@ Connected Test。CI 会在 `hostileApi34` 构建托管设备上安装独立参�
 
 - 设备：`emulator-5558` 上的 Pixel 6 Pro API 36。
 - 结果：1/1 通过；参考插件以独立 APK 安装，与宿主使用不同 UID。
-- 覆盖：类型化成功结果与关联字段、Request/设置/授权/预算上下文、缺少必要 Capability
-  与不支持 Schema 时拒绝，以及远端 Handler 通过 AIDL 与 PFD JSON Transport 收到取消。
+- 覆盖：类型化成功结果中的 Invocation、Extension、Hook 与 Schema 标识和请求一致；
+  Request/设置/授权/预算上下文；缺少必要 Capability 与不支持 Schema 时拒绝；类型化
+  Request/Result 经 PFD JSON 传输；取消经 AIDL 发送并由远端 Handler 确认收到。
 
 最近一次手机 Connected 实测（2026-07-29）：
 
@@ -110,7 +112,8 @@ testing/bin/run-smartphone-provider-ui-matrix.sh emulator-5558 phone
 - 保持进程级恶意 Fixture 门禁通过，覆盖阻塞或迟到调用、忽略取消、进程死亡、错误或超限
   输出、保留 Broker、过期签名信任与 Extension ID 冲突；
 - 保持内置 Runtime、SDK Backend 与独立 APK 共用的一致性测试全部通过；
-- 将 SDK Artifact 与仓库内 Golden Fixture、兼容策略一起发布。
+- 保持带版本的 SDK 压缩包与独立 Hello 消费测试通过。默认开放前，将压缩包及校验值附加到
+  可长期访问的发布渠道，不能只依赖短期 CI Artifact。
 
 ## 决策规则
 

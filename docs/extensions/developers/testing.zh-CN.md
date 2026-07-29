@@ -20,30 +20,15 @@
 
 预期内的失败使用 `handleResult(...)` 或 `handleResultWithBroker(...)` 返回。只有意外故障才抛出异常。
 
-## 2. 检查 Wire Fixture
+## 2. 构建插件
 
-[API 1 Golden Wire Fixtures](../../../extension/api/src/jvmTest/resources/golden-wire/v1/README.zh-CN.md)
-包含调用与结果 Envelope、当前每个 Hook 的 Request 与 Result，以及 Broker 消息。运行以下
-命令检查所有 Fixture 都能解码，并在重新编码后保持相同 JSON 结构：
+运行插件工程的常规构建任务：
 
 ```bash
-./gradlew :extension:api:jvmTest
+./gradlew assembleDebug
 ```
 
-修改 Fixture 前按[兼容性判断表](reference/compatibility.zh-CN.md#遵守-wire-兼容规则)处理。
-保留所有旧 Schema Fixture，新版本新增相邻的 `schema-<version>` 目录。
-
-## 3. 构建模块
-
-Hello 模块使用：
-
-```bash
-./gradlew :samples:hello-extension:assembleDebug
-```
-
-自己的插件使用对应模块任务。
-
-## 4. 从 M3UAndroid 触发 Hook
+## 3. 从 M3UAndroid 触发 Hook
 
 让 M3UAndroid 使用当前插件构建，再操作该 Hook 所属的功能。
 
@@ -61,7 +46,7 @@ Hello 模块使用：
 参考 Provider 测试通过外部插件链路覆盖：发现、登录失败、登录成功、首次刷新、后续刷新、
 播放解析、Header 解析和 Session 关闭。
 
-## 5. 检查失败行为
+## 4. 检查失败行为
 
 为每个 Hook 触发一次预期内的失败，并确认：
 
@@ -76,11 +61,11 @@ Hello 模块使用：
 
 Provider 还应覆盖凭据被拒、刷新失败后保留已有数据、无效播放 Result，以及重复关闭 Session。
 
-## 6. 验证更新
+## 5. 验证更新
 
 - 保持相同的插件身份与签名证书；
 - 确认已有设置仍能读取；
-- 确认删除或改名的字段按预期 reconcile；
+- 确认删除或改名的字段会按预期保留、迁移或清除已有值；
 - 确认新增必要 capability 时会请求授权；
 - 确认诊断信息不包含 Secret、Credential Handle，以及能识别用户的请求或响应数据。
 

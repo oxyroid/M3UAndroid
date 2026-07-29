@@ -40,9 +40,9 @@ API version and Hook schema answer different questions:
 Omitting a field is compatible only when the receiving contract defines a default. Adding a field
 that every receiver must understand requires a new Hook schema even within the same API major.
 
-The checked-in [API 1 golden wire fixtures](../../../../extension/api/src/jvmTest/resources/golden-wire/v1/README.md)
-show the canonical envelope, Hook payload, and broker JSON shapes. A new Hook schema gets a new
-`schema-<version>` directory; do not overwrite the older schema's fixtures.
+The SDK bundle's `golden-wire/v1` directory shows the canonical envelope, Hook payload, and broker
+JSON shapes. Compare the plugin's serialized requests and results with the fixtures for the
+`HookSpec` version it uses.
 
 ## Review capability changes
 
@@ -65,11 +65,11 @@ saved value and approval, so the user must save that origin again.
 - Build the extension module successfully.
 - Trigger every declared Hook from its host feature.
 - Test both a first enable and an update over the previous version.
-- Confirm existing settings reconcile as intended.
+- Confirm existing settings are kept, migrated, or cleared as intended.
 - Confirm every broker-backed Hook works only with its intended origins.
 - Confirm the extension keeps the same identity.
 - Confirm results and diagnostics contain no secrets or user-identifying request data.
-- Compare wire changes with the golden fixtures and run `./gradlew :extension:api:jvmTest`.
+- Compare wire behavior with the golden fixtures included in the SDK version you compile against.
 
 If a setting key is renamed, increase its section schema version. Always take the Hook schema
 version from the current `HookSpec`.

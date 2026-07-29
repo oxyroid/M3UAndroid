@@ -2,11 +2,12 @@
 
 [English](README.md) · [插件文档首页](../README.zh-CN.md)
 
-插件接收 M3UAndroid 发出的类型化请求，并返回类型化结果。外部插件目前属于开发者预览，
-SDK 以仓库内的 `project(":extension:sdk-android")` 模块提供。
+插件接收 M3UAndroid 发出的类型化请求，并返回类型化结果。外部插件目前属于开发者预览。
+当前代码可以生成 `1.0.0-alpha01` SDK 压缩包；其中包含一份可直接引用的本地 Maven 仓库。
 
 ## 从这里开始
 
+- [接入 SDK](sdk-installation.zh-CN.md)：配置 Maven 压缩包与构建要求。
 - [运行 Hello](quickstart.zh-CN.md)：先得到可运行结果，再阅读契约细节。
 - [定义 Manifest](concepts.zh-CN.md)：填写插件身份、Hook、capability（能力授权）和设置。
 - [注册类型化 Hook](first-hook.zh-CN.md)：为插件增加一个可调用功能。

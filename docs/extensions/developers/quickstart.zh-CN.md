@@ -2,17 +2,20 @@
 
 [English](quickstart.md) · [插件开发指南](README.zh-CN.md)
 
-这项检查只需要一条构建命令和一次设置页操作。成功标准是：插件列表出现
-**Hello Extension**，其设置页包含 **Greeting**，以及本地化后的 **Phone name** 或
-**手机名称**字段。
+这项检查会生成本地 SDK 仓库、用它构建并安装 Hello，再通过 M3UAndroid 设置页验证。
+成功标准是：插件列表出现 **Hello Extension**，其设置页包含 **Greeting**，以及本地化后的
+**Phone name** 或 **手机名称**字段。
 
 ## 1. 安装 Hello 示例
 
 在项目根目录执行：
 
 ```bash
-./gradlew :samples:hello-extension:installDebug
+testing/bin/install-hello-extension.sh
 ```
+
+Hello 是独立 Gradle 工程，只会从生成的 Maven 仓库解析
+`io.github.oxyroid.m3u:extension-sdk-android:1.0.0-alpha01`。
 
 ## 2. 在 M3UAndroid 中检查结果
 
@@ -37,7 +40,7 @@ Hello 设置页应显示：
 [`values-zh-rCN/strings.xml`](../../../samples/hello-extension/src/main/res/values-zh-rCN/strings.xml)
 中把 `手机名称` 改成 `手持设备名称`。
 
-再次执行 `./gradlew :samples:hello-extension:installDebug`，刷新插件列表并打开 Hello 设置；
-字段应按当前应用语言显示修改后的名称。
+再次执行安装命令，刷新插件列表并打开 Hello 设置；字段应按当前应用语言显示修改后的
+名称。
 
 下一步：[定义插件 Manifest](concepts.zh-CN.md)。

@@ -2,17 +2,20 @@
 
 [简体中文](quickstart.zh-CN.md) · [Developer guide](README.md)
 
-This check takes one build command and one pass through M3UAndroid settings. Success means that
-**Hello Extension** appears and its settings page contains **Greeting** plus the localized
-**Phone name** or **手机名称** field.
+This check generates the local SDK repository, builds and installs Hello against it, and then uses
+M3UAndroid settings. Success means that **Hello Extension** appears and its settings page contains
+**Greeting** plus the localized **Phone name** or **手机名称** field.
 
 ## 1. Install the Hello sample
 
 From the repository root:
 
 ```bash
-./gradlew :samples:hello-extension:installDebug
+testing/bin/install-hello-extension.sh
 ```
+
+Hello is a standalone Gradle build. It resolves
+`io.github.oxyroid.m3u:extension-sdk-android:1.0.0-alpha01` from the generated Maven repository.
 
 ## 2. Check the result in M3UAndroid
 
@@ -37,7 +40,7 @@ In the sample's
 `Phone name` to `Handset name`. Make the matching Chinese change in
 [`values-zh-rCN/strings.xml`](../../../samples/hello-extension/src/main/res/values-zh-rCN/strings.xml).
 
-Run `./gradlew :samples:hello-extension:installDebug` again, refresh the extension list, and reopen
-Hello settings. The field should use the changed name for the current app language.
+Run the install command again, refresh the extension list, and reopen Hello settings. The
+field should use the changed name for the current app language.
 
 Next: [declare the extension manifest](concepts.md).

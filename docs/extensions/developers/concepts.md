@@ -9,9 +9,11 @@ Hello sample, then replace its identity and features with your own.
 
 ```kotlin
 dependencies {
-    implementation(project(":extension:sdk-android"))
+    implementation("io.github.oxyroid.m3u:extension-sdk-android:1.0.0-alpha01")
 }
 ```
+
+Repository setup and build requirements are on [Add the extension SDK](sdk-installation.md).
 
 ## 2. Declare the Service
 

@@ -42,6 +42,9 @@ jobs:
             :extension:sdk-android:testDebugUnitTest \
             :i18n:testDebugUnitTest
 
+      - name: Verify extension SDK distribution
+        run: testing/bin/verify-extension-sdk-distribution.sh
+
       - name: Build debug APKs
         run: |
           ./gradlew \
@@ -63,6 +66,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
           path: |
+            build/distributions/m3u-extension-sdk-*
             app/smartphone/build/outputs/apk/debug/*.apk
             app/tv/build/outputs/apk/debug/*.apk
             testing/extension-reference/build/outputs/apk/debug/*.apk
@@ -77,6 +81,7 @@ jobs:
           large_file: true
           method: sendFile
           path: |
+            build/distributions/m3u-extension-sdk-*
             app/smartphone/build/outputs/apk/debug/*.apk
             app/tv/build/outputs/apk/debug/*.apk
             testing/extension-reference/build/outputs/apk/debug/*.apk

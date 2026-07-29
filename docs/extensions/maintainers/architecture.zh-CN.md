@@ -40,6 +40,7 @@ Runtime 负责完成一次调用。功能 repository 负责解释 result，并�
 | 宿主 Android Transport | Service 发现、身份、绑定、Broker Bridge、取消与 Binder Death | [`:extension:transport-android`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android) |
 | 外部 SDK | 解码调用并运行已注册的类型化 Handler，不依赖宿主 Runtime、发现或信任代码 | [`TypedExtensionService`](../../../extension/sdk-android/src/main/java/com/m3u/extension/sdk/android/TypedExtensionService.kt) |
 | 一致性测试 | 对内置 Runtime、SDK Backend 和真实 Binder/PFD Transport 运行同一套序列化成功、上下文、能力、Schema 与取消检查 | [`:extension:conformance`](../../../extension/conformance)、[`ExtensionConformanceSuite`](../../../extension/conformance/src/main/kotlin/com/m3u/extension/conformance/ExtensionConformanceSuite.kt) |
+| SDK 分发 | 发布 API、Android 协议、类型化 SDK、一致性测试库、源码与 Golden Fixture，排除宿主模块，并用这些坐标编译 Hello | [`verifyExtensionSdkBundle`](../../../build.gradle.kts)、[`hello-extension`](../../../samples/hello-extension)、[`verify-extension-sdk-distribution.sh`](../../../testing/bin/verify-extension-sdk-distribution.sh) |
 | 插件生命周期 | 信任、证书固定、启停、授权、重连、重新授权与诊断 | [`ExtensionPluginRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/plugin/ExtensionPluginRepositoryImpl.kt) |
 | 设置生命周期 | 已显示的 Schema、保存值、Secret Handle 与编辑授权 | [`ExtensionSettingsRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/extension/ExtensionSettingsRepositoryImpl.kt) |
 | 网络作用域 | 为一次外部 Hook 调用选择已批准的 Origin 与凭据 | [`ExtensionHookBrokerScopeProvider`](../../../data/src/main/java/com/m3u/data/extension/security/ExtensionHookBrokerScopeProvider.kt) |

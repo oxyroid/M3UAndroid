@@ -39,9 +39,8 @@ API 版本与 Hook Schema 回答的是两个不同问题：
 只有接收端契约为字段定义了默认值时，省略该字段才兼容。新增一个所有接收端都必须理解的
 字段时，即使 API Major 不变，也要新建 Hook Schema。
 
-仓库内的 [API 1 Golden Wire Fixtures](../../../../extension/api/src/jvmTest/resources/golden-wire/v1/README.zh-CN.md)
-给出了 Envelope、Hook Payload 与 Broker JSON 的规范形状。新增 Hook Schema 时，新建
-`schema-<version>` 目录，不要覆盖旧 Schema 的 Fixture。
+SDK 压缩包中的 `golden-wire/v1` 目录给出了 Envelope、Hook Payload 与 Broker JSON 的
+规范形状。把插件序列化后的请求和结果与当前 `HookSpec` 版本对应的样例进行对照。
 
 ## 检查 capability 变化
 
@@ -63,11 +62,11 @@ API 版本与 Hook Schema 回答的是两个不同问题：
 - 插件模块构建成功；
 - 从对应宿主功能触发每个已声明 Hook；
 - 同时测试首次启用与覆盖旧版本更新；
-- 确认已有设置按预期 reconcile；
+- 确认已有设置会按预期保留、迁移或清除；
 - 确认每个使用 Broker 的 Hook 只能访问预期 Origin；
 - 确认插件身份保持不变；
 - 确认结果与诊断信息不包含 Secret 或可识别用户的请求数据。
-- 对照 Golden Fixture 审查 Wire 变化，并运行 `./gradlew :extension:api:jvmTest`。
+- 对照当前编译所用 SDK 中的 Golden Fixture 检查 Wire 行为。
 
 设置 Key 改名时，提高所在 Section 的 Schema Version。Hook Schema Version 始终使用当前
 `HookSpec` 提供的值。

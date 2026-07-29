@@ -55,6 +55,14 @@ When changing behavior shared by built-in and APK handlers, update
 [`ExtensionConformanceSuite`](../../../extension/conformance/src/main/kotlin/com/m3u/extension/conformance/ExtensionConformanceSuite.kt)
 and keep its built-in runtime, SDK backend, and standalone reference-APK adapters green.
 
+## Change the published SDK
+
+Keep the SDK version in the root and standalone Hello properties aligned. Run
+`testing/bin/verify-extension-sdk-distribution.sh`; it generates the local Maven repository, checks
+the final zip and checksum, rejects host-module references in published metadata, samples required
+fixtures, and compiles Hello without project substitution. Both CI workflows upload the resulting
+zip and SHA-256 file.
+
 ## Change a result applier
 
 An applier must define the current request scope, result owner, and old-data replacement scope.
@@ -84,7 +92,7 @@ asset or data, the enforcing host boundary, and any risk that remains after the 
 
 UI observes repository state and sends operations; it does not discover or bind services directly.
 
-- On phone, start with [`SubscriptionsFragment`](../../../app/smartphone/src/main/java/com/m3u/smartphone/ui/business/setting/fragments/SubscriptionsFragment.kt) and [`ExtensionSettingsDialog`](../../../app/smartphone/src/main/java/com/m3u/smartphone/ui/business/setting/fragments/ExtensionSettingsDialog.kt).
+- On phone, start with [`PlaylistManagementScreen`](../../../app/smartphone/src/main/java/com/m3u/smartphone/ui/business/setting/fragments/PlaylistManagementScreen.kt), [`ExtensionPluginManagementScreen`](../../../app/smartphone/src/main/java/com/m3u/smartphone/ui/business/setting/fragments/ExtensionPluginManagementScreen.kt), and [`ExtensionSettingsScreen`](../../../app/smartphone/src/main/java/com/m3u/smartphone/ui/business/setting/fragments/ExtensionSettingsScreen.kt).
 - On TV, start with [`TvHomeViewModel`](../../../app/tv/src/main/java/com/m3u/tv/TvHomeViewModel.kt) and [`TvScreens`](../../../app/tv/src/main/java/com/m3u/tv/TvScreens.kt).
 
 Check full-row clicks, scrollable authorization, visible errors, and settings persistence on phone. Check DPad order, focus contrast, back behavior, and long text on TV.
@@ -95,6 +103,7 @@ Check full-row clicks, scrollable authorization, visible errors, and settings pe
 | --- | --- |
 | API or runtime | [`ExtensionContractTest`](../../../extension/api/src/test/kotlin/com/m3u/extension/api/ExtensionContractTest.kt), [`ExtensionRuntimeTest`](../../../extension/runtime/src/test/kotlin/com/m3u/extension/runtime/ExtensionRuntimeTest.kt) |
 | APK SDK and typed handlers | [`TypedExtensionServiceTest`](../../../extension/sdk-android/src/test/java/com/m3u/extension/sdk/android/TypedExtensionServiceTest.kt), [`hello-extension`](../../../samples/hello-extension) |
+| SDK archive contents, published metadata, and dependency boundary | `verifyExtensionSdkBundle`, `verifyExtensionSdkRepository`, [`verify-extension-sdk-distribution.sh`](../../../testing/bin/verify-extension-sdk-distribution.sh) |
 | Behavior shared by built-in and APK handlers | [`BuiltInExtensionConformanceTest`](../../../extension/runtime/src/test/kotlin/com/m3u/extension/runtime/BuiltInExtensionConformanceTest.kt), [`TypedExtensionConformanceTest`](../../../extension/sdk-android/src/test/java/com/m3u/extension/sdk/android/TypedExtensionConformanceTest.kt), [`ExternalExtensionConformanceIpcTest`](../../../app/smartphone/src/androidTest/java/com/m3u/testing/ExternalExtensionConformanceIpcTest.kt) |
 | Certificate trust and connection state | [`CertificateSetFingerprintTest`](../../../extension/transport-android/src/test/java/com/m3u/extension/transport/android/CertificateSetFingerprintTest.kt), [`ExtensionTrustStoreTest`](../../../extension/transport-android/src/androidTest/java/com/m3u/extension/transport/android/ExtensionTrustStoreTest.kt), [`ExtensionConnectionStateTest`](../../../extension/transport-android/src/androidTest/java/com/m3u/extension/transport/android/ExtensionConnectionStateTest.kt) |
 | Cross-process discovery, binding, PFD, invocation, and cancellation | [`ExternalExtensionIpcTest`](../../../app/smartphone/src/androidTest/java/com/m3u/testing/ExternalExtensionIpcTest.kt), [`ExternalExtensionConformanceIpcTest`](../../../app/smartphone/src/androidTest/java/com/m3u/testing/ExternalExtensionConformanceIpcTest.kt), [`extension-reference`](../../../testing/extension-reference) |

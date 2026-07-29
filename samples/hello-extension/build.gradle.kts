@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.com.android.application)
+    alias(libs.plugins.org.jetbrains.kotlin.jvm) apply false
 }
 
 android {
@@ -21,5 +22,9 @@ android {
 }
 
 dependencies {
-    implementation(project(":extension:sdk-android"))
+    implementation(
+        providers.gradleProperty("extensionSdkGroup").get() +
+            ":extension-sdk-android:" +
+            providers.gradleProperty("extensionSdkVersion").get()
+    )
 }

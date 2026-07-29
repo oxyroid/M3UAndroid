@@ -62,6 +62,9 @@ jobs:
             :extension:sdk-android:testDebugUnitTest \
             :extension:transport-android:testDebugUnitTest
 
+      - name: Verify extension SDK distribution
+        run: testing/bin/verify-extension-sdk-distribution.sh
+
       - name: Verify localization contracts
         run: ./gradlew :i18n:testDebugUnitTest
 
@@ -103,6 +106,7 @@ jobs:
         with:
           if-no-files-found: error
           path: |
+            build/distributions/m3u-extension-sdk-*
             app/smartphone/build/outputs/published-apk/release/*.apk
             app/tv/build/outputs/published-apk/release/*.apk
             testing/extension-reference/build/outputs/apk/release/*.apk
@@ -118,6 +122,7 @@ jobs:
           large_file: true
           method: sendFile
           path: |
+            build/distributions/m3u-extension-sdk-*
             app/smartphone/build/outputs/published-apk/release/*.apk
             app/tv/build/outputs/published-apk/release/*.apk
             testing/extension-reference/build/outputs/apk/release/*.apk

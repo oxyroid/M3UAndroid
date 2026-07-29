@@ -9,9 +9,11 @@
 
 ```kotlin
 dependencies {
-    implementation(project(":extension:sdk-android"))
+    implementation("io.github.oxyroid.m3u:extension-sdk-android:1.0.0-alpha01")
 }
 ```
+
+仓库配置与构建要求见[接入插件 SDK](sdk-installation.zh-CN.md)。
 
 ## 2. 声明 Service
 

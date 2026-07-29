@@ -3,11 +3,12 @@
 [简体中文](README.zh-CN.md) · [Extension docs](../README.md)
 
 An extension handles typed requests from M3UAndroid and returns typed results. External extensions
-are currently a developer preview, and the SDK is available as the in-repository
-`project(":extension:sdk-android")` module.
+are currently a developer preview. This checkout can build the `1.0.0-alpha01` SDK as a ZIP
+containing a local Maven repository.
 
 ## Start here
 
+- [Add the SDK](sdk-installation.md): configure the Maven bundle and build requirements.
 - [Run Hello](quickstart.md): get a working result before reading the contract reference.
 - [Define the manifest](concepts.md): set the extension identity, Hooks, capabilities, and settings.
 - [Register a typed Hook](first-hook.md): add one callable feature to an extension.
