@@ -1,5 +1,7 @@
 package com.m3u.data.repository.plugin
 
+import com.m3u.data.repository.extension.ExtensionNetworkOriginState
+import com.m3u.data.repository.extension.ExtensionSettingNetworkOrigin
 import com.m3u.extension.api.ExtensionManifest
 import com.m3u.extension.api.ExtensionState
 
@@ -56,6 +58,17 @@ data class InstalledPlugin(
     val approvedNetworkOrigins: Set<String> = emptySet(),
     val networkOriginSettingFields: Set<String> = emptySet(),
     val authorizationToken: PluginAuthorizationToken? = null,
+    val networkAccess: PluginNetworkAccess = PluginNetworkAccess(),
+)
+
+data class PluginNetworkAccess(
+    val fixedOrigins: List<PluginFixedNetworkOrigin> = emptyList(),
+    val settingOrigins: List<ExtensionSettingNetworkOrigin> = emptyList(),
+)
+
+data class PluginFixedNetworkOrigin(
+    val origin: String,
+    val state: ExtensionNetworkOriginState,
 )
 
 class PluginAuthorizationToken internal constructor(

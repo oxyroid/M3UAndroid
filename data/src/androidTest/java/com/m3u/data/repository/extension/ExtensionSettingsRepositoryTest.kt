@@ -187,6 +187,14 @@ class ExtensionSettingsRepositoryTest {
             JsonPrimitive("https://legacy.example"),
             upgraded.snapshot.values["network/origin"],
         )
+        assertEquals(
+            ExtensionNetworkOriginState.REQUIRES_APPROVAL,
+            upgraded.networkOriginState("network", "origin"),
+        )
+        assertEquals(
+            "Origin",
+            upgraded.settingNetworkOrigin("network", "origin")?.label,
+        )
         assertTrue(
             store.approvedSettingOrigins(EXTENSION_ID.value, upgraded.snapshot).isEmpty()
         )
@@ -201,6 +209,13 @@ class ExtensionSettingsRepositoryTest {
                 EXTENSION_ID.value,
                 store.snapshot(EXTENSION_ID.value),
             ),
+        )
+        val approved = requireNotNull(
+            repository.configuration(EXTENSION_ID, null, "phone")
+        )
+        assertEquals(
+            ExtensionNetworkOriginState.APPROVED,
+            approved.networkOriginState("network", "origin"),
         )
 
         val changedWithoutApproval = store.snapshot(EXTENSION_ID.value).let { current ->
@@ -551,7 +566,7 @@ class ExtensionSettingsRepositoryTest {
             it.sectionId == "network" && it.fieldKey == "origin"
         }
         assertEquals("https://api.example.test:443", review.currentOrigin)
-        assertEquals(ExtensionSettingOriginReviewState.SUSPENDED, review.state)
+        assertEquals(ExtensionNetworkOriginState.SUSPENDED, review.state)
         assertTrue(store.approvedSettingOrigins(EXTENSION_ID.value, raw).isEmpty())
     }
 
@@ -709,6 +724,128 @@ class ExtensionSettingsRepositoryTest {
                     validation = validation,
                     sections = listOf(playbackSection(schema = changedSchema)),
                 )
+            )
+        }
+    }
+
+    @Test
+    fun dynamicNetworkOriginLabelIsNotSecurityShapeAndSurvivesRestart() = runBlocking {
+        settingsSections = listOf(
+            originSection(
+                networkOrigin = true,
+                label = "Server origin",
+            )
+        )
+        val initial = requireNotNull(
+            repository.configuration(EXTENSION_ID, "en-US", "phone")
+        )
+        assertEquals(
+            "Server origin",
+            initial.settingNetworkOrigin("network", "origin")?.label,
+        )
+        val preferences = context.getSharedPreferences(
+            "extension-settings",
+            Context.MODE_PRIVATE,
+        )
+        val fingerprintKey = "schema-fingerprints:${EXTENSION_ID.value}"
+        val initialFingerprint = requireNotNull(
+            preferences.getString(fingerprintKey, null)
+        )
+
+        settingsSections = listOf(
+            originSection(
+                networkOrigin = true,
+                label = "服务器地址",
+            )
+        )
+        val localized = requireNotNull(
+            repository.configuration(EXTENSION_ID, "zh-CN", "phone")
+        )
+
+        assertEquals(
+            "服务器地址",
+            localized.settingNetworkOrigin("network", "origin")?.label,
+        )
+        assertEquals(initialFingerprint, preferences.getString(fingerprintKey, null))
+        val restartedStore = ExtensionSettingStore(context, secretStore)
+        val retained = restartedStore.settingOriginReview(EXTENSION_ID.value).single {
+            it.sectionId == "network" && it.fieldKey == "origin"
+        }
+        assertEquals("服务器地址", retained.label)
+        assertEquals(ExtensionNetworkOriginState.SUSPENDED, retained.state)
+    }
+
+    @Test
+    fun manifestNetworkOriginLabelIsNotSecurityShapeAndSurvivesRestart() {
+        val initialManifest = entrypoint().manifest.copy(
+            settingsSchema = networkOriginSchema(label = "Server origin"),
+            capabilities = entrypoint().manifest.capabilities +
+                ExtensionCapabilityRequest(
+                    ExtensionCapabilityIds.Network,
+                    "Reach the configured server",
+                ),
+        )
+        store.snapshot(initialManifest)
+        val preferences = context.getSharedPreferences(
+            "extension-settings",
+            Context.MODE_PRIVATE,
+        )
+        val fingerprintKey = "schema-fingerprints:${EXTENSION_ID.value}"
+        val initialFingerprint = requireNotNull(
+            preferences.getString(fingerprintKey, null)
+        )
+
+        store.snapshot(
+            initialManifest.copy(
+                settingsSchema = networkOriginSchema(label = "服务器地址"),
+            )
+        )
+
+        assertEquals(initialFingerprint, preferences.getString(fingerprintKey, null))
+        val restartedStore = ExtensionSettingStore(context, secretStore)
+        val retained = restartedStore.settingOriginReview(EXTENSION_ID.value).single {
+            it.sectionId == ExtensionSettingStore.MANIFEST_SECTION_ID &&
+                it.fieldKey == "origin"
+        }
+        assertEquals("服务器地址", retained.label)
+        assertEquals(ExtensionNetworkOriginState.NOT_CONFIGURED, retained.state)
+    }
+
+    @Test
+    fun configurationExposesEveryNetworkOriginStateByQualifiedKey() {
+        val origins = ExtensionNetworkOriginState.values().map { state ->
+            ExtensionSettingNetworkOrigin(
+                sectionId = "network",
+                fieldKey = state.name.lowercase(),
+                label = state.name,
+                currentOrigin = null,
+                state = state,
+            )
+        }
+        val configuration = ExtensionSettingsConfiguration(
+            extensionId = EXTENSION_ID,
+            sections = emptyList(),
+            snapshot = ExtensionSettingsSnapshot(),
+            editTokens = emptyMap(),
+            settingNetworkOrigins = origins,
+        )
+
+        assertEquals(
+            ExtensionNetworkOriginState.values().toList(),
+            configuration.settingNetworkOrigins.map(ExtensionSettingNetworkOrigin::state),
+        )
+        origins.forEach { origin ->
+            assertEquals(
+                origin,
+                configuration.settingNetworkOrigin(origin.sectionId, origin.fieldKey),
+            )
+            assertEquals(
+                origin,
+                configuration.settingNetworkOrigin(origin.qualifiedKey),
+            )
+            assertEquals(
+                origin.state,
+                configuration.networkOriginState(origin.sectionId, origin.fieldKey),
             )
         }
     }
@@ -1102,7 +1239,10 @@ class ExtensionSettingsRepositoryTest {
         schema = schema,
     )
 
-    private fun originSection(networkOrigin: Boolean) = ExtensionSettingSection(
+    private fun originSection(
+        networkOrigin: Boolean,
+        label: String = "Origin",
+    ) = ExtensionSettingSection(
         id = "network",
         title = "Network",
         schema = ExtensionSettingSchema(
@@ -1110,11 +1250,23 @@ class ExtensionSettingsRepositoryTest {
             fields = listOf(
                 ExtensionSettingField(
                     key = "origin",
-                    label = "Origin",
+                    label = label,
                     type = ExtensionSettingType.TEXT,
                     networkOrigin = networkOrigin,
                 )
             ),
+        ),
+    )
+
+    private fun networkOriginSchema(label: String) = ExtensionSettingSchema(
+        version = 1,
+        fields = listOf(
+            ExtensionSettingField(
+                key = "origin",
+                label = label,
+                type = ExtensionSettingType.TEXT,
+                networkOrigin = true,
+            )
         ),
     )
 

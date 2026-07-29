@@ -15,6 +15,8 @@ import com.m3u.data.extension.security.toPrincipal
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.repository.extension.ExtensionContributionScheduler
+import com.m3u.data.repository.extension.ExtensionNetworkOriginState
+import com.m3u.data.repository.extension.ExtensionSettingNetworkOrigin
 import com.m3u.data.repository.extension.ExtensionSettingStore
 import com.m3u.data.repository.extension.ExtensionSettingsRepository
 import com.m3u.data.worker.ExtensionBackgroundTaskScheduler
@@ -23,9 +25,10 @@ import com.m3u.extension.api.ExtensionApiVersions
 import com.m3u.extension.api.ExtensionCapabilityIds
 import com.m3u.extension.api.ExtensionContractCatalog
 import com.m3u.extension.api.ExtensionHookIds
-import com.m3u.extension.api.ExtensionManifest
-import com.m3u.extension.api.ExtensionState
 import com.m3u.extension.api.ExtensionId
+import com.m3u.extension.api.ExtensionManifest
+import com.m3u.extension.api.ExtensionSettingKeys
+import com.m3u.extension.api.ExtensionState
 import com.m3u.extension.api.Hook
 import com.m3u.extension.runtime.ExtensionExecutionKind
 import com.m3u.extension.runtime.ExtensionRegistrationResult
@@ -235,6 +238,32 @@ internal class ExtensionPluginRepositoryImpl private constructor(
             val grantedCapabilities = trustStore.grantedCapabilities(service)
             val networkOrigins = manifest?.canonicalNetworkOrigins()
                 ?: storedIdentity?.networkOrigins.orEmpty()
+            val soleTrustedOwner = extensionId?.let { id ->
+                trustStore.isSoleTrustedOwner(service, id)
+            } == true
+            val approvedFixedOrigins = if (soleTrustedOwner) {
+                trustStore.approvedNetworkOrigins(service)
+            } else {
+                emptySet()
+            }
+            val retainedIdentityConflict = !soleTrustedOwner && (
+                signatureChanged ||
+                    storedIdentity != null ||
+                    manifest?.let { current ->
+                        trustStore.isExtensionIdClaimedByAnotherService(
+                            service = service,
+                            extensionId = current.id.value,
+                        )
+                    } == true
+            )
+            val networkAccess = projectNetworkAccess(
+                manifest = manifest,
+                extensionId = extensionId,
+                networkOrigins = networkOrigins,
+                approvedFixedOrigins = approvedFixedOrigins,
+                soleTrustedOwner = soleTrustedOwner,
+                retainedIdentityConflict = retainedIdentityConflict,
+            )
             InstalledPlugin(
                 packageName = service.packageName,
                 serviceName = service.serviceName,
@@ -294,6 +323,7 @@ internal class ExtensionPluginRepositoryImpl private constructor(
                 },
                 networkOriginSettingFields = manifest?.networkOriginSettingFields().orEmpty(),
                 authorizationToken = authorizationToken,
+                networkAccess = networkAccess,
             )
         }
         val installedServiceKeys = services.mapTo(mutableSetOf(), InstalledExtensionService::key)
@@ -323,6 +353,16 @@ internal class ExtensionPluginRepositoryImpl private constructor(
                     canClearData = false,
                     networkOrigins = record.networkOrigins,
                     approvedNetworkOrigins = record.networkOrigins,
+                    networkAccess = PluginNetworkAccess(
+                        fixedOrigins = record.networkOrigins
+                            .sorted()
+                            .map { origin ->
+                                PluginFixedNetworkOrigin(
+                                    origin = origin,
+                                    state = ExtensionNetworkOriginState.APPROVED,
+                                )
+                            },
+                    ),
                 )
             }
         return (installedPlugins + missingPlugins).sortedWith(
@@ -1157,6 +1197,90 @@ internal class ExtensionPluginRepositoryImpl private constructor(
         return runtime.registeredExtensions().firstOrNull { extension ->
             extension.manifest.id.value == active.extensionId
         }
+    }
+
+    private fun projectNetworkAccess(
+        manifest: ExtensionManifest?,
+        extensionId: String?,
+        networkOrigins: Set<String>,
+        approvedFixedOrigins: Set<String>,
+        soleTrustedOwner: Boolean,
+        retainedIdentityConflict: Boolean,
+    ): PluginNetworkAccess {
+        val fixedOrigins = networkOrigins
+            .sorted()
+            .map { origin ->
+                PluginFixedNetworkOrigin(
+                    origin = origin,
+                    state = if (origin in approvedFixedOrigins) {
+                        ExtensionNetworkOriginState.APPROVED
+                    } else {
+                        ExtensionNetworkOriginState.REQUIRES_APPROVAL
+                    },
+                )
+            }
+        val settingOrigins = if (soleTrustedOwner && extensionId != null) {
+            val currentManifestOriginKeys = manifest
+                ?.settingsSchema
+                ?.fields
+                ?.asSequence()
+                ?.filter { field -> field.networkOrigin }
+                ?.mapTo(mutableSetOf()) { field ->
+                    ExtensionSettingKeys.qualified(
+                        ExtensionSettingStore.MANIFEST_SECTION_ID,
+                        field.key,
+                    )
+                }
+            extensionSettingStore.settingOriginReview(
+                extensionId = extensionId,
+                manifest = manifest,
+            )
+                .asSequence()
+                .filter { origin ->
+                    currentManifestOriginKeys == null ||
+                        origin.sectionId != ExtensionSettingStore.MANIFEST_SECTION_ID ||
+                        origin.qualifiedKey in currentManifestOriginKeys
+                }
+                .map { origin ->
+                    if (
+                        origin.state == ExtensionNetworkOriginState.REQUIRES_APPROVAL &&
+                        origin.currentOrigin?.let { value ->
+                            value in approvedFixedOrigins
+                        } == true
+                    ) {
+                        origin.copy(state = ExtensionNetworkOriginState.APPROVED)
+                    } else {
+                        origin
+                    }
+                }
+                .toList()
+        } else {
+            val state = if (retainedIdentityConflict) {
+                ExtensionNetworkOriginState.UNVERIFIED
+            } else {
+                ExtensionNetworkOriginState.NOT_CONFIGURED
+            }
+            manifest
+                ?.settingsSchema
+                ?.fields
+                ?.asSequence()
+                ?.filter { field -> field.networkOrigin }
+                ?.map { field ->
+                    ExtensionSettingNetworkOrigin(
+                        sectionId = ExtensionSettingStore.MANIFEST_SECTION_ID,
+                        fieldKey = field.key,
+                        label = field.label,
+                        currentOrigin = null,
+                        state = state,
+                    )
+                }
+                ?.toList()
+                .orEmpty()
+        }
+        return PluginNetworkAccess(
+            fixedOrigins = fixedOrigins,
+            settingOrigins = settingOrigins,
+        )
     }
 
     private suspend fun probeTransportHealth(

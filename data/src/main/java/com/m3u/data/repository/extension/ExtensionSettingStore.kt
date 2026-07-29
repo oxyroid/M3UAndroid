@@ -1,6 +1,7 @@
 package com.m3u.data.repository.extension
 
 import android.content.Context
+import com.m3u.data.extension.isSafeExtensionText
 import com.m3u.data.extension.security.ExtensionSecretStore
 import com.m3u.extension.api.ExtensionManifest
 import com.m3u.extension.api.ExtensionNetworkOrigin
@@ -42,23 +43,6 @@ internal class DynamicSchemaValidation internal constructor(
 ) {
     override fun toString(): String = "DynamicSchemaValidation(opaque)"
 }
-
-internal enum class ExtensionSettingOriginReviewState {
-    NOT_CONFIGURED,
-    INVALID,
-    REQUIRES_APPROVAL,
-    APPROVED,
-    SUSPENDED,
-    UNVERIFIED,
-}
-
-internal data class ExtensionSettingOriginReview(
-    val sectionId: String,
-    val fieldKey: String,
-    val label: String? = null,
-    val currentOrigin: String?,
-    val state: ExtensionSettingOriginReviewState,
-)
 
 @Singleton
 internal class ExtensionSettingStore @Inject constructor(
@@ -123,24 +107,11 @@ internal class ExtensionSettingStore @Inject constructor(
             )
         }
         if (manifestSection != null) {
-            rememberNetworkOriginFields(
+            stored = reconcileManifestSection(
                 extensionId = extensionId,
-                sections = listOf(manifestSection),
-                removeMissingSections = false,
-            )
-            rememberSchemaFingerprints(
-                extensionId = extensionId,
-                sections = listOf(manifestSection),
-                removeMissingSections = false,
-            )
-            stored = reconcileSection(
-                extensionId = extensionId,
-                sectionId = MANIFEST_SECTION_ID,
-                schema = manifestSection.schema,
+                section = manifestSection,
                 snapshot = stored,
-            ).withDefaults(MANIFEST_SECTION_ID, manifestSection.schema).also { reconciled ->
-                if (reconciled != stored) save(extensionId, reconciled)
-            }
+            )
         }
         return runtimeSnapshot(
             extensionId = extensionId,
@@ -170,6 +141,100 @@ internal class ExtensionSettingStore @Inject constructor(
                 }.getOrNull()
             }
             ?: ExtensionSettingsSnapshot()
+
+    private fun reconcileManifestSection(
+        extensionId: String,
+        section: ExtensionSettingSection,
+        snapshot: ExtensionSettingsSnapshot,
+    ): ExtensionSettingsSnapshot {
+        val prefix = "$MANIFEST_SECTION_ID/"
+        val fieldsByKey = section.schema.fields.associateBy { field ->
+            ExtensionSettingKeys.qualified(MANIFEST_SECTION_ID, field.key)
+        }
+        val removedHandles = linkedSetOf<CredentialHandle>()
+        val reconciled = if (
+            snapshot.schemaVersions[MANIFEST_SECTION_ID] == section.schema.version
+        ) {
+            removedHandles += snapshot.credentialHandles
+                .filter { (key, _) ->
+                    key.startsWith(prefix) &&
+                        fieldsByKey[key]?.type != ExtensionSettingType.SECRET
+                }
+                .values
+            snapshot.copy(
+                values = snapshot.values.filterKeys { key ->
+                    !key.startsWith(prefix) ||
+                        fieldsByKey[key]?.type?.let { type ->
+                            type != ExtensionSettingType.SECRET
+                        } == true
+                },
+                credentialHandles = snapshot.credentialHandles.filterKeys { key ->
+                    !key.startsWith(prefix) ||
+                        fieldsByKey[key]?.type == ExtensionSettingType.SECRET
+                },
+            )
+        } else {
+            removedHandles += snapshot.credentialHandles
+                .filterKeys { key -> key.startsWith(prefix) }
+                .values
+            snapshot.copy(
+                schemaVersions = snapshot.schemaVersions +
+                    (MANIFEST_SECTION_ID to section.schema.version),
+                values = snapshot.values.filterKeys { key -> !key.startsWith(prefix) },
+                credentialHandles = snapshot.credentialHandles.filterKeys { key ->
+                    !key.startsWith(prefix)
+                },
+            )
+        }.withDefaults(MANIFEST_SECTION_ID, section.schema)
+        val manifestOriginKeys = fieldsByKey
+            .filterValues { field -> field.networkOrigin }
+            .keys
+        val activeOriginKeys = networkOriginSettingKeys(extensionId)
+            .filterTo(mutableSetOf()) { key -> !key.startsWith(prefix) } +
+            manifestOriginKeys
+        val retainedApprovals = retainedNetworkOriginApprovals(
+            extensionId = extensionId,
+            snapshot = reconciled,
+            allowedKeys = activeOriginKeys,
+        )
+        val registry = dynamicSchemaRegistry(extensionId)
+        val updatedRegistry = registry.copy(
+            manifestNetworkOriginLabels = listOf(section)
+                .safeNetworkOriginLabels()
+                .orEmpty(),
+        )
+        val fingerprints = schemaFingerprints(extensionId)
+            .filterKeys { sectionId -> sectionId != MANIFEST_SECTION_ID } +
+            (MANIFEST_SECTION_ID to stableSchemaFingerprint(section))
+        if (
+            reconciled == snapshot &&
+            activeOriginKeys == networkOriginSettingKeys(extensionId) &&
+            retainedApprovals == networkOriginApprovals(extensionId) &&
+            fingerprints == schemaFingerprints(extensionId) &&
+            updatedRegistry == registry
+        ) {
+            return snapshot
+        }
+        val persisted = preferences.edit()
+            .putString(extensionId, json.encodeToString(reconciled))
+            .putStringSet(networkOriginKeysPreference(extensionId), activeOriginKeys)
+            .putString(
+                networkOriginApprovalsPreference(extensionId),
+                json.encodeToString(retainedApprovals),
+            )
+            .putString(
+                schemaFingerprintsPreference(extensionId),
+                json.encodeToString(fingerprints),
+            )
+            .putString(
+                dynamicSchemaRegistryPreference(extensionId),
+                json.encodeToString(updatedRegistry),
+            )
+            .commit()
+        if (!persisted) return snapshot
+        removedHandles.forEach { handle -> secretStore.delete(extensionId, handle) }
+        return reconciled
+    }
 
     @Synchronized
     fun save(extensionId: String, snapshot: ExtensionSettingsSnapshot) {
@@ -317,6 +382,8 @@ internal class ExtensionSettingStore @Inject constructor(
         val descriptor = runCatching {
             sections.toStableDynamicSchemaSurface()
         }.getOrNull() ?: return rejectDynamicSchemaValidation(active, validation)
+        val networkOriginLabels = sections.safeNetworkOriginLabels()
+            ?: return rejectDynamicSchemaValidation(active, validation)
         val previousRegistry = dynamicSchemaRegistry(extensionId)
         val previousSurface = previousRegistry.surfaces[validation.surface]
             ?: PersistedDynamicSchemaSurface()
@@ -352,15 +419,20 @@ internal class ExtensionSettingStore @Inject constructor(
                 (
                     validation.surface to previousSurface.copy(
                         descriptor = descriptor,
+                        networkOriginLabels = networkOriginLabels,
                     )
                 ),
         )
-        reconcileDynamicSchemas(
-            extensionId = extensionId,
-            previousRegistry = previousRegistry,
-            updatedRegistry = updatedRegistry,
-            validatedSections = sections,
-        )
+        if (
+            !reconcileDynamicSchemas(
+                extensionId = extensionId,
+                previousRegistry = previousRegistry,
+                updatedRegistry = updatedRegistry,
+                validatedSections = sections,
+            )
+        ) {
+            return rejectDynamicSchemaValidation(active, validation)
+        }
         active.verifiedSurfaces += validation.surface
         active.verifiedAttempts[validation.surface] = maxOf(
             active.verifiedAttempts[validation.surface] ?: 0L,
@@ -437,11 +509,15 @@ internal class ExtensionSettingStore @Inject constructor(
                     }
                 ),
             )
-            .remove(dynamicSchemaRegistryPreference(extensionId))
+            .putString(
+                dynamicSchemaRegistryPreference(extensionId),
+                json.encodeToString(
+                    dynamicSchemaRegistry(extensionId).copy(surfaces = emptyMap())
+                ),
+            )
             .commit()
-        if (persisted) {
-            removedHandles.forEach { handle -> secretStore.delete(extensionId, handle) }
-        }
+        if (!persisted) return false
+        removedHandles.forEach { handle -> secretStore.delete(extensionId, handle) }
         activeDynamicSchemaSessions[extensionId]?.let { active ->
             active.attempts.clear()
             active.verifiedAttempts.clear()
@@ -466,9 +542,36 @@ internal class ExtensionSettingStore @Inject constructor(
         if (previous.schemaVersions[sectionId] != expectedSchemaVersion) return null
         if (schemaFingerprints(extensionId)[sectionId] != expectedSchemaFingerprint) return null
         val updated = transform(previous)
-        if (updated != previous) save(extensionId, updated)
-        updateSettingOriginApproval(extensionId, settingKey, approvedOrigin)
-        return updated
+        val approvals = networkOriginApprovals(extensionId).toMutableMap()
+        if (approvedOrigin != null && settingKey in networkOriginSettingKeys(extensionId)) {
+            approvals[settingKey] = ExtensionNetworkOrigin(approvedOrigin).canonicalValue
+        } else {
+            approvals.remove(settingKey)
+        }
+        val retainedApprovals = approvals.filter { (key, origin) ->
+            key in networkOriginSettingKeys(extensionId) &&
+                (updated.values[key] as? JsonPrimitive)
+                    ?.contentOrNull
+                    ?.let { value ->
+                        runCatching {
+                            ExtensionNetworkOrigin(value).canonicalValue
+                        }.getOrNull()
+                    } == origin
+        }
+        if (
+            updated == previous &&
+            retainedApprovals == networkOriginApprovals(extensionId)
+        ) {
+            return updated
+        }
+        val persisted = preferences.edit()
+            .putString(extensionId, json.encodeToString(updated))
+            .putString(
+                networkOriginApprovalsPreference(extensionId),
+                json.encodeToString(retainedApprovals),
+            )
+            .commit()
+        return if (persisted) updated else null
     }
 
     @Synchronized
@@ -624,7 +727,7 @@ internal class ExtensionSettingStore @Inject constructor(
     ): Set<String> = settingOriginReview(extensionId, snapshot)
         .mapNotNullTo(linkedSetOf()) { review ->
             review.currentOrigin.takeIf {
-                review.state == ExtensionSettingOriginReviewState.APPROVED
+                review.state == ExtensionNetworkOriginState.APPROVED
             }
         }
 
@@ -632,9 +735,20 @@ internal class ExtensionSettingStore @Inject constructor(
     fun settingOriginReview(
         extensionId: String,
         snapshot: ExtensionSettingsSnapshot = storedSnapshot(extensionId),
-    ): List<ExtensionSettingOriginReview> {
+        manifest: ExtensionManifest? = null,
+    ): List<ExtensionSettingNetworkOrigin> {
         val registry = dynamicSchemaRegistry(extensionId)
         val active = activeDynamicSchemaSessions[extensionId]
+        val currentManifestFields = manifest
+            ?.settingsSchema
+            ?.fields
+            ?.asSequence()
+            ?.filter { field -> field.networkOrigin }
+            ?.associate { field ->
+                ExtensionSettingKeys.qualified(MANIFEST_SECTION_ID, field.key) to
+                    field.label.safeExtensionLabel()
+            }
+            .orEmpty()
         val allDynamicOriginKeys = registry.surfaces.values
             .mapNotNull(PersistedDynamicSchemaSurface::descriptor)
             .flatMapTo(mutableSetOf()) { surface ->
@@ -645,6 +759,23 @@ internal class ExtensionSettingStore @Inject constructor(
                     }
                 }
             }
+        val retainedDynamicLabels = registry.surfaces
+            .toSortedMap()
+            .values
+            .asSequence()
+            .flatMap { surface -> surface.networkOriginLabels.asSequence() }
+            .mapNotNull { (key, label) ->
+                label.safeExtensionLabel()?.let { safeLabel -> key to safeLabel }
+            }
+            .distinctBy { (key, _) -> key }
+            .associate { (key, label) -> key to label }
+        val labels = retainedDynamicLabels +
+            registry.manifestNetworkOriginLabels.mapNotNull { (key, label) ->
+                label.safeExtensionLabel()?.let { safeLabel -> key to safeLabel }
+            }.toMap() +
+            currentManifestFields.mapNotNull { (key, label) ->
+                label?.let { key to it }
+            }.toMap()
         val verifiedDynamicOriginKeys = active
             ?.verifiedSurfaces
             .orEmpty()
@@ -658,7 +789,10 @@ internal class ExtensionSettingStore @Inject constructor(
                 }
             }
         val approvals = networkOriginApprovals(extensionId)
-        return networkOriginSettingKeys(extensionId)
+        val reviewKeys = networkOriginSettingKeys(extensionId) +
+            currentManifestFields.keys +
+            allDynamicOriginKeys
+        return reviewKeys
             .sorted()
             .mapNotNull { qualifiedKey ->
                 val separator = qualifiedKey.indexOf('/')
@@ -676,38 +810,25 @@ internal class ExtensionSettingStore @Inject constructor(
                     sectionId == MANIFEST_SECTION_ID -> null
                     qualifiedKey in verifiedDynamicOriginKeys -> null
                     qualifiedKey in allDynamicOriginKeys ->
-                        ExtensionSettingOriginReviewState.SUSPENDED
-                    else -> ExtensionSettingOriginReviewState.UNVERIFIED
+                        ExtensionNetworkOriginState.SUSPENDED
+                    else -> ExtensionNetworkOriginState.UNVERIFIED
                 }
-                ExtensionSettingOriginReview(
+                ExtensionSettingNetworkOrigin(
                     sectionId = sectionId,
                     fieldKey = fieldKey,
+                    label = labels[qualifiedKey],
                     currentOrigin = currentOrigin,
                     state = accessState ?: when {
                         currentValue == null ->
-                            ExtensionSettingOriginReviewState.NOT_CONFIGURED
+                            ExtensionNetworkOriginState.NOT_CONFIGURED
                         currentOrigin == null ->
-                            ExtensionSettingOriginReviewState.INVALID
+                            ExtensionNetworkOriginState.INVALID
                         approvals[qualifiedKey] == currentOrigin ->
-                            ExtensionSettingOriginReviewState.APPROVED
-                        else -> ExtensionSettingOriginReviewState.REQUIRES_APPROVAL
+                            ExtensionNetworkOriginState.APPROVED
+                        else -> ExtensionNetworkOriginState.REQUIRES_APPROVAL
                     },
                 )
             }
-    }
-
-    private fun updateSettingOriginApproval(
-        extensionId: String,
-        key: String,
-        origin: String?,
-    ) {
-        val approvals = networkOriginApprovals(extensionId).toMutableMap()
-        if (origin != null && key in networkOriginSettingKeys(extensionId)) {
-            approvals[key] = ExtensionNetworkOrigin(origin).canonicalValue
-        } else {
-            approvals.remove(key)
-        }
-        saveNetworkOriginApprovals(extensionId, approvals)
     }
 
     private fun rememberNetworkOriginFields(
@@ -792,18 +913,6 @@ internal class ExtensionSettingStore @Inject constructor(
             }
             .orEmpty()
 
-    private fun saveNetworkOriginApprovals(
-        extensionId: String,
-        approvals: Map<String, String>,
-    ) {
-        preferences.edit()
-            .putString(
-                networkOriginApprovalsPreference(extensionId),
-                json.encodeToString(approvals),
-            )
-            .apply()
-    }
-
     private fun networkOriginApprovalsPreference(extensionId: String): String =
         "$NETWORK_ORIGIN_APPROVALS_PREFIX$extensionId"
 
@@ -873,7 +982,7 @@ internal class ExtensionSettingStore @Inject constructor(
         previousRegistry: PersistedDynamicSchemaRegistry,
         updatedRegistry: PersistedDynamicSchemaRegistry,
         validatedSections: List<ExtensionSettingSection>,
-    ) {
+    ): Boolean {
         val previousSectionIds = previousRegistry.allSectionDescriptors()
             .mapTo(mutableSetOf(), StableDynamicSchemaSection::id)
         val updatedDescriptors = updatedRegistry.allSectionDescriptors()
@@ -987,6 +1096,7 @@ internal class ExtensionSettingStore @Inject constructor(
         if (persisted) {
             removedHandles.forEach { handle -> secretStore.delete(extensionId, handle) }
         }
+        return persisted
     }
 
     private fun dynamicSchemaRegistry(extensionId: String): PersistedDynamicSchemaRegistry =
@@ -1053,11 +1163,13 @@ private data class ActiveDynamicSchemaSession(
 private data class PersistedDynamicSchemaRegistry(
     val formatVersion: Int,
     val surfaces: Map<String, PersistedDynamicSchemaSurface> = emptyMap(),
+    val manifestNetworkOriginLabels: Map<String, String> = emptyMap(),
 )
 
 @Serializable
 private data class PersistedDynamicSchemaSurface(
     val descriptor: StableDynamicSchemaSurface? = null,
+    val networkOriginLabels: Map<String, String> = emptyMap(),
 )
 
 @Serializable
@@ -1116,6 +1228,24 @@ private fun ExtensionSettingSection.toStableDescriptor(): StableDynamicSchemaSec
             .sortedBy(StableDynamicSchemaField::key),
     )
 
+private fun List<ExtensionSettingSection>.safeNetworkOriginLabels(): Map<String, String>? {
+    val labels = linkedMapOf<String, String>()
+    for (section in this) {
+        for (field in section.schema.fields) {
+            if (!field.networkOrigin) continue
+            val label = field.label.safeExtensionLabel() ?: return null
+            val qualifiedKey = runCatching {
+                ExtensionSettingKeys.qualified(section.id, field.key)
+            }.getOrNull() ?: return null
+            labels[qualifiedKey] = label
+        }
+    }
+    return labels
+}
+
+private fun String.safeExtensionLabel(): String? =
+    takeIf { label -> label.isSafeExtensionText(MAX_PERSISTED_SETTING_LABEL_LENGTH) }
+
 private fun PersistedDynamicSchemaRegistry.allSectionDescriptors():
     List<StableDynamicSchemaSection> =
     surfaces.values
@@ -1168,3 +1298,5 @@ private fun String.isValidDynamicSchemaSurface(): Boolean =
                 character == '_' ||
                 character == '-'
         }
+
+private const val MAX_PERSISTED_SETTING_LABEL_LENGTH = 160

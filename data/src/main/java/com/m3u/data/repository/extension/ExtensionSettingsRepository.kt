@@ -52,12 +52,42 @@ data class ExtensionDynamicSchemaRevalidationResult(
         get() = suspendedSurfaces.isEmpty()
 }
 
+enum class ExtensionNetworkOriginState {
+    NOT_CONFIGURED,
+    INVALID,
+    REQUIRES_APPROVAL,
+    APPROVED,
+    SUSPENDED,
+    UNVERIFIED,
+}
+
+data class ExtensionSettingNetworkOrigin(
+    val sectionId: String,
+    val fieldKey: String,
+    val label: String?,
+    val currentOrigin: String?,
+    val state: ExtensionNetworkOriginState,
+) {
+    val qualifiedKey: String
+        get() = ExtensionSettingKeys.qualified(sectionId, fieldKey)
+}
+
 class ExtensionSettingsConfiguration internal constructor(
     val extensionId: ExtensionId,
     val sections: List<ExtensionSettingSection>,
     val snapshot: ExtensionSettingsSnapshot,
     private val editTokens: Map<String, ExtensionSettingEditToken>,
+    val settingNetworkOrigins: List<ExtensionSettingNetworkOrigin> = emptyList(),
 ) {
+    private val settingNetworkOriginsByKey =
+        settingNetworkOrigins.associateBy(ExtensionSettingNetworkOrigin::qualifiedKey)
+
+    init {
+        require(settingNetworkOriginsByKey.size == settingNetworkOrigins.size) {
+            "Setting network origins must be unique"
+        }
+    }
+
     fun editToken(
         sectionId: String,
         fieldKey: String,
@@ -65,6 +95,22 @@ class ExtensionSettingsConfiguration internal constructor(
         runCatching { ExtensionSettingKeys.qualified(sectionId, fieldKey) }
             .getOrNull()
             ?.let(editTokens::get)
+
+    fun settingNetworkOrigin(
+        sectionId: String,
+        fieldKey: String,
+    ): ExtensionSettingNetworkOrigin? =
+        runCatching { ExtensionSettingKeys.qualified(sectionId, fieldKey) }
+            .getOrNull()
+            ?.let(settingNetworkOriginsByKey::get)
+
+    fun settingNetworkOrigin(qualifiedKey: String): ExtensionSettingNetworkOrigin? =
+        settingNetworkOriginsByKey[qualifiedKey]
+
+    fun networkOriginState(
+        sectionId: String,
+        fieldKey: String,
+    ): ExtensionNetworkOriginState? = settingNetworkOrigin(sectionId, fieldKey)?.state
 }
 
 class ExtensionSettingEditToken internal constructor(

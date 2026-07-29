@@ -30,6 +30,7 @@ import com.m3u.data.repository.extension.ExtensionContributionScheduler
 import com.m3u.data.repository.extension.ExtensionDynamicSchemaRevalidationResult
 import com.m3u.data.repository.extension.ExtensionEpgRefreshContribution
 import com.m3u.data.repository.extension.ExtensionMetadataRefreshContribution
+import com.m3u.data.repository.extension.ExtensionNetworkOriginState
 import com.m3u.data.repository.extension.ExtensionSettingEditToken
 import com.m3u.data.repository.extension.ExtensionSettingStore
 import com.m3u.data.repository.extension.ExtensionSettingUpdateResult
@@ -51,6 +52,10 @@ import com.m3u.extension.api.ExtensionManifest
 import com.m3u.extension.api.ExtensionNetworkOrigin
 import com.m3u.extension.api.ExtensionProgramme
 import com.m3u.extension.api.ExtensionSemanticVersion
+import com.m3u.extension.api.ExtensionSettingField
+import com.m3u.extension.api.ExtensionSettingKeys
+import com.m3u.extension.api.ExtensionSettingSchema
+import com.m3u.extension.api.ExtensionSettingType
 import com.m3u.extension.api.ExtensionState
 import com.m3u.extension.api.ExtensionSettingsSnapshot
 import com.m3u.extension.api.HostHookSpecs
@@ -1380,6 +1385,123 @@ class ExtensionPluginRepositoryLifecycleTest {
     }
 
     @Test
+    fun soleTrustedOwnerProjectsRetainedSettingOriginWithoutExportingIt() = runBlocking {
+        val manifest = networkSettingsManifest()
+        trust(manifest)
+        trustStore.setEnabled(SERVICE, false)
+        seedRetainedNetworkOrigin(manifest, RETAINED_SETTING_ORIGIN)
+        val repository = repository(
+            connector = ExtensionPluginTransportConnector {
+                FakePluginTransport(manifest)
+            },
+        )
+
+        val installed = repository.installedPlugins().single()
+
+        assertFalse(installed.enabled)
+        assertEquals(
+            listOf(
+                PluginFixedNetworkOrigin(
+                    origin = FIXED_NETWORK_ORIGIN.canonicalValue,
+                    state = ExtensionNetworkOriginState.APPROVED,
+                )
+            ),
+            installed.networkAccess.fixedOrigins,
+        )
+        val settingOrigin = installed.networkAccess.settingOrigins.single()
+        assertEquals(ExtensionSettingStore.MANIFEST_SECTION_ID, settingOrigin.sectionId)
+        assertEquals(NETWORK_ORIGIN_FIELD_KEY, settingOrigin.fieldKey)
+        assertEquals("Server URL", settingOrigin.label)
+        assertEquals(RETAINED_SETTING_ORIGIN.canonicalValue, settingOrigin.currentOrigin)
+        assertEquals(
+            ExtensionNetworkOriginState.REQUIRES_APPROVAL,
+            settingOrigin.state,
+        )
+        val diagnostics = requireNotNull(repository.diagnostics(EXTENSION_ID.value))
+        assertFalse(diagnostics.contains(RETAINED_SETTING_ORIGIN.value))
+        assertFalse(diagnostics.contains(RETAINED_SETTING_ORIGIN.canonicalValue))
+    }
+
+    @Test
+    fun retainedIdentityConflictsNeverExposeSettingOriginValues() = runBlocking {
+        val manifest = networkSettingsManifest()
+        trust(manifest)
+        trustStore.setEnabled(SERVICE, false)
+        seedRetainedNetworkOrigin(manifest, RETAINED_SETTING_ORIGIN)
+        val replacement = SERVICE.copy(certificateSha256 = "replacement-certificate")
+        val scenarios = listOf(
+            listOf(OTHER_SERVICE) to OTHER_SERVICE,
+            listOf(replacement) to replacement,
+        )
+
+        scenarios.forEach { (services, target) ->
+            val repository = repository(
+                connector = ExtensionPluginTransportConnector {
+                    FakePluginTransport(manifest)
+                },
+                services = services,
+            )
+
+            val installed = repository.installedPlugins().single { plugin ->
+                plugin.packageName == target.packageName &&
+                    plugin.serviceName == target.serviceName
+            }
+
+            assertFalse(installed.trusted)
+            assertEquals(
+                listOf(
+                    PluginFixedNetworkOrigin(
+                        origin = FIXED_NETWORK_ORIGIN.canonicalValue,
+                        state = ExtensionNetworkOriginState.REQUIRES_APPROVAL,
+                    )
+                ),
+                installed.networkAccess.fixedOrigins,
+            )
+            val settingOrigin = installed.networkAccess.settingOrigins.single()
+            assertEquals(ExtensionSettingStore.MANIFEST_SECTION_ID, settingOrigin.sectionId)
+            assertEquals(NETWORK_ORIGIN_FIELD_KEY, settingOrigin.fieldKey)
+            assertEquals("Server URL", settingOrigin.label)
+            assertNull(settingOrigin.currentOrigin)
+            assertEquals(ExtensionNetworkOriginState.UNVERIFIED, settingOrigin.state)
+            assertTrue(
+                installed.networkAccess.settingOrigins.none { origin ->
+                    origin.currentOrigin == RETAINED_SETTING_ORIGIN.canonicalValue
+                }
+            )
+        }
+    }
+
+    @Test
+    fun freshUntrustedProjectionDoesNotReadRetainedSettingOrigin() = runBlocking {
+        val manifest = networkSettingsManifest()
+        seedRetainedNetworkOrigin(manifest, RETAINED_SETTING_ORIGIN)
+        val repository = repository(
+            connector = ExtensionPluginTransportConnector {
+                FakePluginTransport(manifest)
+            },
+        )
+
+        val installed = repository.installedPlugins().single()
+
+        assertFalse(installed.trusted)
+        assertEquals(
+            listOf(
+                PluginFixedNetworkOrigin(
+                    origin = FIXED_NETWORK_ORIGIN.canonicalValue,
+                    state = ExtensionNetworkOriginState.REQUIRES_APPROVAL,
+                )
+            ),
+            installed.networkAccess.fixedOrigins,
+        )
+        val settingOrigin = installed.networkAccess.settingOrigins.single()
+        assertEquals(ExtensionSettingStore.MANIFEST_SECTION_ID, settingOrigin.sectionId)
+        assertEquals(NETWORK_ORIGIN_FIELD_KEY, settingOrigin.fieldKey)
+        assertEquals("Server URL", settingOrigin.label)
+        assertNull(settingOrigin.currentOrigin)
+        assertEquals(ExtensionNetworkOriginState.NOT_CONFIGURED, settingOrigin.state)
+    }
+
+    @Test
     fun explicitEnableTransfersSameSignerServiceRename() = runBlocking {
         trust(MANIFEST)
         val replacement = SERVICE.copy(
@@ -1808,6 +1930,23 @@ class ExtensionPluginRepositoryLifecycleTest {
         )
     }
 
+    private fun seedRetainedNetworkOrigin(
+        manifest: ExtensionManifest,
+        origin: ExtensionNetworkOrigin,
+    ) {
+        val key = ExtensionSettingKeys.qualified(
+            ExtensionSettingStore.MANIFEST_SECTION_ID,
+            NETWORK_ORIGIN_FIELD_KEY,
+        )
+        val initial = settingStore.snapshot(manifest)
+        settingStore.save(
+            manifest.id.value,
+            initial.copy(
+                values = initial.values + (key to JsonPrimitive(origin.value)),
+            ),
+        )
+    }
+
     private fun numberedServices(count: Int): List<InstalledExtensionService> =
         List(count) { index ->
             InstalledExtensionService(
@@ -2073,6 +2212,10 @@ class ExtensionPluginRepositoryLifecycleTest {
         val MANIFEST = manifest()
         const val CONTRIBUTION_PLAYLIST_URL = "https://media.example/contribution-list.m3u"
         const val CONTRIBUTION_CHANNEL_REFERENCE = "contribution-channel"
+        const val NETWORK_ORIGIN_FIELD_KEY = "base-url"
+        val FIXED_NETWORK_ORIGIN = ExtensionNetworkOrigin("https://fixed.example")
+        val RETAINED_SETTING_ORIGIN =
+            ExtensionNetworkOrigin("https://private.retained.example")
         val INVALID_AUTHORIZATION_TOKEN = PluginAuthorizationToken("invalid")
         val MANIFEST_WITH_REMOVED_CAPABILITY = manifest(
             ExtensionCapabilityRequest(ExtensionCapabilityIds.SearchRead, "Search channels")
@@ -2155,6 +2298,21 @@ class ExtensionPluginRepositoryLifecycleTest {
                     )
                 ),
                 networkOrigins = origins,
+            )
+
+        fun networkSettingsManifest(): ExtensionManifest =
+            networkManifest(setOf(FIXED_NETWORK_ORIGIN)).copy(
+                settingsSchema = ExtensionSettingSchema(
+                    version = 1,
+                    fields = listOf(
+                        ExtensionSettingField(
+                            key = NETWORK_ORIGIN_FIELD_KEY,
+                            label = "Server URL",
+                            type = ExtensionSettingType.TEXT,
+                            networkOrigin = true,
+                        )
+                    ),
+                ),
             )
 
         fun contributionManifest(

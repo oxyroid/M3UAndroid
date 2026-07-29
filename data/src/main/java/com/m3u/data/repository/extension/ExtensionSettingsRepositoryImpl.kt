@@ -83,7 +83,32 @@ internal class ExtensionSettingsRepositoryImpl @Inject constructor(
         } else {
             emptyMap()
         }
-        return ExtensionSettingsConfiguration(extensionId, sections, snapshot, editTokens)
+        val originReview = store.settingOriginReview(
+            extensionId = extensionId.value,
+            snapshot = snapshot,
+            manifest = extension.manifest,
+        ).associateBy(ExtensionSettingNetworkOrigin::qualifiedKey)
+        val settingNetworkOrigins = sections.flatMap { section ->
+            section.schema.fields.mapNotNull { field ->
+                if (!field.networkOrigin) return@mapNotNull null
+                val qualifiedKey = ExtensionSettingKeys.qualified(section.id, field.key)
+                originReview[qualifiedKey]?.copy(label = field.label)
+                    ?: ExtensionSettingNetworkOrigin(
+                        sectionId = section.id,
+                        fieldKey = field.key,
+                        label = field.label,
+                        currentOrigin = null,
+                        state = ExtensionNetworkOriginState.NOT_CONFIGURED,
+                    )
+            }
+        }
+        return ExtensionSettingsConfiguration(
+            extensionId = extensionId,
+            sections = sections,
+            snapshot = snapshot,
+            editTokens = editTokens,
+            settingNetworkOrigins = settingNetworkOrigins,
+        )
     }
 
     private fun dynamicSchemaSession(
