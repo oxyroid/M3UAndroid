@@ -23,7 +23,21 @@
     <string name="tv_extensions_enable_developer_mode">Aktivera utvecklartillägg</string>
     <string name="tv_extensions_disable_developer_mode">Inaktivera utvecklartillägg</string>
     <string name="ui_connect">Anslut</string>
-    <string name="ui_remote_control_pair_title">ange kod från TV</string>
-    <string name="ui_remote_control_pair_subtitle">Se till att ansluta till samma Wi-Fi</string>
+    <string name="ui_remote_control_pair_title">Ange koden som visas på TV:n</string>
+    <string name="ui_remote_control_pair_subtitle">Se till att båda enheterna är anslutna till samma Wi-Fi-nätverk</string>
+    <string name="ui_remote_control_pair_timeout">TV:n hittades inte. Kontrollera att båda enheterna är anslutna till samma nätverk.</string>
+    <string name="ui_remote_control_connect">Anslut</string>
+    <string name="ui_remote_control_connecting">Ansluter…</string>
+    <string name="ui_remote_control_disconnect">Koppla från</string>
+    <string name="ui_remote_control_keypad_backspace">Backsteg</string>
+    <string name="ui_remote_control_keypad_clear">Rensa</string>
+    <string name="ui_remote_control_direction_pad">TV:ns styrkors</string>
+    <string name="ui_remote_control_direction_up">Flytta upp</string>
+    <string name="ui_remote_control_direction_down">Flytta ned</string>
+    <string name="ui_remote_control_direction_left">Flytta åt vänster</string>
+    <string name="ui_remote_control_direction_right">Flytta åt höger</string>
+    <string name="ui_remote_control_direction_confirm">Välj</string>
+    <string name="ui_remote_control_pairing_code">Parkopplingskod: %1$s</string>
+    <string name="ui_remote_control_pairing_code_empty">Parkopplingskoden är tom</string>
     <string name="ui_action_delete_epg">Ta bort EPG</string>
 </resources>

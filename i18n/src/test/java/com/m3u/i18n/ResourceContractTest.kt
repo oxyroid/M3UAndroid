@@ -193,6 +193,46 @@ class ResourceContractTest {
     }
 
     @Test
+    fun `remote control resources exist in every supported locale`() {
+        val resourceRoot = resourceRoot()
+        val defaults = readEntries(resourceRoot.resolve("values"))
+        val requiredKeys = defaults.keys
+            .filterTo(sortedSetOf()) { key ->
+                key.startsWith(REMOTE_CONTROL_UI_PREFIX) ||
+                    key.startsWith(REMOTE_CONTROL_SETTING_PREFIX)
+            }
+        val failures = buildList {
+            localeDirectories(resourceRoot).forEach { directory ->
+                val localized = readEntries(directory)
+                val missing = requiredKeys - localized.keys
+                if (missing.isNotEmpty()) {
+                    add("${directory.name}: missing ${missing.joinToString()}")
+                }
+                requiredKeys.forEach keyLoop@ { key ->
+                    val localizedEntry = localized[key] ?: return@keyLoop
+                    if (localizedEntry.text.isBlank()) {
+                        add("${directory.name}: $key is blank")
+                    }
+                    val defaultEntry = defaults.getValue(key)
+                    if (localizedEntry.formatSignature != defaultEntry.formatSignature) {
+                        add(
+                            "${directory.name}: $key has ${localizedEntry.formatSignature} " +
+                                "but default has ${defaultEntry.formatSignature}"
+                        )
+                    }
+                }
+            }
+        }
+
+        assertEquals(
+            REMOTE_CONTROL_RESOURCE_COUNT,
+            requiredKeys.size,
+            "The Remote Control resource contract changed; update every supported locale",
+        )
+        assertTrue(failures.isEmpty(), failures.joinToString(separator = "\n"))
+    }
+
+    @Test
     fun `playlist management resources exist in every supported locale`() {
         val resourceRoot = resourceRoot()
         val defaults = readEntries(resourceRoot.resolve("values"))
@@ -402,6 +442,9 @@ class ResourceContractTest {
         const val PROVIDER_ADDED_KEY = "string/feat_setting_provider_added"
         const val PROVIDER_KEY_PREFIX = "string/feat_setting_provider_"
         const val EXTENSION_KEY_PREFIX = "string/feat_setting_extension_"
+        const val REMOTE_CONTROL_UI_PREFIX = "string/ui_remote_control_"
+        const val REMOTE_CONTROL_SETTING_PREFIX = "string/feat_setting_remote_"
+        const val REMOTE_CONTROL_RESOURCE_COUNT = 23
         const val PLAYLIST_KEY_PREFIX = "feat_setting_playlist_"
         const val PLAYLIST_CONFIGURATION_KEY_PREFIX = "feat_playlist_configuration_"
         const val PLAYLIST_BACKUP_FILENAME_KEY =

@@ -153,10 +153,13 @@
     <string name="feat_setting_canvas_reset">sıfırla</string>
     <string name="feat_setting_epg_clock_mode">program 12 saat modu</string>
     <string name="feat_setting_remote_control">uzaktan kumanda</string>
-    <string name="feat_setting_remote_control_description">TVnizi uzaktan kontrol etme özelliğini açın</string>
+    <string name="feat_setting_remote_control_description">TV’nizi uzaktan kontrol edin</string>
     <string name="feat_setting_remote_control_tv_side">uzaktan kumanda</string>
-    <string name="feat_setting_remote_control_tv_side_description">akıllı telefonların TVnizi kontrol etmesine izin verin</string>
+    <string name="feat_setting_remote_control_tv_side_description">Akıllı telefonların TV’nizi kontrol etmesine izin verin</string>
     <string name="feat_setting_subscribe_for_tv">TV’ye ekle</string>
+    <string name="feat_setting_remote_tv_not_connected">Önce bir TV’ye bağlanın.</string>
+    <string name="feat_setting_remote_subscribe_sent">Abonelik TV’ye gönderildi.</string>
+    <string name="feat_setting_remote_subscribe_failed">Abonelik TV’ye gönderilemedi.</string>
     <string name="feat_setting_backing_up">tüm oynatma listeleri ve kanallar yedekleniyor</string>
     <string name="feat_setting_restoring">tüm oynatma listeleri ve kanallar geri yükleniyor</string>
     <string name="feat_setting_follow_system_theme">sistem temasını takip et</string>

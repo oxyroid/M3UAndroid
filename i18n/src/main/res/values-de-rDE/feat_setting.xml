@@ -151,10 +151,13 @@
     <string name="feat_setting_canvas_reset">zurücksetzen</string>
     <string name="feat_setting_epg_clock_mode">EPG 12h Modus</string>
     <string name="feat_setting_remote_control">Fernbedienung</string>
-    <string name="feat_setting_remote_control_description">TV fernsteuern</string>
+    <string name="feat_setting_remote_control_description">Fernsteuerung des Fernsehers aktivieren</string>
     <string name="feat_setting_remote_control_tv_side">Fernbedienung</string>
-    <string name="feat_setting_remote_control_tv_side_description">Mit Smartphone den TV steuern</string>
+    <string name="feat_setting_remote_control_tv_side_description">Smartphones erlauben, den Fernseher zu steuern</string>
     <string name="feat_setting_subscribe_for_tv">Auf TV hinzufügen</string>
+    <string name="feat_setting_remote_tv_not_connected">Bitte zuerst mit einem Fernseher verbinden.</string>
+    <string name="feat_setting_remote_subscribe_sent">Abonnement an den Fernseher gesendet.</string>
+    <string name="feat_setting_remote_subscribe_failed">Das Abonnement konnte nicht an den Fernseher gesendet werden.</string>
     <string name="feat_setting_backing_up">Sichere Playlisten und Kanäle</string>
     <string name="feat_setting_restoring">Wiederherstellen von Playlisten und Kanäle</string>
     <string name="feat_setting_follow_system_theme">Benutze System-Theme</string>

@@ -22,8 +22,22 @@
     <string name="tv_extensions_subtitle">Ekstensi APK lokal yang terpasang dan status kepercayaannya.</string>
     <string name="tv_extensions_enable_developer_mode">Aktifkan ekstensi pengembang</string>
     <string name="tv_extensions_disable_developer_mode">Nonaktifkan ekstensi pengembang</string>
-    <string name="ui_connect">Terhubung</string>
-    <string name="ui_remote_control_pair_title">Masukkan kode dari TV</string>
-    <string name="ui_remote_control_pair_subtitle">Pastikan terhubung ke Wi-Fi yang sama</string>
+    <string name="ui_connect">Hubungkan</string>
+    <string name="ui_remote_control_pair_title">Masukkan kode yang ditampilkan di TV</string>
+    <string name="ui_remote_control_pair_subtitle">Pastikan kedua perangkat terhubung ke jaringan Wi-Fi yang sama</string>
+    <string name="ui_remote_control_pair_timeout">TV tidak ditemukan. Pastikan kedua perangkat terhubung ke jaringan yang sama.</string>
+    <string name="ui_remote_control_connect">Hubungkan</string>
+    <string name="ui_remote_control_connecting">Menghubungkan…</string>
+    <string name="ui_remote_control_disconnect">Putuskan sambungan</string>
+    <string name="ui_remote_control_keypad_backspace">Hapus karakter terakhir</string>
+    <string name="ui_remote_control_keypad_clear">Hapus</string>
+    <string name="ui_remote_control_direction_pad">Tombol arah TV</string>
+    <string name="ui_remote_control_direction_up">Gerak ke atas</string>
+    <string name="ui_remote_control_direction_down">Gerak ke bawah</string>
+    <string name="ui_remote_control_direction_left">Gerak ke kiri</string>
+    <string name="ui_remote_control_direction_right">Gerak ke kanan</string>
+    <string name="ui_remote_control_direction_confirm">Pilih</string>
+    <string name="ui_remote_control_pairing_code">Kode penyambungan: %1$s</string>
+    <string name="ui_remote_control_pairing_code_empty">Kode penyambungan kosong</string>
     <string name="ui_action_delete_epg">Hapus EPG</string>
 </resources>

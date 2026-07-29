@@ -153,10 +153,13 @@
     <string name="feat_setting_canvas_reset">reiniciar</string>
     <string name="feat_setting_epg_clock_mode">modo reloj de 12 h en programas</string>
     <string name="feat_setting_remote_control">control remoto</string>
-    <string name="feat_setting_remote_control_description">permite controlar la TV a distancia</string>
+    <string name="feat_setting_remote_control_description">Permite controlar la TV a distancia</string>
     <string name="feat_setting_remote_control_tv_side">control remoto</string>
-    <string name="feat_setting_remote_control_tv_side_description">permite a los celulares controlar tu TV</string>
+    <string name="feat_setting_remote_control_tv_side_description">Permite que los celulares controlen la TV</string>
     <string name="feat_setting_subscribe_for_tv">Agregar a la TV</string>
+    <string name="feat_setting_remote_tv_not_connected">Conéctate primero a una TV.</string>
+    <string name="feat_setting_remote_subscribe_sent">Suscripción enviada a la TV.</string>
+    <string name="feat_setting_remote_subscribe_failed">No se pudo enviar la suscripción a la TV.</string>
     <string name="feat_setting_backing_up">respaldando todos los playlists y canales</string>
     <string name="feat_setting_restoring">restaurando todos los playlists y canales</string>
     <string name="feat_setting_follow_system_theme">seguir tema del sistema</string>

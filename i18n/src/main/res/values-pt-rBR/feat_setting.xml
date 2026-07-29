@@ -154,6 +154,9 @@
     <string name="feat_setting_remote_control_tv_side">Controle Remoto</string>
     <string name="feat_setting_remote_control_tv_side_description">Permite que smartphones controlem sua TV</string>
     <string name="feat_setting_subscribe_for_tv">Adicionar à TV</string>
+    <string name="feat_setting_remote_tv_not_connected">Conecte-se a uma TV primeiro.</string>
+    <string name="feat_setting_remote_subscribe_sent">Assinatura enviada à TV.</string>
+    <string name="feat_setting_remote_subscribe_failed">Não foi possível enviar a assinatura à TV.</string>
     <string name="feat_setting_backing_up">Fazendo backup de todas as playlists e canais</string>
     <string name="feat_setting_restoring">Restaurando todas as playlists e canais</string>
     <string name="feat_setting_follow_system_theme">Tema padrão do sistema</string>

@@ -23,7 +23,21 @@
     <string name="tv_extensions_enable_developer_mode">Activer les extensions pour développeurs</string>
     <string name="tv_extensions_disable_developer_mode">Désactiver les extensions pour développeurs</string>
     <string name="ui_connect">Se connecter</string>
-    <string name="ui_remote_control_pair_title">entrez le code depuis la TV</string>
-    <string name="ui_remote_control_pair_subtitle">Assurez-vous d\'être connecté au même Wi-Fi</string>
+    <string name="ui_remote_control_pair_title">Entrez le code affiché sur la TV</string>
+    <string name="ui_remote_control_pair_subtitle">Assurez-vous que les deux appareils sont connectés au même réseau Wi-Fi</string>
+    <string name="ui_remote_control_pair_timeout">TV introuvable. Vérifiez que les deux appareils sont connectés au même réseau.</string>
+    <string name="ui_remote_control_connect">Se connecter</string>
+    <string name="ui_remote_control_connecting">Connexion en cours…</string>
+    <string name="ui_remote_control_disconnect">Se déconnecter</string>
+    <string name="ui_remote_control_keypad_backspace">Retour arrière</string>
+    <string name="ui_remote_control_keypad_clear">Effacer</string>
+    <string name="ui_remote_control_direction_pad">Pavé directionnel de la TV</string>
+    <string name="ui_remote_control_direction_up">Déplacer vers le haut</string>
+    <string name="ui_remote_control_direction_down">Déplacer vers le bas</string>
+    <string name="ui_remote_control_direction_left">Déplacer vers la gauche</string>
+    <string name="ui_remote_control_direction_right">Déplacer vers la droite</string>
+    <string name="ui_remote_control_direction_confirm">Sélectionner</string>
+    <string name="ui_remote_control_pairing_code">Code d’association : %1$s</string>
+    <string name="ui_remote_control_pairing_code_empty">Le code d’association est vide</string>
     <string name="ui_action_delete_epg">Supprimer l’EPG</string>
 </resources>

@@ -153,10 +153,13 @@
     <string name="feat_setting_canvas_reset">réinitialiser</string>
     <string name="feat_setting_epg_clock_mode">mode horloge 12h du programme</string>
     <string name="feat_setting_remote_control">télécommande</string>
-    <string name="feat_setting_remote_control_description">active la possibilité de contrôler à distance la TV</string>
+    <string name="feat_setting_remote_control_description">Activer le contrôle à distance de la TV</string>
     <string name="feat_setting_remote_control_tv_side">télécommande</string>
-    <string name="feat_setting_remote_control_tv_side_description">autoriser le téléphone à contrôler la TV</string>
+    <string name="feat_setting_remote_control_tv_side_description">Autoriser les smartphones à contrôler la TV</string>
     <string name="feat_setting_subscribe_for_tv">Ajouter à la TV</string>
+    <string name="feat_setting_remote_tv_not_connected">Connectez-vous d’abord à une TV.</string>
+    <string name="feat_setting_remote_subscribe_sent">Abonnement envoyé à la TV.</string>
+    <string name="feat_setting_remote_subscribe_failed">Échec de l’envoi de l’abonnement à la TV.</string>
     <string name="feat_setting_backing_up">sauvegarde de toutes les playlists et chaînes</string>
     <string name="feat_setting_restoring">restauration de toutes les playlists et chaînes</string>
     <string name="feat_setting_follow_system_theme">suivre le thème système</string>

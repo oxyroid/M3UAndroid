@@ -20,8 +20,22 @@
     <string name="tv_extensions_subtitle">Extensiile APK locale instalate și starea lor de încredere.</string>
     <string name="tv_extensions_enable_developer_mode">Activează extensiile pentru dezvoltatori</string>
     <string name="tv_extensions_disable_developer_mode">Dezactivează extensiile pentru dezvoltatori</string>
-    <string name="ui_connect">Conectare</string>
-    <string name="ui_remote_control_pair_title">codul de pe TV</string>
-    <string name="ui_remote_control_pair_subtitle">Verificati sa fiti conectat la aceasi retea Wi-Fi</string>
+    <string name="ui_connect">Conectează</string>
+    <string name="ui_remote_control_pair_title">Introdu codul afișat pe TV</string>
+    <string name="ui_remote_control_pair_subtitle">Asigură-te că ambele dispozitive sunt conectate la aceeași rețea Wi-Fi</string>
+    <string name="ui_remote_control_pair_timeout">Televizorul nu a fost găsit. Asigură-te că ambele dispozitive sunt conectate la aceeași rețea.</string>
+    <string name="ui_remote_control_connect">Conectează</string>
+    <string name="ui_remote_control_connecting">Se conectează…</string>
+    <string name="ui_remote_control_disconnect">Deconectează</string>
+    <string name="ui_remote_control_keypad_backspace">Șterge ultimul caracter</string>
+    <string name="ui_remote_control_keypad_clear">Șterge</string>
+    <string name="ui_remote_control_direction_pad">Control direcțional TV</string>
+    <string name="ui_remote_control_direction_up">Deplasează în sus</string>
+    <string name="ui_remote_control_direction_down">Deplasează în jos</string>
+    <string name="ui_remote_control_direction_left">Deplasează la stânga</string>
+    <string name="ui_remote_control_direction_right">Deplasează la dreapta</string>
+    <string name="ui_remote_control_direction_confirm">Selectează</string>
+    <string name="ui_remote_control_pairing_code">Cod de asociere: %1$s</string>
+    <string name="ui_remote_control_pairing_code_empty">Codul de asociere este gol</string>
     <string name="ui_action_delete_epg">Șterge EPG</string>
 </resources>

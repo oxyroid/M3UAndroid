@@ -153,10 +153,13 @@
     <string name="feat_setting_canvas_reset">återställ</string>
     <string name="feat_setting_epg_clock_mode">program 12-timmars klockläge</string>
     <string name="feat_setting_remote_control">fjärrkontroll</string>
-    <string name="feat_setting_remote_control_description">aktivera möjligheten att fjärrstyra din TV</string>
+    <string name="feat_setting_remote_control_description">Aktivera fjärrstyrning av TV:n</string>
     <string name="feat_setting_remote_control_tv_side">fjärrkontroll</string>
-    <string name="feat_setting_remote_control_tv_side_description">låt smartphones styra din TV</string>
+    <string name="feat_setting_remote_control_tv_side_description">Tillåt smarttelefoner att styra TV:n</string>
     <string name="feat_setting_subscribe_for_tv">Lägg till på TV</string>
+    <string name="feat_setting_remote_tv_not_connected">Anslut först till en TV.</string>
+    <string name="feat_setting_remote_subscribe_sent">Prenumerationen skickades till TV:n.</string>
+    <string name="feat_setting_remote_subscribe_failed">Det gick inte att skicka prenumerationen till TV:n.</string>
     <string name="feat_setting_backing_up">säkerhetskopierar alla spellistor och kanaler</string>
     <string name="feat_setting_restoring">återställer alla spellistor och kanaler</string>
     <string name="feat_setting_follow_system_theme">följ systemtema</string>

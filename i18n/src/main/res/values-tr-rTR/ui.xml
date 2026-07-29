@@ -23,7 +23,21 @@
     <string name="tv_extensions_enable_developer_mode">Geliştirici uzantılarını etkinleştir</string>
     <string name="tv_extensions_disable_developer_mode">Geliştirici uzantılarını devre dışı bırak</string>
     <string name="ui_connect">Bağlan</string>
-    <string name="ui_remote_control_pair_title">TVden gelen kodu girin</string>
-    <string name="ui_remote_control_pair_subtitle">Aynı Wi-Fi ağına bağlı olduğunuzdan emin olun</string>
+    <string name="ui_remote_control_pair_title">TV’deki kodu girin</string>
+    <string name="ui_remote_control_pair_subtitle">Her iki cihazın da aynı Wi-Fi ağına bağlı olduğundan emin olun</string>
+    <string name="ui_remote_control_pair_timeout">TV bulunamadı. Her iki cihazın da aynı ağa bağlı olduğundan emin olun.</string>
+    <string name="ui_remote_control_connect">Bağlan</string>
+    <string name="ui_remote_control_connecting">Bağlanıyor…</string>
+    <string name="ui_remote_control_disconnect">Bağlantıyı kes</string>
+    <string name="ui_remote_control_keypad_backspace">Geri sil</string>
+    <string name="ui_remote_control_keypad_clear">Temizle</string>
+    <string name="ui_remote_control_direction_pad">TV yön tuşları</string>
+    <string name="ui_remote_control_direction_up">Yukarı git</string>
+    <string name="ui_remote_control_direction_down">Aşağı git</string>
+    <string name="ui_remote_control_direction_left">Sola git</string>
+    <string name="ui_remote_control_direction_right">Sağa git</string>
+    <string name="ui_remote_control_direction_confirm">Seç</string>
+    <string name="ui_remote_control_pairing_code">Eşleştirme kodu: %1$s</string>
+    <string name="ui_remote_control_pairing_code_empty">Eşleştirme kodu boş</string>
     <string name="ui_action_delete_epg">EPG’yi sil</string>
 </resources>

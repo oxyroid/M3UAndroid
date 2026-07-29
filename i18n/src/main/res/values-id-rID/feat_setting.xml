@@ -152,10 +152,13 @@
     <string name="feat_setting_canvas_reset">atur ulang</string>
     <string name="feat_setting_epg_clock_mode">Mode waktu 12 jam untuk program</string>
     <string name="feat_setting_remote_control">kontrol jarak jauh</string>
-    <string name="feat_setting_remote_control_description">mengaktifkan kemampuan untuk mengontrol TV Anda dari jarak jauh</string>
+    <string name="feat_setting_remote_control_description">Aktifkan kontrol TV dari jarak jauh</string>
     <string name="feat_setting_remote_control_tv_side">kontrol jarak jauh</string>
-    <string name="feat_setting_remote_control_tv_side_description">Izinkan smartphone mengontrol TV Anda</string>
+    <string name="feat_setting_remote_control_tv_side_description">Izinkan ponsel mengontrol TV Anda</string>
     <string name="feat_setting_subscribe_for_tv">Tambahkan ke TV</string>
+    <string name="feat_setting_remote_tv_not_connected">Hubungkan ke TV terlebih dahulu.</string>
+    <string name="feat_setting_remote_subscribe_sent">Langganan dikirim ke TV.</string>
+    <string name="feat_setting_remote_subscribe_failed">Langganan tidak dapat dikirim ke TV.</string>
     <string name="feat_setting_backing_up">Membuat cadangan untuk semua playlist dan saluran</string>
     <string name="feat_setting_restoring">Pulihkan semua daftar putar dan saluran</string>
     <string name="feat_setting_follow_system_theme">Sesuaikan dengan tema sistem</string>

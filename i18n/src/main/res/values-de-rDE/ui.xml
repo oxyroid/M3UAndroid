@@ -22,6 +22,20 @@
     <string name="tv_extensions_disable_developer_mode">Entwicklererweiterungen deaktivieren</string>
     <string name="ui_connect">Verbinden</string>
     <string name="ui_remote_control_pair_title">Code vom Fernseher eingeben</string>
-    <string name="ui_remote_control_pair_subtitle">Stelle sicher, dass Du mit dem selben WLAN verbunden bist</string>
+    <string name="ui_remote_control_pair_subtitle">Stelle sicher, dass du mit demselben WLAN verbunden bist</string>
+    <string name="ui_remote_control_pair_timeout">Der Fernseher wurde nicht gefunden. Stelle sicher, dass beide Geräte mit demselben Netzwerk verbunden sind.</string>
+    <string name="ui_remote_control_connect">Verbinden</string>
+    <string name="ui_remote_control_connecting">Verbindung wird hergestellt…</string>
+    <string name="ui_remote_control_disconnect">Verbindung trennen</string>
+    <string name="ui_remote_control_keypad_backspace">Rücktaste</string>
+    <string name="ui_remote_control_keypad_clear">Eingabe löschen</string>
+    <string name="ui_remote_control_direction_pad">Steuerkreuz des Fernsehers</string>
+    <string name="ui_remote_control_direction_up">Nach oben</string>
+    <string name="ui_remote_control_direction_down">Nach unten</string>
+    <string name="ui_remote_control_direction_left">Nach links</string>
+    <string name="ui_remote_control_direction_right">Nach rechts</string>
+    <string name="ui_remote_control_direction_confirm">Auswählen</string>
+    <string name="ui_remote_control_pairing_code">Kopplungscode: %1$s</string>
+    <string name="ui_remote_control_pairing_code_empty">Der Kopplungscode ist leer</string>
     <string name="ui_action_delete_epg">EPG löschen</string>
 </resources>
