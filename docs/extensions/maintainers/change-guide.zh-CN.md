@@ -51,6 +51,10 @@ Repository 和 Importer 不按具体 `ProviderKind` 分支；只有 Provider 实
 
 任何生命周期改动都要检查正常返回、取消、超时、Binder death、停用、撤销和进程重启。连接状态由 [`ExtensionConnectionStateTest`](../../../extension/transport-android/src/androidTest/java/com/m3u/extension/transport/android/ExtensionConnectionStateTest.kt) 验证，跨进程链路由 [`ExternalExtensionIpcTest`](../../../app/smartphone/src/androidTest/java/com/m3u/testing/ExternalExtensionIpcTest.kt) 验证。
 
+修改内置与 APK Handler 共用的行为时，同步修改
+[`ExtensionConformanceSuite`](../../../extension/conformance/src/main/kotlin/com/m3u/extension/conformance/ExtensionConformanceSuite.kt)，
+并保持内置 Runtime、SDK Backend 与独立参考 APK 三个适配器全部通过。
+
 ## 修改结果应用器
 
 应用器需要明确三件事：本次请求范围、结果所有者、旧数据替换范围。
@@ -91,8 +95,9 @@ Repository 和 Importer 不按具体 `ProviderKind` 分支；只有 Provider 实
 | --- | --- |
 | API 或 runtime | [`ExtensionContractTest`](../../../extension/api/src/test/kotlin/com/m3u/extension/api/ExtensionContractTest.kt)、[`ExtensionRuntimeTest`](../../../extension/runtime/src/test/kotlin/com/m3u/extension/runtime/ExtensionRuntimeTest.kt) |
 | APK SDK 与类型化 handler | [`TypedExtensionServiceTest`](../../../extension/sdk-android/src/test/java/com/m3u/extension/sdk/android/TypedExtensionServiceTest.kt)、[`hello-extension`](../../../samples/hello-extension) |
+| 内置与 APK Handler 共用行为 | [`BuiltInExtensionConformanceTest`](../../../extension/runtime/src/test/kotlin/com/m3u/extension/runtime/BuiltInExtensionConformanceTest.kt)、[`TypedExtensionConformanceTest`](../../../extension/sdk-android/src/test/java/com/m3u/extension/sdk/android/TypedExtensionConformanceTest.kt)、[`ExternalExtensionConformanceIpcTest`](../../../app/smartphone/src/androidTest/java/com/m3u/testing/ExternalExtensionConformanceIpcTest.kt) |
 | 证书信任与连接状态 | [`CertificateSetFingerprintTest`](../../../extension/transport-android/src/test/java/com/m3u/extension/transport/android/CertificateSetFingerprintTest.kt)、[`ExtensionTrustStoreTest`](../../../extension/transport-android/src/androidTest/java/com/m3u/extension/transport/android/ExtensionTrustStoreTest.kt)、[`ExtensionConnectionStateTest`](../../../extension/transport-android/src/androidTest/java/com/m3u/extension/transport/android/ExtensionConnectionStateTest.kt) |
-| 跨进程发现、绑定、PFD、调用与取消 | [`ExternalExtensionIpcTest`](../../../app/smartphone/src/androidTest/java/com/m3u/testing/ExternalExtensionIpcTest.kt)、[`extension-reference`](../../../testing/extension-reference) |
+| 跨进程发现、绑定、PFD、调用与取消 | [`ExternalExtensionIpcTest`](../../../app/smartphone/src/androidTest/java/com/m3u/testing/ExternalExtensionIpcTest.kt)、[`ExternalExtensionConformanceIpcTest`](../../../app/smartphone/src/androidTest/java/com/m3u/testing/ExternalExtensionConformanceIpcTest.kt)、[`extension-reference`](../../../testing/extension-reference) |
 | 外部 provider 生命周期 | [`ExternalProviderEndToEndTest`](../../../app/smartphone/src/androidTest/java/com/m3u/testing/ExternalProviderEndToEndTest.kt)、[`extension-reference`](../../../testing/extension-reference)、[`mock-server`](../../../testing/mock-server) |
 | 内置 provider 与 importer | [`EmbyCompatibleProviderIntegrationTest`](../../../data/src/androidTest/java/com/m3u/data/extension/emby/EmbyCompatibleProviderIntegrationTest.kt)、[`SubscriptionProviderRepositoryIntegrationTest`](../../../data/src/androidTest/java/com/m3u/data/repository/provider/SubscriptionProviderRepositoryIntegrationTest.kt)，以及上文链接的应用器测试 |
 | 手机或 TV 产品链路 | 对应触发入口与可见结果的产品 UI 测试 |

@@ -41,6 +41,7 @@ entries and registration rules before a transport is admitted.
 | Android wire protocol | Stable AIDL descriptors, handshake types, file-backed JSON codec, and bounded callback dispatcher shared by host and SDK | [`:extension:transport-protocol-android`](../../../extension/transport-protocol-android) |
 | Host Android transport | Service discovery, identity, binding, broker bridge, cancellation, and Binder death | [`:extension:transport-android`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android) |
 | External SDK | Decode a call and run the registered typed handler without depending on host runtime, discovery, or trust code | [`TypedExtensionService`](../../../extension/sdk-android/src/main/java/com/m3u/extension/sdk/android/TypedExtensionService.kt) |
+| Conformance | Run the same serialized success, context, capability, schema, and cancellation checks against built-in runtime, SDK backend, and real Binder/PFD transport | [`:extension:conformance`](../../../extension/conformance), [`ExtensionConformanceSuite`](../../../extension/conformance/src/main/kotlin/com/m3u/extension/conformance/ExtensionConformanceSuite.kt) |
 | Plugin lifecycle | Trust, certificate pin, enablement, grants, reconnect, reauthorization, diagnostics | [`ExtensionPluginRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/plugin/ExtensionPluginRepositoryImpl.kt) |
 | Settings lifecycle | Rendered schema, saved values, secret handles, and edit authorization | [`ExtensionSettingsRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/extension/ExtensionSettingsRepositoryImpl.kt) |
 | Network scope | Choose approved origins and credentials for one external Hook call | [`ExtensionHookBrokerScopeProvider`](../../../data/src/main/java/com/m3u/data/extension/security/ExtensionHookBrokerScopeProvider.kt) |
@@ -48,6 +49,10 @@ entries and registration rules before a transport is admitted.
 | Provider flow | Discover, validate, refresh, playback resolve, and session close | [`SubscriptionProviderRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/provider/SubscriptionProviderRepositoryImpl.kt) |
 | Result application | Validate ownership and write host data, or map a result to UI/player | [`data/extension`](../../../data/src/main/java/com/m3u/data/extension), [`data/repository/extension`](../../../data/src/main/java/com/m3u/data/repository/extension) |
 | Background tasks | Reconcile periodic declarations and invoke the task Hook from WorkManager | [`ExtensionBackgroundTaskScheduler`](../../../data/src/main/java/com/m3u/data/worker/ExtensionBackgroundTaskScheduler.kt), [`ExtensionBackgroundTaskWorker`](../../../data/src/main/java/com/m3u/data/worker/ProviderWorker.kt) |
+
+The shared suite checks behavior that must be identical at the serialized invocation boundary.
+Runtime health, admission limits, Binder death, hostile output, trust, and broker security keep their
+specialized tests; passing conformance does not replace those gates.
 
 ## What happens during one Hook call
 

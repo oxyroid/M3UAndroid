@@ -24,7 +24,23 @@ android {
     }
 }
 
+val debugApkForHostTests by configurations.creating {
+    isCanBeConsumed = true
+    isCanBeResolved = false
+}
+
+artifacts {
+    add(
+        debugApkForHostTests.name,
+        layout.buildDirectory.file("outputs/apk/debug/extension-reference-debug.apk"),
+    ) {
+        type = "apk"
+        builtBy("assembleDebug")
+    }
+}
+
 dependencies {
+    implementation(project(":extension:conformance"))
     implementation(project(":extension:sdk-android"))
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)

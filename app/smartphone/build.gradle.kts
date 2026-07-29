@@ -111,11 +111,6 @@ tasks.matching { task ->
     finalizedBy(":testing:mock-server:stopMockServer")
 }
 
-tasks.matching { task -> task.name == "connectedDebugAndroidTest" }.configureEach {
-    dependsOn(":testing:extension-reference:installDebug")
-    finalizedBy(":testing:extension-reference:uninstallDebug")
-}
-
 tasks.withType<KotlinCompile>().configureEach {
     if (name == "compileDebugAndroidTestKotlin") {
         compilerOptions.freeCompilerArgs.add("-Xno-param-assertions")
@@ -214,6 +209,13 @@ dependencies {
     androidTestImplementation(libs.androidx.test.uiautomator.uiautomator)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4.accessibility)
+    androidTestImplementation(project(":extension:conformance"))
     androidTestImplementation(project(":extension:runtime"))
     androidTestImplementation(project(":extension:transport-android"))
+    "androidTestUtil"(
+        project(
+            path = ":testing:extension-reference",
+            configuration = "debugApkForHostTests",
+        )
+    )
 }

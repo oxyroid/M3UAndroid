@@ -10,6 +10,7 @@ dependencies {
     implementation(project(":extension:transport-protocol-android"))
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
+    testImplementation(project(":extension:conformance"))
     testImplementation(kotlin("test-junit"))
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.core)

@@ -39,6 +39,7 @@ Runtime 负责完成一次调用。功能 repository 负责解释 result，并�
 | Android Wire 协议 | 宿主与 SDK 共用的稳定 AIDL Descriptor、Handshake 类型、文件承载 JSON Codec 与有界 Callback Dispatcher | [`:extension:transport-protocol-android`](../../../extension/transport-protocol-android) |
 | 宿主 Android Transport | Service 发现、身份、绑定、Broker Bridge、取消与 Binder Death | [`:extension:transport-android`](../../../extension/transport-android/src/main/java/com/m3u/extension/transport/android) |
 | 外部 SDK | 解码调用并运行已注册的类型化 Handler，不依赖宿主 Runtime、发现或信任代码 | [`TypedExtensionService`](../../../extension/sdk-android/src/main/java/com/m3u/extension/sdk/android/TypedExtensionService.kt) |
+| 一致性测试 | 对内置 Runtime、SDK Backend 和真实 Binder/PFD Transport 运行同一套序列化成功、上下文、能力、Schema 与取消检查 | [`:extension:conformance`](../../../extension/conformance)、[`ExtensionConformanceSuite`](../../../extension/conformance/src/main/kotlin/com/m3u/extension/conformance/ExtensionConformanceSuite.kt) |
 | 插件生命周期 | 信任、证书固定、启停、授权、重连、重新授权与诊断 | [`ExtensionPluginRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/plugin/ExtensionPluginRepositoryImpl.kt) |
 | 设置生命周期 | 已显示的 Schema、保存值、Secret Handle 与编辑授权 | [`ExtensionSettingsRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/extension/ExtensionSettingsRepositoryImpl.kt) |
 | 网络作用域 | 为一次外部 Hook 调用选择已批准的 Origin 与凭据 | [`ExtensionHookBrokerScopeProvider`](../../../data/src/main/java/com/m3u/data/extension/security/ExtensionHookBrokerScopeProvider.kt) |
@@ -46,6 +47,10 @@ Runtime 负责完成一次调用。功能 repository 负责解释 result，并�
 | Provider 流程 | Discover、Validate、Refresh、播放解析与 Session 关闭 | [`SubscriptionProviderRepositoryImpl`](../../../data/src/main/java/com/m3u/data/repository/provider/SubscriptionProviderRepositoryImpl.kt) |
 | Result 应用 | 校验所有权并写入宿主数据，或把结果映射到界面/播放器 | [`data/extension`](../../../data/src/main/java/com/m3u/data/extension)、[`data/repository/extension`](../../../data/src/main/java/com/m3u/data/repository/extension) |
 | 后台任务 | 对齐周期任务声明，并由 WorkManager 调用任务 Hook | [`ExtensionBackgroundTaskScheduler`](../../../data/src/main/java/com/m3u/data/worker/ExtensionBackgroundTaskScheduler.kt)、[`ExtensionBackgroundTaskWorker`](../../../data/src/main/java/com/m3u/data/worker/ProviderWorker.kt) |
+
+共享套件只检查序列化调用边界上必须一致的行为。Runtime 健康状态、调用准入、Binder
+Death、恶意输出、信任与 Broker 安全仍由各自的专项测试负责；一致性测试通过不能替代这些
+门槛。
 
 ## 一次 Hook 调用发生什么
 

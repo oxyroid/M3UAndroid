@@ -56,6 +56,7 @@ jobs:
         run: |
           ./gradlew \
             :extension:api:jvmTest \
+            :extension:conformance:test \
             :extension:runtime:test \
             :extension:transport-protocol-android:testDebugUnitTest \
             :extension:sdk-android:testDebugUnitTest \
@@ -72,10 +73,10 @@ jobs:
             :app:smartphone:assembleDebugAndroidTest \
             :app:tv:assembleDebugAndroidTest
 
-      - name: Verify hostile extension isolation
+      - name: Verify external extension isolation and conformance
         run: |
           ./gradlew :app:smartphone:hostileApi34DebugAndroidTest \
-            -Pandroid.testInstrumentationRunnerArguments.class=com.m3u.testing.HostileExternalExtensionIpcTest \
+            -Pandroid.testInstrumentationRunnerArguments.class=com.m3u.testing.HostileExternalExtensionIpcTest,com.m3u.testing.ExternalExtensionConformanceIpcTest \
             -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect \
             -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true \
             -Pandroid.experimental.androidTest.numManagedDeviceShards=1 \

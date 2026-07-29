@@ -15,7 +15,7 @@ This page defines what may ship from the current branch. Implementation instruct
 
 | Area | Current behavior | Evidence |
 | --- | --- | --- |
-| Contract and runtime | Typed, versioned Hook contracts; each call receives only the current Hook's declared and approved capabilities; per-extension and host-wide admission caps; one deadline across preparation, queueing, execution, response validation, and broker requests; cumulative broker request-count, encoded request-byte, and encoded response-byte limits; cancellation, health, and failure isolation | `WireGoldenFixtureTest`, `ExtensionContractTest`, `ExtensionRuntimeTest`, `InvocationBudgetPropagationTest`, and `ExtensionHostBridgeTest`. CI runs the API golden, runtime, SDK, and transport unit tests; the broker bridge uses connected device evidence. |
+| Contract and runtime | Typed, versioned Hook contracts; each call receives only the current Hook's declared and approved capabilities; per-extension and host-wide admission caps; one deadline across preparation, queueing, execution, response validation, and broker requests; cumulative broker request-count, encoded request-byte, and encoded response-byte limits; cancellation, health, and failure isolation | `WireGoldenFixtureTest`, `ExtensionContractTest`, `ExtensionRuntimeTest`, `InvocationBudgetPropagationTest`, and `ExtensionHostBridgeTest`. One serialized conformance suite runs against the built-in runtime, SDK backend, and standalone reference APK. |
 | Built-in provider | Emby and Jellyfin are selectable variants of one built-in extension; the hidden automatic kind remains only as a compatibility value for existing accounts and is not offered for new subscriptions | `EmbyCompatibleProviderIntegrationTest`, `EmbyCompatibleProviderLocalizationTest`, and `SubscriptionProviderRepositoryIntegrationTest` |
 | Provider credentials | External login returns a one-time host receipt. Post-validation scopes resolve references only into requests for the approved origin; the host does not directly serialize resolved values back to the extension. | `HostNetworkBrokerSecurityTest`, `ExtensionHostBridgeTest`, `ProviderBrokerScopeStoreTest`, and `CredentialVaultTest` |
 | General Hook network access | Settings, search, metadata, EPG, and background Hooks can use the host broker when that Hook declares and receives `network`. Search/metadata/EPG use an account scope when their request has an account; other calls use approved manifest and explicitly saved setting origins. Discover stays offline. | `ExtensionNetworkOriginContractTest`, `ExtensionBrokerScopeRuntimeTest`, `ExtensionHookBrokerScopeStoreTest`, and `ExtensionHostBridgeTest` |
@@ -33,8 +33,9 @@ A CI gate is run by `.github/workflows/android.yml`. A connected UI check is rep
 currently needs an explicit device run. A device check is a recorded one-off run.
 `ResourceContractTest` validates resource structure, not native-language quality.
 CI syntax-checks the phone matrix runner and compiles the data, phone, and TV connected-test
-harnesses. It also runs `HostileExternalExtensionIpcTest` on the `hostileApi34` build-managed
-device; it does not execute the phone, tablet, or TV UI matrices.
+harnesses. On the `hostileApi34` build-managed device it installs the standalone reference APK and
+runs `HostileExternalExtensionIpcTest` plus `ExternalExtensionConformanceIpcTest`; it does not
+execute the phone, tablet, or TV UI matrices.
 
 Latest hostile IPC run, 2026-07-29:
 
@@ -48,6 +49,15 @@ Latest hostile IPC run, 2026-07-29:
   service.
 - The signer case compares PackageManager's current certificate for the real discovered service
   with a seeded stale pin. It does not install a differently signed replacement APK.
+
+Latest shared external conformance run, 2026-07-29:
+
+- Device: Pixel 6 Pro API 36 on `emulator-5558`.
+- Result: 1/1 passed with the reference extension installed as a standalone APK under a different
+  UID from the host.
+- Coverage: typed success and result correlation, request/settings/grant/budget context, rejection
+  of a missing required capability and unsupported schema, and cancellation observed by the remote
+  handler across AIDL and PFD JSON transport.
 
 Latest connected phone run, 2026-07-29:
 
@@ -112,7 +122,7 @@ settings and removes the test packages when it finishes.
 - Keep the process-level hostile fixture green for blocked or late calls, ignored cancellation,
   process death, malformed or oversized output, retained broker access, stale signer trust, and
   extension-ID collision.
-- Run the same published conformance suite against built-in and external transports.
+- Keep the shared conformance suite green for the built-in runtime, SDK backend, and standalone APK.
 - Publish the SDK artifact together with the checked-in golden fixtures and compatibility policy.
 
 ## Decision rule

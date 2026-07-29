@@ -67,6 +67,7 @@ import com.m3u.extension.api.subscription.SubscriptionProviderVariant
 import com.m3u.extension.api.subscription.SubscriptionProviderValidateRequest
 import com.m3u.extension.api.subscription.SubscriptionProviderValidateResult
 import com.m3u.extension.api.subscription.SubscriptionSourceDescriptor
+import com.m3u.extension.conformance.ExtensionConformanceFixtureState
 import com.m3u.extension.sdk.android.BrokerException
 import com.m3u.extension.sdk.android.ExtensionHostNetworkBroker
 import com.m3u.extension.sdk.android.TypedExtensionService
@@ -88,6 +89,7 @@ import kotlinx.serialization.json.JsonPrimitive
 class ReferenceExtensionService : TypedExtensionService() {
     override val extensionManifest: ExtensionManifest = REFERENCE_MANIFEST
     private val invocationGateProbeCount = AtomicInteger()
+    private val conformanceFixtureState = ExtensionConformanceFixtureState()
 
     init {
         handle(SubscriptionHookSpecs.Discover) { request, _ ->
@@ -113,7 +115,11 @@ class ReferenceExtensionService : TypedExtensionService() {
             providerBrokerResult("search") { searchProvider(request, broker) }
         }
         handle(HostHookSpecs.BackgroundTask) { request, context ->
-            runBackgroundTask(context.invocationId, request, context.settings)
+            if (conformanceFixtureState.handles(request)) {
+                conformanceFixtureState.handle(request, context)
+            } else {
+                runBackgroundTask(context.invocationId, request, context.settings)
+            }
         }
         handle(HostHookSpecs.MetadataEnrichment) { request, _ ->
             MetadataEnrichmentResult(

@@ -11,5 +11,6 @@ dependencies {
     api(project(":extension:api"))
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
+    testImplementation(project(":extension:conformance"))
     testImplementation(kotlin("test"))
 }

@@ -36,6 +36,7 @@ jobs:
         run: |
           ./gradlew \
             :extension:api:jvmTest \
+            :extension:conformance:test \
             :extension:runtime:test \
             :extension:transport-protocol-android:testDebugUnitTest \
             :extension:sdk-android:testDebugUnitTest \
