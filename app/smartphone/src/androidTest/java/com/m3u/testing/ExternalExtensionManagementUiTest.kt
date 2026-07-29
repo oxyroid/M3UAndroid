@@ -2,12 +2,21 @@ package com.m3u.testing
 
 import android.os.SystemClock
 import android.view.View
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertWidthIsAtLeast
@@ -29,18 +38,24 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.tryPerformAccessibilityChecks
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.datastore.preferences.core.edit
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.StaleObjectException
 import androidx.test.uiautomator.UiDevice
+import com.m3u.business.setting.ExtensionPluginOperation
+import com.m3u.business.setting.ExtensionPluginOperationState
 import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
 import com.m3u.core.foundation.architecture.preferences.settings
+import com.m3u.extension.api.ExtensionState
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.DebugExtensionPlatformEntryPoint
 import com.m3u.smartphone.MainActivity
+import com.m3u.smartphone.ui.business.setting.fragments.ExtensionPluginDetailContentState
+import com.m3u.smartphone.ui.business.setting.fragments.ExtensionPluginDetailScreen
+import com.m3u.smartphone.ui.business.setting.fragments.ExtensionPluginDiscoveryStatus
 import dagger.hilt.android.EntryPointAccessors
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -100,6 +115,153 @@ class ExternalExtensionManagementUiTest {
                 throw AssertionError("Failed to remove reference extension trust", cause)
             }
         }
+    }
+
+    @Test
+    fun directDetailRenderingDistinguishesLookupStatesAndBusyPluginContent() {
+        assertRequestedAccessibilityConfigurationIfPresent()
+        val repository = EntryPointAccessors.fromApplication(
+            targetContext,
+            DebugExtensionPlatformEntryPoint::class.java,
+        ).pluginRepository()
+        val inspectedPlugin = runBlocking {
+            repository.installedPlugins().single { plugin ->
+                plugin.packageName == REFERENCE_PACKAGE &&
+                    plugin.serviceName == REFERENCE_SERVICE
+            }
+        }
+        assertTrue(
+            "The installed reference plugin must provide an authorization token",
+            inspectedPlugin.authorizationToken != null,
+        )
+        val plugin = inspectedPlugin.copy(
+            trusted = true,
+            signatureChanged = false,
+            extensionId = REFERENCE_EXTENSION_ID,
+            enabled = true,
+            state = ExtensionState.ENABLED,
+            version = LONG_REFERENCE_VERSION,
+            grantedCapabilities = inspectedPlugin.requestedCapabilities,
+            capabilityPermissions = inspectedPlugin.capabilityPermissions.map { permission ->
+                permission.copy(granted = true)
+            },
+            inspectionError = null,
+            installed = true,
+            approvedNetworkOrigins = inspectedPlugin.networkOrigins,
+        )
+        val detailState = mutableStateOf<ExtensionPluginDetailContentState>(
+            ExtensionPluginDetailContentState.Loading
+        )
+        val operationState = mutableStateOf<ExtensionPluginOperationState>(
+            ExtensionPluginOperationState.Idle
+        )
+        val retryRequested = AtomicBoolean(false)
+
+        composeRule.runOnUiThread {
+            composeRule.activity.setContent {
+                MaterialTheme {
+                    Surface(modifier = Modifier.fillMaxSize()) {
+                        ExtensionPluginDetailScreen(
+                            state = detailState.value,
+                            operationState = operationState.value,
+                            onRetryDiscovery = { retryRequested.set(true) },
+                            onOpenAuthorization = {},
+                            onOpenSettings = {},
+                            onDisable = {},
+                            onRevoke = { _, _, _ -> },
+                            onClearData = { _, _, _ -> },
+                            onExportDiagnostics = {},
+                        )
+                    }
+                }
+            }
+        }
+
+        waitUntilTagExists(PLUGIN_DETAIL_LOADING_TAG)
+        composeRule.onNodeWithTag(PLUGIN_DETAIL_LOADING_TAG).assertIsDisplayed()
+        composeRule.onAllNodesWithTag(PLUGIN_UNAVAILABLE_TAG).assertCountEquals(0)
+
+        composeRule.runOnIdle {
+            detailState.value = ExtensionPluginDetailContentState.Failure
+        }
+        waitUntilTagExists(PLUGIN_FAILURE_TAG)
+        composeRule.onNodeWithTag(PLUGIN_FAILURE_TAG).assertIsDisplayed()
+        composeRule.onAllNodesWithTag(PLUGIN_UNAVAILABLE_TAG).assertCountEquals(0)
+        composeRule.onNodeWithTag(PLUGIN_RETRY_TAG)
+            .assertIsDisplayed()
+            .assertMinimumTouchTarget()
+            .performClick()
+        composeRule.waitUntil(UI_TIMEOUT_MILLIS) {
+            retryRequested.get()
+        }
+
+        composeRule.runOnIdle {
+            detailState.value = ExtensionPluginDetailContentState.Missing
+        }
+        waitUntilTagExists(PLUGIN_UNAVAILABLE_TAG)
+        composeRule.onNodeWithTag(PLUGIN_UNAVAILABLE_TAG).assertIsDisplayed()
+        composeRule.onAllNodesWithTag(PLUGIN_DETAIL_LOADING_TAG).assertCountEquals(0)
+
+        composeRule.runOnIdle {
+            detailState.value = ExtensionPluginDetailContentState.Content(
+                plugin = plugin,
+                discoveryStatus = ExtensionPluginDiscoveryStatus.READY,
+            )
+            operationState.value = ExtensionPluginOperationState.Running(
+                ExtensionPluginOperation.Reauthorize(
+                    packageName = REFERENCE_PACKAGE,
+                    serviceName = REFERENCE_SERVICE,
+                )
+            )
+        }
+        waitUntilTagExists(pluginDetailTag())
+        waitUntilTagExists(OPERATION_PROGRESS_TAG)
+        composeRule.onAllNodesWithTag(PLUGIN_UNAVAILABLE_TAG).assertCountEquals(0)
+        val operationDescription = composeRule.activity.getString(
+            string.feat_setting_extension_operation_reauthorizing
+        )
+        composeRule.onNodeWithTag(OPERATION_PROGRESS_TAG)
+            .assertIsDisplayed()
+            .assertTextContains(operationDescription, substring = false)
+            .assert(
+                SemanticsMatcher("does not repeat visible text as a state description") {
+                    !it.config.contains(SemanticsProperties.StateDescription)
+                }
+            )
+            .assert(
+                SemanticsMatcher.expectValue(
+                    SemanticsProperties.LiveRegion,
+                    LiveRegionMode.Polite,
+                )
+            )
+
+        assertBusyDetailActionsAreDisabledAndDoNotOverlap()
+
+        composeRule.runOnIdle {
+            operationState.value = ExtensionPluginOperationState.Running(
+                ExtensionPluginOperation.Reauthorize(
+                    packageName = REFERENCE_PACKAGE,
+                    serviceName = "$REFERENCE_SERVICE.Other",
+                )
+            )
+        }
+        val otherOperationDescription = composeRule.activity.getString(
+            string.feat_setting_extension_operation_other_in_progress
+        )
+        composeRule.onNodeWithTag(OPERATION_PROGRESS_TAG)
+            .assertTextContains(otherOperationDescription, substring = false)
+
+        scrollDetailTo(TECHNICAL_IDENTITY_DISCLOSURE_TAG)
+        composeRule.onNodeWithTag(TECHNICAL_IDENTITY_DISCLOSURE_TAG)
+            .assertMinimumTouchTarget()
+            .performClick()
+        assertTechnicalIdentityValue("version", LONG_REFERENCE_VERSION)
+        assertTechnicalIdentityValue("package", REFERENCE_PACKAGE)
+        assertTechnicalIdentityValue("service", REFERENCE_SERVICE)
+        assertTechnicalIdentityValue(
+            "certificate",
+            plugin.certificateSha256.chunked(16).joinToString(" "),
+        )
     }
 
     @Test
@@ -385,6 +547,64 @@ class ExternalExtensionManagementUiTest {
         }
     }
 
+    private fun assertBusyDetailActionsAreDisabledAndDoNotOverlap() {
+        val actionTags = listOf(
+            actionTag("settings"),
+            actionTag("reauthorize"),
+            actionTag("disable"),
+        )
+        composeRule.onNodeWithTag(pluginDetailTag())
+            .performScrollToNode(hasTestTag(actionTags.last()))
+        composeRule.waitForIdle()
+        val rootBounds = composeRule.onNodeWithTag(pluginDetailTag())
+            .getUnclippedBoundsInRoot()
+        val actionBounds = actionTags.map { tag ->
+            val node = composeRule.onNodeWithTag(tag)
+                .assertIsDisplayed()
+                .assertIsNotEnabled()
+                .assertMinimumTouchTarget()
+            tag to node.getUnclippedBoundsInRoot()
+        }
+
+        actionBounds.forEach { (tag, bounds) ->
+            assertTrue(
+                "Busy extension action is clipped: $tag=$bounds, root=$rootBounds",
+                bounds.left >= rootBounds.left &&
+                    bounds.top >= rootBounds.top &&
+                    bounds.right <= rootBounds.right &&
+                    bounds.bottom <= rootBounds.bottom,
+            )
+        }
+        actionBounds.forEachIndexed { index, (firstTag, firstBounds) ->
+            actionBounds.drop(index + 1).forEach { (secondTag, secondBounds) ->
+                val overlapWidth =
+                    minOf(firstBounds.right, secondBounds.right) -
+                        maxOf(firstBounds.left, secondBounds.left)
+                val overlapHeight =
+                    minOf(firstBounds.bottom, secondBounds.bottom) -
+                        maxOf(firstBounds.top, secondBounds.top)
+                assertTrue(
+                    "Busy extension actions overlap: " +
+                        "$firstTag=$firstBounds, $secondTag=$secondBounds",
+                    overlapWidth <= 0.dp || overlapHeight <= 0.dp,
+                )
+            }
+        }
+    }
+
+    private fun assertTechnicalIdentityValue(key: String, expected: String) {
+        val tag = "$TECHNICAL_IDENTITY_VALUE_TAG_PREFIX$key"
+        composeRule.waitUntil(UI_TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithTag(tag, useUnmergedTree = true)
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+        composeRule.onNodeWithTag(tag, useUnmergedTree = true)
+            .performScrollTo()
+            .assertIsDisplayed()
+            .assertTextContains(expected, substring = true)
+    }
+
     private fun assertRequestedAccessibilityConfigurationIfPresent() {
         val matrixCase = InstrumentationRegistry.getArguments()
             .getString(ARG_ACCESSIBILITY_MATRIX_CASE)
@@ -406,6 +626,11 @@ class ExternalExtensionManagementUiTest {
             "The extension lifecycle must run at 200% font scale; " +
                 "actual=${configuration.fontScale}",
             configuration.fontScale >= LARGE_TEXT_MINIMUM_SCALE,
+        )
+        assertTrue(
+            "The extension lifecycle must use a 320dp compact window; " +
+                "actual=${configuration.screenWidthDp}",
+            configuration.screenWidthDp in COMPACT_WIDTH_RANGE,
         )
     }
 
@@ -577,11 +802,18 @@ class ExternalExtensionManagementUiTest {
         const val EXTENSION_ENTRY_TAG = "extension-entry"
         const val FLOATING_NAVIGATION_TAG = "floating-app-navigation"
         const val PLUGIN_LIST_TAG = "extension-list"
+        const val PLUGIN_DETAIL_LOADING_TAG = "extension-plugin-detail-loading"
+        const val PLUGIN_FAILURE_TAG = "extension-plugin-failure"
+        const val PLUGIN_RETRY_TAG = "extension-plugin-retry"
+        const val PLUGIN_UNAVAILABLE_TAG = "extension-plugin-unavailable"
+        const val OPERATION_PROGRESS_TAG = "extension-operation-progress"
         const val CAPABILITIES_DISCLOSURE_TAG = "extension-capabilities-disclosure"
         const val NETWORK_ORIGINS_DISCLOSURE_TAG =
             "extension-network-origins-disclosure"
         const val TECHNICAL_IDENTITY_DISCLOSURE_TAG =
             "extension-technical-identity-disclosure"
+        const val TECHNICAL_IDENTITY_VALUE_TAG_PREFIX =
+            "extension-technical-identity-value:"
         const val AUTHORIZATION_SCREEN_TAG = "extension-authorization"
         const val AUTHORIZATION_IDENTITY_DISCLOSURE_TAG =
             "extension-authorization-identity-disclosure"
@@ -602,5 +834,9 @@ class ExternalExtensionManagementUiTest {
         const val MATRIX_CASE_COMPACT_RTL_LARGE = "compact-rtl-large"
         const val LOCALE_RTL_TEST = "ar-XB"
         const val LARGE_TEXT_MINIMUM_SCALE = 1.95f
+        const val REFERENCE_EXTENSION_ID = "com.m3u.reference.provider"
+        const val LONG_REFERENCE_VERSION =
+            "1.0.0-reference-preview.20260729"
+        val COMPACT_WIDTH_RANGE = 315..325
     }
 }

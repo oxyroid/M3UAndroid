@@ -39,5 +39,7 @@
     <string name="ui_remote_control_direction_confirm">Seç</string>
     <string name="ui_remote_control_pairing_code">Eşleştirme kodu: %1$s</string>
     <string name="ui_remote_control_pairing_code_empty">Eşleştirme kodu boş</string>
+    <string name="ui_action_refresh">Yenile</string>
+    <string name="ui_action_retry">Tekrar dene</string>
     <string name="ui_action_delete_epg">EPG’yi sil</string>
 </resources>

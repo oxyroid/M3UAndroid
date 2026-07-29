@@ -37,5 +37,7 @@
     <string name="ui_remote_control_direction_confirm">Selecionar</string>
     <string name="ui_remote_control_pairing_code">Código de pareamento: %1$s</string>
     <string name="ui_remote_control_pairing_code_empty">O código de pareamento está vazio</string>
+    <string name="ui_action_refresh">Atualizar</string>
+    <string name="ui_action_retry">Tentar novamente</string>
     <string name="ui_action_delete_epg">Excluir EPG</string>
 </resources>

@@ -37,5 +37,7 @@
     <string name="ui_remote_control_direction_confirm">Selectează</string>
     <string name="ui_remote_control_pairing_code">Cod de asociere: %1$s</string>
     <string name="ui_remote_control_pairing_code_empty">Codul de asociere este gol</string>
+    <string name="ui_action_refresh">Actualizează</string>
+    <string name="ui_action_retry">Încearcă din nou</string>
     <string name="ui_action_delete_epg">Șterge EPG</string>
 </resources>

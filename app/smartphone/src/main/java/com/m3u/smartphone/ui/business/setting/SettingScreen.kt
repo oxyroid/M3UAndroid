@@ -97,6 +97,7 @@ import com.m3u.smartphone.ui.business.setting.fragments.PlaylistManagementOvervi
 import com.m3u.smartphone.ui.business.setting.fragments.SubscriptionEditorScreen
 import com.m3u.smartphone.ui.business.setting.fragments.SubscriptionSourcePickerScreen
 import com.m3u.smartphone.ui.business.setting.fragments.providerSourceSelectionKey
+import com.m3u.smartphone.ui.business.setting.fragments.resolveExtensionPluginDetailContentState
 import com.m3u.smartphone.ui.business.setting.fragments.subscriptionSelectionKey
 import com.m3u.smartphone.ui.business.setting.fragments.preferences.PreferencesFragment
 import com.m3u.smartphone.ui.common.helper.Fob
@@ -900,13 +901,15 @@ private fun SettingScreen(
                 }
 
                 is SettingDestination.ExtensionPluginDetails -> {
-                    val plugin = extensionPlugins.find(
+                    val detailState = resolveExtensionPluginDetailContentState(
+                        discoveryState = extensionPluginDiscoveryState,
                         packageName = destination.packageName,
                         serviceName = destination.serviceName,
                     )
                     ExtensionPluginDetailScreen(
-                        plugin = plugin,
+                        state = detailState,
                         operationState = extensionPluginOperationState,
+                        onRetryDiscovery = onRefreshExtensionPlugins,
                         onOpenAuthorization = { reauthorize ->
                             coroutineScope.launch {
                                 navigator.navigateTo(
@@ -940,12 +943,16 @@ private fun SettingScreen(
                 }
 
                 is SettingDestination.ExtensionPluginAuthorization -> {
-                    val plugin = extensionPlugins.find(
-                        packageName = destination.packageName,
-                        serviceName = destination.serviceName,
-                    )
+                    val authorizationState =
+                        resolveExtensionPluginDetailContentState(
+                            discoveryState = extensionPluginDiscoveryState,
+                            packageName = destination.packageName,
+                            serviceName = destination.serviceName,
+                        )
                     ExtensionPluginAuthorizationScreen(
-                        plugin = plugin,
+                        state = authorizationState,
+                        operationState = extensionPluginOperationState,
+                        onRetryDiscovery = onRefreshExtensionPlugins,
                         reauthorize = destination.reauthorize,
                         onAuthorize = { packageName, serviceName, token, reauthorize ->
                             if (reauthorize) {
@@ -1072,13 +1079,6 @@ private fun PlaylistDetailPane(
             content()
         }
     }
-}
-
-private fun List<InstalledPlugin>.find(
-    packageName: String,
-    serviceName: String,
-): InstalledPlugin? = singleOrNull { plugin ->
-    plugin.packageName == packageName && plugin.serviceName == serviceName
 }
 
 private fun SettingDestination.usesLocalizedStaticTitle(): Boolean = when (this) {

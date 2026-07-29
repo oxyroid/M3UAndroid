@@ -3,9 +3,11 @@ package com.m3u.smartphone.ui.business.setting.fragments
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
@@ -99,6 +101,7 @@ import com.m3u.smartphone.ui.material.ktx.rememberUiBidiFormatter
 import java.text.NumberFormat
 
 private val ExtensionPageMaxWidth = 640.dp
+private const val MINIMUM_COMPACT_EXTENSION_ACTION_WIDTH_DP = 128f
 
 @Composable
 internal fun ExtensionPluginListScreen(
@@ -383,8 +386,9 @@ private fun ExtensionPluginListItem(
 
 @Composable
 internal fun ExtensionPluginDetailScreen(
-    plugin: InstalledPlugin?,
+    state: ExtensionPluginDetailContentState,
     operationState: ExtensionPluginOperationState,
+    onRetryDiscovery: () -> Unit,
     onOpenAuthorization: (reauthorize: Boolean) -> Unit,
     onOpenSettings: (extensionId: String) -> Unit,
     onDisable: (extensionId: String) -> Unit,
@@ -394,22 +398,45 @@ internal fun ExtensionPluginDetailScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
-    if (plugin == null) {
-        ExtensionUnavailableScreen(
+    val contentState = state as? ExtensionPluginDetailContentState.Content
+    if (contentState == null) {
+        ExtensionPluginLookupScreen(
+            state = state,
+            onRetry = onRetryDiscovery,
+            retryEnabled =
+                operationState !is ExtensionPluginOperationState.Running,
             modifier = modifier,
             contentPadding = contentPadding,
         )
         return
     }
 
+    val plugin = contentState.plugin
     val bidiFormatter = rememberUiBidiFormatter()
     val actions = plugin.actionAvailability()
     val unapprovedNetworkOrigins = plugin.networkOrigins - plugin.approvedNetworkOrigins
     val reauthorizationIsPrimary = actions.reauthorize &&
         (plugin.signatureChanged || unapprovedNetworkOrigins.isNotEmpty())
-    val operationRunning = operationState is ExtensionPluginOperationState.Running
-    val operationTargetsPlugin = operationState.targets(plugin)
-    val operationDescription = stringResource(string.feat_setting_extension_loading)
+    val runningOperation = (
+        operationState as? ExtensionPluginOperationState.Running
+    )?.operation
+    val operationForThisPlugin = runningOperation?.takeIf { operation ->
+        operation.targets(plugin)
+    }
+    val discoveryRefreshing =
+        contentState.discoveryStatus == ExtensionPluginDiscoveryStatus.REFRESHING
+    val operationRunning = runningOperation != null || discoveryRefreshing
+    val operationDescription = when {
+        operationForThisPlugin != null ->
+            extensionOperationDescription(operationForThisPlugin)
+        runningOperation != null -> stringResource(
+            string.feat_setting_extension_operation_other_in_progress
+        )
+        discoveryRefreshing -> extensionOperationDescription(
+            ExtensionPluginOperation.Refresh
+        )
+        else -> null
+    }
     val extensionId = plugin.extensionId
     var pendingRevoke by remember { mutableStateOf(false) }
     var pendingClear by remember { mutableStateOf(false) }
@@ -423,10 +450,14 @@ internal fun ExtensionPluginDetailScreen(
         mutableStateOf(false)
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Column(modifier = modifier.fillMaxSize()) {
+        operationDescription?.let { description ->
+            ExtensionOperationStatus(description = description)
+        }
         LazyColumn(
             modifier = Modifier
-                .fillMaxSize()
+                .weight(1f)
+                .fillMaxWidth()
                 .testTag("extension-plugin-detail:${plugin.stableKey}"),
             contentPadding =
                 contentPadding + PaddingValues(horizontal = 16.dp, vertical = 16.dp),
@@ -438,6 +469,20 @@ internal fun ExtensionPluginDetailScreen(
                         plugin = plugin,
                         bidiFormatter = bidiFormatter,
                     )
+                }
+            }
+
+            if (
+                contentState.discoveryStatus ==
+                ExtensionPluginDiscoveryStatus.REFRESH_FAILED
+            ) {
+                item(key = "discovery-failure") {
+                    ExtensionPageContent {
+                        ExtensionDiscoveryFailureNotice(
+                            onRetry = onRetryDiscovery,
+                            enabled = !operationRunning,
+                        )
+                    }
                 }
             }
 
@@ -577,27 +622,6 @@ internal fun ExtensionPluginDetailScreen(
                 }
             }
         }
-
-        if (operationTargetsPlugin) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                contentAlignment = Alignment.TopCenter,
-            ) {
-                LinearProgressIndicator(
-                    modifier = Modifier
-                        .widthIn(max = ExtensionPageMaxWidth)
-                        .fillMaxWidth()
-                        .testTag("extension-operation-progress")
-                        .semantics {
-                            contentDescription = operationDescription
-                            liveRegion = LiveRegionMode.Polite
-                        },
-                )
-            }
-        }
     }
 
     if (pendingRevoke) {
@@ -646,7 +670,6 @@ private fun ExtensionPluginActions(
     val settingsLabel = stringResource(string.feat_setting_extension_settings)
     val reauthorizeLabel = stringResource(string.feat_setting_extension_reauthorize)
     val disableLabel = stringResource(string.feat_setting_extension_disable)
-    val stackedActions = LocalDensity.current.fontScale >= 1.5f
     val groupedActions = buildList {
         if (actions.settings && extensionId != null) {
             add(
@@ -717,12 +740,30 @@ private fun ExtensionPluginActions(
         }
 
         if (groupedActions.isNotEmpty()) {
-            ExtensionActionGroup(
-                actions = groupedActions,
-                stacked = stackedActions,
-            )
+            val fontScale = LocalDensity.current.fontScale
+            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                ExtensionActionGroup(
+                    actions = groupedActions,
+                    stacked = shouldStackExtensionPluginActions(
+                        availableWidthDp = maxWidth.value,
+                        fontScale = fontScale,
+                        actionCount = groupedActions.size,
+                    ),
+                )
+            }
         }
     }
+}
+
+internal fun shouldStackExtensionPluginActions(
+    availableWidthDp: Float,
+    fontScale: Float,
+    actionCount: Int,
+): Boolean {
+    if (actionCount <= 1) return false
+    val minimumWidthPerAction =
+        MINIMUM_COMPACT_EXTENSION_ACTION_WIDTH_DP * fontScale.coerceAtLeast(1f)
+    return availableWidthDp / actionCount < minimumWidthPerAction
 }
 
 private data class ExtensionActionItem(
@@ -931,7 +972,9 @@ private fun ExtensionPluginDataActions(
 
 @Composable
 internal fun ExtensionPluginAuthorizationScreen(
-    plugin: InstalledPlugin?,
+    state: ExtensionPluginDetailContentState,
+    operationState: ExtensionPluginOperationState,
+    onRetryDiscovery: () -> Unit,
     reauthorize: Boolean,
     onAuthorize: (
         packageName: String,
@@ -943,14 +986,32 @@ internal fun ExtensionPluginAuthorizationScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
-    if (plugin == null) {
-        ExtensionUnavailableScreen(
+    val contentState = state as? ExtensionPluginDetailContentState.Content
+    if (
+        contentState == null ||
+        contentState.discoveryStatus != ExtensionPluginDiscoveryStatus.READY
+    ) {
+        val lookupState = when {
+            contentState?.discoveryStatus ==
+                ExtensionPluginDiscoveryStatus.REFRESHING ->
+                ExtensionPluginDetailContentState.Loading
+            contentState?.discoveryStatus ==
+                ExtensionPluginDiscoveryStatus.REFRESH_FAILED ->
+                ExtensionPluginDetailContentState.Failure
+            else -> state
+        }
+        ExtensionPluginLookupScreen(
+            state = lookupState,
+            onRetry = onRetryDiscovery,
+            retryEnabled =
+                operationState !is ExtensionPluginOperationState.Running,
             modifier = modifier,
             contentPadding = contentPadding,
         )
         return
     }
 
+    val plugin = contentState.plugin
     val bidiFormatter = rememberUiBidiFormatter()
     val confirmLabel = stringResource(
         if (reauthorize) {
@@ -1336,6 +1397,7 @@ private fun ExtensionStatePill(plugin: InstalledPlugin) {
         text = extensionStateLabel(plugin.state),
         containerColor = containerColor,
         contentColor = contentColor,
+        maxLines = Int.MAX_VALUE,
     )
 }
 
@@ -1344,6 +1406,7 @@ private fun ExtensionMetadataPill(
     text: String,
     containerColor: Color,
     contentColor: Color,
+    maxLines: Int = 2,
 ) {
     Surface(
         shape = CircleShape,
@@ -1353,10 +1416,10 @@ private fun ExtensionMetadataPill(
         Text(
             text = text,
             style = MaterialTheme.typography.labelMedium,
-            maxLines = 1,
+            maxLines = maxLines,
             overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
             modifier = Modifier
-                .widthIn(max = 160.dp)
                 .padding(horizontal = 10.dp, vertical = 5.dp),
         )
     }
@@ -1581,13 +1644,13 @@ private fun ExtensionLeadingIcon(
         contentColor = contentColor,
     ) {
         Box(
-            modifier = Modifier.size(44.dp),
+            modifier = Modifier.size(48.dp),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                modifier = Modifier.size(22.dp),
+                modifier = Modifier.size(24.dp),
             )
         }
     }
@@ -1598,17 +1661,43 @@ private fun ExtensionTechnicalIdentity(
     plugin: InstalledPlugin,
     bidiFormatter: UiBidiFormatter,
 ) {
-    val values = listOf(
-        stringResource(string.feat_setting_extension_package) to
-            bidiFormatter.ltr(plugin.packageName),
-        stringResource(string.feat_setting_extension_service) to
-            bidiFormatter.ltr(plugin.serviceName),
-        stringResource(string.feat_setting_extension_certificate_sha256) to
-            bidiFormatter.ltr(plugin.certificateSha256.chunked(16).joinToString(" ")),
-    )
+    val values = buildList {
+        plugin.version?.takeIf(String::isNotBlank)?.let { version ->
+            add(
+                Triple(
+                    "version",
+                    stringResource(string.feat_setting_extension_version),
+                    bidiFormatter.ltr(version),
+                )
+            )
+        }
+        add(
+            Triple(
+                "package",
+                stringResource(string.feat_setting_extension_package),
+                bidiFormatter.ltr(plugin.packageName),
+            )
+        )
+        add(
+            Triple(
+                "service",
+                stringResource(string.feat_setting_extension_service),
+                bidiFormatter.ltr(plugin.serviceName),
+            )
+        )
+        add(
+            Triple(
+                "certificate",
+                stringResource(string.feat_setting_extension_certificate_sha256),
+                bidiFormatter.ltr(
+                    plugin.certificateSha256.chunked(16).joinToString(" ")
+                ),
+            )
+        )
+    }
     Column(modifier = Modifier.fillMaxWidth()) {
         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-        values.forEachIndexed { index, (label, value) ->
+        values.forEachIndexed { index, (key, label, value) ->
             ListItem(
                 headlineContent = {
                     Text(
@@ -1618,11 +1707,16 @@ private fun ExtensionTechnicalIdentity(
                     )
                 },
                 supportingContent = {
-                    Text(
-                        text = value,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontFamily = FontFamily.Monospace,
-                    )
+                    SelectionContainer {
+                        Text(
+                            text = value,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontFamily = FontFamily.Monospace,
+                            modifier = Modifier.testTag(
+                                "extension-technical-identity-value:$key"
+                            ),
+                        )
+                    }
                 },
                 colors = ListItemDefaults.colors(
                     containerColor = Color.Transparent
@@ -2042,6 +2136,174 @@ private fun ExtensionDataRemovalBody(
 }
 
 @Composable
+private fun ExtensionPluginLookupScreen(
+    state: ExtensionPluginDetailContentState,
+    onRetry: () -> Unit,
+    retryEnabled: Boolean,
+    modifier: Modifier,
+    contentPadding: PaddingValues,
+) {
+    when (state) {
+        ExtensionPluginDetailContentState.Loading -> {
+            val loadingDescription = stringResource(
+                string.feat_setting_extension_loading
+            )
+            Box(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(contentPadding)
+                    .testTag("extension-plugin-detail-loading"),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.semantics {
+                        contentDescription = loadingDescription
+                    },
+                )
+            }
+        }
+
+        ExtensionPluginDetailContentState.Failure -> {
+            Box(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(contentPadding)
+                    .padding(16.dp)
+                    .testTag("extension-plugin-failure"),
+                contentAlignment = Alignment.TopCenter,
+            ) {
+                ExtensionPageContent {
+                    ExtensionDiscoveryFailureNotice(
+                        onRetry = onRetry,
+                        enabled = retryEnabled,
+                        prominent = true,
+                    )
+                }
+            }
+        }
+
+        ExtensionPluginDetailContentState.Missing -> {
+            ExtensionUnavailableScreen(
+                modifier = modifier,
+                contentPadding = contentPadding,
+            )
+        }
+
+        is ExtensionPluginDetailContentState.Content ->
+            error("Content state must be rendered by ExtensionPluginDetailScreen")
+    }
+}
+
+@Composable
+private fun ExtensionDiscoveryFailureNotice(
+    onRetry: () -> Unit,
+    enabled: Boolean,
+    prominent: Boolean = false,
+) {
+    val retryLabel = stringResource(string.ui_action_retry)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("extension-plugin-discovery-failure"),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalAlignment = Alignment.Start,
+    ) {
+        ExtensionWarning(
+            message = stringResource(
+                string.feat_setting_extension_operation_failed
+            ),
+        )
+        if (prominent) {
+            Button(
+                onClick = onRetry,
+                enabled = enabled,
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .testTag("extension-plugin-retry"),
+            ) {
+                Text(retryLabel)
+            }
+        } else {
+            TextButton(
+                onClick = onRetry,
+                enabled = enabled,
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .testTag("extension-plugin-retry"),
+            ) {
+                Text(retryLabel)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ExtensionOperationStatus(description: String) {
+    ExtensionPageContent {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 4.dp)
+                .testTag("extension-operation-progress")
+                .semantics(mergeDescendants = true) {
+                    liveRegion = LiveRegionMode.Polite
+                },
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            LinearProgressIndicator(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clearAndSetSemantics { },
+            )
+            Text(
+                text = description,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun extensionOperationDescription(
+    operation: ExtensionPluginOperation,
+): String = stringResource(
+    when (operation) {
+        ExtensionPluginOperation.Refresh ->
+            string.feat_setting_extension_operation_refreshing
+        is ExtensionPluginOperation.Enable ->
+            string.feat_setting_extension_operation_enabling
+        is ExtensionPluginOperation.Reauthorize ->
+            string.feat_setting_extension_operation_reauthorizing
+        is ExtensionPluginOperation.Disable ->
+            string.feat_setting_extension_operation_disabling
+        is ExtensionPluginOperation.ClearData ->
+            string.feat_setting_extension_operation_clearing_data
+        is ExtensionPluginOperation.Revoke ->
+            string.feat_setting_extension_operation_revoking_trust
+    }
+)
+
+private fun ExtensionPluginOperation.targets(plugin: InstalledPlugin): Boolean =
+    when (this) {
+        ExtensionPluginOperation.Refresh -> true
+        is ExtensionPluginOperation.Enable ->
+            packageName == plugin.packageName &&
+                serviceName == plugin.serviceName
+        is ExtensionPluginOperation.Reauthorize ->
+            packageName == plugin.packageName &&
+                serviceName == plugin.serviceName
+        is ExtensionPluginOperation.Disable ->
+            extensionId == plugin.extensionId
+        is ExtensionPluginOperation.ClearData ->
+            packageName == plugin.packageName &&
+                serviceName == plugin.serviceName
+        is ExtensionPluginOperation.Revoke ->
+            packageName == plugin.packageName &&
+                serviceName == plugin.serviceName
+    }
+
+@Composable
 private fun ExtensionUnavailableScreen(
     modifier: Modifier,
     contentPadding: PaddingValues,
@@ -2112,26 +2374,6 @@ private val InstalledPlugin.hasVisibleWarning: Boolean
 
 private val ExtensionPluginActionAvailability.hasControlActions: Boolean
     get() = enable || settings || reauthorize || disable
-
-private fun ExtensionPluginOperationState.targets(plugin: InstalledPlugin): Boolean {
-    val operation = (this as? ExtensionPluginOperationState.Running)?.operation ?: return false
-    return when (operation) {
-        ExtensionPluginOperation.Refresh -> false
-        is ExtensionPluginOperation.Enable ->
-            operation.packageName == plugin.packageName &&
-                operation.serviceName == plugin.serviceName
-        is ExtensionPluginOperation.Reauthorize ->
-            operation.packageName == plugin.packageName &&
-                operation.serviceName == plugin.serviceName
-        is ExtensionPluginOperation.Disable -> operation.extensionId == plugin.extensionId
-        is ExtensionPluginOperation.ClearData ->
-            operation.packageName == plugin.packageName &&
-                operation.serviceName == plugin.serviceName
-        is ExtensionPluginOperation.Revoke ->
-            operation.packageName == plugin.packageName &&
-                operation.serviceName == plugin.serviceName
-    }
-}
 
 private fun InstalledPlugin.actionTestTag(action: String): String =
     "extension-plugin-action-$action:$stableKey"

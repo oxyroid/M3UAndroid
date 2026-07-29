@@ -39,5 +39,7 @@
     <string name="ui_remote_control_direction_confirm">Sélectionner</string>
     <string name="ui_remote_control_pairing_code">Code d’association : %1$s</string>
     <string name="ui_remote_control_pairing_code_empty">Le code d’association est vide</string>
+    <string name="ui_action_refresh">Actualiser</string>
+    <string name="ui_action_retry">Réessayer</string>
     <string name="ui_action_delete_epg">Supprimer l’EPG</string>
 </resources>
