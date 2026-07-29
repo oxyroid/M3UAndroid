@@ -50,6 +50,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -82,11 +83,28 @@ import com.m3u.smartphone.ui.business.configuration.providerDisplayName
 import com.m3u.smartphone.ui.business.setting.components.EpgPlaylistItem
 import com.m3u.smartphone.ui.business.setting.components.HiddenChannelItem
 import com.m3u.smartphone.ui.business.setting.components.HiddenPlaylistGroupItem
+import com.m3u.smartphone.ui.material.ktx.UiBidiFormatter
 import com.m3u.smartphone.ui.material.ktx.plus
 import com.m3u.smartphone.ui.material.ktx.rememberUiBidiFormatter
 import com.m3u.smartphone.ui.material.ktx.safeDisplayText
+import java.text.Collator
+import java.util.Locale
 
 private val PlaylistPageMaxWidth = 720.dp
+
+internal fun playlistTitleComparator(locale: Locale): Comparator<String> {
+    val collator = Collator.getInstance(locale).apply {
+        strength = Collator.SECONDARY
+    }
+    return Comparator { left, right ->
+        collator.compare(left.safeDisplayText(), right.safeDisplayText())
+    }
+}
+
+internal fun playlistTitleInLocalizedSentence(
+    title: String,
+    bidiFormatter: UiBidiFormatter,
+): String = bidiFormatter.natural(title.safeDisplayText())
 
 @Composable
 internal fun PlaylistManagementOverviewScreen(
@@ -114,8 +132,13 @@ internal fun PlaylistManagementOverviewScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
+    val locales = LocalConfiguration.current.locales
+    val currentLocale = if (locales.isEmpty) Locale.getDefault() else locales[0]
+    val titleComparator = remember(currentLocale) {
+        playlistTitleComparator(currentLocale)
+    }
     val orderedPlaylists = playlists?.entries.orEmpty().sortedWith(
-        compareBy(String.CASE_INSENSITIVE_ORDER) { entry -> entry.key.title }
+        compareBy(titleComparator) { entry -> entry.key.title }
     )
     val accountsRequiringAttention = providerAccountSummaries.filter { account ->
         account.requiresReauthentication
@@ -399,6 +422,7 @@ private fun PlaylistSubscriptionStatusCard(
 ) {
     if (state.phase == PlaylistSubscriptionPhase.IDLE) return
 
+    val bidiFormatter = rememberUiBidiFormatter()
     val statusText = when (state.phase) {
         PlaylistSubscriptionPhase.IDLE -> return
         PlaylistSubscriptionPhase.ENQUEUED ->
@@ -416,6 +440,7 @@ private fun PlaylistSubscriptionStatusCard(
     val title = state.title
         ?.safeDisplayText()
         ?.takeIf(String::isNotBlank)
+        ?.let(bidiFormatter::natural)
     val isInProgress = state.isInProgress
     val containerColor = when (state.phase) {
         PlaylistSubscriptionPhase.ENQUEUED,
@@ -571,9 +596,12 @@ private fun PlaylistSubscriptionRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val title = playlist.title.safeDisplayText()
+    val bidiFormatter = rememberUiBidiFormatter()
+    val title = bidiFormatter.natural(playlist.title)
     val source = providerDisplayName
+        ?.safeDisplayText()
         ?.takeIf(String::isNotBlank)
+        ?.let(bidiFormatter::natural)
         ?: stringResource(playlist.source.resId)
     val count = pluralStringResource(
         plurals.feat_setting_playlist_channel_count,
@@ -718,6 +746,7 @@ internal fun EpgSourceListScreen(
     contentPadding: PaddingValues = PaddingValues(),
 ) {
     var pendingDeletion by remember { mutableStateOf<Playlist?>(null) }
+    val bidiFormatter = rememberUiBidiFormatter()
 
     LazyColumn(
         modifier = modifier
@@ -756,10 +785,13 @@ internal fun EpgSourceListScreen(
                 items = epgs,
                 key = { _, playlist -> playlist.url },
             ) { index, playlist ->
-                val safeTitle = playlist.title.safeDisplayText()
+                val titleInAction = playlistTitleInLocalizedSentence(
+                    title = playlist.title,
+                    bidiFormatter = bidiFormatter,
+                )
                 val deleteDescription = stringResource(
                     string.feat_setting_playlist_delete_epg_action_description,
-                    safeTitle,
+                    titleInAction,
                 )
                 PlaylistPageContent {
                     EpgPlaylistItem(
@@ -782,7 +814,10 @@ internal fun EpgSourceListScreen(
     }
 
     pendingDeletion?.let { playlist ->
-        val title = rememberUiBidiFormatter().natural(playlist.title)
+        val title = playlistTitleInLocalizedSentence(
+            title = playlist.title,
+            bidiFormatter = bidiFormatter,
+        )
         AlertDialog(
             onDismissRequest = { pendingDeletion = null },
             title = {
@@ -826,6 +861,7 @@ internal fun HiddenChannelListScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
+    val bidiFormatter = rememberUiBidiFormatter()
     PlaylistManagementList(
         empty = hiddenChannels.isEmpty(),
         emptyText = stringResource(string.feat_setting_playlist_hidden_channels_empty),
@@ -838,7 +874,7 @@ internal fun HiddenChannelListScreen(
             items = hiddenChannels,
             key = { _, channel -> channel.id },
         ) { index, channel ->
-            val safeTitle = channel.title.safeDisplayText()
+            val titleInAction = bidiFormatter.natural(channel.title)
             PlaylistPageContent {
                 HiddenChannelItem(
                     channel = channel,
@@ -846,7 +882,7 @@ internal fun HiddenChannelListScreen(
                     showLabel = stringResource(string.feat_setting_playlist_show_action),
                     showContentDescription = stringResource(
                         string.feat_setting_playlist_show_channel_action_description,
-                        safeTitle,
+                        titleInAction,
                     ),
                     enabled = enabled,
                     modifier = Modifier
@@ -869,6 +905,7 @@ internal fun HiddenCategoryListScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
+    val bidiFormatter = rememberUiBidiFormatter()
     PlaylistManagementList(
         empty = hiddenCategoriesWithPlaylists.isEmpty(),
         emptyText = stringResource(string.feat_setting_playlist_hidden_categories_empty),
@@ -883,7 +920,7 @@ internal fun HiddenCategoryListScreen(
                 "${playlist.url}\u0000$category"
             },
         ) { index, (playlist, category) ->
-            val safeCategory = category.safeDisplayText()
+            val categoryInAction = bidiFormatter.natural(category)
             val categoryKey = playlistWorkTag("${playlist.url}\u0000$category")
             PlaylistPageContent {
                 HiddenPlaylistGroupItem(
@@ -895,7 +932,7 @@ internal fun HiddenCategoryListScreen(
                     showLabel = stringResource(string.feat_setting_playlist_show_action),
                     showContentDescription = stringResource(
                         string.feat_setting_playlist_show_category_action_description,
-                        safeCategory,
+                        categoryInAction,
                     ),
                     enabled = enabled,
                     modifier = Modifier

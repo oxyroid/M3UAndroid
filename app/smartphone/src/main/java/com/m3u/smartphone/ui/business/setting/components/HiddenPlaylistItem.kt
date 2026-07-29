@@ -20,7 +20,7 @@ import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.m3u.data.database.model.Playlist
-import com.m3u.smartphone.ui.material.ktx.safeDisplayText
+import com.m3u.smartphone.ui.material.ktx.rememberUiBidiFormatter
 
 @Composable
 internal fun HiddenPlaylistGroupItem(
@@ -32,8 +32,9 @@ internal fun HiddenPlaylistGroupItem(
     enabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
-    val displayGroup = group.safeDisplayText()
-    val displayPlaylistTitle = playlist.title.safeDisplayText()
+    val bidiFormatter = rememberUiBidiFormatter()
+    val displayGroup = bidiFormatter.natural(group)
+    val displayPlaylistTitle = bidiFormatter.natural(playlist.title)
     val stackAction =
         LocalDensity.current.fontScale >= 1.5f ||
             LocalConfiguration.current.screenWidthDp < 360

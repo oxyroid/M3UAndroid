@@ -22,7 +22,6 @@ import androidx.compose.ui.unit.dp
 import com.m3u.data.database.model.Channel
 import com.m3u.smartphone.ui.material.ktx.rememberUiBidiFormatter
 import com.m3u.smartphone.ui.material.ktx.safeSourceReference
-import com.m3u.smartphone.ui.material.ktx.safeDisplayText
 
 @Composable
 internal fun HiddenChannelItem(
@@ -34,7 +33,7 @@ internal fun HiddenChannelItem(
     modifier: Modifier = Modifier
 ) {
     val bidiFormatter = rememberUiBidiFormatter()
-    val displayTitle = channel.title.safeDisplayText()
+    val displayTitle = bidiFormatter.natural(channel.title)
     val displayReference = channel.url.safeSourceReference()
         ?.let(bidiFormatter::ltr)
     val stackAction =

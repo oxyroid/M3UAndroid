@@ -22,7 +22,6 @@ import androidx.compose.ui.unit.dp
 import com.m3u.data.database.model.Playlist
 import com.m3u.smartphone.ui.material.ktx.rememberUiBidiFormatter
 import com.m3u.smartphone.ui.material.ktx.safeSourceReference
-import com.m3u.smartphone.ui.material.ktx.safeDisplayText
 
 @Composable
 internal fun EpgPlaylistItem(
@@ -33,7 +32,7 @@ internal fun EpgPlaylistItem(
     modifier: Modifier = Modifier
 ) {
     val bidiFormatter = rememberUiBidiFormatter()
-    val displayTitle = epgPlaylist.title.safeDisplayText()
+    val displayTitle = bidiFormatter.natural(epgPlaylist.title)
     val displayReference = epgPlaylist.url.safeSourceReference()
         ?.let(bidiFormatter::ltr)
     val stackAction =
