@@ -217,6 +217,16 @@
     <string name="feat_setting_extension_confirm_identity">Package: %1$s\nCertificate SHA-256: %2$s\nName: %3$s\nDeveloper: %4$s\nVersion: %5$s</string>
     <string name="feat_setting_extension_requested_capabilities">Requested capabilities</string>
     <string name="feat_setting_extension_network_origins">Requested network origins</string>
+    <string name="feat_setting_extension_network_origins_declared">Requested by plugin</string>
+    <string name="feat_setting_extension_network_origins_from_settings">From settings</string>
+    <string name="feat_setting_extension_network_origin_settings_explanation">Each address is approved only when you save its setting.</string>
+    <string name="feat_setting_extension_network_origin_settings_attention">One or more network addresses from Settings need your attention.</string>
+    <string name="feat_setting_extension_network_origin_state_approved">Approved</string>
+    <string name="feat_setting_extension_network_origin_state_approval_required">Approval required</string>
+    <string name="feat_setting_extension_network_origin_state_not_configured">Not configured</string>
+    <string name="feat_setting_extension_network_origin_state_invalid">Invalid address</string>
+    <string name="feat_setting_extension_network_origin_state_suspended">Temporarily blocked</string>
+    <string name="feat_setting_extension_network_origin_state_unverified">Awaiting verification</string>
     <string name="feat_setting_extension_network_origin_settings">Saving a value in these settings approves that exact HTTP(S) origin: %1$s</string>
     <string name="feat_setting_extension_network_origin_save_notice">Saving this setting approves network access to the exact HTTP(S) origin entered here. Paths, wildcards, queries, and fragments are not allowed.</string>
     <string name="feat_setting_extension_network_reauthorization_required">Network access to newly requested origins is blocked until you reauthorize: %1$s</string>

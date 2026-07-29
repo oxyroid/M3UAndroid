@@ -208,6 +208,16 @@
     <string name="feat_setting_extension_confirm_identity">Pacchetto: %1$s\nCertificato SHA-256: %2$s\nNome: %3$s\nSviluppatore: %4$s\nVersione: %5$s</string>
     <string name="feat_setting_extension_requested_capabilities">Funzionalità richieste</string>
     <string name="feat_setting_extension_network_origins">Origini di rete richieste</string>
+    <string name="feat_setting_extension_network_origins_declared">Richieste dall’estensione</string>
+    <string name="feat_setting_extension_network_origins_from_settings">Dalle impostazioni</string>
+    <string name="feat_setting_extension_network_origin_settings_explanation">Ogni indirizzo viene approvato solo quando salvi l’impostazione corrispondente.</string>
+    <string name="feat_setting_extension_network_origin_settings_attention">Uno o più indirizzi di rete nelle impostazioni richiedono la tua attenzione.</string>
+    <string name="feat_setting_extension_network_origin_state_approved">Approvata</string>
+    <string name="feat_setting_extension_network_origin_state_approval_required">Approvazione richiesta</string>
+    <string name="feat_setting_extension_network_origin_state_not_configured">Non configurata</string>
+    <string name="feat_setting_extension_network_origin_state_invalid">Indirizzo non valido</string>
+    <string name="feat_setting_extension_network_origin_state_suspended">Temporaneamente bloccata</string>
+    <string name="feat_setting_extension_network_origin_state_unverified">In attesa di verifica</string>
     <string name="feat_setting_extension_network_origin_settings">Il salvataggio di un valore in queste impostazioni approva esattamente questa origine HTTP(S): %1$s</string>
     <string name="feat_setting_extension_network_origin_save_notice">Il salvataggio di questa impostazione approva l’accesso di rete all’origine HTTP(S) esatta immessa qui. Percorsi, caratteri jolly, query e frammenti non sono consentiti.</string>
     <string name="feat_setting_extension_network_reauthorization_required">L’accesso di rete alle nuove origini richieste è bloccato finché non viene autorizzato di nuovo: %1$s</string>

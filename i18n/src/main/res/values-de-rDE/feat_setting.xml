@@ -206,6 +206,16 @@
     <string name="feat_setting_extension_confirm_identity">Paket: %1$s\nZertifikat SHA-256: %2$s\nName: %3$s\nEntwickler: %4$s\nVersion: %5$s</string>
     <string name="feat_setting_extension_requested_capabilities">Angeforderte Berechtigungen</string>
     <string name="feat_setting_extension_network_origins">Angeforderte Netzwerkadressen</string>
+    <string name="feat_setting_extension_network_origins_declared">Von der Erweiterung angefordert</string>
+    <string name="feat_setting_extension_network_origins_from_settings">Aus den Einstellungen</string>
+    <string name="feat_setting_extension_network_origin_settings_explanation">Jede Adresse wird erst genehmigt, wenn du die zugehörige Einstellung speicherst.</string>
+    <string name="feat_setting_extension_network_origin_settings_attention">Eine oder mehrere Netzwerkadressen aus den Einstellungen erfordern deine Aufmerksamkeit.</string>
+    <string name="feat_setting_extension_network_origin_state_approved">Genehmigt</string>
+    <string name="feat_setting_extension_network_origin_state_approval_required">Genehmigung erforderlich</string>
+    <string name="feat_setting_extension_network_origin_state_not_configured">Nicht konfiguriert</string>
+    <string name="feat_setting_extension_network_origin_state_invalid">Ungültige Adresse</string>
+    <string name="feat_setting_extension_network_origin_state_suspended">Vorübergehend blockiert</string>
+    <string name="feat_setting_extension_network_origin_state_unverified">Überprüfung ausstehend</string>
     <string name="feat_setting_extension_network_origin_settings">Das Speichern eines Werts in diesen Einstellungen genehmigt genau diese HTTP(S)-Adresse: %1$s</string>
     <string name="feat_setting_extension_network_origin_save_notice">Das Speichern dieser Einstellung genehmigt den Netzwerkzugriff auf genau die hier eingegebene HTTP(S)-Adresse. Pfade, Platzhalter, Abfragen und Fragmente sind nicht zulässig.</string>
     <string name="feat_setting_extension_network_reauthorization_required">Der Netzwerkzugriff auf neu angeforderte Adressen bleibt bis zur erneuten Autorisierung blockiert: %1$s</string>

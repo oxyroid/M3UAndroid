@@ -205,6 +205,16 @@
     <string name="feat_setting_extension_confirm_identity">Pacote: %1$s\nCertificado SHA-256: %2$s\nNome: %3$s\nDesenvolvedor: %4$s\nVersão: %5$s</string>
     <string name="feat_setting_extension_requested_capabilities">Recursos solicitados</string>
     <string name="feat_setting_extension_network_origins">Origens de rede solicitadas</string>
+    <string name="feat_setting_extension_network_origins_declared">Solicitadas pela extensão</string>
+    <string name="feat_setting_extension_network_origins_from_settings">Das configurações</string>
+    <string name="feat_setting_extension_network_origin_settings_explanation">Cada endereço só é aprovado quando você salva a configuração correspondente.</string>
+    <string name="feat_setting_extension_network_origin_settings_attention">Um ou mais endereços de rede definidos nas configurações precisam da sua atenção.</string>
+    <string name="feat_setting_extension_network_origin_state_approved">Aprovada</string>
+    <string name="feat_setting_extension_network_origin_state_approval_required">Aprovação necessária</string>
+    <string name="feat_setting_extension_network_origin_state_not_configured">Não configurada</string>
+    <string name="feat_setting_extension_network_origin_state_invalid">Endereço inválido</string>
+    <string name="feat_setting_extension_network_origin_state_suspended">Bloqueada temporariamente</string>
+    <string name="feat_setting_extension_network_origin_state_unverified">Aguardando verificação</string>
     <string name="feat_setting_extension_network_origin_settings">Salvar um valor nestas configurações aprova exatamente esta origem HTTP(S): %1$s</string>
     <string name="feat_setting_extension_network_origin_save_notice">Salvar esta configuração aprova o acesso de rede à origem HTTP(S) exata inserida aqui. Caminhos, curingas, consultas e fragmentos não são permitidos.</string>
     <string name="feat_setting_extension_network_reauthorization_required">O acesso de rede às novas origens solicitadas está bloqueado até que você autorize novamente: %1$s</string>

@@ -208,6 +208,16 @@
     <string name="feat_setting_extension_confirm_identity">Paket: %1$s\nCertifikat SHA-256: %2$s\nNamn: %3$s\nUtvecklare: %4$s\nVersion: %5$s</string>
     <string name="feat_setting_extension_requested_capabilities">Begärda behörigheter</string>
     <string name="feat_setting_extension_network_origins">Begärda nätverksursprung</string>
+    <string name="feat_setting_extension_network_origins_declared">Begärda av tillägget</string>
+    <string name="feat_setting_extension_network_origins_from_settings">Från inställningarna</string>
+    <string name="feat_setting_extension_network_origin_settings_explanation">Varje adress godkänns först när du sparar motsvarande inställning.</string>
+    <string name="feat_setting_extension_network_origin_settings_attention">En eller flera nätverksadresser från inställningarna behöver åtgärdas.</string>
+    <string name="feat_setting_extension_network_origin_state_approved">Godkänt</string>
+    <string name="feat_setting_extension_network_origin_state_approval_required">Godkännande krävs</string>
+    <string name="feat_setting_extension_network_origin_state_not_configured">Inte konfigurerat</string>
+    <string name="feat_setting_extension_network_origin_state_invalid">Ogiltig adress</string>
+    <string name="feat_setting_extension_network_origin_state_suspended">Tillfälligt blockerat</string>
+    <string name="feat_setting_extension_network_origin_state_unverified">Väntar på verifiering</string>
     <string name="feat_setting_extension_network_origin_settings">När ett värde sparas i dessa inställningar godkänns exakt detta HTTP(S)-ursprung: %1$s</string>
     <string name="feat_setting_extension_network_origin_save_notice">När den här inställningen sparas godkänns nätverksåtkomst till det exakta HTTP(S)-ursprung som anges här. Sökvägar, jokertecken, frågor och fragment tillåts inte.</string>
     <string name="feat_setting_extension_network_reauthorization_required">Nätverksåtkomst till nya begärda ursprung blockeras tills du auktoriserar igen: %1$s</string>

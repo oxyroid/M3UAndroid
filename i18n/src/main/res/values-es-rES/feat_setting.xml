@@ -208,6 +208,16 @@
     <string name="feat_setting_extension_confirm_identity">Paquete: %1$s\nCertificado SHA-256: %2$s\nNombre: %3$s\nDesarrollador: %4$s\nVersión: %5$s</string>
     <string name="feat_setting_extension_requested_capabilities">Capacidades solicitadas</string>
     <string name="feat_setting_extension_network_origins">Orígenes de red solicitados</string>
+    <string name="feat_setting_extension_network_origins_declared">Solicitados por la extensión</string>
+    <string name="feat_setting_extension_network_origins_from_settings">Desde los ajustes</string>
+    <string name="feat_setting_extension_network_origin_settings_explanation">Cada dirección solo se aprueba al guardar su ajuste.</string>
+    <string name="feat_setting_extension_network_origin_settings_attention">Una o más direcciones de red configuradas en los ajustes requieren tu atención.</string>
+    <string name="feat_setting_extension_network_origin_state_approved">Aprobado</string>
+    <string name="feat_setting_extension_network_origin_state_approval_required">Se requiere aprobación</string>
+    <string name="feat_setting_extension_network_origin_state_not_configured">Sin configurar</string>
+    <string name="feat_setting_extension_network_origin_state_invalid">Dirección no válida</string>
+    <string name="feat_setting_extension_network_origin_state_suspended">Bloqueado temporalmente</string>
+    <string name="feat_setting_extension_network_origin_state_unverified">Pendiente de verificación</string>
     <string name="feat_setting_extension_network_origin_settings">Guardar un valor en estos ajustes autoriza exactamente este origen HTTP(S): %1$s</string>
     <string name="feat_setting_extension_network_origin_save_notice">Guardar este ajuste autoriza el acceso de red al origen HTTP(S) exacto que se introduzca aquí. No se permiten rutas, comodines, consultas ni fragmentos.</string>
     <string name="feat_setting_extension_network_reauthorization_required">El acceso de red a los nuevos orígenes solicitados está bloqueado hasta que vuelvas a autorizarlo: %1$s</string>

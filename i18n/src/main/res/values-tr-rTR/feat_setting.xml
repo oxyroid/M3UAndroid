@@ -208,6 +208,16 @@
     <string name="feat_setting_extension_confirm_identity">Paket: %1$s\nSHA-256 sertifikası: %2$s\nAd: %3$s\nGeliştirici: %4$s\nSürüm: %5$s</string>
     <string name="feat_setting_extension_requested_capabilities">İstenen yetenekler</string>
     <string name="feat_setting_extension_network_origins">İstenen ağ kaynakları</string>
+    <string name="feat_setting_extension_network_origins_declared">Uzantı tarafından istendi</string>
+    <string name="feat_setting_extension_network_origins_from_settings">Ayarlardan</string>
+    <string name="feat_setting_extension_network_origin_settings_explanation">Her adres yalnızca ilgili ayarı kaydettiğinizde onaylanır.</string>
+    <string name="feat_setting_extension_network_origin_settings_attention">Ayarlardaki bir veya daha fazla ağ adresiyle ilgilenmeniz gerekiyor.</string>
+    <string name="feat_setting_extension_network_origin_state_approved">Onaylandı</string>
+    <string name="feat_setting_extension_network_origin_state_approval_required">Onay gerekiyor</string>
+    <string name="feat_setting_extension_network_origin_state_not_configured">Yapılandırılmadı</string>
+    <string name="feat_setting_extension_network_origin_state_invalid">Geçersiz adres</string>
+    <string name="feat_setting_extension_network_origin_state_suspended">Geçici olarak engellendi</string>
+    <string name="feat_setting_extension_network_origin_state_unverified">Doğrulama bekleniyor</string>
     <string name="feat_setting_extension_network_origin_settings">Bu ayarlara bir değer kaydetmek tam olarak şu HTTP(S) kaynağını onaylar: %1$s</string>
     <string name="feat_setting_extension_network_origin_save_notice">Bu ayarı kaydetmek, buraya girilen tam HTTP(S) kaynağına ağ erişimini onaylar. Yollara, joker karakterlere, sorgulara ve parçalara izin verilmez.</string>
     <string name="feat_setting_extension_network_reauthorization_required">Yeni istenen kaynaklara ağ erişimi, yeniden yetkilendirene kadar engellenir: %1$s</string>

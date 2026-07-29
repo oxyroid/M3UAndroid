@@ -207,6 +207,16 @@
     <string name="feat_setting_extension_confirm_identity">Paket: %1$s\nSertifikat SHA-256: %2$s\nNama: %3$s\nPengembang: %4$s\nVersi: %5$s</string>
     <string name="feat_setting_extension_requested_capabilities">Kemampuan yang diminta</string>
     <string name="feat_setting_extension_network_origins">Asal jaringan yang diminta</string>
+    <string name="feat_setting_extension_network_origins_declared">Diminta oleh ekstensi</string>
+    <string name="feat_setting_extension_network_origins_from_settings">Dari pengaturan</string>
+    <string name="feat_setting_extension_network_origin_settings_explanation">Setiap alamat hanya disetujui saat Anda menyimpan pengaturannya.</string>
+    <string name="feat_setting_extension_network_origin_settings_attention">Satu atau beberapa alamat jaringan dalam pengaturan perlu Anda periksa.</string>
+    <string name="feat_setting_extension_network_origin_state_approved">Disetujui</string>
+    <string name="feat_setting_extension_network_origin_state_approval_required">Persetujuan diperlukan</string>
+    <string name="feat_setting_extension_network_origin_state_not_configured">Belum dikonfigurasi</string>
+    <string name="feat_setting_extension_network_origin_state_invalid">Alamat tidak valid</string>
+    <string name="feat_setting_extension_network_origin_state_suspended">Diblokir sementara</string>
+    <string name="feat_setting_extension_network_origin_state_unverified">Menunggu verifikasi</string>
     <string name="feat_setting_extension_network_origin_settings">Menyimpan nilai dalam pengaturan ini akan menyetujui asal HTTP(S) ini secara tepat: %1$s</string>
     <string name="feat_setting_extension_network_origin_save_notice">Menyimpan pengaturan ini akan menyetujui akses jaringan ke asal HTTP(S) yang dimasukkan di sini secara tepat. Jalur, karakter pengganti, kueri, dan fragmen tidak diizinkan.</string>
     <string name="feat_setting_extension_network_reauthorization_required">Akses jaringan ke asal yang baru diminta diblokir sampai Anda mengotorisasi ulang: %1$s</string>

@@ -215,6 +215,16 @@
     <string name="feat_setting_extension_confirm_identity">Pachet: %1$s\nCertificat SHA-256: %2$s\nNume: %3$s\nDezvoltator: %4$s\nVersiune: %5$s</string>
     <string name="feat_setting_extension_requested_capabilities">Capabilități solicitate</string>
     <string name="feat_setting_extension_network_origins">Origini de rețea solicitate</string>
+    <string name="feat_setting_extension_network_origins_declared">Solicitate de extensie</string>
+    <string name="feat_setting_extension_network_origins_from_settings">Din setări</string>
+    <string name="feat_setting_extension_network_origin_settings_explanation">Fiecare adresă este aprobată numai când salvezi setarea corespunzătoare.</string>
+    <string name="feat_setting_extension_network_origin_settings_attention">Una sau mai multe adrese de rețea configurate în setări necesită atenția ta.</string>
+    <string name="feat_setting_extension_network_origin_state_approved">Aprobată</string>
+    <string name="feat_setting_extension_network_origin_state_approval_required">Este necesară aprobarea</string>
+    <string name="feat_setting_extension_network_origin_state_not_configured">Neconfigurată</string>
+    <string name="feat_setting_extension_network_origin_state_invalid">Adresă nevalidă</string>
+    <string name="feat_setting_extension_network_origin_state_suspended">Blocată temporar</string>
+    <string name="feat_setting_extension_network_origin_state_unverified">În așteptarea verificării</string>
     <string name="feat_setting_extension_network_origin_settings">Salvarea unei valori în aceste setări aprobă exact această origine HTTP(S): %1$s</string>
     <string name="feat_setting_extension_network_origin_save_notice">Salvarea acestei setări aprobă accesul la rețea pentru originea HTTP(S) exactă introdusă aici. Căile, metacaracterele, interogările și fragmentele nu sunt permise.</string>
     <string name="feat_setting_extension_network_reauthorization_required">Accesul la rețea pentru originile nou solicitate este blocat până când autorizezi din nou: %1$s</string>

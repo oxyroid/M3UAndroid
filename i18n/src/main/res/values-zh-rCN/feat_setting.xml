@@ -242,6 +242,16 @@
     <string name="feat_setting_extension_confirm_identity">包名：%1$s\n证书 SHA-256：%2$s\n名称：%3$s\n开发者：%4$s\n版本：%5$s</string>
     <string name="feat_setting_extension_requested_capabilities">请求的能力</string>
     <string name="feat_setting_extension_network_origins">请求访问的网络源站</string>
+    <string name="feat_setting_extension_network_origins_declared">插件请求</string>
+    <string name="feat_setting_extension_network_origins_from_settings">来自设置</string>
+    <string name="feat_setting_extension_network_origin_settings_explanation">仅在保存对应设置时批准所填入的精确地址。</string>
+    <string name="feat_setting_extension_network_origin_settings_attention">设置中的一个或多个网络地址需要处理。</string>
+    <string name="feat_setting_extension_network_origin_state_approved">已批准</string>
+    <string name="feat_setting_extension_network_origin_state_approval_required">需要批准</string>
+    <string name="feat_setting_extension_network_origin_state_not_configured">未配置</string>
+    <string name="feat_setting_extension_network_origin_state_invalid">地址无效</string>
+    <string name="feat_setting_extension_network_origin_state_suspended">已暂时阻止</string>
+    <string name="feat_setting_extension_network_origin_state_unverified">等待验证</string>
     <string name="feat_setting_extension_network_origin_settings">在以下设置中保存值时，将批准访问所填入的精确 HTTP(S) 源站：%1$s</string>
     <string name="feat_setting_extension_network_origin_save_notice">保存此设置将批准扩展访问这里填入的精确 HTTP(S) 源站。不允许路径、通配符、查询参数或片段。</string>
     <string name="feat_setting_extension_network_reauthorization_required">新请求源站的网络访问已被阻止，请重新授权：%1$s</string>

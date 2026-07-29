@@ -208,6 +208,16 @@
     <string name="feat_setting_extension_confirm_identity">Paquet : %1$s\nCertificat SHA-256 : %2$s\nNom : %3$s\nDéveloppeur : %4$s\nVersion : %5$s</string>
     <string name="feat_setting_extension_requested_capabilities">Capacités demandées</string>
     <string name="feat_setting_extension_network_origins">Origines réseau demandées</string>
+    <string name="feat_setting_extension_network_origins_declared">Demandées par l’extension</string>
+    <string name="feat_setting_extension_network_origins_from_settings">Depuis les paramètres</string>
+    <string name="feat_setting_extension_network_origin_settings_explanation">Chaque adresse n’est approuvée qu’après l’enregistrement du paramètre correspondant.</string>
+    <string name="feat_setting_extension_network_origin_settings_attention">Une ou plusieurs adresses réseau saisies dans les paramètres nécessitent votre attention.</string>
+    <string name="feat_setting_extension_network_origin_state_approved">Approuvée</string>
+    <string name="feat_setting_extension_network_origin_state_approval_required">Approbation requise</string>
+    <string name="feat_setting_extension_network_origin_state_not_configured">Non configurée</string>
+    <string name="feat_setting_extension_network_origin_state_invalid">Adresse non valide</string>
+    <string name="feat_setting_extension_network_origin_state_suspended">Temporairement bloquée</string>
+    <string name="feat_setting_extension_network_origin_state_unverified">En attente de vérification</string>
     <string name="feat_setting_extension_network_origin_settings">L’enregistrement d’une valeur dans ces paramètres autorise exactement cette origine HTTP(S) : %1$s</string>
     <string name="feat_setting_extension_network_origin_save_notice">L’enregistrement de ce paramètre autorise l’accès réseau à l’origine HTTP(S) exacte saisie ici. Les chemins, caractères génériques, requêtes et fragments ne sont pas autorisés.</string>
     <string name="feat_setting_extension_network_reauthorization_required">L’accès réseau aux nouvelles origines demandées est bloqué jusqu’à leur réautorisation : %1$s</string>
