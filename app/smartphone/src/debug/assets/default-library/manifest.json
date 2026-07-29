@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "revision": "2026-07-29.1",
+  "title": "Debug playback samples",
+  "playlistAsset": "default-library/playlist.m3u",
+  "playlistSha256": "4ca3ab4ffbf27e48ecd4641139864b93cb39f5c6c56784959c52b65343de7809",
+  "expectedChannelIds": [
+    "apple.bipbop.avc",
+    "blender.big-buck-bunny.hls",
+    "blender.sintel.trailer"
+  ],
+  "allowedMediaHosts": [
+    "devstreaming-cdn.apple.com",
+    "test-streams.mux.dev",
+    "download.blender.org"
+  ],
+  "sources": [
+    {
+      "name": "Apple HTTP Live Streaming examples",
+      "url": "https://developer.apple.com/streaming/examples/",
+      "usage": "Apple-hosted developer test stream; this asset stores only its URL"
+    },
+    {
+      "name": "Big Buck Bunny adaptive HLS test stream",
+      "url": "https://test-streams.mux.dev/",
+      "license": "CC-BY-3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "attribution": "© 2008 Blender Foundation / www.bigbuckbunny.org",
+      "usage": "Mux-hosted playback test stream; this asset stores only its URL"
+    },
+    {
+      "name": "Sintel",
+      "url": "https://durian.blender.org/",
+      "license": "CC-BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "attribution": "© copyright Blender Foundation | durian.blender.org",
+      "usage": "Blender-hosted open movie trailer; this asset stores only its URL"
+    }
+  ]
+}

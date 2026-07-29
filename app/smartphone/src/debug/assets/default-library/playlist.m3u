@@ -1,0 +1,7 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="apple.bipbop.avc" group-title="HLS samples",Apple Bip Bop · AVC HLS
+https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/bipbop_4x3_variant.m3u8
+#EXTINF:-1 tvg-id="blender.big-buck-bunny.hls" group-title="HLS samples",Big Buck Bunny · Adaptive HLS
+https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
+#EXTINF:-1 tvg-id="blender.sintel.trailer" group-title="Open movies",Blender Sintel · Trailer
+https://download.blender.org/durian/trailer/sintel_trailer-480p.mp4

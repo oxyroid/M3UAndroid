@@ -11,6 +11,7 @@ import com.m3u.data.worker.ProviderCredentialRecoveryWorker
 import com.m3u.data.worker.ProviderSessionCleanupWorker
 import com.m3u.data.worker.initializePersistedUriPermissionLeases
 import com.m3u.i18n.R.string
+import com.m3u.smartphone.startup.ApplicationStartupTask
 import dagger.hilt.android.HiltAndroidApp
 import org.acra.config.mailSender
 import org.acra.config.notification
@@ -25,20 +26,25 @@ class M3UApplication : Application(), Configuration.Provider {
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
 
+    @Inject
+    lateinit var startupTasks: Set<@JvmSuppressWildcards ApplicationStartupTask>
+
     override fun onCreate() {
         super.onCreate()
         if (BuildConfig.DEBUG) {
             Timber.plant(DebugTree())
         }
         initializePersistedUriPermissionLeases(this)
+        val workManager = WorkManager.getInstance(this)
         PersistedUriPermissionCleanupWorker.enqueueRecovery(
-            WorkManager.getInstance(this)
+            workManager
         )
-        ProviderCredentialRecoveryWorker.enqueue(WorkManager.getInstance(this))
+        ProviderCredentialRecoveryWorker.enqueue(workManager)
         ProviderSessionCleanupWorker.enqueue(
-            workManager = WorkManager.getInstance(this),
+            workManager = workManager,
         )
-        ExtensionPluginBootstrapWorker.enqueue(WorkManager.getInstance(this))
+        ExtensionPluginBootstrapWorker.enqueue(workManager)
+        startupTasks.forEach { task -> task.enqueue(workManager) }
     }
 
     override fun attachBaseContext(base: Context?) {
