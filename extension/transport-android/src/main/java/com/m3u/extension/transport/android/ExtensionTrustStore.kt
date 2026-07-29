@@ -113,9 +113,25 @@ class ExtensionTrustStore(context: Context) {
     fun isSoleTrustedOwner(
         service: InstalledExtensionService,
         extensionId: String,
-    ): Boolean = isTrusted(service) &&
-        extensionId(service) == extensionId &&
-        isSoleStoredOwner(service.packageName, service.serviceName, extensionId)
+    ): Boolean = isSoleTrustedOwner(
+        packageName = service.packageName,
+        serviceName = service.serviceName,
+        certificateSha256 = service.certificateSha256,
+        extensionId = extensionId,
+    )
+
+    fun isSoleTrustedOwner(
+        packageName: String,
+        serviceName: String,
+        certificateSha256: String,
+        extensionId: String,
+    ): Boolean {
+        val serviceKey = serviceKey(packageName, serviceName)
+        return preferences.getString("$serviceKey$CERTIFICATE_SUFFIX", null) ==
+            certificateSha256 &&
+            preferences.getString("$serviceKey$EXTENSION_ID_SUFFIX", null) == extensionId &&
+            isSoleStoredOwner(packageName, serviceName, extensionId)
+    }
 
     fun isSoleStoredOwner(
         packageName: String,

@@ -27,6 +27,7 @@ import com.m3u.data.extension.security.InactiveExtensionPrincipalLeaseException
 import com.m3u.data.extension.security.ProviderAccountOwnerStore
 import com.m3u.data.extension.security.toPrincipal
 import com.m3u.data.repository.extension.ExtensionContributionScheduler
+import com.m3u.data.repository.extension.ExtensionDynamicSchemaRevalidationResult
 import com.m3u.data.repository.extension.ExtensionEpgRefreshContribution
 import com.m3u.data.repository.extension.ExtensionMetadataRefreshContribution
 import com.m3u.data.repository.extension.ExtensionSettingEditToken
@@ -58,6 +59,7 @@ import com.m3u.extension.api.SerializedExtensionEnvelope
 import com.m3u.extension.api.SerializedExtensionResult
 import com.m3u.extension.api.security.CredentialHandle
 import com.m3u.extension.runtime.CapabilityPolicy
+import com.m3u.extension.runtime.ExtensionRegistrationLease
 import com.m3u.extension.runtime.ExtensionRuntime
 import com.m3u.extension.runtime.ExtensionTransportHealth
 import com.m3u.extension.transport.android.ExtensionTransportIncompatibleException
@@ -507,6 +509,100 @@ class ExtensionPluginRepositoryLifecycleTest {
             ExtensionState.ENABLED,
             repository.runtime.registeredExtensions().single().state,
         )
+    }
+
+    @Test
+    fun reconnectBindsSchemaValidationOnceToEachRegistration() = runBlocking {
+        val firstManifest = MANIFEST.copy(
+            extensionVersion = ExtensionSemanticVersion(1, 1, 0)
+        )
+        val replacementManifest = firstManifest.copy(
+            extensionVersion = ExtensionSemanticVersion(1, 2, 0)
+        )
+        trust(firstManifest)
+        val connectedTransports = mutableListOf<FakePluginTransport>()
+        var connectionAttempt = 0
+        var forbiddenVersion = firstManifest.extensionVersion
+        lateinit var repository: TestRepository
+        val settingsRepository = RecordingSettingsRepository { extensionId ->
+            assertEquals(EXTENSION_ID, extensionId)
+            assertFalse(
+                repository.runtime.registeredExtensions().any { registered ->
+                    registered.manifest.extensionVersion == forbiddenVersion
+                }
+            )
+        }
+        repository = repository(
+            connector = ExtensionPluginTransportConnector {
+                val manifest = if (connectionAttempt++ == 0) {
+                    firstManifest
+                } else {
+                    replacementManifest
+                }
+                FakePluginTransport(manifest).also(connectedTransports::add)
+            },
+            extensionSettingsRepository = settingsRepository,
+        )
+
+        assertEquals(1, repository.restoreEnabled())
+        assertEquals(1, settingsRepository.activationLeases.size)
+        assertEquals(1, settingsRepository.revalidationCount)
+        assertTrue(
+            settingsRepository.revalidationLeases.single() ===
+                settingsRepository.activationLeases.single()
+        )
+
+        repository.installedPlugins()
+        assertEquals(1, repository.restoreEnabled())
+        assertEquals(1, settingsRepository.activationLeases.size)
+        assertEquals(1, settingsRepository.revalidationCount)
+
+        connectedTransports.single().connectionAvailable = false
+        forbiddenVersion = replacementManifest.extensionVersion
+
+        assertEquals(1, repository.restoreEnabled())
+        assertEquals(2, settingsRepository.activationLeases.size)
+        assertEquals(2, settingsRepository.revalidationCount)
+        assertEquals(1, settingsRepository.suspensionCount)
+        assertFalse(
+            settingsRepository.activationLeases[0] ===
+                settingsRepository.activationLeases[1]
+        )
+        assertFalse(
+            repository.runtime.isRegistrationCurrent(
+                EXTENSION_ID,
+                settingsRepository.activationLeases[0],
+            )
+        )
+        assertTrue(
+            repository.runtime.isRegistrationCurrent(
+                EXTENSION_ID,
+                settingsRepository.activationLeases[1],
+            )
+        )
+        assertTrue(
+            settingsRepository.revalidationLeases[1] ===
+                settingsRepository.activationLeases[1]
+        )
+        assertEquals(
+            replacementManifest.extensionVersion,
+            repository.runtime.registeredExtensions().single().manifest.extensionVersion,
+        )
+
+        repository.installedPlugins()
+        assertEquals(2, settingsRepository.revalidationCount)
+    }
+
+    @Test
+    fun schemaActivationRejectionRollsBackRegisteredSecurityState() = runBlocking {
+        assertSchemaActivationFailureRollsBack { false }
+    }
+
+    @Test
+    fun schemaActivationExceptionRollsBackRegisteredSecurityState() = runBlocking {
+        assertSchemaActivationFailureRollsBack {
+            throw IllegalStateException("activation failed")
+        }
     }
 
     @Test
@@ -1599,6 +1695,36 @@ class ExtensionPluginRepositoryLifecycleTest {
         )
     }
 
+    private suspend fun assertSchemaActivationFailureRollsBack(
+        activate: () -> Boolean,
+    ) {
+        val principalRegistry = ActiveExtensionPrincipalRegistry()
+        val connectedTransports = mutableListOf<FakePluginTransport>()
+        lateinit var repository: TestRepository
+        val settingsRepository = ActivationSettingsRepository { extensionId, lease ->
+            assertEquals(EXTENSION_ID, extensionId)
+            assertTrue(repository.runtime.isRegistrationCurrent(extensionId, lease))
+            activate()
+        }
+        repository = repository(
+            connector = ExtensionPluginTransportConnector {
+                FakePluginTransport(MANIFEST).also(connectedTransports::add)
+            },
+            extensionSettingsRepository = settingsRepository,
+            activePrincipalRegistry = principalRegistry,
+        )
+
+        val result = repository.enable(SERVICE.packageName, SERVICE.serviceName)
+
+        assertTrue(result is PluginEnableResult.Rejected)
+        assertEquals(1, settingsRepository.activationCount)
+        assertEquals(1, settingsRepository.suspensionCount)
+        assertTrue(connectedTransports.isNotEmpty())
+        assertTrue(connectedTransports.all(FakePluginTransport::closed))
+        assertTrue(runtimeExtensions(repository).isEmpty())
+        assertNull(principalRegistry.captureLease(EXTENSION_ID))
+    }
+
     private fun repository(
         connector: ExtensionPluginTransportConnector,
         services: List<InstalledExtensionService> = listOf(SERVICE),
@@ -1817,6 +1943,70 @@ class ExtensionPluginRepositoryLifecycleTest {
         ): ExtensionSettingUpdateResult = error("Settings update is not expected")
 
         override fun clear(extensionId: ExtensionId) = Unit
+    }
+
+    private class RecordingSettingsRepository(
+        private val onSuspend: (ExtensionId) -> Unit,
+    ) : ExtensionSettingsRepository by NoOpSettingsRepository {
+        val activationLeases = mutableListOf<ExtensionRegistrationLease>()
+        val revalidationLeases = mutableListOf<ExtensionRegistrationLease>()
+        var suspensionCount = 0
+            private set
+        var revalidationCount = 0
+            private set
+
+        override fun activateDynamicSchemas(
+            extensionId: ExtensionId,
+            registrationLease: ExtensionRegistrationLease,
+        ): Boolean {
+            assertEquals(EXTENSION_ID, extensionId)
+            activationLeases += registrationLease
+            return true
+        }
+
+        override fun suspendDynamicSchemas(extensionId: ExtensionId) {
+            onSuspend(extensionId)
+            suspensionCount++
+        }
+
+        override suspend fun revalidateDynamicSchemas(
+            extensionId: ExtensionId,
+            registrationLease: ExtensionRegistrationLease,
+            localeTag: String?,
+            surfaces: Set<String>,
+        ): ExtensionDynamicSchemaRevalidationResult {
+            assertEquals(EXTENSION_ID, extensionId)
+            revalidationLeases += registrationLease
+            revalidationCount++
+            return ExtensionDynamicSchemaRevalidationResult(
+                authoritativelyCleared = true,
+            )
+        }
+    }
+
+    private class ActivationSettingsRepository(
+        private val activate: (
+            extensionId: ExtensionId,
+            registrationLease: ExtensionRegistrationLease,
+        ) -> Boolean,
+    ) : ExtensionSettingsRepository by NoOpSettingsRepository {
+        var activationCount = 0
+            private set
+        var suspensionCount = 0
+            private set
+
+        override fun activateDynamicSchemas(
+            extensionId: ExtensionId,
+            registrationLease: ExtensionRegistrationLease,
+        ): Boolean {
+            activationCount++
+            return activate(extensionId, registrationLease)
+        }
+
+        override fun suspendDynamicSchemas(extensionId: ExtensionId) {
+            assertEquals(EXTENSION_ID, extensionId)
+            suspensionCount++
+        }
     }
 
     private class StoreBackedSettingsRepository(

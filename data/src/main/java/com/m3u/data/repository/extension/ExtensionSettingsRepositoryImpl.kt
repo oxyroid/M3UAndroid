@@ -12,7 +12,11 @@ import com.m3u.extension.api.ExtensionState
 import com.m3u.extension.api.HookResult
 import com.m3u.extension.api.HostHookSpecs
 import com.m3u.extension.api.SettingsSchemaRequest
+import com.m3u.extension.runtime.ExtensionExecutionKind
+import com.m3u.extension.runtime.ExtensionRegistrationLease
+import com.m3u.extension.runtime.ExtensionRegistrationSnapshot
 import com.m3u.extension.runtime.ExtensionRuntime
+import com.m3u.extension.runtime.RegisteredExtension
 import java.util.UUID
 import javax.inject.Inject
 import kotlinx.serialization.json.JsonPrimitive
@@ -45,13 +49,10 @@ internal class ExtensionSettingsRepositoryImpl @Inject constructor(
         issueEditTokens: Boolean,
     ): ExtensionSettingsConfiguration? {
         require(surface.isNotBlank()) { "Settings surface must not be blank" }
-        val extension = runtime.registeredExtensions()
-            .singleOrNull { candidate -> candidate.manifest.id == extensionId }
-            ?: return null
+        val registration = runtime.captureRegistration(extensionId) ?: return null
+        val extension = registration.extension
         if (extension.state != ExtensionState.ENABLED) return null
-
-        var dynamicSchemaAuthoritative =
-            !extension.boundHooks.contains(HostHookSpecs.SettingsSchema.hook)
+        val session = dynamicSchemaSession(registration) ?: return null
         val manifestSections = extension.manifest.settingsSchema?.let { schema ->
             listOf(
                 ExtensionSettingSection(
@@ -61,39 +62,20 @@ internal class ExtensionSettingsRepositoryImpl @Inject constructor(
                 )
             )
         }.orEmpty()
-        val dynamicSections =
-            if (extension.boundHooks.contains(HostHookSpecs.SettingsSchema.hook)) {
-                when (
-                    val outcome = runtime.invoke(
-                        extensionId,
-                        HostHookSpecs.SettingsSchema,
-                        SettingsSchemaRequest(localeTag = localeTag, surface = surface),
-                    ).outcome
-                ) {
-                    is HookResult.Success -> outcome.payload.sections
-                        .takeIf { sections ->
-                            sections.isValidDynamicSchema(
-                                existingSectionIds = manifestSections
-                                    .mapTo(mutableSetOf(), ExtensionSettingSection::id),
-                                maximumSectionCount = MAX_SECTIONS - manifestSections.size,
-                            )
-                        }
-                        ?.also { dynamicSchemaAuthoritative = true }
-                        .orEmpty()
-                    is HookResult.Failure -> emptyList()
-                }
-            } else {
-                emptyList()
-            }
+        val dynamicSections = loadDynamicSurface(
+            extension = extension,
+            session = session,
+            localeTag = localeTag,
+            surface = surface,
+            manifestSections = manifestSections,
+        ).orEmpty()
         val sections = (manifestSections + dynamicSections).hostOwnedSnapshot()
-        val snapshot = store.reconcile(
-            extensionId = extensionId.value,
-            sections = sections,
-            removeMissingSections = dynamicSchemaAuthoritative,
-        )
+        if (!runtime.isRegistrationCurrent(extensionId, registration.lease)) return null
+        val snapshot = store.snapshot(extension.manifest, session) ?: return null
         val editTokens = if (issueEditTokens) {
             issueEditTokens(
                 extensionId = extensionId,
+                session = session,
                 sections = sections,
                 localeTag = localeTag,
                 surface = surface,
@@ -102,6 +84,188 @@ internal class ExtensionSettingsRepositoryImpl @Inject constructor(
             emptyMap()
         }
         return ExtensionSettingsConfiguration(extensionId, sections, snapshot, editTokens)
+    }
+
+    private fun dynamicSchemaSession(
+        registration: ExtensionRegistrationSnapshot,
+    ): DynamicSchemaSession? {
+        val extensionId = registration.extension.manifest.id
+        store.currentDynamicSchemaSession(extensionId.value, registration.lease)?.let {
+            return it
+        }
+        if (registration.extension.executionKind != ExtensionExecutionKind.BUILT_IN) return null
+        if (!runtime.isRegistrationCurrent(extensionId, registration.lease)) return null
+        val session = store.beginDynamicSchemaSession(extensionId.value, registration.lease)
+        if (runtime.isRegistrationCurrent(extensionId, registration.lease)) return session
+        store.suspendDynamicSchemas(session)
+        return null
+    }
+
+    private suspend fun loadDynamicSurface(
+        extension: RegisteredExtension,
+        session: DynamicSchemaSession,
+        localeTag: String?,
+        surface: String,
+        manifestSections: List<ExtensionSettingSection>,
+    ): List<ExtensionSettingSection>? {
+        val extensionId = extension.manifest.id
+        if (!extension.boundHooks.contains(HostHookSpecs.SettingsSchema.hook)) {
+            return emptyList<ExtensionSettingSection>().takeIf {
+                store.clearDynamicSchemas(extensionId.value, session)
+            }
+        }
+        val pending = fetchDynamicSurface(
+            extension = extension,
+            session = session,
+            localeTag = localeTag,
+            surface = surface,
+            manifestSections = manifestSections,
+        ) ?: return null
+        return pending.sections.takeIf {
+            store.revalidateDynamicSchemas(
+                extensionId = extensionId.value,
+                validation = pending.validation,
+                sections = pending.sections,
+            )
+        }
+    }
+
+    private suspend fun fetchDynamicSurface(
+        extension: RegisteredExtension,
+        session: DynamicSchemaSession,
+        localeTag: String?,
+        surface: String,
+        manifestSections: List<ExtensionSettingSection>,
+    ): PendingDynamicSchemaSurface? {
+        val extensionId = extension.manifest.id
+        val validation = store.beginDynamicSchemaValidation(
+            session = session,
+            surface = surface,
+        ) ?: return null
+        val sections = when (
+            val outcome = runtime.invoke(
+                extensionId,
+                HostHookSpecs.SettingsSchema,
+                SettingsSchemaRequest(localeTag = localeTag, surface = surface),
+            ).outcome
+        ) {
+            is HookResult.Success -> outcome.payload.sections
+            is HookResult.Failure -> return null
+        }
+        if (
+            !sections.isValidDynamicSchema(
+                existingSectionIds = manifestSections
+                    .mapTo(mutableSetOf(), ExtensionSettingSection::id),
+                maximumSectionCount = MAX_SECTIONS - manifestSections.size,
+            )
+        ) {
+            return null
+        }
+        return PendingDynamicSchemaSurface(validation, sections)
+    }
+
+    override fun suspendDynamicSchemas(extensionId: ExtensionId) {
+        invalidateEditTokens(extensionId)
+        store.suspendDynamicSchemas(extensionId.value)
+    }
+
+    override fun activateDynamicSchemas(
+        extensionId: ExtensionId,
+        registrationLease: ExtensionRegistrationLease,
+    ): Boolean {
+        if (!runtime.isRegistrationCurrent(extensionId, registrationLease)) return false
+        invalidateEditTokens(extensionId)
+        val session = store.beginDynamicSchemaSession(extensionId.value, registrationLease)
+        if (runtime.isRegistrationCurrent(extensionId, registrationLease)) return true
+        store.suspendDynamicSchemas(session)
+        return false
+    }
+
+    override fun knownDynamicSchemaSurfaces(extensionId: ExtensionId): Set<String> =
+        store.knownDynamicSchemaSurfaces(extensionId.value).ifEmpty {
+            LEGACY_DYNAMIC_SCHEMA_SURFACES.takeIf {
+                store.hasRetainedDynamicSettings(extensionId.value)
+            }.orEmpty()
+        }
+
+    override suspend fun revalidateDynamicSchemas(
+        extensionId: ExtensionId,
+        registrationLease: ExtensionRegistrationLease,
+        localeTag: String?,
+        surfaces: Set<String>,
+    ): ExtensionDynamicSchemaRevalidationResult {
+        val registration = runtime.captureRegistration(extensionId)
+            ?.takeIf { current -> current.lease === registrationLease }
+            ?: return ExtensionDynamicSchemaRevalidationResult(
+                suspendedSurfaces = surfaces,
+            )
+        val extension = registration.extension
+        if (extension.state != ExtensionState.ENABLED) {
+            return ExtensionDynamicSchemaRevalidationResult(
+                suspendedSurfaces = surfaces,
+            )
+        }
+        val session = store.currentDynamicSchemaSession(
+            extensionId.value,
+            registrationLease,
+        ) ?: return ExtensionDynamicSchemaRevalidationResult(
+            suspendedSurfaces = surfaces,
+        )
+        if (!extension.boundHooks.contains(HostHookSpecs.SettingsSchema.hook)) {
+            if (!store.clearDynamicSchemas(extensionId.value, session)) {
+                return ExtensionDynamicSchemaRevalidationResult(
+                    suspendedSurfaces = surfaces,
+                )
+            }
+            return ExtensionDynamicSchemaRevalidationResult(
+                authoritativelyCleared = true,
+            )
+        }
+        val requestedSurfaces = surfaces.ifEmpty {
+            store.knownDynamicSchemaSurfaces(extensionId.value)
+        }
+        val manifestSections = extension.manifest.settingsSchema?.let { schema ->
+            listOf(
+                ExtensionSettingSection(
+                    id = ExtensionSettingStore.MANIFEST_SECTION_ID,
+                    title = extension.manifest.displayName,
+                    schema = schema,
+                )
+            )
+        }.orEmpty()
+        val verified = linkedSetOf<String>()
+        val suspended = linkedSetOf<String>()
+        val pending = linkedMapOf<DynamicSchemaValidation, List<ExtensionSettingSection>>()
+        requestedSurfaces.sorted().forEach { surface ->
+            val fetched = fetchDynamicSurface(
+                    extension = extension,
+                    session = session,
+                    localeTag = localeTag,
+                    surface = surface,
+                    manifestSections = manifestSections,
+                )
+            if (fetched != null) {
+                pending[fetched.validation] = fetched.sections
+            } else {
+                suspended += surface
+            }
+        }
+        if (!runtime.isRegistrationCurrent(extensionId, registrationLease)) {
+            store.suspendDynamicSchemas(session)
+            return ExtensionDynamicSchemaRevalidationResult(
+                suspendedSurfaces = requestedSurfaces,
+            )
+        }
+        verified += store.commitDynamicSchemaValidations(
+            extensionId = extensionId.value,
+            session = session,
+            validations = pending,
+        )
+        suspended += requestedSurfaces - verified
+        return ExtensionDynamicSchemaRevalidationResult(
+            verifiedSurfaces = verified,
+            suspendedSurfaces = suspended,
+        )
     }
 
     override suspend fun update(
@@ -131,6 +295,7 @@ internal class ExtensionSettingsRepositoryImpl @Inject constructor(
         }
         return applyUpdate(
             configuration = configuration,
+            expectedSession = grant.session,
             sectionId = sectionId,
             fieldKey = fieldKey,
             expectedSchemaFingerprint = grant.sectionFingerprint,
@@ -140,6 +305,7 @@ internal class ExtensionSettingsRepositoryImpl @Inject constructor(
 
     private fun applyUpdate(
         configuration: ExtensionSettingsConfiguration,
+        expectedSession: DynamicSchemaSession,
         sectionId: String,
         fieldKey: String,
         expectedSchemaFingerprint: String,
@@ -155,6 +321,7 @@ internal class ExtensionSettingsRepositoryImpl @Inject constructor(
         if (rawValue == null) {
             val cleared = store.mutateIfSchema(
                 extensionId = extensionId.value,
+                expectedSession = expectedSession,
                 sectionId = sectionId,
                 expectedSchemaVersion = section.schema.version,
                 expectedSchemaFingerprint = expectedSchemaFingerprint,
@@ -194,6 +361,7 @@ internal class ExtensionSettingsRepositoryImpl @Inject constructor(
         }
         val updated = store.mutateIfSchema(
             extensionId = extensionId.value,
+            expectedSession = expectedSession,
             sectionId = sectionId,
             expectedSchemaVersion = section.schema.version,
             expectedSchemaFingerprint = expectedSchemaFingerprint,
@@ -228,16 +396,21 @@ internal class ExtensionSettingsRepositoryImpl @Inject constructor(
     }
 
     override fun clear(extensionId: ExtensionId) {
+        invalidateEditTokens(extensionId)
+        store.clear(extensionId.value)
+    }
+
+    private fun invalidateEditTokens(extensionId: ExtensionId) {
         synchronized(editTokenLock) {
             activeEditTokens.entries.removeAll { (_, grant) ->
                 grant.extensionId == extensionId
             }
         }
-        store.clear(extensionId.value)
     }
 
     private fun issueEditTokens(
         extensionId: ExtensionId,
+        session: DynamicSchemaSession,
         sections: List<ExtensionSettingSection>,
         localeTag: String?,
         surface: String,
@@ -247,7 +420,7 @@ internal class ExtensionSettingsRepositoryImpl @Inject constructor(
             pruneExpiredEditTokens(now)
             buildMap {
                 sections.forEach { section ->
-                    val sectionFingerprint = store.schemaFingerprint(section)
+                    val sectionFingerprint = store.stableSchemaFingerprint(section)
                     section.schema.fields.forEach { field ->
                         while (activeEditTokens.size >= MAX_ACTIVE_EDIT_TOKENS) {
                             val eldest = activeEditTokens.entries.iterator()
@@ -259,6 +432,7 @@ internal class ExtensionSettingsRepositoryImpl @Inject constructor(
                             .first { candidate -> candidate !in activeEditTokens }
                         activeEditTokens[token] = EditGrant(
                             extensionId = extensionId,
+                            session = session,
                             sectionId = section.id,
                             fieldKey = field.key,
                             sectionFingerprint = sectionFingerprint,
@@ -400,10 +574,12 @@ internal class ExtensionSettingsRepositoryImpl @Inject constructor(
         const val SCHEMA_CHANGED_MESSAGE = "Settings schema changed; reload and try again"
         const val VALIDATION_FIELD_KEY = "field"
         const val EDIT_TOKEN_TTL_NANOS = 10L * 60L * 1_000_000_000L
+        val LEGACY_DYNAMIC_SCHEMA_SURFACES = setOf("phone", "tv")
     }
 
     private data class EditGrant(
         val extensionId: ExtensionId,
+        val session: DynamicSchemaSession,
         val sectionId: String,
         val fieldKey: String,
         val sectionFingerprint: String,
@@ -411,5 +587,10 @@ internal class ExtensionSettingsRepositoryImpl @Inject constructor(
         val localeTag: String?,
         val surface: String,
         val issuedAtNanos: Long,
+    )
+
+    private data class PendingDynamicSchemaSurface(
+        val validation: DynamicSchemaValidation,
+        val sections: List<ExtensionSettingSection>,
     )
 }

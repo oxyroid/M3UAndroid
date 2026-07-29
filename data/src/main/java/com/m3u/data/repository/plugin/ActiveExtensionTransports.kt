@@ -1,5 +1,6 @@
 package com.m3u.data.repository.plugin
 
+import com.m3u.extension.runtime.ExtensionRegistrationLease
 import com.m3u.extension.runtime.ExtensionRegistrationToken
 import com.m3u.extension.transport.android.InstalledExtensionService
 import java.util.concurrent.ConcurrentHashMap
@@ -14,6 +15,7 @@ internal data class ActiveExtensionTransport<Transport>(
     val extensionId: String,
     val transport: Transport,
     val registrationToken: ExtensionRegistrationToken? = null,
+    val registrationLease: ExtensionRegistrationLease? = null,
 )
 
 internal class ActiveExtensionTransports<Transport> {
@@ -27,9 +29,16 @@ internal class ActiveExtensionTransports<Transport> {
         extensionId: String,
         transport: Transport,
         registrationToken: ExtensionRegistrationToken? = null,
+        registrationLease: ExtensionRegistrationLease? = null,
     ): ActiveExtensionTransport<Transport>? = entries.put(
         key,
-        ActiveExtensionTransport(key, extensionId, transport, registrationToken),
+        ActiveExtensionTransport(
+            key,
+            extensionId,
+            transport,
+            registrationToken,
+            registrationLease,
+        ),
     )
 
     fun remove(key: ExtensionServiceKey): ActiveExtensionTransport<Transport>? = entries.remove(key)

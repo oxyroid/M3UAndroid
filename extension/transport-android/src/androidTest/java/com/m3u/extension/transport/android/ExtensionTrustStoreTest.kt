@@ -87,6 +87,14 @@ class ExtensionTrustStoreTest {
             version = "1.0.0",
             developer = null,
         )
+        assertTrue(
+            store.isSoleTrustedOwner(
+                packageName = first.packageName,
+                serviceName = first.serviceName,
+                certificateSha256 = first.certificateSha256,
+                extensionId = EXTENSION_ID,
+            )
+        )
         store.trust(
             service = second,
             extensionId = EXTENSION_ID,
@@ -103,10 +111,21 @@ class ExtensionTrustStoreTest {
         assertTrue(store.isExtensionIdClaimedByAnotherService(second, EXTENSION_ID))
         assertFalse(store.isSoleStoredOwner(first.packageName, first.serviceName, EXTENSION_ID))
         assertFalse(store.isSoleStoredOwner(second.packageName, second.serviceName, EXTENSION_ID))
+        assertFalse(store.isSoleTrustedOwner(first, EXTENSION_ID))
+        assertFalse(store.isSoleTrustedOwner(second, EXTENSION_ID))
 
         store.revoke(first.packageName, first.serviceName)
 
         assertTrue(store.isSoleStoredOwner(second.packageName, second.serviceName, EXTENSION_ID))
+        assertTrue(store.isSoleTrustedOwner(second, EXTENSION_ID))
+        assertFalse(
+            store.isSoleTrustedOwner(
+                packageName = second.packageName,
+                serviceName = second.serviceName,
+                certificateSha256 = "changed-certificate",
+                extensionId = EXTENSION_ID,
+            )
+        )
     }
 
     @Test

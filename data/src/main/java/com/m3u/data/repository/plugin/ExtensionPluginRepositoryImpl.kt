@@ -94,6 +94,8 @@ internal class ExtensionPluginRepositoryImpl private constructor(
     private val contributionSchedulingFailures = ConcurrentHashMap<String, String>()
     private val pendingAuthorizations =
         ConcurrentHashMap<ExtensionServiceKey, PendingPluginAuthorization>()
+    private val dynamicSchemaRevalidationAttempts =
+        ConcurrentHashMap.newKeySet<ExtensionRegistrationToken>()
 
     @Inject
     constructor(
@@ -567,6 +569,17 @@ internal class ExtensionPluginRepositoryImpl private constructor(
                 when (val registration = runtime.register(transport)) {
                     is ExtensionRegistrationResult.Registered -> {
                         uncommittedExtensionId = registration.extension.manifest.id
+                        val registrationToken = checkNotNull(registration.registrationToken)
+                        val registrationLease = runtime.captureRegistration(
+                            registration.extension.manifest.id,
+                            registrationToken,
+                        )?.lease ?: run {
+                            runtime.unregister(registration.extension.manifest.id)
+                            uncommittedExtensionId = null
+                            return@runCatching PluginEnableResult.Rejected(
+                                "Extension registration identity is unavailable"
+                            )
+                        }
                         if (
                             authorizedManifest != null &&
                             registration.extension.manifest != authorizedManifest
@@ -610,7 +623,7 @@ internal class ExtensionPluginRepositoryImpl private constructor(
                         }
                         runtime.recordTransportHealth(
                             extensionId = registration.extension.manifest.id,
-                            registrationToken = checkNotNull(registration.registrationToken),
+                            registrationToken = registrationToken,
                             health = ExtensionTransportHealth.UNAVAILABLE,
                         )
                         runCatching { activePrincipalRegistry.activate(principal) }
@@ -627,13 +640,29 @@ internal class ExtensionPluginRepositoryImpl private constructor(
                             key = service.key,
                             extensionId = registration.extension.manifest.id.value,
                             transport = transport,
-                            registrationToken = checkNotNull(registration.registrationToken),
+                            registrationToken = registrationToken,
+                            registrationLease = registrationLease,
                         )
                         ownedTransport = null
                         uncommittedExtensionId = null
                         uncommittedPrincipalExtensionId = null
                         replaced?.transport?.close()
-                        if (!reauthorizeCapabilities && !isAutomaticConnectionAllowed(service)) {
+                        if (
+                            !runCatching {
+                                extensionSettingsRepository.activateDynamicSchemas(
+                                    registration.extension.manifest.id,
+                                    registrationLease,
+                                )
+                            }.getOrDefault(false)
+                        ) {
+                            deactivateService(service.key)
+                            PluginEnableResult.Rejected(
+                                "Extension settings identity could not be activated"
+                            )
+                        } else if (
+                            !reauthorizeCapabilities &&
+                            !isAutomaticConnectionAllowed(service)
+                        ) {
                             deactivateService(service.key)
                             PluginEnableResult.Rejected(
                                 "Extension was disabled or revoked while reconnecting"
@@ -1136,6 +1165,7 @@ internal class ExtensionPluginRepositoryImpl private constructor(
         val active = transports[service.key] ?: return null
         if (active.extensionId != trustStore.extensionId(service)) return null
         val registrationToken = active.registrationToken ?: return null
+        val registrationLease = active.registrationLease ?: return null
         val health = try {
             if (!active.transport.isConnectionAvailable) {
                 ExtensionTransportHealth.UNAVAILABLE
@@ -1155,6 +1185,35 @@ internal class ExtensionPluginRepositoryImpl private constructor(
             registrationToken = registrationToken,
             health = health,
         ) ?: return null
+        if (
+            !runtime.isRegistrationCurrent(
+                ExtensionId(active.extensionId),
+                registrationLease,
+            )
+        ) {
+            return null
+        }
+        if (
+            health == ExtensionTransportHealth.HEALTHY &&
+            dynamicSchemaRevalidationAttempts.add(registrationToken)
+        ) {
+            try {
+                extensionSettingsRepository.revalidateDynamicSchemas(
+                    extensionId = ExtensionId(active.extensionId),
+                    registrationLease = registrationLease,
+                    localeTag = null,
+                )
+            } catch (cancelled: CancellationException) {
+                dynamicSchemaRevalidationAttempts.remove(registrationToken)
+                throw cancelled
+            } catch (_: Exception) {
+                // Dynamic settings remain suspended until the user explicitly retries.
+            }
+            if (transports[service.key]?.registrationToken !== registrationToken) {
+                dynamicSchemaRevalidationAttempts.remove(registrationToken)
+                return null
+            }
+        }
         return TransportHealthProbe(health, registrationToken)
     }
 
@@ -1168,6 +1227,10 @@ internal class ExtensionPluginRepositoryImpl private constructor(
         active: ActiveExtensionTransport<ExtensionPluginTransport>,
     ) {
         val extensionId = ExtensionId(active.extensionId)
+        active.registrationToken?.let(dynamicSchemaRevalidationAttempts::remove)
+        runCatching {
+            extensionSettingsRepository.suspendDynamicSchemas(extensionId)
+        }
         val principal = activePrincipalRegistry.deactivate(
             extensionId = extensionId,
             packageName = active.serviceKey.packageName,
@@ -1181,7 +1244,13 @@ internal class ExtensionPluginRepositoryImpl private constructor(
 
     private suspend fun deactivateExtension(extensionId: String): Boolean {
         val removed = transports.removeByExtensionId(extensionId)
+        if (removed.isNotEmpty()) {
+            runCatching {
+                extensionSettingsRepository.suspendDynamicSchemas(ExtensionId(extensionId))
+            }
+        }
         removed.forEach { active ->
+            active.registrationToken?.let(dynamicSchemaRevalidationAttempts::remove)
             val principal = activePrincipalRegistry.deactivate(
                 extensionId = ExtensionId(extensionId),
                 packageName = active.serviceKey.packageName,

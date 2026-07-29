@@ -42,14 +42,21 @@ internal class ExtensionHookBrokerScopeProvider @Inject constructor(
         ) {
             return null
         }
-        val principal = principalRegistry.active(request.manifest.id) ?: return null
+        val principalLease = principalRegistry.captureLease(request.manifest.id) ?: return null
+        val principal = principalLease.principal
         val credentialReadAllowed =
             ExtensionCapabilityIds.CredentialRead in declaration.requiredCapabilities &&
                 ExtensionCapabilityIds.CredentialRead in request.grantedCapabilities
-        val extensionCredentials = if (credentialReadAllowed) {
+        val soleTrustedOwner = trustStore.isSoleTrustedOwner(
+            packageName = principal.packageName,
+            serviceName = principal.serviceName,
+            certificateSha256 = principal.certificateSha256,
+            extensionId = principal.extensionId.value,
+        )
+        val extensionCredentials = if (credentialReadAllowed && soleTrustedOwner) {
             settingStore.resolveBrokerCredentials(
-                extensionId = request.manifest.id.value,
-                handles = request.settings.credentialHandles.values,
+                manifest = request.manifest,
+                candidates = request.settings.credentialHandles,
             )
         } else {
             emptyMap()
@@ -71,10 +78,16 @@ internal class ExtensionHookBrokerScopeProvider @Inject constructor(
             )
             val approvedOrigins = currentManifestOrigins
                 .intersect(approvedManifestOrigins) +
-                settingStore.approvedSettingOrigins(
-                    extensionId = request.manifest.id.value,
-                    snapshot = request.settings,
-                )
+                if (request.hook == ExtensionHookIds.SettingsSchemaContribute) {
+                    emptySet()
+                } else if (!soleTrustedOwner) {
+                    emptySet()
+                } else {
+                    settingStore.approvedSettingOrigins(
+                        extensionId = request.manifest.id.value,
+                        snapshot = request.settings,
+                    )
+                }
             if (approvedOrigins.isEmpty()) return null
             scopeStore.mintHookScope(
                 principal = principal,
@@ -82,6 +95,10 @@ internal class ExtensionHookBrokerScopeProvider @Inject constructor(
                 approvedOrigins = approvedOrigins,
                 credentials = extensionCredentials,
             )
+        }
+        if (!principalRegistry.isActive(principalLease)) {
+            scopeStore.close(scope)
+            return null
         }
         return ScopeLease(scopeStore, scope)
     }

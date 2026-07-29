@@ -147,6 +147,7 @@ class ActiveExtensionPrincipalRegistryTest {
         registry.invalidateAndRun(EXTENSION_ID) {
             assertNull(registry.captureLease(EXTENSION_ID))
             assertFalse(registry.isActive(principal))
+            assertFalse(registry.isActive(staleLease))
         }
 
         assertTrue(
@@ -154,6 +155,8 @@ class ActiveExtensionPrincipalRegistryTest {
                 InactiveExtensionPrincipalLeaseException
         )
         val currentLease = checkNotNull(registry.captureLease(EXTENSION_ID))
+        assertFalse(registry.isActive(staleLease))
+        assertTrue(registry.isActive(currentLease))
         assertEquals("current", registry.commit(currentLease) { "current" })
     }
 

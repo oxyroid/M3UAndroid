@@ -51,11 +51,16 @@ class ExtensionSettingsRepositoryTest {
     private lateinit var context: Context
     private lateinit var secretStore: AndroidKeystoreCredentialVault
     private lateinit var store: ExtensionSettingStore
+    private lateinit var runtime: ExtensionRuntime
     private lateinit var repository: ExtensionSettingsRepository
     private lateinit var repositoryImpl: ExtensionSettingsRepositoryImpl
     private var lastSettingsContext: ExtensionCallContext? = null
     private var failSettingsHook = false
     private var settingsSections = listOf(playbackSection())
+    private var settingsSectionsProvider:
+        ((SettingsSchemaRequest) -> List<ExtensionSettingSection>)? = null
+    private var settingsInvocationStarted: CompletableDeferred<Unit>? = null
+    private var settingsInvocationRelease: CompletableDeferred<Unit>? = null
     private var concurrentSettingsGate: CompletableDeferred<Unit>? = null
     private val concurrentSettingsCalls = AtomicInteger()
 
@@ -65,7 +70,7 @@ class ExtensionSettingsRepositoryTest {
         secretStore = AndroidKeystoreCredentialVault(context)
         store = ExtensionSettingStore(context, secretStore)
         store.clear(EXTENSION_ID.value)
-        val runtime = ExtensionRuntime(
+        runtime = ExtensionRuntime(
             hostApiVersion = ExtensionApiVersions.Current,
             settingsProvider = store,
         )
@@ -97,7 +102,12 @@ class ExtensionSettingsRepositoryTest {
         assertNotNull(handle)
         assertEquals(SECRET, secretStore.resolve(EXTENSION_ID.value, requireNotNull(handle)))
         assertEquals(JsonPrimitive("direct"), current.snapshot.values["playback/quality"])
-        assertEquals(current.snapshot, lastSettingsContext?.settings)
+        assertFalse(
+            requireNotNull(lastSettingsContext)
+                .settings
+                .values
+                .containsKey("playback/quality")
+        )
 
         val persistedText = context.getSharedPreferences("extension-settings", Context.MODE_PRIVATE)
             .all.values.joinToString()
@@ -168,6 +178,7 @@ class ExtensionSettingsRepositoryTest {
             ).isEmpty()
         )
 
+        forgetDynamicSchemaRegistryToSimulateLegacyState()
         settingsSections = listOf(originSection(networkOrigin = true))
         val upgraded = requireNotNull(
             repository.configuration(EXTENSION_ID, null, "phone")
@@ -243,7 +254,12 @@ class ExtensionSettingsRepositoryTest {
             repository.configuration(EXTENSION_ID, null, "phone")
         )
 
-        settingsSections = listOf(transitionSection(ExtensionSettingType.TEXT))
+        settingsSections = listOf(
+            transitionSection(
+                type = ExtensionSettingType.TEXT,
+                version = 2,
+            )
+        )
         val draftSecret = "draft-secret-must-not-become-text"
         val update = updateFromConfiguration(
             configuration = displayedSecretField,
@@ -282,6 +298,7 @@ class ExtensionSettingsRepositoryTest {
             repository.configuration(EXTENSION_ID, null, "phone")
         )
 
+        forgetDynamicSchemaRegistryToSimulateLegacyState()
         settingsSections = listOf(originSection(networkOrigin = true))
         val update = updateFromConfiguration(
             configuration = displayedOrdinaryField,
@@ -381,6 +398,35 @@ class ExtensionSettingsRepositoryTest {
     }
 
     @Test
+    fun consumedEditTokenCannotWriteAfterItsSchemaSessionIsSuspended() = runBlocking {
+        val configuration = requireNotNull(
+            repository.configuration(EXTENSION_ID, "en-US", "phone")
+        )
+        settingsInvocationStarted = CompletableDeferred()
+        settingsInvocationRelease = CompletableDeferred()
+
+        val update = async(Dispatchers.Default) {
+            updateFromConfiguration(
+                configuration = configuration,
+                sectionId = "playback",
+                fieldKey = "quality",
+                rawValue = "direct",
+            )
+        }
+        requireNotNull(settingsInvocationStarted).await()
+        repository.suspendDynamicSchemas(EXTENSION_ID)
+        requireNotNull(settingsInvocationRelease).complete(Unit)
+
+        assertTrue(update.await() is ExtensionSettingUpdateResult.Rejected)
+        assertEquals(
+            JsonPrimitive("auto"),
+            store.snapshot(EXTENSION_ID.value).values["playback/quality"],
+        )
+        settingsInvocationStarted = null
+        settingsInvocationRelease = null
+    }
+
+    @Test
     fun temporaryDynamicSchemaFailurePreservesValuesAndSecret() = runBlocking {
         val updated = updateCurrent(
             sectionId = "playback",
@@ -397,6 +443,357 @@ class ExtensionSettingsRepositoryTest {
         val persisted = store.snapshot(EXTENSION_ID.value)
         assertEquals(handle, persisted.credentialHandles["playback/token"])
         assertEquals(SECRET, secretStore.resolve(EXTENSION_ID.value, handle))
+    }
+
+    @Test
+    fun localizedCopyAndSurfaceOnlySectionsPreserveVerifiedValues() = runBlocking {
+        settingsSectionsProvider = { request ->
+            val playback = playbackSection(
+                title = if (request.localeTag == "zh-CN") "播放" else "Playback",
+                schema = localizedPlaybackSchema(request.localeTag == "zh-CN"),
+            )
+            if (request.surface == "tv") {
+                listOf(
+                    playback,
+                    playbackSection(
+                        id = "television",
+                        title = "Television",
+                        schema = ExtensionSettingSchema(
+                            version = 1,
+                            fields = listOf(
+                                ExtensionSettingField(
+                                    key = "large-controls",
+                                    label = "Large controls",
+                                    type = ExtensionSettingType.BOOLEAN,
+                                    defaultValue = JsonPrimitive(true),
+                                )
+                            ),
+                        ),
+                    ),
+                )
+            } else {
+                listOf(playback)
+            }
+        }
+        assertTrue(
+            updateCurrent("playback", "token", SECRET, localeTag = "en-US") is
+                ExtensionSettingUpdateResult.Updated
+        )
+
+        val tv = requireNotNull(
+            repository.configuration(EXTENSION_ID, "en-US", "tv")
+        )
+        val localizedPhone = requireNotNull(
+            repository.configuration(EXTENSION_ID, "zh-CN", "phone")
+        )
+
+        assertEquals(
+            setOf("phone", "tv"),
+            repository.knownDynamicSchemaSurfaces(EXTENSION_ID),
+        )
+        assertEquals(
+            listOf("manifest", "playback"),
+            localizedPhone.sections.map(ExtensionSettingSection::id),
+        )
+        assertEquals(
+            listOf("manifest", "playback", "television"),
+            tv.sections.map(ExtensionSettingSection::id),
+        )
+        val schemaContext = requireNotNull(lastSettingsContext).settings
+        assertFalse(schemaContext.values.containsKey("playback/quality"))
+        assertFalse(schemaContext.values.containsKey("television/large-controls"))
+        assertFalse(schemaContext.credentialHandles.containsKey("playback/token"))
+        val runtimeSnapshot = store.snapshot(entrypoint().manifest)
+        assertEquals(JsonPrimitive("auto"), runtimeSnapshot.values["playback/quality"])
+        assertEquals(
+            JsonPrimitive(true),
+            runtimeSnapshot.values["television/large-controls"],
+        )
+        val token = requireNotNull(runtimeSnapshot.credentialHandles["playback/token"])
+        assertEquals(SECRET, secretStore.resolve(EXTENSION_ID.value, token))
+    }
+
+    @Test
+    fun failedSurfaceSuspendsDynamicValuesSecretsAndOriginApproval() = runBlocking {
+        settingsSections = listOf(
+            playbackSection(),
+            originSection(networkOrigin = true),
+        )
+        assertTrue(
+            updateCurrent("playback", "token", SECRET) is
+                ExtensionSettingUpdateResult.Updated
+        )
+        assertTrue(
+            updateCurrent("network", "origin", "HTTPS://API.EXAMPLE.TEST") is
+                ExtensionSettingUpdateResult.Updated
+        )
+        val rawBeforeFailure = store.snapshot(EXTENSION_ID.value)
+        val handle = requireNotNull(rawBeforeFailure.credentialHandles["playback/token"])
+
+        failSettingsHook = true
+        val degraded = requireNotNull(
+            repository.configuration(EXTENSION_ID, "en-US", "phone")
+        )
+
+        assertEquals(
+            listOf(ExtensionSettingStore.MANIFEST_SECTION_ID),
+            degraded.sections.map(ExtensionSettingSection::id),
+        )
+        val raw = store.snapshot(EXTENSION_ID.value)
+        assertEquals(JsonPrimitive("auto"), raw.values["playback/quality"])
+        assertEquals(SECRET, secretStore.resolve(EXTENSION_ID.value, handle))
+        val runtimeSnapshot = store.snapshot(entrypoint().manifest)
+        assertFalse(runtimeSnapshot.values.containsKey("playback/quality"))
+        assertFalse(runtimeSnapshot.values.containsKey("network/origin"))
+        assertFalse(runtimeSnapshot.credentialHandles.containsKey("playback/token"))
+        assertFalse(runtimeSnapshot.schemaVersions.containsKey("playback"))
+        val review = store.settingOriginReview(EXTENSION_ID.value).single {
+            it.sectionId == "network" && it.fieldKey == "origin"
+        }
+        assertEquals("https://api.example.test:443", review.currentOrigin)
+        assertEquals(ExtensionSettingOriginReviewState.SUSPENDED, review.state)
+        assertTrue(store.approvedSettingOrigins(EXTENSION_ID.value, raw).isEmpty())
+    }
+
+    @Test
+    fun persistedRegistryRequiresANewSessionAndRejectsPreClearResponse() = runBlocking {
+        repository.configuration(EXTENSION_ID, "en-US", "phone")
+        val restartedStore = ExtensionSettingStore(context, secretStore)
+
+        assertEquals(
+            setOf("phone"),
+            restartedStore.knownDynamicSchemaSurfaces(EXTENSION_ID.value),
+        )
+        assertFalse(
+            restartedStore.snapshot(entrypoint().manifest)
+                .values
+                .containsKey("playback/quality")
+        )
+        val session = restartedStore.beginDynamicSchemaSession(
+            EXTENSION_ID.value,
+            registrationLease(),
+        )
+        val validation = requireNotNull(
+            restartedStore.beginDynamicSchemaValidation(session, "phone")
+        )
+        restartedStore.clearDynamicSchemas(EXTENSION_ID.value, session)
+
+        assertFalse(
+            restartedStore.revalidateDynamicSchemas(
+                extensionId = EXTENSION_ID.value,
+                validation = validation,
+                sections = listOf(playbackSection()),
+            )
+        )
+        assertEquals("DynamicSchemaSession(opaque)", session.toString())
+    }
+
+    @Test
+    fun legacyRegistryWithRetainedValuesRevalidatesPhoneAndTvSurfaces() = runBlocking {
+        repository.configuration(EXTENSION_ID, "en-US", "phone")
+        val preferences = context.getSharedPreferences(
+            "extension-settings",
+            Context.MODE_PRIVATE,
+        )
+        val registryKey = "dynamic-schema-registry:${EXTENSION_ID.value}"
+        val encodedRegistry = requireNotNull(preferences.getString(registryKey, null))
+        val legacyRegistry = encodedRegistry
+            .replace("\"formatVersion\":2", "\"formatVersion\":1")
+            .let { replaced ->
+                if (replaced != encodedRegistry) {
+                    replaced
+                } else {
+                    "${encodedRegistry.dropLast(1)},\"formatVersion\":1}"
+                }
+            }
+        assertTrue(preferences.edit().putString(registryKey, legacyRegistry).commit())
+        val restartedStore = ExtensionSettingStore(context, secretStore)
+        val restartedRepository = ExtensionSettingsRepositoryImpl(
+            runtime,
+            restartedStore,
+            secretStore,
+        )
+
+        assertEquals(
+            setOf("phone", "tv"),
+            restartedRepository.knownDynamicSchemaSurfaces(EXTENSION_ID),
+        )
+    }
+
+    @Test
+    fun olderSuccessfulValidationCannotReplaceTheLatestSurfaceAttempt() {
+        val session = store.beginDynamicSchemaSession(
+            EXTENSION_ID.value,
+            registrationLease(),
+        )
+        val olderValidation = requireNotNull(
+            store.beginDynamicSchemaValidation(session, "phone")
+        )
+        val latestValidation = requireNotNull(
+            store.beginDynamicSchemaValidation(session, "phone")
+        )
+
+        assertTrue(
+            store.revalidateDynamicSchemas(
+                extensionId = EXTENSION_ID.value,
+                validation = latestValidation,
+                sections = listOf(
+                    playbackSection(schema = PLAYBACK_SCHEMA.copy(version = 2))
+                ),
+            )
+        )
+        assertFalse(
+            store.revalidateDynamicSchemas(
+                extensionId = EXTENSION_ID.value,
+                validation = olderValidation,
+                sections = listOf(playbackSection()),
+            )
+        )
+
+        val runtimeSnapshot = store.snapshot(entrypoint().manifest)
+        assertEquals(2, runtimeSnapshot.schemaVersions["playback"])
+    }
+
+    @Test
+    fun sameVersionDynamicSchemaRejectsSemanticFieldChanges() {
+        val session = store.beginDynamicSchemaSession(
+            EXTENSION_ID.value,
+            registrationLease(),
+        )
+        val initialValidation = requireNotNull(
+            store.beginDynamicSchemaValidation(session, "phone")
+        )
+        assertTrue(
+            store.revalidateDynamicSchemas(
+                extensionId = EXTENSION_ID.value,
+                validation = initialValidation,
+                sections = listOf(playbackSection()),
+            )
+        )
+        val semanticChanges = listOf(
+            PLAYBACK_SCHEMA.copy(
+                fields = PLAYBACK_SCHEMA.fields.map { field ->
+                    if (field.key == "quality") field.copy(required = true) else field
+                },
+            ),
+            PLAYBACK_SCHEMA.copy(
+                fields = PLAYBACK_SCHEMA.fields.map { field ->
+                    if (field.key == "quality") {
+                        field.copy(
+                            choices = field.choices +
+                                ExtensionSettingChoice("transcoded", "Transcoded")
+                        )
+                    } else {
+                        field
+                    }
+                },
+            ),
+            PLAYBACK_SCHEMA.copy(
+                fields = PLAYBACK_SCHEMA.fields.map { field ->
+                    if (field.key == "quality") {
+                        field.copy(defaultValue = JsonPrimitive("direct"))
+                    } else {
+                        field
+                    }
+                },
+            ),
+        )
+
+        semanticChanges.forEach { changedSchema ->
+            val validation = requireNotNull(
+                store.beginDynamicSchemaValidation(session, "phone")
+            )
+            assertFalse(
+                store.revalidateDynamicSchemas(
+                    extensionId = EXTENSION_ID.value,
+                    validation = validation,
+                    sections = listOf(playbackSection(schema = changedSchema)),
+                )
+            )
+        }
+    }
+
+    @Test
+    fun sameVersionNetworkOriginPromotionSuspendsTheWholeDynamicSurface() = runBlocking {
+        settingsSections = listOf(securityShapeSection(promotedNetworkOrigin = false))
+        assertTrue(
+            updateCurrent(
+                sectionId = "security",
+                fieldKey = "promoted-origin",
+                rawValue = "https://promoted.example",
+                localeTag = null,
+            ) is ExtensionSettingUpdateResult.Updated
+        )
+        assertTrue(
+            updateCurrent(
+                sectionId = "security",
+                fieldKey = "approved-origin",
+                rawValue = "https://approved.example",
+                localeTag = null,
+            ) is ExtensionSettingUpdateResult.Updated
+        )
+        assertTrue(
+            updateCurrent(
+                sectionId = "security",
+                fieldKey = "token",
+                rawValue = SECRET,
+                localeTag = null,
+            ) is ExtensionSettingUpdateResult.Updated
+        )
+        val rawBeforeRejection = store.snapshot(EXTENSION_ID.value)
+        val secretHandle = requireNotNull(
+            rawBeforeRejection.credentialHandles["security/token"]
+        )
+        assertEquals(
+            setOf("https://approved.example:443"),
+            store.approvedSettingOrigins(EXTENSION_ID.value, rawBeforeRejection),
+        )
+        val runtimeBeforeRejection = store.snapshot(entrypoint().manifest)
+        assertEquals(
+            JsonPrimitive("https://promoted.example"),
+            runtimeBeforeRejection.values["security/promoted-origin"],
+        )
+        assertEquals(
+            JsonPrimitive("https://approved.example:443"),
+            runtimeBeforeRejection.values["security/approved-origin"],
+        )
+        assertEquals(
+            secretHandle,
+            runtimeBeforeRejection.credentialHandles["security/token"],
+        )
+        assertEquals(1, runtimeBeforeRejection.schemaVersions["security"])
+
+        val session = requireNotNull(
+            store.currentDynamicSchemaSession(
+                EXTENSION_ID.value,
+                registrationLease(),
+            )
+        )
+        val validation = requireNotNull(
+            store.beginDynamicSchemaValidation(session, "phone")
+        )
+        assertFalse(
+            store.revalidateDynamicSchemas(
+                extensionId = EXTENSION_ID.value,
+                validation = validation,
+                sections = listOf(securityShapeSection(promotedNetworkOrigin = true)),
+            )
+        )
+
+        val rawAfterRejection = store.snapshot(EXTENSION_ID.value)
+        assertEquals(rawBeforeRejection, rawAfterRejection)
+        assertEquals(SECRET, secretStore.resolve(EXTENSION_ID.value, secretHandle))
+        val runtimeSnapshot = store.snapshot(entrypoint().manifest)
+        assertFalse(runtimeSnapshot.values.containsKey("security/promoted-origin"))
+        assertFalse(runtimeSnapshot.values.containsKey("security/approved-origin"))
+        assertFalse(runtimeSnapshot.credentialHandles.containsKey("security/token"))
+        assertFalse(runtimeSnapshot.schemaVersions.containsKey("security"))
+        assertTrue(
+            store.approvedSettingOrigins(
+                EXTENSION_ID.value,
+                rawAfterRejection,
+            ).isEmpty()
+        )
     }
 
     @Test
@@ -668,6 +1065,8 @@ class ExtensionSettingsRepositoryTest {
                     request: SettingsSchemaRequest,
                 ): HookResult<SettingsSchemaResult> {
                     lastSettingsContext = context
+                    settingsInvocationStarted?.complete(Unit)
+                    settingsInvocationRelease?.await()
                     concurrentSettingsGate?.let { gate ->
                         if (concurrentSettingsCalls.incrementAndGet() == 2) {
                             gate.complete(Unit)
@@ -684,7 +1083,9 @@ class ExtensionSettingsRepositoryTest {
                         )
                     }
                     return HookResult.Success(
-                        SettingsSchemaResult(settingsSections)
+                        SettingsSchemaResult(
+                            settingsSectionsProvider?.invoke(request) ?: settingsSections
+                        )
                     )
                 }
             }
@@ -717,11 +1118,43 @@ class ExtensionSettingsRepositoryTest {
         ),
     )
 
-    private fun transitionSection(type: ExtensionSettingType) = ExtensionSettingSection(
+    private fun securityShapeSection(
+        promotedNetworkOrigin: Boolean,
+    ) = ExtensionSettingSection(
+        id = "security",
+        title = "Security",
+        schema = ExtensionSettingSchema(
+            version = 1,
+            fields = listOf(
+                ExtensionSettingField(
+                    key = "promoted-origin",
+                    label = "Promoted origin",
+                    type = ExtensionSettingType.TEXT,
+                    networkOrigin = promotedNetworkOrigin,
+                ),
+                ExtensionSettingField(
+                    key = "approved-origin",
+                    label = "Approved origin",
+                    type = ExtensionSettingType.TEXT,
+                    networkOrigin = true,
+                ),
+                ExtensionSettingField(
+                    key = "token",
+                    label = "Token",
+                    type = ExtensionSettingType.SECRET,
+                ),
+            ),
+        ),
+    )
+
+    private fun transitionSection(
+        type: ExtensionSettingType,
+        version: Int = 1,
+    ) = ExtensionSettingSection(
         id = "transition",
         title = "Transition",
         schema = ExtensionSettingSchema(
-            version = 1,
+            version = version,
             fields = listOf(
                 ExtensionSettingField(
                     key = "value",
@@ -731,6 +1164,38 @@ class ExtensionSettingsRepositoryTest {
             ),
         ),
     )
+
+    private fun forgetDynamicSchemaRegistryToSimulateLegacyState() {
+        context.getSharedPreferences("extension-settings", Context.MODE_PRIVATE)
+            .edit()
+            .remove("dynamic-schema-registry:${EXTENSION_ID.value}")
+            .commit()
+    }
+
+    private fun registrationLease() =
+        requireNotNull(runtime.captureRegistration(EXTENSION_ID)).lease
+
+    private fun localizedPlaybackSchema(chinese: Boolean): ExtensionSettingSchema =
+        PLAYBACK_SCHEMA.copy(
+            fields = PLAYBACK_SCHEMA.fields.map { field ->
+                field.copy(
+                    label = when {
+                        !chinese -> field.label
+                        field.key == "quality" -> "画质"
+                        else -> "令牌"
+                    },
+                    choices = field.choices.map { choice ->
+                        choice.copy(
+                            label = if (chinese) {
+                                "选项-${choice.value}"
+                            } else {
+                                choice.label
+                            }
+                        )
+                    },
+                )
+            },
+        )
 
     private companion object {
         val EXTENSION_ID = ExtensionId("com.m3u.test.settings")

@@ -80,6 +80,14 @@ internal class ActiveExtensionPrincipalRegistry @Inject constructor() {
         } == true
     }
 
+    fun isActive(lease: ExtensionPrincipalLease): Boolean = synchronized(stateLock) {
+        slots[lease.principal.extensionId]?.let { slot ->
+            !slot.persistenceBlocked &&
+                slot.principal == lease.principal &&
+                slot.generation == lease.generation
+        } == true
+    }
+
     fun deactivate(
         extensionId: ExtensionId,
         packageName: String,

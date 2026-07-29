@@ -4,6 +4,7 @@ import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.ExtensionSettingKeys
 import com.m3u.extension.api.ExtensionSettingSection
 import com.m3u.extension.api.ExtensionSettingsSnapshot
+import com.m3u.extension.runtime.ExtensionRegistrationLease
 
 interface ExtensionSettingsRepository {
     suspend fun configuration(
@@ -21,6 +22,34 @@ interface ExtensionSettingsRepository {
     ): ExtensionSettingUpdateResult
 
     fun clear(extensionId: ExtensionId)
+
+    fun suspendDynamicSchemas(extensionId: ExtensionId) = Unit
+
+    fun activateDynamicSchemas(
+        extensionId: ExtensionId,
+        registrationLease: ExtensionRegistrationLease,
+    ): Boolean = true
+
+    fun knownDynamicSchemaSurfaces(extensionId: ExtensionId): Set<String> = emptySet()
+
+    suspend fun revalidateDynamicSchemas(
+        extensionId: ExtensionId,
+        registrationLease: ExtensionRegistrationLease,
+        localeTag: String?,
+        surfaces: Set<String> = knownDynamicSchemaSurfaces(extensionId),
+    ): ExtensionDynamicSchemaRevalidationResult =
+        ExtensionDynamicSchemaRevalidationResult(
+            suspendedSurfaces = surfaces,
+        )
+}
+
+data class ExtensionDynamicSchemaRevalidationResult(
+    val verifiedSurfaces: Set<String> = emptySet(),
+    val suspendedSurfaces: Set<String> = emptySet(),
+    val authoritativelyCleared: Boolean = false,
+) {
+    val fullyVerified: Boolean
+        get() = suspendedSurfaces.isEmpty()
 }
 
 class ExtensionSettingsConfiguration internal constructor(
