@@ -173,6 +173,11 @@ Broker 可以防止宿主直接泄露凭据，但无法阻止恶意插件与用�
 - **已启用：** 用户允许调用，并且必要授权齐全。
 - **已注册：** 当前宿主进程已经有可用 transport。
 
+每次注册都会得到新的不透明 Lease。动态设置、Schema 重新校验、Broker 凭据和 Broker
+Origin 只在这次 Lease 仍是当前注册时可用。重连不会把它们转交给替代注册：旧设置 Session
+先暂停，新注册必须激活并校验自己的 Session。激活失败时，Repository 会一起移除
+Transport、Runtime 注册和当前 Android 身份。
+
 进程重启后，Repository 恢复可信且已启用的插件。插件更新或 Binder 断开后，恢复流程或插件
 列表刷新会重新建立注册。Runtime 不管理 Android Service 生命周期。
 

@@ -184,6 +184,12 @@ Keep these states separate:
 - **Enabled:** the user allows calls and required grants are present.
 - **Registered:** this host process currently has a working transport.
 
+Each registration receives a new opaque lease. Dynamic settings, schema revalidation, broker
+credentials, and broker origins are usable only while that exact lease is current. Reconnect does
+not transfer them to the replacement registration: the old settings session is suspended and the
+new registration must activate and verify its own session. If activation fails, the repository
+removes the transport, runtime registration, and active Android identity together.
+
 After process restart, the repository restores trusted, enabled extensions. After an update or
 Binder disconnect, a restore or plugin-list refresh rebuilds registration. The runtime does not own
 Android Service lifecycle.

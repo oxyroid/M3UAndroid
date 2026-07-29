@@ -20,7 +20,7 @@
 | 通用 Hook 联网 | 设置、搜索、Metadata、EPG 和后台任务 Hook 在自身声明并获得 `network` 后可以使用宿主 Broker。搜索、Metadata、EPG request 带账号时使用账号作用域；其他调用使用已批准的 manifest Origin 与用户明确保存的设置 Origin。Discover 保持离线。 | `ExtensionNetworkOriginContractTest`、`ExtensionBrokerScopeRuntimeTest`、`ExtensionHookBrokerScopeStoreTest` 与 `ExtensionHostBridgeTest` |
 | Provider 持久化 | 新建和恢复的订阅统一使用 `DataSource.Provider`；通用账号、无 Token 备份、重新认证、WorkManager 刷新和重启 Session 清理共用一条链路 | Migration、Provider Repository、Worker、Restore 与 Session Cleanup 测试 |
 | 外部插件生命周期 | 发现、身份与证书信任、与审阅内容绑定的启用/重新授权 Token、启停、Capability 与固定 Origin 授权、重连、清除数据、诊断、流式 Payload 和取消 | Transport 测试、`ExtensionPluginRepositoryLifecycleTest` 与 `ExternalExtensionIpcTest` |
-| 插件设置 | Manifest 与动态 Schema、普通值、加密 Secret Handle、网络 Origin 授权，以及与已显示字段绑定的编辑 | `ExtensionSettingsRepositoryTest` 与 `ExtensionPluginRepositoryLifecycleTest` |
+| 插件设置 | Manifest 与动态 Schema、普通值、加密 Secret Handle、网络 Origin 授权，以及与已显示字段绑定的编辑。动态状态绑定一次 Runtime 注册；失败、停用或替换后保持隐藏，直到当前注册重新校验。 | `ExtensionSettingsRepositoryTest`、`ExtensionPluginRepositoryLifecycleTest` 与 `ExtensionHookBrokerScopeProviderTest` |
 | 外部参考 Provider | 发现、宿主管理登录、首次与后续刷新、Room 导入、带凭据的播放解析、Header 解析与 Session 关闭都跨 Binder 运行，并与内置 Provider 共用 Repository | `ExternalProviderEndToEndTest` |
 | Provider 界面 | 手机和 TV 都由 Descriptor 生成 Provider 列表与表单；Emby 与 Jellyfin 保持独立选项，外部 Provider 选项保留可见的来源身份 | `SubscriptionSourceSelectionTest`、`TvProviderAccessibilityTest` 与 `ResourceContractTest`；Connected UI 测试目前需要显式设备运行 |
 | 其他 Hook | 设置、搜索、Metadata 与 EPG 已有类型化 SDK Handler 和产品调用点 | SDK、Contribution Repository/Importer 与 IPC 测试 |
