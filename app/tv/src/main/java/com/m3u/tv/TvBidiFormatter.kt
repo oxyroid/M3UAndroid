@@ -37,7 +37,7 @@ internal fun String.withoutBidiControls(): String = filterNot { character ->
 }
 
 /**
- * Splits extension-owned text before applying direction isolation.
+ * Splits provider-owned text before applying direction isolation.
  *
  * BidiFormatter adds paired control characters. Splitting an already wrapped
  * value can leave one Text node with an opening control and another with its

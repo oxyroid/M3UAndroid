@@ -1,6 +1,5 @@
 package com.m3u.tv
 
-import com.m3u.extension.api.ExtensionState
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -147,7 +146,6 @@ class TvUiPoliciesTest {
             tvAppBackTarget(
                 playerVisible = false,
                 providerSubscriptionVisible = false,
-                extensionSettingsVisible = false,
             ),
         )
     }
@@ -225,37 +223,7 @@ class TvUiPoliciesTest {
             ),
             tvProviderChoicePresentation(
                 providerId = "builtin.media-server",
-                providerDisplayName = "Emby / Jellyfin",
                 variantDisplayName = "Jellyfin",
-                external = false,
-            ),
-        )
-    }
-
-    @Test
-    fun `external provider choice preserves a distinct plugin name`() {
-        assertEquals(
-            TvProviderChoicePresentation(
-                variantName = "Jellyfin",
-                providerName = "Living room provider",
-            ),
-            tvProviderChoicePresentation(
-                providerId = "dev.example.provider",
-                providerDisplayName = "Living room provider",
-                variantDisplayName = "Jellyfin",
-                external = true,
-            ),
-        )
-        assertEquals(
-            TvProviderChoicePresentation(
-                variantName = "Jellyfin",
-                providerName = null,
-            ),
-            tvProviderChoicePresentation(
-                providerId = "dev.example.provider",
-                providerDisplayName = "Jellyfin",
-                variantDisplayName = "Jellyfin",
-                external = true,
             ),
         )
     }
@@ -282,53 +250,6 @@ class TvUiPoliciesTest {
                 panelIsVisible = false,
                 hasReturnTarget = false,
             )
-        )
-    }
-
-    @Test
-    fun `plugin trust mutations return to the stable developer mode control`() {
-        listOf(
-            TvExtensionPluginAction.DISABLE,
-            TvExtensionPluginAction.ENABLE,
-            TvExtensionPluginAction.REVOKE,
-            TvExtensionPluginAction.REAUTHORIZE,
-            TvExtensionPluginAction.CLEAR_DATA,
-        ).forEach { action ->
-            assertEquals(
-                TvExtensionPluginReturnFocusAnchor.DEVELOPER_MODE,
-                tvExtensionPluginReturnFocusAnchor(action),
-            )
-        }
-        listOf(
-            TvExtensionPluginAction.SETTINGS,
-            TvExtensionPluginAction.EXPORT_DIAGNOSTICS,
-        ).forEach { action ->
-            assertEquals(
-                TvExtensionPluginReturnFocusAnchor.SOURCE_ACTION,
-                tvExtensionPluginReturnFocusAnchor(action),
-            )
-        }
-    }
-
-    @Test
-    fun `developer mode item index accounts for dynamic provider rows`() {
-        assertEquals(
-            8,
-            tvExtensionDeveloperModeItemIndex(
-                providerFeedbackVisible = false,
-                reauthenticationCount = 0,
-                providerDiscoveryItemCount = 4,
-                extensionErrorVisible = false,
-            ),
-        )
-        assertEquals(
-            12,
-            tvExtensionDeveloperModeItemIndex(
-                providerFeedbackVisible = true,
-                reauthenticationCount = 2,
-                providerDiscoveryItemCount = 4,
-                extensionErrorVisible = true,
-            ),
         )
     }
 
@@ -376,54 +297,12 @@ class TvUiPoliciesTest {
     }
 
     @Test
-    fun `cancelling a plugin panel returns to its source action`() {
-        listOf(
-            TvExtensionPluginAction.ENABLE,
-            TvExtensionPluginAction.REVOKE,
-            TvExtensionPluginAction.REAUTHORIZE,
-            TvExtensionPluginAction.CLEAR_DATA,
-        ).forEach { action ->
-            assertEquals(
-                TvExtensionPluginReturnFocusAnchor.SOURCE_ACTION,
-                tvExtensionPluginReturnFocusAnchor(
-                    action = action,
-                    panelCancelled = true,
-                ),
-            )
-        }
-    }
-
-    @Test
-    fun `plugin source action availability is exposed for focus retry`() {
-        val actions = TvExtensionPluginActionAvailability(
-            settings = false,
-            disable = true,
-            enable = false,
-            revoke = true,
-            reauthorize = false,
-            exportDiagnostics = true,
-            clearData = false,
-        )
-
-        assertTrue(actions.isActionAvailable(TvExtensionPluginAction.DISABLE))
-        assertTrue(actions.isActionAvailable(TvExtensionPluginAction.REVOKE))
-        assertTrue(
-            actions.isActionAvailable(TvExtensionPluginAction.EXPORT_DIAGNOSTICS)
-        )
-        assertFalse(actions.isActionAvailable(TvExtensionPluginAction.SETTINGS))
-        assertFalse(actions.isActionAvailable(TvExtensionPluginAction.ENABLE))
-        assertFalse(actions.isActionAvailable(TvExtensionPluginAction.REAUTHORIZE))
-        assertFalse(actions.isActionAvailable(TvExtensionPluginAction.CLEAR_DATA))
-    }
-
-    @Test
     fun `app back handler preserves overlay priority`() {
         assertEquals(
             TvAppBackTarget.PLAYER,
             tvAppBackTarget(
                 playerVisible = true,
                 providerSubscriptionVisible = true,
-                extensionSettingsVisible = true,
             ),
         )
         assertEquals(
@@ -431,90 +310,7 @@ class TvUiPoliciesTest {
             tvAppBackTarget(
                 playerVisible = false,
                 providerSubscriptionVisible = true,
-                extensionSettingsVisible = true,
-            ),
-        )
-        assertEquals(
-            TvAppBackTarget.EXTENSION_SETTINGS,
-            tvAppBackTarget(
-                playerVisible = false,
-                providerSubscriptionVisible = false,
-                extensionSettingsVisible = true,
             ),
         )
     }
-
-    @Test
-    fun `enabled unhealthy plugin keeps disable without exposing settings or enable`() {
-        val actions = actions(
-            enabled = true,
-            state = ExtensionState.UNHEALTHY,
-            hasInspectionError = true,
-        )
-
-        assertTrue(actions.disable)
-        assertFalse(actions.settings)
-        assertFalse(actions.enable)
-    }
-
-    @Test
-    fun `enabled incompatible plugin keeps disable after inspection failure`() {
-        val actions = actions(
-            enabled = true,
-            state = ExtensionState.INCOMPATIBLE,
-            hasInspectionError = true,
-        )
-
-        assertTrue(actions.disable)
-        assertFalse(actions.settings)
-        assertFalse(actions.enable)
-    }
-
-    @Test
-    fun `only an eligible disabled plugin exposes enable`() {
-        assertTrue(
-            actions(
-                enabled = false,
-                state = ExtensionState.DISABLED,
-                hasAuthorizationToken = true,
-            ).enable
-        )
-        assertFalse(
-            actions(
-                enabled = false,
-                state = ExtensionState.INCOMPATIBLE,
-                hasAuthorizationToken = true,
-            ).enable
-        )
-        assertFalse(
-            actions(
-                enabled = false,
-                state = ExtensionState.DISABLED,
-                hasInspectionError = true,
-                hasAuthorizationToken = true,
-            ).enable
-        )
-    }
-
-    private fun actions(
-        enabled: Boolean,
-        state: ExtensionState,
-        hasExtensionId: Boolean = true,
-        installed: Boolean = true,
-        signatureChanged: Boolean = false,
-        hasInspectionError: Boolean = false,
-        hasAuthorizationToken: Boolean = false,
-        trusted: Boolean = false,
-        canClearData: Boolean = false,
-    ) = extensionPluginActionAvailability(
-        enabled = enabled,
-        state = state,
-        hasExtensionId = hasExtensionId,
-        installed = installed,
-        signatureChanged = signatureChanged,
-        hasInspectionError = hasInspectionError,
-        hasAuthorizationToken = hasAuthorizationToken,
-        trusted = trusted,
-        canClearData = canClearData,
-    )
 }

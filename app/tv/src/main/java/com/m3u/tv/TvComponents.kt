@@ -1,5 +1,4 @@
 package com.m3u.tv
-
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -36,9 +35,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -47,6 +46,7 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
@@ -117,8 +117,10 @@ fun TvBackdrop(channel: Channel?) {
 @Composable
 fun TvNavigationRail(
     selected: TvDestination,
-    onSelect: (TvDestination) -> Unit
+    onSelect: (TvDestination) -> Unit,
+    focusRequesters: Map<TvDestination, FocusRequester>,
 ) {
+    val destinations = TvDestination.entries
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -127,11 +129,16 @@ fun TvNavigationRail(
             .fillMaxSize()
             .background(Color.Black.copy(alpha = 0.28f))
     ) {
-        TvDestination.entries.forEach { destination ->
+        destinations.forEachIndexed { index, destination ->
             RailItem(
                 destination = destination,
                 selected = destination == selected,
-                onClick = { onSelect(destination) }
+                onClick = { onSelect(destination) },
+                focusRequester = focusRequesters.getValue(destination),
+                previousFocusRequester = destinations.getOrNull(index - 1)
+                    ?.let(focusRequesters::getValue),
+                nextFocusRequester = destinations.getOrNull(index + 1)
+                    ?.let(focusRequesters::getValue),
             )
             Spacer(Modifier.height(16.dp))
         }
@@ -142,16 +149,32 @@ fun TvNavigationRail(
 private fun RailItem(
     destination: TvDestination,
     selected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    focusRequester: FocusRequester,
+    previousFocusRequester: FocusRequester?,
+    nextFocusRequester: FocusRequester?,
 ) {
     FocusFrame(
         onClick = onClick,
         selected = selected,
         selectionState = selected,
+        focusRequester = focusRequester,
         semanticsLabel = destination.label(),
         shape = RoundedCornerShape(16.dp),
         semanticRole = Role.Tab,
-        modifier = Modifier.size(64.dp)
+        modifier = Modifier
+            .size(64.dp)
+            .onPreviewKeyEvent { event ->
+                if (event.type != KeyEventType.KeyDown) {
+                    false
+                } else {
+                    when (event.key) {
+                        Key.DirectionUp -> previousFocusRequester?.requestFocus() ?: true
+                        Key.DirectionDown -> nextFocusRequester?.requestFocus() ?: true
+                        else -> false
+                    }
+                }
+            },
     ) { focused ->
         Icon(
             imageVector = destination.icon,
@@ -248,7 +271,6 @@ fun FocusFrame(
                             role = null,
                             onClick = onClick,
                         )
-                        .focusable()
                 } else if (focusableWhenDisabled) {
                     Modifier.focusable()
                 } else {

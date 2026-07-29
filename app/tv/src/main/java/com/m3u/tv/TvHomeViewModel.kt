@@ -4,37 +4,24 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.Player
-import com.m3u.business.setting.ExtensionSettingsOperationQueue
 import com.m3u.business.setting.ProviderDiscoveryState
 import com.m3u.business.setting.ProviderSubscriptionForm
 import com.m3u.business.setting.ProviderSubscriptionFormBuildResult
 import com.m3u.business.setting.supports
-import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
-import com.m3u.core.foundation.architecture.preferences.Settings
-import com.m3u.core.foundation.architecture.preferences.set
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.repository.channel.ChannelRepository
-import com.m3u.data.repository.extension.ExtensionSettingEditToken
-import com.m3u.data.repository.extension.ExtensionSettingUpdateResult
-import com.m3u.data.repository.extension.ExtensionSettingsConfiguration
-import com.m3u.data.repository.extension.ExtensionSettingsRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
-import com.m3u.data.repository.plugin.ExtensionPluginRepository
-import com.m3u.data.repository.plugin.InstalledPlugin
-import com.m3u.data.repository.plugin.PluginAuthorizationToken
-import com.m3u.data.repository.plugin.PluginDataClearResult
-import com.m3u.data.repository.plugin.PluginEnableResult
 import com.m3u.data.repository.provider.DiscoveredSubscriptionProvider
 import com.m3u.data.repository.provider.ProviderAccountSummary
 import com.m3u.data.repository.provider.ProviderDiscoveryException
+import com.m3u.data.repository.provider.SubscriptionProviderExecutionKind
 import com.m3u.data.repository.provider.SubscriptionProviderRepository
 import com.m3u.data.repository.tv.TvRepository
 import com.m3u.data.service.DPadReactionService
 import com.m3u.data.service.MediaCommand
 import com.m3u.data.service.PlayerManager
-import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.subscription.SubscriptionProviderDescriptor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.Locale
@@ -44,12 +31,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -63,10 +47,6 @@ data class TvUiState(
     val favorites: List<Channel> = emptyList(),
     val recent: Channel? = null,
     val loadingChannels: Boolean = false,
-    val externalExtensionsEnabled: Boolean = false,
-    val extensionPlugins: List<InstalledPlugin> = emptyList(),
-    val extensionSettings: ExtensionSettingsConfiguration? = null,
-    val extensionPluginOperationFailed: Boolean = false,
     val providerDiscoveryState: ProviderDiscoveryState = ProviderDiscoveryState.Loading,
     val providerAccounts: List<ProviderAccountSummary> = emptyList(),
     val providerSubscriptionForm: ProviderSubscriptionForm? = null,
@@ -91,17 +71,12 @@ class TvHomeViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val channelRepository: ChannelRepository,
     private val playerManager: PlayerManager,
-    private val extensionPluginRepository: ExtensionPluginRepository,
-    private val extensionSettingsRepository: ExtensionSettingsRepository,
     private val subscriptionProviderRepository: SubscriptionProviderRepository,
-    private val settings: Settings,
     tvRepository: TvRepository,
     dPadReactionService: DPadReactionService
 ) : ViewModel() {
     private val _state = MutableStateFlow(TvUiState())
     val state: StateFlow<TvUiState> = _state.asStateFlow()
-    private val _extensionDiagnostics = MutableSharedFlow<String>(extraBufferCapacity = 1)
-    val extensionDiagnostics = _extensionDiagnostics.asSharedFlow()
 
     val player: StateFlow<Player?> = playerManager.player
     val currentChannel: StateFlow<Channel?> = playerManager.channel
@@ -115,8 +90,6 @@ class TvHomeViewModel @Inject constructor(
     private var providerReauthenticationJob: Job? = null
     private var providerSubscriptionJob: Job? = null
     private var providerLocaleTag: String? = null
-    private var extensionSettingsLoadJob: Job? = null
-    private var extensionSettingsRequestedId: ExtensionId? = null
     @Volatile
     private var sortLocale: Locale = Locale.getDefault()
 
@@ -149,29 +122,13 @@ class TvHomeViewModel @Inject constructor(
         }
         if (providerLocaleChanged) {
             startSubscriptionProviderDiscovery(requestedLocaleTag)
-            extensionSettingsRequestedId?.value?.let { extensionId ->
-                openExtensionSettings(extensionId, requestedLocaleTag)
-            }
         }
     }
-    private var extensionSettingsGeneration = 0L
-    private var extensionSettingsUpdateGeneration = 0L
-    private val extensionSettingsOperationQueue = ExtensionSettingsOperationQueue(
-        scope = viewModelScope,
-        onFailure = {
-            _state.update {
-                it.copy(
-                    extensionPluginOperationFailed = true,
-                )
-            }
-        },
-    )
 
     init {
         observePlaylists()
         observeFavorites()
         observeRecent()
-        observeExternalExtensions()
         observeProviderAccounts()
         refreshSubscriptionProviders()
     }
@@ -213,201 +170,6 @@ class TvHomeViewModel @Inject constructor(
 
     fun releasePlayer() {
         playerManager.release()
-    }
-
-    fun setExternalExtensionsEnabled(enabled: Boolean) {
-        viewModelScope.launch { settings[PreferencesKeys.EXTERNAL_EXTENSIONS] = enabled }
-    }
-
-    fun enableExtensionPlugin(
-        packageName: String,
-        serviceName: String,
-        authorizationToken: PluginAuthorizationToken,
-    ) {
-        viewModelScope.launch {
-            updateExtensionPluginResult(
-                extensionPluginRepository.enable(
-                    packageName,
-                    serviceName,
-                    authorizationToken,
-                )
-            )
-            refreshExtensionPlugins()
-        }
-    }
-
-    fun reauthorizeExtensionPlugin(
-        packageName: String,
-        serviceName: String,
-        authorizationToken: PluginAuthorizationToken,
-    ) {
-        viewModelScope.launch {
-            updateExtensionPluginResult(
-                extensionPluginRepository.reauthorize(
-                    packageName,
-                    serviceName,
-                    authorizationToken,
-                )
-            )
-            refreshExtensionPlugins()
-        }
-    }
-
-    fun disableExtensionPlugin(extensionId: String) {
-        closeExtensionSettingsIfActive(extensionId)
-        viewModelScope.launch {
-            extensionPluginRepository.disable(extensionId)
-            refreshExtensionPlugins()
-        }
-    }
-
-    fun revokeExtensionPlugin(
-        packageName: String,
-        serviceName: String,
-        extensionId: String?,
-    ) {
-        if (extensionId == null) {
-            reportExtensionOperationFailure()
-            return
-        }
-        closeExtensionSettingsIfActive(extensionId)
-        extensionSettingsOperationQueue.launchDestructive(extensionId) {
-            extensionPluginRepository.revoke(packageName, serviceName)
-            _state.update {
-                it.copy(
-                    extensionPluginOperationFailed = false,
-                )
-            }
-            refreshExtensionPlugins()
-        }
-    }
-
-    fun openExtensionSettings(extensionId: String, localeTag: String?) {
-        val requestedExtensionId = ExtensionId(extensionId)
-        val generation = ++extensionSettingsGeneration
-        extensionSettingsLoadJob?.cancel()
-        extensionSettingsRequestedId = requestedExtensionId
-        _state.update { it.copy(extensionSettings = null) }
-        extensionSettingsLoadJob = extensionSettingsOperationQueue.launchOperation(extensionId) {
-            val configuration = withContext(Dispatchers.IO) {
-                extensionSettingsRepository.configuration(
-                    requestedExtensionId,
-                    localeTag,
-                    TV_SETTINGS_SURFACE,
-                )
-            }
-            if (generation == extensionSettingsGeneration) {
-                _state.update {
-                    it.copy(
-                        extensionSettings = configuration,
-                        extensionPluginOperationFailed = false,
-                    )
-                }
-            }
-        }
-    }
-
-    fun closeExtensionSettings() {
-        extensionSettingsGeneration++
-        extensionSettingsLoadJob?.cancel()
-        extensionSettingsLoadJob = null
-        extensionSettingsRequestedId = null
-        _state.update { it.copy(extensionSettings = null) }
-    }
-
-    private fun closeExtensionSettingsIfActive(extensionId: String) {
-        if (
-            state.value.extensionSettings?.extensionId?.value == extensionId ||
-            extensionSettingsRequestedId?.value == extensionId
-        ) {
-            closeExtensionSettings()
-        }
-    }
-
-    fun clearExtensionData(
-        packageName: String,
-        serviceName: String,
-        extensionId: String?,
-    ) {
-        if (extensionId == null) {
-            reportExtensionOperationFailure()
-            return
-        }
-        closeExtensionSettingsIfActive(extensionId)
-        extensionSettingsOperationQueue.launchDestructive(extensionId) {
-            when (
-                val result = withContext(Dispatchers.IO) {
-                    extensionPluginRepository.clearData(packageName, serviceName)
-                }
-            ) {
-                is PluginDataClearResult.Cleared -> {
-                    _state.update {
-                        it.copy(
-                            extensionPluginOperationFailed = false,
-                        )
-                    }
-                }
-                is PluginDataClearResult.Rejected -> {
-                    _state.update {
-                        it.copy(
-                            extensionPluginOperationFailed = true,
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    fun exportExtensionDiagnostics(extensionId: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            extensionPluginRepository.diagnostics(extensionId)?.let { payload ->
-                _extensionDiagnostics.emit(payload)
-            }
-        }
-    }
-
-    fun updateExtensionSetting(
-        sectionId: String,
-        fieldKey: String,
-        editToken: ExtensionSettingEditToken,
-        rawValue: String?,
-        localeTag: String?,
-    ) {
-        val extensionId = state.value.extensionSettings?.extensionId ?: return
-        val generation = extensionSettingsGeneration
-        val updateGeneration = ++extensionSettingsUpdateGeneration
-        extensionSettingsOperationQueue.launchUpdate(extensionId.value) update@{
-            val result = withContext(Dispatchers.IO) {
-                val update = extensionSettingsRepository.update(
-                    extensionId,
-                    sectionId,
-                    fieldKey,
-                    editToken,
-                    rawValue,
-                )
-                TvExtensionSettingsRefreshResult(
-                    configuration = extensionSettingsRepository.configuration(
-                        extensionId,
-                        localeTag,
-                        TV_SETTINGS_SURFACE,
-                    ),
-                    rejected = update is ExtensionSettingUpdateResult.Rejected,
-                )
-            }
-            if (
-                generation != extensionSettingsGeneration ||
-                updateGeneration != extensionSettingsUpdateGeneration ||
-                state.value.extensionSettings?.extensionId != extensionId
-            ) {
-                return@update
-            }
-            _state.update {
-                it.copy(
-                    extensionSettings = result.configuration,
-                    extensionPluginOperationFailed = result.rejected,
-                )
-            }
-        }
     }
 
     fun refreshSubscriptionProviders() {
@@ -459,6 +221,8 @@ class TvHomeViewModel @Inject constructor(
         return try {
             val providers = withContext(Dispatchers.IO) {
                 subscriptionProviderRepository.discoverProviders(localeTag)
+            }.filter { provider ->
+                provider.executionKind == SubscriptionProviderExecutionKind.BUILT_IN
             }
             val discoveryState = if (providers.isEmpty()) {
                 ProviderDiscoveryState.Empty
@@ -692,27 +456,6 @@ class TvHomeViewModel @Inject constructor(
         }
     }
 
-    private fun observeExternalExtensions() {
-        viewModelScope.launch {
-            settings.data
-                .map { preferences -> preferences[PreferencesKeys.EXTERNAL_EXTENSIONS] ?: false }
-                .collect { enabled ->
-                    _state.update { it.copy(externalExtensionsEnabled = enabled) }
-                    refreshExtensionPlugins()
-                }
-        }
-    }
-
-    private fun refreshExtensionPlugins() {
-        viewModelScope.launch {
-            val plugins = withContext(Dispatchers.IO) {
-                extensionPluginRepository.installedPlugins()
-            }
-            _state.update { it.copy(extensionPlugins = plugins) }
-            refreshSubscriptionProviders()
-        }
-    }
-
     private fun observeProviderAccounts() {
         viewModelScope.launch {
             subscriptionProviderRepository.observeAccountSummaries().collect { accounts ->
@@ -725,22 +468,6 @@ class TvHomeViewModel @Inject constructor(
         (state.value.providerDiscoveryState as? ProviderDiscoveryState.Ready)
             ?.providers
             .orEmpty()
-
-    private fun updateExtensionPluginResult(result: PluginEnableResult) {
-        _state.update { state ->
-            state.copy(
-                extensionPluginOperationFailed = result is PluginEnableResult.Rejected,
-            )
-        }
-    }
-
-    private fun reportExtensionOperationFailure() {
-        _state.update {
-            it.copy(
-                extensionPluginOperationFailed = true,
-            )
-        }
-    }
 
     private fun observePlaylists() {
         viewModelScope.launch {
@@ -825,15 +552,7 @@ class TvHomeViewModel @Inject constructor(
     private fun Map<Playlist, Int>.countFor(url: String): Int? =
         entries.firstOrNull { it.key.url == url }?.value
 
-    private companion object {
-        const val TV_SETTINGS_SURFACE = "tv"
-    }
 }
-
-private data class TvExtensionSettingsRefreshResult(
-    val configuration: ExtensionSettingsConfiguration?,
-    val rejected: Boolean,
-)
 
 private fun List<DiscoveredSubscriptionProvider>.providerFor(
     account: ProviderAccountSummary,

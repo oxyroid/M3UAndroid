@@ -1,6 +1,5 @@
 package com.m3u.tv
 
-import android.content.Intent
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -20,13 +19,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -53,11 +51,11 @@ fun App(
     val remoteControlCode by viewModel.remoteControlCode.collectAsStateWithLifecycle()
     val view = LocalView.current
     val localeTag = LocalConfiguration.current.locales[0].toLanguageTag()
-    val context = LocalContext.current
-    val diagnosticsShareTitle = stringResource(string.feat_setting_extension_diagnostics_share_title)
-    val currentDiagnosticsShareTitle by rememberUpdatedState(diagnosticsShareTitle)
     var destination by remember { mutableStateOf(TvDestination.Home) }
     var surface by remember { mutableStateOf(TvSurface.Browse) }
+    val navigationFocusRequesters = remember {
+        TvDestination.entries.associateWith { FocusRequester() }
+    }
     val closePlayer = {
         viewModel.releasePlayer()
         surface = TvSurface.Browse
@@ -66,13 +64,11 @@ fun App(
     val backTarget = tvAppBackTarget(
         playerVisible = surface == TvSurface.Player,
         providerSubscriptionVisible = state.providerSubscriptionForm != null,
-        extensionSettingsVisible = state.extensionSettings != null,
     )
     BackHandler(enabled = backTarget != TvAppBackTarget.ACTIVITY) {
         when (backTarget) {
             TvAppBackTarget.PLAYER -> closePlayer()
             TvAppBackTarget.PROVIDER_SUBSCRIPTION -> viewModel.closeProviderSubscription()
-            TvAppBackTarget.EXTENSION_SETTINGS -> viewModel.closeExtensionSettings()
             TvAppBackTarget.ACTIVITY -> Unit
         }
     }
@@ -86,20 +82,6 @@ fun App(
     LaunchedEffect(viewModel, localeTag) {
         viewModel.updateLocale(localeTag)
     }
-    LaunchedEffect(viewModel, context) {
-        viewModel.extensionDiagnostics.collect { payload ->
-            context.startActivity(
-                Intent.createChooser(
-                    Intent(Intent.ACTION_SEND).apply {
-                        type = "application/json"
-                        putExtra(Intent.EXTRA_TEXT, payload)
-                    },
-                    currentDiagnosticsShareTitle,
-                )
-            )
-        }
-    }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -110,10 +92,12 @@ fun App(
         Row(Modifier.fillMaxSize()) {
             TvNavigationRail(
                 selected = destination,
-                onSelect = { destination = it }
+                onSelect = { destination = it },
+                focusRequesters = navigationFocusRequesters,
             )
             TvBrowsePane(
                 destination = destination,
+                navigationFocusRequester = navigationFocusRequesters.getValue(destination),
                 state = state,
                 onOpenLibrary = { destination = TvDestination.Library },
                 onPlaylist = {
@@ -128,26 +112,6 @@ fun App(
                 onPlayRecent = {
                     viewModel.playRecent()
                     surface = TvSurface.Player
-                },
-                onExternalExtensionsEnabled = viewModel::setExternalExtensionsEnabled,
-                onEnableExtension = viewModel::enableExtensionPlugin,
-                onReauthorizeExtension = viewModel::reauthorizeExtensionPlugin,
-                onDisableExtension = viewModel::disableExtensionPlugin,
-                onRevokeExtension = viewModel::revokeExtensionPlugin,
-                onClearExtensionData = viewModel::clearExtensionData,
-                onExportExtensionDiagnostics = viewModel::exportExtensionDiagnostics,
-                onOpenExtensionSettings = { extensionId ->
-                    viewModel.openExtensionSettings(extensionId, localeTag)
-                },
-                onCloseExtensionSettings = viewModel::closeExtensionSettings,
-                onUpdateExtensionSetting = { sectionId, fieldKey, editToken, value ->
-                    viewModel.updateExtensionSetting(
-                        sectionId,
-                        fieldKey,
-                        editToken,
-                        value,
-                        localeTag,
-                    )
                 },
                 onRefreshProviders = viewModel::refreshSubscriptionProviders,
                 onOpenProviderSubscription = viewModel::openProviderSubscription,

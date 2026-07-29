@@ -28,8 +28,6 @@ class TvProviderAccessibilityTest {
             val homeDescription = context.getString(string.tv_home_title)
             val statusDescription = context.getString(string.tv_settings_title)
             val providerLabel = context.getString(string.feat_setting_data_source_emby)
-            val externalExtensionsLabel =
-                context.getString(string.feat_setting_external_extensions)
 
             assertNavigationRailMatchesLayoutDirection(homeDescription)
             focusNavigationDestination(
@@ -69,18 +67,6 @@ class TvProviderAccessibilityTest {
             assertFocusedActionContract(providerLabel)
             assertFalse(device.hasObject(By.desc(exact(homeDescription)).focused(true)))
             assertFalse(device.hasObject(By.desc(exact(statusDescription)).focused(true)))
-
-            assertTrue(
-                "DPad navigation did not reach the external extensions switch",
-                moveFocusDownToAccessibilityAction(externalExtensionsLabel),
-            )
-            val extensionsSwitch =
-                waitForFocusedAccessibilityAction(externalExtensionsLabel)
-                    ?: error("The external extensions switch lost focus")
-            assertTrue(
-                "The external extensions control does not expose switch state",
-                extensionsSwitch.isCheckable,
-            )
         }
     }
 
