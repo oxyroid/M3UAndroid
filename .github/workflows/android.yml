@@ -79,14 +79,43 @@ jobs:
             :app:smartphone:assembleDebugAndroidTest \
             :app:tv:assembleDebugAndroidTest
 
-      - name: Verify external extension isolation and conformance
+      - name: Start provider mock server
+        run: |
+          ./gradlew :testing:mock-server:startMockServer
+          curl \
+            --fail \
+            --silent \
+            --show-error \
+            --noproxy '*' \
+            --retry 20 \
+            --retry-connrefused \
+            --retry-delay 1 \
+            --max-time 2 \
+            http://127.0.0.1:8080/health
+
+      - name: Verify external extension isolation, conformance, and provider lifecycle
         run: |
           ./gradlew :app:smartphone:hostileApi34DebugAndroidTest \
-            -Pandroid.testInstrumentationRunnerArguments.class=com.m3u.testing.HostileExternalExtensionIpcTest,com.m3u.testing.ExternalExtensionConformanceIpcTest,com.m3u.testing.DebugDefaultLibraryBootstrapTest \
+            -Pm3uMockServerUrl=http://10.0.2.2:8080 \
+            -Pandroid.testInstrumentationRunnerArguments.class=com.m3u.testing.HostileExternalExtensionIpcTest,com.m3u.testing.ExternalExtensionConformanceIpcTest,com.m3u.testing.ExternalProviderEndToEndTest,com.m3u.testing.DebugDefaultLibraryBootstrapTest \
             -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect \
             -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true \
             -Pandroid.experimental.androidTest.numManagedDeviceShards=1 \
             -Pandroid.experimental.testOptions.managedDevices.maxConcurrentDevices=1
+
+      - name: Stop provider mock server
+        if: always()
+        run: ./gradlew :testing:mock-server:stopMockServer
+
+      - name: Upload managed device test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: warn
+          path: |
+            app/smartphone/build/outputs/androidTest-results/managedDevice/**
+            app/smartphone/build/reports/androidTests/managedDevice/**
+            testing/mock-server/build/mock-server/mock-server.log
 
       - name: Build smartphone release APK
         run: ./gradlew :app:smartphone:assembleRelease

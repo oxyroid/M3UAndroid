@@ -23,7 +23,7 @@
 | Provider 持久化 | 新建和恢复的订阅统一使用 `DataSource.Provider`；通用账号、无 Token 备份、重新认证、WorkManager 刷新和重启 Session 清理共用一条链路 | Migration、Provider Repository、Worker、Restore 与 Session Cleanup 测试 |
 | 外部插件生命周期 | 发现、身份与证书信任、与审阅内容绑定的启用/重新授权 Token、启停、Capability 与固定 Origin 授权、重连、清除数据、诊断、文件承载的大 Payload 传输和取消 | Transport 测试、`ExtensionPluginRepositoryLifecycleTest` 与 `ExternalExtensionIpcTest` |
 | 插件设置 | Manifest 与动态 Schema、普通值、加密 Secret Handle、网络 Origin 授权，以及与已显示字段绑定的编辑。动态状态绑定一次 Runtime 注册；失败、停用或替换后保持隐藏，直到当前注册重新校验。 | `ExtensionSettingsRepositoryTest`、`ExtensionPluginRepositoryLifecycleTest` 与 `ExtensionHookBrokerScopeProviderTest` |
-| 外部参考 Provider | 发现、宿主管理登录、首次与后续刷新、Room 导入、带凭据的播放解析、Header 解析与 Session 关闭都跨 Binder 运行，并与内置 Provider 共用 Repository | `ExternalProviderEndToEndTest` |
+| 外部参考 Provider | 独立参考 APK 通过 Binder/PFD 完成错误与正确登录、订阅、Room 导入、WorkManager 刷新、带凭据的播放解析、真实 PlayerManager/Media3 就绪和 Session 关闭，并与内置 Provider 共用 Repository | `ExternalProviderEndToEndTest` |
 | Provider 界面 | 手机和 TV 都由 Descriptor 生成 Provider 列表与表单；Emby 与 Jellyfin 保持独立选项，外部 Provider 选项保留可见的来源身份 | `SubscriptionSourceSelectionTest`、`TvProviderAccessibilityTest` 与 `ResourceContractTest`；Connected UI 测试目前需要显式设备运行 |
 | 其他 Hook | 设置、搜索、Metadata 与 EPG 已有类型化 SDK Handler 和产品调用点 | SDK、Contribution Repository/Importer 与 IPC 测试 |
 | 后台任务 | 插件启用、重新授权或恢复时，manifest 任务声明会对齐为 WorkManager 周期任务。停用或缺少授权时取消；联网任务带联网约束。 | `ExtensionBackgroundTaskSchedulerTest`、Worker 测试与 `ExtensionPluginRepositoryLifecycleTest` |
@@ -33,9 +33,11 @@
 CI 门禁指 `.github/workflows/android.yml` 自动执行的检查。Connected UI 检查可重复，但目前
 需要显式设备运行；设备检查指有记录的一次性实测。`ResourceContractTest` 验证资源结构，
 不代表母语文案质量。CI 会检查手机矩阵脚本的语法，并编译 data、手机与 TV 的
-Connected Test。流水线已配置为在 `hostileApi34` 构建托管设备上安装独立参考 APK，
-并运行 `HostileExternalExtensionIpcTest` 与 `ExternalExtensionConformanceIpcTest`；
-不会执行手机、平板或 TV 的界面矩阵。
+Connected Test。外部插件门禁会先启动本地参考服务并通过健康检查，再在
+`hostileApi34` 构建托管设备上使用独立参考 APK，运行
+`HostileExternalExtensionIpcTest`、`ExternalExtensionConformanceIpcTest`、
+`ExternalProviderEndToEndTest` 与 `DebugDefaultLibraryBootstrapTest`。参考服务为真实
+播放器检查提供确定性的 PCM WAV；该门禁不运行手机、平板或 TV 的界面矩阵。
 
 最近一次恶意 IPC Fixture 实测（2026-07-29）：
 
@@ -54,6 +56,16 @@ Connected Test。流水线已配置为在 `hostileApi34` 构建托管设备上�
 - 覆盖：类型化成功结果中的 Invocation、Extension、Hook 与 Schema 标识和请求一致；
   Request/设置/授权/预算上下文；缺少必要 Capability 与不支持 Schema 时拒绝；类型化
   Request/Result 经 PFD JSON 传输；取消经 AIDL 发送并由远端 Handler 确认收到。
+
+最近一次外部 Provider 生产链路实测（2026-07-29）：
+
+- 结果：`ExternalProviderEndToEndTest` 通过；参考插件以独立 APK 安装，Provider 调用
+  通过 Binder 传递 PFD JSON Payload。
+- 失败链路：连续三次错误登录都返回 `provider.authentication_failed`，且插件没有被停用。
+- 数据链路：正确登录后订阅成功并导入两个频道；WorkManager 后台刷新完成后仍为两个频道。
+- 播放链路：真实 `PlayerManager` 与 Media3 使用确定性 WAV 到达 `STATE_READY`；显式关闭
+  与播放器释放对应的服务端 Session 都已关闭。
+- 尚未覆盖：TV 上的完整外部 Provider 流程，以及仍有播放 Session 时宿主冷启动后的恢复。
 
 最近一次手机 Connected 实测（2026-07-29）：
 
@@ -107,7 +119,12 @@ testing/bin/run-smartphone-provider-ui-matrix.sh emulator-5558 phone
 
 - 逐项解决并留档[外部 APK 插件威胁模型](threat-model.zh-CN.md#仍未解决的问题)中的未决项，
   包括 HTTP/LAN 策略、解析后地址、已批准服务端串谋、Hook 数据披露和包准入。
-- 在 TV、WorkManager 和真实播放器中跑通完整外部 Provider 流程，而不只依赖 Repository 级设备测试；
+- 保持 `ExternalProviderEndToEndTest` 通过，覆盖错误登录、订阅、WorkManager 刷新、
+  真实播放器就绪和 Session 关闭；
+- 在 TV 上补齐同一套外部 Provider 完整流程；手机生产链路门禁不能替代 TV 播放器与焦点
+  生命周期验证；
+- 增加冷启动设备测试：保留一个未关闭的外部播放 Session，重启宿主，并验证服务端幂等关闭
+  与本地 Session 删除；
 - 为外部插件的授权、重新授权、设置、错误状态、破坏性操作确认与 TV 回焦增加可在 CI
   运行的 Connected UI 自动化；内置 Provider 的 DPad 测试不算完成此门槛；
 - 保持进程级恶意 Fixture 门禁通过，覆盖阻塞或迟到调用、忽略取消、进程死亡、错误或超限

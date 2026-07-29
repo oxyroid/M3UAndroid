@@ -23,7 +23,7 @@ This page defines what may ship from the current branch. Implementation instruct
 | Provider persistence | New and restored subscriptions use `DataSource.Provider`; generic provider accounts, backup without tokens, reauthentication state, WorkManager refresh, and restart session cleanup share one path | Migration, provider repository, worker, restore, and session cleanup tests |
 | External lifecycle | Discovery, identity and certificate trust, review-bound enable/reauthorize tokens, enable/disable, capability and fixed-origin authorization, reconnect, clear data, diagnostics, file-backed large-payload transfer, and cancellation | Transport tests, `ExtensionPluginRepositoryLifecycleTest`, and `ExternalExtensionIpcTest` |
 | Extension settings | Manifest and dynamic schemas, ordinary values, encrypted secret handles, network-origin approval, and review-bound field edits. Dynamic state is bound to one runtime registration and stays hidden after failure, disablement, or replacement until the current registration verifies it. | `ExtensionSettingsRepositoryTest`, `ExtensionPluginRepositoryLifecycleTest`, and `ExtensionHookBrokerScopeProviderTest` |
-| External reference provider | Discover, host-managed login, initial and later refresh, Room import, credential-backed playback resolve, header resolution, and session close cross Binder and use the same repository as built-in providers. | `ExternalProviderEndToEndTest` |
+| External reference provider | A standalone reference APK crosses Binder/PFD for rejected and successful login, subscription, Room import, WorkManager refresh, credential-backed playback resolve, real PlayerManager/Media3 readiness, and session close. It uses the same repository as built-in providers. | `ExternalProviderEndToEndTest` |
 | Provider UI | Phone and TV use descriptor-driven provider lists and forms; Emby and Jellyfin remain separate choices, while external choices retain visible provider identity | `SubscriptionSourceSelectionTest`, `TvProviderAccessibilityTest`, and `ResourceContractTest`; connected UI tests currently require an explicit device run |
 | Other Hooks | Settings, search, metadata enrichment, and EPG refresh have typed SDK handlers and product callers | SDK, contribution repository/importer, and IPC tests |
 | Background task | Manifest task declarations are reconciled into periodic WorkManager jobs when an extension is enabled, reauthorized, or restored. Disablement or missing grants cancels them; network tasks use a connected constraint. | `ExtensionBackgroundTaskSchedulerTest`, Worker tests, and `ExtensionPluginRepositoryLifecycleTest` |
@@ -34,9 +34,12 @@ A CI gate is run by `.github/workflows/android.yml`. A connected UI check is rep
 currently needs an explicit device run. A device check is a recorded one-off run.
 `ResourceContractTest` validates resource structure, not native-language quality.
 CI syntax-checks the phone matrix runner and compiles the data, phone, and TV connected-test
-harnesses. The workflow is configured to install the standalone reference APK on the
-`hostileApi34` build-managed device and run `HostileExternalExtensionIpcTest` plus
-`ExternalExtensionConformanceIpcTest`; it does not execute the phone, tablet, or TV UI matrices.
+harnesses. Its external-extension gate starts and health-checks the local reference server, then
+runs `HostileExternalExtensionIpcTest`, `ExternalExtensionConformanceIpcTest`,
+`ExternalProviderEndToEndTest`, and `DebugDefaultLibraryBootstrapTest` with the standalone
+reference APK on the `hostileApi34` build-managed device. The reference server supplies a
+deterministic PCM WAV fixture for the real-player check. This gate does not run the phone, tablet,
+or TV UI matrices.
 
 Latest hostile IPC run, 2026-07-29:
 
@@ -60,6 +63,19 @@ Latest shared external conformance run, 2026-07-29:
   request/settings/grant/budget context; rejection of a missing required capability and unsupported
   schema; typed request/result transfer over PFD JSON; and AIDL cancellation observed by the remote
   handler.
+
+Latest external provider production-path run, 2026-07-29:
+
+- Result: `ExternalProviderEndToEndTest` passed with the reference extension installed as a
+  standalone APK; provider calls crossed Binder with PFD JSON payloads.
+- Failure path: three rejected logins returned `provider.authentication_failed` without disabling
+  the plugin.
+- Data path: a successful subscription imported two channels, and a WorkManager background refresh
+  completed with the same two-channel result.
+- Playback path: the real `PlayerManager` and Media3 reached `STATE_READY` with the deterministic
+  WAV fixture. Both explicit close and player release closed their server-side sessions.
+- Not covered: the full external-provider flow on TV and cold-start recovery of an open persisted
+  playback session.
 
 Latest connected phone run, 2026-07-29:
 
@@ -118,7 +134,12 @@ settings and removes the test packages when it finishes.
 - Resolve and record every open decision in the
   [external APK threat model](threat-model.md#what-remains-open), including HTTP/LAN policy,
   resolved-address handling, approved-server cooperation, Hook disclosure, and package admission.
-- Run the complete external provider flow on TV, through WorkManager, and through the real player rather than only the repository-level device test.
+- Keep `ExternalProviderEndToEndTest` green for rejected login, subscription, WorkManager refresh,
+  real-player readiness, and session close.
+- Add the same complete external-provider flow on TV. The phone production-path gate does not prove
+  the TV player and focus lifecycle.
+- Add a cold-start device test that leaves an external playback session open, restarts the host,
+  and verifies idempotent remote close plus local session removal.
 - Add CI-runnable connected UI automation for external authorization, reauthorization, settings,
   error states, destructive confirmations, and TV focus restoration. The built-in provider DPad
   test does not satisfy this gate.
