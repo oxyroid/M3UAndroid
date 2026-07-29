@@ -16,6 +16,7 @@ sealed interface ExtensionSettingsState {
 
     data class Content(
         val configuration: ExtensionSettingsConfiguration,
+        val updatingKeys: Set<String> = emptySet(),
     ) : ExtensionSettingsState {
         override val extensionId: ExtensionId = configuration.extensionId
     }
@@ -31,6 +32,12 @@ sealed interface ExtensionSettingsState {
 
 internal fun ExtensionSettingsConfiguration?.toExtensionSettingsState(
     extensionId: ExtensionId,
+    updatingKeys: Set<String> = emptySet(),
 ): ExtensionSettingsState =
-    this?.let(ExtensionSettingsState::Content)
+    this?.let { configuration ->
+        ExtensionSettingsState.Content(
+            configuration = configuration,
+            updatingKeys = updatingKeys,
+        )
+    }
         ?: ExtensionSettingsState.Unavailable(extensionId)

@@ -1,10 +1,13 @@
 package com.m3u.smartphone.ui.business.setting.fragments
 
 import androidx.compose.ui.text.style.TextDirection
+import com.m3u.data.repository.extension.ExtensionNetworkOriginState
 import com.m3u.extension.api.ExtensionSettingField
 import com.m3u.extension.api.ExtensionSettingType
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class ExtensionSettingsPresentationPolicyTest {
     @Test
@@ -46,6 +49,28 @@ class ExtensionSettingsPresentationPolicyTest {
                 "Expected $key to follow its content direction",
             )
         }
+    }
+
+    @Test
+    fun `unchanged network origin can be resubmitted for approval`() {
+        assertTrue(
+            shouldShowExtensionSettingSaveAction(
+                dirty = false,
+                networkOriginState = ExtensionNetworkOriginState.REQUIRES_APPROVAL,
+            )
+        )
+        assertFalse(
+            shouldShowExtensionSettingSaveAction(
+                dirty = false,
+                networkOriginState = ExtensionNetworkOriginState.APPROVED,
+            )
+        )
+        assertTrue(
+            shouldShowExtensionSettingSaveAction(
+                dirty = true,
+                networkOriginState = ExtensionNetworkOriginState.NOT_CONFIGURED,
+            )
+        )
     }
 
     private fun settingField(

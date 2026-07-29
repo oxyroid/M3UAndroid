@@ -80,8 +80,10 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -91,8 +93,11 @@ import com.m3u.business.setting.ExtensionPluginOperation
 import com.m3u.business.setting.ExtensionPluginOperationState
 import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
 import com.m3u.core.foundation.architecture.preferences.mutablePreferenceOf
+import com.m3u.data.repository.extension.ExtensionNetworkOriginState
+import com.m3u.data.repository.extension.ExtensionSettingNetworkOrigin
 import com.m3u.data.repository.plugin.InstalledPlugin
 import com.m3u.data.repository.plugin.PluginAuthorizationToken
+import com.m3u.data.repository.plugin.PluginFixedNetworkOrigin
 import com.m3u.extension.api.ExtensionState
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.material.ktx.plus
@@ -414,7 +419,12 @@ internal fun ExtensionPluginDetailScreen(
     val plugin = contentState.plugin
     val bidiFormatter = rememberUiBidiFormatter()
     val actions = plugin.actionAvailability()
-    val unapprovedNetworkOrigins = plugin.networkOrigins - plugin.approvedNetworkOrigins
+    val unapprovedNetworkOrigins = plugin.networkAccess.fixedOrigins
+        .filter { origin ->
+            origin.state == ExtensionNetworkOriginState.REQUIRES_APPROVAL
+        }
+        .mapTo(linkedSetOf(), PluginFixedNetworkOrigin::origin)
+    val networkAccessCounts = plugin.networkAccessCounts()
     val reauthorizationIsPrimary = actions.reauthorize &&
         (plugin.signatureChanged || unapprovedNetworkOrigins.isNotEmpty())
     val runningOperation = (
@@ -515,7 +525,7 @@ internal fun ExtensionPluginDetailScreen(
 
             if (
                 plugin.capabilityPermissions.isNotEmpty() ||
-                plugin.networkOrigins.isNotEmpty()
+                networkAccessCounts.total > 0
             ) {
                 item(key = "access") {
                     ExtensionPageContent {
@@ -1087,8 +1097,8 @@ internal fun ExtensionPluginAuthorizationScreen(
         }
 
         if (
-            plugin.networkOrigins.isNotEmpty() ||
-            plugin.networkOriginSettingFields.isNotEmpty()
+            plugin.networkAccess.fixedOrigins.isNotEmpty() ||
+            plugin.networkAccess.settingOrigins.isNotEmpty()
         ) {
             item(key = "origins") {
                 ExtensionPageContent {
@@ -1498,10 +1508,7 @@ private fun ExtensionAccessOverview(
 ) {
     val capabilityCount = plugin.capabilityPermissions.size
     val grantedCapabilityCount = plugin.capabilityPermissions.count { it.granted }
-    val originCount = plugin.networkOrigins.size
-    val approvedOriginCount = plugin.networkOrigins.count {
-        it in plugin.approvedNetworkOrigins
-    }
+    val originCounts = plugin.networkAccessCounts()
     val locale = LocalConfiguration.current.locales[0]
     val numberFormat = remember(locale) {
         NumberFormat.getIntegerInstance(locale)
@@ -1534,17 +1541,17 @@ private fun ExtensionAccessOverview(
                     )
                 }
             }
-            if (capabilityCount > 0 && originCount > 0) {
+            if (capabilityCount > 0 && originCounts.total > 0) {
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             }
-            if (originCount > 0) {
+            if (originCounts.total > 0) {
                 ExtensionDisclosureHeader(
                     title = stringResource(string.feat_setting_extension_network_access),
                     summary = bidiFormatter.natural(
                         stringResource(
                             string.feat_setting_extension_network_origin_summary,
-                            numberFormat.format(approvedOriginCount),
-                            numberFormat.format(originCount),
+                            numberFormat.format(originCounts.approved),
+                            numberFormat.format(originCounts.total),
                         )
                     ),
                     icon = Icons.Rounded.Public,
@@ -1667,7 +1674,7 @@ private fun ExtensionTechnicalIdentity(
                 Triple(
                     "version",
                     stringResource(string.feat_setting_extension_version),
-                    bidiFormatter.ltr(version),
+                    bidiFormatter.standaloneTechnical(version),
                 )
             )
         }
@@ -1675,21 +1682,21 @@ private fun ExtensionTechnicalIdentity(
             Triple(
                 "package",
                 stringResource(string.feat_setting_extension_package),
-                bidiFormatter.ltr(plugin.packageName),
+                bidiFormatter.standaloneTechnical(plugin.packageName),
             )
         )
         add(
             Triple(
                 "service",
                 stringResource(string.feat_setting_extension_service),
-                bidiFormatter.ltr(plugin.serviceName),
+                bidiFormatter.standaloneTechnical(plugin.serviceName),
             )
         )
         add(
             Triple(
                 "certificate",
                 stringResource(string.feat_setting_extension_certificate_sha256),
-                bidiFormatter.ltr(
+                bidiFormatter.standaloneTechnical(
                     plugin.certificateSha256.chunked(16).joinToString(" ")
                 ),
             )
@@ -1710,7 +1717,9 @@ private fun ExtensionTechnicalIdentity(
                     SelectionContainer {
                         Text(
                             text = value,
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                textDirection = TextDirection.Ltr
+                            ),
                             fontFamily = FontFamily.Monospace,
                             modifier = Modifier.testTag(
                                 "extension-technical-identity-value:$key"
@@ -1835,20 +1844,32 @@ private fun ExtensionAuthorizationNetworkOrigins(
     plugin: InstalledPlugin,
     bidiFormatter: UiBidiFormatter,
 ) {
-    val origins = plugin.networkOrigins.sorted()
+    val fixedOrigins = plugin.networkAccess.fixedOrigins.sortedBy { origin -> origin.origin }
+    val settingOrigins = plugin.networkAccess.settingOrigins.sortedWith(
+        compareBy(
+            { origin -> origin.label.orEmpty() },
+            ExtensionSettingNetworkOrigin::qualifiedKey,
+        )
+    )
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.extraLarge,
         color = MaterialTheme.colorScheme.surfaceContainer,
     ) {
         Column {
-            origins.forEachIndexed { index, origin ->
+            if (fixedOrigins.isNotEmpty()) {
+                ExtensionNetworkOriginGroupLabel(
+                    text = stringResource(
+                        string.feat_setting_extension_network_origins_declared
+                    )
+                )
+            }
+            fixedOrigins.forEachIndexed { index, origin ->
                 ListItem(
                     headlineContent = {
-                        Text(
-                            text = bidiFormatter.ltr(origin),
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontFamily = FontFamily.Monospace,
+                        ExtensionTechnicalValue(
+                            value = origin.origin,
+                            bidiFormatter = bidiFormatter,
                         )
                     },
                     leadingContent = {
@@ -1857,27 +1878,37 @@ private fun ExtensionAuthorizationNetworkOrigins(
                     colors = ListItemDefaults.colors(
                         containerColor = Color.Transparent
                     ),
-                    modifier = Modifier.semantics(mergeDescendants = true) {},
                 )
-                if (
-                    index != origins.lastIndex ||
-                    plugin.networkOriginSettingFields.isNotEmpty()
-                ) {
+                if (index != fixedOrigins.lastIndex) {
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 }
             }
-            if (plugin.networkOriginSettingFields.isNotEmpty()) {
+            if (fixedOrigins.isNotEmpty() && settingOrigins.isNotEmpty()) {
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            }
+            if (settingOrigins.isNotEmpty()) {
+                ExtensionNetworkOriginGroupLabel(
+                    text = stringResource(
+                        string.feat_setting_extension_network_origins_from_settings
+                    )
+                )
                 Text(
                     text = stringResource(
-                        string.feat_setting_extension_network_origin_settings,
-                        plugin.networkOriginSettingFields
-                            .sorted()
-                            .joinToString(transform = bidiFormatter::ltr),
+                        string.feat_setting_extension_network_origin_settings_explanation
                     ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 )
+            }
+            settingOrigins.forEachIndexed { index, origin ->
+                ExtensionAuthorizationSettingOriginRow(
+                    origin = origin,
+                    bidiFormatter = bidiFormatter,
+                )
+                if (index != settingOrigins.lastIndex) {
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                }
             }
         }
     }
@@ -1888,60 +1919,230 @@ private fun ExtensionNetworkOriginList(
     plugin: InstalledPlugin,
     bidiFormatter: UiBidiFormatter,
 ) {
-    val origins = plugin.networkOrigins.sorted()
+    val fixedOrigins = plugin.networkAccess.fixedOrigins.sortedBy { origin -> origin.origin }
+    val settingOrigins = plugin.visibleSettingNetworkOrigins().sortedWith(
+        compareBy(
+            { origin -> origin.label.orEmpty() },
+            ExtensionSettingNetworkOrigin::qualifiedKey,
+        )
+    )
     Column(modifier = Modifier.fillMaxWidth()) {
         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-        origins.forEachIndexed { index, origin ->
-            val approved = origin in plugin.approvedNetworkOrigins
-            val approvalState = stringResource(
-                if (approved) {
-                    string.feat_setting_extension_capability_granted
-                } else {
-                    string.feat_setting_extension_capability_not_granted
-                }
+        if (fixedOrigins.isNotEmpty()) {
+            ExtensionNetworkOriginGroupLabel(
+                text = stringResource(
+                    string.feat_setting_extension_network_origins_declared
+                )
             )
-            ListItem(
-                headlineContent = {
-                    Text(
-                        text = bidiFormatter.ltr(origin),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontFamily = FontFamily.Monospace,
-                    )
-                },
-                supportingContent = {
-                    Text(
-                        text = approvalState,
-                        color = if (approved) {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        } else {
-                            MaterialTheme.colorScheme.error
-                        },
-                    )
-                },
-                trailingContent = {
-                    Icon(
-                        imageVector = Icons.Rounded.Public,
-                        contentDescription = null,
-                        tint = if (approved) {
-                            MaterialTheme.colorScheme.secondary
-                        } else {
-                            MaterialTheme.colorScheme.error
-                        },
-                    )
-                },
-                colors = ListItemDefaults.colors(
-                    containerColor = Color.Transparent
-                ),
-                modifier = Modifier.semantics(mergeDescendants = true) {
-                    stateDescription = approvalState
-                },
+        }
+        fixedOrigins.forEachIndexed { index, origin ->
+            ExtensionFixedNetworkOriginRow(
+                origin = origin,
+                bidiFormatter = bidiFormatter,
             )
-            if (index != origins.lastIndex) {
+            if (index != fixedOrigins.lastIndex) {
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            }
+        }
+        if (fixedOrigins.isNotEmpty() && settingOrigins.isNotEmpty()) {
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+        }
+        if (settingOrigins.isNotEmpty()) {
+            ExtensionNetworkOriginGroupLabel(
+                text = stringResource(
+                    string.feat_setting_extension_network_origins_from_settings
+                )
+            )
+        }
+        settingOrigins.forEachIndexed { index, origin ->
+            ExtensionSettingNetworkOriginRow(
+                origin = origin,
+                bidiFormatter = bidiFormatter,
+            )
+            if (index != settingOrigins.lastIndex) {
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             }
         }
     }
 }
+
+@Composable
+private fun ExtensionNetworkOriginGroupLabel(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp)
+            .semantics { heading() },
+    )
+}
+
+@Composable
+private fun ExtensionAuthorizationSettingOriginRow(
+    origin: ExtensionSettingNetworkOrigin,
+    bidiFormatter: UiBidiFormatter,
+) {
+    ListItem(
+        headlineContent = {
+            Text(
+                text = bidiFormatter.natural(
+                    origin.label?.takeIf(String::isNotBlank)
+                        ?: origin.qualifiedKey
+                ),
+            )
+        },
+        supportingContent = origin.currentOrigin?.let { currentOrigin ->
+            {
+                ExtensionTechnicalValue(
+                    value = currentOrigin,
+                    bidiFormatter = bidiFormatter,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        },
+        leadingContent = {
+            ExtensionLeadingIcon(icon = Icons.Rounded.Settings)
+        },
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+    )
+}
+
+@Composable
+private fun ExtensionFixedNetworkOriginRow(
+    origin: PluginFixedNetworkOrigin,
+    bidiFormatter: UiBidiFormatter,
+) {
+    val stateLabel = extensionNetworkOriginStateLabel(origin.state)
+    ExtensionNetworkOriginRow(
+        headline = {
+            ExtensionTechnicalValue(
+                value = origin.origin,
+                bidiFormatter = bidiFormatter,
+            )
+        },
+        state = origin.state,
+        stateLabel = stateLabel,
+        testTag = "extension-network-fixed-origin:${origin.origin}",
+    )
+}
+
+@Composable
+private fun ExtensionSettingNetworkOriginRow(
+    origin: ExtensionSettingNetworkOrigin,
+    bidiFormatter: UiBidiFormatter,
+) {
+    val stateLabel = extensionNetworkOriginStateLabel(origin.state)
+    ExtensionNetworkOriginRow(
+        headline = {
+            Text(
+                text = bidiFormatter.natural(
+                    origin.label?.takeIf(String::isNotBlank)
+                        ?: origin.qualifiedKey
+                ),
+            )
+        },
+        origin = origin.currentOrigin,
+        bidiFormatter = bidiFormatter,
+        state = origin.state,
+        stateLabel = stateLabel,
+        testTag = "extension-network-setting-origin:${origin.qualifiedKey}",
+    )
+}
+
+@Composable
+private fun ExtensionNetworkOriginRow(
+    headline: @Composable () -> Unit,
+    state: ExtensionNetworkOriginState,
+    stateLabel: String,
+    origin: String? = null,
+    bidiFormatter: UiBidiFormatter? = null,
+    testTag: String,
+) {
+    val needsAttention = state.requiresUserAttention
+    ListItem(
+        headlineContent = headline,
+        supportingContent = {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                if (origin != null && bidiFormatter != null) {
+                    ExtensionTechnicalValue(
+                        value = origin,
+                        bidiFormatter = bidiFormatter,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                Text(
+                    text = stateLabel,
+                    color = if (needsAttention) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                    modifier = Modifier.clearAndSetSemantics {},
+                )
+            }
+        },
+        trailingContent = {
+            Icon(
+                imageVector = when {
+                    state == ExtensionNetworkOriginState.APPROVED ->
+                        Icons.Rounded.CheckCircle
+                    needsAttention -> Icons.Rounded.Warning
+                    else -> Icons.Rounded.Public
+                },
+                contentDescription = null,
+                tint = when {
+                    state == ExtensionNetworkOriginState.APPROVED ->
+                        MaterialTheme.colorScheme.secondary
+                    needsAttention -> MaterialTheme.colorScheme.error
+                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                },
+            )
+        },
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        modifier = Modifier
+            .semantics(mergeDescendants = true) {
+                stateDescription = stateLabel
+            }
+            .testTag(testTag),
+    )
+}
+
+@Composable
+private fun ExtensionTechnicalValue(
+    value: String,
+    bidiFormatter: UiBidiFormatter,
+    style: TextStyle = MaterialTheme.typography.bodyMedium,
+) {
+    SelectionContainer {
+        Text(
+            text = bidiFormatter.standaloneTechnical(value),
+            style = style.copy(textDirection = TextDirection.Ltr),
+            fontFamily = FontFamily.Monospace,
+        )
+    }
+}
+
+@Composable
+internal fun extensionNetworkOriginStateLabel(
+    state: ExtensionNetworkOriginState,
+): String = stringResource(
+    when (state) {
+        ExtensionNetworkOriginState.APPROVED ->
+            string.feat_setting_extension_network_origin_state_approved
+        ExtensionNetworkOriginState.REQUIRES_APPROVAL ->
+            string.feat_setting_extension_network_origin_state_approval_required
+        ExtensionNetworkOriginState.NOT_CONFIGURED ->
+            string.feat_setting_extension_network_origin_state_not_configured
+        ExtensionNetworkOriginState.INVALID ->
+            string.feat_setting_extension_network_origin_state_invalid
+        ExtensionNetworkOriginState.SUSPENDED ->
+            string.feat_setting_extension_network_origin_state_suspended
+        ExtensionNetworkOriginState.UNVERIFIED ->
+            string.feat_setting_extension_network_origin_state_unverified
+    }
+)
 
 @Composable
 private fun ExtensionWarningSummary(
@@ -1971,6 +2172,13 @@ private fun extensionWarningMessages(
             unapprovedNetworkOrigins
                 .sorted()
                 .joinToString(transform = bidiFormatter::ltr),
+            )
+        )
+    }
+    if (plugin.hasSettingNetworkOriginWarning) {
+        add(
+            stringResource(
+                string.feat_setting_extension_network_origin_settings_attention
             )
         )
     }
@@ -2370,7 +2578,13 @@ private val InstalledPlugin.hasVisibleWarning: Boolean
         inspectionError != null ||
         state == ExtensionState.INCOMPATIBLE ||
         state == ExtensionState.UNHEALTHY ||
-        (trusted && (networkOrigins - approvedNetworkOrigins).isNotEmpty())
+        (
+            trusted &&
+                networkAccess.fixedOrigins.any { origin ->
+                    origin.state == ExtensionNetworkOriginState.REQUIRES_APPROVAL
+                }
+            ) ||
+        hasSettingNetworkOriginWarning
 
 private val ExtensionPluginActionAvailability.hasControlActions: Boolean
     get() = enable || settings || reauthorize || disable

@@ -56,6 +56,7 @@ import com.m3u.data.worker.SubscriptionWorker
 import com.m3u.data.worker.enqueuePersistedUriWork
 import com.m3u.data.worker.persistedUriPermissionTag
 import com.m3u.extension.api.ExtensionId
+import com.m3u.extension.api.ExtensionSettingKeys
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -115,6 +116,7 @@ class SettingViewModel @Inject constructor(
         scope = viewModelScope,
         onFailure = { messager.emit(SettingMessage.ExtensionOperationFailed) },
     )
+    private val extensionSettingUpdateGate = ExtensionSettingUpdateGate()
     private val extensionPluginOperationController = ExtensionPluginOperationController()
 
     private val _extensionPluginDiscoveryState =
@@ -478,6 +480,7 @@ class SettingViewModel @Inject constructor(
         val requestedExtensionId = ExtensionId(extensionId)
         val generation = ++extensionSettingsGeneration
         extensionSettingsLoadJob?.cancel()
+        extensionSettingsRequestedId?.value?.let(extensionSettingUpdateGate::clear)
         extensionSettingsRequestedId = requestedExtensionId
         _extensionSettingsState.value =
             ExtensionSettingsState.Loading(requestedExtensionId)
@@ -510,6 +513,7 @@ class SettingViewModel @Inject constructor(
         extensionSettingsGeneration++
         extensionSettingsLoadJob?.cancel()
         extensionSettingsLoadJob = null
+        extensionSettingsRequestedId?.value?.let(extensionSettingUpdateGate::clear)
         extensionSettingsRequestedId = null
         _extensionSettingsState.value = ExtensionSettingsState.Closed
     }
@@ -570,64 +574,117 @@ class SettingViewModel @Inject constructor(
         rawValue: String?,
         localeTag: String?,
     ) {
-        val extensionId =
-            (_extensionSettingsState.value as? ExtensionSettingsState.Content)
-                ?.configuration
-                ?.extensionId
+        val content =
+            _extensionSettingsState.value as? ExtensionSettingsState.Content
                 ?: return
+        val configuration = content.configuration
+        val extensionId = configuration.extensionId
+        val qualifiedKey = runCatching {
+            ExtensionSettingKeys.qualified(sectionId, fieldKey)
+        }.getOrNull() ?: return
+        if (!extensionSettingUpdateGate.tryStart(extensionId.value, qualifiedKey)) return
+        val refreshPluginProjection =
+            configuration.networkOriginState(sectionId, fieldKey) != null
+        _extensionSettingsState.value = content.copy(
+            updatingKeys = content.updatingKeys + qualifiedKey,
+        )
         val generation = extensionSettingsGeneration
         val updateGeneration = ++extensionSettingsUpdateGeneration
         extensionSettingsOperationQueue.launchUpdate(extensionId.value) update@{
-            val result = withContext(Dispatchers.IO) {
-                when (
-                    val update = extensionSettingsRepository.update(
-                        extensionId,
-                        sectionId,
-                        fieldKey,
-                        editToken,
-                        rawValue,
-                    )
+            try {
+                val result = withContext(Dispatchers.IO) {
+                    when (
+                        val update = extensionSettingsRepository.update(
+                            extensionId,
+                            sectionId,
+                            fieldKey,
+                            editToken,
+                            rawValue,
+                        )
+                    ) {
+                        is ExtensionSettingUpdateResult.Updated -> {
+                            ExtensionSettingsRefreshResult.Updated(
+                                configuration = extensionSettingsRepository.configuration(
+                                    extensionId,
+                                    localeTag,
+                                    PHONE_SETTINGS_SURFACE,
+                                ),
+                            )
+                        }
+                        is ExtensionSettingUpdateResult.Rejected -> {
+                            ExtensionSettingsRefreshResult.Rejected(
+                                configuration = extensionSettingsRepository.configuration(
+                                    extensionId,
+                                    localeTag,
+                                    PHONE_SETTINGS_SURFACE,
+                                )
+                            )
+                        }
+                    }
+                }
+                if (
+                    result is ExtensionSettingsRefreshResult.Updated &&
+                    refreshPluginProjection
                 ) {
-                    is ExtensionSettingUpdateResult.Updated -> {
-                        ExtensionSettingsRefreshResult.Updated(
-                            extensionSettingsRepository.configuration(
-                                extensionId,
-                                localeTag,
-                                PHONE_SETTINGS_SURFACE,
+                    requestExtensionPluginRefresh(queueIfBusy = true)
+                }
+                if (
+                    generation != extensionSettingsGeneration ||
+                    updateGeneration != extensionSettingsUpdateGeneration ||
+                    _extensionSettingsState.value.extensionId != extensionId
+                ) {
+                    return@update
+                }
+                val updatingKeys = currentExtensionSettingUpdateKeys(extensionId) - qualifiedKey
+                when (result) {
+                    is ExtensionSettingsRefreshResult.Updated -> {
+                        _extensionSettingsState.value =
+                            result.configuration.toExtensionSettingsState(
+                                extensionId = extensionId,
+                                updatingKeys = updatingKeys,
                             )
-                        )
                     }
-                    is ExtensionSettingUpdateResult.Rejected -> {
-                        ExtensionSettingsRefreshResult.Rejected(
-                            configuration = extensionSettingsRepository.configuration(
-                                extensionId,
-                                localeTag,
-                                PHONE_SETTINGS_SURFACE,
+                    is ExtensionSettingsRefreshResult.Rejected -> {
+                        _extensionSettingsState.value =
+                            result.configuration.toExtensionSettingsState(
+                                extensionId = extensionId,
+                                updatingKeys = updatingKeys,
                             )
-                        )
+                        messager.emit(SettingMessage.ExtensionOperationFailed)
                     }
                 }
-            }
-            if (
-                generation != extensionSettingsGeneration ||
-                updateGeneration != extensionSettingsUpdateGeneration ||
-                _extensionSettingsState.value.extensionId != extensionId
-            ) {
-                return@update
-            }
-            when (result) {
-                is ExtensionSettingsRefreshResult.Updated -> {
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Exception) {
+                if (
+                    generation == extensionSettingsGeneration &&
+                    _extensionSettingsState.value.extensionId == extensionId
+                ) {
                     _extensionSettingsState.value =
-                        result.configuration.toExtensionSettingsState(extensionId)
+                        ExtensionSettingsState.Error(extensionId)
                 }
-                is ExtensionSettingsRefreshResult.Rejected -> {
-                    _extensionSettingsState.value =
-                        result.configuration.toExtensionSettingsState(extensionId)
-                    messager.emit(SettingMessage.ExtensionOperationFailed)
+                throw failure
+            } finally {
+                extensionSettingUpdateGate.finish(extensionId.value, qualifiedKey)
+                val current = _extensionSettingsState.value
+                if (
+                    current is ExtensionSettingsState.Content &&
+                    current.extensionId == extensionId &&
+                    qualifiedKey in current.updatingKeys
+                ) {
+                    _extensionSettingsState.value = current.copy(
+                        updatingKeys = current.updatingKeys - qualifiedKey,
+                    )
                 }
             }
         }
     }
+
+    private fun currentExtensionSettingUpdateKeys(extensionId: ExtensionId): Set<String> =
+        (_extensionSettingsState.value as? ExtensionSettingsState.Content)
+            ?.takeIf { content -> content.extensionId == extensionId }
+            ?.updatingKeys
+            .orEmpty()
 
     private fun launchExtensionPluginOperation(
         operation: ExtensionPluginOperation,

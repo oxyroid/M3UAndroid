@@ -56,6 +56,7 @@ import com.m3u.business.setting.ExtensionSettingInputError
 import com.m3u.business.setting.ExtensionSettingsState
 import com.m3u.business.setting.extensionSettingInputError
 import com.m3u.business.setting.normalizedExtensionSettingValue
+import com.m3u.data.repository.extension.ExtensionNetworkOriginState
 import com.m3u.data.repository.extension.ExtensionSettingEditToken
 import com.m3u.extension.api.ExtensionSettingField
 import com.m3u.extension.api.ExtensionSettingKeys
@@ -204,6 +205,11 @@ internal fun ExtensionSettingsScreen(
                     secretConfigured = key in configuration.snapshot.credentialHandles,
                     validationRequested = validationRequested[key] == true,
                     dirty = dirtyKeys[key] == true,
+                    updating = key in state.updatingKeys,
+                    networkOriginState = configuration.networkOriginState(
+                        section.id,
+                        field.key,
+                    ),
                     onDraftChange = { value ->
                         draftValues[key] = value
                         dirtyKeys[key] = true
@@ -302,6 +308,8 @@ private fun ExtensionSettingControl(
     secretConfigured: Boolean,
     validationRequested: Boolean,
     dirty: Boolean,
+    updating: Boolean,
+    networkOriginState: ExtensionNetworkOriginState?,
     onDraftChange: (String) -> Unit,
     onValidationRequested: () -> Unit,
     onUpdate: (String?) -> Unit,
@@ -353,6 +361,9 @@ private fun ExtensionSettingControl(
         clearLabel,
         semanticFieldLabelText,
     )
+    val networkOriginStateLabel = networkOriginState?.let {
+        extensionNetworkOriginStateLabel(it)
+    }
     val focusManager = LocalFocusManager.current
     Column(
         modifier = modifier,
@@ -368,6 +379,7 @@ private fun ExtensionSettingControl(
                         .testTag("extension-setting:$qualifiedKey")
                         .toggleable(
                             value = checked,
+                            enabled = !updating,
                             role = Role.Switch,
                             onValueChange = { value -> onUpdate(value.toString()) },
                         )
@@ -388,6 +400,7 @@ private fun ExtensionSettingControl(
                     Switch(
                         checked = checked,
                         onCheckedChange = null,
+                        enabled = !updating,
                         modifier = Modifier.clearAndSetSemantics {},
                     )
                 }
@@ -431,6 +444,7 @@ private fun ExtensionSettingControl(
                         ).joinToString(separator = "\n")
                         FilterChip(
                             selected = rawValue == choice.value,
+                            enabled = !updating,
                             onClick = { onUpdate(choice.value) },
                             label = {
                                 Text(
@@ -463,6 +477,7 @@ private fun ExtensionSettingControl(
                     field.type != ExtensionSettingType.TEXT || field.networkOrigin
                 val textDirection = extensionSettingInputTextDirection(field)
                 fun commitInput(): Boolean {
+                    if (updating) return false
                     onValidationRequested()
                     if (inputError != null) return false
                     onUpdate(
@@ -521,6 +536,7 @@ private fun ExtensionSettingControl(
                     } else {
                         KeyboardActions.Default
                     },
+                    readOnly = updating,
                     isError = inputErrorMessage != null,
                     supportingText = when {
                         inputErrorMessage != null -> {
@@ -528,11 +544,34 @@ private fun ExtensionSettingControl(
                         }
                         field.networkOrigin -> {
                             {
-                                Text(
-                                    stringResource(
-                                        string.feat_setting_extension_network_origin_save_notice
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                                ) {
+                                    networkOriginStateLabel?.let { stateLabel ->
+                                        Text(
+                                            text = stateLabel,
+                                            color = if (
+                                                networkOriginState.requiresUserAttention
+                                            ) {
+                                                MaterialTheme.colorScheme.error
+                                            } else {
+                                                MaterialTheme.colorScheme.onSurfaceVariant
+                                            },
+                                            modifier = Modifier
+                                                .testTag(
+                                                    "extension-setting-origin-state:$qualifiedKey"
+                                                )
+                                                .semantics {
+                                                    liveRegion = LiveRegionMode.Polite
+                                                },
+                                        )
+                                    }
+                                    Text(
+                                        stringResource(
+                                            string.feat_setting_extension_network_origin_save_notice
+                                        )
                                     )
-                                )
+                                }
                             }
                         }
                         else -> null
@@ -545,11 +584,18 @@ private fun ExtensionSettingControl(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    AnimatedVisibility(visible = dirty) {
+                    AnimatedVisibility(
+                        visible = shouldShowExtensionSettingSaveAction(
+                            dirty = dirty,
+                            networkOriginState = networkOriginState,
+                        )
+                    ) {
                         TextButton(
-                            enabled =
-                                field.type != ExtensionSettingType.SECRET ||
-                                    rawValue.isNotEmpty(),
+                            enabled = !updating &&
+                                (
+                                    field.type != ExtensionSettingType.SECRET ||
+                                        rawValue.isNotEmpty()
+                                    ),
                             onClick = { commitInput() },
                             modifier = Modifier
                                 .heightIn(min = 48.dp)
@@ -563,6 +609,7 @@ private fun ExtensionSettingControl(
                     }
                     if (rawValue.isNotEmpty() || secretConfigured) {
                         TextButton(
+                            enabled = !updating,
                             onClick = { onUpdate(null) },
                             modifier = Modifier
                                 .heightIn(min = 48.dp)
@@ -651,3 +698,9 @@ internal fun extensionSettingInputTextDirection(
 } else {
     TextDirection.ContentOrLtr
 }
+
+internal fun shouldShowExtensionSettingSaveAction(
+    dirty: Boolean,
+    networkOriginState: ExtensionNetworkOriginState?,
+): Boolean = dirty ||
+    networkOriginState == ExtensionNetworkOriginState.REQUIRES_APPROVAL

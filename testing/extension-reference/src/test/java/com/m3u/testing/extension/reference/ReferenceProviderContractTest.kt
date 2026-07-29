@@ -98,11 +98,19 @@ class ReferenceProviderContractTest {
         )
         val chineseSettings = referenceDynamicSettings("zh-CN")
         assertEquals("播放", chineseSettings.sections.single().title)
+        assertEquals(2, chineseSettings.sections.single().schema.version)
         assertEquals(
             listOf("自动", "直接播放"),
-            chineseSettings.sections.single().schema.fields.single().choices.map { choice ->
-                choice.label
-            },
+            chineseSettings.sections.single().schema.fields
+                .single { field -> field.key == "quality" }
+                .choices
+                .map { choice -> choice.label },
+        )
+        assertEquals(
+            "API 源站",
+            chineseSettings.sections.single().schema.fields
+                .single { field -> field.networkOrigin }
+                .label,
         )
 
         val fallbackProvider = discoverProvider("fr-FR").provider

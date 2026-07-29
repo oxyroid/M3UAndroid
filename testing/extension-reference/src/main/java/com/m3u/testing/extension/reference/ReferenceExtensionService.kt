@@ -245,7 +245,7 @@ internal fun referenceDynamicSettings(localeTag: String?): SettingsSchemaResult 
                 id = "playback",
                 title = copy.playback,
                 schema = ExtensionSettingSchema(
-                    version = 1,
+                    version = 2,
                     fields = listOf(
                         ExtensionSettingField(
                             key = "quality",
@@ -256,7 +256,13 @@ internal fun referenceDynamicSettings(localeTag: String?): SettingsSchemaResult 
                                 ExtensionSettingChoice("direct", copy.directPlay),
                             ),
                             defaultValue = JsonPrimitive("auto"),
-                        )
+                        ),
+                        ExtensionSettingField(
+                            key = "api-origin",
+                            label = copy.apiOrigin,
+                            type = ExtensionSettingType.TEXT,
+                            networkOrigin = true,
+                        ),
                     ),
                 ),
             )
@@ -300,6 +306,7 @@ private data class ReferenceLocalizedCopy(
     val password: String,
     val playback: String,
     val quality: String,
+    val apiOrigin: String,
     val automatic: String,
     val directPlay: String,
 )
@@ -314,6 +321,7 @@ private fun referenceLocalizedCopy(localeTag: String?): ReferenceLocalizedCopy {
             password = "密码",
             playback = "播放",
             quality = "画质",
+            apiOrigin = "API 源站",
             automatic = "自动",
             directPlay = "直接播放",
         )
@@ -326,6 +334,7 @@ private fun referenceLocalizedCopy(localeTag: String?): ReferenceLocalizedCopy {
             password = "Password",
             playback = "Playback",
             quality = "Quality",
+            apiOrigin = "API origin",
             automatic = "Automatic",
             directPlay = "Direct play",
         )

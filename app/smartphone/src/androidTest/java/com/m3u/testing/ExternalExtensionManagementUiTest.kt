@@ -47,6 +47,7 @@ import com.m3u.business.setting.ExtensionPluginOperation
 import com.m3u.business.setting.ExtensionPluginOperationState
 import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
 import com.m3u.core.foundation.architecture.preferences.settings
+import com.m3u.data.repository.extension.ExtensionNetworkOriginState
 import com.m3u.extension.api.ExtensionState
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.DebugExtensionPlatformEntryPoint
@@ -148,6 +149,11 @@ class ExternalExtensionManagementUiTest {
             inspectionError = null,
             installed = true,
             approvedNetworkOrigins = inspectedPlugin.networkOrigins,
+            networkAccess = inspectedPlugin.networkAccess.copy(
+                fixedOrigins = inspectedPlugin.networkAccess.fixedOrigins.map { origin ->
+                    origin.copy(state = ExtensionNetworkOriginState.APPROVED)
+                }
+            ),
         )
         val detailState = mutableStateOf<ExtensionPluginDetailContentState>(
             ExtensionPluginDetailContentState.Loading
@@ -404,7 +410,51 @@ class ExternalExtensionManagementUiTest {
             firstTag = API_KEY_SAVE_TAG,
             secondTag = API_KEY_CLEAR_TAG,
         )
+        val notConfiguredOriginState = composeRule.activity.getString(
+            string.feat_setting_extension_network_origin_state_not_configured
+        )
+        composeRule.onNodeWithTag(API_ORIGIN_STATE_TAG, useUnmergedTree = true)
+            .performScrollTo()
+            .assertTextContains(notConfiguredOriginState, substring = false)
+        composeRule.onNodeWithTag(API_ORIGIN_FIELD_TAG)
+            .performScrollTo()
+            .performTextInput(REFERENCE_SETTING_ORIGIN)
+        composeRule.onNodeWithTag(API_ORIGIN_SAVE_TAG)
+            .performScrollTo()
+            .assertMinimumTouchTarget()
+            .performClick()
+        val approvedOriginState = composeRule.activity.getString(
+            string.feat_setting_extension_network_origin_state_approved
+        )
+        composeRule.waitUntil(UI_TIMEOUT_MILLIS) {
+            runCatching {
+                composeRule.onNodeWithTag(
+                    API_ORIGIN_STATE_TAG,
+                    useUnmergedTree = true,
+                )
+                    .assertTextContains(approvedOriginState, substring = false)
+            }.isSuccess
+        }
         closeSettings()
+
+        scrollDetailTo(NETWORK_ORIGINS_DISCLOSURE_TAG)
+        composeRule.onNodeWithTag(NETWORK_ORIGINS_DISCLOSURE_TAG)
+            .performClick()
+        waitUntilTagExists(API_ORIGIN_DETAIL_TAG)
+        composeRule.onNodeWithTag(API_ORIGIN_DETAIL_TAG)
+            .performScrollTo()
+            .assertIsDisplayed()
+        waitUntilExists(
+            hasText(REFERENCE_SETTING_ORIGIN, substring = false)
+        )
+        composeRule.onNodeWithTag(API_ORIGIN_DETAIL_TAG).assert(
+            SemanticsMatcher.expectValue(
+                SemanticsProperties.StateDescription,
+                approvedOriginState,
+            )
+        )
+        composeRule.onNodeWithTag(NETWORK_ORIGINS_DISCLOSURE_TAG)
+            .performClick()
 
         scrollDetailTo(actionTag("clear-data"))
         waitUntilTagEnabled(actionTag("clear-data"))
@@ -428,6 +478,9 @@ class ExternalExtensionManagementUiTest {
         openSettings()
         composeRule.onNodeWithTag(choiceTag("auto")).performScrollTo().assertIsSelected()
         waitUntilTagGone(API_KEY_CLEAR_TAG)
+        composeRule.onNodeWithTag(API_ORIGIN_STATE_TAG, useUnmergedTree = true)
+            .performScrollTo()
+            .assertTextContains(notConfiguredOriginState, substring = false)
         closeSettings()
 
         scrollDetailTo(actionTag("reauthorize"))
@@ -830,6 +883,15 @@ class ExternalExtensionManagementUiTest {
         const val API_KEY_FIELD_TAG = "extension-setting-field:manifest/api-key"
         const val API_KEY_SAVE_TAG = "extension-setting-save:manifest/api-key"
         const val API_KEY_CLEAR_TAG = "extension-setting-clear:manifest/api-key"
+        const val API_ORIGIN_FIELD_TAG =
+            "extension-setting-field:playback/api-origin"
+        const val API_ORIGIN_SAVE_TAG =
+            "extension-setting-save:playback/api-origin"
+        const val API_ORIGIN_STATE_TAG =
+            "extension-setting-origin-state:playback/api-origin"
+        const val API_ORIGIN_DETAIL_TAG =
+            "extension-network-setting-origin:playback/api-origin"
+        const val REFERENCE_SETTING_ORIGIN = "https://ui.reference.test:443"
         const val ARG_ACCESSIBILITY_MATRIX_CASE = "accessibilityMatrixCase"
         const val MATRIX_CASE_COMPACT_RTL_LARGE = "compact-rtl-large"
         const val LOCALE_RTL_TEST = "ar-XB"
