@@ -93,6 +93,11 @@ object DeclaredCapabilityPolicy : CapabilityPolicy {
 
 fun interface ExtensionSettingsProvider {
     fun snapshot(manifest: ExtensionManifest): ExtensionSettingsSnapshot
+
+    fun snapshot(
+        manifest: ExtensionManifest,
+        hook: Hook,
+    ): ExtensionSettingsSnapshot = snapshot(manifest)
 }
 
 object EmptyExtensionSettingsProvider : ExtensionSettingsProvider {
@@ -403,7 +408,12 @@ class ExtensionRuntime(
                     synchronized(registrationLifecycleLock) {
                         registrations[extensionId]
                             ?.takeIf { current -> current.matches(registrationLease) }
-                            ?.let { settingsProvider.snapshot(registration.manifest) }
+                            ?.let {
+                                settingsProvider.snapshot(
+                                    manifest = registration.manifest,
+                                    hook = spec.hook,
+                                )
+                            }
                     } ?: return@withTimeout staleRegistrationAttempt()
                 } catch (cancellation: CancellationException) {
                     throw cancellation
