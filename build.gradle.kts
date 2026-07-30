@@ -1,4 +1,5 @@
 import com.android.build.api.artifact.SingleArtifact
+import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.dsl.LibraryExtension
 import com.android.build.api.variant.ApplicationAndroidComponentsExtension
 import com.android.build.api.variant.BuiltArtifactsLoader
@@ -396,6 +397,9 @@ val kotlinMetadataVersion = extensions
     .findVersion("kotlin")
     .orElseThrow()
     .requiredVersion
+val releaseSigningRequired = providers.gradleProperty("m3uReleaseSigningRequired")
+    .map(String::toBooleanStrict)
+    .orElse(false)
 
 subprojects {
     val coroutineOptInProjects = setOf(
@@ -443,6 +447,60 @@ subprojects {
     }
     plugins.withId("com.android.application") {
         configureBuiltInAndroidKotlin()
+        val releaseSigningPropertyPrefix = when (path) {
+            ":app:smartphone", ":app:tv" -> "m3uAppRelease"
+            ":testing:extension-reference" -> "m3uReferenceExtensionRelease"
+            else -> null
+        }
+        if (releaseSigningPropertyPrefix != null) {
+            val releaseSigningPropertyNames = listOf(
+                "${releaseSigningPropertyPrefix}StoreFile",
+                "${releaseSigningPropertyPrefix}StorePassword",
+                "${releaseSigningPropertyPrefix}KeyAlias",
+                "${releaseSigningPropertyPrefix}KeyPassword",
+            )
+            val releaseSigningPropertyValues = releaseSigningPropertyNames.associateWith { name ->
+                providers.gradleProperty(name).orNull?.takeUnless(String::isEmpty)
+            }
+            val configuredPropertyCount = releaseSigningPropertyValues.values.count { it != null }
+            check(
+                configuredPropertyCount == 0 ||
+                    configuredPropertyCount == releaseSigningPropertyNames.size
+            ) {
+                val missingPropertyNames = releaseSigningPropertyValues
+                    .filterValues { it == null }
+                    .keys
+                    .joinToString()
+                "Release signing for $path is only partially configured. " +
+                    "Configure every property or none of them. Missing: $missingPropertyNames"
+            }
+            check(!releaseSigningRequired.get() || configuredPropertyCount > 0) {
+                "Release signing is required for $path, but none of the " +
+                    "$releaseSigningPropertyPrefix properties are configured."
+            }
+
+            extensions.configure<ApplicationExtension> {
+                val productionSigningConfig =
+                    if (configuredPropertyCount == releaseSigningPropertyNames.size) {
+                        fun signingProperty(suffix: String): String = checkNotNull(
+                            releaseSigningPropertyValues[
+                                "$releaseSigningPropertyPrefix$suffix"
+                            ]
+                        )
+                        signingConfigs.create("production") {
+                            storeFile = rootProject.file(signingProperty("StoreFile"))
+                            storePassword = signingProperty("StorePassword")
+                            keyAlias = signingProperty("KeyAlias")
+                            keyPassword = signingProperty("KeyPassword")
+                        }
+                    } else {
+                        null
+                    }
+                buildTypes.named("release") {
+                    signingConfig = productionSigningConfig
+                }
+            }
+        }
         val publishedApkPrefix = when (path) {
             ":app:smartphone" -> ""
             ":app:tv" -> "tv-"

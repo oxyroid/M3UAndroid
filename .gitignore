@@ -18,6 +18,9 @@
 local.properties
 jks.txt
 *.jks
+*.keystore
+*.p12
+*.pfx
 /sample/
 /.kotlin
 __pycache__/

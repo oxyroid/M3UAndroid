@@ -11,14 +11,22 @@ on:
   pull_request:
     branches: [ "master" ]
   workflow_dispatch:
+    inputs:
+      publish_release:
+        description: Build and publish signed Release artifacts
+        required: true
+        default: false
+        type: boolean
 
 concurrency:
   group: android-release-${{ github.ref }}
   cancel-in-progress: true
 
-jobs:
-  build:
+permissions:
+  contents: read
 
+jobs:
+  verify:
     runs-on: ubuntu-latest
 
     steps:
@@ -70,6 +78,9 @@ jobs:
           ./gradlew \
             :app:smartphone:testDebugUnitTest \
             :i18n:testDebugUnitTest
+
+      - name: Verify release signing contract
+        run: testing/bin/verify-release-signing-contract.sh
 
       - name: Validate connected UI harnesses
         run: |
@@ -128,8 +139,77 @@ jobs:
             app/smartphone/build/reports/androidTests/managedDevice/**
             testing/mock-server/build/mock-server/mock-server.log
 
-      - name: Build smartphone release APK
-        run: ./gradlew :app:smartphone:assembleRelease
+      - name: Build unsigned pull request release APKs
+        if: github.event_name == 'pull_request'
+        run: |
+          ./gradlew \
+            :app:smartphone:assembleRelease \
+            :app:tv:assembleRelease \
+            :testing:extension-reference:assembleRelease
+
+      - name: Verify pull request release default library packaging
+        if: github.event_name == 'pull_request'
+        run: |
+          testing/bin/verify-smartphone-default-library-assets.sh \
+            release \
+            app/smartphone/build/outputs/published-apk/release/*.apk
+
+      - name: Verify pull request release 16 KB native compatibility
+        if: github.event_name == 'pull_request'
+        run: |
+          testing/bin/verify-android-16kb.sh \
+            app/smartphone/build/outputs/published-apk/release/*.apk \
+            app/tv/build/outputs/published-apk/release/*.apk \
+            testing/extension-reference/build/outputs/apk/release/*.apk
+
+  release_build:
+    if: >-
+      github.event_name != 'pull_request' &&
+      github.ref == 'refs/heads/master' &&
+      (github.event_name != 'workflow_dispatch' || inputs.publish_release)
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: "zulu"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-home-cache-cleanup: true
+
+      - name: Prepare stable release signing
+        env:
+          M3U_APP_RELEASE_KEYSTORE_BASE64: ${{ secrets.M3U_APP_RELEASE_KEYSTORE_BASE64 }}
+          M3U_APP_RELEASE_STORE_PASSWORD: ${{ secrets.M3U_APP_RELEASE_STORE_PASSWORD }}
+          M3U_APP_RELEASE_KEY_ALIAS: ${{ secrets.M3U_APP_RELEASE_KEY_ALIAS }}
+          M3U_APP_RELEASE_KEY_PASSWORD: ${{ secrets.M3U_APP_RELEASE_KEY_PASSWORD }}
+          M3U_REFERENCE_EXTENSION_RELEASE_KEYSTORE_BASE64: ${{ secrets.M3U_REFERENCE_EXTENSION_RELEASE_KEYSTORE_BASE64 }}
+          M3U_REFERENCE_EXTENSION_RELEASE_STORE_PASSWORD: ${{ secrets.M3U_REFERENCE_EXTENSION_RELEASE_STORE_PASSWORD }}
+          M3U_REFERENCE_EXTENSION_RELEASE_KEY_ALIAS: ${{ secrets.M3U_REFERENCE_EXTENSION_RELEASE_KEY_ALIAS }}
+          M3U_REFERENCE_EXTENSION_RELEASE_KEY_PASSWORD: ${{ secrets.M3U_REFERENCE_EXTENSION_RELEASE_KEY_PASSWORD }}
+          M3U_REFERENCE_EXTENSION_EXPECTED_CERT_SHA256: ${{ vars.M3U_REFERENCE_EXTENSION_EXPECTED_CERT_SHA256 }}
+        run: testing/bin/prepare-release-signing.sh "${{ github.event_name }}"
+
+      - name: Build signed release artifacts
+        run: |
+          ./gradlew \
+            --no-daemon \
+            --no-configuration-cache \
+            verifyExtensionSdkBundle \
+            :app:smartphone:assembleRelease \
+            :app:tv:assembleRelease \
+            :testing:extension-reference:assembleRelease
 
       - name: Verify release default library packaging
         run: |
@@ -137,11 +217,12 @@ jobs:
             release \
             app/smartphone/build/outputs/published-apk/release/*.apk
 
-      - name: Build TV release APK
-        run: ./gradlew :app:tv:assembleRelease
-
-      - name: Build reference extension release APK
-        run: ./gradlew :testing:extension-reference:assembleRelease
+      - name: Verify release APK certificates
+        run: |
+          testing/bin/verify-release-apk-signing.sh \
+            app/smartphone/build/outputs/published-apk/release/*.apk \
+            app/tv/build/outputs/published-apk/release/*.apk \
+            testing/extension-reference/build/outputs/apk/release/*.apk
 
       - name: Verify 16 KB native compatibility
         run: |
@@ -150,9 +231,45 @@ jobs:
             app/tv/build/outputs/published-apk/release/*.apk \
             testing/extension-reference/build/outputs/apk/release/*.apk
 
-      - name: Upload
+      - name: Remove release signing material
+        if: always()
+        shell: bash
+        run: |
+          app_keystore="${ORG_GRADLE_PROJECT_m3uAppReleaseStoreFile:-}"
+          reference_keystore="${ORG_GRADLE_PROJECT_m3uReferenceExtensionReleaseStoreFile:-}"
+          if [[ -n "$app_keystore" || -n "$reference_keystore" ]]; then
+            app_signing_directory="$(dirname "$app_keystore")"
+            reference_signing_directory="$(dirname "$reference_keystore")"
+            if [[ \
+              -z "$app_keystore" ||
+              -z "$reference_keystore" ||
+              "$app_signing_directory" != "$reference_signing_directory" ||
+              "$app_signing_directory" != "$RUNNER_TEMP"/m3u-release-signing.* \
+            ]]; then
+              echo "Refusing to clean an unexpected release signing path." >&2
+              exit 1
+            fi
+            rm -f -- "$app_keystore" "$reference_keystore"
+            rmdir "$app_signing_directory"
+          fi
+          {
+            echo "ORG_GRADLE_PROJECT_m3uReleaseSigningRequired="
+            echo "ORG_GRADLE_PROJECT_m3uAppReleaseStoreFile="
+            echo "ORG_GRADLE_PROJECT_m3uAppReleaseStorePassword="
+            echo "ORG_GRADLE_PROJECT_m3uAppReleaseKeyAlias="
+            echo "ORG_GRADLE_PROJECT_m3uAppReleaseKeyPassword="
+            echo "ORG_GRADLE_PROJECT_m3uReferenceExtensionReleaseStoreFile="
+            echo "ORG_GRADLE_PROJECT_m3uReferenceExtensionReleaseStorePassword="
+            echo "ORG_GRADLE_PROJECT_m3uReferenceExtensionReleaseKeyAlias="
+            echo "ORG_GRADLE_PROJECT_m3uReferenceExtensionReleaseKeyPassword="
+            echo "M3U_APP_EXPECTED_CERT_SHA256="
+            echo "M3U_REFERENCE_EXTENSION_EXPECTED_CERT_SHA256="
+          } >> "$GITHUB_ENV"
+
+      - name: Upload signed release artifacts
         uses: actions/upload-artifact@v4
         with:
+          name: android-release-artifacts
           if-no-files-found: error
           path: |
             build/distributions/m3u-extension-sdk-*
@@ -160,8 +277,22 @@ jobs:
             app/tv/build/outputs/published-apk/release/*.apk
             testing/extension-reference/build/outputs/apk/release/*.apk
 
+  publish:
+    if: >-
+      github.event_name != 'pull_request' &&
+      github.ref == 'refs/heads/master' &&
+      (github.event_name != 'workflow_dispatch' || inputs.publish_release)
+    needs: release_build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download signed release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: android-release-artifacts
+          path: release-artifacts
+
       - name: Upload To Telegram
-        if: github.event_name != 'pull_request'
         uses: xireiki/channel-post@890c1d09635ae629aeffbed4f9716a5473eac896 # v1.0.10
         with:
           bot_token: ${{ secrets.BOT_TOKEN }}
@@ -171,7 +302,7 @@ jobs:
           large_file: true
           method: sendFile
           path: |
-            build/distributions/m3u-extension-sdk-*
-            app/smartphone/build/outputs/published-apk/release/*.apk
-            app/tv/build/outputs/published-apk/release/*.apk
-            testing/extension-reference/build/outputs/apk/release/*.apk
+            release-artifacts/build/distributions/m3u-extension-sdk-*
+            release-artifacts/app/smartphone/build/outputs/published-apk/release/*.apk
+            release-artifacts/app/tv/build/outputs/published-apk/release/*.apk
+            release-artifacts/testing/extension-reference/build/outputs/apk/release/*.apk
