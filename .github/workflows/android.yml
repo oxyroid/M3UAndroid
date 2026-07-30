@@ -28,6 +28,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
       - name: Checkout
@@ -141,9 +142,7 @@ jobs:
             testing/mock-server/build/mock-server/mock-server.log
 
       - name: Build unsigned validation Release APKs
-        if: >-
-          github.event_name == 'pull_request' ||
-          (github.event_name == 'workflow_dispatch' && inputs.publish_release == false)
+        if: github.event_name == 'pull_request'
         run: |
           ./gradlew \
             :app:smartphone:assembleRelease \
@@ -151,18 +150,14 @@ jobs:
             :testing:extension-reference:assembleRelease
 
       - name: Verify unsigned Release default library packaging
-        if: >-
-          github.event_name == 'pull_request' ||
-          (github.event_name == 'workflow_dispatch' && inputs.publish_release == false)
+        if: github.event_name == 'pull_request'
         run: |
           testing/bin/verify-smartphone-default-library-assets.sh \
             release \
             app/smartphone/build/outputs/published-apk/release/*.apk
 
       - name: Verify unsigned Release 16 KB native compatibility
-        if: >-
-          github.event_name == 'pull_request' ||
-          (github.event_name == 'workflow_dispatch' && inputs.publish_release == false)
+        if: github.event_name == 'pull_request'
         run: |
           testing/bin/verify-android-16kb.sh \
             app/smartphone/build/outputs/published-apk/release/*.apk \
