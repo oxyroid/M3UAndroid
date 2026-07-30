@@ -80,6 +80,25 @@ full Cartesian product. Cover every value and always run the compact RTL + 200% 
 Run phone cases on a phone profile and large-window cases on a tablet or resizable large-screen
 profile.
 
+The checked-in runner uses eight bounded cases rather than a Cartesian product:
+
+| Profile | Case | Window | Locale and font | Theme and navigation | Test scope |
+| --- | --- | --- | --- | --- | --- |
+| Phone | `compact-ltr` | 360 × 800 dp | English, 100% | Light, gestures | Complete compact group |
+| Phone | `compact-narrow-ltr` | 320 × 720 dp | English, 100% | Light, gestures | Narrow source-picker and editor actions |
+| Phone | `compact-height-zh-cn-dark-three-button` | 360 × 480 dp | Simplified Chinese, 100% | Dark, three-button | IME and final-content inset checks |
+| Phone | `compact-599-en-xa` | 599 × 800 dp | `en-XA`, 100% | Light, gestures | Localized rows, plugin detail, and compact navigation |
+| Phone | `compact-rtl-large` | 320 × 720 dp | `ar-XB` RTL, 200% | Dark, gestures | RTL, large-text, alignment, and accessibility stress group |
+| Tablet | `medium-600-ltr` | 600 × 900 dp | English, 100% | Light, gestures | Medium single-pane boundary |
+| Tablet | `medium-839-ltr` | 839 × 600 dp | English, 100% | Light, gestures | Medium upper boundary |
+| Tablet | `expanded-840-ltr-dark` | 840 × 600 dp | English, 100% | Dark, gestures | Expanded list-detail group |
+
+Run `testing/bin/run-smartphone-provider-ui-matrix.sh --describe` to inspect this contract without
+an emulator. CI validates the case count, boundaries, locales, themes, three-button case, RTL +
+200% combination, and phone/tablet separation; CI does not execute the device matrix. Plugin,
+capability, field-count, dynamic-color, IME-state, and long-value fixtures still need their
+applicable automated or visual evidence and are not implied by the eight device configurations.
+
 ## What the checks must prove
 
 Automated UI tests must assert:

@@ -34,8 +34,9 @@
 
 CI 门禁指 `.github/workflows/android.yml` 自动执行的检查。Connected UI 检查可重复，但目前
 需要显式设备运行；设备检查指有记录的一次性实测。`ResourceContractTest` 验证资源结构，
-不代表母语文案质量。CI 会检查 smartphone 矩阵脚本的语法，并编译 data 与 smartphone
-Connected Test。外部插件门禁会先启动本地参考服务并通过健康检查，再在
+不代表母语文案质量。CI 会执行 smartphone 矩阵的静态契约检查，并编译 data 与 smartphone
+Connected Test。静态检查验证断点、Locale、主题、导航、压力组合和手机/平板 profile
+分离，但不会启动模拟器。外部插件门禁会先启动本地参考服务并通过健康检查，再在
 `hostileApi34` 构建托管设备上使用独立参考 APK，运行
 `HostileExternalExtensionIpcTest`、`ExternalExtensionConformanceIpcTest`、
 `ExternalProviderEndToEndTest` 与 `DebugDefaultLibraryBootstrapTest`。参考服务为真实
@@ -69,26 +70,29 @@ Connected Test。外部插件门禁会先启动本地参考服务并通过健康
   与播放器释放对应的服务端 Session 都已关闭。
 - 尚未覆盖：仍有播放 Session 时宿主冷启动后的恢复。
 
-最近一次手机 Connected 实测（2026-07-29）：
+最近一次手机 Connected 实测（2026-07-30）：
 
 - 设备与配置：`emulator-5558` 上的 Pixel_6_Pro API 36，使用运行脚本的 `phone`
   profile。
-- 结果：`compact-ltr` 为 20/20，`compact-narrow-ltr` 为 2/2；
-  `compact-rtl-large` 在 `ar-XB`、320dp 宽度和 200% 字体下为 11/11。
+- 结果：`compact-ltr` 为 20/20，`compact-narrow-ltr` 为 2/2，
+  `compact-height-zh-cn-dark-three-button` 为 2/2，`compact-599-en-xa` 为 3/3，
+  `compact-rtl-large` 为 11/11。
 - 插件覆盖包括 Descriptor 驱动的 Provider 表单、参考插件的完整管理流程，以及可区分的
   Loading、可重试 Failure、Missing 和 Content 状态。
 - 无障碍覆盖包括每行只有一个操作目标、左右镜像的 48dp 首尾区域、无重复的状态语义、
-  完整技术身份，以及长设置选项在 200% 字体 RTL 下自然换行且错误只朗读一次。
+  完整技术身份，以及长设置选项在 200% 字体 RTL 下自然换行且错误只朗读一次。实测还
+  覆盖 599dp Compact 边界、480dp 高简体中文输入法场景、`en-XA`、浅色/深色主题及
+  手势/三键导航。
 
-最近一次平板 Connected 实测（2026-07-29）：
+最近一次平板 Connected 实测（2026-07-30）：
 
 - 设备与配置：`emulator-5554` 上的 `6GB_RAM_Device` API 36，使用运行脚本的
   `tablet` profile。
-- 结果：英语 LTR、正常字体下，800dp 的 `medium-ltr` 为 1/1，1080dp 的
-  `wide-ltr` 为 6/6。
+- 结果：600dp 的 `medium-600-ltr` 为 1/1，839dp 的 `medium-839-ltr` 为 1/1，
+  深色主题下 840dp 的 `expanded-840-ltr-dark` 为 6/6。
 - 其中与插件系统直接相关的覆盖包括 Descriptor 驱动的 Provider 表单，以及“设置”
-  侧栏保持显示和选中时的完整外部插件管理流程。中宽用例还验证单面板标题、返回导航
-  与 48dp 触控范围。
+  侧栏保持显示和选中时的完整外部插件管理流程。两个 Medium 边界还验证唯一的上下文
+  Heading、唯一返回操作、单面板导航与 48dp 返回触控范围。
 
 在一台已启动、可清空数据且 API 不低于 33 的手机模拟器上，用下面的命令重跑手机矩阵：
 
@@ -96,10 +100,18 @@ Connected Test。外部插件门禁会先启动本地参考服务并通过健康
 testing/bin/run-smartphone-provider-ui-matrix.sh emulator-5558 phone
 ```
 
-`phone` profile 会运行完整的紧凑英语 LTR 组、定向的窄版紧凑英语 LTR 组，以及
-320dp 宽度、200% 字体下的紧凑 `ar-XB` RTL 组。每次运行都会传入必填的命名用例；
-参数、profile、App Locale 或设备实际配置不符都会使测试失败。结束后，脚本会恢复
-模拟器显示设置并移除测试包。
+`phone` profile 会运行完整的 Compact 英语 LTR 组、定向的 320dp 窄屏英语 LTR 组、
+360 × 480dp 的简体中文深色/三键导航输入法用例、599dp 的 `en-XA` 断点用例，以及
+320dp 宽度、200% 字体下的 Compact `ar-XB` RTL 组。大窗口用例必须另行在专用平板
+模拟器上运行：
+
+```shell
+testing/bin/run-smartphone-provider-ui-matrix.sh emulator-5554 tablet
+```
+
+`tablet` profile 运行精确的 600、839 和 840dp 用例，绝不运行手机宽度用例。每个用例
+都会在 Instrumentation 前验证显示、字体、主题、导航和 App Locale。结束后，脚本会恢复
+所有改动过的显示、开发者、主题与导航设置，并移除测试包。
 
 ## 发布内置 Provider 链路之前
 

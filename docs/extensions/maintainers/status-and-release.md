@@ -36,8 +36,10 @@ This page defines what may ship from the current branch. Implementation instruct
 A CI gate is run by `.github/workflows/android.yml`. A connected UI check is repeatable, but
 currently needs an explicit device run. A device check is a recorded one-off run.
 `ResourceContractTest` validates resource structure, not native-language quality.
-CI syntax-checks the smartphone matrix runner and compiles the data and smartphone connected-test
-harnesses. Its external-extension gate starts and health-checks the local reference server, then
+CI runs the smartphone matrix's static contract check and compiles the data and smartphone
+connected-test harnesses. The contract check verifies declared boundaries, locales, themes,
+navigation, stress coverage, and phone/tablet separation; it does not run an emulator. Its
+external-extension gate starts and health-checks the local reference server, then
 runs `HostileExternalExtensionIpcTest`, `ExternalExtensionConformanceIpcTest`,
 `ExternalProviderEndToEndTest`, and `DebugDefaultLibraryBootstrapTest` with the standalone
 reference APK on the `hostileApi34` build-managed device. The reference server supplies a
@@ -79,27 +81,31 @@ Latest external provider production-path run, 2026-07-29:
   WAV fixture. Both explicit close and player release closed their server-side sessions.
 - Not covered: cold-start recovery of an open persisted playback session.
 
-Latest connected phone run, 2026-07-29:
+Latest connected phone run, 2026-07-30:
 
 - Device and profile: Pixel_6_Pro API 36 on `emulator-5558`, using the runner's
   `phone` profile.
-- Results: `compact-ltr` passed 20/20, `compact-narrow-ltr` passed 2/2, and
-  `compact-rtl-large` passed 11/11 with `ar-XB` at 320dp width and 200% text.
+- Results: `compact-ltr` passed 20/20, `compact-narrow-ltr` passed 2/2,
+  `compact-height-zh-cn-dark-three-button` passed 2/2, `compact-599-en-xa` passed
+  3/3, and `compact-rtl-large` passed 11/11.
 - Extension coverage includes descriptor-driven provider forms, the complete reference-plugin
   management lifecycle, and distinct Loading, retryable Failure, Missing, and Content states.
 - Accessibility coverage verifies one action owner per plugin row, mirrored 48dp leading and
   trailing slots, non-duplicated status semantics, complete technical identity, and natural
-  wrapping for long setting choices and single error announcements in RTL at 200% text.
+  wrapping for long setting choices and single error announcements in RTL at 200% text. The run
+  also covers the 599dp compact boundary, a 480dp-high Simplified Chinese IME case, `en-XA`,
+  light/dark themes, and gesture/three-button navigation.
 
-Latest connected tablet run, 2026-07-29:
+Latest connected tablet run, 2026-07-30:
 
 - Device and profile: `6GB_RAM_Device` API 36 on `emulator-5554`, using the runner's
   `tablet` profile.
-- Results: `medium-ltr` passed 1/1 at 800dp and `wide-ltr` passed 6/6 at 1080dp,
-  both in English LTR with normal text size.
+- Results: `medium-600-ltr` passed 1/1 at 600dp, `medium-839-ltr` passed 1/1 at
+  839dp, and dark-theme `expanded-840-ltr-dark` passed 6/6 at 840dp.
 - Extension-specific coverage verifies the descriptor-driven provider form and the complete
   external-plugin management lifecycle with the Settings side rail present and selected.
-  The medium case also verifies the single-pane header, back navigation, and its 48dp touch target.
+  The medium boundary cases also verify one contextual heading, one back action, single-pane
+  navigation, and the 48dp back touch target.
 
 Repeat the phone matrix on a disposable, booted API 33 or newer phone emulator with:
 
@@ -108,10 +114,18 @@ testing/bin/run-smartphone-provider-ui-matrix.sh emulator-5558 phone
 ```
 
 The `phone` profile runs the complete compact English LTR group, the targeted compact-narrow
-English LTR group, and the compact `ar-XB` RTL group at 320dp width and 200% text. Each run
-passes a required named instrumentation case; the test fails if the argument, profile, app
-locale, or actual device configuration does not match. The script restores the emulator display
-settings and removes the test packages when it finishes.
+English LTR group, a 360 × 480dp Simplified Chinese dark/three-button IME case, the 599dp `en-XA`
+boundary case, and the compact `ar-XB` RTL group at 320dp width and 200% text. Run large-window
+cases separately on the dedicated tablet emulator:
+
+```shell
+testing/bin/run-smartphone-provider-ui-matrix.sh emulator-5554 tablet
+```
+
+The `tablet` profile runs exact 600, 839, and 840dp cases and never runs a phone-width case. Each
+case verifies its display, font, theme, navigation, and app-locale configuration before
+instrumentation. The script restores every changed display, developer, theme, and navigation
+setting and removes the test packages when it finishes.
 
 ## Before shipping the built-in provider path
 

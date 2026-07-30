@@ -31,19 +31,19 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
 
       - name: Setup JDK
         id: setup-java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: 17
           distribution: "zulu"
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v5
         with:
           gradle-home-cache-cleanup: true
 
@@ -84,7 +84,8 @@ jobs:
 
       - name: Validate connected UI harnesses
         run: |
-          bash -n testing/bin/run-smartphone-provider-ui-matrix.sh
+          bash -n testing/bin/verify-smartphone-provider-ui-matrix-contract.sh
+          bash testing/bin/verify-smartphone-provider-ui-matrix-contract.sh
           ./gradlew \
             :data:assembleDebugAndroidTest \
             :app:smartphone:assembleDebugAndroidTest \
@@ -131,7 +132,7 @@ jobs:
 
       - name: Upload managed device test reports
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           if-no-files-found: warn
           path: |
@@ -179,18 +180,18 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
 
       - name: Setup JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: 17
           distribution: "zulu"
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v5
         with:
           gradle-home-cache-cleanup: true
 
@@ -273,7 +274,7 @@ jobs:
           } >> "$GITHUB_ENV"
 
       - name: Upload signed release artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: android-release-artifacts
           if-no-files-found: error
@@ -293,7 +294,7 @@ jobs:
 
     steps:
       - name: Download signed release artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: android-release-artifacts
           path: release-artifacts

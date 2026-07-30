@@ -73,6 +73,24 @@ smartphone 应用的手机或平板布局中，发现插件、插件列表、详
 
 手机用例必须在手机配置上运行；大窗口用例使用平板或可调整大小的大屏配置。
 
+仓库中的运行脚本使用 8 个有界用例，不运行各维度的笛卡尔积：
+
+| Profile | 用例 | 窗口 | 语言与字体 | 主题与导航 | 测试范围 |
+| --- | --- | --- | --- | --- | --- |
+| 手机 | `compact-ltr` | 360 × 800 dp | 英语、100% | 浅色、手势 | 完整 Compact 测试组 |
+| 手机 | `compact-narrow-ltr` | 320 × 720 dp | 英语、100% | 浅色、手势 | 窄屏 Source Picker 与编辑操作 |
+| 手机 | `compact-height-zh-cn-dark-three-button` | 360 × 480 dp | 简体中文、100% | 深色、三键 | 输入法与最终内容 Insets |
+| 手机 | `compact-599-en-xa` | 599 × 800 dp | `en-XA`、100% | 浅色、手势 | 本地化列表行、插件详情与 Compact 导航 |
+| 手机 | `compact-rtl-large` | 320 × 720 dp | `ar-XB` RTL、200% | 深色、手势 | RTL、大字体、对齐与无障碍压力组 |
+| 平板 | `medium-600-ltr` | 600 × 900 dp | 英语、100% | 浅色、手势 | Medium 下边界单栏 |
+| 平板 | `medium-839-ltr` | 839 × 600 dp | 英语、100% | 浅色、手势 | Medium 上边界 |
+| 平板 | `expanded-840-ltr-dark` | 840 × 600 dp | 英语、100% | 深色、手势 | Expanded 列表—详情测试组 |
+
+运行 `testing/bin/run-smartphone-provider-ui-matrix.sh --describe` 可以在不启动模拟器时查看
+这份契约。CI 会校验用例数量、断点、Locale、主题、三键导航、RTL + 200% 字体组合，以及
+手机/平板用例分离，但不会执行设备矩阵。插件数、Capability 数、字段数、动态取色、输入法
+状态和长值 Fixture 仍需提供各自适用的自动化或视觉证据，不能由这 8 个设备配置代替。
+
 ## 检查必须证明什么
 
 自动化界面测试必须断言：
