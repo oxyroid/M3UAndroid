@@ -107,9 +107,19 @@ apk_certificate_sha256() {
   local digests
   digests="$(
     printf '%s\n' "$output" \
-      | sed -n 's/^Signer #[0-9][0-9]* certificate SHA-256 digest: //p'
+      | sed -nE \
+        's/^.*Signer #[0-9]+ certificate SHA-256 digest:[[:space:]]*([0-9A-Fa-f:]+)[[:space:]]*$/\1/p'
   )"
-  if [[ "$(printf '%s\n' "$digests" | sed '/^$/d' | wc -l | tr -d ' ')" != "1" ]]; then
+  local digest_count
+  digest_count="$(
+    printf '%s\n' "$digests" \
+      | sed '/^$/d' \
+      | wc -l \
+      | tr -d ' '
+  )"
+  if [[ "$digest_count" != "1" ]]; then
+    echo "apksigner output for $label:" >&2
+    printf '%s\n' "$output" >&2
     fail "$label APK must have exactly one signer certificate"
   fi
   normalize_sha256 "$digests"
