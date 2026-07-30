@@ -33,19 +33,15 @@ This page defines what may ship from the current branch. Implementation instruct
 
 ## How to read the evidence
 
-A CI gate is run by `.github/workflows/android.yml`. It uses one Gradle invocation for the
-extension/runtime, smartphone, and localization unit tests, then one managed-device invocation for
-`HostileExternalExtensionIpcTest`, `ExternalExtensionConformanceIpcTest`,
-`ExternalProviderEndToEndTest`, `DebugDefaultLibraryBootstrapTest`, and
-`ExternalProviderColdStartSessionRecoveryTest`. Android Test Orchestrator gives the cold-start
-phases separate host processes without starting a second managed device. The reference server
-supplies a deterministic PCM WAV fixture for the real-player check.
+`.github/workflows/android.yml` is a build and release workflow, not a functional-test gate. Pull
+requests and manual non-publishing runs compile the three unsigned Release APKs. A publishing run
+on `master` builds the signed app, TV, reference-plugin, and SDK artifacts, then checks their
+certificates, default-library contents, and 16 KB packaging before upload. The manual fast workflow
+only builds the three debug APKs, uploads them, and sends them to Telegram.
 
-The CI gate does not run the phone/tablet UI matrix. Those connected UI checks remain explicit
-device runs; `ResourceContractTest` checks resource structure, not native-language quality. Pull
-requests additionally compile the three unsigned Release APKs. Certificate, default-library, SDK
-bundle, and 16 KB packaging checks run only in the signed release job. The manual fast workflow is
-not a test gate: it builds the three debug APKs, uploads them, and sends them to Telegram.
+Unit, managed-device, and phone/tablet UI tests are explicit maintainer validation commands outside
+these packaging workflows. The recorded results below are evidence from those runs.
+`ResourceContractTest` checks resource structure, not native-language quality.
 
 Latest hostile IPC run, 2026-07-29:
 

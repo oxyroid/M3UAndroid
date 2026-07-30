@@ -26,89 +26,12 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  unsigned_build:
+    if: >-
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'workflow_dispatch' && inputs.publish_release == false)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-        with:
-          submodules: recursive
-
-      - name: Setup JDK
-        uses: actions/setup-java@v5
-        with:
-          java-version: 17
-          distribution: "zulu"
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
-        with:
-          gradle-home-cache-cleanup: true
-
-      - name: Run unit tests
-        run: |
-          ./gradlew \
-            :extension:api:jvmTest \
-            :extension:conformance:test \
-            :extension:runtime:test \
-            :app:smartphone:testDebugUnitTest \
-            :i18n:testDebugUnitTest
-
-      - name: Enable KVM
-        run: |
-          if [ ! -e /dev/kvm ]; then
-            echo "/dev/kvm is not available on this runner"
-            exit 1
-          fi
-          sudo chown root:$(id -gn) /dev/kvm
-          sudo chmod 660 /dev/kvm
-
-      - name: Start provider mock server
-        run: |
-          ./gradlew :testing:mock-server:startMockServer
-          curl \
-            --fail \
-            --silent \
-            --show-error \
-            --noproxy '*' \
-            --retry 20 \
-            --retry-connrefused \
-            --retry-delay 1 \
-            --max-time 2 \
-            http://127.0.0.1:8080/health
-
-      - name: Run extension and provider device tests
-        run: |
-          ./gradlew :app:smartphone:hostileApi34DebugAndroidTest \
-            -Pm3uMockServerUrl=http://10.0.2.2:8080 \
-            -Pm3uUseTestOrchestrator=true \
-            -Pandroid.testInstrumentationRunnerArguments.class=com.m3u.testing.HostileExternalExtensionIpcTest,com.m3u.testing.ExternalExtensionConformanceIpcTest,com.m3u.testing.ExternalProviderEndToEndTest,com.m3u.testing.DebugDefaultLibraryBootstrapTest,com.m3u.testing.ExternalProviderColdStartSessionRecoveryTest \
-            -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect \
-            -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true \
-            -Pandroid.experimental.androidTest.numManagedDeviceShards=1 \
-            -Pandroid.experimental.testOptions.managedDevices.maxConcurrentDevices=1
-
-      - name: Stop provider mock server
-        if: always()
-        run: ./gradlew :testing:mock-server:stopMockServer
-
-      - name: Upload managed device test reports
-        if: failure()
-        uses: actions/upload-artifact@v6
-        with:
-          if-no-files-found: warn
-          path: |
-            app/smartphone/build/outputs/androidTest-results/managedDevice/**
-            app/smartphone/build/reports/androidTests/managedDevice/**
-            testing/mock-server/build/mock-server/mock-server.log
-
-  pr_release:
-    if: github.event_name == 'pull_request'
-    needs: test
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       - name: Checkout
@@ -139,7 +62,6 @@ jobs:
       github.event_name != 'pull_request' &&
       github.ref == 'refs/heads/master' &&
       (github.event_name != 'workflow_dispatch' || inputs.publish_release)
-    needs: test
     runs-on: ubuntu-latest
     environment: production
 

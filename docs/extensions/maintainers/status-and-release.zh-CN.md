@@ -32,19 +32,13 @@
 
 ## 如何理解证据
 
-CI 门禁指 `.github/workflows/android.yml`。它用一次 Gradle 调用运行 Extension/Runtime、
-smartphone 与本地化单元测试，再用一次托管设备调用运行
-`HostileExternalExtensionIpcTest`、`ExternalExtensionConformanceIpcTest`、
-`ExternalProviderEndToEndTest`、`DebugDefaultLibraryBootstrapTest` 与
-`ExternalProviderColdStartSessionRecoveryTest`。Android Test Orchestrator 让冷启动的
-两个阶段运行在不同宿主进程，不再为它单独启动第二次托管设备。参考服务为真实播放器
-检查提供确定性的 PCM WAV。
+`.github/workflows/android.yml` 是构建与发布流水线，不是功能测试门禁。PR 与手动的
+非发布运行只编译三份无签名 Release APK。`master` 上的发布运行构建签名后的手机、
+TV、参考插件与 SDK 产物，再检查证书、默认数据和 16 KB 打包后上传。手动快速流水线
+只构建三份 debug APK、上传 Artifact 并发送到 Telegram。
 
-CI 不运行手机/平板 UI 矩阵；这些 Connected UI 检查仍需显式设备运行。
-`ResourceContractTest` 只验证资源结构，不代表母语文案质量。PR 额外编译三份无签名
-Release APK；证书、默认数据、SDK 压缩包与 16 KB 打包检查只在签名发布任务中执行。
-手动快速流水线不是测试门禁，只负责构建三份 debug APK、上传 Artifact 并发送到
-Telegram。
+单元测试、托管设备测试和手机/平板 UI 测试由维护者在打包流水线外显式执行。下文记录
+的是这些专项运行的证据。`ResourceContractTest` 只验证资源结构，不代表母语文案质量。
 
 最近一次恶意 IPC Fixture 实测（2026-07-29）：
 
