@@ -47,18 +47,15 @@ class ExternalProviderColdStartSessionRecoveryTest {
     @Test
     fun phase1_opensAndPersistsExternalProviderSession() = runBlocking {
         val fixture = fixture()
-        val initialState = fixture.captureInitialState()
-        fixture.markerFile.parentFile?.mkdirs()
-        fixture.markerFile.writeText(
-            JSONObject()
-                .put(MARKER_HOST_PID, Process.myPid())
-                .putInitialState(initialState)
-                .toString()
-        )
+        val initialState = fixture.captureInitialStateAndEnableExternalExtensions()
         try {
-            fixture.context.settings.edit { preferences ->
-                preferences[PreferencesKeys.EXTERNAL_EXTENSIONS] = true
-            }
+            fixture.markerFile.parentFile?.mkdirs()
+            fixture.markerFile.writeText(
+                JSONObject()
+                    .put(MARKER_HOST_PID, Process.myPid())
+                    .putInitialState(initialState)
+                    .toString()
+            )
             val plugin = fixture.pluginRepository.installedPlugins().single { installed ->
                 installed.packageName == REFERENCE_PACKAGE
             }
@@ -146,7 +143,7 @@ class ExternalProviderColdStartSessionRecoveryTest {
     @Test
     fun phase2_coldStartClosesSessionOnceAndDeletesTombstone() = runBlocking {
         val fixture = fixture()
-        var initialState = fixture.captureInitialState()
+        var initialState = fixture.captureInitialStateAndEnableExternalExtensions()
         try {
             assertTrue(
                 "Phase 1 marker is missing; run this class with Android Test Orchestrator",
@@ -248,17 +245,29 @@ class ExternalProviderColdStartSessionRecoveryTest {
             .forEach { playlist -> playlistRepository.unsubscribe(playlist.url) }
     }
 
-    private suspend fun TestFixture.captureInitialState(): InitialState {
-        val plugin = pluginRepository.installedPlugins().single { installed ->
-            installed.packageName == REFERENCE_PACKAGE
+    private suspend fun TestFixture.captureInitialStateAndEnableExternalExtensions(): InitialState {
+        val externalExtensionsEnabled =
+            context.settings.data.first()[PreferencesKeys.EXTERNAL_EXTENSIONS] ?: false
+        context.settings.edit { preferences ->
+            preferences[PreferencesKeys.EXTERNAL_EXTENSIONS] = true
         }
-        return InitialState(
-            externalExtensionsEnabled =
-                context.settings.data.first()[PreferencesKeys.EXTERNAL_EXTENSIONS] ?: false,
-            pluginTrusted = plugin.trusted,
-            pluginEnabled = plugin.enabled,
-            pluginState = plugin.state.name,
-        )
+        return try {
+            val plugin = pluginRepository.installedPlugins().single { installed ->
+                installed.packageName == REFERENCE_PACKAGE
+            }
+            InitialState(
+                externalExtensionsEnabled = externalExtensionsEnabled,
+                pluginTrusted = plugin.trusted,
+                pluginEnabled = plugin.enabled,
+                pluginState = plugin.state.name,
+            )
+        } catch (failure: Throwable) {
+            context.settings.edit { preferences ->
+                preferences[PreferencesKeys.EXTERNAL_EXTENSIONS] =
+                    externalExtensionsEnabled
+            }
+            throw failure
+        }
     }
 
     private suspend fun TestFixture.cleanup(initialState: InitialState) {
