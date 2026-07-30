@@ -490,9 +490,6 @@ class ResourceContractTest {
             "string/feat_setting_data_source_selector_with_identifier_description",
             "string/feat_setting_label_subscribe",
             "string/feat_setting_label_subscribing",
-            "string/tv_extensions_subtitle",
-            "string/tv_extensions_enable_developer_mode",
-            "string/tv_extensions_disable_developer_mode",
             "string/ui_state_loading",
         )
         val THEME_PREVIEW_KEYS = setOf(

@@ -3,9 +3,11 @@ package com.m3u.testing
 import android.content.res.Configuration
 import android.os.SystemClock
 import android.view.View
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasClickAction
@@ -18,6 +20,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performTouchInput
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.test.platform.app.InstrumentationRegistry
@@ -187,7 +190,7 @@ class SubscriptionSourceSelectionTest {
             fieldKey = SubscriptionProviderSettingKeys.Password,
             labelResId = string.feat_setting_placeholder_password,
         ).second
-        passwordField.click()
+        passwordField.performClick()
 
         val imeBottom = waitForStableImeBottom()
         device.waitForIdle()
@@ -269,11 +272,14 @@ class SubscriptionSourceSelectionTest {
         val isRtl =
             context.resources.configuration.layoutDirection == View.LAYOUT_DIRECTION_RTL
         val edgeInset = FULL_ROW_CLICK_INSET_DP * density
-        val x = if (isRtl) bounds.left + edgeInset else bounds.right - edgeInset
-        assertTrue(
-            "Could not click the logical end of source row $sourceKey at $bounds",
-            device.click(x.toInt(), bounds.center.y.toInt()),
-        )
+        row.performTouchInput {
+            val logicalEnd = Offset(
+                x = if (isRtl) edgeInset else visibleSize.width - edgeInset,
+                y = visibleSize.height / 2f,
+            )
+            down(logicalEnd)
+            up()
+        }
         waitUntilTagExists(editorTag(sourceKey))
         composeRule.waitForIdle()
     }
@@ -332,20 +338,22 @@ class SubscriptionSourceSelectionTest {
                 fieldKey = fieldKey,
                 labelResId = labelResId,
             )
+            val labelBounds = labelNode.fetchSemanticsNode().boundsInWindow
+            val fieldBounds = fieldNode.fetchSemanticsNode().boundsInWindow
             val labelEdge = if (isRtl) {
-                labelNode.visibleBounds.right
+                labelBounds.right
             } else {
-                labelNode.visibleBounds.left
+                labelBounds.left
             }
             val fieldEdge = if (isRtl) {
-                fieldNode.visibleBounds.right
+                fieldBounds.right
             } else {
-                fieldNode.visibleBounds.left
+                fieldBounds.left
             }
             assertTrue(
                 "Provider label and field are not aligned for " +
                     "${context.getString(labelResId)}: " +
-                    "label=${labelNode.visibleBounds}, field=${fieldNode.visibleBounds}",
+                    "label=$labelBounds, field=$fieldBounds",
                 abs(labelEdge - fieldEdge) <= FIELD_EDGE_TOLERANCE_PX,
             )
         }
@@ -355,7 +363,7 @@ class SubscriptionSourceSelectionTest {
         editorSourceKey: String,
         fieldKey: String,
         labelResId: Int,
-    ): Pair<UiObject2, UiObject2> {
+    ): Pair<SemanticsNodeInteraction, SemanticsNodeInteraction> {
         val label = context.getString(labelResId).withoutBidiControls()
         val fieldTag = providerFieldTag(fieldKey)
         composeRule.waitUntil(UI_TIMEOUT_MILLIS) {
@@ -365,35 +373,16 @@ class SubscriptionSourceSelectionTest {
             }.isSuccess
         }
         waitUntilTagExists(fieldTag)
-        composeRule.onNodeWithTag(fieldTag).performScrollTo()
+        val fieldContainer = composeRule.onNodeWithTag(fieldTag)
+        fieldContainer.performScrollTo()
         composeRule.waitForIdle()
-        device.waitForIdle()
-        val deadline = SystemClock.uptimeMillis() + UI_TIMEOUT_MILLIS
-        while (SystemClock.uptimeMillis() < deadline) {
-            val labelNode = device.findObjects(
-                By.text(caseInsensitiveContaining(label))
-            ).firstOrNull { node ->
-                runCatching {
-                    node.className == "android.widget.TextView"
-                }.getOrDefault(false)
-            }
-            val fieldNode = runCatching {
-                device.findObject(
-                    By.desc(caseInsensitiveContaining(label))
-                )?.ancestorOfClass("android.widget.EditText")
-            }.getOrNull()
-            if (labelNode != null && fieldNode != null) {
-                val nodesAreStable = runCatching {
-                    !labelNode.visibleBounds.isEmpty &&
-                        !fieldNode.visibleBounds.isEmpty
-                }.getOrDefault(false)
-                if (nodesAreStable) {
-                    return labelNode to fieldNode
-                }
-            }
-            SystemClock.sleep(TAG_POLL_MILLIS)
-        }
-        error("Provider field was not exposed after scrolling to $fieldTag: $label")
+        val fieldMatcher = hasContentDescription(
+            label,
+            substring = true,
+            ignoreCase = true,
+        )
+        waitUntilMatcherExists(fieldMatcher)
+        return fieldContainer to composeRule.onNode(fieldMatcher)
     }
 
     private fun assertWideSettingPanesAreArrangedSideBySide(sourceKey: String) {
@@ -616,11 +605,6 @@ class SubscriptionSourceSelectionTest {
         Pattern.CASE_INSENSITIVE,
     )
 
-    private fun caseInsensitiveContaining(value: String): Pattern = Pattern.compile(
-        ".*${Pattern.quote(value)}.*",
-        Pattern.CASE_INSENSITIVE,
-    )
-
     private fun String.withoutBidiControls(): String = filterNot { char ->
         char == '\u061C' ||
             char == '\u200E' ||
@@ -635,15 +619,6 @@ class SubscriptionSourceSelectionTest {
             current = current.parent ?: return this
         }
         return current
-    }
-
-    private fun UiObject2.ancestorOfClass(className: String): UiObject2 {
-        var current: UiObject2? = this
-        while (current != null) {
-            if (current.className == className) return current
-            current = current.parent
-        }
-        error("Object has no $className ancestor: $this")
     }
 
     private fun sourceTag(sourceKey: String): String = "playlist-source:$sourceKey"

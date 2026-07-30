@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import com.m3u.core.foundation.unit.DataUnit
 import com.m3u.smartphone.ui.material.ktx.plus
 import com.m3u.smartphone.ui.material.model.LocalSpacing
@@ -18,6 +19,7 @@ internal fun PreferencesFragment(
     versionName: String,
     versionCode: Int,
     codecPackEnabled: Boolean,
+    extensionEntryRole: Role,
     navigateToPlaylistManagement: () -> Unit,
     navigateToExtensionPlugins: () -> Unit,
     navigateToThemeSelector: () -> Unit,
@@ -40,6 +42,7 @@ internal fun PreferencesFragment(
                 navigateToThemeSelector = navigateToThemeSelector,
                 navigateToOptional = navigateToOptional,
                 codecPackEnabled = codecPackEnabled,
+                extensionEntryRole = extensionEntryRole,
                 navigateToCodecPack = navigateToCodecPack
             )
         }

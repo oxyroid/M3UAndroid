@@ -1,6 +1,7 @@
 package com.m3u.smartphone.ui.business.setting.fragments
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +23,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -105,6 +107,7 @@ internal fun ExtensionSettingsScreen(
                 modifier = modifier,
                 contentPadding = contentPadding,
                 onRetry = onRetry,
+                isError = true,
             )
             return
         }
@@ -267,12 +270,19 @@ private fun ExtensionSettingsStatus(
     modifier: Modifier,
     contentPadding: PaddingValues,
     onRetry: (() -> Unit)? = null,
+    isError: Boolean = false,
 ) {
     Box(
         modifier = modifier
             .fillMaxSize()
             .padding(contentPadding)
             .padding(16.dp)
+            .semantics {
+                if (isError) {
+                    error(text)
+                    liveRegion = LiveRegionMode.Polite
+                }
+            }
             .testTag(tag),
         contentAlignment = Alignment.TopCenter,
     ) {
@@ -293,7 +303,7 @@ private fun ExtensionSettingsStatus(
                         .heightIn(min = 48.dp)
                         .testTag("extension-settings-retry"),
                 ) {
-                    Text(stringResource(string.ui_action_refresh))
+                    Text(stringResource(string.ui_action_retry))
                 }
             }
         }
@@ -414,7 +424,7 @@ private fun ExtensionSettingControl(
                     testTag = "extension-setting-choice-group:$qualifiedKey",
                     errorTestTag = "extension-setting-choice-error:$qualifiedKey",
                 ) {
-                    field.choices.forEach { choice ->
+                    field.choices.forEachIndexed { index, choice ->
                         val semanticChoiceLabel = extensionSettingSemanticText(
                             value = choice.label,
                             bidiFormatter = bidiFormatter,
@@ -444,6 +454,7 @@ private fun ExtensionSettingControl(
                             label = bidiFormatter.natural(choice.label),
                             contentDescription = choiceControlDescription,
                             testTag = "extension-setting-choice:$qualifiedKey:${choice.value}",
+                            showDivider = index > 0,
                         )
                     }
                 }
@@ -613,14 +624,19 @@ internal fun ExtensionSettingChoiceGroup(
     errorTestTag: String,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .selectableGroup()
-            .testTag(testTag),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        content = content,
-    )
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .selectableGroup()
+                .testTag(testTag),
+            content = content,
+        )
+    }
     errorMessage?.let { message ->
         ExtensionSettingErrorText(
             message = message,
@@ -638,20 +654,26 @@ internal fun ExtensionSettingChoiceRow(
     contentDescription: String,
     testTag: String,
     modifier: Modifier = Modifier,
+    showDivider: Boolean = false,
 ) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        color = if (selected) {
-            MaterialTheme.colorScheme.secondaryContainer
-        } else {
-            MaterialTheme.colorScheme.surfaceContainerLow
-        },
-    ) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        if (showDivider) {
+            HorizontalDivider(
+                modifier = Modifier.padding(start = 52.dp),
+                color = MaterialTheme.colorScheme.outlineVariant,
+            )
+        }
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 56.dp)
+                .background(
+                    if (selected) {
+                        MaterialTheme.colorScheme.secondaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surfaceContainerLow
+                    }
+                )
                 .selectable(
                     selected = selected,
                     enabled = enabled,
@@ -675,6 +697,11 @@ internal fun ExtensionSettingChoiceRow(
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyLarge,
+                color = if (selected) {
+                    MaterialTheme.colorScheme.onSecondaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                },
                 modifier = Modifier.weight(1f),
             )
         }

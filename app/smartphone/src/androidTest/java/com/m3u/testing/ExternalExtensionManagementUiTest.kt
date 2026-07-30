@@ -1,6 +1,5 @@
 package com.m3u.testing
 
-import android.os.SystemClock
 import android.view.View
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,6 +8,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
@@ -42,8 +42,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.datastore.preferences.core.edit
 import androidx.test.platform.app.InstrumentationRegistry
-import androidx.test.uiautomator.By
-import androidx.test.uiautomator.StaleObjectException
 import androidx.test.uiautomator.UiDevice
 import com.m3u.business.setting.ExtensionPluginDiscoveryState
 import com.m3u.business.setting.ExtensionPluginOperation
@@ -383,20 +381,21 @@ class ExternalExtensionManagementUiTest {
         composeRule.onNodeWithTag(AUTHORIZATION_IDENTITY_CERTIFICATE_TAG)
             .assertIsDisplayed()
             .assertTextContains(
-                referencePlugin.certificateSha256.shortCertificateFingerprint(),
+                referencePlugin.certificateSha256.chunked(16).joinToString(" "),
                 substring = true,
-            )
+        )
         assertTechnicalIdentityValueIsAbsent("package")
         assertTechnicalIdentityValueIsAbsent("certificate")
-        waitUntilExists(
-            hasText(
-                composeRule.activity.getString(
-                    string.feat_setting_extension_requested_capabilities
-                ),
-                substring = false,
-                ignoreCase = true,
-            )
+        val requestedCapabilities = hasText(
+            composeRule.activity.getString(
+                string.feat_setting_extension_requested_capabilities
+            ),
+            substring = false,
+            ignoreCase = true,
         )
+        composeRule.onNodeWithTag(AUTHORIZATION_SCREEN_TAG)
+            .performScrollToNode(requestedCapabilities)
+        waitUntilExists(requestedCapabilities)
         composeRule.onNodeWithTag(AUTHORIZATION_SCREEN_TAG)
             .performScrollToNode(hasTestTag(AUTHORIZATION_IDENTITY_DISCLOSURE_TAG))
         waitUntilTagExists(AUTHORIZATION_IDENTITY_DISCLOSURE_TAG)
@@ -961,40 +960,29 @@ class ExternalExtensionManagementUiTest {
 
     private fun physicallyClickAuthorization(labelResource: Int) {
         val label = composeRule.activity.getString(labelResource)
-        val expectedBounds = composeRule.onNodeWithTag(AUTHORIZATION_CONFIRM_TAG)
+        val expectedBounds = composeRule
+            .onNodeWithTag(AUTHORIZATION_CONFIRM_TAG)
+            .assertIsDisplayed()
+            .assertTextContains(label, substring = false)
             .fetchSemanticsNode()
             .boundsInWindow
-        // Compose exposes the control role through semantics, but UIAutomator
-        // does not consistently map that role to android.widget.Button.
-        val selector = By.text(label).enabled(true)
-        val deadline = SystemClock.uptimeMillis() + UI_TIMEOUT_MILLIS
-
-        while (SystemClock.uptimeMillis() < deadline) {
-            val clicked = device.findObjects(selector).any { control ->
-                try {
-                    val bounds = control.visibleBounds
-                    val centerX = bounds.exactCenterX()
-                    val centerY = bounds.exactCenterY()
-                    val matchesComposeControl =
-                        centerX >= expectedBounds.left &&
-                            centerX <= expectedBounds.right &&
-                            centerY >= expectedBounds.top &&
-                            centerY <= expectedBounds.bottom
-                    if (matchesComposeControl) control.click()
-                    matchesComposeControl
-                } catch (_: StaleObjectException) {
-                    false
-                }
-            }
-            if (clicked) {
-                device.waitForIdle()
-                composeRule.waitForIdle()
-                return
-            }
-            SystemClock.sleep(UI_AUTOMATOR_RETRY_MILLIS)
-        }
-
-        throw AssertionError("Authorization action is not visible: $label")
+        assertTrue(
+            "Authorization action is outside the physical display: " +
+                "$label at $expectedBounds",
+            expectedBounds.left >= 0f &&
+                expectedBounds.top >= 0f &&
+                expectedBounds.right <= device.displayWidth &&
+                expectedBounds.bottom <= device.displayHeight,
+        )
+        assertTrue(
+            "Could not physically click authorization action: $label at $expectedBounds",
+            device.click(
+                expectedBounds.center.x.toInt(),
+                expectedBounds.center.y.toInt(),
+            ),
+        )
+        device.waitForIdle()
+        composeRule.waitForIdle()
     }
 
     private fun closeSettings() {
@@ -1035,10 +1023,35 @@ class ExternalExtensionManagementUiTest {
         }
         waitUntilTagExists(EXTENSION_ENTRY_TAG)
         composeRule.onAllNodesWithTag(EXTENSION_ENTRY_TAG).assertCountEquals(1)
+        assertExtensionEntryNavigationSemantics()
         composeRule.onNodeWithTag(EXTENSION_ENTRY_TAG)
             .assertMinimumTouchTarget()
             .performClick()
         waitUntilTagExists(PLUGIN_LIST_TAG)
+    }
+
+    private fun assertExtensionEntryNavigationSemantics() {
+        val usesSideRail =
+            composeRule.activity.resources.configuration.screenWidthDp >=
+                SIDE_RAIL_MINIMUM_WIDTH_DP
+        composeRule.onNodeWithTag(EXTENSION_ENTRY_TAG)
+            .assert(
+                SemanticsMatcher.expectValue(
+                    SemanticsProperties.Role,
+                    if (usesSideRail) Role.Tab else Role.Button,
+                )
+            )
+            .assert(
+                SemanticsMatcher(
+                    if (usesSideRail) {
+                        "side-rail entry preserves selected semantics"
+                    } else {
+                        "compact entry does not expose tab selection semantics"
+                    }
+                ) { node ->
+                    node.config.contains(SemanticsProperties.Selected) == usesSideRail
+                }
+            )
     }
 
     private fun SemanticsNodeInteraction.assertMinimumTouchTarget():
@@ -1105,14 +1118,8 @@ class ExternalExtensionManagementUiTest {
     private fun choiceTag(value: String): String =
         "extension-setting-choice:playback/quality:$value"
 
-    private fun String.shortCertificateFingerprint(): String {
-        val prefix = take(16).chunked(8).joinToString(" ")
-        return if (length > 16) "$prefix…" else prefix
-    }
-
     private companion object {
         const val UI_TIMEOUT_MILLIS = 15_000L
-        const val UI_AUTOMATOR_RETRY_MILLIS = 100L
         const val GEOMETRY_TOLERANCE_DP = 0.5f
         const val REFERENCE_PACKAGE = "com.m3u.testing.extension.reference"
         const val REFERENCE_SERVICE =

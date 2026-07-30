@@ -167,6 +167,7 @@
     <string name="feat_setting_provider_source_with_provider">%1$s — %2$s</string>
     <string name="feat_setting_provider_choice_with_identifier">%1$s · %2$s</string>
     <string name="feat_setting_provider_choice_with_identifier_description">%1$s. ID del proveedor: %2$s</string>
+    <string name="feat_setting_provider_identifier">ID del proveedor</string>
     <string name="feat_setting_data_source_selector_description">Fuente de suscripción. Actual: %1$s</string>
     <string name="feat_setting_data_source_selector_with_identifier_description">Fuente de suscripción. Actual: %1$s. ID del proveedor: %2$s</string>
     <string name="feat_setting_external_extensions">Extensiones externas</string>

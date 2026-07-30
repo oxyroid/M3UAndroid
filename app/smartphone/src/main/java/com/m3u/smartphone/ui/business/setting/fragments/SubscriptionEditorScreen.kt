@@ -75,6 +75,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -192,6 +193,10 @@ internal fun SubscriptionEditorScreen(
             submission.providerKind.value == expectedProviderKind &&
             submission.reauthenticationPlaylistUrl == reauthenticationPlaylistUrl
     } == true
+    val providerReauthenticationInProgress =
+        reauthenticationPlaylistUrl?.let(
+            providerOperationState::isReauthenticating
+        ) == true
     val sourceLabel = if (editorSource == DataSource.Provider) {
         discoveredVariant?.displayName
             ?.let(bidiFormatter::natural)
@@ -225,22 +230,7 @@ internal fun SubscriptionEditorScreen(
                         SubscriptionProviderExecutionKind.EXTERNAL
                     )
         }
-        ?.let(bidiFormatter::ltr)
-    val sourceSupporting = externalProviderIdentity?.let { stableProviderId ->
-        stringResource(
-            string.feat_setting_provider_choice_with_identifier,
-            sourceSupportingName ?: sourceLabel,
-            stableProviderId,
-        )
-    } ?: sourceSupportingName
-    val sourceSupportingContentDescription =
-        externalProviderIdentity?.let { stableProviderId ->
-            stringResource(
-                string.feat_setting_provider_choice_with_identifier_description,
-                sourceSupportingName ?: sourceLabel,
-                stableProviderId,
-            )
-        }
+    val sourceSupporting = sourceSupportingName
     val sourceIcon = when (editorSource) {
         DataSource.M3U -> Icons.Rounded.Link
         DataSource.EPG -> Icons.Rounded.DateRange
@@ -328,8 +318,7 @@ internal fun SubscriptionEditorScreen(
                 SubscriptionSourceSummary(
                     label = sourceLabel,
                     supporting = sourceSupporting,
-                    supportingContentDescription =
-                        sourceSupportingContentDescription,
+                    technicalIdentity = externalProviderIdentity,
                     icon = sourceIcon,
                 )
             }
@@ -360,9 +349,7 @@ internal fun SubscriptionEditorScreen(
                                     onRetryProviderReauthentication
                                 ) ?: onRetryProviderDiscovery()
                             },
-                            preparing = reauthenticationPlaylistUrl?.let(
-                                providerOperationState::isReauthenticating
-                            ) == true,
+                            preparing = providerReauthenticationInProgress,
                             enabled = !operationInProgress,
                             showErrors = submissionAttempted,
                         )
@@ -372,7 +359,14 @@ internal fun SubscriptionEditorScreen(
             }
         }
 
-        if (operationInProgress && !providerSubmissionInProgress) {
+        if (
+            shouldShowPlaylistMaintenanceNotice(
+                operationInProgress = operationInProgress,
+                providerSubmissionInProgress = providerSubmissionInProgress,
+                providerReauthenticationInProgress =
+                    providerReauthenticationInProgress,
+            )
+        ) {
             item(key = "maintenance") {
                 SubscriptionEditorPageContent {
                     PlaylistMaintenanceNotice()
@@ -570,13 +564,16 @@ private fun SubscriptionEditorPageContent(
 }
 
 @Composable
-private fun SubscriptionSourceSummary(
+internal fun SubscriptionSourceSummary(
     label: String,
     supporting: String?,
-    supportingContentDescription: String?,
+    technicalIdentity: String?,
     icon: ImageVector,
     modifier: Modifier = Modifier,
 ) {
+    val bidiFormatter = rememberUiBidiFormatter()
+    val technicalIdentityText = technicalIdentity
+        ?.let(bidiFormatter::standaloneTechnical)
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.extraLarge,
@@ -622,11 +619,27 @@ private fun SubscriptionSourceSummary(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 3,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = supportingContentDescription?.let { description ->
-                            Modifier.clearAndSetSemantics {
-                                contentDescription = description
-                            }
-                        } ?: Modifier,
+                    )
+                }
+                technicalIdentityText?.let { text ->
+                    Text(
+                        text = stringResource(string.feat_setting_provider_identifier),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = text,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            textDirection = TextDirection.Ltr,
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontFamily = FontFamily.Monospace,
+                        softWrap = true,
+                        maxLines = Int.MAX_VALUE,
+                        overflow = TextOverflow.Clip,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("provider-technical-identity"),
                     )
                 }
             }
@@ -1165,7 +1178,7 @@ internal fun ProviderDiscoveryRetryNotice(
 }
 
 @Composable
-private fun ProviderFormField(
+internal fun ProviderFormField(
     field: ProviderSubscriptionFormField,
     bidiFormatter: UiBidiFormatter,
     enabled: Boolean,
@@ -1184,6 +1197,7 @@ private fun ProviderFormField(
     ) {
         val displayLabel = bidiFormatter.natural(definition.label)
         FlowRow(
+            modifier = Modifier.clearAndSetSemantics {},
             horizontalArrangement = Arrangement.spacedBy(spacing.small),
             verticalArrangement = Arrangement.spacedBy(spacing.extraSmall),
         ) {
@@ -1267,15 +1281,13 @@ private fun ProviderFormField(
                     shape = MaterialTheme.shapes.large,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .semantics {
-                            contentDescription = displayLabel
-                            if (definition.required) {
-                                stateDescription = requiredDescription
-                            }
-                            if (errorMessage != null) {
-                                error(errorMessage)
-                            }
-                        },
+                        .providerFieldSemantics(
+                            fieldLabel = displayLabel,
+                            requiredDescription = requiredDescription.takeIf {
+                                definition.required
+                            },
+                            errorMessage = errorMessage,
+                        ),
                 )
             }
 
@@ -1294,19 +1306,16 @@ private fun ProviderFormField(
             ) {
                 ProviderResetChoice(
                     field = field,
-                    fieldLabel = displayLabel,
                     enabled = enabled,
                     onUpdate = onUpdate,
                 )
                 ProviderChoiceButton(
-                    fieldLabel = displayLabel,
                     selected = field.value == "true" && !field.isUsingDefault,
                     enabled = enabled,
                     onClick = { onUpdate("true") },
                     text = stringResource(string.feat_setting_provider_value_true),
                 )
                 ProviderChoiceButton(
-                    fieldLabel = displayLabel,
                     selected = field.value == "false" && !field.isUsingDefault,
                     enabled = enabled,
                     onClick = { onUpdate("false") },
@@ -1329,13 +1338,11 @@ private fun ProviderFormField(
             ) {
                 ProviderResetChoice(
                     field = field,
-                    fieldLabel = displayLabel,
                     enabled = enabled,
                     onUpdate = onUpdate,
                 )
                 definition.choices.forEach { choice ->
                     ProviderChoiceButton(
-                        fieldLabel = displayLabel,
                         selected = field.value == choice.value && !field.isUsingDefault,
                         enabled = enabled,
                         onClick = { onUpdate(choice.value) },
@@ -1367,13 +1374,11 @@ private fun ProviderFormField(
 @Composable
 private fun ProviderResetChoice(
     field: ProviderSubscriptionFormField,
-    fieldLabel: String,
     enabled: Boolean,
     onUpdate: (String?) -> Unit,
 ) {
     if (field.definition.defaultValue != null || !field.definition.required) {
         ProviderChoiceButton(
-            fieldLabel = fieldLabel,
             selected = field.isUsingDefault || field.value == null,
             enabled = enabled,
             onClick = { onUpdate(null) },
@@ -1390,7 +1395,6 @@ private fun ProviderResetChoice(
 
 @Composable
 private fun ProviderChoiceButton(
-    fieldLabel: String,
     selected: Boolean,
     enabled: Boolean = true,
     onClick: () -> Unit,
@@ -1406,11 +1410,6 @@ private fun ProviderChoiceButton(
     } else {
         MaterialTheme.colorScheme.onSurfaceVariant
     }
-    val choiceDescription = stringResource(
-        string.feat_setting_extension_choice_field_description,
-        text,
-        fieldLabel,
-    )
     Surface(
         selected = selected,
         onClick = onClick,
@@ -1423,7 +1422,6 @@ private fun ProviderChoiceButton(
             .alpha(if (enabled) 1f else 0.38f)
             .semantics {
                 role = Role.RadioButton
-                contentDescription = choiceDescription
             },
     ) {
         Row(
@@ -1449,15 +1447,36 @@ private fun Modifier.providerChoiceGroupSemantics(
     fieldLabel: String,
     requiredDescription: String?,
     errorMessage: String?,
+): Modifier = providerFieldSemantics(
+    fieldLabel = fieldLabel,
+    requiredDescription = requiredDescription,
+    errorMessage = errorMessage,
+)
+
+private fun Modifier.providerFieldSemantics(
+    fieldLabel: String,
+    requiredDescription: String?,
+    errorMessage: String?,
 ): Modifier = semantics {
     contentDescription = fieldLabel
-    requiredDescription?.let { description ->
-        stateDescription = description
-    }
+    requiredDescription
+        ?.takeUnless { description -> description == errorMessage }
+        ?.let { description ->
+            stateDescription = description
+        }
     errorMessage?.let { message ->
         error(message)
     }
 }
+
+internal fun shouldShowPlaylistMaintenanceNotice(
+    operationInProgress: Boolean,
+    providerSubmissionInProgress: Boolean,
+    providerReauthenticationInProgress: Boolean,
+): Boolean =
+    operationInProgress &&
+        !providerSubmissionInProgress &&
+        !providerReauthenticationInProgress
 
 private fun ProviderSettingFieldError.messageResource(): Int = when (this) {
     ProviderSettingFieldError.REQUIRED -> string.feat_setting_provider_error_required

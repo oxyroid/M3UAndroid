@@ -1552,7 +1552,7 @@ private fun ExtensionAuthorizationIdentitySummary(
         ExtensionAuthorizationIdentitySummaryLine(
             label = stringResource(string.feat_setting_extension_certificate_sha256),
             value = bidiFormatter.standaloneTechnical(
-                plugin.certificateSha256.shortCertificateFingerprint()
+                plugin.certificateSha256.chunked(16).joinToString(" ")
             ),
             testTag = "extension-authorization-identity-certificate",
         )
@@ -1560,18 +1560,17 @@ private fun ExtensionAuthorizationIdentitySummary(
 }
 
 @Composable
-private fun ExtensionAuthorizationIdentitySummaryLine(
+internal fun ExtensionAuthorizationIdentitySummaryLine(
     label: String,
     value: String,
     testTag: String,
 ) {
-    FlowRow(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .semantics(mergeDescendants = true) {}
             .testTag(testTag),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Text(
             text = label,
@@ -1585,8 +1584,10 @@ private fun ExtensionAuthorizationIdentitySummaryLine(
             ),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontFamily = FontFamily.Monospace,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
+            softWrap = true,
+            maxLines = Int.MAX_VALUE,
+            overflow = TextOverflow.Clip,
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }
@@ -2424,12 +2425,12 @@ private fun ExtensionDataRemovalBody(
             )
         }
         Text(
-            text = bidiFormatter.ltr(plugin.packageName),
-            style = if (plugin.displayName.isNullOrBlank()) {
+            text = bidiFormatter.standaloneTechnical(plugin.packageName),
+            style = (if (plugin.displayName.isNullOrBlank()) {
                 MaterialTheme.typography.titleMedium
             } else {
                 MaterialTheme.typography.bodySmall
-            },
+            }).copy(textDirection = TextDirection.Ltr),
             fontFamily = FontFamily.Monospace,
             modifier = Modifier.testTag("extension-data-removal-package"),
         )

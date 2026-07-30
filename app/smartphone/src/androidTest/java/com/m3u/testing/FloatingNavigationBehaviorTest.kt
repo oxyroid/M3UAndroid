@@ -238,7 +238,10 @@ class FloatingNavigationBehaviorTest {
     }
 
     private fun caseInsensitive(value: String): Pattern = Pattern.compile(
-        Pattern.quote(value),
+        value
+            .trim()
+            .split(WHITESPACE)
+            .joinToString(separator = "\\s+") { token -> Pattern.quote(token) },
         Pattern.CASE_INSENSITIVE,
     )
 
@@ -247,5 +250,6 @@ class FloatingNavigationBehaviorTest {
         const val NAVIGATION_DRAG_STEPS = 24
         const val NAVIGATION_ANIMATION_SETTLE_MILLIS = 500L
         const val UI_TIMEOUT_MILLIS = 5_000L
+        val WHITESPACE = Regex("\\s+")
     }
 }

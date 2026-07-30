@@ -17,9 +17,6 @@
     <string name="ui_sort_never_played">niciodata rulat</string>
     <string name="ui_sort_unspecified">Nespecificat</string>
     <string name="ui_state_loading">Se încarcă</string>
-    <string name="tv_extensions_subtitle">Extensiile APK locale instalate și starea lor de încredere.</string>
-    <string name="tv_extensions_enable_developer_mode">Activează extensiile pentru dezvoltatori</string>
-    <string name="tv_extensions_disable_developer_mode">Dezactivează extensiile pentru dezvoltatori</string>
     <string name="ui_connect">Conectează</string>
     <string name="ui_remote_control_pair_title">Introdu codul afișat pe TV</string>
     <string name="ui_remote_control_pair_subtitle">Asigură-te că ambele dispozitive sunt conectate la aceeași rețea Wi-Fi</string>

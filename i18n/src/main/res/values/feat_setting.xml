@@ -98,9 +98,9 @@
     <string name="feat_setting_subscription_status_succeeded">Playlist added</string>
     <string name="feat_setting_subscription_status_failed">Couldn’t add playlist</string>
     <string name="feat_setting_subscription_status_cancelled">Cancelled</string>
-    <string name="feat_setting_provider_credentials_required">check the required provider settings</string>
+    <string name="feat_setting_provider_credentials_required">Check the required provider settings.</string>
     <string name="feat_setting_provider_added">Connected to the provider and imported its live TV channels.</string>
-    <string name="feat_setting_provider_subscription_failed">could not connect to or refresh this server</string>
+    <string name="feat_setting_provider_subscription_failed">Couldn’t connect to or refresh this server.</string>
     <string name="feat_setting_provider_discovery_loading">Loading available providers…</string>
     <string name="feat_setting_provider_discovery_empty">No subscription providers are available.</string>
     <string name="feat_setting_provider_discovery_failed">Available providers could not be loaded.</string>
@@ -178,6 +178,7 @@
     <string name="feat_setting_provider_source_with_provider">%1$s — %2$s</string>
     <string name="feat_setting_provider_choice_with_identifier">%1$s · %2$s</string>
     <string name="feat_setting_provider_choice_with_identifier_description">%1$s. Provider ID: %2$s</string>
+    <string name="feat_setting_provider_identifier">Provider ID</string>
     <string name="feat_setting_data_source_selector_description">Subscription source. Current: %1$s</string>
     <string name="feat_setting_data_source_selector_with_identifier_description">Subscription source. Current: %1$s. Provider ID: %2$s</string>
     <string name="feat_setting_extension_plugins">Extension plugins</string>

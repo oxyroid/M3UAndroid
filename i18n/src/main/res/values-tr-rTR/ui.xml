@@ -19,9 +19,6 @@
     <string name="ui_sort_never_played">Hiç Oynatılmamış</string>
     <string name="ui_sort_unspecified">Belirtilmemiş</string>
     <string name="ui_state_loading">Yükleniyor</string>
-    <string name="tv_extensions_subtitle">Yüklü yerel APK uzantıları ve güven durumları.</string>
-    <string name="tv_extensions_enable_developer_mode">Geliştirici uzantılarını etkinleştir</string>
-    <string name="tv_extensions_disable_developer_mode">Geliştirici uzantılarını devre dışı bırak</string>
     <string name="ui_connect">Bağlan</string>
     <string name="ui_remote_control_pair_title">TV’deki kodu girin</string>
     <string name="ui_remote_control_pair_subtitle">Her iki cihazın da aynı Wi-Fi ağına bağlı olduğundan emin olun</string>

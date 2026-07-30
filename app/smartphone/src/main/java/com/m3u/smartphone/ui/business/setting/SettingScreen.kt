@@ -6,24 +6,12 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.Icons
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
-import androidx.compose.material3.adaptive.layout.PaneAdaptedValue
 import androidx.compose.material3.adaptive.navigation.BackNavigationBehavior
 import androidx.compose.material3.adaptive.navigation.ThreePaneScaffoldNavigator
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
@@ -37,7 +25,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
@@ -47,10 +34,8 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -412,14 +397,12 @@ private fun SettingScreen(
         ?.takeIf(String::isNotBlank)
         ?: playlistTitle
     val density = LocalDensity.current
-    val showPlaylistPaneHeader =
+    val usesSideRail =
         resolveAppNavigationMode(
             with(density) {
                 LocalWindowInfo.current.containerSize.width.toDp()
             }
         ) == AppNavigationMode.SideRail
-    val playlistListPaneVisible =
-        navigator.scaffoldValue[ListDetailPaneScaffoldRole.List] == PaneAdaptedValue.Expanded
     val currentPlaylistEditorTitle = when {
         destination !is SettingDestination.PlaylistEditor -> playlistEditorTitle
         destination.reauthenticationPlaylistUrl != null ->
@@ -531,6 +514,7 @@ private fun SettingScreen(
                 versionName = versionName,
                 versionCode = versionCode,
                 codecPackEnabled = codecPackState.enabled,
+                extensionEntryRole = if (usesSideRail) Role.Tab else Role.Button,
                 navigateToPlaylistManagement = {
                     if (destination != SettingDestination.Playlists) {
                         coroutineScope.launch {
@@ -576,21 +560,7 @@ private fun SettingScreen(
         detailPane = {
             when (destination) {
                 SettingDestination.Playlists -> {
-                    PlaylistDetailPane(
-                        showHeader = showPlaylistPaneHeader,
-                        title = playlistTitle,
-                        onBack = if (
-                            showPlaylistPaneHeader && !playlistListPaneVisible
-                        ) {
-                            {
-                                coroutineScope.launch {
-                                    navigator.navigateBack(backNavigationBehavior)
-                                }
-                            }
-                        } else {
-                            null
-                        },
-                    ) {
+                    PlaylistDetailPane {
                         PlaylistManagementOverviewScreen(
                             backingUpOrRestoring = backingUpOrRestoring,
                             playlists = playlists,
@@ -693,15 +663,7 @@ private fun SettingScreen(
                 }
 
                 is SettingDestination.PlaylistConfiguration -> {
-                    PlaylistDetailPane(
-                        showHeader = showPlaylistPaneHeader,
-                        title = configurationTitle,
-                        onBack = {
-                            coroutineScope.launch {
-                                navigator.navigateBack(backNavigationBehavior)
-                            }
-                        },
-                    ) {
+                    PlaylistDetailPane {
                         PlaylistConfigurationRoute(
                             viewModel = hiltViewModel(
                                 key = "playlist-configuration:" +
@@ -722,15 +684,7 @@ private fun SettingScreen(
                 }
 
                 SettingDestination.PlaylistSourcePicker -> {
-                    PlaylistDetailPane(
-                        showHeader = showPlaylistPaneHeader,
-                        title = playlistSourcePickerTitle,
-                        onBack = {
-                            coroutineScope.launch {
-                                navigator.navigateBack(backNavigationBehavior)
-                            }
-                        },
-                    ) {
+                    PlaylistDetailPane {
                         SubscriptionSourcePickerScreen(
                             dataOperationInProgress =
                                 backingUpOrRestoring != BackingUpAndRestoringState.NONE,
@@ -760,15 +714,7 @@ private fun SettingScreen(
                 }
 
                 is SettingDestination.PlaylistEditor -> {
-                    PlaylistDetailPane(
-                        showHeader = showPlaylistPaneHeader,
-                        title = currentPlaylistEditorTitle,
-                        onBack = {
-                            coroutineScope.launch {
-                                navigator.navigateBack(backNavigationBehavior)
-                            }
-                        },
-                    ) {
+                    PlaylistDetailPane {
                         SubscriptionEditorScreen(
                             dataOperationInProgress =
                                 backingUpOrRestoring != BackingUpAndRestoringState.NONE,
@@ -802,15 +748,7 @@ private fun SettingScreen(
                 }
 
                 SettingDestination.PlaylistEpgSources -> {
-                    PlaylistDetailPane(
-                        showHeader = showPlaylistPaneHeader,
-                        title = playlistEpgTitle,
-                        onBack = {
-                            coroutineScope.launch {
-                                navigator.navigateBack(backNavigationBehavior)
-                            }
-                        },
-                    ) {
+                    PlaylistDetailPane {
                         EpgSourceListScreen(
                             epgs = epgs,
                             onAddEpgSource = {
@@ -835,15 +773,7 @@ private fun SettingScreen(
                 }
 
                 SettingDestination.PlaylistHiddenChannels -> {
-                    PlaylistDetailPane(
-                        showHeader = showPlaylistPaneHeader,
-                        title = playlistHiddenChannelsTitle,
-                        onBack = {
-                            coroutineScope.launch {
-                                navigator.navigateBack(backNavigationBehavior)
-                            }
-                        },
-                    ) {
+                    PlaylistDetailPane {
                         HiddenChannelListScreen(
                             hiddenChannels = hiddenChannels,
                             onUnhideChannel = onUnhideChannel,
@@ -857,15 +787,7 @@ private fun SettingScreen(
                 }
 
                 SettingDestination.PlaylistHiddenCategories -> {
-                    PlaylistDetailPane(
-                        showHeader = showPlaylistPaneHeader,
-                        title = playlistHiddenCategoriesTitle,
-                        onBack = {
-                            coroutineScope.launch {
-                                navigator.navigateBack(backNavigationBehavior)
-                            }
-                        },
-                    ) {
+                    PlaylistDetailPane {
                         HiddenCategoryListScreen(
                             hiddenCategoriesWithPlaylists =
                                 hiddenCategoriesWithPlaylists,
@@ -1033,51 +955,11 @@ private fun SettingScreen(
 
 @Composable
 private fun PlaylistDetailPane(
-    showHeader: Boolean,
-    title: String,
     modifier: Modifier = Modifier,
-    onBack: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
-    Column(modifier = modifier.fillMaxSize()) {
-        if (showHeader) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .defaultMinSize(minHeight = 64.dp)
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (onBack != null) {
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.sizeIn(
-                            minWidth = 48.dp,
-                            minHeight = 48.dp,
-                        ),
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = stringResource(
-                                string.ui_cd_top_bar_on_back_pressed
-                            ),
-                        )
-                    }
-                }
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = 8.dp)
-                        .semantics { heading() },
-                )
-            }
-            HorizontalDivider()
-        }
-        Box(modifier = Modifier.weight(1f)) {
-            content()
-        }
+    Box(modifier = modifier.fillMaxSize()) {
+        content()
     }
 }
 

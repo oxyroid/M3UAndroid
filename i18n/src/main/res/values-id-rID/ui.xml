@@ -19,9 +19,6 @@
     <string name="ui_sort_never_played">tidak pernah diputar</string>
     <string name="ui_sort_unspecified">Tidak disebutkan</string>
     <string name="ui_state_loading">Memuat</string>
-    <string name="tv_extensions_subtitle">Ekstensi APK lokal yang terpasang dan status kepercayaannya.</string>
-    <string name="tv_extensions_enable_developer_mode">Aktifkan ekstensi pengembang</string>
-    <string name="tv_extensions_disable_developer_mode">Nonaktifkan ekstensi pengembang</string>
     <string name="ui_connect">Hubungkan</string>
     <string name="ui_remote_control_pair_title">Masukkan kode yang ditampilkan di TV</string>
     <string name="ui_remote_control_pair_subtitle">Pastikan kedua perangkat terhubung ke jaringan Wi-Fi yang sama</string>

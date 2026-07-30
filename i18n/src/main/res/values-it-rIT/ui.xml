@@ -19,9 +19,6 @@
     <string name="ui_sort_never_played">mai riprodotti</string>
     <string name="ui_sort_unspecified">Non specificato</string>
     <string name="ui_state_loading">Caricamento</string>
-    <string name="tv_extensions_subtitle">Estensioni APK locali installate e relativo stato di attendibilità.</string>
-    <string name="tv_extensions_enable_developer_mode">Abilita estensioni per sviluppatori</string>
-    <string name="tv_extensions_disable_developer_mode">Disabilita estensioni per sviluppatori</string>
     <string name="ui_connect">Connetti</string>
     <string name="ui_remote_control_pair_title">Inserisci il codice mostrato sulla TV</string>
     <string name="ui_remote_control_pair_subtitle">Assicurati che entrambi i dispositivi siano connessi alla stessa rete Wi-Fi</string>

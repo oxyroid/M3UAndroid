@@ -338,7 +338,13 @@ class PlaylistAdaptiveLayoutTest {
         val headingBounds = composeRule.onAllNodes(heading)
             .fetchSemanticsNodes()
             .map { node -> node.boundsInWindow }
-            .firstOrNull { bounds -> bounds.isHeaderFor(contentBounds) }
+            .filter { bounds -> bounds.isHeaderFor(contentBounds) }
+        assertEquals(
+            "Expected one playlist pane heading above $contentTag",
+            1,
+            headingBounds.size,
+        )
+        val singleHeadingBounds = headingBounds.singleOrNull()
             ?: error(
                 "Playlist pane heading was not found above $contentTag: " +
                     "title=$title, content=$contentBounds",
@@ -348,9 +354,15 @@ class PlaylistAdaptiveLayoutTest {
             substring = false,
             ignoreCase = true,
         ) and hasClickAction()
-        val backNode = composeRule.onAllNodes(back)
+        val backNodes = composeRule.onAllNodes(back)
             .fetchSemanticsNodes()
-            .firstOrNull { node -> node.boundsInWindow.isHeaderFor(contentBounds) }
+            .filter { node -> node.boundsInWindow.isHeaderFor(contentBounds) }
+        assertEquals(
+            "Expected one playlist pane back action above $contentTag",
+            1,
+            backNodes.size,
+        )
+        val backNode = backNodes.singleOrNull()
             ?: error(
                 "Playlist pane back action was not found above $contentTag: " +
                     "content=$contentBounds",
@@ -362,7 +374,7 @@ class PlaylistAdaptiveLayoutTest {
         assertTrue(
             "Pane heading overlaps content: heading=$headingBounds, " +
                 "content=$contentBounds",
-            headingBounds.bottom <= contentBounds.top + BOUNDS_TOLERANCE_PX,
+            singleHeadingBounds.bottom <= contentBounds.top + BOUNDS_TOLERANCE_PX,
         )
         assertTrue(
             "Pane back action must keep a 48dp touch target: $touchBounds",
@@ -371,8 +383,8 @@ class PlaylistAdaptiveLayoutTest {
         )
         assertFalse(
             "Pane heading overlaps its back action: " +
-                "heading=$headingBounds, back=$backBounds",
-            headingBounds.intersects(backBounds),
+                "heading=$singleHeadingBounds, back=$backBounds",
+            singleHeadingBounds.intersects(backBounds),
         )
         return backBounds
     }
