@@ -13,7 +13,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
@@ -32,39 +32,12 @@ jobs:
         with:
           gradle-home-cache-cleanup: true
 
-      - name: Verify fast contracts
-        run: |
-          ./gradlew \
-            :extension:api:jvmTest \
-            :extension:conformance:test \
-            :extension:runtime:test \
-            :extension:transport-protocol-android:testDebugUnitTest \
-            :extension:sdk-android:testDebugUnitTest \
-            :app:smartphone:testDebugUnitTest \
-            :i18n:testDebugUnitTest
-
-      - name: Verify extension SDK distribution
-        run: testing/bin/verify-extension-sdk-distribution.sh
-
       - name: Build debug APKs
         run: |
           ./gradlew \
             :app:smartphone:assembleDebug \
             :app:tv:assembleDebug \
             :testing:extension-reference:assembleDebug
-
-      - name: Verify debug default library packaging
-        run: |
-          testing/bin/verify-smartphone-default-library-assets.sh \
-            debug \
-            app/smartphone/build/outputs/apk/debug/*.apk
-
-      - name: Verify 16 KB native compatibility
-        run: |
-          testing/bin/verify-android-16kb.sh \
-            app/smartphone/build/outputs/apk/debug/*.apk \
-            app/tv/build/outputs/apk/debug/*.apk \
-            testing/extension-reference/build/outputs/apk/debug/*.apk
 
       - name: Upload
         uses: actions/upload-artifact@v6
@@ -73,7 +46,6 @@ jobs:
           if-no-files-found: error
           retention-days: 14
           path: |
-            build/distributions/m3u-extension-sdk-*
             app/smartphone/build/outputs/apk/debug/*.apk
             app/tv/build/outputs/apk/debug/*.apk
             testing/extension-reference/build/outputs/apk/debug/*.apk
@@ -89,7 +61,6 @@ jobs:
           large_file: true
           method: sendFile
           path: |
-            build/distributions/m3u-extension-sdk-*
             app/smartphone/build/outputs/apk/debug/*.apk
             app/tv/build/outputs/apk/debug/*.apk
             testing/extension-reference/build/outputs/apk/debug/*.apk

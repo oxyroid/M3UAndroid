@@ -17,7 +17,7 @@
 | 范围 | 当前行为 | 证据 |
 | --- | --- | --- |
 | 契约与 Runtime | 类型化、带版本的 Hook 契约；每次调用只获得当前 Hook 已声明且已批准的 Capability；限制单插件与宿主级调用准入；Request 准备、排队、执行、Response 校验与 Broker 请求共用一个截止时间；累计限制 Broker 请求次数、编码后的请求总字节数和响应总字节数；传播取消；记录健康状态并隔离连续失败 | `WireGoldenFixtureTest`、`ExtensionContractTest`、`ExtensionRuntimeTest`、`InvocationBudgetPropagationTest` 与 `ExtensionHostBridgeTest`。同一套序列化一致性测试会分别运行于内置 Runtime、SDK Backend 与独立参考 APK。 |
-| SDK 分发 | `1.0.0-alpha01` 会把 API、Android 协议、类型化 SDK、源码、一致性测试库和 Golden Fixture 发布为带版本的 Maven 仓库压缩包，并生成 SHA-256 文件。Hello 是独立的 Gradle 引用工程，只从该仓库解析 SDK group。 | `verifyExtensionSdkBundle`、`verifyExtensionSdkRepository` 与 `testing/bin/verify-extension-sdk-distribution.sh`。两条流水线都已配置上传压缩包与校验值，仍需首次 Actions 成功结果作为远端证据。 |
+| SDK 分发 | `1.0.0-alpha01` 会把 API、Android 协议、类型化 SDK、源码、一致性测试库和 Golden Fixture 发布为带版本的 Maven 仓库压缩包，并生成 SHA-256 文件。Hello 是独立的 Gradle 引用工程，只从该仓库解析 SDK group。 | 签名发布任务运行 `verifyExtensionSdkBundle`，并上传压缩包与校验值。`testing/bin/verify-extension-sdk-distribution.sh` 保留为发布前显式执行的独立 Hello 消费测试。快速流水线只打包 debug APK。 |
 | 内置 Provider | Emby 和 Jellyfin 是 smartphone 应用中同一个内置插件的两个选择项 | `EmbyCompatibleProviderIntegrationTest`、`EmbyCompatibleProviderLocalizationTest` 与 `SubscriptionProviderRepositoryIntegrationTest` |
 | 完整 Provider 契约 | 每个内置和外部 Provider 都实现 `Discover`、`Validate`、`Refresh`、`Browse`、`ResolvePlayback`、`UpdatePlayback` 与 `ClosePlayback`。`Browse` 提供有数量上限、带稳定引用的根页面和子页面；`UpdatePlayback` 上报有边界的 Session 事件。 | `SubscriptionProviderContractsTest`、`ExtensionContractTest`、`ExtensionNetworkOriginContractTest`、`WireGoldenFixtureTest` 与 Provider 产品链路测试 |
 | Provider 凭据 | 外部登录只返回一次性宿主回执。验证后的作用域只会把引用解析进发往批准 Origin 的请求；宿主不会把解析值直接序列化回插件。 | `HostNetworkBrokerSecurityTest`、`ExtensionHostBridgeTest`、`ProviderBrokerScopeStoreTest` 与 `CredentialVaultTest` |
@@ -32,15 +32,19 @@
 
 ## 如何理解证据
 
-CI 门禁指 `.github/workflows/android.yml` 自动执行的检查。Connected UI 检查可重复，但目前
-需要显式设备运行；设备检查指有记录的一次性实测。`ResourceContractTest` 验证资源结构，
-不代表母语文案质量。CI 会执行 smartphone 矩阵的静态契约检查，并编译 data 与 smartphone
-Connected Test。静态检查验证断点、Locale、主题、导航、压力组合和手机/平板 profile
-分离，但不会启动模拟器。外部插件门禁会先启动本地参考服务并通过健康检查，再在
-`hostileApi34` 构建托管设备上使用独立参考 APK，运行
+CI 门禁指 `.github/workflows/android.yml`。它用一次 Gradle 调用运行 Extension/Runtime、
+smartphone 与本地化单元测试，再用一次托管设备调用运行
 `HostileExternalExtensionIpcTest`、`ExternalExtensionConformanceIpcTest`、
-`ExternalProviderEndToEndTest` 与 `DebugDefaultLibraryBootstrapTest`。参考服务为真实
-播放器检查提供确定性的 PCM WAV；该门禁不运行手机或平板界面矩阵。
+`ExternalProviderEndToEndTest`、`DebugDefaultLibraryBootstrapTest` 与
+`ExternalProviderColdStartSessionRecoveryTest`。Android Test Orchestrator 让冷启动的
+两个阶段运行在不同宿主进程，不再为它单独启动第二次托管设备。参考服务为真实播放器
+检查提供确定性的 PCM WAV。
+
+CI 不运行手机/平板 UI 矩阵；这些 Connected UI 检查仍需显式设备运行。
+`ResourceContractTest` 只验证资源结构，不代表母语文案质量。PR 额外编译三份无签名
+Release APK；证书、默认数据、SDK 压缩包与 16 KB 打包检查只在签名发布任务中执行。
+手动快速流水线不是测试门禁，只负责构建三份 debug APK、上传 Artifact 并发送到
+Telegram。
 
 最近一次恶意 IPC Fixture 实测（2026-07-29）：
 

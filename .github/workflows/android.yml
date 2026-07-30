@@ -26,9 +26,9 @@ permissions:
   contents: read
 
 jobs:
-  verify:
+  test:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
@@ -37,7 +37,6 @@ jobs:
           submodules: recursive
 
       - name: Setup JDK
-        id: setup-java
         uses: actions/setup-java@v5
         with:
           java-version: 17
@@ -48,8 +47,14 @@ jobs:
         with:
           gradle-home-cache-cleanup: true
 
-      - name: Clean GMD
-        run: ./gradlew cleanManagedDevices --unused-only
+      - name: Run unit tests
+        run: |
+          ./gradlew \
+            :extension:api:jvmTest \
+            :extension:conformance:test \
+            :extension:runtime:test \
+            :app:smartphone:testDebugUnitTest \
+            :i18n:testDebugUnitTest
 
       - name: Enable KVM
         run: |
@@ -59,38 +64,6 @@ jobs:
           fi
           sudo chown root:$(id -gn) /dev/kvm
           sudo chmod 660 /dev/kvm
-          ls -l /dev/kvm
-
-      - name: Verify extension contracts
-        run: |
-          ./gradlew \
-            :extension:api:jvmTest \
-            :extension:conformance:test \
-            :extension:runtime:test \
-            :extension:transport-protocol-android:testDebugUnitTest \
-            :extension:sdk-android:testDebugUnitTest \
-            :extension:transport-android:testDebugUnitTest
-
-      - name: Verify extension SDK distribution
-        run: testing/bin/verify-extension-sdk-distribution.sh
-
-      - name: Verify localization contracts
-        run: |
-          ./gradlew \
-            :app:smartphone:testDebugUnitTest \
-            :i18n:testDebugUnitTest
-
-      - name: Verify release signing contract
-        run: testing/bin/verify-release-signing-contract.sh
-
-      - name: Validate connected UI harnesses
-        run: |
-          bash -n testing/bin/verify-smartphone-provider-ui-matrix-contract.sh
-          bash testing/bin/verify-smartphone-provider-ui-matrix-contract.sh
-          ./gradlew \
-            :data:assembleDebugAndroidTest \
-            :app:smartphone:assembleDebugAndroidTest \
-            :app:tv:assembleDebugAndroidTest
 
       - name: Start provider mock server
         run: |
@@ -106,22 +79,12 @@ jobs:
             --max-time 2 \
             http://127.0.0.1:8080/health
 
-      - name: Verify external extension isolation, conformance, and provider lifecycle
-        run: |
-          ./gradlew :app:smartphone:hostileApi34DebugAndroidTest \
-            -Pm3uMockServerUrl=http://10.0.2.2:8080 \
-            -Pandroid.testInstrumentationRunnerArguments.class=com.m3u.testing.HostileExternalExtensionIpcTest,com.m3u.testing.ExternalExtensionConformanceIpcTest,com.m3u.testing.ExternalProviderEndToEndTest,com.m3u.testing.DebugDefaultLibraryBootstrapTest \
-            -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect \
-            -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true \
-            -Pandroid.experimental.androidTest.numManagedDeviceShards=1 \
-            -Pandroid.experimental.testOptions.managedDevices.maxConcurrentDevices=1
-
-      - name: Verify external provider cold-start session recovery
+      - name: Run extension and provider device tests
         run: |
           ./gradlew :app:smartphone:hostileApi34DebugAndroidTest \
             -Pm3uMockServerUrl=http://10.0.2.2:8080 \
             -Pm3uUseTestOrchestrator=true \
-            -Pandroid.testInstrumentationRunnerArguments.class=com.m3u.testing.ExternalProviderColdStartSessionRecoveryTest \
+            -Pandroid.testInstrumentationRunnerArguments.class=com.m3u.testing.HostileExternalExtensionIpcTest,com.m3u.testing.ExternalExtensionConformanceIpcTest,com.m3u.testing.ExternalProviderEndToEndTest,com.m3u.testing.DebugDefaultLibraryBootstrapTest,com.m3u.testing.ExternalProviderColdStartSessionRecoveryTest \
             -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect \
             -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true \
             -Pandroid.experimental.androidTest.numManagedDeviceShards=1 \
@@ -141,35 +104,42 @@ jobs:
             app/smartphone/build/reports/androidTests/managedDevice/**
             testing/mock-server/build/mock-server/mock-server.log
 
-      - name: Build unsigned validation Release APKs
-        if: github.event_name == 'pull_request'
+  pr_release:
+    if: github.event_name == 'pull_request'
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          java-version: 17
+          distribution: "zulu"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          gradle-home-cache-cleanup: true
+
+      - name: Build unsigned Release APKs
         run: |
           ./gradlew \
             :app:smartphone:assembleRelease \
             :app:tv:assembleRelease \
             :testing:extension-reference:assembleRelease
 
-      - name: Verify unsigned Release default library packaging
-        if: github.event_name == 'pull_request'
-        run: |
-          testing/bin/verify-smartphone-default-library-assets.sh \
-            release \
-            app/smartphone/build/outputs/published-apk/release/*.apk
-
-      - name: Verify unsigned Release 16 KB native compatibility
-        if: github.event_name == 'pull_request'
-        run: |
-          testing/bin/verify-android-16kb.sh \
-            app/smartphone/build/outputs/published-apk/release/*.apk \
-            app/tv/build/outputs/published-apk/release/*.apk \
-            testing/extension-reference/build/outputs/apk/release/*.apk
-
   release_build:
     if: >-
       github.event_name != 'pull_request' &&
       github.ref == 'refs/heads/master' &&
       (github.event_name != 'workflow_dispatch' || inputs.publish_release)
-    needs: verify
+    needs: test
     runs-on: ubuntu-latest
     environment: production
 

@@ -18,7 +18,7 @@ This page defines what may ship from the current branch. Implementation instruct
 | Area | Current behavior | Evidence |
 | --- | --- | --- |
 | Contract and runtime | Typed, versioned Hook contracts; each call receives only the current Hook's declared and approved capabilities; per-extension and host-wide admission caps; one deadline across preparation, queueing, execution, response validation, and broker requests; cumulative broker request-count, encoded request-byte, and encoded response-byte limits; cancellation, health, and failure isolation | `WireGoldenFixtureTest`, `ExtensionContractTest`, `ExtensionRuntimeTest`, `InvocationBudgetPropagationTest`, and `ExtensionHostBridgeTest`. One serialized conformance suite runs against the built-in runtime, SDK backend, and standalone reference APK. |
-| SDK distribution | `1.0.0-alpha01` publishes API, Android protocol, typed SDK, sources, conformance code, and golden fixtures into a versioned Maven repository zip with a SHA-256 file. Hello is an independent Gradle consumer project that resolves the SDK group only from that repository. | `verifyExtensionSdkBundle`, `verifyExtensionSdkRepository`, and `testing/bin/verify-extension-sdk-distribution.sh`. Both workflows are configured to upload the zip and checksum; the first Actions run is still required as remote evidence. |
+| SDK distribution | `1.0.0-alpha01` publishes API, Android protocol, typed SDK, sources, conformance code, and golden fixtures into a versioned Maven repository zip with a SHA-256 file. Hello is an independent Gradle consumer project that resolves the SDK group only from that repository. | The signed release job runs `verifyExtensionSdkBundle` and uploads the zip and checksum. `testing/bin/verify-extension-sdk-distribution.sh` remains the explicit pre-release check for the independent Hello consumer. The fast workflow intentionally packages only debug APKs. |
 | Built-in provider | Emby and Jellyfin are selectable variants of one built-in extension in the smartphone app | `EmbyCompatibleProviderIntegrationTest`, `EmbyCompatibleProviderLocalizationTest`, and `SubscriptionProviderRepositoryIntegrationTest` |
 | Complete provider contract | Every built-in and external provider implements `Discover`, `Validate`, `Refresh`, `Browse`, `ResolvePlayback`, `UpdatePlayback`, and `ClosePlayback`. `Browse` exposes bounded root/child pages with extensible media kinds and stable references. `UpdatePlayback` reports bounded session events. | `SubscriptionProviderContractsTest`, `ExtensionContractTest`, `ExtensionNetworkOriginContractTest`, `WireGoldenFixtureTest`, and provider product-flow tests |
 | Provider credentials | External login returns a one-time host receipt. Post-validation scopes resolve references only into requests for the approved origin; the host does not directly serialize resolved values back to the extension. | `HostNetworkBrokerSecurityTest`, `ExtensionHostBridgeTest`, `ProviderBrokerScopeStoreTest`, and `CredentialVaultTest` |
@@ -33,18 +33,19 @@ This page defines what may ship from the current branch. Implementation instruct
 
 ## How to read the evidence
 
-A CI gate is run by `.github/workflows/android.yml`. A connected UI check is repeatable, but
-currently needs an explicit device run. A device check is a recorded one-off run.
-`ResourceContractTest` validates resource structure, not native-language quality.
-CI runs the smartphone matrix's static contract check and compiles the data and smartphone
-connected-test harnesses. The contract check verifies declared boundaries, locales, themes,
-navigation, stress coverage, and phone/tablet separation; it does not run an emulator. Its
-external-extension gate starts and health-checks the local reference server, then
-runs `HostileExternalExtensionIpcTest`, `ExternalExtensionConformanceIpcTest`,
-`ExternalProviderEndToEndTest`, and `DebugDefaultLibraryBootstrapTest` with the standalone
-reference APK on the `hostileApi34` build-managed device. The reference server supplies a
-deterministic PCM WAV fixture for the real-player check. This gate does not run the phone or tablet
-UI matrices.
+A CI gate is run by `.github/workflows/android.yml`. It uses one Gradle invocation for the
+extension/runtime, smartphone, and localization unit tests, then one managed-device invocation for
+`HostileExternalExtensionIpcTest`, `ExternalExtensionConformanceIpcTest`,
+`ExternalProviderEndToEndTest`, `DebugDefaultLibraryBootstrapTest`, and
+`ExternalProviderColdStartSessionRecoveryTest`. Android Test Orchestrator gives the cold-start
+phases separate host processes without starting a second managed device. The reference server
+supplies a deterministic PCM WAV fixture for the real-player check.
+
+The CI gate does not run the phone/tablet UI matrix. Those connected UI checks remain explicit
+device runs; `ResourceContractTest` checks resource structure, not native-language quality. Pull
+requests additionally compile the three unsigned Release APKs. Certificate, default-library, SDK
+bundle, and 16 KB packaging checks run only in the signed release job. The manual fast workflow is
+not a test gate: it builds the three debug APKs, uploads them, and sends them to Telegram.
 
 Latest hostile IPC run, 2026-07-29:
 
