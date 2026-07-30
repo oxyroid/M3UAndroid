@@ -108,7 +108,7 @@ apk_certificate_sha256() {
   digests="$(
     printf '%s\n' "$output" \
       | sed -nE \
-        's/^.*Signer #[0-9]+ certificate SHA-256 digest:[[:space:]]*([0-9A-Fa-f:]+)[[:space:]]*$/\1/p'
+        's/^.*Signer( #[0-9]+|:)[[:space:]]+certificate SHA-256 digest:[[:space:]]*([0-9A-Fa-f:]+)[[:space:]]*$/\2/p'
   )"
   local digest_count
   digest_count="$(
