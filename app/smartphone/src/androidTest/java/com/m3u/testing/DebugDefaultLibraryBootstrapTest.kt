@@ -85,7 +85,7 @@ class DebugDefaultLibraryBootstrapTest {
         ).bufferedReader().use { reader ->
             JSONObject(reader.readText())
         }
-        assertEquals(2, state.getInt("schemaVersion"))
+        assertEquals(1, state.getInt("schemaVersion"))
         assertEquals("imported", state.getString("status"))
         assertEquals(manifest.getString("revision"), state.getString("revision"))
         assertEquals(

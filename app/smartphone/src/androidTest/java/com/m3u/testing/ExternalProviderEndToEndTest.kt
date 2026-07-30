@@ -141,9 +141,9 @@ class ExternalProviderEndToEndTest {
                 )
             )
             providerPlaylistUrl = subscription.playlistUrl
-            assertEquals(2, subscription.channelCount)
+            assertEquals(EXPECTED_IMPORTED_ITEM_COUNT, subscription.channelCount)
             assertEquals(
-                2,
+                EXPECTED_IMPORTED_ITEM_COUNT,
                 requireNotNull(
                     playlistRepository.getPlaylistWithChannels(subscription.playlistUrl)
                 ).channels.size,
@@ -163,13 +163,17 @@ class ExternalProviderEndToEndTest {
             }
             assertEquals(WorkInfo.State.SUCCEEDED, refreshWork.state)
             assertEquals(
-                2,
+                EXPECTED_IMPORTED_ITEM_COUNT,
                 refreshWork.outputData.getInt(OUTPUT_CHANNEL_COUNT_KEY, -1),
             )
             val channels = requireNotNull(
                 playlistRepository.getPlaylistWithChannels(subscription.playlistUrl)
             ).channels
-            assertEquals(2, channels.size)
+            assertEquals(EXPECTED_IMPORTED_ITEM_COUNT, channels.size)
+            assertEquals(
+                EXPECTED_RELATION_IDS,
+                channels.mapNotNullTo(mutableSetOf()) { channel -> channel.relationId },
+            )
             val news = channels.single { channel -> channel.relationId == REFERENCE_NEWS_ID }
             assertEquals(Channel.URL_DYNAMIC, news.url)
 
@@ -347,9 +351,18 @@ class ExternalProviderEndToEndTest {
         const val REFERENCE_ACCESS_TOKEN = "mock-reference-access-token"
         const val REFERENCE_USER_ID = "reference-user-id"
         const val REFERENCE_NEWS_ID = "reference.news"
+        const val REFERENCE_SPORTS_ID = "reference.sports"
+        const val CATALOG_RELATION_PREFIX = "content:"
         const val REFERENCE_NEWS_PLAY_SESSION_ID =
             "reference-play-session-reference.news"
         const val OUTPUT_CHANNEL_COUNT_KEY = "channel-count"
+        const val EXPECTED_IMPORTED_ITEM_COUNT = 4
+        val EXPECTED_RELATION_IDS = setOf(
+            REFERENCE_NEWS_ID,
+            REFERENCE_SPORTS_ID,
+            "$CATALOG_RELATION_PREFIX$REFERENCE_NEWS_ID",
+            "$CATALOG_RELATION_PREFIX$REFERENCE_SPORTS_ID",
+        )
         const val WORK_TIMEOUT_MILLIS = 60_000L
         const val PLAYER_READY_TIMEOUT_MILLIS = 30_000L
         const val SESSION_CLOSE_TIMEOUT_MILLIS = 15_000L
