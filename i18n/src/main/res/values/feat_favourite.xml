@@ -7,4 +7,17 @@
     <string name="feat_favorite_browse_playlists">Browse playlists</string>
     <string name="feat_favorite_load_error_title">Couldn’t load favorites</string>
     <string name="feat_favorite_load_error_description">Try loading your saved channels again.</string>
+    <string name="feat_favorite_played_just_now">Played just now</string>
+    <plurals name="feat_favorite_played_minutes_ago">
+        <item quantity="one">Played %1$d minute ago</item>
+        <item quantity="other">Played %1$d minutes ago</item>
+    </plurals>
+    <plurals name="feat_favorite_played_hours_ago">
+        <item quantity="one">Played %1$d hour ago</item>
+        <item quantity="other">Played %1$d hours ago</item>
+    </plurals>
+    <plurals name="feat_favorite_played_days_ago">
+        <item quantity="one">Played %1$d day ago</item>
+        <item quantity="other">Played %1$d days ago</item>
+    </plurals>
 </resources>

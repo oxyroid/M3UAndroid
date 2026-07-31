@@ -7,4 +7,14 @@
     <string name="feat_favorite_browse_playlists">浏览播放列表</string>
     <string name="feat_favorite_load_error_title">无法加载收藏</string>
     <string name="feat_favorite_load_error_description">请重新加载已收藏的频道。</string>
+    <string name="feat_favorite_played_just_now">刚刚播放</string>
+    <plurals name="feat_favorite_played_minutes_ago">
+        <item quantity="other">%1$d 分钟前播放</item>
+    </plurals>
+    <plurals name="feat_favorite_played_hours_ago">
+        <item quantity="other">%1$d 小时前播放</item>
+    </plurals>
+    <plurals name="feat_favorite_played_days_ago">
+        <item quantity="other">%1$d 天前播放</item>
+    </plurals>
 </resources>

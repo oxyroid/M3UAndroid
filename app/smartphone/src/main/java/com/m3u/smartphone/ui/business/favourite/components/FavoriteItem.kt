@@ -1,31 +1,19 @@
 package com.m3u.smartphone.ui.business.favourite.components
 
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.MediaKinds
+import com.m3u.i18n.R.plurals
 import com.m3u.i18n.R.string
-import com.m3u.smartphone.ui.material.model.LocalSpacing
-import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
+import com.m3u.smartphone.ui.material.components.ChannelMediaCard
+import com.m3u.smartphone.ui.material.components.ChannelMediaCardLayout
 import kotlin.time.Clock
+import kotlin.time.Duration
 import kotlin.time.Instant
-import kotlin.time.Duration.Companion.days
-import kotlin.time.Duration.Companion.hours
-import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 
 @Composable
 internal fun FavoriteItem(
@@ -34,59 +22,66 @@ internal fun FavoriteItem(
     zapping: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
-    val spacing = LocalSpacing.current
+    val layout = when (channel.mediaKind) {
+        MediaKinds.MOVIE,
+        MediaKinds.SERIES -> ChannelMediaCardLayout.POSTER
+        else -> ChannelMediaCardLayout.LANDSCAPE
+    }
+    val playbackStatus = if (recently) {
+        channel.playbackStatus()
+    } else {
+        null
+    }
+    val supportingText = listOfNotNull(
+        channel.category.trim().takeIf(String::isNotEmpty),
+        playbackStatus,
+    ).joinToString(" · ").ifBlank {
+        channel.subtitle
+            ?.trim()
+            ?.takeIf(String::isNotEmpty)
+            ?: channel.productionYear?.toString().orEmpty()
+    }.takeIf(String::isNotEmpty)
 
-    val recentlyString = stringResource(string.ui_sort_recently)
-    val neverPlayedString = stringResource(string.ui_sort_never_played)
+    ChannelMediaCard(
+        channel = channel,
+        layout = layout,
+        supportingText = supportingText,
+        zapping = zapping,
+        onClick = onClick,
+        onLongClick = onLongClick,
+        modifier = modifier,
+    )
+}
 
-    OutlinedCard(
-        modifier = Modifier.semantics(mergeDescendants = true) { },
-        border = CardDefaults.outlinedCardBorder(zapping),
-        colors = CardDefaults.cardColors(Color.Transparent),
-        shape = AbsoluteSmoothCornerShape(spacing.medium, 65),
-    ) {
-        ListItem(
-            headlineContent = {
-                Text(
-                    text = channel.title.trim(),
-                    style = MaterialTheme.typography.titleSmall,
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1,
-                    fontWeight = FontWeight.Bold,
-                )
-            },
-            supportingContent = {
-                if (recently) {
-                    Text(
-                        text = remember(channel.seen) {
-                            val now = Clock.System.now()
-                            val instant = Instant.fromEpochMilliseconds(channel.seen)
-                            val duration = now - instant
-                            duration.toComponents { days, hours, minutes, seconds, _ ->
-                                when {
-                                    channel.seen == 0L -> neverPlayedString
-                                    days > 0 -> days.days.toString()
-                                    hours > 0 -> hours.hours.toString()
-                                    minutes > 0 -> minutes.minutes.toString()
-                                    seconds > 0 -> seconds.seconds.toString()
-                                    else -> recentlyString
-                                }
-                            }
-                        },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = LocalContentColor.current.copy(0.56f)
-                    )
-                }
-            },
-            colors = ListItemDefaults.colors(Color.Transparent),
-            modifier = Modifier
-                .combinedClickable(
-                    onClick = onClick,
-                    onLongClick = onLongClick
-                )
-                .then(modifier)
+@Composable
+private fun Channel.playbackStatus(): String {
+    if (seen == 0L) {
+        return stringResource(string.ui_sort_never_played)
+    }
+    val elapsed = remember(seen) {
+        Clock.System.now() - Instant.fromEpochMilliseconds(seen)
+    }.coerceAtLeast(Duration.ZERO)
+    val days = elapsed.inWholeDays
+    val hours = elapsed.inWholeHours
+    val minutes = elapsed.inWholeMinutes
+    return when {
+        days > 0 -> pluralStringResource(
+            plurals.feat_favorite_played_days_ago,
+            days.toInt(),
+            days,
         )
+        hours > 0 -> pluralStringResource(
+            plurals.feat_favorite_played_hours_ago,
+            hours.toInt(),
+            hours,
+        )
+        minutes > 0 -> pluralStringResource(
+            plurals.feat_favorite_played_minutes_ago,
+            minutes.toInt(),
+            minutes,
+        )
+        else -> stringResource(string.feat_favorite_played_just_now)
     }
 }

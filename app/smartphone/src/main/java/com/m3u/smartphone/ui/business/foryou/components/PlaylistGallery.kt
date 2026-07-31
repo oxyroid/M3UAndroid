@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -51,6 +52,8 @@ import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.common.helper.LocalHelper
 import com.m3u.smartphone.ui.common.helper.Metadata
 import com.m3u.smartphone.ui.common.helper.useRailNav
+import com.m3u.smartphone.ui.material.components.ChannelMediaCard
+import com.m3u.smartphone.ui.material.components.ChannelMediaCardLayout
 import com.m3u.smartphone.ui.material.components.PageStateContent
 import com.m3u.smartphone.ui.material.ktx.plus
 import com.m3u.smartphone.ui.material.model.LocalHazeState
@@ -214,6 +217,12 @@ private fun HomeChannelShelfSection(
         channel.mediaKind == MediaKinds.MOVIE ||
             channel.mediaKind == MediaKinds.SERIES
     }
+    val cardLayout = if (posterLayout) {
+        ChannelMediaCardLayout.POSTER
+    } else {
+        ChannelMediaCardLayout.LANDSCAPE
+    }
+    val cardWidth = if (posterLayout) 148.dp else 216.dp
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         HomeSectionTitle(
             title = section.title,
@@ -232,10 +241,11 @@ private fun HomeChannelShelfSection(
                 items = section.channels,
                 key = { channel -> channel.id },
             ) { channel ->
-                HomeChannelCard(
+                ChannelMediaCard(
                     channel = channel,
-                    posterLayout = posterLayout,
+                    layout = cardLayout,
                     onClick = { onPlayChannel(channel) },
+                    modifier = Modifier.width(cardWidth),
                 )
             }
         }

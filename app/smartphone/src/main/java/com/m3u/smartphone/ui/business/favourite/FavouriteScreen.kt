@@ -200,7 +200,7 @@ private fun FavoriteScreen(
 ) {
     val configuration = LocalConfiguration.current
     val actualRowCount = when (configuration.orientation) {
-        Configuration.ORIENTATION_PORTRAIT -> rowCount
+        Configuration.ORIENTATION_PORTRAIT -> rowCount + 1
         Configuration.ORIENTATION_LANDSCAPE -> rowCount + 2
         else -> rowCount + 2
     }
