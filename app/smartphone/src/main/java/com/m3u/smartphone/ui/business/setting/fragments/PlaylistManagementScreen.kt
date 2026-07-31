@@ -1,21 +1,26 @@
 package com.m3u.smartphone.ui.business.setting.fragments
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.automirrored.rounded.List
@@ -62,6 +67,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextOverflow
@@ -267,29 +273,39 @@ internal fun PlaylistManagementOverviewScreen(
                     }
                 }
             } else {
-                itemsIndexed(
-                    items = orderedPlaylists,
-                    key = { _, entry -> entry.key.url },
-                ) { index, (playlist, channelCount) ->
-                    val providerAccount = providerAccountSummaries.firstOrNull { account ->
-                        account.playlistUrl == playlist.url
-                    }
-                    val providerName = providerAccount?.let { account ->
-                        providerDisplayName(account, providerDiscoveryState)
-                    }
+                item(key = "playlist-shelf") {
                     PlaylistPageContent {
-                        PlaylistSubscriptionRow(
-                            playlist = playlist,
-                            channelCount = channelCount,
-                            providerDisplayName = providerName,
-                            enabled = !dataOperationInProgress && !operationInProgress,
-                            onClick = { onOpenPlaylistConfiguration(playlist) },
-                            modifier = Modifier.testTag(
-                                "playlist-management-item:${playlistWorkTag(playlist.url)}"
-                            ),
-                        )
-                        if (index != orderedPlaylists.lastIndex) {
-                            PlaylistInsetDivider()
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            orderedPlaylists.forEach { (playlist, channelCount) ->
+                                val providerAccount =
+                                    providerAccountSummaries.firstOrNull { account ->
+                                        account.playlistUrl == playlist.url
+                                    }
+                                val providerName = providerAccount?.let { account ->
+                                    providerDisplayName(account, providerDiscoveryState)
+                                }
+                                PlaylistSubscriptionCard(
+                                    playlist = playlist,
+                                    channelCount = channelCount,
+                                    providerDisplayName = providerName,
+                                    enabled =
+                                        !dataOperationInProgress &&
+                                            !operationInProgress,
+                                    onClick = {
+                                        onOpenPlaylistConfiguration(playlist)
+                                    },
+                                    modifier = Modifier.testTag(
+                                        "playlist-management-item:" +
+                                            playlistWorkTag(playlist.url)
+                                    ),
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
                         }
                     }
                 }
@@ -305,66 +321,76 @@ internal fun PlaylistManagementOverviewScreen(
                 )
             }
         }
-        item(key = "epg-sources") {
+        item(key = "content-shelf") {
             PlaylistPageContent {
-                PlaylistDestinationRow(
-                    headline = stringResource(string.feat_setting_label_epg_playlists),
-                    supporting = listOf(
-                        stringResource(string.feat_setting_playlist_manage_epg_description),
-                        pluralStringResource(
-                            plurals.feat_setting_playlist_epg_source_count,
-                            epgCount,
-                            epgCount,
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    PlaylistDestinationShelfCard(
+                        headline = stringResource(
+                            string.feat_setting_label_epg_playlists
                         ),
-                    ),
-                    icon = Icons.Rounded.DateRange,
-                    onClick = onOpenEpgSources,
-                    modifier = Modifier.testTag("playlist-overview-epg-sources"),
-                )
-                PlaylistInsetDivider()
-            }
-        }
-        item(key = "hidden-channels") {
-            PlaylistPageContent {
-                PlaylistDestinationRow(
-                    headline = stringResource(string.feat_setting_label_hidden_channels),
-                    supporting = listOf(
-                        stringResource(
-                            string.feat_setting_playlist_restore_hidden_channels_description
+                        supporting = listOf(
+                            stringResource(
+                                string.feat_setting_playlist_manage_epg_description
+                            ),
+                            pluralStringResource(
+                                plurals.feat_setting_playlist_epg_source_count,
+                                epgCount,
+                                epgCount,
+                            ),
                         ),
-                        pluralStringResource(
-                            plurals.feat_setting_playlist_hidden_channel_count,
-                            hiddenChannelCount,
-                            hiddenChannelCount,
+                        icon = Icons.Rounded.DateRange,
+                        onClick = onOpenEpgSources,
+                        modifier = Modifier.testTag(
+                            "playlist-overview-epg-sources"
                         ),
-                    ),
-                    icon = Icons.Rounded.VisibilityOff,
-                    onClick = onOpenHiddenChannels,
-                    modifier = Modifier.testTag("playlist-overview-hidden-channels"),
-                )
-                PlaylistInsetDivider()
-            }
-        }
-        item(key = "hidden-categories") {
-            PlaylistPageContent {
-                PlaylistDestinationRow(
-                    headline = stringResource(
-                        string.feat_setting_label_hidden_playlist_groups
-                    ),
-                    supporting = listOf(
-                        stringResource(
-                            string.feat_setting_playlist_restore_hidden_categories_description
+                    )
+                    PlaylistDestinationShelfCard(
+                        headline = stringResource(
+                            string.feat_setting_label_hidden_channels
                         ),
-                        pluralStringResource(
-                            plurals.feat_setting_playlist_hidden_category_count,
-                            hiddenCategoryCount,
-                            hiddenCategoryCount,
+                        supporting = listOf(
+                            stringResource(
+                                string.feat_setting_playlist_restore_hidden_channels_description
+                            ),
+                            pluralStringResource(
+                                plurals.feat_setting_playlist_hidden_channel_count,
+                                hiddenChannelCount,
+                                hiddenChannelCount,
+                            ),
                         ),
-                    ),
-                    icon = Icons.AutoMirrored.Rounded.List,
-                    onClick = onOpenHiddenCategories,
-                    modifier = Modifier.testTag("playlist-overview-hidden-categories"),
-                )
+                        icon = Icons.Rounded.VisibilityOff,
+                        onClick = onOpenHiddenChannels,
+                        modifier = Modifier.testTag(
+                            "playlist-overview-hidden-channels"
+                        ),
+                    )
+                    PlaylistDestinationShelfCard(
+                        headline = stringResource(
+                            string.feat_setting_label_hidden_playlist_groups
+                        ),
+                        supporting = listOf(
+                            stringResource(
+                                string.feat_setting_playlist_restore_hidden_categories_description
+                            ),
+                            pluralStringResource(
+                                plurals.feat_setting_playlist_hidden_category_count,
+                                hiddenCategoryCount,
+                                hiddenCategoryCount,
+                            ),
+                        ),
+                        icon = Icons.AutoMirrored.Rounded.List,
+                        onClick = onOpenHiddenCategories,
+                        modifier = Modifier.testTag(
+                            "playlist-overview-hidden-categories"
+                        ),
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                }
             }
         }
 
@@ -377,35 +403,42 @@ internal fun PlaylistManagementOverviewScreen(
                 )
             }
         }
-        item(key = "backup") {
+        item(key = "data-shelf") {
             PlaylistPageContent {
-                PlaylistDataActionRow(
-                    headline = stringResource(string.feat_setting_label_backup),
-                    supporting = stringResource(
-                        string.feat_setting_playlist_backup_description
-                    ),
-                    icon = Icons.Rounded.Backup,
-                    loading = backupInProgress,
-                    enabled = !dataOperationInProgress && !operationInProgress,
-                    onClick = onBackup,
-                    modifier = Modifier.testTag("playlist-backup-action"),
-                )
-                PlaylistInsetDivider()
-            }
-        }
-        item(key = "restore") {
-            PlaylistPageContent {
-                PlaylistDataActionRow(
-                    headline = stringResource(string.feat_setting_label_restore),
-                    supporting = stringResource(
-                        string.feat_setting_playlist_restore_description
-                    ),
-                    icon = Icons.Rounded.Restore,
-                    loading = restoreInProgress,
-                    enabled = !dataOperationInProgress && !operationInProgress,
-                    onClick = onRestore,
-                    modifier = Modifier.testTag("playlist-restore-action"),
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    PlaylistDataActionCard(
+                        headline = stringResource(string.feat_setting_label_backup),
+                        supporting = stringResource(
+                            string.feat_setting_playlist_backup_description
+                        ),
+                        icon = Icons.Rounded.Backup,
+                        loading = backupInProgress,
+                        enabled =
+                            !dataOperationInProgress &&
+                                !operationInProgress,
+                        onClick = onBackup,
+                        modifier = Modifier.testTag("playlist-backup-action"),
+                    )
+                    PlaylistDataActionCard(
+                        headline = stringResource(string.feat_setting_label_restore),
+                        supporting = stringResource(
+                            string.feat_setting_playlist_restore_description
+                        ),
+                        icon = Icons.Rounded.Restore,
+                        loading = restoreInProgress,
+                        enabled =
+                            !dataOperationInProgress &&
+                                !operationInProgress,
+                        onClick = onRestore,
+                        modifier = Modifier.testTag("playlist-restore-action"),
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                }
             }
         }
     }
@@ -588,7 +621,7 @@ private fun PlaylistSubscriptionStatusCard(
 }
 
 @Composable
-private fun PlaylistSubscriptionRow(
+private fun PlaylistSubscriptionCard(
     playlist: Playlist,
     channelCount: Int,
     providerDisplayName: String?,
@@ -615,60 +648,16 @@ private fun PlaylistSubscriptionRow(
         else -> Icons.AutoMirrored.Rounded.List
     }
 
-    ListItem(
-        headlineContent = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    textDirection = TextDirection.ContentOrLtr,
-                ),
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis,
-            )
-        },
-        supportingContent = {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    text = source,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        textDirection = TextDirection.ContentOrLtr,
-                    ),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = count,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        },
-        leadingContent = {
-            Icon(
-                imageVector = sourceIcon,
-                contentDescription = null,
-                modifier = Modifier.size(24.dp),
-            )
-        },
-        trailingContent = {
-            Icon(
-                imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
-                contentDescription = null,
-            )
-        },
-        colors = ListItemDefaults.colors(
-            containerColor = MaterialTheme.colorScheme.surface,
-        ),
+    PlaylistShelfCard(
+        headline = title,
+        supporting = listOf(source, count),
+        icon = sourceIcon,
+        onClick = onClick,
+        enabled = enabled,
+        headlineTextDirection = TextDirection.ContentOrLtr,
+        supportingTextDirection = TextDirection.ContentOrLtr,
         modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = 64.dp)
-            .alpha(if (enabled) 1f else 0.38f)
-            .clickable(
-                enabled = enabled,
-                role = Role.Button,
-                onClick = onClick,
-            ),
+            .width(244.dp),
     )
 }
 
@@ -1049,7 +1038,26 @@ private fun PlaylistDestinationRow(
 }
 
 @Composable
-private fun PlaylistDataActionRow(
+private fun PlaylistDestinationShelfCard(
+    headline: String,
+    supporting: List<String>,
+    icon: ImageVector,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
+    PlaylistShelfCard(
+        headline = headline,
+        supporting = supporting,
+        icon = icon,
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier.width(244.dp),
+    )
+}
+
+@Composable
+private fun PlaylistDataActionCard(
     headline: String,
     supporting: String,
     icon: ImageVector,
@@ -1058,53 +1066,113 @@ private fun PlaylistDataActionRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    PlaylistShelfCard(
+        headline = headline,
+        supporting = listOf(supporting),
+        icon = icon,
+        onClick = onClick,
+        enabled = enabled,
+        loading = loading,
+        modifier = modifier.width(272.dp),
+    )
+}
+
+@Composable
+private fun PlaylistShelfCard(
+    headline: String,
+    supporting: List<String>,
+    icon: ImageVector,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    loading: Boolean = false,
+    headlineTextDirection: TextDirection? = null,
+    supportingTextDirection: TextDirection? = null,
+) {
+    val shape = MaterialTheme.shapes.extraLarge
     val loadingDescription = stringResource(string.ui_state_loading)
-    ListItem(
-        headlineContent = {
-            Text(
-                text = headline,
-                style = MaterialTheme.typography.titleMedium,
-            )
-        },
-        supportingContent = {
-            Text(
-                text = supporting,
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        },
-        leadingContent = {
-            Icon(imageVector = icon, contentDescription = null)
-        },
-        trailingContent = {
-            if (loading) {
-                CircularProgressIndicator(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clearAndSetSemantics { },
-                    strokeWidth = 2.dp,
-                )
-            }
-        },
-        colors = ListItemDefaults.colors(
-            containerColor = MaterialTheme.colorScheme.surface,
-        ),
+    val headlineStyle = headlineTextDirection?.let { direction ->
+        MaterialTheme.typography.titleMedium.copy(textDirection = direction)
+    } ?: MaterialTheme.typography.titleMedium
+    val supportingStyle = supportingTextDirection?.let { direction ->
+        MaterialTheme.typography.bodyMedium.copy(textDirection = direction)
+    } ?: MaterialTheme.typography.bodyMedium
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = 64.dp)
+            .heightIn(min = 48.dp)
             .alpha(if (enabled || loading) 1f else 0.38f)
+            .clip(shape)
             .clickable(
                 enabled = enabled,
                 role = Role.Button,
                 onClick = onClick,
             )
-            .semantics {
+            .semantics(mergeDescendants = true) {
                 role = Role.Button
                 if (loading) {
                     stateDescription = loadingDescription
                     liveRegion = LiveRegionMode.Polite
                 }
             },
-    )
+    ) {
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            shape = shape,
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(16 / 9f),
+        ) {
+            Box(modifier = Modifier.padding(16.dp)) {
+                Surface(
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    shape = MaterialTheme.shapes.large,
+                    modifier = Modifier
+                        .size(72.dp)
+                        .align(Alignment.Center),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            modifier = Modifier.size(36.dp),
+                        )
+                    }
+                }
+                if (loading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .align(Alignment.TopEnd)
+                            .clearAndSetSemantics { },
+                        strokeWidth = 2.dp,
+                    )
+                }
+            }
+        }
+        Text(
+            text = headline,
+            style = headlineStyle,
+            maxLines = 3,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(horizontal = 4.dp),
+        )
+        Column(
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+            modifier = Modifier.padding(horizontal = 4.dp),
+        ) {
+            supporting.forEach { line ->
+                Text(
+                    text = line,
+                    style = supportingStyle,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -1114,11 +1182,12 @@ private fun PlaylistSectionHeading(
 ) {
     Text(
         text = text,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurface,
         modifier = modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 8.dp)
+            .padding(top = 24.dp, bottom = 12.dp)
             .semantics { heading() },
     )
 }
