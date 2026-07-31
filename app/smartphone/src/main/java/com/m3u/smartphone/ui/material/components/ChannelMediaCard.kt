@@ -34,6 +34,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -58,10 +59,13 @@ internal fun ChannelMediaCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     onLongClick: (() -> Unit)? = null,
-    supportingText: String? = channel.subtitle
+    artwork: Any? = channel.cover,
+    supportingText: AnnotatedString? = channel.subtitle
         ?.trim()
         ?.takeIf(String::isNotEmpty)
-        ?: channel.productionYear?.toString(),
+        ?.let(::AnnotatedString)
+        ?: channel.productionYear?.toString()?.let(::AnnotatedString),
+    forceCompact: Boolean = false,
     zapping: Boolean = false,
 ) {
     val context = LocalContext.current
@@ -90,10 +94,13 @@ internal fun ChannelMediaCard(
     val cardModifier = modifier
         .semantics(mergeDescendants = true) { }
         .then(interactionModifier)
-    val cover = channel.cover?.takeIf(String::isNotBlank)
-    if (noPictureMode || cover == null) {
+    val resolvedArtwork = artwork?.takeUnless {
+        it is String && it.isBlank()
+    }
+    if (noPictureMode || forceCompact || resolvedArtwork == null) {
         CompactChannelMediaCard(
             channel = channel,
+            artwork = resolvedArtwork.takeUnless { noPictureMode },
             supportingText = supportingText,
             zapping = zapping,
             outlineColor = outlineColor,
@@ -119,9 +126,9 @@ internal fun ChannelMediaCard(
             ) {
                 Box {
                     SubcomposeAsyncImage(
-                        model = remember(cover) {
+                        model = remember(resolvedArtwork) {
                             ImageRequest.Builder(context)
-                                .data(cover)
+                                .data(resolvedArtwork)
                                 .crossfade(true)
                                 .build()
                         },
@@ -182,8 +189,7 @@ internal fun ChannelMediaCard(
                 modifier = Modifier.padding(horizontal = 2.dp),
             )
             supportingText
-                ?.trim()
-                ?.takeIf(String::isNotEmpty)
+                ?.takeIf { it.text.isNotBlank() }
                 ?.let { supporting ->
                     Text(
                         text = supporting,
@@ -201,7 +207,8 @@ internal fun ChannelMediaCard(
 @Composable
 private fun CompactChannelMediaCard(
     channel: Channel,
-    supportingText: String?,
+    artwork: Any?,
+    supportingText: AnnotatedString?,
     zapping: Boolean,
     outlineColor: Color,
     modifier: Modifier = Modifier,
@@ -228,14 +235,26 @@ private fun CompactChannelMediaCard(
                 color = MaterialTheme.colorScheme.secondaryContainer,
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 shape = MaterialTheme.shapes.extraLarge,
+                modifier = Modifier.size(56.dp),
             ) {
-                Icon(
-                    imageVector = channel.typeIcon(),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .padding(14.dp)
-                        .size(28.dp),
-                )
+                if (artwork == null) {
+                    ChannelTypeIcon(channel = channel)
+                } else {
+                    SubcomposeAsyncImage(
+                        model = artwork,
+                        contentDescription = null,
+                        contentScale = ContentScale.Fit,
+                        loading = {
+                            ChannelTypeIcon(channel = channel)
+                        },
+                        error = {
+                            ChannelTypeIcon(channel = channel)
+                        },
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(6.dp),
+                    )
+                }
             }
             Column(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -249,8 +268,7 @@ private fun CompactChannelMediaCard(
                     overflow = TextOverflow.Ellipsis,
                 )
                 supportingText
-                    ?.trim()
-                    ?.takeIf(String::isNotEmpty)
+                    ?.takeIf { it.text.isNotBlank() }
                     ?.let { supporting ->
                         Text(
                             text = supporting,
@@ -289,14 +307,28 @@ private fun ChannelArtworkPlaceholder(
             contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
             shape = MaterialTheme.shapes.extraLarge,
         ) {
-            Icon(
-                imageVector = channel.typeIcon(),
-                contentDescription = null,
-                modifier = Modifier
-                    .padding(18.dp)
-                    .size(32.dp),
+            ChannelTypeIcon(
+                channel = channel,
+                modifier = Modifier.size(68.dp),
             )
         }
+    }
+}
+
+@Composable
+private fun ChannelTypeIcon(
+    channel: Channel,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier.fillMaxSize(),
+    ) {
+        Icon(
+            imageVector = channel.typeIcon(),
+            contentDescription = null,
+            modifier = Modifier.size(28.dp),
+        )
     }
 }
 

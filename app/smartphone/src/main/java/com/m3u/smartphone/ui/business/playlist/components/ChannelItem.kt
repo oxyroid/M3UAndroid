@@ -1,69 +1,28 @@
 package com.m3u.smartphone.ui.business.playlist.components
 
-import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.BrokenImage
-import androidx.compose.material.icons.rounded.Star
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.movableContentOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import coil.compose.SubcomposeAsyncImage
-import coil.request.ImageRequest
-import coil.size.Size
 import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
 import com.m3u.core.foundation.architecture.preferences.preferenceOf
-import com.m3u.core.foundation.components.CircularProgressIndicator
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.MediaKinds
 import com.m3u.data.database.model.Programme
-import com.m3u.i18n.R.string
 import com.m3u.smartphone.TimeUtils.formatEOrSh
-import com.m3u.core.foundation.ui.composableOf
-import com.m3u.smartphone.ui.material.model.LocalSpacing
-import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
-import kotlin.time.Clock
-import kotlin.time.Instant
+import com.m3u.smartphone.ui.material.components.ChannelMediaCard
+import com.m3u.smartphone.ui.material.components.ChannelMediaCardLayout
+import com.m3u.smartphone.ui.material.components.playbackStatusText
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Duration.Companion.days
-import kotlin.time.Duration.Companion.hours
-import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 
 @Composable
 internal fun ChannelItem(
@@ -75,205 +34,58 @@ internal fun ChannelItem(
     onLongClick: () -> Unit,
     programme: Programme?,
     modifier: Modifier = Modifier,
-    isVodOrSeriesPlaylist: Boolean = true
+    isVodOrSeriesPlaylist: Boolean = true,
 ) {
-    val context = LocalContext.current
-    val spacing = LocalSpacing.current
-
-    val favourite = channel.favourite
-
-    val recentlyString = stringResource(string.ui_sort_recently)
-    val neverPlayedString = stringResource(string.ui_sort_never_played)
-
-    val noPictureMode by preferenceOf(PreferencesKeys.NO_PICTURE_MODE)
-    val usesPosterLayout = channel.mediaKind == MediaKinds.MOVIE ||
-        channel.mediaKind == MediaKinds.SERIES ||
-        channel.mediaKind == MediaKinds.UNKNOWN && isVodOrSeriesPlaylist
-
-    val star = remember(favourite) {
-        movableContentOf {
-            Crossfade(
-                targetState = favourite,
-                label = "channel-item-favourite"
-            ) { favourite ->
-                if (favourite) {
-                    Icon(
-                        imageVector = Icons.Rounded.Star,
-                        contentDescription = null,
-                        tint = Color(0xffffcd3c)
-                    )
-                }
-            }
-        }
+    val usesArtworkCard = channel.usesArtworkCard(isVodOrSeriesPlaylist)
+    val supportingText = when {
+        recently -> AnnotatedString(channel.playbackStatusText())
+        programme != null -> programme.readText()
+        else -> channel.fallbackSupportingText()
     }
 
-    OutlinedCard(
-        modifier = Modifier.semantics(mergeDescendants = true) { },
-        border = CardDefaults.outlinedCardBorder(zapping),
-        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceContainerLow),
-        shape = AbsoluteSmoothCornerShape(spacing.medium, 65)
-    ) {
-        when {
-            !noPictureMode && usesPosterLayout -> {
-                Column(
-                    modifier = Modifier
-                        .combinedClickable(
-                            onClick = onClick,
-                            onLongClick = onLongClick
-                        )
-                        .then(modifier)
-                ) {
-                    Box {
-                        SubcomposeAsyncImage(
-                            model = remember(cover) {
-                                ImageRequest.Builder(context)
-                                    .data(cover)
-                                    .size(Size.ORIGINAL)
-                                    .build()
-                            },
-                            contentDescription = channel.title,
-                            contentScale = ContentScale.Crop,
-                            loading = {
-                                Box(
-                                    contentAlignment = Alignment.Center,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .aspectRatio(2 / 3f)
-                                ) {
-                                    CircularProgressIndicator()
-                                }
-                            },
-                            error = {
-                                Box(
-                                    contentAlignment = Alignment.Center,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .aspectRatio(2 / 3f)
-                                        .padding(spacing.medium)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.BrokenImage,
-                                        contentDescription = null
-                                    )
-                                }
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(2 / 3f)
-                        )
-                        if (favourite) {
-                            Box(
-                                modifier = Modifier
-                                    .padding(spacing.small)
-                                    .align(Alignment.BottomEnd)
-                            ) { star() }
-                        }
-                    }
-                    Text(
-                        text = channel.title.trim(),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(
-                            start = spacing.small,
-                            top = spacing.small,
-                            end = spacing.small,
-                        ),
-                    )
-                    val supportingText = channel.subtitle
-                        ?: channel.productionYear?.toString()
-                    if (!supportingText.isNullOrBlank()) {
-                        Text(
-                            text = supportingText,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = LocalContentColor.current.copy(alpha = 0.7f),
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.padding(
-                                start = spacing.small,
-                                top = 2.dp,
-                                end = spacing.small,
-                                bottom = spacing.small,
-                            ),
-                        )
-                    } else {
-                        Spacer(modifier = Modifier.height(spacing.small))
-                    }
-                }
-            }
+    ChannelMediaCard(
+        channel = channel,
+        artwork = cover,
+        layout = if (usesArtworkCard) {
+            ChannelMediaCardLayout.POSTER
+        } else {
+            ChannelMediaCardLayout.LANDSCAPE
+        },
+        supportingText = supportingText,
+        forceCompact = !usesArtworkCard,
+        zapping = zapping,
+        onClick = onClick,
+        onLongClick = onLongClick,
+        modifier = modifier,
+    )
+}
 
-            else -> {
-                ListItem(
-                    headlineContent = {
-                        Text(
-                            text = channel.title.trim(),
-                            style = MaterialTheme.typography.titleSmall,
-                            overflow = TextOverflow.Ellipsis,
-                            maxLines = 2,
-                            fontWeight = FontWeight.Bold,
-                        )
-                    },
-                    leadingContent = composableOf(!noPictureMode) {
-                        AsyncImage(
-                            model = cover,
-                            contentDescription = null,
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier.size(56.dp)
-                        )
-                    },
-                    supportingContent = {
-                        when {
-                            recently -> {
-                                Text(
-                                    text = remember(channel.seen) {
-                                        val now = Clock.System.now()
-                                        val instant = Instant.fromEpochMilliseconds(channel.seen)
-                                        val duration = now - instant
-                                        duration.toComponents { days, hours, minutes, seconds, _ ->
-                                            when {
-                                                channel.seen == 0L -> neverPlayedString
-                                                days > 0 -> days.days.toString()
-                                                hours > 0 -> hours.hours.toString()
-                                                minutes > 0 -> minutes.minutes.toString()
-                                                seconds > 0 -> seconds.seconds.toString()
-                                                else -> recentlyString
-                                            }
-                                        }
-                                    },
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = LocalContentColor.current.copy(0.56f)
-                                )
-                            }
+internal fun Channel.usesArtworkCard(
+    isVodOrSeriesPlaylist: Boolean,
+): Boolean {
+    val isPosterMedia = mediaKind == MediaKinds.MOVIE ||
+        mediaKind == MediaKinds.SERIES ||
+        mediaKind == MediaKinds.UNKNOWN && isVodOrSeriesPlaylist
+    return isPosterMedia && !cover.isNullOrBlank()
+}
 
-                            programme != null -> {
-                                Text(
-                                    text = programme.readText(),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = LocalContentColor.current.copy(0.56f),
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                        }
-                    },
-                    trailingContent = star,
-                    colors = ListItemDefaults.colors(Color.Transparent),
-                    modifier = Modifier
-                        .combinedClickable(
-                            onClick = onClick,
-                            onLongClick = onLongClick
-                        )
-                        .then(modifier)
-                )
-            }
-        }
-    }
+private fun Channel.fallbackSupportingText(): AnnotatedString? {
+    val normalizedTitle = title.trim()
+    val metadata = listOfNotNull(
+        subtitle
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() && it != normalizedTitle },
+        productionYear?.toString(),
+    ).distinct()
+        .joinToString(" · ")
+        .ifBlank { category.trim() }
+        .takeIf(String::isNotEmpty)
+    return metadata?.let(::AnnotatedString)
 }
 
 @Composable
 internal fun Programme.readText(
-    timeColor: Color = MaterialTheme.colorScheme.secondary
+    timeColor: Color = MaterialTheme.colorScheme.secondary,
 ): AnnotatedString = buildAnnotatedString {
     val clockMode by preferenceOf(PreferencesKeys.CLOCK_MODE)
     val formatLocale = LocalConfiguration.current.locales[0]
@@ -282,7 +94,7 @@ internal fun Programme.readText(
         .toLocalDateTime(TimeZone.currentSystemDefault())
         .formatEOrSh(clockMode, locale = formatLocale)
     withStyle(
-        SpanStyle(color = timeColor, fontWeight = FontWeight.SemiBold)
+        SpanStyle(color = timeColor, fontWeight = FontWeight.SemiBold),
     ) {
         append("[$start] ")
     }
