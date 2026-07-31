@@ -676,7 +676,7 @@ val verifyExtensionSdkRepository =
 val bundleExtensionSdk = tasks.register<Zip>("bundleExtensionSdk") {
     group = "distribution"
     description = "Builds the standalone extension SDK Maven bundle."
-    dependsOn(verifyExtensionSdkRepository)
+    dependsOn(publishExtensionSdkRepository)
     archiveBaseName.set("m3u-extension-sdk")
     archiveVersion.set(extensionSdkVersion)
     destinationDirectory.set(layout.buildDirectory.dir("distributions"))

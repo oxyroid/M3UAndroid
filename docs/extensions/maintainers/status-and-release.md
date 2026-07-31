@@ -18,7 +18,7 @@ This page defines what may ship from the current branch. Implementation instruct
 | Area | Current behavior | Evidence |
 | --- | --- | --- |
 | Contract and runtime | Typed, versioned Hook contracts; each call receives only the current Hook's declared and approved capabilities; per-extension and host-wide admission caps; one deadline across preparation, queueing, execution, response validation, and broker requests; cumulative broker request-count, encoded request-byte, and encoded response-byte limits; cancellation, health, and failure isolation | `WireGoldenFixtureTest`, `ExtensionContractTest`, `ExtensionRuntimeTest`, `InvocationBudgetPropagationTest`, and `ExtensionHostBridgeTest`. One serialized conformance suite runs against the built-in runtime, SDK backend, and standalone reference APK. |
-| SDK distribution | `1.0.0-alpha01` publishes API, Android protocol, typed SDK, sources, conformance code, and golden fixtures into a versioned Maven repository zip with a SHA-256 file. Hello is an independent Gradle consumer project that resolves the SDK group only from that repository. | The signed release job runs `verifyExtensionSdkBundle` and uploads the zip and checksum. `testing/bin/verify-extension-sdk-distribution.sh` remains the explicit pre-release check for the independent Hello consumer. The fast workflow intentionally packages only debug APKs. |
+| SDK distribution | `1.0.0-alpha01` publishes API, Android protocol, typed SDK, sources, conformance code, and golden fixtures into a versioned Maven repository zip with a SHA-256 file. Hello is an independent Gradle consumer project that resolves the SDK group only from that repository. | The signed release job packages the zip and checksum without running functional verification. `testing/bin/verify-extension-sdk-distribution.sh` remains the explicit pre-release check for the independent Hello consumer. The fast workflow intentionally packages only debug APKs. |
 | Built-in provider | Emby and Jellyfin are selectable variants of one built-in extension in the smartphone app | `EmbyCompatibleProviderIntegrationTest`, `EmbyCompatibleProviderLocalizationTest`, and `SubscriptionProviderRepositoryIntegrationTest` |
 | Complete provider contract | Every built-in and external provider implements `Discover`, `Validate`, `Refresh`, `Browse`, `ResolvePlayback`, `UpdatePlayback`, and `ClosePlayback`. `Browse` exposes bounded root/child pages with extensible media kinds and stable references. `UpdatePlayback` reports bounded session events. | `SubscriptionProviderContractsTest`, `ExtensionContractTest`, `ExtensionNetworkOriginContractTest`, `WireGoldenFixtureTest`, and provider product-flow tests |
 | Provider credentials | External login returns a one-time host receipt. Post-validation scopes resolve references only into requests for the approved origin; the host does not directly serialize resolved values back to the extension. | `HostNetworkBrokerSecurityTest`, `ExtensionHostBridgeTest`, `ProviderBrokerScopeStoreTest`, and `CredentialVaultTest` |
@@ -35,9 +35,9 @@ This page defines what may ship from the current branch. Implementation instruct
 
 `.github/workflows/android.yml` is a build and release workflow, not a functional-test gate. Pull
 requests and manual non-publishing runs compile the three unsigned Release APKs. A publishing run
-on `master` builds the signed app, TV, reference-plugin, and SDK artifacts, then checks their
-certificates, default-library contents, and 16 KB packaging before upload. The manual fast workflow
-only builds the three debug APKs, uploads them, and sends them to Telegram.
+on `master` builds the signed app, TV, reference-plugin, and SDK artifacts. It only checks release
+artifact integrity—the APK certificates and 16 KB native packaging—before upload. The manual fast
+workflow only builds the three debug APKs, uploads them, and sends them to Telegram.
 
 Unit, managed-device, and phone/tablet UI tests are explicit maintainer validation commands outside
 these packaging workflows. The recorded results below are evidence from those runs.

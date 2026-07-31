@@ -64,8 +64,9 @@ and keep its built-in runtime, SDK backend, and standalone reference-APK adapter
 Keep the SDK version in the root and standalone Hello properties aligned. Run
 `testing/bin/verify-extension-sdk-distribution.sh`; it generates the local Maven repository, checks
 the final zip and checksum, rejects host-module references in published metadata, samples required
-fixtures, and compiles Hello without project substitution. Both CI workflows upload the resulting
-zip and SHA-256 file.
+fixtures, and compiles Hello without project substitution. This verification is run explicitly,
+outside the packaging workflows. The formal release workflow packages the zip and SHA-256 file;
+the fast workflow packages only the three debug APKs.
 
 ## Change a result applier
 

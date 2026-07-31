@@ -17,7 +17,7 @@
 | 范围 | 当前行为 | 证据 |
 | --- | --- | --- |
 | 契约与 Runtime | 类型化、带版本的 Hook 契约；每次调用只获得当前 Hook 已声明且已批准的 Capability；限制单插件与宿主级调用准入；Request 准备、排队、执行、Response 校验与 Broker 请求共用一个截止时间；累计限制 Broker 请求次数、编码后的请求总字节数和响应总字节数；传播取消；记录健康状态并隔离连续失败 | `WireGoldenFixtureTest`、`ExtensionContractTest`、`ExtensionRuntimeTest`、`InvocationBudgetPropagationTest` 与 `ExtensionHostBridgeTest`。同一套序列化一致性测试会分别运行于内置 Runtime、SDK Backend 与独立参考 APK。 |
-| SDK 分发 | `1.0.0-alpha01` 会把 API、Android 协议、类型化 SDK、源码、一致性测试库和 Golden Fixture 发布为带版本的 Maven 仓库压缩包，并生成 SHA-256 文件。Hello 是独立的 Gradle 引用工程，只从该仓库解析 SDK group。 | 签名发布任务运行 `verifyExtensionSdkBundle`，并上传压缩包与校验值。`testing/bin/verify-extension-sdk-distribution.sh` 保留为发布前显式执行的独立 Hello 消费测试。快速流水线只打包 debug APK。 |
+| SDK 分发 | `1.0.0-alpha01` 会把 API、Android 协议、类型化 SDK、源码、一致性测试库和 Golden Fixture 发布为带版本的 Maven 仓库压缩包，并生成 SHA-256 文件。Hello 是独立的 Gradle 引用工程，只从该仓库解析 SDK group。 | 签名发布任务只打包压缩包并生成校验值，不运行功能验证。`testing/bin/verify-extension-sdk-distribution.sh` 保留为发布前显式执行的独立 Hello 消费测试。快速流水线只打包 debug APK。 |
 | 内置 Provider | Emby 和 Jellyfin 是 smartphone 应用中同一个内置插件的两个选择项 | `EmbyCompatibleProviderIntegrationTest`、`EmbyCompatibleProviderLocalizationTest` 与 `SubscriptionProviderRepositoryIntegrationTest` |
 | 完整 Provider 契约 | 每个内置和外部 Provider 都实现 `Discover`、`Validate`、`Refresh`、`Browse`、`ResolvePlayback`、`UpdatePlayback` 与 `ClosePlayback`。`Browse` 提供有数量上限、带稳定引用的根页面和子页面；`UpdatePlayback` 上报有边界的 Session 事件。 | `SubscriptionProviderContractsTest`、`ExtensionContractTest`、`ExtensionNetworkOriginContractTest`、`WireGoldenFixtureTest` 与 Provider 产品链路测试 |
 | Provider 凭据 | 外部登录只返回一次性宿主回执。验证后的作用域只会把引用解析进发往批准 Origin 的请求；宿主不会把解析值直接序列化回插件。 | `HostNetworkBrokerSecurityTest`、`ExtensionHostBridgeTest`、`ProviderBrokerScopeStoreTest` 与 `CredentialVaultTest` |
@@ -34,8 +34,8 @@
 
 `.github/workflows/android.yml` 是构建与发布流水线，不是功能测试门禁。PR 与手动的
 非发布运行只编译三份无签名 Release APK。`master` 上的发布运行构建签名后的手机、
-TV、参考插件与 SDK 产物，再检查证书、默认数据和 16 KB 打包后上传。手动快速流水线
-只构建三份 debug APK、上传 Artifact 并发送到 Telegram。
+TV、参考插件与 SDK 产物，上传前只检查发布产物完整性：APK 证书与 16 KB 原生打包。
+手动快速流水线只构建三份 debug APK、上传 Artifact 并发送到 Telegram。
 
 单元测试、托管设备测试和手机/平板 UI 测试由维护者在打包流水线外显式执行。下文记录
 的是这些专项运行的证据。`ResourceContractTest` 只验证资源结构，不代表母语文案质量。

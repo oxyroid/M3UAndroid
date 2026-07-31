@@ -100,16 +100,16 @@ jobs:
           ./gradlew \
             --no-daemon \
             --no-configuration-cache \
-            verifyExtensionSdkBundle \
+            bundleExtensionSdk \
             :app:smartphone:assembleRelease \
             :app:tv:assembleRelease \
             :testing:extension-reference:assembleRelease
 
-      - name: Verify release default library packaging
+      - name: Write extension SDK checksum
         run: |
-          testing/bin/verify-smartphone-default-library-assets.sh \
-            release \
-            app/smartphone/build/outputs/published-apk/release/*.apk
+          for sdk_archive in build/distributions/m3u-extension-sdk-*.zip; do
+            sha256sum "$sdk_archive" > "$sdk_archive.sha256"
+          done
 
       - name: Verify release APK certificates
         run: |

@@ -64,7 +64,8 @@ Provider 订阅统一保存为 `DataSource.Provider`。每个 Provider 都必须
 根工程与独立 Hello 的 SDK 版本必须一致。运行
 `testing/bin/verify-extension-sdk-distribution.sh`；该命令会生成本地 Maven 仓库，检查最终
 压缩包与校验值，拒绝发布元数据中的宿主模块引用，抽查必要的 Fixture，并在不使用
-project substitution 的情况下编译 Hello。两条 CI 流水线都会上传压缩包与 SHA-256 文件。
+project substitution 的情况下编译 Hello。这项验证需要在打包流水线之外显式执行。
+正式发布流水线会打包压缩包与 SHA-256 文件；快速流水线只打包三份 debug APK。
 
 ## 修改结果应用器
 
