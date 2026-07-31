@@ -49,6 +49,7 @@ fun AppNavHost(
     ) {
         rootGraph(
             contentPadding = contentPadding,
+            navigateToDestination = navigateToDestination,
             navigateToPlaylist = { playlist ->
                 navController.navigateToPlaylist(playlist.url)
             },

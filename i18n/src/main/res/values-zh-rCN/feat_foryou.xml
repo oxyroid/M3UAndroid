@@ -6,6 +6,13 @@
     <string name="feat_foryou_rename_playlist">重命名</string>
     <string name="feat_foryou_imported_playlist_title">导入频道</string>
     <string name="feat_foryou_prompt_add_playlist">添加一个播放列表</string>
+    <string name="feat_foryou_library_title">我的媒体库</string>
+    <string name="feat_foryou_empty_title">还没有播放列表</string>
+    <string name="feat_foryou_empty_description">添加链接、本地文件或媒体服务器，开始建立你的媒体库。</string>
+    <string name="feat_foryou_add_playlist_action">新增订阅</string>
+    <plurals name="feat_foryou_channel_count">
+        <item quantity="other">%1$d 个频道</item>
+    </plurals>
     <string name="feat_foryou_recommend_unseen_label">好久不见</string>
     <string name="feat_foryou_recommend_unseen_more_than_days">超过 %d 天</string>
     <string name="feat_foryou_recommend_unseen_days">%d 天</string>

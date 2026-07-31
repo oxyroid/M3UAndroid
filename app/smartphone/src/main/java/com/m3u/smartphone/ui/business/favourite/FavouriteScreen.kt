@@ -53,6 +53,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun FavoriteRoute(
     navigateToChannel: () -> Unit,
+    navigateToForYou: () -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     viewModel: FavoriteViewModel = hiltViewModel()
@@ -123,6 +124,7 @@ fun FavoriteRoute(
             }
         },
         onLongClickChannel = { mediaSheetValue = MediaSheetValue.FavoriteScreen(it) },
+        onBrowsePlaylists = navigateToForYou,
         modifier = Modifier
             .fillMaxSize()
             .thenIf(godMode) {
@@ -193,6 +195,7 @@ private fun FavoriteScreen(
     recently: Boolean,
     onClickChannel: (Channel) -> Unit,
     onLongClickChannel: (Channel) -> Unit,
+    onBrowsePlaylists: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
@@ -209,6 +212,7 @@ private fun FavoriteScreen(
         rowCount = actualRowCount,
         onClick = onClickChannel,
         onLongClick = onLongClickChannel,
+        onBrowsePlaylists = onBrowsePlaylists,
         modifier = modifier.hazeSource(LocalHazeState.current)
     )
 }

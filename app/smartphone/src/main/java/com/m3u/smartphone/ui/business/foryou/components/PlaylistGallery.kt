@@ -3,11 +3,16 @@ package com.m3u.smartphone.ui.business.foryou.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.VideoLibrary
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -17,7 +22,8 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -31,6 +37,7 @@ import com.m3u.i18n.R.string
 import com.m3u.smartphone.ui.common.helper.LocalHelper
 import com.m3u.smartphone.ui.common.helper.Metadata
 import com.m3u.smartphone.ui.common.helper.useRailNav
+import com.m3u.smartphone.ui.material.components.PageStateContent
 import com.m3u.smartphone.ui.material.ktx.plus
 import com.m3u.smartphone.ui.material.model.LocalHazeState
 import com.m3u.smartphone.ui.material.model.LocalSpacing
@@ -48,6 +55,7 @@ internal fun PlaylistGallery(
     refreshingEpgUrls: List<String>,
     onClick: (Playlist) -> Unit,
     onLongClick: (Playlist) -> Unit,
+    onAddPlaylist: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     header: (@Composable () -> Unit)? = null
@@ -82,7 +90,10 @@ internal fun PlaylistGallery(
     LazyVerticalGrid(
         state = state,
         columns = GridCells.Fixed(rowCount),
-        contentPadding = PaddingValues(vertical = spacing.medium) + contentPadding,
+        contentPadding = PaddingValues(
+            horizontal = spacing.medium,
+            vertical = spacing.medium,
+        ) + contentPadding,
         verticalArrangement = Arrangement.spacedBy(spacing.medium),
         horizontalArrangement = Arrangement.spacedBy(spacing.medium),
         modifier = modifier.hazeSource(LocalHazeState.current)
@@ -92,7 +103,35 @@ internal fun PlaylistGallery(
                 header()
             }
         }
+        item(
+            key = "library-heading",
+            span = { GridItemSpan(rowCount) },
+        ) {
+            Text(
+                text = stringResource(string.feat_foryou_library_title),
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.semantics { heading() },
+            )
+        }
         val entries = playlists.entries.toList()
+        if (entries.isEmpty()) {
+            item(
+                key = "empty-library",
+                span = { GridItemSpan(rowCount) },
+            ) {
+                PageStateContent(
+                    icon = Icons.Rounded.VideoLibrary,
+                    title = stringResource(string.feat_foryou_empty_title),
+                    description = stringResource(string.feat_foryou_empty_description),
+                    actionLabel = stringResource(string.feat_foryou_add_playlist_action),
+                    actionIcon = Icons.Rounded.Add,
+                    onAction = onAddPlaylist,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 280.dp),
+                )
+            }
+        }
         items(entries.size, key = { entries[it].key.url }) { index ->
             val (playlist, count) = entries[index]
             val subscribing = playlist.url in subscribingPlaylistUrls
@@ -113,17 +152,9 @@ internal fun PlaylistGallery(
                 },
                 count = count,
                 subscribingOrRefreshing = subscribing || refreshing,
-                refreshable = playlist.refreshable,
                 onClick = { onClick(playlist) },
                 onLongClick = { onLongClick(playlist) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        PlaylistGalleryDefaults.calculateItemHorizontalPadding(
-                            rowCount = rowCount,
-                            index = index
-                        )
-                    )
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
@@ -139,15 +170,4 @@ private object PlaylistGalleryDefaults {
         return actual
     }
 
-    @Composable
-    fun calculateItemHorizontalPadding(
-        rowCount: Int,
-        index: Int,
-        padding: Dp = LocalSpacing.current.medium
-    ): PaddingValues {
-        return PaddingValues(
-            start = if (index % rowCount == 0) padding else 0.dp,
-            end = if (index % rowCount == rowCount - 1) padding else 0.dp
-        )
-    }
 }

@@ -1,37 +1,35 @@
 package com.m3u.smartphone.ui.business.foryou.components
 
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.DriveFileMove
+import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.BaselineShift
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.m3u.core.foundation.components.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import com.m3u.smartphone.ui.material.model.LocalSpacing
 import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
-import com.m3u.smartphone.ui.material.components.Badge
-import com.m3u.smartphone.ui.material.components.FontFamilies
+import com.m3u.i18n.R.plurals
+import com.m3u.smartphone.ui.material.model.LocalSpacing
 import java.util.Locale
 
 @Composable
@@ -39,102 +37,80 @@ internal fun PlaylistItem(
     label: String,
     type: String?,
     count: Int,
-    refreshable: Boolean,
     subscribingOrRefreshing: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
-    OutlinedCard(
+    Card(
         shape = AbsoluteSmoothCornerShape(spacing.medium, 65),
-        colors = CardDefaults.cardColors(Color.Transparent),
-        modifier = modifier.semantics(mergeDescendants = true) { }
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        ),
+        modifier = modifier
+            .semantics(mergeDescendants = true) { }
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick,
+            ),
     ) {
         ListItem(
             headlineContent = {
                 Text(
                     text = label,
                     style = MaterialTheme.typography.bodyMedium.copy(
-                        baselineShift = BaselineShift.None
+                        fontWeight = FontWeight.SemiBold,
                     ),
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
             },
             supportingContent = {
-                Text(
-                    text = type?.uppercase(Locale.ROOT).orEmpty(),
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        letterSpacing = 1.sp,
-                        baselineShift = BaselineShift.Subscript,
-                        fontFamily = FontFamilies.LexendExa,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 10.sp
-                    ),
-                    color = LocalContentColor.current.copy(0.45f)
+                if (type != null) {
+                    Text(
+                        text = type.uppercase(Locale.ROOT),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            },
+            leadingContent = {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.PlaylistPlay,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(28.dp),
                 )
             },
             trailingContent = {
-                Column(
-                    horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.spacedBy(spacing.extraSmall)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.widthIn(max = 120.dp),
                 ) {
-                    Badge {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall)
-                        ) {
-                            if (subscribingOrRefreshing) {
-                                CircularProgressIndicator(
-                                    color = LocalContentColor.current,
-                                    size = 8.dp
-                                )
-                            }
-                            Text(
-                                text = count.toString(),
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    lineHeightStyle = LineHeightStyle(
-                                        alignment = LineHeightStyle.Alignment.Center,
-                                        trim = LineHeightStyle.Trim.None
-                                    )
-                                ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                softWrap = false,
-                                textAlign = TextAlign.Center,
-                                fontFamily = FontFamilies.LexendExa
-                            )
-                        }
+                    if (subscribingOrRefreshing) {
+                        CircularProgressIndicator(
+                            size = 16.dp,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Spacer(Modifier.width(spacing.small))
                     }
-                    Row(
-                        Modifier.height(16.dp)
-                    ) {
-                        if (!refreshable) {
-                            Badge(
-                                color = MaterialTheme.colorScheme.secondary,
-                                shape = AbsoluteSmoothCornerShape(
-                                    cornerRadiusTL = spacing.extraSmall,
-                                    cornerRadiusTR = spacing.extraSmall,
-                                    cornerRadiusBL = spacing.extraSmall,
-                                    cornerRadiusBR = spacing.small
-                                )
-                            ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Rounded.DriveFileMove,
-                                    contentDescription = null,
-                                )
-                            }
-                        }
-                    }
+                    Text(
+                        text = pluralStringResource(
+                            plurals.feat_foryou_channel_count,
+                            count,
+                            count,
+                        ),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.End,
+                    )
                 }
             },
-            colors = ListItemDefaults.colors(Color.Transparent),
-            modifier = Modifier.combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick
-            )
+            colors = ListItemDefaults.colors(
+                containerColor = Color.Transparent,
+            ),
+            modifier = Modifier.heightIn(min = 88.dp),
         )
     }
 }

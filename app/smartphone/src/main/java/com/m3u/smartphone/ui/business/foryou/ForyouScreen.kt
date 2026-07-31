@@ -134,6 +134,7 @@ fun ForyouRoute(
             },
             navigateToPlaylistConfiguration = navigateToPlaylistConfiguration,
             onUnsubscribePlaylist = viewModel::onUnsubscribePlaylist,
+            onAddPlaylist = navigateToSettingPlaylistManagement,
             modifier = Modifier
                 .fillMaxSize()
                 .thenIf(godMode) {
@@ -180,6 +181,7 @@ private fun ForyouScreen(
     onPlayChannel: (Channel) -> Unit,
     navigateToPlaylistConfiguration: (Playlist) -> Unit,
     onUnsubscribePlaylist: (playlistUrl: String) -> Unit,
+    onAddPlaylist: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
@@ -228,6 +230,7 @@ private fun ForyouScreen(
             refreshingEpgUrls = refreshingEpgUrls,
             onClick = navigateToPlaylist,
             onLongClick = { mediaSheetValue = MediaSheetValue.ForyouScreen(it) },
+            onAddPlaylist = onAddPlaylist,
             header = composableOf(specs.isNotEmpty(), header),
             contentPadding = contentPadding,
             modifier = Modifier.fillMaxSize()

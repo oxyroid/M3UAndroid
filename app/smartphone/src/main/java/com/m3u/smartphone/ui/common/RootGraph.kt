@@ -18,6 +18,7 @@ import com.m3u.smartphone.ui.material.ktx.blurEdge
 
 fun NavGraphBuilder.rootGraph(
     contentPadding: PaddingValues,
+    navigateToDestination: (Destination) -> Unit,
     navigateToPlaylist: (Playlist) -> Unit,
     navigateToChannel: () -> Unit,
     navigateToSettingPlaylistManagement: () -> Unit,
@@ -57,6 +58,9 @@ fun NavGraphBuilder.rootGraph(
     ) {
         FavoriteRoute(
             navigateToChannel = navigateToChannel,
+            navigateToForYou = {
+                navigateToDestination(Destination.Foryou)
+            },
             contentPadding = contentPadding,
             modifier = Modifier
                 .fillMaxSize()
