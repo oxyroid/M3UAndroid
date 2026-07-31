@@ -1,6 +1,7 @@
 @file:Suppress("UnstableApiUsage")
 
 import com.android.build.api.dsl.ManagedVirtualDevice
+import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -29,6 +30,57 @@ val m3uMockServerUrl = providers.gradleProperty("m3uMockServerUrl").orElse("http
 val useAndroidTestOrchestrator = providers.gradleProperty("m3uUseTestOrchestrator")
     .map(String::toBoolean)
     .orElse(false)
+val localProperties = Properties().apply {
+    rootProject.file("local.properties")
+        .takeIf { file -> file.isFile }
+        ?.inputStream()
+        ?.use(::load)
+}
+
+fun localDebugFixtureValue(
+    propertyName: String,
+    environmentName: String,
+): String = providers.gradleProperty(propertyName).orNull
+    ?: providers.environmentVariable(environmentName).orNull
+    ?: localProperties.getProperty(propertyName).orEmpty()
+
+fun String.asBuildConfigString(): String = buildString(length + 2) {
+    append('"')
+    this@asBuildConfigString.forEach { character ->
+        when (character) {
+            '\\' -> append("\\\\")
+            '"' -> append("\\\"")
+            '\n' -> append("\\n")
+            '\r' -> append("\\r")
+            '\t' -> append("\\t")
+            '\b' -> append("\\b")
+            '\u000C' -> append("\\f")
+            else -> append(character)
+        }
+    }
+    append('"')
+}
+
+val debugEmbyBaseUrl = localDebugFixtureValue(
+    propertyName = "m3u.debug.emby.baseUrl",
+    environmentName = "M3U_DEBUG_EMBY_BASE_URL",
+).trim()
+val debugEmbyUsername = localDebugFixtureValue(
+    propertyName = "m3u.debug.emby.username",
+    environmentName = "M3U_DEBUG_EMBY_USERNAME",
+).trim()
+val debugEmbyPassword = localDebugFixtureValue(
+    propertyName = "m3u.debug.emby.password",
+    environmentName = "M3U_DEBUG_EMBY_PASSWORD",
+)
+val debugEmbyValues = listOf(
+    debugEmbyBaseUrl,
+    debugEmbyUsername,
+    debugEmbyPassword,
+)
+require(debugEmbyValues.all(String::isBlank) || debugEmbyValues.none(String::isBlank)) {
+    "Configure all of m3u.debug.emby.baseUrl, username, and password, or leave all three unset"
+}
 
 android {
     namespace = "com.m3u.smartphone"
@@ -53,6 +105,21 @@ android {
             isShrinkResources = false
             isPseudoLocalesEnabled = true
             signingConfig = signingConfigs.getByName("debug")
+            buildConfigField(
+                "String",
+                "DEBUG_EMBY_BASE_URL",
+                debugEmbyBaseUrl.asBuildConfigString(),
+            )
+            buildConfigField(
+                "String",
+                "DEBUG_EMBY_USERNAME",
+                debugEmbyUsername.asBuildConfigString(),
+            )
+            buildConfigField(
+                "String",
+                "DEBUG_EMBY_PASSWORD",
+                debugEmbyPassword.asBuildConfigString(),
+            )
         }
         all {
             isCrunchPngs = false

@@ -15,6 +15,15 @@ internal class DebugDefaultLibraryStartupTask @Inject constructor() :
     }
 }
 
+internal class DebugEmbyAccountStartupTask @Inject constructor() :
+    ApplicationStartupTask {
+    override fun enqueue(workManager: WorkManager) {
+        if (DebugEmbyAccountConfiguration.configuredOrNull() != null) {
+            DebugEmbyAccountWorker.enqueue(workManager)
+        }
+    }
+}
+
 @Module
 @InstallIn(SingletonComponent::class)
 internal interface DebugDefaultLibraryStartupModule {
@@ -22,5 +31,11 @@ internal interface DebugDefaultLibraryStartupModule {
     @IntoSet
     fun bindDebugDefaultLibraryStartupTask(
         task: DebugDefaultLibraryStartupTask,
+    ): ApplicationStartupTask
+
+    @Binds
+    @IntoSet
+    fun bindDebugEmbyAccountStartupTask(
+        task: DebugEmbyAccountStartupTask,
     ): ApplicationStartupTask
 }

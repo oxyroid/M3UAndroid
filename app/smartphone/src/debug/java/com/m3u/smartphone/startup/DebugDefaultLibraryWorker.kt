@@ -337,6 +337,20 @@ internal class DebugDefaultLibraryWorker @AssistedInject constructor(
         internal const val FAILURE_KIND_INVALID_ASSET = "invalid-asset"
         internal const val FAILURE_KIND_IMPORT = "import-failed"
 
+        internal fun hasSettled(context: Context): Boolean {
+            val stateFile = File(
+                context.noBackupFilesDir,
+                "$STATE_DIRECTORY/$STATE_FILE_NAME",
+            )
+            val status = runCatching {
+                DebugDefaultLibraryBootstrapStateCodec
+                    .decodeOrNull(stateFile.readText())
+                    ?.status
+            }.getOrNull()
+            return status == DebugDefaultLibraryBootstrapStatus.IMPORTED ||
+                status == DebugDefaultLibraryBootstrapStatus.OPTED_OUT
+        }
+
         fun enqueue(workManager: WorkManager) {
             workManager.enqueueUniqueWork(
                 UNIQUE_WORK_NAME,
