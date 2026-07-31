@@ -276,6 +276,11 @@ Project constraints:
 - A clickable Card owns one primary whole-card action by default. Independent accessory actions
   follow the two-node rules above.
 - Leading icon, primary/supporting text, and trailing action use shared slots and vertical centering.
+- A settings overview groups related rows inside one tonal Surface. Its section heading names the
+  domain, while supporting text states the task scope instead of repeating the row title.
+- A compact settings entry exposes Button semantics. The same entry exposes Tab and selected
+  semantics only when it controls a simultaneously visible list-detail pane. Informational rows
+  such as the app version expose neither a click action nor a navigation indicator.
 - TV media Cards may use a strong focus layer. TV setting rows still use list semantics.
 
 ## State, error, and operation feedback

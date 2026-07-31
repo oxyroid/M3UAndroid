@@ -3,7 +3,6 @@ package com.m3u.smartphone.ui.business.setting.fragments.preferences
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
-import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Book
@@ -29,11 +28,15 @@ internal fun OtherPreferences(
 ) {
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
-    Column(
-        modifier = modifier
+    SettingsSection(
+        title = stringResource(string.feat_setting_section_about),
+        modifier = modifier,
     ) {
         TrailingIconPreference(
             title = stringResource(string.feat_setting_system_setting).title(),
+            content = stringResource(
+                string.feat_setting_system_setting_description
+            ),
             icon = Icons.Rounded.PermDeviceInformation,
             trailingIcon = Icons.AutoMirrored.Rounded.OpenInNew,
             onClick = {
@@ -51,7 +54,9 @@ internal fun OtherPreferences(
         )
         Preference(
             title = stringResource(string.feat_setting_source_code).title(),
-            content = "@oxyroid/M3UAndroid",
+            content = stringResource(
+                string.feat_setting_source_code_description
+            ),
             icon = Icons.Rounded.Book,
             onClick = {
                 uriHandler.openUri("https://github.com/oxyroid/M3UAndroid")

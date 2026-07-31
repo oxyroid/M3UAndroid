@@ -238,6 +238,10 @@ Android 的[设置模式](https://developer.android.com/design/ui/mobile/guides/
 - Card 内再套 Card 必须有两个可独立解释的层级，否则应拆平；
 - 一个可点击 Card 默认由整个 Card 承担主要动作；独立 accessory action 遵守前述双节点规则；
 - Leading 图标、primary/supporting text 和 trailing action 使用统一槽位与垂直居中；
+- 设置概览把相关行放在同一个色调 Surface 中；分组标题说明领域，Supporting text 说明任务范围，
+  不能只是重复行标题；
+- Compact 设置入口使用 Button 语义；只有它控制同时可见的列表—详情 Pane 时，才使用 Tab 与
+  selected 语义。应用版本等信息行既没有点击语义，也不用导航提示；
 - TV 媒体 Card 可以使用明显焦点层；TV 设置行仍按列表语义设计。
 
 ## 状态、错误与操作反馈

@@ -42,7 +42,7 @@ internal fun PreferencesFragment(
                 navigateToThemeSelector = navigateToThemeSelector,
                 navigateToOptional = navigateToOptional,
                 codecPackEnabled = codecPackEnabled,
-                extensionEntryRole = extensionEntryRole,
+                entryRole = extensionEntryRole,
                 navigateToCodecPack = navigateToCodecPack
             )
         }

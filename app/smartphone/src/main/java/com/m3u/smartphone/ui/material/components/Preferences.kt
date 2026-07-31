@@ -38,7 +38,7 @@ fun Preference(
     elevation: Dp = 0.dp,
     selected: Boolean? = null,
     role: Role? = null,
-    onClick: () -> Unit = {},
+    onClick: (() -> Unit)? = null,
     icon: ImageVector? = null,
     trailing: @Composable (() -> Unit)? = null
 ) {
@@ -86,11 +86,11 @@ fun Preference(
                         selected = selected,
                         enabled = enabled,
                         role = role ?: Role.Tab,
-                        onClick = onClick,
+                        onClick = onClick ?: {},
                         interactionSource = interactionSource,
                         indication = ripple()
                     )
-                } else {
+                } else if (onClick != null) {
                     Modifier.clickable(
                         enabled = enabled,
                         role = role,
@@ -98,6 +98,8 @@ fun Preference(
                         interactionSource = interactionSource,
                         indication = ripple()
                     )
+                } else {
+                    Modifier
                 }
             )
             .fillMaxWidth()

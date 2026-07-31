@@ -3,6 +3,9 @@
     <string name="feat_setting_external_extensions">外部扩展</string>
     <string name="feat_setting_external_extensions_description">允许已安装的扩展连接到此应用</string>
     <string name="feat_setting_app_version">应用版本</string>
+    <string name="feat_setting_section_content">内容与扩展</string>
+    <string name="feat_setting_section_experience">使用体验</string>
+    <string name="feat_setting_section_about">关于</string>
     <string name="feat_setting_label_subscribe">订阅</string>
     <string name="feat_setting_success_subscribe">订阅成功</string>
     <string name="feat_setting_failed_malformed_url">URL错误（%s）</string>
@@ -14,6 +17,7 @@
     <string name="feat_setting_sync_mode_keep">保留</string>
     <string name="feat_setting_sync_mode">同步策略</string>
     <string name="feat_setting_playlist_management">订阅管理</string>
+    <string name="feat_setting_playlist_management_description">管理订阅、节目单与隐藏内容</string>
     <string name="feat_setting_playlist_your_playlists">你的播放列表</string>
     <string name="feat_setting_playlist_no_playlists">还没有播放列表。添加一个即可开始观看。</string>
     <plurals name="feat_setting_playlist_channel_count">
@@ -87,6 +91,7 @@
     <string name="feat_setting_no_picture_mode">无图模式</string>
     <string name="feat_setting_no_picture_mode_description">可能会对性能有所提升</string>
     <string name="feat_setting_system_setting">系统设置</string>
+    <string name="feat_setting_system_setting_description">管理权限、存储空间与系统级控制</string>
     <string name="feat_setting_script_management_import_js">导入Javascript</string>
     <string name="feat_setting_enqueue_subscribe">订阅任务已添加至队列</string>
     <string name="feat_setting_subscription_status_queued">等待添加播放列表</string>
@@ -112,12 +117,14 @@
     <string name="feat_setting_screen_rotating">屏幕旋转</string>
     <string name="feat_setting_screen_rotating_description">只有当系统屏幕旋转解锁时可用</string>
     <string name="feat_setting_optional_features">可选功能</string>
+    <string name="feat_setting_optional_features_description">调整播放、手势与其他应用行为</string>
     <string name="feat_setting_unseen_limit">推荐许久未见的流媒体</string>
     <string name="feat_setting_reconnect_mode">自动重连</string>
     <string name="feat_setting_reconnect_mode_no">永不</string>
     <string name="feat_setting_reconnect_mode_retry">仅在失败时</string>
     <string name="feat_setting_reconnect_mode_reconnect">永远</string>
     <string name="feat_setting_appearance">外观</string>
+    <string name="feat_setting_appearance_description">调整主题、配色与视觉风格</string>
     <string name="feat_setting_appearance_hint_edit_color">长按编辑颜色</string>
     <string name="feat_setting_theme_parchment">暖纸</string>
     <string name="feat_setting_theme_ink">暖墨</string>
@@ -157,6 +164,7 @@
         加载大量频道很有用，但是与此同时分组会被禁用
     </string>
     <string name="feat_setting_source_code">源代码</string>
+    <string name="feat_setting_source_code_description">在 GitHub 上查看项目</string>
     <string name="feat_setting_placeholder_epg_title">EPG 名称</string>
     <string name="feat_setting_error_empty_epg_title">EPG名称为空</string>
     <string name="feat_setting_error_empty_epg">EPG链接为空</string>
@@ -164,6 +172,7 @@
     <string name="feat_setting_epg_added">您可以随后将播放列表与 EPG 相关联</string>
     <string name="feat_setting_randomly_in_favourite">随机播放只播放已收藏的频道</string>
     <string name="feat_setting_codec_pack">解码器组件</string>
+    <string name="feat_setting_codec_pack_description">为更多媒体格式安装可选组件</string>
     <string name="feat_setting_codec_pack_status">组件状态</string>
     <string name="feat_setting_codec_pack_installed">已安装</string>
     <string name="feat_setting_codec_pack_not_installed">未安装</string>
@@ -207,6 +216,7 @@
     <string name="feat_setting_data_source_selector_description">订阅来源，当前为：%1$s</string>
     <string name="feat_setting_data_source_selector_with_identifier_description">订阅来源，当前为：%1$s；服务标识：%2$s</string>
     <string name="feat_setting_extension_plugins">扩展插件</string>
+    <string name="feat_setting_extension_plugins_description">管理已安装插件、权限与诊断信息</string>
     <string name="feat_setting_extension_on_device">此设备上</string>
     <string name="feat_setting_extension_details">插件详情</string>
     <string name="feat_setting_extension_access">访问权限</string>
