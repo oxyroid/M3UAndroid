@@ -6,12 +6,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -19,7 +15,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
@@ -32,6 +27,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.m3u.business.foryou.ForyouViewModel
+import com.m3u.business.foryou.HomeFeedSection
+import com.m3u.business.foryou.HomePlaylistPreview
 import com.m3u.business.foryou.Recommend
 import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
 import com.m3u.core.foundation.architecture.preferences.mutablePreferenceOf
@@ -39,11 +36,9 @@ import com.m3u.core.foundation.architecture.preferences.preferenceOf
 import com.m3u.core.foundation.ui.composableOf
 import com.m3u.core.foundation.ui.thenIf
 import com.m3u.core.foundation.util.basic.title
-import com.m3u.core.foundation.wrapper.Resource
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.MediaOpenAction
 import com.m3u.data.database.model.Playlist
-import com.m3u.data.database.model.PlaylistWithCount
 import com.m3u.data.database.model.openAction
 import com.m3u.data.service.MediaCommand
 import com.m3u.i18n.R.string
@@ -57,7 +52,6 @@ import com.m3u.smartphone.ui.material.components.EpisodesBottomSheet
 import com.m3u.smartphone.ui.material.components.MediaSheet
 import com.m3u.smartphone.ui.material.components.MediaSheetValue
 import com.m3u.smartphone.ui.material.ktx.interceptVolumeEvent
-import com.m3u.smartphone.ui.material.model.LocalSpacing
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
@@ -81,7 +75,8 @@ fun ForyouRoute(
     val title = stringResource(string.ui_title_foryou)
     val addContentDescription = stringResource(string.ui_action_add)
 
-    val playlists by viewModel.playlists.collectAsStateWithLifecycle()
+    val playlistPreviews by viewModel.playlistPreviews.collectAsStateWithLifecycle()
+    val feedSections by viewModel.feedSections.collectAsStateWithLifecycle()
     val specs by viewModel.specs.collectAsStateWithLifecycle()
     val episodes by viewModel.episodes.collectAsStateWithLifecycle()
 
@@ -108,7 +103,8 @@ fun ForyouRoute(
 
     Box(modifier) {
         ForyouScreen(
-            playlists = playlists,
+            playlistPreviews = playlistPreviews,
+            feedSections = feedSections,
             subscribingPlaylistUrls = subscribingPlaylistUrls,
             refreshingEpgUrls = refreshingEpgUrls,
             specs = specs,
@@ -172,7 +168,8 @@ fun ForyouRoute(
 @Composable
 private fun ForyouScreen(
     rowCount: Int,
-    playlists: Map<Playlist, Int>,
+    playlistPreviews: List<HomePlaylistPreview>,
+    feedSections: List<HomeFeedSection>,
     subscribingPlaylistUrls: List<String>,
     refreshingEpgUrls: List<String>,
     specs: List<Recommend.Spec>,
@@ -225,11 +222,13 @@ private fun ForyouScreen(
         }
         PlaylistGallery(
             rowCount = actualRowCount,
-            playlists = playlists,
+            previews = playlistPreviews,
+            feedSections = feedSections,
             subscribingPlaylistUrls = subscribingPlaylistUrls,
             refreshingEpgUrls = refreshingEpgUrls,
             onClick = navigateToPlaylist,
             onLongClick = { mediaSheetValue = MediaSheetValue.ForyouScreen(it) },
+            onPlayChannel = onPlayChannel,
             onAddPlaylist = onAddPlaylist,
             header = composableOf(specs.isNotEmpty(), header),
             contentPadding = contentPadding,

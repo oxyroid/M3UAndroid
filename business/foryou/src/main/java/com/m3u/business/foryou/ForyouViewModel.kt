@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -53,6 +54,42 @@ class ForyouViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.Lazily,
             initialValue = emptyMap()
+        )
+
+    val playlistPreviews: StateFlow<List<HomePlaylistPreview>> = playlists
+        .flatMapLatest { playlistCounts ->
+            val entries = playlistCounts.entries.toList()
+            if (entries.isEmpty()) {
+                flowOf(emptyList())
+            } else {
+                combine(
+                    entries.map { (playlist, channelCount) ->
+                        channelRepository.observePreviewByPlaylistUrl(
+                            playlistUrl = playlist.url,
+                            limit = HOME_PREVIEW_CHANNEL_LIMIT,
+                        ).map { channels ->
+                            HomePlaylistPreview(
+                                playlist = playlist,
+                                channelCount = channelCount,
+                                channels = channels,
+                            )
+                        }
+                    }
+                ) { previews -> previews.toList() }
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000L),
+            initialValue = emptyList(),
+        )
+
+    val feedSections: StateFlow<List<HomeFeedSection>> = playlistPreviews
+        .map { previews -> previews.flatMap(::buildLocalFeedSections) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000L),
+            initialValue = emptyList(),
         )
 
     val subscribingPlaylistUrls: StateFlow<List<String>> =
@@ -134,4 +171,31 @@ class ForyouViewModel @Inject constructor(
 
     suspend fun getPlaylist(playlistUrl: String): Playlist? =
         playlistRepository.get(playlistUrl)
+
+    private companion object {
+        const val HOME_PREVIEW_CHANNEL_LIMIT = 48
+    }
 }
+
+private fun buildLocalFeedSections(
+    preview: HomePlaylistPreview,
+): List<HomeFeedSection> {
+    val playlist = preview.playlist
+    return preview.channels
+        .groupBy { channel -> channel.category.trim() }
+        .entries
+        .take(HOME_SECTIONS_PER_PLAYLIST_LIMIT)
+        .mapIndexed { index, (category, channels) ->
+            val title = category.ifBlank { playlist.title }
+            HomeFeedSection(
+                id = "${playlist.url}\u0000${category.ifBlank { index.toString() }}",
+                title = title,
+                supporting = playlist.title.takeUnless { it == title },
+                playlist = playlist,
+                channels = channels.take(HOME_ITEMS_PER_SECTION_LIMIT),
+            )
+        }
+}
+
+private const val HOME_SECTIONS_PER_PLAYLIST_LIMIT = 6
+private const val HOME_ITEMS_PER_SECTION_LIMIT = 12

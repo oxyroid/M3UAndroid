@@ -27,6 +27,16 @@ internal class ChannelRepositoryImpl @Inject constructor(
         .observeAllByPlaylistUrl(playlistUrl)
         .catch { emit(emptyList()) }
 
+    override fun observePreviewByPlaylistUrl(
+        playlistUrl: String,
+        limit: Int,
+    ): Flow<List<Channel>> = channelDao
+        .observePreviewByPlaylistUrl(
+            playlistUrl = playlistUrl,
+            limit = limit,
+        )
+        .catch { emit(emptyList()) }
+
     override fun observeRelationIdsByPlaylistUrl(playlistUrl: String): Flow<List<String>> = channelDao
         .observeRelationIdsByPlaylistUrl(playlistUrl)
         .catch { emit(emptyList()) }
