@@ -77,19 +77,29 @@ class AppNavigationPolicyTest {
     fun `nested tasks use contextual chrome in compact and rail layouts`() {
         assertFalse(
             shouldShowContextualTopBar(
+                isRootPlaylistDetail = false,
                 isRootPlaylistConfiguration = false,
                 isNestedDetailVisible = false,
             )
         )
         assertTrue(
             shouldShowContextualTopBar(
+                isRootPlaylistDetail = false,
                 isRootPlaylistConfiguration = false,
                 isNestedDetailVisible = true,
             )
         )
         assertTrue(
             shouldShowContextualTopBar(
+                isRootPlaylistDetail = false,
                 isRootPlaylistConfiguration = true,
+                isNestedDetailVisible = false,
+            )
+        )
+        assertTrue(
+            shouldShowContextualTopBar(
+                isRootPlaylistDetail = true,
+                isRootPlaylistConfiguration = false,
                 isNestedDetailVisible = false,
             )
         )
@@ -102,6 +112,7 @@ class AppNavigationPolicyTest {
                 remoteControlEnabled = true,
                 isSearchActive = false,
                 isImeVisible = false,
+                isRootPlaylistDetail = false,
                 isRootPlaylistConfiguration = false,
                 isNestedDetailVisible = false,
             )
@@ -111,6 +122,7 @@ class AppNavigationPolicyTest {
                 remoteControlEnabled = true,
                 isSearchActive = false,
                 isImeVisible = false,
+                isRootPlaylistDetail = false,
                 isRootPlaylistConfiguration = false,
                 isNestedDetailVisible = true,
             )
@@ -120,6 +132,7 @@ class AppNavigationPolicyTest {
                 remoteControlEnabled = true,
                 isSearchActive = true,
                 isImeVisible = false,
+                isRootPlaylistDetail = false,
                 isRootPlaylistConfiguration = false,
                 isNestedDetailVisible = false,
             )
@@ -129,6 +142,7 @@ class AppNavigationPolicyTest {
                 remoteControlEnabled = true,
                 isSearchActive = false,
                 isImeVisible = true,
+                isRootPlaylistDetail = false,
                 isRootPlaylistConfiguration = false,
                 isNestedDetailVisible = false,
             )
@@ -138,7 +152,18 @@ class AppNavigationPolicyTest {
                 remoteControlEnabled = true,
                 isSearchActive = false,
                 isImeVisible = false,
+                isRootPlaylistDetail = false,
                 isRootPlaylistConfiguration = true,
+                isNestedDetailVisible = false,
+            )
+        )
+        assertFalse(
+            shouldShowRemoteControlAction(
+                remoteControlEnabled = true,
+                isSearchActive = false,
+                isImeVisible = false,
+                isRootPlaylistDetail = true,
+                isRootPlaylistConfiguration = false,
                 isNestedDetailVisible = false,
             )
         )
@@ -147,6 +172,7 @@ class AppNavigationPolicyTest {
                 remoteControlEnabled = false,
                 isSearchActive = false,
                 isImeVisible = false,
+                isRootPlaylistDetail = false,
                 isRootPlaylistConfiguration = false,
                 isNestedDetailVisible = false,
             )

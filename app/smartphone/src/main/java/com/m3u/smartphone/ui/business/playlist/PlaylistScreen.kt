@@ -30,6 +30,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridS
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material.icons.rounded.KeyboardDoubleArrowUp
 import androidx.compose.material.icons.rounded.Refresh
@@ -107,6 +108,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 internal fun PlaylistRoute(
+    onBack: () -> Unit,
     navigateToChannel: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: PlaylistViewModel = hiltViewModel(),
@@ -153,12 +155,24 @@ internal fun PlaylistRoute(
 
     LifecycleResumeEffect(
         title,
-        colorScheme
+        colorScheme,
+        onBack,
     ) {
+        val navigationAction = Fob(
+            destination = Destination.Foryou,
+            icon = Icons.AutoMirrored.Rounded.ArrowBack,
+            iconTextId = string.ui_cd_top_bar_on_back_pressed,
+            onClick = onBack,
+        )
         Metadata.title = AnnotatedString(title)
         Metadata.color = colorScheme.secondaryContainer
         Metadata.contentColor = colorScheme.onSecondaryContainer
-        onPauseOrDispose {}
+        Metadata.navigationAction = navigationAction
+        onPauseOrDispose {
+            if (Metadata.navigationAction === navigationAction) {
+                Metadata.navigationAction = null
+            }
+        }
     }
 
     LaunchedEffect(autoRefreshChannels, playlistUrl) {
@@ -431,7 +445,7 @@ private fun PlaylistScreen(
             state = pagerState,
             modifier = Modifier
                 .hazeSource(LocalHazeState.current)
-                .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                .background(MaterialTheme.colorScheme.background)
         ) { index ->
             val (_, channels) = entries[index]
 

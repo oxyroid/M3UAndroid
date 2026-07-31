@@ -65,6 +65,9 @@ fun AppNavHost(
             onNestedDetailVisibilityChanged = onNestedDetailVisibilityChanged,
         )
         playlistScreen(
+            onBack = {
+                navController.popBackStack()
+            },
             navigateToChannel = {
                 if (zappingMode && PlayerActivity.isInPipMode) return@playlistScreen
                 val options = ActivityOptions.makeCustomAnimation(

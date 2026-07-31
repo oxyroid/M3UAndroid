@@ -110,7 +110,7 @@ internal fun ChannelItem(
     OutlinedCard(
         modifier = Modifier.semantics(mergeDescendants = true) { },
         border = CardDefaults.outlinedCardBorder(zapping),
-        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceContainer),
+        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceContainerLow),
         shape = AbsoluteSmoothCornerShape(spacing.medium, 65)
     ) {
         when {
@@ -210,7 +210,7 @@ internal fun ChannelItem(
                             text = channel.title.trim(),
                             style = MaterialTheme.typography.titleSmall,
                             overflow = TextOverflow.Ellipsis,
-                            maxLines = 1,
+                            maxLines = 2,
                             fontWeight = FontWeight.Bold,
                         )
                     },
@@ -251,7 +251,7 @@ internal fun ChannelItem(
                                     text = programme.readText(),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = LocalContentColor.current.copy(0.56f),
-                                    maxLines = 1,
+                                    maxLines = 2,
                                     overflow = TextOverflow.Ellipsis
                                 )
                             }

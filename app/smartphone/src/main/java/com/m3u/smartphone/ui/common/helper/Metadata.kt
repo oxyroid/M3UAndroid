@@ -14,6 +14,7 @@ object Metadata {
     var headlineUrl: String by mutableStateOf("")
     var headlineFraction: Float by mutableFloatStateOf(0f)
     var actions: List<Action> by mutableStateOf(emptyList())
+    var navigationAction: Fob? by mutableStateOf(null)
     var fob: Fob? by mutableStateOf(null)
     var color: Color by mutableStateOf(Color.Unspecified)
     var contentColor: Color by mutableStateOf(Color.Unspecified)

@@ -87,8 +87,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
 import androidx.paging.PagingData
-import com.m3u.business.playlist.configuration.PlaylistConfigurationNavigation
 import com.m3u.business.playlist.ChannelWithProgramme
+import com.m3u.business.playlist.PlaylistNavigation
+import com.m3u.business.playlist.configuration.PlaylistConfigurationNavigation
 import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
 import com.m3u.core.foundation.architecture.preferences.ThemeStyle
 import com.m3u.core.foundation.architecture.preferences.preferenceOf
@@ -210,6 +211,8 @@ private fun AppImpl(
     val isRootPlaylistConfiguration =
         entry?.destination?.route ==
             PlaylistConfigurationNavigation.PLAYLIST_CONFIGURATION_ROUTE
+    val isRootPlaylistDetail =
+        entry?.destination?.route == PlaylistNavigation.PLAYLIST_ROUTE
     val navigationMode = resolveAppNavigationMode(
         with(density) {
             LocalWindowInfo.current.containerSize.width.toDp()
@@ -247,6 +250,7 @@ private fun AppImpl(
         remoteControlEnabled = remoteControl,
         isSearchActive = searchActive,
         isImeVisible = imeVisible,
+        isRootPlaylistDetail = isRootPlaylistDetail,
         isRootPlaylistConfiguration = isRootPlaylistConfiguration,
         isNestedDetailVisible = nestedDetailVisible,
     )
@@ -345,6 +349,7 @@ private fun AppImpl(
         contentPadding = contentInsets.contentPadding,
         showBottomEdgeBlur = shouldShowBottomEdgeBlur(navigationMode),
         showContextualTopBar = shouldShowContextualTopBar(
+            isRootPlaylistDetail = isRootPlaylistDetail,
             isRootPlaylistConfiguration = isRootPlaylistConfiguration,
             isNestedDetailVisible = nestedDetailVisible,
         ),
@@ -590,12 +595,12 @@ private fun AppContent(
                     )
                 },
                 navigationIcon = {
-                    Metadata.fob?.let { backAction ->
-                        IconButton(onClick = backAction.onClick) {
+                    Metadata.navigationAction?.let { navigationAction ->
+                        IconButton(onClick = navigationAction.onClick) {
                             Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                imageVector = navigationAction.icon,
                                 contentDescription = stringResource(
-                                    string.ui_cd_top_bar_on_back_pressed
+                                    navigationAction.iconTextId
                                 ),
                             )
                         }
@@ -610,6 +615,14 @@ private fun AppContent(
                             Icon(
                                 imageVector = action.icon,
                                 contentDescription = action.contentDescription,
+                            )
+                        }
+                    }
+                    Metadata.fob?.let { action ->
+                        IconButton(onClick = action.onClick) {
+                            Icon(
+                                imageVector = action.icon,
+                                contentDescription = stringResource(action.iconTextId),
                             )
                         }
                     }

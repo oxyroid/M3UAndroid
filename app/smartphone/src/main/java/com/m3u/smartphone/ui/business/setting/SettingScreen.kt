@@ -489,7 +489,7 @@ private fun SettingScreen(
         Metadata.color = Color.Unspecified
         Metadata.contentColor = Color.Unspecified
         if (destination != SettingDestination.Default) {
-            Metadata.fob = Fob(
+            Metadata.navigationAction = Fob(
                 destination = Destination.Setting,
                 icon = Icons.AutoMirrored.Rounded.ArrowBack,
                 iconTextId = string.ui_cd_top_bar_on_back_pressed,
@@ -500,7 +500,7 @@ private fun SettingScreen(
             }
         }
         onPauseOrDispose {
-            Metadata.fob = null
+            Metadata.navigationAction = null
         }
     }
 

@@ -13,4 +13,8 @@
     <string name="feat_playlist_error_channel_not_found">频道不存在</string>
     <string name="feat_playlist_success_save_cover">保存到了（%s）</string>
     <string name="feat_playlist_scroll_up">回到顶部</string>
+    <string name="feat_playlist_empty_category_title">这里还没有频道</string>
+    <string name="feat_playlist_empty_category_description">此分类暂时不包含任何频道。</string>
+    <string name="feat_playlist_load_error_title">无法加载频道</string>
+    <string name="feat_playlist_load_error_description">请检查网络连接后重试。</string>
 </resources>

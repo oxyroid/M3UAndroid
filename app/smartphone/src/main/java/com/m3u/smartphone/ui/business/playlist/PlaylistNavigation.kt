@@ -12,6 +12,7 @@ import androidx.navigation.navArgument
 import com.m3u.business.playlist.PlaylistNavigation
 
 fun NavGraphBuilder.playlistScreen(
+    onBack: () -> Unit,
     navigateToChannel: () -> Unit,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
@@ -28,6 +29,7 @@ fun NavGraphBuilder.playlistScreen(
         popExitTransition = { slideOutVertically { it } }
     ) {
         PlaylistRoute(
+            onBack = onBack,
             navigateToChannel = navigateToChannel,
             contentPadding = contentPadding
         )

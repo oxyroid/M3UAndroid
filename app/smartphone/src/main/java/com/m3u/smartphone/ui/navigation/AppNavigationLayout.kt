@@ -35,19 +35,24 @@ internal fun shouldShowBottomNavigation(
     !isImeVisible
 
 internal fun shouldShowContextualTopBar(
+    isRootPlaylistDetail: Boolean,
     isRootPlaylistConfiguration: Boolean,
     isNestedDetailVisible: Boolean,
-): Boolean = isRootPlaylistConfiguration || isNestedDetailVisible
+): Boolean = isRootPlaylistDetail ||
+    isRootPlaylistConfiguration ||
+    isNestedDetailVisible
 
 internal fun shouldShowRemoteControlAction(
     remoteControlEnabled: Boolean,
     isSearchActive: Boolean,
     isImeVisible: Boolean,
+    isRootPlaylistDetail: Boolean,
     isRootPlaylistConfiguration: Boolean,
     isNestedDetailVisible: Boolean,
 ): Boolean = remoteControlEnabled &&
     !isSearchActive &&
     !isImeVisible &&
+    !isRootPlaylistDetail &&
     !isRootPlaylistConfiguration &&
     !isNestedDetailVisible
 

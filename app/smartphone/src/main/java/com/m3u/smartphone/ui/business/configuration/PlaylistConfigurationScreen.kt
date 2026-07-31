@@ -213,10 +213,10 @@ internal fun PlaylistConfigurationRoute(
                     onClick = navigateBack,
                 )
             }
-            Metadata.fob = backAction
+            Metadata.navigationAction = backAction
             onPauseOrDispose {
-                if (Metadata.fob === backAction) {
-                    Metadata.fob = null
+                if (Metadata.navigationAction === backAction) {
+                    Metadata.navigationAction = null
                 }
             }
         }

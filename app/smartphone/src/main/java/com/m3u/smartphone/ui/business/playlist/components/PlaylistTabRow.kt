@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
@@ -61,6 +62,7 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
 import com.m3u.core.foundation.ui.thenIf
@@ -345,18 +347,30 @@ private fun PlaylistTabRowItem(
                         .heightIn(32.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = when {
-                            pinned -> "[$name]"
-                            else -> name
-                        },
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = when {
-                            pinned -> FontWeight.Black
-                            selected && !hasOtherFocused -> FontWeight.Bold
-                            else -> null
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.widthIn(max = 240.dp),
+                    ) {
+                        if (pinned) {
+                            Icon(
+                                imageVector = Icons.Rounded.PushPin,
+                                contentDescription = null,
+                                modifier = Modifier.requiredSize(16.dp),
+                            )
                         }
-                    )
+                        Text(
+                            text = name,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = when {
+                                pinned -> FontWeight.Bold
+                                selected && !hasOtherFocused -> FontWeight.Bold
+                                else -> null
+                            },
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
             }
             val indicator = @Composable {
