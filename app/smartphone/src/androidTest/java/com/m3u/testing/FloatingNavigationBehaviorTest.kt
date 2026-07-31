@@ -90,6 +90,22 @@ class FloatingNavigationBehaviorTest {
                 "Floating navigation remained visible while search was expanded",
                 device.wait(Until.gone(forYou), UI_TIMEOUT_MILLIS)
             )
+            device.findRequiredObject(
+                By.clazz("android.widget.EditText"),
+            ).text = SEARCH_STABILITY_QUERY
+            SystemClock.sleep(SEARCH_RESULT_SETTLE_MILLIS)
+            device.findRequiredObject(
+                By.text(caseInsensitive(SEARCH_STABILITY_QUERY))
+            )
+            device.findRequiredObject(
+                By.desc(
+                    caseInsensitive(
+                        context.getString(
+                            string.ui_cd_top_bar_on_back_pressed
+                        ),
+                    )
+                )
+            )
 
             device.pressBack()
             device.pressBack()
@@ -249,6 +265,8 @@ class FloatingNavigationBehaviorTest {
         const val COMPACT_WIDTH_DP = 600f
         const val NAVIGATION_DRAG_STEPS = 24
         const val NAVIGATION_ANIMATION_SETTLE_MILLIS = 500L
+        const val SEARCH_STABILITY_QUERY = "paging"
+        const val SEARCH_RESULT_SETTLE_MILLIS = 1_000L
         const val UI_TIMEOUT_MILLIS = 5_000L
         val WHITESPACE = Regex("\\s+")
     }

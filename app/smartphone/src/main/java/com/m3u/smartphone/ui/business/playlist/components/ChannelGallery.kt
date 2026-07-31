@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
@@ -61,7 +62,10 @@ internal fun ChannelGallery(
     reloadThumbnail: suspend (channelUrl: String) -> Uri?,
     syncThumbnail: suspend (channelUrl: String) -> Uri?,
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(0.dp)
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    emptyIcon: ImageVector? = null,
+    emptyTitle: String? = null,
+    emptyDescription: String? = null,
 ) {
     val spacing = LocalSpacing.current
 
@@ -130,11 +134,13 @@ internal fun ChannelGallery(
 
             refreshState is LoadState.NotLoading && channels.itemCount == 0 -> {
                 PageStateContent(
-                    icon = Icons.Rounded.TvOff,
-                    title = stringResource(string.feat_playlist_empty_category_title),
-                    description = stringResource(
-                        string.feat_playlist_empty_category_description
-                    ),
+                    icon = emptyIcon ?: Icons.Rounded.TvOff,
+                    title = emptyTitle
+                        ?: stringResource(string.feat_playlist_empty_category_title),
+                    description = emptyDescription
+                        ?: stringResource(
+                            string.feat_playlist_empty_category_description
+                        ),
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(contentPadding),

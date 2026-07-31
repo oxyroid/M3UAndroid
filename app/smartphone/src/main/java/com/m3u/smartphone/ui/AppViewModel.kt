@@ -97,6 +97,7 @@ class AppViewModel @Inject constructor(
                     }
             }
         }
+        .cachedIn(viewModelScope)
 
     private val extensionSearchResults = searchQueries
         .mapLatestSearchResults { query ->

@@ -52,6 +52,11 @@
     <string name="ui_error_unknown">unknown error</string>
     <string name="ui_cd_top_bar_on_back_pressed">back</string>
     <string name="ui_search_placeholder">Search channels and providers</string>
+    <string name="ui_search_clear">Clear search</string>
+    <string name="ui_search_start_title">Search your library</string>
+    <string name="ui_search_start_description">Find channels, movies, series, and results from enabled providers.</string>
+    <string name="ui_search_no_results_title">No results</string>
+    <string name="ui_search_no_results_description">No channels or provider results match “%1$s”.</string>
     <string name="ui_theme_card_left">Did you know?</string>
     <string name="ui_theme_card_right">We will save your watching progress and resume it next time you play</string>
     <string name="ui_sort">Sort</string>

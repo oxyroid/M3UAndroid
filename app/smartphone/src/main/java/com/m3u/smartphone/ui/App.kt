@@ -33,11 +33,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.SettingsRemote
 import androidx.compose.material3.ExpandedFullScreenSearchBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -109,6 +110,7 @@ import com.m3u.smartphone.ui.common.helper.LocalHelper
 import com.m3u.smartphone.ui.common.helper.Metadata
 import com.m3u.smartphone.ui.material.components.Destination
 import com.m3u.smartphone.ui.material.components.EpisodesBottomSheet
+import com.m3u.smartphone.ui.material.components.PageStateContent
 import com.m3u.smartphone.ui.material.components.SnackHost
 import com.m3u.smartphone.ui.material.components.withEditorialVoice
 import com.m3u.smartphone.ui.material.model.LocalThemeStyle
@@ -545,6 +547,7 @@ private fun AppContent(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
+    val normalizedSearchQuery = textFieldState.text.toString().trim()
     val contextualTitleStyle = if (LocalThemeStyle.current == ThemeStyle.WARM_EDITORIAL) {
         MaterialTheme.typography.titleLarge.withEditorialVoice()
     } else {
@@ -554,7 +557,7 @@ private fun AppContent(
         SearchBarDefaults.InputField(
             searchBarState = searchBarState,
             textFieldState = textFieldState,
-            onSearch = { coroutineScope.launch { searchBarState.animateToCollapsed() } },
+            onSearch = { focusManager.clearFocus() },
             placeholder = { Text(stringResource(string.ui_search_placeholder)) },
             leadingIcon = {
                 if (searchBarState.currentValue == SearchBarValue.Expanded) {
@@ -577,7 +580,16 @@ private fun AppContent(
                 }
             },
             trailingIcon = {
-                Icon(Icons.Default.MoreVert, contentDescription = null)
+                if (textFieldState.text.isNotEmpty()) {
+                    IconButton(onClick = textFieldState::clearText) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = stringResource(
+                                string.ui_search_clear,
+                            ),
+                        )
+                    }
+                }
             },
         )
     }
@@ -644,23 +656,41 @@ private fun AppContent(
                         searchBarState.animateToCollapsed()
                     }
                 }
-                val state = rememberLazyStaggeredGridState()
-                ChannelGallery(
-                    state = state,
-                    rowCount = 1,
-                    channels = channels,
-                    zapping = null,
-                    recently = false,
-                    isVodOrSeriesPlaylist = false,
-                    onClick = { channel ->
-                        focusManager.clearFocus()
-                        onSearchResultClick(channel)
-                    },
-                    onLongClick = {},
-                    reloadThumbnail = { null },
-                    syncThumbnail = { null },
-                    contentPadding = WindowInsets.ime.asPaddingValues(),
-                )
+                if (normalizedSearchQuery.isEmpty()) {
+                    PageStateContent(
+                        icon = Icons.Default.Search,
+                        title = stringResource(string.ui_search_start_title),
+                        description = stringResource(
+                            string.ui_search_start_description,
+                        ),
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                } else {
+                    val state = rememberLazyStaggeredGridState()
+                    ChannelGallery(
+                        state = state,
+                        rowCount = 1,
+                        channels = channels,
+                        zapping = null,
+                        recently = false,
+                        isVodOrSeriesPlaylist = false,
+                        onClick = { channel ->
+                            focusManager.clearFocus()
+                            onSearchResultClick(channel)
+                        },
+                        onLongClick = {},
+                        reloadThumbnail = { null },
+                        syncThumbnail = { null },
+                        emptyIcon = Icons.Default.Search,
+                        emptyTitle = stringResource(
+                            string.ui_search_no_results_title,
+                        ),
+                        emptyDescription = stringResource(
+                            string.ui_search_no_results_description,
+                            normalizedSearchQuery,
+                        ),
+                    )
+                }
             }
         }
         AppNavHost(
