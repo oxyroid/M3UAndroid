@@ -35,8 +35,9 @@
     <string name="feat_setting_playlist_update_in_progress">Adding or refreshing a playlist…</string>
     <string name="feat_setting_playlist_source_picker_title">Choose a source</string>
     <string name="feat_setting_playlist_source_picker_description">Select how you want to add this playlist</string>
-    <string name="feat_setting_playlist_built_in_sources">Built-in sources</string>
-    <string name="feat_setting_playlist_providers">Providers</string>
+    <string name="feat_setting_playlist_built_in_sources">Playlists</string>
+    <string name="feat_setting_playlist_providers">Media servers</string>
+    <string name="feat_setting_playlist_provider_source_description">Add channels from %1$s</string>
     <string name="feat_setting_playlist_source_m3u_description">Add a playlist from a link or file</string>
     <string name="feat_setting_playlist_source_epg_description">Add a programme guide from an XMLTV URL</string>
     <string name="feat_setting_playlist_source_xtream_description">Sign in to an Xtream Codes server</string>

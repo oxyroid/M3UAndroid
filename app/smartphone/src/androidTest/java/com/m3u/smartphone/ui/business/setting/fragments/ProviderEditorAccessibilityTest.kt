@@ -164,7 +164,7 @@ class ProviderEditorAccessibilityTest {
             substring = false,
             ignoreCase = false,
             useUnmergedTree = true,
-        ).assertCountEquals(0)
+        ).assertCountEquals(1)
         composeRule.onAllNodesWithText(
             text = required,
             substring = false,

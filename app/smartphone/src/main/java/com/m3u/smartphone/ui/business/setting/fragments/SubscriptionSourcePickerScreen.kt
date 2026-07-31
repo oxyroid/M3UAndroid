@@ -14,8 +14,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Cloud
-import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.Link
+import androidx.compose.material.icons.rounded.VideoLibrary
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -112,7 +112,10 @@ internal fun SubscriptionSourcePickerScreen(
                     stableProviderId,
                 )
             } else {
-                providerName.takeUnless { name -> name == variantName }
+                stringResource(
+                    string.feat_setting_playlist_provider_source_description,
+                    variantName,
+                )
             }
             SubscriptionSourceRow(
                 key = source.subscriptionSelectionKey(),
@@ -127,7 +130,7 @@ internal fun SubscriptionSourcePickerScreen(
                 } else {
                     null
                 },
-                icon = Icons.Rounded.Extension,
+                icon = Icons.Rounded.VideoLibrary,
                 providerSource = source,
             )
         }

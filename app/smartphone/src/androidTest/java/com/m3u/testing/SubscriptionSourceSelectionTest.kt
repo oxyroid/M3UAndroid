@@ -8,10 +8,12 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -20,6 +22,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -70,6 +73,40 @@ class SubscriptionSourceSelectionTest {
 
         waitUntilTagExists(editorTag(EMBY_SOURCE_KEY))
         assertProviderFieldsVisible(EMBY_SOURCE_KEY)
+    }
+
+    @Test
+    fun pristineProviderFormDefersRequiredErrorsUntilSubmit() {
+        openSourcePicker()
+        clickSourceAcrossFullRow(EMBY_SOURCE_KEY)
+        waitUntilTagExists(editorTag(EMBY_SOURCE_KEY))
+        val required = context.getString(
+            string.feat_setting_provider_error_required
+        )
+        val requiredError = SemanticsMatcher.expectValue(
+            SemanticsProperties.Error,
+            required,
+        )
+
+        composeRule.onAllNodes(
+            requiredError,
+            useUnmergedTree = true,
+        ).assertCountEquals(0)
+        composeRule.onNode(
+            hasSetTextAction() and hasText(
+                context.getString(string.feat_setting_placeholder_title),
+                substring = false,
+                ignoreCase = true,
+            )
+        ).performTextReplacement("My Emby")
+        composeRule.onNodeWithTag(SUBMIT_ACTION_TAG).run {
+            assertHasClickAction()
+            performClick()
+        }
+        composeRule.onAllNodes(
+            requiredError,
+            useUnmergedTree = true,
+        ).assertCountEquals(3)
     }
 
     @Test
@@ -661,6 +698,7 @@ class SubscriptionSourceSelectionTest {
         const val OVERVIEW_TAG = "playlist-management-overview"
         const val ADD_ACTION_TAG = "playlist-add-action"
         const val SOURCE_PICKER_TAG = "playlist-source-picker"
+        const val SUBMIT_ACTION_TAG = "subscription-submit-action"
         const val EPG_SOURCES_ACTION_TAG = "playlist-overview-epg-sources"
         const val HIDDEN_CHANNELS_ACTION_TAG = "playlist-overview-hidden-channels"
         const val HIDDEN_CATEGORIES_ACTION_TAG =

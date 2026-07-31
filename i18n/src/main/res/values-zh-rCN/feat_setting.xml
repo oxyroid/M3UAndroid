@@ -34,8 +34,9 @@
     <string name="feat_setting_playlist_update_in_progress">正在添加或刷新播放列表…</string>
     <string name="feat_setting_playlist_source_picker_title">选择来源</string>
     <string name="feat_setting_playlist_source_picker_description">选择新增订阅的方式</string>
-    <string name="feat_setting_playlist_built_in_sources">内置来源</string>
-    <string name="feat_setting_playlist_providers">订阅服务</string>
+    <string name="feat_setting_playlist_built_in_sources">播放列表</string>
+    <string name="feat_setting_playlist_providers">媒体服务器</string>
+    <string name="feat_setting_playlist_provider_source_description">从 %1$s 添加频道</string>
     <string name="feat_setting_playlist_source_m3u_description">从链接或文件新增订阅</string>
     <string name="feat_setting_playlist_source_epg_description">从 XMLTV 链接新增节目单</string>
     <string name="feat_setting_playlist_source_xtream_description">登录 Xtream Codes 服务器</string>

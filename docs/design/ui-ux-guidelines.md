@@ -281,6 +281,9 @@ Project constraints:
 - A compact settings entry exposes Button semantics. The same entry exposes Tab and selected
   semantics only when it controls a simultaneously visible list-detail pane. Informational rows
   such as the app version expose neither a click action nor a navigation indicator.
+- Subscription choices describe the user's source or service and the result of selecting it.
+  Runtime ownership terms and generic extension symbols stay in plugin management, not in the
+  subscription flow.
 - TV media Cards may use a strong focus layer. TV setting rows still use list semantics.
 
 ## State, error, and operation feedback
@@ -296,6 +299,7 @@ everything:
 | Background refresh | Preserve the last valid content and show local refresh state |
 | Refresh failure | Keep old content when safe and show a non-destructive retry |
 | Unavailable/disabled | Explain cause, effect, and recovery; do not communicate only by reducing alpha |
+| Pristine form | Mark required fields compactly, but do not present untouched fields as errors |
 | Form validation failure | Place error next to the field with error semantics; retain input and bring the first error into the safe region |
 | Operation in progress | Prevent duplicate submission and show progress near the action; long work needs cancellation or recoverable status after leaving |
 | Operation success | Update content immediately; use transient feedback only when confirmation helps without interrupting |

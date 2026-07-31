@@ -31,9 +31,9 @@ import androidx.compose.material.icons.rounded.Cloud
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ContentPaste
 import androidx.compose.material.icons.rounded.DateRange
-import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
+import androidx.compose.material.icons.rounded.VideoLibrary
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -215,9 +215,10 @@ internal fun SubscriptionEditorScreen(
         DataSource.Xtream -> stringResource(
             string.feat_setting_playlist_source_xtream_description
         )
-        DataSource.Provider -> discoveredProvider?.descriptor?.displayName
-            ?.let(bidiFormatter::natural)
-            ?.takeUnless { name -> name.isBlank() || name == sourceLabel }
+        DataSource.Provider -> stringResource(
+            string.feat_setting_playlist_provider_source_description,
+            sourceLabel,
+        )
         else -> null
     }
     val externalProviderIdentity = expectedProviderId
@@ -235,7 +236,7 @@ internal fun SubscriptionEditorScreen(
         DataSource.M3U -> Icons.Rounded.Link
         DataSource.EPG -> Icons.Rounded.DateRange
         DataSource.Xtream -> Icons.Rounded.Cloud
-        DataSource.Provider -> Icons.Rounded.Extension
+        DataSource.Provider -> Icons.Rounded.VideoLibrary
         else -> Icons.Rounded.Link
     }
     val showsLocalStorageOption = editorSource == DataSource.M3U
@@ -428,14 +429,13 @@ internal fun SubscriptionEditorScreen(
                             },
                         enabled = !operationInProgress && (
                             editorSource != DataSource.Provider ||
-                                editorInputReady
+                                providerDiscoveryState.supports(
+                                    matchingProviderForm
+                                )
                             ),
                         onClick = {
                             submissionAttempted = true
-                            if (
-                                editorSource != DataSource.Provider &&
-                                !editorInputReady
-                            ) {
+                            if (!editorInputReady) {
                                 return@Button
                             }
                             if (
@@ -1191,41 +1191,17 @@ internal fun ProviderFormField(
     val errorMessage = field.error?.let { stringResource(it.messageResource()) }
     val requiredDescription =
         stringResource(string.feat_setting_provider_error_required)
+    val displayLabel = bidiFormatter.natural(definition.label)
+    val description = definition.description?.let { value ->
+        bidiFormatter.natural(
+            value = value,
+            maximumCharacters = MAX_PROVIDER_DESCRIPTION_LENGTH,
+        )
+    }
     Column(
         modifier = Modifier.testTag("provider-field:${definition.key}"),
         verticalArrangement = Arrangement.spacedBy(spacing.extraSmall),
     ) {
-        val displayLabel = bidiFormatter.natural(definition.label)
-        FlowRow(
-            modifier = Modifier.clearAndSetSemantics {},
-            horizontalArrangement = Arrangement.spacedBy(spacing.small),
-            verticalArrangement = Arrangement.spacedBy(spacing.extraSmall),
-        ) {
-            Text(
-                text = displayLabel,
-                style = MaterialTheme.typography.labelLarge.copy(
-                    textDirection = TextDirection.ContentOrLtr,
-                ),
-            )
-            if (definition.required) {
-                Text(
-                    text = requiredDescription,
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.labelSmall,
-                )
-            }
-        }
-        definition.description?.let { description ->
-            Text(
-                bidiFormatter.natural(
-                    value = description,
-                    maximumCharacters = MAX_PROVIDER_DESCRIPTION_LENGTH,
-                ),
-                style = MaterialTheme.typography.bodySmall.copy(
-                    textDirection = TextDirection.ContentOrLtr,
-                ),
-            )
-        }
         when (definition.type) {
             ExtensionSettingType.TEXT,
             ExtensionSettingType.NUMBER,
@@ -1278,6 +1254,25 @@ internal fun ProviderFormField(
                         } else {
                             VisualTransformation.None
                         },
+                    label = {
+                        Row(
+                            modifier = Modifier.clearAndSetSemantics {},
+                            horizontalArrangement = Arrangement.spacedBy(2.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = displayLabel,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            if (definition.required) {
+                                Text(
+                                    text = "*",
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                            }
+                        }
+                    },
                     shape = MaterialTheme.shapes.large,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1291,65 +1286,87 @@ internal fun ProviderFormField(
                 )
             }
 
-            ExtensionSettingType.BOOLEAN -> FlowRow(
-                modifier = Modifier
-                    .selectableGroup()
-                    .providerChoiceGroupSemantics(
-                        fieldLabel = displayLabel,
-                        requiredDescription = requiredDescription.takeIf {
-                            definition.required
-                        },
-                        errorMessage = errorMessage,
-                    ),
-                horizontalArrangement = Arrangement.spacedBy(spacing.small),
-                verticalArrangement = Arrangement.spacedBy(spacing.small),
-            ) {
-                ProviderResetChoice(
-                    field = field,
-                    enabled = enabled,
-                    onUpdate = onUpdate,
+            ExtensionSettingType.BOOLEAN -> {
+                ProviderChoiceFieldHeader(
+                    label = displayLabel,
+                    required = definition.required,
                 )
-                ProviderChoiceButton(
-                    selected = field.value == "true" && !field.isUsingDefault,
-                    enabled = enabled,
-                    onClick = { onUpdate("true") },
-                    text = stringResource(string.feat_setting_provider_value_true),
-                )
-                ProviderChoiceButton(
-                    selected = field.value == "false" && !field.isUsingDefault,
-                    enabled = enabled,
-                    onClick = { onUpdate("false") },
-                    text = stringResource(string.feat_setting_provider_value_false),
-                )
-            }
-
-            ExtensionSettingType.SINGLE_CHOICE -> FlowRow(
-                modifier = Modifier
-                    .selectableGroup()
-                    .providerChoiceGroupSemantics(
-                        fieldLabel = displayLabel,
-                        requiredDescription = requiredDescription.takeIf {
-                            definition.required
-                        },
-                        errorMessage = errorMessage,
-                    ),
-                horizontalArrangement = Arrangement.spacedBy(spacing.small),
-                verticalArrangement = Arrangement.spacedBy(spacing.small),
-            ) {
-                ProviderResetChoice(
-                    field = field,
-                    enabled = enabled,
-                    onUpdate = onUpdate,
-                )
-                definition.choices.forEach { choice ->
-                    ProviderChoiceButton(
-                        selected = field.value == choice.value && !field.isUsingDefault,
+                FlowRow(
+                    modifier = Modifier
+                        .selectableGroup()
+                        .providerChoiceGroupSemantics(
+                            fieldLabel = displayLabel,
+                            requiredDescription = requiredDescription.takeIf {
+                                definition.required
+                            },
+                            errorMessage = errorMessage,
+                        ),
+                    horizontalArrangement = Arrangement.spacedBy(spacing.small),
+                    verticalArrangement = Arrangement.spacedBy(spacing.small),
+                ) {
+                    ProviderResetChoice(
+                        field = field,
                         enabled = enabled,
-                        onClick = { onUpdate(choice.value) },
-                        text = bidiFormatter.natural(choice.label),
+                        onUpdate = onUpdate,
+                    )
+                    ProviderChoiceButton(
+                        selected = field.value == "true" && !field.isUsingDefault,
+                        enabled = enabled,
+                        onClick = { onUpdate("true") },
+                        text = stringResource(string.feat_setting_provider_value_true),
+                    )
+                    ProviderChoiceButton(
+                        selected = field.value == "false" && !field.isUsingDefault,
+                        enabled = enabled,
+                        onClick = { onUpdate("false") },
+                        text = stringResource(string.feat_setting_provider_value_false),
                     )
                 }
             }
+
+            ExtensionSettingType.SINGLE_CHOICE -> {
+                ProviderChoiceFieldHeader(
+                    label = displayLabel,
+                    required = definition.required,
+                )
+                FlowRow(
+                    modifier = Modifier
+                        .selectableGroup()
+                        .providerChoiceGroupSemantics(
+                            fieldLabel = displayLabel,
+                            requiredDescription = requiredDescription.takeIf {
+                                definition.required
+                            },
+                            errorMessage = errorMessage,
+                        ),
+                    horizontalArrangement = Arrangement.spacedBy(spacing.small),
+                    verticalArrangement = Arrangement.spacedBy(spacing.small),
+                ) {
+                    ProviderResetChoice(
+                        field = field,
+                        enabled = enabled,
+                        onUpdate = onUpdate,
+                    )
+                    definition.choices.forEach { choice ->
+                        ProviderChoiceButton(
+                            selected =
+                                field.value == choice.value && !field.isUsingDefault,
+                            enabled = enabled,
+                            onClick = { onUpdate(choice.value) },
+                            text = bidiFormatter.natural(choice.label),
+                        )
+                    }
+                }
+            }
+        }
+        description?.let { text ->
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    textDirection = TextDirection.ContentOrLtr,
+                ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
         if (field.isUsingDefault) {
             Text(
@@ -1366,6 +1383,32 @@ internal fun ProviderFormField(
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.clearAndSetSemantics {},
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProviderChoiceFieldHeader(
+    label: String,
+    required: Boolean,
+) {
+    Row(
+        modifier = Modifier.clearAndSetSemantics {},
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge.copy(
+                textDirection = TextDirection.ContentOrLtr,
+            ),
+        )
+        if (required) {
+            Text(
+                text = "*",
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.labelLarge,
             )
         }
     }
