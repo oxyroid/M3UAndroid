@@ -118,6 +118,13 @@ and the Compose [semantics tree](https://developer.android.com/develop/ui/compos
 | Informational row | No click semantic | Do not imply navigation with a chevron |
 | Drag, swipe, or long press adds a shortcut | Gesture is enhancement | Provide an equivalent tap, keyboard, or D-pad operation |
 
+A single-choice sheet uses one selectable semantic node per row. The row owns the action and the
+`RadioButton` only reflects state; do not nest that row inside a disabled clickable Card. Related
+context actions belong in one continuous grouped surface with aligned leading icons. Separate cards
+are reserved for actions that carry independent descriptions or consequences, not for every verb.
+A modal sheet closes with system Back unless it contains an explicit nested step that consumes Back
+first; tapping the scrim must not be the only way out.
+
 A 24dp icon is not a 24dp button. Lay out an independent trailing action as an invisible circular
 button of at least 48dp:
 

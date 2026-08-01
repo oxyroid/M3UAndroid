@@ -101,6 +101,13 @@ Compose 的[语义树](https://developer.android.com/develop/ui/compose/accessib
 | 行只展示信息 | 没有点击语义 | 不用 Chevron 暗示可导航 |
 | 拖动、滑动或长按提供快捷操作 | 手势是增强交互 | 必须同时有点击、键盘或 DPad 可达的等价操作 |
 
+单选 Bottom Sheet 的每一行只能有一个 selectable 语义节点。点击由整行承接，`RadioButton`
+只反映状态；不能再把这一行嵌套进 disabled 的可点击 Card。相互关联的上下文操作放在一个连续
+分组 Surface 中，并使用对齐的 leading icon。只有动作本身带有独立说明或后果时才拆成 Card，
+不能给每个动词都套一张卡片。
+模态 Sheet 默认必须响应系统 Back；只有内部存在需要先返回的显式子步骤时才能暂时消费 Back，
+不能把点击遮罩做成唯一退出方式。
+
 24dp 的图标不等于 24dp 的按钮。独立尾部操作按不可见的至少 48dp 圆形按钮布局：
 
 - 行的 Start 和 End 外边距相同；

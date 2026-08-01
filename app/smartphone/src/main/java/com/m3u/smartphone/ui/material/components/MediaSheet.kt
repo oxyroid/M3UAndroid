@@ -2,16 +2,25 @@ package com.m3u.smartphone.ui.material.components
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.AddToHomeScreen
+import androidx.compose.material.icons.rounded.ContentCopy
+import androidx.compose.material.icons.rounded.DeleteOutline
+import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.rounded.VisibilityOff
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
@@ -20,16 +29,19 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import com.m3u.core.foundation.util.basic.title
-import com.m3u.data.database.model.Playlist
+import androidx.compose.ui.unit.dp
 import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.Playlist
 import com.m3u.i18n.R.string
-import androidx.compose.material3.IconButton
+import com.m3u.smartphone.ui.material.ktx.rememberUiBidiFormatter
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 
 @Immutable
@@ -72,7 +84,6 @@ fun MediaSheet(
     BottomSheet(
         sheetState = sheetState,
         visible = visible,
-        shouldDismissOnBackPress = false,
         header = {
             when (value) {
                 is MediaSheetValue.ForyouScreen -> ForyouScreenMediaSheetHeaderImpl(
@@ -90,88 +101,75 @@ fun MediaSheet(
             }
         },
         body = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(spacing.small),
-                modifier = Modifier.padding(spacing.medium)
-            ) {
-                when (value) {
-                    is MediaSheetValue.ForyouScreen -> {
-                        value.playlist?.let { playlist ->
-                            val playlistUrl = playlist.url
-                            MediaSheetItem(
-                                stringRes = string.feat_foryou_unsubscribe_playlist,
-                                onClick = {
-                                    onUnsubscribePlaylist(playlist)
-                                    onDismissRequest()
-                                }
-                            )
-                            MediaSheetItem(
-                                stringRes = string.feat_foryou_copy_playlist_url,
-                                onClick = {
-                                    clipboardManager.setText(
-                                        AnnotatedString(playlistUrl)
-                                    )
-                                    onDismissRequest()
-                                }
-                            )
-                        }
-                    }
+            val actions = when (value) {
+                is MediaSheetValue.ForyouScreen -> value.playlist?.let { playlist ->
+                    listOf(
+                        MediaSheetAction(
+                            stringRes = string.feat_foryou_copy_playlist_url,
+                            icon = Icons.Rounded.ContentCopy,
+                            onClick = {
+                                clipboardManager.setText(AnnotatedString(playlist.url))
+                            },
+                        ),
+                        MediaSheetAction(
+                            stringRes = string.feat_foryou_unsubscribe_playlist,
+                            icon = Icons.Rounded.DeleteOutline,
+                            destructive = true,
+                            onClick = { onUnsubscribePlaylist(playlist) },
+                        ),
+                    )
+                }.orEmpty()
 
-                    is MediaSheetValue.PlaylistScreen -> {
-                        value.channel?.let {
-                            MediaSheetItem(
-                                stringRes = if (!it.favourite) string.feat_playlist_dialog_favourite_title
-                                else string.feat_playlist_dialog_favourite_cancel_title,
-                                onClick = {
-                                    onFavoriteChannel(it)
-                                    onDismissRequest()
-                                }
-                            )
-                            MediaSheetItem(
+                is MediaSheetValue.PlaylistScreen -> value.channel?.let { channel ->
+                    buildList {
+                        add(channel.favoriteAction(onFavoriteChannel))
+                        add(
+                            MediaSheetAction(
                                 stringRes = string.feat_playlist_dialog_hide_title,
-                                onClick = {
-                                    onHideChannel(it)
-                                    onDismissRequest()
-                                }
+                                icon = Icons.Rounded.VisibilityOff,
+                                onClick = { onHideChannel(channel) },
                             )
-                            if (it.playable && !it.browsable) {
-                                MediaSheetItem(
-                                    stringRes = string.feat_playlist_dialog_create_shortcut_title,
-                                    onClick = {
-                                        onCreateShortcut(it)
-                                        onDismissRequest()
-                                    }
-                                )
-                            }
-                            MediaSheetItem(
+                        )
+                        if (channel.playable && !channel.browsable) {
+                            add(channel.shortcutAction(onCreateShortcut))
+                        }
+                        add(
+                            MediaSheetAction(
                                 stringRes = string.feat_playlist_dialog_save_picture_title,
-                                onClick = {
-                                    onSaveChannelCover(it)
-                                    onDismissRequest()
-                                }
+                                icon = Icons.Rounded.Download,
+                                onClick = { onSaveChannelCover(channel) },
                             )
+                        )
+                    }
+                }.orEmpty()
+
+                is MediaSheetValue.FavoriteScreen -> value.channel?.let { channel ->
+                    buildList {
+                        add(channel.favoriteAction(onFavoriteChannel))
+                        if (channel.playable && !channel.browsable) {
+                            add(channel.shortcutAction(onCreateShortcut))
                         }
                     }
-
-                    is MediaSheetValue.FavoriteScreen -> {
-                        value.channel?.let {
-                            MediaSheetItem(
-                                stringRes = if (!it.favourite) string.feat_playlist_dialog_favourite_title
-                                else string.feat_playlist_dialog_favourite_cancel_title,
-                                onClick = {
-                                    onFavoriteChannel(it)
-                                    onDismissRequest()
-                                }
+                }.orEmpty()
+            }
+            if (actions.isNotEmpty()) {
+                OutlinedCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(spacing.medium),
+                ) {
+                    actions.forEachIndexed { index, action ->
+                        MediaSheetItem(
+                            action = action,
+                            onClick = {
+                                action.onClick()
+                                onDismissRequest()
+                            },
+                        )
+                        if (index != actions.lastIndex) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(start = 56.dp),
                             )
-                            if (it.playable && !it.browsable) {
-                                MediaSheetItem(
-                                    stringRes = string.feat_playlist_dialog_create_shortcut_title,
-                                    onClick = {
-                                        onCreateShortcut(it)
-                                        onDismissRequest()
-                                    }
-                                )
-                            }
                         }
                     }
                 }
@@ -187,37 +185,35 @@ private fun RowScope.ForyouScreenMediaSheetHeaderImpl(
     playlist: Playlist?,
     onPlaylistConfiguration: (Playlist) -> Unit,
 ) {
-    val spacing = LocalSpacing.current
+    val bidiFormatter = rememberUiBidiFormatter()
     playlist?.let {
-        Row {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(spacing.extraSmall),
-                modifier = Modifier.weight(1f)
-            ) {
+        Column(
+            modifier = Modifier.weight(1f),
+        ) {
+            Text(
+                text = bidiFormatter.natural(it.title),
+                style = MaterialTheme.typography.titleLarge,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            it.userAgent?.ifEmpty { null }?.let { ua ->
                 Text(
-                    text = it.title,
-                    style = MaterialTheme.typography.titleLarge
-                )
-                it.userAgent?.ifEmpty { null }?.let { ua ->
-                    Text(
-                        text = ua,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = LocalContentColor.current.copy(0.38f),
-                        maxLines = 1,
-                        fontFamily = FontFamilies.LexendExa,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-
-            IconButton(
-                onClick = { onPlaylistConfiguration(playlist) }
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Edit,
-                    contentDescription = null
+                    text = bidiFormatter.ltr(ua),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = LocalContentColor.current.copy(0.60f),
+                    maxLines = 2,
+                    fontFamily = FontFamilies.LexendExa,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
+        }
+        IconButton(
+            onClick = { onPlaylistConfiguration(playlist) },
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Edit,
+                contentDescription = stringResource(string.feat_foryou_edit_playlist),
+            )
         }
     }
 }
@@ -226,45 +222,99 @@ private fun RowScope.ForyouScreenMediaSheetHeaderImpl(
 private fun RowScope.PlaylistScreenMediaSheetHeaderImpl(
     channel: Channel?
 ) {
+    val bidiFormatter = rememberUiBidiFormatter()
     channel?.let {
         Text(
-            text = it.title,
-            style = MaterialTheme.typography.titleLarge
+            text = bidiFormatter.natural(it.title),
+            style = MaterialTheme.typography.titleLarge,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
         )
     }
-    Spacer(modifier = Modifier.weight(1f))
 }
 
 @Composable
 private fun RowScope.FavoriteScreenMediaSheetHeaderImpl(
     channel: Channel?
 ) {
+    val bidiFormatter = rememberUiBidiFormatter()
     channel?.let {
         Text(
-            text = it.title,
-            style = MaterialTheme.typography.titleLarge
+            text = bidiFormatter.natural(it.title),
+            style = MaterialTheme.typography.titleLarge,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
         )
     }
-    Spacer(modifier = Modifier.weight(1f))
 }
+
+private data class MediaSheetAction(
+    @StringRes val stringRes: Int,
+    val icon: ImageVector,
+    val destructive: Boolean = false,
+    val onClick: () -> Unit,
+)
+
+private fun Channel.favoriteAction(
+    onFavoriteChannel: (Channel) -> Unit,
+): MediaSheetAction = MediaSheetAction(
+    stringRes = if (favourite) {
+        string.feat_playlist_dialog_favourite_cancel_title
+    } else {
+        string.feat_playlist_dialog_favourite_title
+    },
+    icon = if (favourite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+    onClick = { onFavoriteChannel(this) },
+)
+
+private fun Channel.shortcutAction(
+    onCreateShortcut: (Channel) -> Unit,
+): MediaSheetAction = MediaSheetAction(
+    stringRes = string.feat_playlist_dialog_create_shortcut_title,
+    icon = Icons.AutoMirrored.Rounded.AddToHomeScreen,
+    onClick = { onCreateShortcut(this) },
+)
 
 @Composable
 private fun MediaSheetItem(
-    @StringRes stringRes: Int,
-    onClick: () -> Unit
+    action: MediaSheetAction,
+    onClick: () -> Unit,
 ) {
-    OutlinedCard {
-        ListItem(
-            headlineContent = {
-                Text(
-                    text = stringResource(stringRes).title(),
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-            },
-            modifier = Modifier.clickable { onClick() }
-        )
+    val contentColor = if (action.destructive) {
+        MaterialTheme.colorScheme.error
+    } else {
+        MaterialTheme.colorScheme.onSurface
     }
+    ListItem(
+        headlineContent = {
+            Text(
+                text = stringResource(action.stringRes),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                maxLines = 2,
+            )
+        },
+        leadingContent = {
+            Icon(
+                imageVector = action.icon,
+                contentDescription = null,
+            )
+        },
+        colors = ListItemDefaults.colors(
+            containerColor = Color.Transparent,
+            headlineColor = contentColor,
+            leadingIconColor = contentColor,
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 64.dp)
+            .clickable(
+                role = Role.Button,
+                onClick = onClick,
+            ),
+    )
 }
 
 private fun noImpl(): Nothing =
