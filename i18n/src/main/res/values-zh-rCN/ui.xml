@@ -14,6 +14,10 @@
     <string name="ui_search_start_description">查找频道、电影、剧集和已启用提供方返回的内容。</string>
     <string name="ui_search_no_results_title">没有找到结果</string>
     <string name="ui_search_no_results_description">没有频道或提供方结果与“%1$s”匹配。</string>
+    <string name="ui_episodes_load_error_title">无法加载分集</string>
+    <string name="ui_episodes_load_error_description">请检查网络连接后重试。</string>
+    <string name="ui_episodes_empty_title">暂无可用分集</string>
+    <string name="ui_episodes_empty_description">刷新剧集以重新检查分集内容。</string>
     <string name="ui_theme_card_left">你知道吗？</string>
     <string name="ui_theme_card_right">我们会保存您的观看进度，并在下次播放时恢复进度</string>
     <string name="ui_sort">排序</string>

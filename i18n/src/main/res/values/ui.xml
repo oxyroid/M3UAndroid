@@ -57,6 +57,10 @@
     <string name="ui_search_start_description">Find channels, movies, series, and results from enabled providers.</string>
     <string name="ui_search_no_results_title">No results</string>
     <string name="ui_search_no_results_description">No channels or provider results match “%1$s”.</string>
+    <string name="ui_episodes_load_error_title">Couldn’t load episodes</string>
+    <string name="ui_episodes_load_error_description">Check the connection and try again.</string>
+    <string name="ui_episodes_empty_title">No episodes available</string>
+    <string name="ui_episodes_empty_description">Refresh this series to check for episodes.</string>
     <string name="ui_theme_card_left">Did you know?</string>
     <string name="ui_theme_card_right">We will save your watching progress and resume it next time you play</string>
     <string name="ui_sort">Sort</string>
