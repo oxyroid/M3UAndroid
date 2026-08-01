@@ -179,9 +179,9 @@
     <string name="feat_setting_data_source_selector_with_identifier_description">Sursa abonamentului. Selecția curentă: %1$s. ID furnizor: %2$s</string>
     <string name="feat_setting_external_extensions">Extensii externe</string>
     <string name="feat_setting_external_extensions_description">Permite extensiilor instalate să se conecteze la aplicație</string>
-    <string name="feat_setting_extension_plugins">Pluginuri de extensie</string>
+    <string name="feat_setting_extension_plugins">Extensii</string>
     <string name="feat_setting_extension_on_device">Pe acest dispozitiv</string>
-    <string name="feat_setting_extension_details">Detalii plugin</string>
+    <string name="feat_setting_extension_details">Detalii extensie</string>
     <string name="feat_setting_extension_access">Acces</string>
     <string name="feat_setting_extension_capabilities">Capabilități</string>
     <string name="feat_setting_extension_network_access">Acces la rețea</string>
@@ -196,8 +196,8 @@
     <string name="feat_setting_extension_service">Serviciu</string>
     <string name="feat_setting_extension_version">Versiune</string>
     <string name="feat_setting_extension_certificate_sha256">SHA-256 certificat</string>
-    <string name="feat_setting_extension_enable_external_hint">Activează mai sus Extensii externe pentru a gestiona pluginurile instalate.</string>
-    <string name="feat_setting_extension_no_plugins">Nu este instalat niciun plugin de extensie compatibil</string>
+    <string name="feat_setting_extension_enable_external_hint">Activează mai sus Extensii externe pentru a gestiona extensiile instalate.</string>
+    <string name="feat_setting_extension_no_plugins">Nu este instalată nicio extensie compatibilă</string>
     <string name="feat_setting_extension_loading">Se încarcă extensiile…</string>
     <string name="feat_setting_extension_operation_refreshing">Se actualizează extensiile…</string>
     <string name="feat_setting_extension_operation_enabling">Se activează extensia…</string>
@@ -262,7 +262,7 @@
     <string name="feat_setting_extension_capability_name_playback_resolve">Pregătește redarea</string>
     <string name="feat_setting_extension_capability_name_epg_read">Adaugă date pentru ghidul de programe</string>
     <string name="feat_setting_extension_capability_name_metadata_write">Modifică informațiile canalelor</string>
-    <string name="feat_setting_extension_capability_name_settings_contribute">Adaugă setările pluginului</string>
+    <string name="feat_setting_extension_capability_name_settings_contribute">Adaugă setările extensiei</string>
     <string name="feat_setting_extension_capability_name_search_read">Adaugă rezultate de căutare</string>
     <string name="feat_setting_extension_capability_name_background_task">Rulează activități periodice în fundal</string>
     <string name="feat_setting_extension_capability_required">obligatorie</string>

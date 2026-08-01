@@ -172,7 +172,7 @@
     <string name="feat_setting_data_source_selector_with_identifier_description">Source de l\'abonnement. Actuelle : %1$s. ID du fournisseur : %2$s</string>
     <string name="feat_setting_external_extensions">Extensions externes</string>
     <string name="feat_setting_external_extensions_description">Autoriser les extensions installées à se connecter à l’application</string>
-    <string name="feat_setting_extension_plugins">Plugins d’extension</string>
+    <string name="feat_setting_extension_plugins">Extensions</string>
     <string name="feat_setting_extension_on_device">Sur cet appareil</string>
     <string name="feat_setting_extension_details">Détails de l’extension</string>
     <string name="feat_setting_extension_access">Accès</string>
@@ -189,8 +189,8 @@
     <string name="feat_setting_extension_service">Service</string>
     <string name="feat_setting_extension_version">Version</string>
     <string name="feat_setting_extension_certificate_sha256">SHA-256 du certificat</string>
-    <string name="feat_setting_extension_enable_external_hint">Activez Extensions externes ci-dessus pour gérer les plugins installés.</string>
-    <string name="feat_setting_extension_no_plugins">Aucun plugin d’extension compatible n’est installé</string>
+    <string name="feat_setting_extension_enable_external_hint">Activez Extensions externes ci-dessus pour gérer les extensions installées.</string>
+    <string name="feat_setting_extension_no_plugins">Aucune extension compatible n’est installée</string>
     <string name="feat_setting_extension_loading">Chargement des extensions…</string>
     <string name="feat_setting_extension_operation_refreshing">Actualisation des extensions…</string>
     <string name="feat_setting_extension_operation_enabling">Activation de l’extension…</string>
@@ -255,7 +255,7 @@
     <string name="feat_setting_extension_capability_name_playback_resolve">Préparer la lecture</string>
     <string name="feat_setting_extension_capability_name_epg_read">Ajouter des données de guide des programmes</string>
     <string name="feat_setting_extension_capability_name_metadata_write">Modifier les informations des chaînes</string>
-    <string name="feat_setting_extension_capability_name_settings_contribute">Ajouter des réglages de plugin</string>
+    <string name="feat_setting_extension_capability_name_settings_contribute">Ajouter des réglages d’extension</string>
     <string name="feat_setting_extension_capability_name_search_read">Ajouter des résultats de recherche</string>
     <string name="feat_setting_extension_capability_name_background_task">Exécuter des tâches périodiques en arrière-plan</string>
     <string name="feat_setting_extension_capability_required">requise</string>

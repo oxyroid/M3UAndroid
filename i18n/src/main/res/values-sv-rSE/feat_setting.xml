@@ -172,7 +172,7 @@
     <string name="feat_setting_data_source_selector_with_identifier_description">Prenumerationskälla. Aktuell: %1$s. Leverantörs-ID: %2$s</string>
     <string name="feat_setting_external_extensions">Externa tillägg</string>
     <string name="feat_setting_external_extensions_description">Tillåt installerade tillägg att ansluta till appen</string>
-    <string name="feat_setting_extension_plugins">Tilläggspluginer</string>
+    <string name="feat_setting_extension_plugins">Tillägg</string>
     <string name="feat_setting_extension_on_device">På den här enheten</string>
     <string name="feat_setting_extension_details">Tilläggsinformation</string>
     <string name="feat_setting_extension_access">Åtkomst</string>
@@ -189,8 +189,8 @@
     <string name="feat_setting_extension_service">Tjänst</string>
     <string name="feat_setting_extension_version">Version</string>
     <string name="feat_setting_extension_certificate_sha256">Certifikatets SHA-256</string>
-    <string name="feat_setting_extension_enable_external_hint">Aktivera Externa tillägg ovan för att hantera installerade pluginer.</string>
-    <string name="feat_setting_extension_no_plugins">Inga kompatibla tilläggspluginer är installerade</string>
+    <string name="feat_setting_extension_enable_external_hint">Aktivera Externa tillägg ovan för att hantera installerade tillägg.</string>
+    <string name="feat_setting_extension_no_plugins">Inga kompatibla tillägg är installerade</string>
     <string name="feat_setting_extension_loading">Läser in tillägg…</string>
     <string name="feat_setting_extension_operation_refreshing">Läser in tillägg på nytt…</string>
     <string name="feat_setting_extension_operation_enabling">Aktiverar tillägget…</string>
@@ -255,7 +255,7 @@
     <string name="feat_setting_extension_capability_name_playback_resolve">Förbered uppspelning</string>
     <string name="feat_setting_extension_capability_name_epg_read">Lägg till programinformation</string>
     <string name="feat_setting_extension_capability_name_metadata_write">Ändra kanalinformation</string>
-    <string name="feat_setting_extension_capability_name_settings_contribute">Lägg till plugininställningar</string>
+    <string name="feat_setting_extension_capability_name_settings_contribute">Lägg till tilläggsinställningar</string>
     <string name="feat_setting_extension_capability_name_search_read">Lägg till sökresultat</string>
     <string name="feat_setting_extension_capability_name_background_task">Kör regelbundna bakgrundsuppgifter</string>
     <string name="feat_setting_extension_capability_required">obligatorisk</string>

@@ -21,7 +21,7 @@ Hello is a standalone Gradle build. It resolves
 
 1. In M3UAndroid, open **Settings → Optional features** and enable **External extensions**.
 2. Open **Settings → Playlist management**.
-3. Swipe to **Extension plugins**.
+3. Swipe to **Extensions**.
 4. Select **Hello Extension**, choose **Enable**, and confirm the requested capability.
 5. Open **Settings** on the Hello card.
 
