@@ -1,6 +1,5 @@
 package com.m3u.smartphone.ui.business.playlist.components
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -17,10 +16,10 @@ import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -33,23 +32,18 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
@@ -65,12 +59,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.m3u.core.foundation.components.AbsoluteSmoothCornerShape
-import com.m3u.core.foundation.ui.thenIf
 import com.m3u.i18n.R.string
-import com.m3u.smartphone.ui.material.effects.BackStackEntry
-import com.m3u.smartphone.ui.material.effects.BackStackHandler
 import com.m3u.smartphone.ui.material.ktx.Edge
 import com.m3u.smartphone.ui.material.ktx.blurEdge
+import com.m3u.smartphone.ui.material.ktx.safeDisplayText
 import com.m3u.smartphone.ui.material.model.LocalHazeState
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import dev.chrisbanes.haze.hazeSource
@@ -97,6 +89,7 @@ internal fun PlaylistTabRow(
     val categoryOptionsDescription = stringResource(string.ui_action_category_options)
     val expandDescription = stringResource(string.ui_action_expand_categories)
     val collapseDescription = stringResource(string.ui_action_collapse_categories)
+    val manageCategoriesTitle = stringResource(string.feat_playlist_manage_categories)
     val expandedStateDescription = stringResource(string.ui_state_expanded)
     val collapsedStateDescription = stringResource(string.ui_state_collapsed)
     val pinnedStateDescription = stringResource(string.ui_state_pinned)
@@ -109,112 +102,60 @@ internal fun PlaylistTabRow(
     )
 
     Box(modifier) {
-        var focusCategory: String? by rememberSaveable { mutableStateOf(null) }
+        val categoryMenuModifier = Modifier
+            .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+            .clearAndSetSemantics {
+                contentDescription = categoryOptionsDescription
+                role = Role.Button
+                stateDescription = categoryMenuSemantics.stateDescription
+                onClick(label = categoryMenuSemantics.actionLabel) {
+                    onExpanded()
+                    true
+                }
+            }
         val header = @Composable {
-            AnimatedContent(
-                targetState = focusCategory,
-                label = "playlist-tab-row-action-buttons",
-                modifier = Modifier.background(MaterialTheme.colorScheme.surface)
-            ) { name ->
-                Box(
-                    modifier = Modifier.thenIf(isExpanded) {
-                        Modifier.fillMaxWidth()
-                    }
+            if (isExpanded) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 64.dp)
+                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                        .padding(start = spacing.medium),
                 ) {
-                    if (name != null) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.End
-                        ) {
-                            IconButton(
-                                modifier = Modifier.sizeIn(
-                                    minWidth = 48.dp,
-                                    minHeight = 48.dp
-                                ),
-                                onClick = {
-                                    name.let(onPinOrUnpinCategory)
-                                    focusCategory = null
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.PushPin,
-                                    contentDescription = if (name in pinnedCategories) {
-                                        unpinDescription
-                                    } else {
-                                        pinDescription
-                                    }
-                                )
-                            }
-                            IconButton(
-                                modifier = Modifier.sizeIn(
-                                    minWidth = 48.dp,
-                                    minHeight = 48.dp
-                                ),
-                                onClick = {
-                                    name.let(onHideCategory)
-                                    focusCategory = null
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.VisibilityOff,
-                                    contentDescription = hideDescription
-                                )
-                            }
-                        }
-                    } else {
-                        IconButton(
-                            modifier = Modifier
-                                .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-                                .clearAndSetSemantics {
-                                    contentDescription = categoryOptionsDescription
-                                    role = Role.Button
-                                    stateDescription = categoryMenuSemantics.stateDescription
-                                    onClick(label = categoryMenuSemantics.actionLabel) {
-                                        onExpanded()
-                                        true
-                                    }
-                                },
-                            onClick = onExpanded
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Menu,
-                                contentDescription = null
-                            )
-                        }
+                    Text(
+                        text = manageCategoriesTitle,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 2,
+                        modifier = Modifier.weight(1f),
+                    )
+                    IconButton(
+                        modifier = categoryMenuModifier,
+                        onClick = onExpanded,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = null,
+                        )
                     }
+                }
+            } else {
+                IconButton(
+                    modifier = categoryMenuModifier,
+                    onClick = onExpanded,
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Menu,
+                        contentDescription = null,
+                    )
                 }
             }
         }
-        LaunchedEffect(selectedCategory) {
+        LaunchedEffect(selectedCategory, isExpanded) {
             val index = categories.indexOf(selectedCategory)
             if (index != -1) {
-                state.animateScrollToItem(index)
-            }
-        }
-        val categoriesContent: LazyListScope.() -> Unit = {
-            stickyHeader { header() }
-            items(categories, key = { it }) { category ->
-                PlaylistTabRowItem(
-                    name = category,
-                    selected = category == selectedCategory,
-                    pinned = category in pinnedCategories,
-                    focused = category == focusCategory,
-                    hasOtherFocused = focusCategory != null && focusCategory != category,
-                    isExpanded = isExpanded,
-                    onClick = {
-                        if (focusCategory == null) {
-                            onCategoryChanged(category)
-                        }
-                    },
-                    onLongClick = {
-                        focusCategory = category
-                        onCategoryChanged(category)
-                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                    },
-                    categoryOptionsDescription = categoryOptionsDescription,
-                    pinnedStateDescription = pinnedStateDescription
-                )
+                state.animateScrollToItem(index + 1)
             }
         }
         Column {
@@ -222,15 +163,32 @@ internal fun PlaylistTabRow(
                 LazyColumn(
                     state = state,
                     horizontalAlignment = Alignment.Start,
-                    verticalArrangement = Arrangement.spacedBy(spacing.extraSmall),
                     contentPadding = bottomContentPadding,
                     modifier = Modifier
                         .fillMaxSize()
                         .selectableGroup()
                         .background(MaterialTheme.colorScheme.surface)
                         .hazeSource(LocalHazeState.current),
-                    content = categoriesContent
-                )
+                ) {
+                    stickyHeader { header() }
+                    items(categories, key = { it }) { category ->
+                        val pinned = category in pinnedCategories
+                        ExpandedPlaylistCategoryItem(
+                            name = category,
+                            selected = category == selectedCategory,
+                            pinned = pinned,
+                            pinDescription = if (pinned) unpinDescription else pinDescription,
+                            hideDescription = hideDescription,
+                            pinnedStateDescription = pinnedStateDescription,
+                            onClick = { onCategoryChanged(category) },
+                            onPin = { onPinOrUnpinCategory(category) },
+                            onHide = { onHideCategory(category) },
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(start = spacing.medium),
+                        )
+                    }
+                }
             } else {
                 LazyRow(
                     state = state,
@@ -241,16 +199,27 @@ internal fun PlaylistTabRow(
                         .blurEdge(MaterialTheme.colorScheme.surface, Edge.End)
                         .fillMaxWidth()
                         .selectableGroup(),
-                    content = categoriesContent
-                )
+                ) {
+                    stickyHeader { header() }
+                    items(categories, key = { it }) { category ->
+                        CollapsedPlaylistCategoryItem(
+                            name = category,
+                            selected = category == selectedCategory,
+                            pinned = category in pinnedCategories,
+                            onClick = { onCategoryChanged(category) },
+                            onLongClick = {
+                                onCategoryChanged(category)
+                                onExpanded()
+                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                            },
+                            categoryOptionsDescription = categoryOptionsDescription,
+                            pinnedStateDescription = pinnedStateDescription,
+                        )
+                    }
+                }
             }
             HorizontalDivider()
         }
-        BackStackHandler(
-            enabled = focusCategory != null,
-            entry = BackStackEntry(Icons.Rounded.Close),
-            onBack = { focusCategory = null }
-        )
     }
 }
 
@@ -278,13 +247,92 @@ internal fun categoryMenuSemantics(
 }
 
 @Composable
-private fun PlaylistTabRowItem(
+private fun ExpandedPlaylistCategoryItem(
     name: String,
     selected: Boolean,
     pinned: Boolean,
-    focused: Boolean,
-    hasOtherFocused: Boolean,
-    isExpanded: Boolean,
+    pinDescription: String,
+    hideDescription: String,
+    pinnedStateDescription: String,
+    onClick: () -> Unit,
+    onPin: () -> Unit,
+    onHide: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val containerColor = if (selected) {
+        MaterialTheme.colorScheme.secondaryContainer
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
+    val contentColor = if (selected) {
+        MaterialTheme.colorScheme.onSecondaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
+    ListItem(
+        headlineContent = {
+            Text(
+                text = name.safeDisplayText(),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = if (selected || pinned) FontWeight.SemiBold else FontWeight.Normal,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        trailingContent = {
+            Row {
+                IconButton(
+                    modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
+                    onClick = onPin,
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.PushPin,
+                        contentDescription = pinDescription,
+                        tint = if (pinned) contentColor else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                    )
+                }
+                IconButton(
+                    modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
+                    onClick = onHide,
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.VisibilityOff,
+                        contentDescription = hideDescription,
+                        tint = if (selected) contentColor else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                    )
+                }
+            }
+        },
+        colors = ListItemDefaults.colors(
+            containerColor = containerColor,
+            headlineColor = contentColor,
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 72.dp)
+            .selectable(
+                selected = selected,
+                role = Role.Tab,
+                onClick = onClick,
+            )
+            .semantics {
+                if (pinned) {
+                    stateDescription = pinnedStateDescription
+                }
+            }
+            .then(modifier),
+    )
+}
+
+@Composable
+private fun CollapsedPlaylistCategoryItem(
+    name: String,
+    selected: Boolean,
+    pinned: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     categoryOptionsDescription: String,
@@ -293,145 +341,83 @@ private fun PlaylistTabRowItem(
 ) {
     val spacing = LocalSpacing.current
     val interactionSource = remember { MutableInteractionSource() }
-
-    CompositionLocalProvider(
-        LocalContentColor provides LocalContentColor.current.copy(
-            when {
-                focused -> 1f
-                hasOtherFocused -> 0.25f
-                selected -> 1f
-                else -> 0.65f
-            }
-        )
-    ) {
-        val indication = if (hasOtherFocused) null else ripple()
-        val shape = if (isExpanded) RectangleShape
-        else RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = if (focused) LocalContentColor.current
-                else MaterialTheme.colorScheme.surface,
-                contentColor = if (focused) MaterialTheme.colorScheme.surfaceVariant
-                else MaterialTheme.colorScheme.onSurface
-            ),
-            shape = shape,
-            modifier = Modifier
-                .clip(shape)
-                .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-                .semantics {
-                    this.selected = selected
-                    if (pinned) {
-                        stateDescription = pinnedStateDescription
-                    }
-                }
-                .combinedClickable(
-                    interactionSource = interactionSource,
-                    indication = indication,
-                    onClick = onClick,
-                    onLongClickLabel = categoryOptionsDescription,
-                    onLongClick = onLongClick,
-                    role = Role.Tab
-                )
-                .thenIf(isExpanded) { Modifier.fillMaxWidth() }
-                .then(modifier)
-        ) {
-            val text = @Composable {
-                Box(
-                    modifier = Modifier
-                        .padding(
-                            start = spacing.medium,
-                            end = spacing.medium,
-                            top = spacing.small,
-                            bottom = if (isExpanded) spacing.small else spacing.none
-                        )
-                        .heightIn(32.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall),
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.widthIn(max = 240.dp),
-                    ) {
-                        if (pinned) {
-                            Icon(
-                                imageVector = Icons.Rounded.PushPin,
-                                contentDescription = null,
-                                modifier = Modifier.requiredSize(16.dp),
-                            )
-                        }
-                        Text(
-                            text = name,
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = when {
-                                pinned -> FontWeight.Bold
-                                selected && !hasOtherFocused -> FontWeight.Bold
-                                else -> null
-                            },
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                }
-            }
-            val indicator = @Composable {
-                if (isExpanded) {
-                    Box(
-                        Modifier
-                            .requiredSize(spacing.small)
-                            .background(
-                                when {
-                                    focused -> LocalContentColor.current
-                                    selected -> MaterialTheme.colorScheme.primary
-                                    else -> Color.Transparent
-                                },
-                                shape = AbsoluteSmoothCornerShape(
-                                    cornerRadiusTL = 4.dp,
-                                    cornerRadiusTR = 4.dp,
-                                    cornerRadiusBL = 4.dp,
-                                    cornerRadiusBR = 4.dp,
-                                    smoothnessAsPercentBL = 60
-                                )
-                            )
-                    )
-                } else {
-                    Box(
-                        Modifier
-                            .requiredSize(48.dp, spacing.small)
-                            .background(
-                                when {
-                                    focused -> LocalContentColor.current
-                                    selected -> MaterialTheme.colorScheme.primary
-                                    else -> Color.Transparent
-                                },
-                                shape = AbsoluteSmoothCornerShape(
-                                    cornerRadiusTL = 4.dp,
-                                    cornerRadiusTR = 4.dp,
-                                    smoothnessAsPercentBL = 60
-                                )
-                            )
-                    )
-                }
-            }
-
-            if (isExpanded) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(end = spacing.medium)
-                ) {
-                    text()
-                    indicator()
-                }
+    val shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = if (selected) {
+                MaterialTheme.colorScheme.onSurface
             } else {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    text()
-                    indicator()
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+        ),
+        shape = shape,
+        modifier = Modifier
+            .clip(shape)
+            .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+            .semantics {
+                this.selected = selected
+                if (pinned) {
+                    stateDescription = pinnedStateDescription
                 }
             }
+            .combinedClickable(
+                interactionSource = interactionSource,
+                indication = ripple(),
+                onClick = onClick,
+                onLongClickLabel = categoryOptionsDescription,
+                onLongClick = onLongClick,
+                role = Role.Tab,
+            )
+            .then(modifier),
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Box(
+                modifier = Modifier
+                    .padding(
+                        start = spacing.medium,
+                        end = spacing.medium,
+                        top = spacing.small,
+                    )
+                    .heightIn(32.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(spacing.extraSmall),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.widthIn(max = 240.dp),
+                ) {
+                    if (pinned) {
+                        Icon(
+                            imageVector = Icons.Rounded.PushPin,
+                            contentDescription = null,
+                            modifier = Modifier.requiredSize(16.dp),
+                        )
+                    }
+                    Text(
+                        text = name.safeDisplayText(),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = if (pinned || selected) FontWeight.Bold else FontWeight.Normal,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+
+            Box(
+                Modifier
+                    .requiredSize(48.dp, spacing.small)
+                    .background(
+                        if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                        shape = AbsoluteSmoothCornerShape(
+                            cornerRadiusTL = 4.dp,
+                            cornerRadiusTR = 4.dp,
+                            smoothnessAsPercentBL = 60,
+                        ),
+                    )
+            )
         }
     }
 }

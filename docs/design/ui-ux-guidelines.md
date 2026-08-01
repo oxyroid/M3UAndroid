@@ -118,6 +118,10 @@ and the Compose [semantics tree](https://developer.android.com/develop/ui/compos
 | Informational row | No click semantic | Do not imply navigation with a chevron |
 | Drag, swipe, or long press adds a shortcut | Gesture is enhancement | Provide an equivalent tap, keyboard, or D-pad operation |
 
+A management mode entered from a compact tab or chip row must identify itself, preserve the current
+selection, and expose each row action directly. Long press may open that mode faster, but cannot be
+the only route to pin, hide, rename, or otherwise manage an item.
+
 A single-choice sheet uses one selectable semantic node per row. The row owns the action and the
 `RadioButton` only reflects state; do not nest that row inside a disabled clickable Card. Related
 context actions belong in one continuous grouped surface with aligned leading icons. Separate cards

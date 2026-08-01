@@ -101,6 +101,9 @@ Compose 的[语义树](https://developer.android.com/develop/ui/compose/accessib
 | 行只展示信息 | 没有点击语义 | 不用 Chevron 暗示可导航 |
 | 拖动、滑动或长按提供快捷操作 | 手势是增强交互 | 必须同时有点击、键盘或 DPad 可达的等价操作 |
 
+从紧凑 Tab 或 Chip Row 进入管理模式后，页面必须明确说明当前模式、保留当前选中项，并直接
+展示每行操作。长按可以更快进入管理模式，但不能成为置顶、隐藏、重命名等操作的唯一入口。
+
 单选 Bottom Sheet 的每一行只能有一个 selectable 语义节点。点击由整行承接，`RadioButton`
 只反映状态；不能再把这一行嵌套进 disabled 的可点击 Card。相互关联的上下文操作放在一个连续
 分组 Surface 中，并使用对齐的 leading icon。只有动作本身带有独立说明或后果时才拆成 Card，
