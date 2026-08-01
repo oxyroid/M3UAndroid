@@ -219,6 +219,10 @@ Test long unspaced CJK, long German or Romanian, Arabic RTL, long playlist title
 identifiers. Visual truncation must not make two items indistinguishable. A full accessible name is
 not a replacement for visibly presenting task-critical identity.
 
+Preserve the authored capitalization of user-controlled playlist, provider, server, account, and
+media names. Case conversion is limited to controlled localized labels; it is never a formatting
+step for stored entity titles.
+
 ## RTL and i18n
 
 RTL is a layout direction, not a string transform.

@@ -68,7 +68,6 @@ import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
 import com.m3u.core.foundation.architecture.preferences.mutablePreferenceOf
 import com.m3u.core.foundation.architecture.preferences.preferenceOf
 import com.m3u.core.foundation.ui.thenIf
-import com.m3u.core.foundation.util.basic.title
 import com.m3u.core.foundation.wrapper.Event
 import com.m3u.core.foundation.wrapper.Sort
 import com.m3u.core.foundation.wrapper.eventOf
@@ -96,6 +95,7 @@ import com.m3u.smartphone.ui.material.ktx.interceptVolumeEvent
 import com.m3u.smartphone.ui.material.ktx.isAtTop
 import com.m3u.smartphone.ui.material.ktx.minus
 import com.m3u.smartphone.ui.material.ktx.only
+import com.m3u.smartphone.ui.material.ktx.safeDisplayText
 import com.m3u.smartphone.ui.material.model.LocalHazeState
 import com.m3u.smartphone.ui.material.model.LocalSpacing
 import dev.chrisbanes.haze.hazeSource
@@ -151,7 +151,9 @@ internal fun PlaylistRoute(
     val postNotificationPermission = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) null
     else rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
 
-    val title by remember { derivedStateOf { playlist?.title?.title().orEmpty() } }
+    val title by remember {
+        derivedStateOf { playlist?.title?.safeDisplayText().orEmpty() }
+    }
 
     LifecycleResumeEffect(
         title,

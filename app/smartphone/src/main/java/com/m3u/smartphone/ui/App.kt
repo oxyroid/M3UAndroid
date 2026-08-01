@@ -54,6 +54,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopSearchBar
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.material3.rememberSearchBarState
@@ -553,6 +554,12 @@ private fun AppContent(
     } else {
         MaterialTheme.typography.titleLarge
     }
+    val contextualTopAppBarHeight = maxOf(
+        TopAppBarDefaults.TopAppBarExpandedHeight,
+        with(LocalDensity.current) {
+            contextualTitleStyle.lineHeight.toDp() * 2
+        } + 8.dp,
+    )
     val inputField = @Composable {
         SearchBarDefaults.InputField(
             searchBarState = searchBarState,
@@ -597,11 +604,12 @@ private fun AppContent(
     Column(modifier = modifier.fillMaxSize()) {
         if (showContextualTopBar) {
             TopAppBar(
+                expandedHeight = contextualTopAppBarHeight,
                 title = {
                     Text(
                         text = Metadata.title,
                         style = contextualTitleStyle,
-                        maxLines = 1,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.semantics { heading() },
                     )

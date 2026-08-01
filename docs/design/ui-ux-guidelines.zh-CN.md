@@ -192,6 +192,9 @@ Compose 的[语义树](https://developer.android.com/develop/ui/compose/accessib
 技术标识。视觉省略不能把两个项目变成无法区分的同名项；无障碍完整名称不能替代关键身份的
 可见呈现。
 
+用户填写或服务端提供的 Playlist、Provider、服务器、账号与媒体名称必须保留原始大小写。
+大小写转换只用于来源受控的本地化标签，不能作为已存实体标题的格式化步骤。
+
 ## RTL 与 i18n
 
 RTL 是布局方向，不是字符串变换。
