@@ -12,6 +12,7 @@
     <string name="feat_setting_sync_mode_keep">behåll</string>
     <string name="feat_setting_sync_mode">synkroniseringsstrategi</string>
     <string name="feat_setting_playlist_management">Hantera spellistor</string>
+    <string name="feat_setting_playlist_management_description">Prenumerationer, guider och dolda objekt</string>
     <string name="feat_setting_playlist_your_playlists">Dina spellistor</string>
     <string name="feat_setting_playlist_no_playlists">Det finns inga spellistor ännu. Lägg till en för att börja titta.</string>
     <plurals name="feat_setting_playlist_channel_count">
@@ -30,6 +31,7 @@
     <string name="feat_setting_playlist_source_picker_description">Välj hur du vill lägga till spellistan</string>
     <string name="feat_setting_playlist_built_in_sources">Inbyggda källor</string>
     <string name="feat_setting_playlist_providers">Leverantörer</string>
+    <string name="feat_setting_playlist_provider_source_description">Lägg till kanaler från %1$s</string>
     <string name="feat_setting_playlist_source_m3u_description">Lägg till en spellista från en länk eller fil</string>
     <string name="feat_setting_playlist_source_epg_description">Lägg till en programguide från en XMLTV-URL</string>
     <string name="feat_setting_playlist_source_xtream_description">Logga in på en Xtream Codes-server</string>
@@ -173,6 +175,7 @@
     <string name="feat_setting_external_extensions">Externa tillägg</string>
     <string name="feat_setting_external_extensions_description">Tillåt installerade tillägg att ansluta till appen</string>
     <string name="feat_setting_extension_plugins">Tillägg</string>
+    <string name="feat_setting_extension_plugins_description">Installerade tillägg, behörigheter och diagnostik</string>
     <string name="feat_setting_extension_on_device">På den här enheten</string>
     <string name="feat_setting_extension_details">Tilläggsinformation</string>
     <string name="feat_setting_extension_access">Åtkomst</string>

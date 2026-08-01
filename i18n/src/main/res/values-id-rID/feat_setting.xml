@@ -12,6 +12,7 @@
     <string name="feat_setting_sync_mode_keep">pertahankan</string>
     <string name="feat_setting_sync_mode">strategi sinkronisasi</string>
     <string name="feat_setting_playlist_management">Manajemen playlist</string>
+    <string name="feat_setting_playlist_management_description">Langganan, panduan, dan item tersembunyi</string>
     <string name="feat_setting_playlist_your_playlists">Playlist Anda</string>
     <string name="feat_setting_playlist_no_playlists">Belum ada playlist. Tambahkan satu untuk mulai menonton.</string>
     <plurals name="feat_setting_playlist_channel_count">
@@ -29,6 +30,7 @@
     <string name="feat_setting_playlist_source_picker_description">Pilih cara menambahkan playlist ini</string>
     <string name="feat_setting_playlist_built_in_sources">Sumber bawaan</string>
     <string name="feat_setting_playlist_providers">Penyedia</string>
+    <string name="feat_setting_playlist_provider_source_description">Tambahkan saluran dari %1$s</string>
     <string name="feat_setting_playlist_source_m3u_description">Tambahkan playlist dari tautan atau file</string>
     <string name="feat_setting_playlist_source_epg_description">Tambahkan panduan acara dari URL XMLTV</string>
     <string name="feat_setting_playlist_source_xtream_description">Masuk ke server Xtream Codes</string>
@@ -172,6 +174,7 @@
     <string name="feat_setting_external_extensions">Ekstensi eksternal</string>
     <string name="feat_setting_external_extensions_description">Izinkan ekstensi terpasang terhubung ke aplikasi</string>
     <string name="feat_setting_extension_plugins">Ekstensi</string>
+    <string name="feat_setting_extension_plugins_description">Ekstensi terpasang, izin, dan diagnostik</string>
     <string name="feat_setting_extension_on_device">Di perangkat ini</string>
     <string name="feat_setting_extension_details">Detail ekstensi</string>
     <string name="feat_setting_extension_access">Akses</string>

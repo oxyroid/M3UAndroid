@@ -12,6 +12,7 @@
     <string name="feat_setting_sync_mode_keep">garder</string>
     <string name="feat_setting_sync_mode">mode de synchronisation</string>
     <string name="feat_setting_playlist_management">Gestion des playlists</string>
+    <string name="feat_setting_playlist_management_description">Abonnements, guides et éléments masqués</string>
     <string name="feat_setting_playlist_your_playlists">Vos playlists</string>
     <string name="feat_setting_playlist_no_playlists">Aucune playlist pour le moment. Ajoutez-en une pour commencer à regarder.</string>
     <plurals name="feat_setting_playlist_channel_count">
@@ -30,6 +31,7 @@
     <string name="feat_setting_playlist_source_picker_description">Choisissez comment ajouter cette playlist</string>
     <string name="feat_setting_playlist_built_in_sources">Sources intégrées</string>
     <string name="feat_setting_playlist_providers">Fournisseurs</string>
+    <string name="feat_setting_playlist_provider_source_description">Ajouter des chaînes depuis %1$s</string>
     <string name="feat_setting_playlist_source_m3u_description">Ajouter une playlist depuis un lien ou un fichier</string>
     <string name="feat_setting_playlist_source_epg_description">Ajouter un guide des programmes depuis une URL XMLTV</string>
     <string name="feat_setting_playlist_source_xtream_description">Se connecter à un serveur Xtream Codes</string>
@@ -173,6 +175,7 @@
     <string name="feat_setting_external_extensions">Extensions externes</string>
     <string name="feat_setting_external_extensions_description">Autoriser les extensions installées à se connecter à l’application</string>
     <string name="feat_setting_extension_plugins">Extensions</string>
+    <string name="feat_setting_extension_plugins_description">Extensions installées, autorisations et diagnostics</string>
     <string name="feat_setting_extension_on_device">Sur cet appareil</string>
     <string name="feat_setting_extension_details">Détails de l’extension</string>
     <string name="feat_setting_extension_access">Accès</string>

@@ -12,6 +12,7 @@
     <string name="feat_setting_sync_mode_keep">sari peste favorite</string>
     <string name="feat_setting_sync_mode">strategie sincronizare</string>
     <string name="feat_setting_playlist_management">Gestionarea listelor de redare</string>
+    <string name="feat_setting_playlist_management_description">Abonamente, ghiduri și elemente ascunse</string>
     <string name="feat_setting_playlist_your_playlists">Listele tale de redare</string>
     <string name="feat_setting_playlist_no_playlists">Nu există încă liste de redare. Adaugă una pentru a începe să vizionezi.</string>
     <plurals name="feat_setting_playlist_channel_count">
@@ -31,6 +32,7 @@
     <string name="feat_setting_playlist_source_picker_description">Alege cum dorești să adaugi această listă de redare</string>
     <string name="feat_setting_playlist_built_in_sources">Surse integrate</string>
     <string name="feat_setting_playlist_providers">Furnizori</string>
+    <string name="feat_setting_playlist_provider_source_description">Adaugă canale din %1$s</string>
     <string name="feat_setting_playlist_source_m3u_description">Adaugă o listă de redare dintr-un link sau fișier</string>
     <string name="feat_setting_playlist_source_epg_description">Adaugă un ghid TV dintr-un URL XMLTV</string>
     <string name="feat_setting_playlist_source_xtream_description">Conectează-te la un server Xtream Codes</string>
@@ -180,6 +182,7 @@
     <string name="feat_setting_external_extensions">Extensii externe</string>
     <string name="feat_setting_external_extensions_description">Permite extensiilor instalate să se conecteze la aplicație</string>
     <string name="feat_setting_extension_plugins">Extensii</string>
+    <string name="feat_setting_extension_plugins_description">Extensii instalate, permisiuni și diagnosticare</string>
     <string name="feat_setting_extension_on_device">Pe acest dispozitiv</string>
     <string name="feat_setting_extension_details">Detalii extensie</string>
     <string name="feat_setting_extension_access">Acces</string>

@@ -12,6 +12,7 @@
     <string name="feat_setting_sync_mode_keep">beibehalten</string>
     <string name="feat_setting_sync_mode">Synchronisation</string>
     <string name="feat_setting_playlist_management">Playlistverwaltung</string>
+    <string name="feat_setting_playlist_management_description">Abonnements, Programmführer und ausgeblendete Elemente</string>
     <string name="feat_setting_playlist_your_playlists">Deine Playlists</string>
     <string name="feat_setting_playlist_no_playlists">Noch keine Playlists. Füge eine hinzu, um mit dem Ansehen zu beginnen.</string>
     <plurals name="feat_setting_playlist_channel_count">
@@ -30,6 +31,7 @@
     <string name="feat_setting_playlist_source_picker_description">Wähle aus, wie du diese Playlist hinzufügen möchtest</string>
     <string name="feat_setting_playlist_built_in_sources">Integrierte Quellen</string>
     <string name="feat_setting_playlist_providers">Anbieter</string>
+    <string name="feat_setting_playlist_provider_source_description">Kanäle von %1$s hinzufügen</string>
     <string name="feat_setting_playlist_source_m3u_description">Playlist über einen Link oder eine Datei hinzufügen</string>
     <string name="feat_setting_playlist_source_epg_description">Programmführer über eine XMLTV-URL hinzufügen</string>
     <string name="feat_setting_playlist_source_xtream_description">Bei einem Xtream-Codes-Server anmelden</string>
@@ -171,6 +173,7 @@
     <string name="feat_setting_external_extensions">Externe Erweiterungen</string>
     <string name="feat_setting_external_extensions_description">Installierten Erweiterungen die Verbindung mit der App erlauben</string>
     <string name="feat_setting_extension_plugins">Erweiterungen</string>
+    <string name="feat_setting_extension_plugins_description">Installierte Erweiterungen, Berechtigungen und Diagnose</string>
     <string name="feat_setting_extension_on_device">Auf diesem Gerät</string>
     <string name="feat_setting_extension_details">Erweiterungsdetails</string>
     <string name="feat_setting_extension_access">Zugriff</string>

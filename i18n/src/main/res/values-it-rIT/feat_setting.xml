@@ -12,6 +12,7 @@
     <string name="feat_setting_sync_mode_keep">mantieni</string>
     <string name="feat_setting_sync_mode">strategia di sincronizzazione</string>
     <string name="feat_setting_playlist_management">Gestione playlist</string>
+    <string name="feat_setting_playlist_management_description">Abbonamenti, guide ed elementi nascosti</string>
     <string name="feat_setting_playlist_your_playlists">Le tue playlist</string>
     <string name="feat_setting_playlist_no_playlists">Non ci sono ancora playlist. Aggiungine una per iniziare a guardare.</string>
     <plurals name="feat_setting_playlist_channel_count">
@@ -30,6 +31,7 @@
     <string name="feat_setting_playlist_source_picker_description">Scegli come aggiungere questa playlist</string>
     <string name="feat_setting_playlist_built_in_sources">Fonti integrate</string>
     <string name="feat_setting_playlist_providers">Provider</string>
+    <string name="feat_setting_playlist_provider_source_description">Aggiungi canali da %1$s</string>
     <string name="feat_setting_playlist_source_m3u_description">Aggiungi una playlist da un link o un file</string>
     <string name="feat_setting_playlist_source_epg_description">Aggiungi una guida TV da un URL XMLTV</string>
     <string name="feat_setting_playlist_source_xtream_description">Accedi a un server Xtream Codes</string>
@@ -173,6 +175,7 @@
     <string name="feat_setting_external_extensions">Estensioni esterne</string>
     <string name="feat_setting_external_extensions_description">Consenti alle estensioni installate di connettersi all’app</string>
     <string name="feat_setting_extension_plugins">Estensioni</string>
+    <string name="feat_setting_extension_plugins_description">Estensioni installate, autorizzazioni e diagnostica</string>
     <string name="feat_setting_extension_on_device">Su questo dispositivo</string>
     <string name="feat_setting_extension_details">Dettagli dell’estensione</string>
     <string name="feat_setting_extension_access">Accesso</string>

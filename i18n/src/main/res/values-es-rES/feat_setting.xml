@@ -12,6 +12,7 @@
     <string name="feat_setting_sync_mode_keep">omitir favorito</string>
     <string name="feat_setting_sync_mode">forma de sincronizado</string>
     <string name="feat_setting_playlist_management">Gestión de listas de reproducción</string>
+    <string name="feat_setting_playlist_management_description">Suscripciones, guías y elementos ocultos</string>
     <string name="feat_setting_playlist_your_playlists">Tus listas de reproducción</string>
     <string name="feat_setting_playlist_no_playlists">Aún no hay listas de reproducción. Añade una para empezar a ver contenido.</string>
     <plurals name="feat_setting_playlist_channel_count">
@@ -30,6 +31,7 @@
     <string name="feat_setting_playlist_source_picker_description">Elige cómo quieres añadir esta lista de reproducción</string>
     <string name="feat_setting_playlist_built_in_sources">Fuentes integradas</string>
     <string name="feat_setting_playlist_providers">Proveedores</string>
+    <string name="feat_setting_playlist_provider_source_description">Añadir canales desde %1$s</string>
     <string name="feat_setting_playlist_source_m3u_description">Añade una lista de reproducción desde un enlace o archivo</string>
     <string name="feat_setting_playlist_source_epg_description">Añade una guía de programación desde una URL XMLTV</string>
     <string name="feat_setting_playlist_source_xtream_description">Inicia sesión en un servidor de Xtream Codes</string>
@@ -173,6 +175,7 @@
     <string name="feat_setting_external_extensions">Extensiones externas</string>
     <string name="feat_setting_external_extensions_description">Permitir que las extensiones instaladas se conecten a la aplicación</string>
     <string name="feat_setting_extension_plugins">Extensiones</string>
+    <string name="feat_setting_extension_plugins_description">Extensiones instaladas, permisos y diagnósticos</string>
     <string name="feat_setting_extension_on_device">En este dispositivo</string>
     <string name="feat_setting_extension_details">Detalles de la extensión</string>
     <string name="feat_setting_extension_access">Acceso</string>
