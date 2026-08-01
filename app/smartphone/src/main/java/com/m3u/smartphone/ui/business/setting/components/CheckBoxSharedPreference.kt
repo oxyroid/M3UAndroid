@@ -20,7 +20,7 @@ fun CheckBoxSharedPreference(
 ) {
     CheckBoxPreference(
         title = stringResource(title).title(),
-        content = content?.let { stringResource(it) }?.title(),
+        content = content?.let { stringResource(it) },
         enabled = enabled,
         checked = checked,
         icon = icon,
@@ -45,7 +45,7 @@ fun SwitchSharedPreference(
 ) {
     SwitchPreference(
         title = stringResource(title).title(),
-        content = content?.let { stringResource(it) }?.title(),
+        content = content?.let { stringResource(it) },
         enabled = enabled,
         checked = checked,
         icon = icon,

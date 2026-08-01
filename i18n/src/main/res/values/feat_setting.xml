@@ -73,8 +73,8 @@
     <string name="feat_setting_playlist_show_channel_action_description">Show hidden channel %1$s</string>
     <string name="feat_setting_playlist_show_category_action_description">Show hidden category %1$s</string>
     <string name="feat_setting_connect_timeout">connect timeout</string>
-    <string name="feat_setting_god_mode">god mode</string>
-    <string name="feat_setting_god_mode_description">adjust layouts by physical volume buttons</string>
+    <string name="feat_setting_god_mode">adjust layout with volume keys</string>
+    <string name="feat_setting_god_mode_description">use the physical volume buttons to adjust layout size</string>
     <string name="feat_setting_experimental_mode">experimental mode</string>
     <string name="feat_setting_experimental_mode_description">unstable features can throw fatal errors</string>
     <string name="feat_setting_label_epg_playlists">EPG sources</string>
@@ -84,7 +84,7 @@
     <string name="feat_setting_label_parse_from_clipboard">Paste from clipboard</string>
     <string name="feat_setting_label_select_from_local_storage">Select file</string>
     <string name="feat_setting_label_parse_from_disk">parse file</string>
-    <string name="feat_setting_clip_mode">video clip mode</string>
+    <string name="feat_setting_clip_mode">video scaling</string>
     <string name="feat_setting_clip_mode_adaptive">adaptive</string>
     <string name="feat_setting_clip_mode_clip">clip</string>
     <string name="feat_setting_clip_mode_stretched">stretched</string>
@@ -93,8 +93,8 @@
     <string name="feat_setting_full_info_player">full information player</string>
     <string name="feat_setting_full_info_player_description">display more information in the player</string>
     <string name="feat_setting_slider">slider</string>
-    <string name="feat_setting_no_picture_mode">no picture mode</string>
-    <string name="feat_setting_no_picture_mode_description">may improve performance</string>
+    <string name="feat_setting_no_picture_mode">hide artwork</string>
+    <string name="feat_setting_no_picture_mode_description">use text-first layouts and reduce image loading</string>
     <string name="feat_setting_system_setting">system setting</string>
     <string name="feat_setting_system_setting_description">Permissions, storage, and app controls</string>
     <string name="feat_setting_script_management_import_js">import Javascript</string>
@@ -154,6 +154,10 @@
     <string name="feat_setting_reconnect_mode_reconnect">always</string>
     <string name="feat_setting_appearance">appearance</string>
     <string name="feat_setting_appearance_description">Theme, colors, and visual style</string>
+    <string name="feat_setting_appearance_section_color_theme">Color theme</string>
+    <string name="feat_setting_appearance_section_layout">Layout and media</string>
+    <string name="feat_setting_appearance_section_behavior">Theme behavior</string>
+    <string name="feat_setting_appearance_section_controls">Controls</string>
     <string name="feat_setting_appearance_hint_edit_color">long press to edit color</string>
     <string name="feat_setting_theme_parchment">Parchment</string>
     <string name="feat_setting_theme_ink">Ink</string>
@@ -299,7 +303,7 @@
     </string>
     <string name="feat_setting_source_code">source code</string>
     <string name="feat_setting_source_code_description">@oxyroid/M3UAndroid · GitHub</string>
-    <string name="feat_setting_compact_dimension">compact dimension</string>
+    <string name="feat_setting_compact_dimension">compact layout</string>
     <string name="feat_setting_placeholder_epg_title">EPG name</string>
     <string name="feat_setting_error_empty_epg_title">epg name is empty</string>
     <string name="feat_setting_error_empty_epg">epg link is empty</string>

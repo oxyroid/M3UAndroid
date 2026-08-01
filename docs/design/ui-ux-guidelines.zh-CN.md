@@ -240,6 +240,8 @@ Android 的[设置模式](https://developer.android.com/design/ui/mobile/guides/
 - Leading 图标、primary/supporting text 和 trailing action 使用统一槽位与垂直居中；
 - 设置概览把相关行放在同一个色调 Surface 中；分组标题说明领域，Supporting text 说明任务范围，
   不能只是重复行标题；
+- 主题预览是可比较配色的功能样例，不是装饰占位；它要用易识别的组件同时呈现当前 Surface、
+  Primary、Secondary 与 Content 色，样例中的提示文案只承担次要的信息传达；
 - Compact 设置入口使用 Button 语义；只有它控制同时可见的列表—详情 Pane 时，才使用 Tab 与
   selected 语义。应用版本等信息行既没有点击语义，也不用导航提示；
 - 订阅选择项说明用户选择的来源或服务，以及选择后能得到什么；Runtime 归属等实现术语和

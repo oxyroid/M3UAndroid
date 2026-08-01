@@ -4,10 +4,10 @@ import android.annotation.SuppressLint
 import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,18 +19,19 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.ColorLens
 import androidx.compose.material.icons.rounded.DarkMode
-import androidx.compose.material.icons.rounded.DeviceHub
 import androidx.compose.material.icons.rounded.FitScreen
 import androidx.compose.material.icons.rounded.FormatSize
 import androidx.compose.material.icons.rounded.HideImage
 import androidx.compose.material.icons.rounded.Restore
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -38,6 +39,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import com.m3u.core.foundation.architecture.preferences.ClipMode
 import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
 import com.m3u.core.foundation.architecture.preferences.ThemePreference
@@ -130,15 +135,15 @@ internal fun AppearanceFragment(
     }
 
     LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(spacing.small),
+        verticalArrangement = Arrangement.spacedBy(24.dp),
         contentPadding = contentPadding + PaddingValues(spacing.medium),
         modifier = modifier.fillMaxSize()
     ) {
         item {
-            OutlinedCard(
-                colors = CardDefaults.outlinedCardColors(
-                    containerColor = colorScheme.surfaceContainer
-                )
+            AppearanceSection(
+                title = stringResource(
+                    string.feat_setting_appearance_section_color_theme
+                ),
             ) {
                 Column(
                     modifier = Modifier
@@ -147,31 +152,26 @@ internal fun AppearanceFragment(
                         .fillMaxWidth(),
                 ) {
                     @SuppressLint("UnusedBoxWithConstraintsScope")
-                    BoxWithConstraints(
-                        Modifier.align(Alignment.Start)
-                    ) {
+                    BoxWithConstraints(Modifier.align(Alignment.Start)) {
                         MessageItem(
                             containerColor = colorScheme.primary,
                             contentColor = colorScheme.onPrimary,
                             alignedToStart = true,
                             contentDescription = leftContentDescription,
-                            modifier = Modifier.sizeIn(maxWidth = maxWidth * 0.8f)
+                            modifier = Modifier.sizeIn(maxWidth = maxWidth * 0.8f),
                         )
                     }
                     Spacer(Modifier.height(spacing.small))
                     @SuppressLint("UnusedBoxWithConstraintsScope")
-                    BoxWithConstraints(
-                        Modifier.align(Alignment.End)
-                    ) {
+                    BoxWithConstraints(Modifier.align(Alignment.End)) {
                         MessageItem(
                             containerColor = colorScheme.secondary,
                             contentColor = colorScheme.onSecondary,
                             alignedToStart = false,
                             contentDescription = rightContentDescription,
-                            modifier = Modifier.sizeIn(maxWidth = maxWidth * 0.8f)
+                            modifier = Modifier.sizeIn(maxWidth = maxWidth * 0.8f),
                         )
                     }
-
                 }
                 HorizontalDivider()
                 val lazyListState = rememberLazyListState()
@@ -183,7 +183,8 @@ internal fun AppearanceFragment(
                         .selectableGroup()
                         .thenIf(!lazyListState.isAtTop) {
                             Modifier.blurEdges(
-                                colorScheme.surface, edges = listOf(Edge.Start, Edge.End)
+                                colorScheme.surfaceContainer,
+                                edges = listOf(Edge.Start, Edge.End),
                             )
                         },
                     verticalAlignment = Alignment.CenterVertically,
@@ -214,100 +215,128 @@ internal fun AppearanceFragment(
                                 .takeIf { option.colorScheme != null },
                         )
                     }
-//                        item {
-//                            val inDarkTheme = isSystemInDarkTheme()
-//                            ThemeAddSelection {
-//                                openColorScheme(
-//                                    ColorScheme(
-//                                        argb = Color(
-//                                            red = (0..0xFF).random(),
-//                                            green = (0..0xFF).random(),
-//                                            blue = (0..0xFF).random()
-//                                        ).toArgb(),
-//                                        isDark = inDarkTheme,
-//                                        name = ColorScheme.NAME_TEMP
-//                                    )
-//                                )
-//                            }
-//                        }
                 }
             }
-
         }
         item {
-            TextPreference(
-                title = stringResource(string.feat_setting_clip_mode).title(),
-                icon = Icons.Rounded.FitScreen,
-                trailing = when (clipMode) {
-                    ClipMode.ADAPTIVE -> stringResource(string.feat_setting_clip_mode_adaptive)
-                    ClipMode.CLIP -> stringResource(string.feat_setting_clip_mode_clip)
-                    ClipMode.STRETCHED -> stringResource(string.feat_setting_clip_mode_stretched)
-                    else -> ""
-                }.title(),
-                onClick = {
-                    clipMode = when (clipMode) {
-                        ClipMode.ADAPTIVE -> ClipMode.CLIP
-                        ClipMode.CLIP -> ClipMode.STRETCHED
-                        ClipMode.STRETCHED -> ClipMode.ADAPTIVE
-                        else -> ClipMode.ADAPTIVE
+            AppearanceSection(
+                title = stringResource(
+                    string.feat_setting_appearance_section_layout
+                ),
+            ) {
+                TextPreference(
+                    title = stringResource(string.feat_setting_clip_mode).title(),
+                    icon = Icons.Rounded.FitScreen,
+                    trailing = when (clipMode) {
+                        ClipMode.ADAPTIVE ->
+                            stringResource(string.feat_setting_clip_mode_adaptive)
+                        ClipMode.CLIP ->
+                            stringResource(string.feat_setting_clip_mode_clip)
+                        ClipMode.STRETCHED ->
+                            stringResource(string.feat_setting_clip_mode_stretched)
+                        else -> ""
+                    }.title(),
+                    onClick = {
+                        clipMode = when (clipMode) {
+                            ClipMode.ADAPTIVE -> ClipMode.CLIP
+                            ClipMode.CLIP -> ClipMode.STRETCHED
+                            ClipMode.STRETCHED -> ClipMode.ADAPTIVE
+                            else -> ClipMode.ADAPTIVE
+                        }
                     }
-                }
-            )
+                )
+                SwitchSharedPreference(
+                    title = string.feat_setting_compact_dimension,
+                    icon = Icons.Rounded.FormatSize,
+                    checked = compactDimension,
+                    onChanged = { compactDimension = !compactDimension }
+                )
+                SwitchSharedPreference(
+                    title = string.feat_setting_no_picture_mode,
+                    content = string.feat_setting_no_picture_mode_description,
+                    icon = Icons.Rounded.HideImage,
+                    checked = noPictureMode,
+                    onChanged = { noPictureMode = !noPictureMode }
+                )
+            }
         }
         item {
-            SwitchSharedPreference(
-                title = string.feat_setting_compact_dimension,
-                icon = Icons.Rounded.FormatSize,
-                checked = compactDimension,
-                onChanged = { compactDimension = !compactDimension }
-            )
+            AppearanceSection(
+                title = stringResource(
+                    string.feat_setting_appearance_section_behavior
+                ),
+            ) {
+                SwitchSharedPreference(
+                    title = string.feat_setting_follow_system_theme,
+                    icon = Icons.Rounded.DarkMode,
+                    checked = followSystemTheme,
+                    onChanged = {
+                        followSystemThemePreference.value = !followSystemTheme
+                    },
+                )
+                SwitchSharedPreference(
+                    title = string.feat_setting_use_dynamic_colors,
+                    content = string.feat_setting_use_dynamic_colors_unavailable
+                        .takeUnless { useDynamicColorsAvailable },
+                    icon = Icons.Rounded.ColorLens,
+                    checked = useDynamicColors && useDynamicColorsAvailable,
+                    onChanged = {
+                        dynamicColorsPreference.value = !useDynamicColors
+                    },
+                    enabled = useDynamicColorsAvailable
+                )
+                Preference(
+                    title = stringResource(
+                        string.feat_setting_restore_schemes
+                    ).title(),
+                    icon = Icons.Rounded.Restore,
+                    onClick = restoreSchemes
+                )
+            }
         }
         item {
-            SwitchSharedPreference(
-                title = string.feat_setting_no_picture_mode,
-                content = string.feat_setting_no_picture_mode_description,
-                icon = Icons.Rounded.HideImage,
-                checked = noPictureMode,
-                onChanged = { noPictureMode = !noPictureMode }
-            )
+            AppearanceSection(
+                title = stringResource(
+                    string.feat_setting_appearance_section_controls
+                ),
+            ) {
+                SwitchSharedPreference(
+                    title = string.feat_setting_god_mode,
+                    content = string.feat_setting_god_mode_description,
+                    icon = Icons.AutoMirrored.Rounded.VolumeUp,
+                    checked = godMode,
+                    onChanged = { godMode = !godMode }
+                )
+            }
         }
-        item {
-            SwitchSharedPreference(
-                title = string.feat_setting_follow_system_theme,
-                icon = Icons.Rounded.DarkMode,
-                checked = followSystemTheme,
-                onChanged = {
-                    followSystemThemePreference.value = !followSystemTheme
-                },
-            )
-        }
-        item {
-            SwitchSharedPreference(
-                title = string.feat_setting_use_dynamic_colors,
-                content = string.feat_setting_use_dynamic_colors_unavailable.takeUnless { useDynamicColorsAvailable },
-                icon = Icons.Rounded.ColorLens,
-                checked = useDynamicColors && useDynamicColorsAvailable,
-                onChanged = {
-                    dynamicColorsPreference.value = !useDynamicColors
-                },
-                enabled = useDynamicColorsAvailable
-            )
-        }
-        item {
-            Preference(
-                title = stringResource(string.feat_setting_restore_schemes).title(),
-                icon = Icons.Rounded.Restore,
-                onClick = restoreSchemes
-            )
-        }
-        item {
-            SwitchSharedPreference(
-                title = string.feat_setting_god_mode,
-                content = string.feat_setting_god_mode_description,
-                icon = Icons.Rounded.DeviceHub,
-                checked = godMode,
-                onChanged = { godMode = !godMode }
-            )
+    }
+}
+
+@Composable
+private fun AppearanceSection(
+    title: String,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .semantics { heading() },
+        )
+        Surface(
+            shape = MaterialTheme.shapes.extraLarge,
+            color = MaterialTheme.colorScheme.surfaceContainer,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(content = content)
         }
     }
 }
