@@ -27,3 +27,19 @@ adb shell am start -n com.m3u.smartphone/.stability.DebugCrashTestActivity
 
 Use it to verify report persistence, the isolated sender process, and removal of the probe secret
 from exception messages.
+
+To verify automatic HTTP delivery, start the repository mock receiver and reverse the device port
+to the host:
+
+```shell
+./gradlew :testing:mock-server:startMockServer
+./gradlew :app:smartphone:assembleDebug \
+  -Pm3u.debug.crash.report.endpoint=http://127.0.0.1:8080/crash-reports
+adb reverse tcp:8080 tcp:8080
+adb install -r app/smartphone/build/outputs/apk/debug/smartphone-debug.apk
+adb shell am start -n com.m3u.smartphone/.stability.DebugCrashTestActivity
+curl http://127.0.0.1:8080/crash-reports/latest
+```
+
+`m3u.debug.crash.report.endpoint` affects debug only. HTTP is accepted only for localhost,
+emulator-host, or private-network receivers; release endpoints always require HTTPS.

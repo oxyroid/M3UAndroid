@@ -9,10 +9,12 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.request.host
 import io.ktor.server.request.port
+import io.ktor.server.request.receive
 import io.ktor.server.request.receiveText
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondBytes
 import io.ktor.server.response.respondText
+import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
@@ -27,7 +29,10 @@ import kotlinx.serialization.json.putJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import java.io.ByteArrayInputStream
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicReference
+import java.util.zip.GZIPInputStream
 
 private const val DEFAULT_HOST = "0.0.0.0"
 private const val DEFAULT_PORT = 8080
@@ -49,6 +54,9 @@ private const val REFERENCE_WAV_DURATION_SECONDS = 10
 private const val REFERENCE_WAV_CHANNEL_COUNT = 1
 private const val REFERENCE_WAV_BITS_PER_SAMPLE = 16
 private const val REFERENCE_WAV_TONE_FREQUENCY = 500
+private const val CRASH_REPORT_SCHEMA = "1"
+private const val MAX_COMPRESSED_CRASH_REPORT_BYTES = 128 * 1024
+private const val MAX_UNCOMPRESSED_CRASH_REPORT_BYTES = 512 * 1024
 
 private val referenceChannelIds = setOf("reference.news", "reference.sports")
 private val referenceSessions = ConcurrentHashMap<String, ReferenceSession>()
@@ -61,6 +69,7 @@ private val embyVodPlayableItemIds = setOf(
     "mock.episode.orbit.s02e01",
 )
 private val embyVodSessions = ConcurrentHashMap<String, EmbyVodSession>()
+private val latestCrashReport = AtomicReference<JsonObject?>()
 
 private val json = Json {
     prettyPrint = true
@@ -89,6 +98,37 @@ internal fun Application.mockServerModule() {
 
         get("/health") {
             call.respondText("ok", ContentType.Text.Plain)
+        }
+
+        post("/crash-reports") {
+            if (!call.isValidCrashReportRequest()) {
+                call.respond(HttpStatusCode.BadRequest, "invalid crash report headers")
+                return@post
+            }
+            val report = call.receiveCrashReportOrNull()
+            if (report == null || !report.hasSafeCrashReportShape()) {
+                call.respond(HttpStatusCode.BadRequest, "invalid crash report payload")
+                return@post
+            }
+            latestCrashReport.set(report)
+            call.respond(HttpStatusCode.Accepted, "accepted")
+        }
+
+        get("/crash-reports/latest") {
+            val report = latestCrashReport.get()
+            if (report == null) {
+                call.respond(HttpStatusCode.NotFound, "no crash report")
+            } else {
+                call.respondText(
+                    text = json.encodeToString(report),
+                    contentType = ContentType.Application.Json,
+                )
+            }
+        }
+
+        delete("/crash-reports") {
+            latestCrashReport.set(null)
+            call.respond(HttpStatusCode.NoContent)
         }
 
         post("/reference-provider/login") {
@@ -971,6 +1011,27 @@ private fun ApplicationCall.isJsonRequest(): Boolean =
         ?.trim()
         ?.equals(ContentType.Application.Json.toString(), ignoreCase = true) == true
 
+private fun ApplicationCall.isValidCrashReportRequest(): Boolean =
+    isJsonRequest() &&
+        request.headers["Content-Encoding"]?.equals("gzip", ignoreCase = true) == true &&
+        request.headers["X-M3U-Report-Schema"] == CRASH_REPORT_SCHEMA
+
+private suspend fun ApplicationCall.receiveCrashReportOrNull(): JsonObject? = runCatching {
+    val compressed = receive<ByteArray>()
+    require(compressed.size <= MAX_COMPRESSED_CRASH_REPORT_BYTES)
+    val uncompressed = GZIPInputStream(ByteArrayInputStream(compressed)).use { gzip ->
+        gzip.readNBytes(MAX_UNCOMPRESSED_CRASH_REPORT_BYTES + 1)
+    }
+    require(uncompressed.size <= MAX_UNCOMPRESSED_CRASH_REPORT_BYTES)
+    Json.parseToJsonElement(uncompressed.decodeToString()).jsonObject
+}.getOrNull()
+
+private fun JsonObject.hasSafeCrashReportShape(): Boolean =
+    keys.containsAll(crashReportRequiredFields) &&
+        keys.none(crashReportForbiddenFields::contains) &&
+        string("PACKAGE_NAME") == "com.m3u.smartphone" &&
+        string("STACK_TRACE").orEmpty().isNotBlank()
+
 private suspend fun ApplicationCall.receiveJsonObjectOrNull(): JsonObject? = runCatching {
     Json.parseToJsonElement(receiveText()).jsonObject
 }.getOrNull()
@@ -1223,7 +1284,38 @@ private fun endpointIndex(baseUrl: String): String = json.encodeToString(
         put("emby", baseUrl)
         put("jellyfin", "$baseUrl/jellyfin")
         put("reference_provider", "$baseUrl/reference-provider")
+        put("crash_reports", "$baseUrl/crash-reports")
     }
+)
+
+private val crashReportRequiredFields = setOf(
+    "REPORT_ID",
+    "APP_VERSION_CODE",
+    "APP_VERSION_NAME",
+    "PACKAGE_NAME",
+    "STACK_TRACE",
+    "STACK_TRACE_HASH",
+    "CUSTOM_DATA",
+)
+
+private val crashReportForbiddenFields = setOf(
+    "BUILD_CONFIG",
+    "FILE_PATH",
+    "LOGCAT",
+    "EVENTSLOG",
+    "RADIOLOG",
+    "DROPBOX",
+    "INSTALLATION_ID",
+    "DEVICE_ID",
+    "USER_EMAIL",
+    "USER_COMMENT",
+    "SHARED_PREFERENCES",
+    "APPLICATION_LOG",
+    "ENVIRONMENT",
+    "SETTINGS_SYSTEM",
+    "SETTINGS_SECURE",
+    "SETTINGS_GLOBAL",
+    "USER_IP",
 )
 
 private fun referenceLoginResponse(): JsonObject = buildJsonObject {

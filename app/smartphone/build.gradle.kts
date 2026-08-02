@@ -38,24 +38,63 @@ val localProperties = Properties().apply {
         ?.use(::load)
 }
 
-val crashReportEndpoint = (
-    providers.gradleProperty("m3u.crash.report.endpoint").orNull
-        ?: providers.environmentVariable("M3U_CRASH_REPORT_ENDPOINT").orNull
-        ?: localProperties.getProperty("m3u.crash.report.endpoint").orEmpty()
-    ).trim().also { endpoint ->
+fun validateCrashReportEndpoint(
+    endpoint: String,
+    propertyName: String,
+    allowInsecureLocal: Boolean,
+) {
     if (endpoint.isNotEmpty()) {
         val uri = runCatching { URI(endpoint) }
-            .getOrElse { error("m3u.crash.report.endpoint must be an absolute HTTPS URL") }
+            .getOrElse { error("$propertyName must be an absolute URL") }
+        val privateDebugHttp = allowInsecureLocal &&
+            uri.scheme.equals("http", ignoreCase = true) &&
+            uri.host.isPrivateDebugReceiverHost()
         require(
-            uri.scheme.equals("https", ignoreCase = true) &&
+            (uri.scheme.equals("https", ignoreCase = true) || privateDebugHttp) &&
                 !uri.host.isNullOrBlank() &&
                 uri.userInfo == null &&
                 uri.query == null &&
                 uri.fragment == null
         ) {
-            "m3u.crash.report.endpoint must be an absolute HTTPS URL without credentials, query, or fragment"
+            "$propertyName must be an absolute HTTPS URL without credentials, query, or fragment" +
+                if (allowInsecureLocal) "; HTTP is allowed only for a local debug receiver" else ""
         }
     }
+}
+
+fun String?.isPrivateDebugReceiverHost(): Boolean {
+    val host = this ?: return false
+    if (host == "localhost") return true
+    val octets = host.split('.').map { octet -> octet.toIntOrNull() ?: return false }
+    if (octets.size != 4 || octets.any { octet -> octet !in 0..255 }) return false
+    return octets[0] == 10 ||
+        (octets[0] == 127 && octets[1] == 0 && octets[2] == 0 && octets[3] == 1) ||
+        (octets[0] == 192 && octets[1] == 168) ||
+        (octets[0] == 172 && octets[1] in 16..31)
+}
+
+val crashReportEndpoint = (
+    providers.gradleProperty("m3u.crash.report.endpoint").orNull
+        ?: providers.environmentVariable("M3U_CRASH_REPORT_ENDPOINT").orNull
+        ?: localProperties.getProperty("m3u.crash.report.endpoint").orEmpty()
+    ).trim().also { endpoint ->
+    validateCrashReportEndpoint(
+        endpoint = endpoint,
+        propertyName = "m3u.crash.report.endpoint",
+        allowInsecureLocal = false,
+    )
+}
+
+val debugCrashReportEndpoint = (
+    providers.gradleProperty("m3u.debug.crash.report.endpoint").orNull
+        ?: providers.environmentVariable("M3U_DEBUG_CRASH_REPORT_ENDPOINT").orNull
+        ?: localProperties.getProperty("m3u.debug.crash.report.endpoint").orEmpty()
+    ).trim().ifEmpty { crashReportEndpoint }.also { endpoint ->
+    validateCrashReportEndpoint(
+        endpoint = endpoint,
+        propertyName = "m3u.debug.crash.report.endpoint",
+        allowInsecureLocal = true,
+    )
 }
 
 fun localDebugFixtureValue(
@@ -132,6 +171,11 @@ android {
             isShrinkResources = false
             isPseudoLocalesEnabled = true
             signingConfig = signingConfigs.getByName("debug")
+            buildConfigField(
+                "String",
+                "CRASH_REPORT_ENDPOINT",
+                debugCrashReportEndpoint.asBuildConfigString(),
+            )
             buildConfigField(
                 "String",
                 "DEBUG_EMBY_BASE_URL",

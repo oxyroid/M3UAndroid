@@ -25,3 +25,17 @@ adb shell am start -n com.m3u.smartphone/.stability.DebugCrashTestActivity
 ```
 
 它用于验证崩溃报告是否落盘、发送进程能否独立启动，以及异常消息中的测试 secret 是否已被移除。
+
+需要验证自动 HTTP 发送时，启动仓库内 mock receiver，并让设备端口反向连接宿主机：
+
+```shell
+./gradlew :testing:mock-server:startMockServer
+./gradlew :app:smartphone:assembleDebug \
+  -Pm3u.debug.crash.report.endpoint=http://127.0.0.1:8080/crash-reports
+adb reverse tcp:8080 tcp:8080
+adb install -r app/smartphone/build/outputs/apk/debug/smartphone-debug.apk
+adb shell am start -n com.m3u.smartphone/.stability.DebugCrashTestActivity
+curl http://127.0.0.1:8080/crash-reports/latest
+```
+
+`m3u.debug.crash.report.endpoint` 仅影响 debug。HTTP 只允许本机、模拟器宿主地址或私网地址；release endpoint 始终要求 HTTPS。

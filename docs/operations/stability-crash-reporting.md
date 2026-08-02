@@ -66,4 +66,7 @@ Delete raw reports after 30 days, restrict access to maintainers, and audit expo
 
 See `app/smartphone/src/debug/README.md` for the debug probe command.
 
+The repository mock receiver validates gzip, schema, package name, payload limits, and forbidden
+fields. Use it to test immediate delivery and retry after failure; it is not a production receiver.
+
 References: [ACRA senders](https://www.acra.ch/docs/Senders), [ACRA advanced usage](https://www.acra.ch/docs/AdvancedUsage).
