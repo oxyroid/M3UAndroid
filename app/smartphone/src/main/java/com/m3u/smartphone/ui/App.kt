@@ -109,6 +109,8 @@ import com.m3u.smartphone.ui.common.connect.RemoteControlSheet
 import com.m3u.smartphone.ui.common.connect.RemoteControlSheetValue
 import com.m3u.smartphone.ui.common.helper.LocalHelper
 import com.m3u.smartphone.ui.common.helper.Metadata
+import com.m3u.smartphone.stability.StabilityFeature
+import com.m3u.smartphone.stability.StabilityReporter
 import com.m3u.smartphone.ui.material.components.Destination
 import com.m3u.smartphone.ui.material.components.EpisodesBottomSheet
 import com.m3u.smartphone.ui.material.components.PageStateContent
@@ -210,6 +212,15 @@ private fun AppImpl(
         derivedStateOf {
             Destination.of(entry?.destination?.route)
         }
+    }
+    LaunchedEffect(currentDestination) {
+        val feature = when (currentDestination) {
+            Destination.Foryou -> StabilityFeature.HOME
+            Destination.Favorite -> StabilityFeature.FAVORITES
+            Destination.Setting -> StabilityFeature.SETTINGS
+            null -> StabilityFeature.APP
+        }
+        StabilityReporter.setFeature(feature)
     }
     val isRootPlaylistConfiguration =
         entry?.destination?.route ==

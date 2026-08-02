@@ -16,3 +16,14 @@ precedence, followed by environment variables and then `local.properties`.
 The values are compiled only into the local debug APK. Release variants contain neither the
 fixture code nor these fields. A fresh debug app imports the account after the bundled playback
 samples; later launches reuse the existing provider account.
+
+## Crash-reporting probe
+
+A controlled crash entry point exists only in the debug variant. After installation, run:
+
+```shell
+adb shell am start -n com.m3u.smartphone/.stability.DebugCrashTestActivity
+```
+
+Use it to verify report persistence, the isolated sender process, and removal of the probe secret
+from exception messages.

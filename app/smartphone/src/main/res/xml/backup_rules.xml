@@ -9,4 +9,5 @@
     <exclude domain="sharedpref" path="extension-setting-secrets.xml" />
     <exclude domain="sharedpref" path="extension-trust.xml" />
     <exclude domain="sharedpref" path="subscription_provider.xml" />
+    <exclude domain="sharedpref" path="stability-process-exit.xml" />
 </full-backup-content>

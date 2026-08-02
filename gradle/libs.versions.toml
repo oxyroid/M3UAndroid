@@ -198,6 +198,8 @@ androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profi
 jakewharton-disklrucache = { group = "com.jakewharton", name = "disklrucache", version.ref = "jakewharton-disklrucache" }
 acra-mail = { group = "ch.acra", name = "acra-mail", version.ref = "acra" }
 acra-notification = { group = "ch.acra", name = "acra-notification", version.ref = "acra" }
+acra-http = { group = "ch.acra", name = "acra-http", version.ref = "acra" }
+acra-limiter = { group = "ch.acra", name = "acra-limiter", version.ref = "acra" }
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
 wire-runtime = { module = "com.squareup.wire:wire-runtime", version.ref = "squareup-wire" }
 

@@ -8,11 +8,13 @@
         <exclude domain="sharedpref" path="extension-setting-secrets.xml" />
         <exclude domain="sharedpref" path="extension-trust.xml" />
         <exclude domain="sharedpref" path="subscription_provider.xml" />
+        <exclude domain="sharedpref" path="stability-process-exit.xml" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="sharedpref" path="extension-settings.xml" />
         <exclude domain="sharedpref" path="extension-setting-secrets.xml" />
         <exclude domain="sharedpref" path="extension-trust.xml" />
         <exclude domain="sharedpref" path="subscription_provider.xml" />
+        <exclude domain="sharedpref" path="stability-process-exit.xml" />
     </device-transfer>
 </data-extraction-rules>

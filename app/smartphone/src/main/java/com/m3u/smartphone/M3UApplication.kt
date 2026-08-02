@@ -15,11 +15,13 @@ import com.m3u.data.worker.ProviderCredentialRecoveryWorker
 import com.m3u.data.worker.ProviderSessionCleanupWorker
 import com.m3u.data.worker.initializePersistedUriPermissionLeases
 import com.m3u.i18n.R.string
+import com.m3u.smartphone.stability.CrashFallbackCopy
+import com.m3u.smartphone.stability.ProcessExitMonitor
+import com.m3u.smartphone.stability.StabilityReporter
+import com.m3u.smartphone.stability.configureCrashReporting
 import com.m3u.smartphone.startup.ApplicationStartupTask
 import dagger.hilt.android.HiltAndroidApp
-import org.acra.config.mailSender
-import org.acra.config.notification
-import org.acra.data.StringFormat
+import org.acra.ACRA
 import org.acra.ktx.initAcra
 import timber.log.Timber
 import timber.log.Timber.DebugTree
@@ -38,6 +40,12 @@ class M3UApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        if (ACRA.isACRASenderServiceProcess()) return
+
+        StabilityReporter.initialize(BuildConfig.BUILD_TYPE)
+        if (BuildConfig.CRASH_REPORT_ENDPOINT.isNotBlank()) {
+            ProcessExitMonitor.reportPreviousExit(this)
+        }
         Coil.setImageLoader(
             ImageLoaderFactory {
                 ImageLoader.Builder(this)
@@ -66,18 +74,15 @@ class M3UApplication : Application(), Configuration.Provider {
     override fun attachBaseContext(base: Context?) {
         super.attachBaseContext(base)
         initAcra {
-            buildConfigClass = BuildConfig::class.java
-            reportFormat = StringFormat.JSON
-            notification {
-                title = getString(string.crash_notification_title)
-                text = getString(string.crash_notification_text)
-                channelName = getString(string.crash_notification_channel_name)
-            }
-            mailSender {
-                mailTo = "oxyroid@outlook.com"
-                reportAsFile = true
-                reportFileName = "Crash.txt"
-            }
+            configureCrashReporting(
+                endpoint = BuildConfig.CRASH_REPORT_ENDPOINT,
+                fallbackCopy = CrashFallbackCopy(
+                    notificationTitle = getString(string.crash_notification_title),
+                    notificationText = getString(string.crash_notification_text),
+                    notificationChannelName = getString(string.crash_notification_channel_name),
+                    mailTo = "oxyroid@outlook.com",
+                ),
+            )
         }
     }
 

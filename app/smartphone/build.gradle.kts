@@ -1,6 +1,7 @@
 @file:Suppress("UnstableApiUsage")
 
 import com.android.build.api.dsl.ManagedVirtualDevice
+import java.net.URI
 import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -35,6 +36,26 @@ val localProperties = Properties().apply {
         .takeIf { file -> file.isFile }
         ?.inputStream()
         ?.use(::load)
+}
+
+val crashReportEndpoint = (
+    providers.gradleProperty("m3u.crash.report.endpoint").orNull
+        ?: providers.environmentVariable("M3U_CRASH_REPORT_ENDPOINT").orNull
+        ?: localProperties.getProperty("m3u.crash.report.endpoint").orEmpty()
+    ).trim().also { endpoint ->
+    if (endpoint.isNotEmpty()) {
+        val uri = runCatching { URI(endpoint) }
+            .getOrElse { error("m3u.crash.report.endpoint must be an absolute HTTPS URL") }
+        require(
+            uri.scheme.equals("https", ignoreCase = true) &&
+                !uri.host.isNullOrBlank() &&
+                uri.userInfo == null &&
+                uri.query == null &&
+                uri.fragment == null
+        ) {
+            "m3u.crash.report.endpoint must be an absolute HTTPS URL without credentials, query, or fragment"
+        }
+    }
 }
 
 fun localDebugFixtureValue(
@@ -91,6 +112,12 @@ android {
         targetSdk = 33
         versionCode = 145
         versionName = "1.15.1"
+
+        buildConfigField(
+            "String",
+            "CRASH_REPORT_ENDPOINT",
+            crashReportEndpoint.asBuildConfigString(),
+        )
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments["m3uMockServerUrl"] = m3uMockServerUrl.get()
@@ -276,6 +303,8 @@ dependencies {
     implementation(libs.backdrop)
     implementation(libs.acra.notification)
     implementation(libs.acra.mail)
+    implementation(libs.acra.http)
+    implementation(libs.acra.limiter)
 
     testImplementation(kotlin("test-junit"))
     androidTestImplementation(platform(libs.androidx.compose.bom))

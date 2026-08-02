@@ -15,3 +15,13 @@ m3u.debug.emby.password=your-password
 
 这些值只会编译进本地 debug APK；release 变体没有对应代码和字段。首次启动全新安装的
 debug 应用时，会在内置播放样例导入完成后添加账号；后续启动会复用已存在的 provider 账号。
+
+## 崩溃报告探针
+
+只在 debug 变体中提供受控崩溃入口。安装后运行：
+
+```shell
+adb shell am start -n com.m3u.smartphone/.stability.DebugCrashTestActivity
+```
+
+它用于验证崩溃报告是否落盘、发送进程能否独立启动，以及异常消息中的测试 secret 是否已被移除。
