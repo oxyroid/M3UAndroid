@@ -28,10 +28,10 @@ An APK built without the endpoint does not upload automatically. It can only ope
 after the user approves the crash notification, then let the user send the report to
 `crash@oxyroid.com`. This is a manual fallback, not production monitoring.
 
-Production can use the same address as the server-side alert inbox: the app still uploads over
-HTTPS, then the receiver groups and sanitizes reports before sending new-issue, regression, and
-health-check alerts to `crash@oxyroid.com` over SMTP. SMTP credentials must stay on the server and
-must never be compiled into the APK.
+Production uses the repository's `:stability:receiver`: the app still uploads over HTTPS, then the
+receiver groups and sanitizes reports again before sending new-issue, cross-version recurrence,
+and spike alerts to `crash@oxyroid.com` over SMTP. SMTP credentials stay on the server and must
+never be compiled into the APK. See `stability/receiver/README.md` for deployment inputs.
 
 ## Receiver contract
 
@@ -75,5 +75,8 @@ See `app/smartphone/src/debug/README.md` for the debug probe command.
 
 The repository mock receiver validates gzip, schema, package name, payload limits, and forbidden
 fields. Use it to test immediate delivery and retry after failure; it is not a production receiver.
+
+The production receiver exposes `/health`, but an independent external monitor must detect an
+outage; the receiver cannot monitor itself after its process has stopped.
 
 References: [ACRA senders](https://www.acra.ch/docs/Senders), [ACRA advanced usage](https://www.acra.ch/docs/AdvancedUsage).

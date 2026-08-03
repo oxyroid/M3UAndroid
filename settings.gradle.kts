@@ -45,6 +45,7 @@ include(
     ":baselineprofile:tv"
 )
 include(":i18n")
+include(":stability:receiver")
 include(":testing:device-benchmark")
 include(":testing:mock-server")
 include(":testing:extension-reference")

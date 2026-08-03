@@ -27,9 +27,10 @@ export M3U_CRASH_REPORT_ENDPOINT=https://crash.example.com/reports
 未配置 endpoint 的 APK 不会自动上传；它只能在用户点击崩溃通知后打开邮件客户端，
 由用户确认后将报告发送到 `crash@oxyroid.com`。这条路径是人工兜底，不能替代生产监控。
 
-生产环境可以把同一邮箱设为服务端告警收件箱：App 仍通过 HTTPS 自动上传，接收端完成
-聚合和脱敏后再通过 SMTP 向 `crash@oxyroid.com` 发送新问题、回归和健康检查提醒。
-SMTP 凭据只能保存在服务端，不能编译进 APK。
+生产环境使用仓库内的 `:stability:receiver`：App 仍通过 HTTPS 自动上传，接收端完成
+聚合和二次脱敏后，再通过 SMTP 向 `crash@oxyroid.com` 发送新问题、跨版本复现和突增提醒。
+SMTP 凭据只能保存在服务端，不能编译进 APK。部署与环境变量见
+`stability/receiver/README.zh-CN.md`。
 
 ## 接收协议
 
@@ -72,5 +73,7 @@ X-M3U-Report-Schema: 1
 debug 探针命令见 `app/smartphone/src/debug/README.zh-CN.md`。
 
 仓库内 mock receiver 会校验 gzip、schema、包名、payload 上限和禁止字段，可用于验证即时发送与失败后重试；它只用于测试，不是生产接收端。
+
+生产接收端提供 `/health`，但宕机提醒必须由独立外部监控发出；不能依赖接收端监控自身。
 
 参考：[ACRA sender](https://www.acra.ch/docs/Senders)、[ACRA advanced usage](https://www.acra.ch/docs/AdvancedUsage)。

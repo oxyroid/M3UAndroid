@@ -65,6 +65,7 @@ profileinstaller = "1.4.1"
 jakewharton-disklrucache = "2.0.2"
 acra = "5.13.1"
 timber = "5.0.1"
+angus-mail = "2.0.5"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
@@ -188,6 +189,7 @@ nextlib-mediainfo = { module = "io.github.anilbeesetti:nextlib-mediainfo", versi
 rtmp-client-page16k = { module = "com.github.anenasa:LibRtmp-Client-for-Android", version.ref = "rtmpClientPage16k" }
 
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j-api" }
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j-api" }
 snakeyaml = { module = "org.yaml:snakeyaml", version.ref = "snakeyaml" }
 
 minabox = { group = "io.github.oleksandrbalan", name = "minabox", version.ref = "minabox" }
@@ -200,6 +202,7 @@ acra-mail = { group = "ch.acra", name = "acra-mail", version.ref = "acra" }
 acra-notification = { group = "ch.acra", name = "acra-notification", version.ref = "acra" }
 acra-http = { group = "ch.acra", name = "acra-http", version.ref = "acra" }
 acra-limiter = { group = "ch.acra", name = "acra-limiter", version.ref = "acra" }
+angus-mail = { group = "org.eclipse.angus", name = "jakarta.mail", version.ref = "angus-mail" }
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
 wire-runtime = { module = "com.squareup.wire:wire-runtime", version.ref = "squareup-wire" }
 

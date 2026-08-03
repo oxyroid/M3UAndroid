@@ -1,0 +1,21 @@
+[Unit]
+Description=M3U crash receiver
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=m3u-crash
+Group=m3u-crash
+EnvironmentFile=/etc/m3u-crash-receiver.env
+ExecStart=/opt/m3u-crash-receiver/bin/receiver
+Restart=on-failure
+RestartSec=5s
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/m3u-crash-receiver
+
+[Install]
+WantedBy=multi-user.target
