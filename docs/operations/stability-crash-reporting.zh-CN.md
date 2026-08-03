@@ -24,7 +24,12 @@ export M3U_CRASH_REPORT_ENDPOINT=https://crash.example.com/reports
 
 只接受无账号、query 和 fragment 的绝对 HTTPS URL。不要把接收端 token 或 Basic Auth 密码编译进 APK。
 
-未配置 endpoint 的 APK 不会自动上传；它只能在用户点击崩溃通知后打开邮件客户端。
+未配置 endpoint 的 APK 不会自动上传；它只能在用户点击崩溃通知后打开邮件客户端，
+由用户确认后将报告发送到 `crash@oxyroid.com`。这条路径是人工兜底，不能替代生产监控。
+
+生产环境可以把同一邮箱设为服务端告警收件箱：App 仍通过 HTTPS 自动上传，接收端完成
+聚合和脱敏后再通过 SMTP 向 `crash@oxyroid.com` 发送新问题、回归和健康检查提醒。
+SMTP 凭据只能保存在服务端，不能编译进 APK。
 
 ## 接收协议
 

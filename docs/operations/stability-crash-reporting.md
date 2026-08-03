@@ -24,7 +24,14 @@ export M3U_CRASH_REPORT_ENDPOINT=https://crash.example.com/reports
 
 The value must be an absolute HTTPS URL without credentials, query, or fragment. Never compile a receiver token or Basic Auth password into the APK.
 
-An APK built without the endpoint does not upload automatically. It can only open the mail client after the user approves the crash notification.
+An APK built without the endpoint does not upload automatically. It can only open the mail client
+after the user approves the crash notification, then let the user send the report to
+`crash@oxyroid.com`. This is a manual fallback, not production monitoring.
+
+Production can use the same address as the server-side alert inbox: the app still uploads over
+HTTPS, then the receiver groups and sanitizes reports before sending new-issue, regression, and
+health-check alerts to `crash@oxyroid.com` over SMTP. SMTP credentials must stay on the server and
+must never be compiled into the APK.
 
 ## Receiver contract
 

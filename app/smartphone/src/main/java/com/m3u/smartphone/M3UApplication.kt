@@ -80,7 +80,7 @@ class M3UApplication : Application(), Configuration.Provider {
                     notificationTitle = getString(string.crash_notification_title),
                     notificationText = getString(string.crash_notification_text),
                     notificationChannelName = getString(string.crash_notification_channel_name),
-                    mailTo = "oxyroid@outlook.com",
+                    mailTo = "crash@oxyroid.com",
                 ),
             )
         }
