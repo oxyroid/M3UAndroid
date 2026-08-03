@@ -5,8 +5,13 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
-# Loaded by ACRA through ServiceLoader after the crash is persisted.
+# Instantiated reflectively by the explicit StabilityPluginLoader.
 -keep class com.m3u.smartphone.stability.SanitizedStacktraceCollector { public <init>(); }
+-keep class com.m3u.smartphone.stability.StabilityContextCollector { public <init>(); }
+
+# Preserve actionable line numbers in minified crash reports. The matching mapping.txt still needs
+# to be archived for every published versionCode.
+-keepattributes SourceFile,LineNumberTable
 
 # If your project uses WebView with JS, uncomment the following
 # and specify the fully qualified class name to the JavaScript interface

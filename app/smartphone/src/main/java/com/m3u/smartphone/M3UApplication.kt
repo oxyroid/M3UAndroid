@@ -43,7 +43,6 @@ class M3UApplication : Application(), Configuration.Provider {
         super.onCreate()
         if (ACRA.isACRASenderServiceProcess()) return
 
-        StabilityReporter.initialize(BuildConfig.BUILD_TYPE)
         if (BuildConfig.CRASH_REPORT_ENDPOINT.isNotBlank()) {
             ProcessExitMonitor.reportPreviousExit(this)
         }
@@ -74,6 +73,7 @@ class M3UApplication : Application(), Configuration.Provider {
 
     override fun attachBaseContext(base: Context?) {
         super.attachBaseContext(base)
+        StabilityReporter.initialize(BuildConfig.BUILD_TYPE)
         initAcra {
             configureCrashReporting(
                 endpoint = BuildConfig.CRASH_REPORT_ENDPOINT,

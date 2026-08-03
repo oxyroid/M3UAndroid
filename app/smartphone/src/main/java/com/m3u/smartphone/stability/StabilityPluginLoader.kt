@@ -1,7 +1,6 @@
 package com.m3u.smartphone.stability
 
 import org.acra.collector.ConfigurationCollector
-import org.acra.collector.CustomDataCollector
 import org.acra.collector.DisplayManagerCollector
 import org.acra.collector.MemoryInfoCollector
 import org.acra.collector.PackageManagerCollector
@@ -27,7 +26,6 @@ import org.acra.startup.UnapprovedStartupProcessor
 internal class StabilityPluginLoader : PluginLoader {
     private val delegate = SimplePluginLoader(
         ConfigurationCollector::class.java,
-        CustomDataCollector::class.java,
         DisplayManagerCollector::class.java,
         MemoryInfoCollector::class.java,
         PackageManagerCollector::class.java,
@@ -36,6 +34,7 @@ internal class StabilityPluginLoader : PluginLoader {
         ThreadCollector::class.java,
         TimeCollector::class.java,
         SanitizedStacktraceCollector::class.java,
+        StabilityContextCollector::class.java,
         LimitingReportAdministrator::class.java,
         NotificationInteraction::class.java,
         EmailIntentSenderFactory::class.java,

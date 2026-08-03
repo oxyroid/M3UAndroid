@@ -3,6 +3,7 @@ package com.m3u.smartphone.stability
 import android.app.ApplicationExitInfo
 import org.acra.ReportField
 import org.acra.collector.Collector
+import org.acra.collector.CustomDataCollector
 import org.acra.config.CoreConfigurationBuilder
 import org.acra.config.MailSenderConfiguration
 import org.acra.config.getPluginConfiguration
@@ -48,8 +49,27 @@ class CrashReportPolicyTest {
         val collectors = StabilityPluginLoader().load(Collector::class.java)
 
         assertTrue(collectors.any { it is SanitizedStacktraceCollector })
+        assertTrue(collectors.any { it is StabilityContextCollector })
+        assertFalse(collectors.any { it is CustomDataCollector })
         assertTrue(collectors.any { it.order == Collector.Order.FIRST })
         assertTrue(collectors.any { it.order == Collector.Order.LAST })
+    }
+
+    @Test
+    fun stabilityContextUsesAReportLocalSnapshot() {
+        StabilityReporter.initialize("release")
+        StabilityReporter.setFeature(StabilityFeature.HOME)
+
+        val crashContext = StabilityReporter.snapshot(RuntimeException("not collected"))
+        val anrContext = StabilityReporter.snapshot(PreviousAnrExit())
+        val nativeContext = StabilityReporter.snapshot(PreviousNativeCrashExit())
+
+        assertEquals("1", crashContext["context_schema"])
+        assertEquals("release", crashContext["build_type"])
+        assertEquals("home", crashContext["feature"])
+        assertFalse("previous_exit" in crashContext)
+        assertEquals("anr", anrContext["previous_exit"])
+        assertEquals("native_crash", nativeContext["previous_exit"])
     }
 
     @Test
