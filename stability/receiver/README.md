@@ -44,6 +44,25 @@ service user, and environment-file path for the target server.
 - `GET /internal/status`: requires `Authorization: Bearer <admin token>` and returns issue count,
   pending alert count, and latest delivery status. Missing configuration or invalid credentials
   return 404.
+- `POST /internal/test-alert`: uses the same admin authentication and durably queues a test email
+  with a unique probe ID. It returns 503 when the alert queue is full.
+
+## Verify email delivery
+
+After deployment, call the internal endpoint on the server itself. `/internal/*` does not need to
+be exposed publicly:
+
+```shell
+curl --fail-with-body --request POST \
+  --header "Authorization: Bearer <admin token>" \
+  http://127.0.0.1:8080/internal/test-alert
+```
+
+A successful request returns `202` and a UUID. Verify that `crash@oxyroid.com` receives a message
+whose subject is `[M3U crash][test] <first 8 UUID characters>` and whose body contains the exact
+response as `probe_id`. Then inspect `pendingAlertCount`, `lastAlertDeliveredAtEpochMillis`, and
+`lastAlertFailureType` through `/internal/status`. This does not fabricate a crash or alter issue
+aggregation counts.
 
 The receiver atomically persists an accepted report before returning `202`. Mail delivery runs in
 the background, with a durable queue and backoff after failures. A `REPORT_ID` counts only once in

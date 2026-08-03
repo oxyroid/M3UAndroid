@@ -99,6 +99,23 @@ class CrashStoreTest {
     }
 
     @Test
+    fun `delivery test is persisted with a unique probe id`() {
+        val directory = createTempDirectory("m3u-crash-delivery-test")
+        try {
+            val stateFile = directory.resolve("state.json")
+            val alert = assertNotNull(CrashStore(stateFile).enqueueDeliveryTest())
+
+            assertEquals(AlertType.DELIVERY_TEST, alert.type)
+            assertTrue(alert.subject.contains(alert.id.take(8)))
+            assertTrue(alert.body.contains("probe_id: ${alert.id}"))
+            assertTrue(alert.body.contains("recipient: $CRASH_ALERT_RECIPIENT"))
+            assertEquals(alert.id, CrashStore(stateFile).nextPendingAlert()?.id)
+        } finally {
+            directory.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
     fun `a full queue records loss and keeps the newest high priority alert`() {
         val directory = createTempDirectory("m3u-crash-queue-test")
         try {
@@ -119,6 +136,8 @@ class CrashStoreTest {
             assertEquals(1L, status.droppedAlertCount)
             assertEquals(clock.millis(), status.lastDroppedAlertAtEpochMillis)
             assertTrue(store.nextPendingAlert()?.subject?.contains("22222222") == true)
+            assertNull(store.enqueueDeliveryTest())
+            assertEquals(2L, store.status().droppedAlertCount)
         } finally {
             directory.toFile().deleteRecursively()
         }

@@ -6,6 +6,7 @@ import java.io.ByteArrayOutputStream
 import java.net.HttpURLConnection
 import java.net.ServerSocket
 import java.net.URL
+import java.util.UUID
 import java.util.zip.GZIPOutputStream
 import kotlin.io.path.createTempDirectory
 import kotlin.test.Test
@@ -41,6 +42,17 @@ class CrashReceiverEndpointTest {
                     headers = mapOf("Authorization" to "Bearer wrong"),
                 ).statusCode,
             )
+            assertEquals(
+                404,
+                request(url = "$baseUrl/internal/test-alert", method = "POST").statusCode,
+            )
+            val deliveryTest = request(
+                url = "$baseUrl/internal/test-alert",
+                method = "POST",
+                headers = mapOf("Authorization" to "Bearer admin-test-token"),
+            )
+            assertEquals(202, deliveryTest.statusCode)
+            UUID.fromString(deliveryTest.body.decodeToString())
             assertEquals(
                 400,
                 request(

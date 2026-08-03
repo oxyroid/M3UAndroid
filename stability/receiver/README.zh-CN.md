@@ -41,6 +41,23 @@ HTTPS，并将公开的 `/reports` 转发到本服务；不要把管理 token �
 - `GET /health`：公开存活检查，只返回 `ok`。
 - `GET /internal/status`：需要 `Authorization: Bearer <admin token>`，返回问题数、待发送
   告警数和最近一次投递状态；未配置或凭据错误时返回 404。
+- `POST /internal/test-alert`：使用同一管理鉴权，把一封带唯一 probe ID 的测试邮件加入
+  持久队列；队列已满时返回 503。
+
+## 邮件投递验收
+
+部署后在服务器本机调用内部接口，不需要把 `/internal/*` 暴露给公网：
+
+```shell
+curl --fail-with-body --request POST \
+  --header "Authorization: Bearer <admin token>" \
+  http://127.0.0.1:8080/internal/test-alert
+```
+
+成功时返回 `202` 和一个 UUID。确认 `crash@oxyroid.com` 收到标题为
+`[M3U crash][test] <UUID 前 8 位>` 的邮件，且正文中的 `probe_id` 与响应完全一致；随后检查
+`/internal/status` 的 `pendingAlertCount`、`lastAlertDeliveredAtEpochMillis` 和
+`lastAlertFailureType`。这条测试不会伪造崩溃，也不会改变问题聚合计数。
 
 接收成功后先原子写盘，再返回 `202`。邮件发送在后台进行，失败会保留队列并退避重试。
 相同 `REPORT_ID` 在 30 天内只计一次。报告只保留 30 天；不会保存 IP、账号、服务地址、

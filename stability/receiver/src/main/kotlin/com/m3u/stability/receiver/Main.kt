@@ -63,6 +63,26 @@ internal fun Application.crashReceiverModule(service: CrashReceiverService) {
                 contentType = ContentType.Application.Json,
             )
         }
+        post("/internal/test-alert") {
+            if (!service.isAdminAuthorized(call.request.headers[HttpHeaders.Authorization])) {
+                call.respond(HttpStatusCode.NotFound)
+                return@post
+            }
+            val alert = service.enqueueDeliveryTest()
+            if (alert == null) {
+                call.respondText(
+                    text = "alert queue is full",
+                    contentType = ContentType.Text.Plain,
+                    status = HttpStatusCode.ServiceUnavailable,
+                )
+                return@post
+            }
+            call.respondText(
+                text = alert.id,
+                contentType = ContentType.Text.Plain,
+                status = HttpStatusCode.Accepted,
+            )
+        }
         post("/reports") {
             when (val result = service.receive(call)) {
                 is ReceiveResult.Accepted -> call.respondText(
@@ -123,6 +143,10 @@ internal class CrashReceiverService(
     }
 
     fun status(): ReceiverStatus = store.status()
+
+    fun enqueueDeliveryTest(): StoredAlert? = store.enqueueDeliveryTest()?.also {
+        dispatcher.requestFlush()
+    }
 
     fun isAdminAuthorized(authorization: String?): Boolean {
         val expected = adminToken ?: return false

@@ -106,6 +106,38 @@ internal class CrashStore(
         RecordResult(issueKey = issueKey, alertType = alertType, duplicate = false)
     }
 
+    fun enqueueDeliveryTest(): StoredAlert? = synchronized(lock) {
+        val now = clock.millis()
+        state = state.withExpiredIssuesRemoved(now)
+        val alertId = UUID.randomUUID().toString()
+        val alert = StoredAlert(
+            id = alertId,
+            type = AlertType.DELIVERY_TEST,
+            subject = "[M3U crash][test] ${alertId.take(8)}",
+            body = buildString {
+                appendLine("event: delivery_test")
+                appendLine("probe_id: $alertId")
+                appendLine("queued_at: ${Instant.ofEpochMilli(now)}")
+                appendLine("recipient: $CRASH_ALERT_RECIPIENT")
+                append("This message verifies the crash alert delivery path.")
+            },
+            createdAtEpochMillis = now,
+        )
+        val enqueueResult = state.pendingAlerts.enqueue(alert, maxPendingAlerts)
+        state = state.copy(
+            pendingAlerts = enqueueResult.alerts,
+            droppedAlertCount = state.droppedAlertCount +
+                if (enqueueResult.dropped) 1L else 0L,
+            lastDroppedAlertAtEpochMillis = if (enqueueResult.dropped) {
+                now
+            } else {
+                state.lastDroppedAlertAtEpochMillis
+            },
+        )
+        persistState()
+        alert.takeIf { enqueueResult.incomingAccepted }
+    }
+
     fun nextPendingAlert(): StoredAlert? = synchronized(lock) {
         val now = clock.millis()
         state.pendingAlerts
@@ -229,6 +261,7 @@ internal enum class AlertType {
     NEW_ISSUE,
     REGRESSION,
     SPIKE,
+    DELIVERY_TEST,
 }
 
 @Serializable
@@ -291,6 +324,7 @@ private fun StoredIssue.toAlert(type: AlertType, now: Long): StoredAlert {
         AlertType.NEW_ISSUE -> "new"
         AlertType.REGRESSION -> "regression"
         AlertType.SPIKE -> "spike"
+        AlertType.DELIVERY_TEST -> error("Delivery tests are not issue alerts")
     }
     return StoredAlert(
         id = UUID.randomUUID().toString(),
@@ -327,6 +361,7 @@ private fun Long.daysInMillis(): Long = this * 24L * 60L * 60L * 1_000L
 private data class AlertEnqueueResult(
     val alerts: List<StoredAlert>,
     val dropped: Boolean,
+    val incomingAccepted: Boolean,
 )
 
 private fun List<StoredAlert>.enqueue(
@@ -334,10 +369,18 @@ private fun List<StoredAlert>.enqueue(
     capacity: Int,
 ): AlertEnqueueResult {
     if (size < capacity) {
-        return AlertEnqueueResult(alerts = this + alert, dropped = false)
+        return AlertEnqueueResult(
+            alerts = this + alert,
+            dropped = false,
+            incomingAccepted = true,
+        )
     }
-    if (alert.type == AlertType.SPIKE) {
-        return AlertEnqueueResult(alerts = this, dropped = true)
+    if (alert.type == AlertType.SPIKE || alert.type == AlertType.DELIVERY_TEST) {
+        return AlertEnqueueResult(
+            alerts = this,
+            dropped = true,
+            incomingAccepted = false,
+        )
     }
     val replaceIndex = indexOfFirst { queued -> queued.type == AlertType.SPIKE }
         .takeIf { index -> index >= 0 }
@@ -345,6 +388,7 @@ private fun List<StoredAlert>.enqueue(
     return AlertEnqueueResult(
         alerts = toMutableList().apply { set(replaceIndex, alert) },
         dropped = true,
+        incomingAccepted = true,
     )
 }
 
