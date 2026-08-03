@@ -16,6 +16,7 @@ import com.m3u.data.worker.ProviderSessionCleanupWorker
 import com.m3u.data.worker.initializePersistedUriPermissionLeases
 import com.m3u.i18n.R.string
 import com.m3u.smartphone.stability.CrashFallbackCopy
+import com.m3u.smartphone.stability.CRASH_REPORT_MAILBOX
 import com.m3u.smartphone.stability.ProcessExitMonitor
 import com.m3u.smartphone.stability.StabilityReporter
 import com.m3u.smartphone.stability.configureCrashReporting
@@ -80,7 +81,7 @@ class M3UApplication : Application(), Configuration.Provider {
                     notificationTitle = getString(string.crash_notification_title),
                     notificationText = getString(string.crash_notification_text),
                     notificationChannelName = getString(string.crash_notification_channel_name),
-                    mailTo = "crash@oxyroid.com",
+                    mailTo = CRASH_REPORT_MAILBOX,
                 ),
             )
         }

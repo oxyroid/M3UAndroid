@@ -28,6 +28,10 @@ adb shell am start -n com.m3u.smartphone/.stability.DebugCrashTestActivity
 Use it to verify report persistence, the isolated sender process, and removal of the probe secret
 from exception messages.
 
+Without an endpoint, the probe creates a crash notification. Its send action must open the system
+mail chooser with `crash@oxyroid.com` as the recipient and `Crash.json` as an attachment. The app
+does not send the message on the user's behalf.
+
 To verify automatic HTTP delivery, start the repository mock receiver and reverse the device port
 to the host:
 

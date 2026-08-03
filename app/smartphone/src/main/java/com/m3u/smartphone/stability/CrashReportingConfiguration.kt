@@ -9,6 +9,8 @@ import org.acra.data.StringFormat
 import org.acra.sender.HttpSender
 import java.util.concurrent.TimeUnit
 
+internal const val CRASH_REPORT_MAILBOX = "crash@oxyroid.com"
+
 internal data class CrashFallbackCopy(
     val notificationTitle: String,
     val notificationText: String,
@@ -23,7 +25,9 @@ internal fun CoreConfigurationBuilder.configureCrashReporting(
     reportFormat = StringFormat.JSON
     reportContent = safeCrashReportFields
     pluginLoader = StabilityPluginLoader()
-    sendReportsInDevMode = endpoint.isNotBlank()
+    // The mail sender remains behind NotificationInteraction, so enabling it in debug still
+    // requires an explicit user action. Keeping this enabled also makes the fallback testable.
+    sendReportsInDevMode = true
 
     if (endpoint.isNotBlank()) {
         httpSender {

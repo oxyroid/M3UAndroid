@@ -26,6 +26,9 @@ adb shell am start -n com.m3u.smartphone/.stability.DebugCrashTestActivity
 
 它用于验证崩溃报告是否落盘、发送进程能否独立启动，以及异常消息中的测试 secret 是否已被移除。
 
+不配置 endpoint 时，探针会生成崩溃通知。点击通知中的发送操作应打开系统邮件选择器，
+邮件收件人固定为 `crash@oxyroid.com`，报告以 `Crash.json` 附件提供；应用不会替用户发送邮件。
+
 需要验证自动 HTTP 发送时，启动仓库内 mock receiver，并让设备端口反向连接宿主机：
 
 ```shell

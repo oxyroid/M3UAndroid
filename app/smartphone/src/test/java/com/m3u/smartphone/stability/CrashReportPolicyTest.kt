@@ -4,11 +4,14 @@ import android.app.ApplicationExitInfo
 import org.acra.ReportField
 import org.acra.collector.Collector
 import org.acra.config.CoreConfigurationBuilder
+import org.acra.config.MailSenderConfiguration
+import org.acra.config.getPluginConfiguration
 import org.acra.interaction.NotificationInteraction
 import org.acra.interaction.ReportInteraction
 import org.acra.sender.EmailIntentSenderFactory
 import org.acra.sender.HttpSenderFactory
 import org.acra.sender.ReportSenderFactory
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -73,9 +76,12 @@ class CrashReportPolicyTest {
 
         val senders = config.pluginLoader.loadEnabled(config, ReportSenderFactory::class.java)
         val interactions = config.pluginLoader.loadEnabled(config, ReportInteraction::class.java)
+        val mailConfig = config.getPluginConfiguration<MailSenderConfiguration>()
 
         assertTrue(senders.single() is EmailIntentSenderFactory)
         assertTrue(interactions.single() is NotificationInteraction)
+        assertTrue(config.sendReportsInDevMode)
+        assertEquals(CRASH_REPORT_MAILBOX, mailConfig.mailTo)
     }
 
     @Test
@@ -96,6 +102,6 @@ class CrashReportPolicyTest {
         notificationTitle = "Crash",
         notificationText = "Share report",
         notificationChannelName = "Crashes",
-        mailTo = "maintainer@example.test",
+        mailTo = CRASH_REPORT_MAILBOX,
     )
 }
