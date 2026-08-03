@@ -53,6 +53,17 @@ internal fun Application.crashReceiverModule(service: CrashReceiverService) {
         get("/health") {
             call.respondText("ok", ContentType.Text.Plain)
         }
+        get("/ready") {
+            if (service.isDeliveryReady()) {
+                call.respondText("ready", ContentType.Text.Plain)
+            } else {
+                call.respondText(
+                    text = "delivery degraded",
+                    contentType = ContentType.Text.Plain,
+                    status = HttpStatusCode.ServiceUnavailable,
+                )
+            }
+        }
         get("/internal/status") {
             if (!service.isAdminAuthorized(call.request.headers[HttpHeaders.Authorization])) {
                 call.respond(HttpStatusCode.NotFound)
@@ -143,6 +154,8 @@ internal class CrashReceiverService(
     }
 
     fun status(): ReceiverStatus = store.status()
+
+    fun isDeliveryReady(): Boolean = status().lastAlertFailureType == null
 
     fun enqueueDeliveryTest(): StoredAlert? = store.enqueueDeliveryTest()?.also {
         dispatcher.requestFlush()

@@ -6,6 +6,7 @@ import java.time.ZoneId
 import kotlin.io.path.createTempDirectory
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -66,15 +67,23 @@ class CrashStoreTest {
             val clock = MutableClock(Instant.parse("2026-08-03T10:00:00Z"))
             val store = CrashStore(directory.resolve("state.json"), clock)
             store.record(report())
+            val pendingAlert = assertNotNull(store.nextPendingAlert())
             val dispatcher = AlertDispatcher(store) { error("smtp password=must-not-be-stored") }
+            val service = CrashReceiverService(store, dispatcher, null)
 
             dispatcher.flushAvailable()
 
             val status = store.status()
             assertEquals(1, status.pendingAlertCount)
             assertEquals("IllegalStateException", status.lastAlertFailureType)
+            assertFalse(service.isDeliveryReady())
             assertTrue(directory.resolve("state.json").toFile().readText().contains("IllegalStateException"))
-            assertTrue(!directory.resolve("state.json").toFile().readText().contains("must-not-be-stored"))
+            assertFalse(
+                directory.resolve("state.json").toFile().readText().contains("must-not-be-stored")
+            )
+
+            store.markAlertSent(pendingAlert.id)
+            assertTrue(service.isDeliveryReady())
             dispatcher.close()
         } finally {
             directory.toFile().deleteRecursively()

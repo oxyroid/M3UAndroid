@@ -3,6 +3,7 @@ package com.m3u.stability.receiver
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import java.io.ByteArrayOutputStream
+import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.ServerSocket
 import java.net.URL
@@ -34,6 +35,7 @@ class CrashReceiverEndpointTest {
         val baseUrl = "http://127.0.0.1:$port"
         try {
             assertEquals(200, request("$baseUrl/health").statusCode)
+            assertEquals(200, request("$baseUrl/ready").statusCode)
             assertEquals(404, request("$baseUrl/internal/status").statusCode)
             assertEquals(
                 404,
@@ -126,6 +128,43 @@ class CrashReceiverEndpointTest {
                     body = oversized,
                 ).statusCode,
             )
+        } finally {
+            server.stop(gracePeriodMillis = 100, timeoutMillis = 1_000)
+            directory.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun `readiness reports a delivery failure and recovers after success`() {
+        val directory = createTempDirectory("m3u-crash-readiness-test")
+        val port = ServerSocket(0).use { socket -> socket.localPort }
+        val store = CrashStore(directory.resolve("state.json"))
+        val alert = requireNotNull(store.enqueueDeliveryTest())
+        store.markAlertFailed(alert.id, IOException("smtp details must not be exposed"))
+        val server = embeddedServer(
+            factory = Netty,
+            host = "127.0.0.1",
+            port = port,
+            module = {
+                crashReceiverModule(
+                    CrashReceiverService(
+                        store = store,
+                        dispatcher = AlertDispatcher(store) { },
+                        adminToken = null,
+                    )
+                )
+            },
+        ).start(wait = false)
+        val baseUrl = "http://127.0.0.1:$port"
+        try {
+            assertEquals(200, request("$baseUrl/health").statusCode)
+            val degraded = request("$baseUrl/ready")
+            assertEquals(503, degraded.statusCode)
+            assertEquals("delivery degraded", degraded.body.decodeToString())
+            assertFalse(degraded.body.decodeToString().contains("smtp"))
+
+            store.markAlertSent(alert.id)
+            assertEquals(200, request("$baseUrl/ready").statusCode)
         } finally {
             server.stop(gracePeriodMillis = 100, timeoutMillis = 1_000)
             directory.toFile().deleteRecursively()

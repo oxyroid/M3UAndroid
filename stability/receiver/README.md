@@ -41,6 +41,8 @@ service user, and environment-file path for the target server.
 
 - `POST /reports`: automatic app ingestion.
 - `GET /health`: public liveness check; returns only `ok`.
+- `GET /ready`: public delivery-readiness check. It returns 503 after a mail failure and recovers to
+  200 after a successful retry without exposing failure details.
 - `GET /internal/status`: requires `Authorization: Bearer <admin token>` and returns issue count,
   pending alert count, and latest delivery status. Missing configuration or invalid credentials
   return 404.
@@ -74,5 +76,7 @@ not let multiple instances write the same state file. The pending queue is cappe
 when full it favors new issues and cross-version recurrences, increments `droppedAlertCount`, and
 exposes that value through the admin status. Operations should alert whenever it is non-zero.
 
-Production also needs an independent external monitor polling `/health`; a process cannot report
-its own outage after it has stopped.
+Production also needs an independent external monitor polling both `/health` and `/ready` through
+a notification channel independent of this service's SMTP path. The former detects a stopped
+process, while the latter detects persistent mail delivery failures. A process and its mail path
+cannot reliably report their own outage.

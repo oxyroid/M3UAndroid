@@ -76,7 +76,8 @@ See `app/smartphone/src/debug/README.md` for the debug probe command.
 The repository mock receiver validates gzip, schema, package name, payload limits, and forbidden
 fields. Use it to test immediate delivery and retry after failure; it is not a production receiver.
 
-The production receiver exposes `/health`, but an independent external monitor must detect an
-outage; the receiver cannot monitor itself after its process has stopped.
+The production receiver exposes `/health` for liveness and `/ready` for mail-delivery readiness,
+but an external monitor with an independent notification channel must detect failures. Neither the
+receiver nor the same SMTP path can reliably monitor itself.
 
 References: [ACRA senders](https://www.acra.ch/docs/Senders), [ACRA advanced usage](https://www.acra.ch/docs/AdvancedUsage).

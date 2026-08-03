@@ -74,6 +74,7 @@ debug 探针命令见 `app/smartphone/src/debug/README.zh-CN.md`。
 
 仓库内 mock receiver 会校验 gzip、schema、包名、payload 上限和禁止字段，可用于验证即时发送与失败后重试；它只用于测试，不是生产接收端。
 
-生产接收端提供 `/health`，但宕机提醒必须由独立外部监控发出；不能依赖接收端监控自身。
+生产接收端提供 `/health` 存活检查和 `/ready` 邮件投递就绪检查，但提醒必须由使用独立
+通知渠道的外部监控发出；不能依赖接收端或同一条 SMTP 链路监控自身。
 
 参考：[ACRA sender](https://www.acra.ch/docs/Senders)、[ACRA advanced usage](https://www.acra.ch/docs/AdvancedUsage)。
