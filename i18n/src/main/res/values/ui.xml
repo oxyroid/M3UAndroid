@@ -116,4 +116,8 @@
         <item quantity="other">%1$d days</item>
     </plurals>
     <string name="ui_never">Never</string>
+
+    <string name="ui_details_cast">Cast</string>
+    <string name="ui_details_director">Director</string>
+    <string name="ui_details_loading">Loading details…</string>
 </resources>

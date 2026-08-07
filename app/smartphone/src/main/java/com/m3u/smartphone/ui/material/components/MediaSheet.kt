@@ -94,6 +94,15 @@ fun MediaSheet(
                 verticalArrangement = Arrangement.spacedBy(spacing.small),
                 modifier = Modifier.padding(spacing.medium)
             ) {
+                // Above the actions, so the description is what a long press
+                // shows first. Renders nothing when the channel has none.
+                ChannelDetailsSection(
+                    channel = when (value) {
+                        is MediaSheetValue.PlaylistScreen -> value.channel
+                        is MediaSheetValue.FavoriteScreen -> value.channel
+                        is MediaSheetValue.ForyouScreen -> null
+                    }
+                )
                 when (value) {
                     is MediaSheetValue.ForyouScreen -> {
                         value.playlist?.let { playlist ->
