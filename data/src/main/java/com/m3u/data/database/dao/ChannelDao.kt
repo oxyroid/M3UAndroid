@@ -184,7 +184,7 @@ interface ChannelDao {
             SELECT DISTINCT `group`
             FROM streams
             WHERE playlist_url = :playlistUrl
-            AND title LIKE '%'||:query||'%'
+            AND title_normalized LIKE '%'||:query||'%'
         """
     )
     suspend fun getCategoriesByPlaylistUrl(
@@ -197,7 +197,7 @@ interface ChannelDao {
             SELECT DISTINCT `group`
             FROM streams
             WHERE playlist_url = :playlistUrl
-            AND title LIKE '%'||:query||'%'
+            AND title_normalized LIKE '%'||:query||'%'
         """
     )
     fun observeCategoriesByPlaylistUrl(
@@ -276,7 +276,15 @@ interface ChannelDao {
             stream.favourite AS favourite,
             stream.hidden AS hidden,
             stream.seen AS seen,
-            stream.relation_id AS relation_id
+            stream.relation_id AS relation_id,
+            -- Present only because Room requires every non-null field to be
+            -- returned. This projection overrides the title with an extension
+            -- overlay, so the folded copy taken from the source row may not
+            -- match it — which costs nothing here: the field sits outside the
+            -- constructor, so it is neither serialised into the backup nor
+            -- carried across a restore. It is recomputed from whatever title
+            -- the channel is rebuilt with.
+            stream.title_normalized AS title_normalized
         FROM streams AS stream
         LEFT JOIN channel_metadata_bases AS base
             ON base.playlist_url = stream.playlist_url
@@ -313,7 +321,7 @@ interface ChannelDao {
         """
             SELECT * FROM streams 
             WHERE playlist_url = :url
-            AND title LIKE '%'||:query||'%'
+            AND title_normalized LIKE '%'||:query||'%'
             AND `group` = :category
         """
     )
@@ -327,7 +335,7 @@ interface ChannelDao {
         """
             SELECT * FROM streams 
             WHERE playlist_url = :url
-            AND title LIKE '%'||:query||'%'
+            AND title_normalized LIKE '%'||:query||'%'
             AND `group` = :category
             ORDER BY title ASC
         """
@@ -342,7 +350,7 @@ interface ChannelDao {
         """
             SELECT * FROM streams 
             WHERE playlist_url = :url
-            AND title LIKE '%'||:query||'%'
+            AND title_normalized LIKE '%'||:query||'%'
             AND `group` = :category
             ORDER BY title DESC
         """
@@ -357,7 +365,7 @@ interface ChannelDao {
         """
             SELECT * FROM streams 
             WHERE playlist_url = :url
-            AND title LIKE '%'||:query||'%'
+            AND title_normalized LIKE '%'||:query||'%'
             AND `group` = :category
             ORDER BY seen DESC
         """
@@ -372,7 +380,7 @@ interface ChannelDao {
         """
             SELECT * FROM streams 
             WHERE playlist_url = :url
-            AND title LIKE '%'||:query||'%'
+            AND title_normalized LIKE '%'||:query||'%'
         """
     )
     fun pagingAllByPlaylistUrlMixed(
@@ -430,10 +438,15 @@ interface ChannelDao {
     ): Flow<AdjacentChannels>
 
 
+    /**
+     * @param query must already be folded with normalizeForSearch — the column
+     * it is compared against holds folded titles, so an unfolded query would
+     * match nothing as soon as it carried an accent or a capital.
+     */
     @Query(
         """
             SELECT * FROM streams WHERE 1
-            AND title LIKE '%'||:query||'%'
+            AND title_normalized LIKE '%'||:query||'%'
         """
     )
     fun query(
@@ -475,7 +488,7 @@ interface ChannelDao {
     @Query(
         """
             SELECT * FROM streams WHERE 1
-            AND title LIKE '%'||:query||'%'
+            AND title_normalized LIKE '%'||:query||'%'
         """
     )
     fun pagingAll(query: String): PagingSource<Int, Channel>

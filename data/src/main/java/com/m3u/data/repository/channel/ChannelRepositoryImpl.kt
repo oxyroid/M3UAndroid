@@ -2,6 +2,7 @@ package com.m3u.data.repository.channel
 
 import androidx.paging.PagingSource
 import com.m3u.core.foundation.architecture.preferences.Settings
+import com.m3u.core.foundation.util.basic.normalizeForSearch
 import com.m3u.core.foundation.wrapper.Sort
 import com.m3u.data.database.dao.ChannelDao
 import com.m3u.data.database.dao.PlaylistDao
@@ -31,8 +32,12 @@ internal class ChannelRepositoryImpl @Inject constructor(
         .observeRelationIdsByPlaylistUrl(playlistUrl)
         .catch { emit(emptyList()) }
 
+    // Every user-typed query is folded here rather than at each call site.
+    // The DAO compares against a folded column, so a raw query would stop
+    // matching the moment it carried an accent or a capital — and callers
+    // would have no way of telling, since the result is simply an empty list.
     override fun pagingAll(query: String): PagingSource<Int, Channel> {
-        return channelDao.pagingAll(query)
+        return channelDao.pagingAll(query.normalizeForSearch())
     }
 
     override fun pagingAllByPlaylistUrl(
@@ -40,12 +45,15 @@ internal class ChannelRepositoryImpl @Inject constructor(
         category: String,
         query: String,
         sort: Sort
-    ): PagingSource<Int, Channel> = when (sort) {
-        Sort.UNSPECIFIED -> channelDao.pagingAllByPlaylistUrl(url, category, query)
-        Sort.ASC -> channelDao.pagingAllByPlaylistUrlAsc(url, category, query)
-        Sort.DESC -> channelDao.pagingAllByPlaylistUrlDesc(url, category, query)
-        Sort.RECENTLY -> channelDao.pagingAllByPlaylistUrlRecently(url, category, query)
-        Sort.MIXED -> channelDao.pagingAllByPlaylistUrlMixed(url, query)
+    ): PagingSource<Int, Channel> {
+        val folded = query.normalizeForSearch()
+        return when (sort) {
+            Sort.UNSPECIFIED -> channelDao.pagingAllByPlaylistUrl(url, category, folded)
+            Sort.ASC -> channelDao.pagingAllByPlaylistUrlAsc(url, category, folded)
+            Sort.DESC -> channelDao.pagingAllByPlaylistUrlDesc(url, category, folded)
+            Sort.RECENTLY -> channelDao.pagingAllByPlaylistUrlRecently(url, category, folded)
+            Sort.MIXED -> channelDao.pagingAllByPlaylistUrlMixed(url, folded)
+        }
     }
 
     override suspend fun get(id: Int): Channel? = channelDao.get(id)
@@ -151,6 +159,6 @@ internal class ChannelRepositoryImpl @Inject constructor(
         .catch { emit(emptyList()) }
 
     override fun search(query: String): PagingSource<Int, Channel> {
-        return channelDao.query(query)
+        return channelDao.query(query.normalizeForSearch())
     }
 }

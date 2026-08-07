@@ -36,7 +36,7 @@ import com.m3u.data.database.model.ProviderPlaybackSessionEntity
         ChannelMetadataBase::class,
         ExtensionChannelMetadataOverlay::class,
     ],
-    version = 26,
+    version = 27,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(

@@ -12,6 +12,7 @@ import com.m3u.core.foundation.architecture.preferences.PreferencesKeys
 import com.m3u.core.foundation.architecture.preferences.Settings
 import com.m3u.core.foundation.architecture.preferences.get
 import com.m3u.core.foundation.util.basic.PlaylistInputKind
+import com.m3u.core.foundation.util.basic.normalizeForSearch
 import com.m3u.core.foundation.util.basic.normalizePlaylistInputForSubmission
 import com.m3u.core.foundation.util.basic.startsWithAny
 import com.m3u.data.api.OkhttpClient
@@ -1048,7 +1049,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         val pinnedCategories = playlist?.pinnedCategories ?: emptyList()
         val hiddenCategories = playlist?.hiddenCategories ?: emptyList()
         channelDao
-            .getCategoriesByPlaylistUrl(url, query)
+            .getCategoriesByPlaylistUrl(url, query.normalizeForSearch())
             .filterNot { it in hiddenCategories }
             .sortedByDescending { it in pinnedCategories }
     }
@@ -1061,7 +1062,7 @@ internal class PlaylistRepositoryImpl @Inject constructor(
         val pinnedCategories = playlist.pinnedCategories
         val hiddenCategories = playlist.hiddenCategories
         channelDao
-            .observeCategoriesByPlaylistUrl(playlist.url, query)
+            .observeCategoriesByPlaylistUrl(playlist.url, query.normalizeForSearch())
             .map { categories ->
                 categories
                     .filterNot { it in hiddenCategories }

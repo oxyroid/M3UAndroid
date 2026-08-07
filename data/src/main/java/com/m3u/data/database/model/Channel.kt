@@ -6,6 +6,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.m3u.annotation.Exclude
 import com.m3u.annotation.Likable
+import com.m3u.core.foundation.util.basic.normalizeForSearch
 import com.m3u.data.parser.xtream.XtreamEpisodeInfo
 import io.ktor.http.URLBuilder
 import io.ktor.http.Url
@@ -65,6 +66,24 @@ data class Channel(
      */
     val relationId: String? = null
 ) {
+    /**
+     * [title] with diacritics and case folded away — what search compares
+     * against, since SQLite's LIKE never ignores accents on its own.
+     *
+     * Declared outside the constructor on purpose. A data class only copies
+     * constructor parameters, so every construction path recomputes this from
+     * whatever [title] ends up being — including copy(title = …), which would
+     * otherwise carry a stale value forward and silently drop the channel out
+     * of every search. The invariant holds by construction rather than by
+     * remembering to maintain it.
+     */
+    // No index: search matches on '%query%', which no B-tree index can serve,
+    // and one more index would only slow down the bulk inserts a resubscription
+    // performs on tens of thousands of rows.
+    @ColumnInfo(name = "title_normalized", defaultValue = "''")
+    @Exclude
+    var titleNormalized: String = title.normalizeForSearch()
+
     companion object {
         const val URL_DYNAMIC = "dynamic"
         const val LICENSE_TYPE_WIDEVINE = "com.widevine.alpha"
