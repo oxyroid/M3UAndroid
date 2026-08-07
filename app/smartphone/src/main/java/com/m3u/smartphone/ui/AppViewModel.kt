@@ -88,6 +88,23 @@ class AppViewModel @Inject constructor(
                     }
             }
         }
+        // Cache before the combine below, not after.
+        //
+        // A PagingData straight out of a Pager can only ever be collected once.
+        // combine re-emits the latest value of every source whenever any single
+        // one of them changes, and extensionSearchResults always emits twice per
+        // query — an empty placeholder, then the actual results. That hands the
+        // same PagingData downstream a second time, and Paging throws:
+        //
+        //   IllegalStateException: Attempt to collect twice from pageEventFlow
+        //
+        // The crash killed the process on the first keystroke, which is why
+        // searching looked like it simply returned nothing.
+        //
+        // cachedIn turns the stream into a multicast one that tolerates being
+        // collected again; the filter and insertHeaderItem below are re-applied
+        // on each collection, which is exactly what we want.
+        .cachedIn(viewModelScope)
 
     private val extensionSearchResults = searchQueries
         .mapLatestSearchResults { query ->
@@ -112,7 +129,7 @@ class AppViewModel @Inject constructor(
                 item = ChannelWithProgramme(channel = channel, programme = null)
             )
         }
-    }.cachedIn(viewModelScope)
+    }
 
     private fun refreshProgrammes() {
         viewModelScope.launch {
