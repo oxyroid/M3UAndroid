@@ -8,6 +8,7 @@ import com.m3u.data.database.dao.ChannelDao
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.ChannelSearchResult
 import com.m3u.data.repository.playlist.PlaylistDataMaintenanceCoordinator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -158,7 +159,7 @@ internal class ChannelRepositoryImpl @Inject constructor(
     override fun observeAllHidden(): Flow<List<Channel>> = channelDao.observeAllHidden()
         .catch { emit(emptyList()) }
 
-    override fun search(query: String): PagingSource<Int, Channel> {
+    override fun search(query: String): PagingSource<Int, ChannelSearchResult> {
         return channelDao.query(query.normalizeForSearch())
     }
 }

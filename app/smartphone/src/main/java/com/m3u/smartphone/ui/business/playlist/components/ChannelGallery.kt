@@ -111,6 +111,7 @@ internal fun ChannelGallery(
                     ChannelItem(
                         channel = channel,
                         programme = channelWithProgramme.programme,
+                        matchedCast = channelWithProgramme.matchedCast,
                         cover = loadedUrl,
                         recently = recently,
                         zapping = zapping == channel,

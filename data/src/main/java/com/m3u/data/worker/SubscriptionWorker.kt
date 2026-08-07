@@ -203,6 +203,10 @@ class SubscriptionWorker @AssistedInject constructor(
                         createN10nBuilder()
                             .setContentText(findCompleteContentText(total))
                             .buildThenNotify()
+                        // The catalogue is in; collect the descriptions behind
+                        // it. That sweep paces itself and steps aside as soon
+                        // as anything plays, so it can start straight away.
+                        url?.let { ChannelDetailsWorker.enqueue(workManager, it) }
                         Result.success()
                         } catch (cancelled: CancellationException) {
                             throw cancelled

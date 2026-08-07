@@ -11,6 +11,7 @@ import androidx.room.Upsert
 import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.ChannelMetadataBase
+import com.m3u.data.database.model.ChannelSearchResult
 import com.m3u.data.database.model.ExtensionChannelMetadataOverlay
 import kotlinx.coroutines.flow.Flow
 
@@ -296,6 +297,29 @@ interface ChannelDao {
     @Query("SELECT * FROM streams WHERE playlist_url = :playlistUrl AND relation_id = :relationId")
     suspend fun getByPlaylistUrlAndRelationId(playlistUrl: String, relationId: String): Channel?
 
+    /**
+     * Channels of a playlist whose description has not been fetched yet.
+     *
+     * The background sweep asks for one batch at a time and re-asks: rows it
+     * has dealt with drop out of the result on their own, so it resumes where
+     * it stopped without keeping a cursor of its own — which matters when the
+     * work is spread over several nights and interrupted by every playback.
+     */
+    @Query(
+        """
+            SELECT stream.* FROM streams AS stream
+            LEFT JOIN channel_details AS details
+                ON details.playlist_url = stream.playlist_url
+                AND details.channel_reference = stream.relation_id
+            WHERE stream.playlist_url = :playlistUrl
+                AND stream.relation_id IS NOT NULL
+                AND stream.relation_id != ''
+                AND details.channel_reference IS NULL
+            LIMIT :limit
+        """
+    )
+    suspend fun getWithoutDetails(playlistUrl: String, limit: Int): List<Channel>
+
     @Query("SELECT * FROM streams WHERE relation_id IN (:relationIds) AND hidden = 0")
     suspend fun getByRelationIds(relationIds: List<String>): List<Channel>
 
@@ -439,19 +463,39 @@ interface ChannelDao {
 
 
     /**
-     * @param query must already be folded with normalizeForSearch — the column
-     * it is compared against holds folded titles, so an unfolded query would
-     * match nothing as soon as it carried an accent or a capital.
+     * Searches titles and, where they have been fetched, cast lists.
+     *
+     * The join is a LEFT one so a catalogue whose descriptions have not been
+     * collected yet searches exactly as it did before — the actor half simply
+     * matches nothing until the background sweep has filled it in.
+     *
+     * matched_cast carries why a row came back: null when the title itself
+     * matched, the cast list when only an actor did. Without it a search for
+     * "Gyllenhaal" returns films whose titles have nothing to do with the
+     * query, and the list reads as broken.
+     *
+     * @param query must already be folded with normalizeForSearch — the columns
+     * it is compared against hold folded text, so an unfolded query would match
+     * nothing as soon as it carried an accent or a capital.
      */
     @Query(
         """
-            SELECT * FROM streams WHERE 1
-            AND title_normalized LIKE '%'||:query||'%'
+            SELECT stream.*,
+                CASE
+                    WHEN stream.title_normalized LIKE '%'||:query||'%' THEN NULL
+                    ELSE details.`cast`
+                END AS matched_cast
+            FROM streams AS stream
+            LEFT JOIN channel_details AS details
+                ON details.playlist_url = stream.playlist_url
+                AND details.channel_reference = stream.relation_id
+            WHERE stream.title_normalized LIKE '%'||:query||'%'
+                OR details.cast_normalized LIKE '%'||:query||'%'
         """
     )
     fun query(
         query: String
-    ): PagingSource<Int, Channel>
+    ): PagingSource<Int, ChannelSearchResult>
 
     @Query(
         """

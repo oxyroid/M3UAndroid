@@ -5,6 +5,7 @@ import androidx.paging.PagingSource
 import com.m3u.core.foundation.wrapper.Sort
 import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.ChannelSearchResult
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.Duration
 
@@ -39,5 +40,5 @@ interface ChannelRepository {
     fun observeAllFavorite(): Flow<List<Channel>>
     fun pagingAllFavorite(sort: Sort): PagingSource<Int, Channel>
     fun observeAllHidden(): Flow<List<Channel>>
-    fun search(query: String): PagingSource<Int, Channel>
+    fun search(query: String): PagingSource<Int, ChannelSearchResult>
 }

@@ -79,10 +79,11 @@ class AppViewModel @Inject constructor(
                 )
                     .flow
                     .map { data ->
-                        data.pagingMap { channel ->
+                        data.pagingMap { result ->
                             ChannelWithProgramme(
-                                channel = channel,
-                                programme = null
+                                channel = result.channel,
+                                programme = null,
+                                matchedCast = result.matchedCast,
                             )
                         }
                     }

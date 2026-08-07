@@ -78,6 +78,11 @@ import kotlin.time.Duration.Companion.seconds
 data class ChannelWithProgramme(
     val channel: Channel,
     val programme: Programme?,
+    /**
+     * Set only on search results a cast list matched rather than the title,
+     * so the row can say why it is there. Null everywhere else.
+     */
+    val matchedCast: String? = null,
 )
 
 @HiltViewModel

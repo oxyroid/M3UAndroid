@@ -71,6 +71,8 @@ internal fun ChannelItem(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     programme: Programme?,
+    /** Cast list when an actor, not the title, is why this row matched. */
+    matchedCast: String? = null,
     modifier: Modifier = Modifier,
     isVodOrSeriesPlaylist: Boolean = true
 ) {
@@ -189,6 +191,18 @@ internal fun ChannelItem(
                     },
                     supportingContent = {
                         when {
+                            // Comes first: on a search for an actor, the title
+                            // alone gives no clue why the row is in the list.
+                            matchedCast != null -> {
+                                Text(
+                                    text = matchedCast,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+
                             recently -> {
                                 Text(
                                     text = remember(channel.seen) {
