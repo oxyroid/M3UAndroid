@@ -7,6 +7,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.m3u.data.database.dao.ChannelDao
+import com.m3u.data.database.dao.ChannelDetailsDao
 import com.m3u.data.database.dao.ColorSchemeDao
 import com.m3u.data.database.dao.EpisodeDao
 import com.m3u.data.database.dao.PlaylistDao
@@ -58,6 +59,12 @@ internal object DatabaseModule {
     fun provideChannelDao(
         database: M3UDatabase
     ): ChannelDao = database.channelDao()
+
+    @Provides
+    @Singleton
+    fun provideChannelDetailsDao(
+        database: M3UDatabase
+    ): ChannelDetailsDao = database.channelDetailsDao()
 
     @Provides
     @Singleton

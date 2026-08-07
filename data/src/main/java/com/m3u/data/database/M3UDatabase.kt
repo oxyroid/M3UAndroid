@@ -9,8 +9,10 @@ import com.m3u.data.database.dao.ColorSchemeDao
 import com.m3u.data.database.dao.EpisodeDao
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.ProgrammeDao
+import com.m3u.data.database.dao.ChannelDetailsDao
 import com.m3u.data.database.dao.ProviderDao
 import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.ChannelDetails
 import com.m3u.data.database.model.ChannelMetadataBase
 import com.m3u.data.database.model.ChannelPlaybackReference
 import com.m3u.data.database.model.ColorScheme
@@ -35,8 +37,9 @@ import com.m3u.data.database.model.ProviderPlaybackSessionEntity
         ProviderPlaybackSessionEntity::class,
         ChannelMetadataBase::class,
         ExtensionChannelMetadataOverlay::class,
+        ChannelDetails::class,
     ],
-    version = 27,
+    version = 28,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(
@@ -77,11 +80,14 @@ import com.m3u.data.database.model.ProviderPlaybackSessionEntity
         AutoMigration(from = 20, to = 21),
         AutoMigration(from = 21, to = 22),
         AutoMigration(from = 23, to = 24),
+        // Adding channel_details is a pure table creation; Room writes it itself.
+        AutoMigration(from = 27, to = 28),
     ]
 )
 @TypeConverters(Converters::class)
 internal abstract class M3UDatabase : RoomDatabase() {
     abstract fun channelDao(): ChannelDao
+    abstract fun channelDetailsDao(): ChannelDetailsDao
     abstract fun playlistDao(): PlaylistDao
     abstract fun episodeDao(): EpisodeDao
     abstract fun programmeDao(): ProgrammeDao
