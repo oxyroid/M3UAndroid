@@ -44,6 +44,7 @@ class Migration26To27Test {
             )
             .allowMainThreadQueries()
             .addMigrations(DatabaseMigrations.MIGRATION_26_27)
+            .addMigrations(DatabaseMigrations.MIGRATION_28_29)
             .build()
         val migrated = database.openHelper.writableDatabase
 
@@ -81,6 +82,7 @@ class Migration26To27Test {
             )
             .allowMainThreadQueries()
             .addMigrations(DatabaseMigrations.MIGRATION_26_27)
+            .addMigrations(DatabaseMigrations.MIGRATION_28_29)
             .build()
         val migrated = database.openHelper.writableDatabase
 

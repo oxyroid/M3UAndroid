@@ -60,6 +60,8 @@ class Migration25To26Test {
         val database = Room.databaseBuilder(context, M3UDatabase::class.java, DATABASE_NAME)
             .allowMainThreadQueries()
             .addMigrations(DatabaseMigrations.MIGRATION_25_26)
+            .addMigrations(DatabaseMigrations.MIGRATION_26_27)
+            .addMigrations(DatabaseMigrations.MIGRATION_28_29)
             .build()
         val migrated = database.openHelper.writableDatabase
 

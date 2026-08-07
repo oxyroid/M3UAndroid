@@ -16,6 +16,7 @@ import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.ProviderAccount
 import com.m3u.data.database.model.ProviderCredentialEntity
 import com.m3u.data.parser.m3u.M3UParserImpl
+import com.m3u.data.parser.xtream.XtreamChannelDetails
 import com.m3u.data.parser.xtream.XtreamChannelInfo
 import com.m3u.data.parser.xtream.XtreamData
 import com.m3u.data.parser.xtream.XtreamInfo
@@ -897,6 +898,7 @@ class PlaylistRepositoryProviderRestoreTest {
         val repository = PlaylistRepositoryImpl(
             playlistDao = database.playlistDao(),
             channelDao = database.channelDao(),
+            channelDetailsDao = database.channelDetailsDao(),
             providerDao = database.providerDao(),
             database = database,
             providerLifecycleCoordinator = ProviderLifecycleCoordinator(),
@@ -1005,6 +1007,12 @@ class PlaylistRepositoryProviderRestoreTest {
             input: XtreamInput,
             seriesId: Int,
         ): XtreamChannelInfo = error("Not used")
+
+        override suspend fun getChannelDetailsOrNull(
+            input: XtreamInput,
+            kind: XtreamParser.ChannelDetailsKind,
+            id: Int,
+        ): XtreamChannelDetails? = null
 
         override fun parse(input: XtreamInput): Flow<XtreamData> = flow {
             emit(

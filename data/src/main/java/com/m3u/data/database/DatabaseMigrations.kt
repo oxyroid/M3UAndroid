@@ -529,6 +529,57 @@ internal object DatabaseMigrations {
         }
     }
 
+    /**
+     * Drops the foreign key that was emptying channel_details on every refresh.
+     *
+     * Re-subscribing writes the playlist back with INSERT OR REPLACE, which
+     * SQLite performs as a delete followed by an insert; the ON DELETE CASCADE
+     * then took every cached description with it. Measured on a real database:
+     * 401 rows before, 0 after — and each one costs a request to earn back.
+     *
+     * Rows now go away only when a playlist is genuinely unsubscribed, which
+     * PlaylistRepository does explicitly.
+     */
+    val MIGRATION_28_29 = object : Migration(28, 29) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `channel_details_new` (
+                    `playlist_url` TEXT NOT NULL,
+                    `channel_reference` TEXT NOT NULL,
+                    `plot` TEXT,
+                    `cast` TEXT,
+                    `cast_normalized` TEXT,
+                    `director` TEXT,
+                    `genre` TEXT,
+                    `rating` TEXT,
+                    `release_date` TEXT,
+                    `duration_seconds` INTEGER,
+                    `fetched_at` INTEGER NOT NULL,
+                    PRIMARY KEY(`playlist_url`, `channel_reference`)
+                )
+                """.trimIndent()
+            )
+            db.execSQL(
+                """
+                INSERT OR REPLACE INTO `channel_details_new`
+                SELECT `playlist_url`, `channel_reference`, `plot`, `cast`,
+                    `cast_normalized`, `director`, `genre`, `rating`,
+                    `release_date`, `duration_seconds`, `fetched_at`
+                FROM `channel_details`
+                """.trimIndent()
+            )
+            db.execSQL("DROP TABLE `channel_details`")
+            db.execSQL("ALTER TABLE `channel_details_new` RENAME TO `channel_details`")
+            db.execSQL(
+                """
+                CREATE INDEX IF NOT EXISTS `index_channel_details_playlist_url`
+                ON `channel_details` (`playlist_url`)
+                """.trimIndent()
+            )
+        }
+    }
+
     private const val BACKFILL_BATCH_SIZE = 500
 
     private fun SupportSQLiteDatabase.enableSecureDelete() {

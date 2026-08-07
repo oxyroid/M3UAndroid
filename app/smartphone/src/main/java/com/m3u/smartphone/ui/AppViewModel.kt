@@ -23,6 +23,7 @@ import com.m3u.data.repository.tv.ConnectionToTvValue
 import com.m3u.data.repository.tv.TvRepository
 import com.m3u.data.tv.model.RemoteDirection
 import com.m3u.data.tv.model.TvInfo
+import com.m3u.data.worker.ChannelDetailsWorker
 import com.m3u.data.worker.SubscriptionWorker
 import com.m3u.smartphone.ui.common.connect.RemoteControlSheetValue
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -115,6 +116,23 @@ class AppViewModel @Inject constructor(
         }
     }.cachedIn(viewModelScope)
 
+    /**
+     * Resumes collecting channel descriptions on every start.
+     *
+     * Cheap to call: the worker asks for channels that still have no
+     * description and finishes at once when there are none, and KEEP means an
+     * ongoing sweep is never restarted. Hooked here rather than only after a
+     * subscription so a catalogue that was interrupted — a few tens of
+     * thousands of titles are not collected in one sitting — carries on by
+     * itself, without asking anyone to re-subscribe.
+     */
+    private fun collectChannelDetails() {
+        viewModelScope.launch {
+            runCatching { ChannelDetailsWorker.enqueue(workManager) }
+                .onFailure { throwable -> timber.w(throwable, "details sweep not scheduled") }
+        }
+    }
+
     private fun refreshProgrammes() {
         viewModelScope.launch {
             val playlists = playlistRepository.getAllAutoRefresh()
@@ -137,6 +155,7 @@ class AppViewModel @Inject constructor(
 
     init {
         refreshProgrammes()
+        collectChannelDetails()
         tvRepository.connected
             .onEach {
                 timber.d("connected tv changed: $it")

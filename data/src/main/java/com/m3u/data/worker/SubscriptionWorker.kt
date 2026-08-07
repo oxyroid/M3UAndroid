@@ -206,7 +206,7 @@ class SubscriptionWorker @AssistedInject constructor(
                         // The catalogue is in; collect the descriptions behind
                         // it. That sweep paces itself and steps aside as soon
                         // as anything plays, so it can start straight away.
-                        url?.let { ChannelDetailsWorker.enqueue(workManager, it) }
+                        ChannelDetailsWorker.enqueue(workManager)
                         Result.success()
                         } catch (cancelled: CancellationException) {
                             throw cancelled

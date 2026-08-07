@@ -51,6 +51,8 @@ class Migration22To23Test {
             .addMigrations(DatabaseMigrations.migration22To23(TestCredentialVault))
             .addMigrations(DatabaseMigrations.MIGRATION_24_25)
             .addMigrations(DatabaseMigrations.MIGRATION_25_26)
+            .addMigrations(DatabaseMigrations.MIGRATION_26_27)
+            .addMigrations(DatabaseMigrations.MIGRATION_28_29)
             .build()
         val migrated = database.openHelper.writableDatabase
 
@@ -111,6 +113,8 @@ class Migration22To23Test {
             .addMigrations(DatabaseMigrations.migration22To23(FailingCredentialVault))
             .addMigrations(DatabaseMigrations.MIGRATION_24_25)
             .addMigrations(DatabaseMigrations.MIGRATION_25_26)
+            .addMigrations(DatabaseMigrations.MIGRATION_26_27)
+            .addMigrations(DatabaseMigrations.MIGRATION_28_29)
             .build()
         val migrated = database.openHelper.writableDatabase
 
