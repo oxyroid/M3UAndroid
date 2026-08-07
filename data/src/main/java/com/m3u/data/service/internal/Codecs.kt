@@ -54,7 +54,17 @@ object Codecs {
         }
         return factory.apply {
             setEnableDecoderFallback(true)
-            setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
+            setExtensionRendererMode(
+                if (disableAudioPassthrough) {
+                    // Prefer the bundled FFmpeg decoders over the platform ones.
+                    // Hardware AC3 decoders are built to feed a passthrough path;
+                    // asked for PCM instead, some produce no output at all — the
+                    // stream plays, the mixer runs, and nothing is audible.
+                    DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
+                } else {
+                    DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON
+                }
+            )
         }
     }
 
