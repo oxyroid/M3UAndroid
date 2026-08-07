@@ -39,9 +39,11 @@ object Codecs {
                     context: Context,
                     enableFloatOutput: Boolean,
                     enableAudioTrackPlaybackParams: Boolean
-                ): AudioSink = DefaultAudioSink.Builder(context)
-                    // Stereo PCM only: nothing is advertised as passthrough-capable,
-                    // so every compressed format takes the decoding path.
+                ): AudioSink = DefaultAudioSink.Builder()
+                    // Deliberately built WITHOUT a Context. DefaultAudioSink only
+                    // honours the capabilities set here when no Context is given —
+                    // otherwise it probes the actual output and silently discards
+                    // them, which is exactly what happened on the first attempt.
                     .setAudioCapabilities(AudioCapabilities.DEFAULT_AUDIO_CAPABILITIES)
                     .setEnableFloatOutput(enableFloatOutput)
                     .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
