@@ -5,7 +5,11 @@ import android.graphics.Bitmap
 import android.net.Uri
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultRenderersFactory
+import androidx.media3.exoplayer.Renderer
 import androidx.media3.exoplayer.RenderersFactory
+import androidx.media3.exoplayer.audio.AudioRendererEventListener
+import androidx.media3.exoplayer.mediacodec.MediaCodecSelector
+import android.os.Handler
 import androidx.media3.exoplayer.audio.AudioCapabilities
 import androidx.media3.exoplayer.audio.AudioSink
 import androidx.media3.exoplayer.audio.DefaultAudioSink
@@ -48,23 +52,49 @@ object Codecs {
                     .setEnableFloatOutput(enableFloatOutput)
                     .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
                     .build()
+
+                /**
+                 * Route audio decoding to the bundled FFmpeg renderers, and only
+                 * audio.
+                 *
+                 * Hardware AC3 decoders are built to feed a passthrough path;
+                 * asked for PCM instead, some produce no output at all — the
+                 * stream plays, the mixer runs, and nothing is audible.
+                 *
+                 * The mode is overridden here rather than on the factory because
+                 * setExtensionRendererMode applies to every renderer: raising it
+                 * globally also hands video to the software decoders, which on a
+                 * modest TV box turns smooth playback into a slideshow. Measured,
+                 * not assumed.
+                 */
+                override fun buildAudioRenderers(
+                    context: Context,
+                    extensionRendererMode: Int,
+                    mediaCodecSelector: MediaCodecSelector,
+                    enableDecoderFallback: Boolean,
+                    audioSink: AudioSink,
+                    eventHandler: Handler,
+                    eventListener: AudioRendererEventListener,
+                    out: ArrayList<Renderer>
+                ) {
+                    super.buildAudioRenderers(
+                        context,
+                        DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER,
+                        mediaCodecSelector,
+                        enableDecoderFallback,
+                        audioSink,
+                        eventHandler,
+                        eventListener,
+                        out
+                    )
+                }
             }
         } else {
             NextRenderersFactory(context)
         }
         return factory.apply {
             setEnableDecoderFallback(true)
-            setExtensionRendererMode(
-                if (disableAudioPassthrough) {
-                    // Prefer the bundled FFmpeg decoders over the platform ones.
-                    // Hardware AC3 decoders are built to feed a passthrough path;
-                    // asked for PCM instead, some produce no output at all — the
-                    // stream plays, the mixer runs, and nothing is audible.
-                    DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
-                } else {
-                    DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON
-                }
-            )
+            setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
         }
     }
 
