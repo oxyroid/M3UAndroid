@@ -6,7 +6,6 @@ import androidx.room.RenameTable
 import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.m3u.core.foundation.util.basic.normalizeForSearch
 import com.m3u.data.extension.security.CredentialVault
 import com.m3u.extension.api.ExtensionId
 import com.m3u.extension.api.subscription.ProviderKind
@@ -483,53 +482,6 @@ internal object DatabaseMigrations {
             arrayOf(account.playlistUrl),
         )
     }
-
-    /**
-     * Adds the folded copy of every channel title that search compares against.
-     *
-     * The backfill runs in Kotlin rather than in SQL so it goes through the very
-     * same [normalizeForSearch] the writes and the queries use. Spelling the
-     * fold out as a stack of SQL REPLACE calls would work today and drift from
-     * the Kotlin version the first time either side is touched — and the two
-     * disagreeing is invisible: rows simply stop matching.
-     *
-     * Rows are walked in keyed batches instead of one long cursor, so nothing
-     * is updated underneath an open cursor and memory stays flat whatever the
-     * catalogue size. Xtream playlists here run to about 41 000 rows.
-     */
-    val MIGRATION_26_27 = object : Migration(26, 27) {
-        override fun migrate(db: SupportSQLiteDatabase) {
-            db.execSQL(
-                "ALTER TABLE streams ADD COLUMN title_normalized TEXT NOT NULL DEFAULT ''"
-            )
-            val update = db.compileStatement(
-                "UPDATE streams SET title_normalized = ? WHERE id = ?"
-            )
-            var lastId = Int.MIN_VALUE
-            while (true) {
-                val batch = buildList {
-                    db.query(
-                        "SELECT id, title FROM streams WHERE id > ? ORDER BY id LIMIT ?",
-                        arrayOf<Any>(lastId, BACKFILL_BATCH_SIZE),
-                    ).use { cursor ->
-                        while (cursor.moveToNext()) {
-                            add(cursor.getInt(0) to cursor.getString(1))
-                        }
-                    }
-                }
-                if (batch.isEmpty()) break
-                batch.forEach { (id, title) ->
-                    update.clearBindings()
-                    update.bindString(1, title.normalizeForSearch())
-                    update.bindLong(2, id.toLong())
-                    update.executeUpdateDelete()
-                }
-                lastId = batch.last().first
-            }
-        }
-    }
-
-    private const val BACKFILL_BATCH_SIZE = 500
 
     private fun SupportSQLiteDatabase.enableSecureDelete() {
         query("PRAGMA secure_delete = ON").use { cursor ->

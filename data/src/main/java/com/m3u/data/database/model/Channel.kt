@@ -64,25 +64,26 @@ data class Channel(
      * if it is xtream vod, it may be streamId.
      * if it is xtream series, it may be seriesId.
      */
-    val relationId: String? = null
-) {
+    val relationId: String? = null,
     /**
      * [title] with diacritics and case folded away — what search compares
      * against, since SQLite's LIKE never ignores accents on its own.
      *
-     * Declared outside the constructor on purpose. A data class only copies
-     * constructor parameters, so every construction path recomputes this from
-     * whatever [title] ends up being — including copy(title = …), which would
-     * otherwise carry a stale value forward and silently drop the channel out
-     * of every search. The invariant holds by construction rather than by
-     * remembering to maintain it.
+     * Defaults off [title], so no caller has to remember to set it.
+     *
+     * The one way to desynchronise it is copy(title = …), which keeps this
+     * parameter as it was and would silently drop the channel out of every
+     * search. Nothing copies a channel with a new title today — the two call
+     * sites in PlaylistRepositoryImpl only reassign ids — so the invariant
+     * holds.
      */
     // No index: search matches on '%query%', which no B-tree index can serve,
     // and one more index would only slow down the bulk inserts a resubscription
     // performs on tens of thousands of rows.
     @ColumnInfo(name = "title_normalized", defaultValue = "''")
     @Exclude
-    var titleNormalized: String = title.normalizeForSearch()
+    val titleNormalized: String = title.normalizeForSearch()
+) {
 
     companion object {
         const val URL_DYNAMIC = "dynamic"
