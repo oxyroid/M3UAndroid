@@ -116,4 +116,6 @@
         <item quantity="other">%1$d days</item>
     </plurals>
     <string name="ui_never">Never</string>
+
+    <string name="ui_cd_more_actions">More actions</string>
 </resources>

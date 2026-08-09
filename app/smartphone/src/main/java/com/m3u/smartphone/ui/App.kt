@@ -44,6 +44,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBarDefaults
@@ -451,6 +453,55 @@ private fun AppImpl(
     }
 }
 
+/**
+ * The overflow menu of the search bar, holding whatever the current screen
+ * published in [Metadata.actions].
+ *
+ * Those actions used to be unreachable. They are only ever rendered by the
+ * TopAppBar, which shouldShowContextualTopBar keeps off every screen showing
+ * the search bar instead — the playlist screen among them. So its refresh and
+ * its sort existed, fully wired, and nothing on screen could invoke them: the
+ * only way to update a catalogue was to subscribe to it again, credentials and
+ * all.
+ *
+ * Reading the actions rather than naming them keeps this generic: any screen
+ * publishing actions gets them here, with no change to this file.
+ */
+@Composable
+private fun ScreenActionsMenu(modifier: Modifier = Modifier) {
+    val actions = Metadata.actions
+    // No icon at all rather than one opening an empty menu.
+    if (actions.isEmpty()) return
+    var expanded by remember { mutableStateOf(false) }
+
+    Box(modifier = modifier) {
+        IconButton(onClick = { expanded = true }) {
+            Icon(
+                imageVector = Icons.Default.MoreVert,
+                contentDescription = stringResource(string.ui_cd_more_actions),
+            )
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            actions.forEach { action ->
+                DropdownMenuItem(
+                    text = { Text(action.contentDescription.orEmpty()) },
+                    leadingIcon = {
+                        Icon(imageVector = action.icon, contentDescription = null)
+                    },
+                    enabled = action.enabled,
+                    onClick = {
+                        expanded = false
+                        action.onClick()
+                    },
+                )
+            }
+        }
+    }
+}
+
 private class AppContentArguments(
     val navController: NavHostController,
     val channels: Flow<PagingData<ChannelWithProgramme>>,
@@ -513,7 +564,11 @@ private fun AppContent(
                 }
             },
             trailingIcon = {
-                Icon(Icons.Default.MoreVert, contentDescription = null)
+                // Hidden while the search is expanded: these actions belong to
+                // the screen underneath, not to the search results.
+                if (searchBarState.currentValue != SearchBarValue.Expanded) {
+                    ScreenActionsMenu()
+                }
             },
         )
     }
