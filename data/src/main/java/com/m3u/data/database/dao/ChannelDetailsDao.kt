@@ -36,4 +36,14 @@ interface ChannelDetailsDao {
 
     @Query("SELECT COUNT(*) FROM channel_details WHERE playlist_url = :playlistUrl")
     suspend fun countByPlaylistUrl(playlistUrl: String): Int
+
+    /**
+     * Called when a playlist is unsubscribed for good.
+     *
+     * This table carries no cascading foreign key on purpose — cascading would
+     * also fire on the INSERT OR REPLACE a refresh performs, discarding
+     * descriptions that cost one request each to collect.
+     */
+    @Query("DELETE FROM channel_details WHERE playlist_url = :playlistUrl")
+    suspend fun deleteByPlaylistUrl(playlistUrl: String)
 }

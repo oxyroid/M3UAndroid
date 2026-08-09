@@ -17,6 +17,7 @@ import com.m3u.core.foundation.util.basic.startsWithAny
 import com.m3u.data.api.OkhttpClient
 import com.m3u.data.database.M3UDatabase
 import com.m3u.data.database.dao.ChannelDao
+import com.m3u.data.database.dao.ChannelDetailsDao
 import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.ProgrammeDao
 import com.m3u.data.database.dao.ProviderDao
@@ -151,6 +152,7 @@ private data class StagedChannel(
 internal class PlaylistRepositoryImpl @Inject constructor(
     private val playlistDao: PlaylistDao,
     private val channelDao: ChannelDao,
+    private val channelDetailsDao: ChannelDetailsDao,
     private val providerDao: ProviderDao,
     private val database: M3UDatabase,
     private val providerLifecycleCoordinator: ProviderLifecycleCoordinator,
@@ -1113,6 +1115,10 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                     val current = database.withTransaction {
                         target?.also {
                             channelDao.deleteByPlaylistUrl(it.url)
+                            // Explicit, because this table carries no cascade:
+                            // cascading would also fire on the INSERT OR REPLACE
+                            // a refresh performs, and empty the cache with it.
+                            channelDetailsDao.deleteByPlaylistUrl(it.url)
                             playlistDao.delete(it)
                         }
                     }

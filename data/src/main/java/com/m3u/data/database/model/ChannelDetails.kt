@@ -3,7 +3,6 @@ package com.m3u.data.database.model
 import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
-import androidx.room.ForeignKey
 import androidx.room.Index
 
 /**
@@ -14,18 +13,21 @@ import androidx.room.Index
  * way to refresh a catalogue — so keying on them would throw the whole cache
  * away every time, and re-earning it costs one request per title.
  */
+/*
+ * Deliberately without a foreign key onto playlists.
+ *
+ * Re-subscribing writes the playlist row back with INSERT OR REPLACE, and
+ * SQLite implements REPLACE as a delete followed by an insert — so an
+ * ON DELETE CASCADE here would empty this table on every refresh. Measured on
+ * a real database before this was caught: 401 rows before, 0 after, each one
+ * costing a network request to earn back.
+ *
+ * Rows are removed explicitly when a playlist is actually unsubscribed, next
+ * to where its channels are deleted.
+ */
 @Entity(
     tableName = "channel_details",
     primaryKeys = ["playlist_url", "channel_reference"],
-    foreignKeys = [
-        ForeignKey(
-            entity = Playlist::class,
-            parentColumns = ["url"],
-            childColumns = ["playlist_url"],
-            onUpdate = ForeignKey.CASCADE,
-            onDelete = ForeignKey.CASCADE,
-        )
-    ],
     indices = [
         Index("playlist_url"),
     ],

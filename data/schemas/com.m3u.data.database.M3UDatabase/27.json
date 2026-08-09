@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 27,
-    "identityHash": "ffd99d9ffb43035965b22e6406467aba",
+    "identityHash": "8b94aee0f3efceeb5d3751eb7eee3ef0",
     "entities": [
       {
         "tableName": "playlists",
@@ -826,7 +826,7 @@
       },
       {
         "tableName": "channel_details",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`playlist_url` TEXT NOT NULL, `channel_reference` TEXT NOT NULL, `plot` TEXT, `cast` TEXT, `director` TEXT, `genre` TEXT, `rating` TEXT, `release_date` TEXT, `duration_seconds` INTEGER, `fetched_at` INTEGER NOT NULL, PRIMARY KEY(`playlist_url`, `channel_reference`), FOREIGN KEY(`playlist_url`) REFERENCES `playlists`(`url`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`playlist_url` TEXT NOT NULL, `channel_reference` TEXT NOT NULL, `plot` TEXT, `cast` TEXT, `director` TEXT, `genre` TEXT, `rating` TEXT, `release_date` TEXT, `duration_seconds` INTEGER, `fetched_at` INTEGER NOT NULL, PRIMARY KEY(`playlist_url`, `channel_reference`))",
         "fields": [
           {
             "fieldPath": "playlistUrl",
@@ -899,25 +899,12 @@
             "orders": [],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_channel_details_playlist_url` ON `${TABLE_NAME}` (`playlist_url`)"
           }
-        ],
-        "foreignKeys": [
-          {
-            "table": "playlists",
-            "onDelete": "CASCADE",
-            "onUpdate": "CASCADE",
-            "columns": [
-              "playlist_url"
-            ],
-            "referencedColumns": [
-              "url"
-            ]
-          }
         ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ffd99d9ffb43035965b22e6406467aba')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8b94aee0f3efceeb5d3751eb7eee3ef0')"
     ]
   }
 }
