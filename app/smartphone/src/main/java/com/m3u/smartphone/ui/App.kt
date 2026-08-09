@@ -99,6 +99,7 @@ import com.m3u.smartphone.ui.common.AppNavHost
 import com.m3u.smartphone.ui.common.connect.RemoteControlSheet
 import com.m3u.smartphone.ui.common.connect.RemoteControlSheetValue
 import com.m3u.smartphone.ui.common.helper.LocalHelper
+import com.m3u.smartphone.ui.common.helper.Action
 import com.m3u.smartphone.ui.common.helper.Metadata
 import com.m3u.smartphone.ui.material.components.Destination
 import com.m3u.smartphone.ui.material.components.SnackHost
@@ -454,8 +455,8 @@ private fun AppImpl(
 }
 
 /**
- * The overflow menu of the search bar, holding whatever the current screen
- * published in [Metadata.actions].
+ * The overflow menu of the search bar, holding the actions the current screen
+ * published.
  *
  * Those actions used to be unreachable. They are only ever rendered by the
  * TopAppBar, which shouldShowContextualTopBar keeps off every screen showing
@@ -464,12 +465,16 @@ private fun AppImpl(
  * only way to update a catalogue was to subscribe to it again, credentials and
  * all.
  *
- * Reading the actions rather than naming them keeps this generic: any screen
- * publishing actions gets them here, with no change to this file.
+ * Taking the actions as a parameter rather than reading Metadata here keeps
+ * this a function of its arguments: what makes it recompose is visible in its
+ * signature. It also stays generic — any screen publishing actions gets them,
+ * with no change to this file.
  */
 @Composable
-private fun ScreenActionsMenu(modifier: Modifier = Modifier) {
-    val actions = Metadata.actions
+private fun ScreenActionsMenu(
+    actions: List<Action>,
+    modifier: Modifier = Modifier,
+) {
     // No icon at all rather than one opening an empty menu.
     if (actions.isEmpty()) return
     var expanded by remember { mutableStateOf(false) }
@@ -567,7 +572,7 @@ private fun AppContent(
                 // Hidden while the search is expanded: these actions belong to
                 // the screen underneath, not to the search results.
                 if (searchBarState.currentValue != SearchBarValue.Expanded) {
-                    ScreenActionsMenu()
+                    ScreenActionsMenu(actions = Metadata.actions)
                 }
             },
         )
