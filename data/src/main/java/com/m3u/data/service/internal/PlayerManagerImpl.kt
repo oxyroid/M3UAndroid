@@ -693,9 +693,9 @@ class PlayerManagerImpl @Inject constructor(
             }
         }
 
-    // La fabrique n'est plus mise en cache : le réglage de décodage audio peut
-    // changer entre deux visionnages, et une instance mémorisée continuerait
-    // d'appliquer l'ancien choix sans que rien ne le signale.
+    // The renderers factory is no longer cached: the audio decoding preference
+    // can change between two playbacks, and a remembered instance would keep
+    // applying the earlier choice with nothing to show for it.
 
     private fun createTrackSelector(tunneling: Boolean): TrackSelector {
         return DefaultTrackSelector(context).apply {
