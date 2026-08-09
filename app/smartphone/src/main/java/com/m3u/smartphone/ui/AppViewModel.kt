@@ -97,6 +97,8 @@ class AppViewModel @Inject constructor(
                     }
             }
         }
+        // combine can re-emit the same PagingData when extension results change.
+        // Cache the Pager flow first so those emissions remain collectable.
         .cachedIn(viewModelScope)
 
     private val extensionSearchResults = searchQueries
@@ -122,7 +124,7 @@ class AppViewModel @Inject constructor(
                 item = ChannelWithProgramme(channel = channel, programme = null)
             )
         }
-    }.cachedIn(viewModelScope)
+    }
 
     val series = MutableStateFlow<Channel?>(null)
     val seriesReplay = MutableStateFlow(0)
