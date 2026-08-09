@@ -11,6 +11,7 @@ import androidx.room.Upsert
 import com.m3u.data.database.model.AdjacentChannels
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.ChannelMetadataBase
+import com.m3u.data.database.model.ChannelUserState
 import com.m3u.data.database.model.ExtensionChannelMetadataOverlay
 import kotlinx.coroutines.flow.Flow
 
@@ -222,6 +223,24 @@ interface ChannelDao {
 
     @Query("SELECT url FROM streams WHERE relation_id IS NULL AND playlist_url IN (:playlistUrls) AND (favourite = 1 OR hidden = 1)")
     suspend fun getFavOrHiddenUrlsByPlaylistUrlNotContainsRelationId(vararg playlistUrls: String): List<String>
+
+    /**
+     * Everything a viewer built up on the channels of a playlist, so a refresh
+     * can hand it back to the rows that replace them.
+     *
+     * Only rows that differ from a fresh import are returned. A catalogue runs
+     * to tens of thousands of channels, of which a handful were ever watched or
+     * favourited; carrying the rest would mean holding the whole thing in
+     * memory to restore nothing.
+     */
+    @Query(
+        """
+            SELECT relation_id, url, seen, favourite, hidden FROM streams
+            WHERE playlist_url = :playlistUrl
+                AND (seen != 0 OR favourite = 1 OR hidden = 1)
+        """
+    )
+    suspend fun getUserStateByPlaylistUrl(playlistUrl: String): List<ChannelUserState>
 
     @Query("SELECT * FROM streams WHERE seen != 0 ORDER BY seen DESC LIMIT 1")
     suspend fun getPlayedRecently(): Channel?

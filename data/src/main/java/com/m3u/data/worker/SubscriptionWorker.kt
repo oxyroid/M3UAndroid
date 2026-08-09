@@ -242,6 +242,18 @@ class SubscriptionWorker @AssistedInject constructor(
     }
 
     override suspend fun getForegroundInfo(): ForegroundInfo {
+        // WorkManager calls this before doWork, which is where the channel used
+        // to be created — so on the very first run of an install the channel did
+        // not exist yet and startForeground was handed a notification pointing
+        // at nothing:
+        //
+        //   RemoteServiceException: Bad notification for startForeground:
+        //   invalid channel for service notification
+        //
+        // That killed the process. It stayed unnoticed because the channel
+        // survives once created, and because nothing on screen could trigger a
+        // refresh in the first place.
+        createChannel()
         return ForegroundInfo(notificationId, createN10nBuilder().build())
     }
 

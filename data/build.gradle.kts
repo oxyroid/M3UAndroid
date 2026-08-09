@@ -169,6 +169,7 @@ dependencies {
 
     implementation(libs.jakewharton.disklrucache)
 
+    testImplementation(kotlin("test-junit"))
     androidTestImplementation(libs.androidx.room.testing)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.core)
