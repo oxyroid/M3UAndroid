@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "239e8afc_40a68430",
+        "filename": "data/src/main/java/com/m3u/data/repository/channel/ChannelDetailsRepositoryImpl.kt",
+        "patchSetId": 1
+      },
+      "lineNbr": 51,
+      "author": {
+        "id": 1039815
+      },
+      "writtenOn": "2026-08-10T03:22:27Z",
+      "side": 1,
+      "message": "I think when the business layer calls the repository, it shouldn\u0027t consider whether the repository layer will retrieve or reuse the data. Perhaps simply calling this function \"get\" would be more appropriate?",
+      "revId": "cf212fed7d6e8ecc580ec2fd5c42e1eb6ec3cec0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c95d8105_4c8f88b5",
+        "filename": "data/src/main/java/com/m3u/data/repository/channel/ChannelDetailsRepositoryImpl.kt",
+        "patchSetId": 1
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 1039815
+      },
+      "writtenOn": "2026-08-10T03:22:27Z",
+      "side": 1,
+      "message": "Since the `Result` from `runCatching` isn\u0027t used here, would a plain `try-catch` be clearer? It seems we\u0027re only catching the exception for logging.",
+      "revId": "cf212fed7d6e8ecc580ec2fd5c42e1eb6ec3cec0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}
