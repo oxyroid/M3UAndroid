@@ -31,7 +31,7 @@ dependencies {
     api(libs.androidx.paging.runtime.ktx)
     api(libs.androidx.paging.compose)
     api(libs.timber)
-    api("androidx.datastore:datastore-preferences:1.1.7")
+    api("androidx.datastore:datastore-preferences:1.2.1")
 
     testImplementation(kotlin("test-junit"))
 }
