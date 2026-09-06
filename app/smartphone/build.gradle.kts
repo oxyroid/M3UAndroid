@@ -29,7 +29,7 @@ android {
     defaultConfig {
         applicationId = "com.m3u.smartphone"
         minSdk = 26
-        targetSdk = 33
+        targetSdk = 36
         versionCode = 145
         versionName = "1.15.1"
 
