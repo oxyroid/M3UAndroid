@@ -6,6 +6,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.m3u.annotation.Exclude
 import com.m3u.annotation.Likable
+import com.m3u.core.foundation.util.basic.normalizeForSearch
 import com.m3u.data.parser.xtream.XtreamEpisodeInfo
 import io.ktor.http.URLBuilder
 import io.ktor.http.Url
@@ -63,8 +64,27 @@ data class Channel(
      * if it is xtream vod, it may be streamId.
      * if it is xtream series, it may be seriesId.
      */
-    val relationId: String? = null
+    val relationId: String? = null,
+    /**
+     * [title] with diacritics and case folded away — what search compares
+     * against, since SQLite's LIKE never ignores accents on its own.
+     *
+     * Defaults off [title], so no caller has to remember to set it.
+     *
+     * The one way to desynchronise it is copy(title = …), which keeps this
+     * parameter as it was and would silently drop the channel out of every
+     * search. Nothing copies a channel with a new title today — the two call
+     * sites in PlaylistRepositoryImpl only reassign ids — so the invariant
+     * holds.
+     */
+    // No index: search matches on '%query%', which no B-tree index can serve,
+    // and one more index would only slow down the bulk inserts a resubscription
+    // performs on tens of thousands of rows.
+    @ColumnInfo(name = "title_normalized", defaultValue = "''")
+    @Exclude
+    val titleNormalized: String = title.normalizeForSearch()
 ) {
+
     companion object {
         const val URL_DYNAMIC = "dynamic"
         const val LICENSE_TYPE_WIDEVINE = "com.widevine.alpha"
