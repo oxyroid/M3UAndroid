@@ -3,7 +3,6 @@ package com.m3u.smartphone.ui.business.channel
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
-import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -49,9 +48,6 @@ class PlayerActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        // The player View's own `keepScreenOn` propagation is unreliable on some OEMs
-        // (e.g. Samsung One UI), so this Activity keeps the window flag directly.
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         handleIntent(intent)
         setContent {
             Toolkit(
