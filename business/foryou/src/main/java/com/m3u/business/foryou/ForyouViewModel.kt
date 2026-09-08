@@ -13,6 +13,7 @@ import com.m3u.core.foundation.wrapper.mapResource
 import com.m3u.core.foundation.wrapper.resource
 import com.m3u.data.database.model.Channel
 import com.m3u.data.database.model.Playlist
+import com.m3u.data.database.model.refreshable
 import com.m3u.data.parser.xtream.XtreamEpisodeInfo
 import com.m3u.data.repository.channel.ChannelRepository
 import com.m3u.data.repository.playlist.PlaylistRepository
@@ -111,6 +112,22 @@ class ForyouViewModel @Inject constructor(
     fun onUnsubscribePlaylist(url: String) {
         viewModelScope.launch {
             playlistRepository.unsubscribe(url)
+        }
+    }
+
+    /**
+     * Refreshes every playlist that can be refreshed.
+     *
+     * The playlist screen refreshes the one it shows, which means going into
+     * each of them in turn — and this screen is precisely where they are all
+     * in view. Sources that cannot be refreshed at all, such as a playlist
+     * imported from a local file, are skipped rather than reported as failing.
+     */
+    fun onRefreshAllPlaylists() {
+        viewModelScope.launch {
+            playlistRepository.getAll()
+                .filter { playlist -> playlist.refreshable }
+                .forEach { playlist -> playlistRepository.refresh(playlist.url) }
         }
     }
 

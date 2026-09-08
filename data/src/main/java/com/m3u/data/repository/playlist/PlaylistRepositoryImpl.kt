@@ -21,6 +21,8 @@ import com.m3u.data.database.dao.PlaylistDao
 import com.m3u.data.database.dao.ProgrammeDao
 import com.m3u.data.database.dao.ProviderDao
 import com.m3u.data.database.model.Channel
+import com.m3u.data.database.model.PreservedUserStates
+import com.m3u.data.database.model.restoring
 import com.m3u.data.database.model.DataSource
 import com.m3u.data.database.model.Playlist
 import com.m3u.data.database.model.PlaylistWithChannels
@@ -253,6 +255,10 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                         // The previous row may have been saved as EPG or another source.
                         source = DataSource.M3U,
                     ) ?: Playlist(title, internalUrl, source = DataSource.M3U)
+                    // Captured before the delete: a refresh re-imports every
+                    // channel, and these columns would otherwise come back reset.
+                    val preservedUserStates =
+                        PreservedUserStates(channelDao.getUserStateByPlaylistUrl(internalUrl))
                     deleteChannelsForImport(internalUrl, playlistStrategy)
                     playlistDao.insertOrReplace(playlist)
                     staging.forEachBatch(BUFFER_M3U_CAPACITY) { staged ->
@@ -269,7 +275,12 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                                         }
                                     )
                             }
-                            .map(StagedChannel::channel)
+                            .map { record ->
+                                record.channel.restoring(
+                                    preservedUserStates,
+                                    record.preservationRelationId,
+                                )
+                            }
                             .toList()
                         if (channelsToInsert.isNotEmpty()) {
                             channelDao.insertOrReplaceAll(*channelsToInsert.toTypedArray())
@@ -414,6 +425,14 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                                     }
                             else -> emptyMap()
                         }
+                    // Captured before the delete below wipes it. Refreshing a
+                    // catalogue re-imports every channel from scratch, so
+                    // without this the Continue watching row empties and
+                    // favourites are lost every single time.
+                    val userStateByPlaylistUrl = requiredPlaylistUrls
+                        .associateWith { playlistUrl ->
+                            PreservedUserStates(channelDao.getUserStateByPlaylistUrl(playlistUrl))
+                        }
                     val requiredPlaylists = requiredPlaylistUrls.map { playlistUrl ->
                         currentXtreamPlaylist(title, playlistUrl)
                     }
@@ -433,7 +452,12 @@ internal class PlaylistRepositoryImpl @Inject constructor(
                                             favOrHiddenRelationIdsByPlaylistUrl,
                                     )
                             }
-                            .map(StagedChannel::channel)
+                            .map { record ->
+                                record.channel.restoring(
+                                    userStateByPlaylistUrl[record.channel.playlistUrl],
+                                    record.preservationRelationId,
+                                )
+                            }
                             .toList()
                         if (channelsToInsert.isNotEmpty()) {
                             channelDao.insertOrReplaceAll(*channelsToInsert.toTypedArray())

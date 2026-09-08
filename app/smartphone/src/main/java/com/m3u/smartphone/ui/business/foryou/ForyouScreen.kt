@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -79,6 +80,7 @@ fun ForyouRoute(
 
     val title = stringResource(string.ui_title_foryou)
     val addContentDescription = stringResource(string.ui_action_add)
+    val refreshContentDescription = stringResource(string.ui_action_refresh)
 
     val playlists by viewModel.playlists.collectAsStateWithLifecycle()
     val specs by viewModel.specs.collectAsStateWithLifecycle()
@@ -97,6 +99,14 @@ fun ForyouRoute(
                 icon = Icons.Rounded.Add,
                 contentDescription = addContentDescription,
                 onClick = navigateToSettingPlaylistManagement
+            ),
+            // Refreshing lives on the playlist screen, one playlist at a time —
+            // which means opening each of them in turn, from the very screen
+            // that already lists them all.
+            Action(
+                icon = Icons.Rounded.Refresh,
+                contentDescription = refreshContentDescription,
+                onClick = viewModel::onRefreshAllPlaylists
             )
         )
         onPauseOrDispose {
