@@ -179,6 +179,7 @@ private val PREFERENCES: Map<Preferences.Key<*>, Any> = buildMap {
     put(PreferencesKeys.THEME_STYLE, ThemePreference.DEFAULT.style)
     put(PreferencesKeys.THEME_PRESET_ID, ThemePreference.DEFAULT.presetId)
     put(PreferencesKeys.TUNNELING, false)
+    put(PreferencesKeys.DISABLE_AUDIO_PASSTHROUGH, false)
     put(PreferencesKeys.CLOCK_MODE, false)
     put(PreferencesKeys.REMOTE_CONTROL, false)
     put(PreferencesKeys.SLIDER, true)
@@ -235,6 +236,20 @@ object PreferencesKeys {
     val THEME_STYLE = intPreferencesKey("theme-style")
     val THEME_PRESET_ID = stringPreferencesKey("theme-preset-id")
     val TUNNELING = booleanPreferencesKey("tunneling")
+
+    /**
+     * Decode compressed audio locally instead of passing it through untouched.
+     *
+     * Some devices — Amlogic TV boxes in particular — route AC3/EAC3 straight to
+     * the HDMI sink, bypassing the mixer entirely. Playback works, but the
+     * volume keys no longer affect it: a stereo channel responds while a 5.1
+     * movie stays at a fixed level, which looks like a broken remote.
+     *
+     * Off by default: passthrough is the right choice when an A/V receiver is
+     * doing the decoding, and turning it off would cost those users their
+     * surround track.
+     */
+    val DISABLE_AUDIO_PASSTHROUGH = booleanPreferencesKey("disable-audio-passthrough")
     val CLOCK_MODE = booleanPreferencesKey("12h-clock-mode")
     val REMOTE_CONTROL = booleanPreferencesKey("remote-control")
 

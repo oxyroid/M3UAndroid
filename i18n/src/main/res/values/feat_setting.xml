@@ -151,6 +151,8 @@
     <string name="feat_setting_theme_ink">Ink</string>
     <string name="feat_setting_tunneling">tunneling mode</string>
     <string name="feat_setting_tunneling_description">improve playback of 4K/HDR content</string>
+    <string name="feat_setting_disable_audio_passthrough">decode audio locally</string>
+    <string name="feat_setting_disable_audio_passthrough_description">restores volume control when compressed audio (AC3/EAC3) is sent untouched to the TV. Turn off if an A/V receiver handles surround decoding</string>
     <string name="feat_setting_label_backup">Back up</string>
     <string name="feat_setting_label_restore">Restore</string>
     <string name="feat_setting_canvas_dark">dark</string>

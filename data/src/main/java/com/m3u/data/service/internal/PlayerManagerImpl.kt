@@ -352,6 +352,7 @@ class PlayerManagerImpl @Inject constructor(
         if (!providerSessionState.isCurrent(generation)) return
         val rtmp: Boolean = Url(url).protocol.name == "rtmp"
         val tunneling = settings[PreferencesKeys.TUNNELING]
+        val disableAudioPassthrough = settings[PreferencesKeys.DISABLE_AUDIO_PASSTHROUGH]
 
         val mimeType = when (val chain = chain) {
             is MimetypeChain.Remembered -> chain.mimeType
@@ -450,6 +451,7 @@ class PlayerManagerImpl @Inject constructor(
             mediaSource = mediaSource,
             mediaExtractor = mediaExtractor,
             tunneling = tunneling,
+            disableAudioPassthrough = disableAudioPassthrough,
         ) ?: return
         mainCoroutineScope.launch {
             if (!providerSessionState.isCurrent(generation)) return@launch
@@ -612,10 +614,13 @@ class PlayerManagerImpl @Inject constructor(
     private fun createPlayer(
         mediaSourceFactory: MediaSource.Factory,
         tunneling: Boolean,
+        disableAudioPassthrough: Boolean,
         listener: Player.Listener,
     ): ExoPlayer = ExoPlayer.Builder(context)
         .setMediaSourceFactory(mediaSourceFactory)
-        .setRenderersFactory(renderersFactory)
+        .setRenderersFactory(
+            Codecs.createRenderersFactory(context, disableAudioPassthrough)
+        )
         .setTrackSelector(createTrackSelector(tunneling))
         .setHandleAudioBecomingNoisy(true)
         .build()
@@ -635,6 +640,7 @@ class PlayerManagerImpl @Inject constructor(
         mediaSource: MediaSource,
         mediaExtractor: MediaExtractorCompat,
         tunneling: Boolean,
+        disableAudioPassthrough: Boolean,
     ): ExoPlayer? {
         var result: ExoPlayer? = null
         providerSessionState.runIfCurrent(generation) {
@@ -644,6 +650,7 @@ class PlayerManagerImpl @Inject constructor(
                     createPlayer(
                         mediaSourceFactory = mediaSourceFactory,
                         tunneling = tunneling,
+                        disableAudioPassthrough = disableAudioPassthrough,
                         listener = listener,
                     ).also { createdPlayer ->
                         timber.d("player instance updated")
@@ -686,9 +693,9 @@ class PlayerManagerImpl @Inject constructor(
             }
         }
 
-    private val renderersFactory: RenderersFactory by lazy {
-        Codecs.createRenderersFactory(context)
-    }
+    // The renderers factory is no longer cached: the audio decoding preference
+    // can change between two playbacks, and a remembered instance would keep
+    // applying the earlier choice with nothing to show for it.
 
     private fun createTrackSelector(tunneling: Boolean): TrackSelector {
         return DefaultTrackSelector(context).apply {

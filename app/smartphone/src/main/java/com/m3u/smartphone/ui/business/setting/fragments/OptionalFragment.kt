@@ -10,6 +10,7 @@ import androidx.compose.material.icons.rounded.AccessTime
 import androidx.compose.material.icons.rounded.BrightnessMedium
 import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.Details
+import androidx.compose.material.icons.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.FlashOn
 import androidx.compose.material.icons.rounded.Loop
 import androidx.compose.material.icons.rounded.PictureInPicture
@@ -63,6 +64,18 @@ internal fun OptionalFragment(
                 icon = Icons.Rounded.FlashOn,
                 checked = tunneling,
                 onChanged = { tunneling = !tunneling }
+            )
+        }
+        item {
+            var disableAudioPassthrough by mutablePreferenceOf(
+                PreferencesKeys.DISABLE_AUDIO_PASSTHROUGH
+            )
+            SwitchSharedPreference(
+                title = string.feat_setting_disable_audio_passthrough,
+                content = string.feat_setting_disable_audio_passthrough_description,
+                icon = Icons.Rounded.VolumeUp,
+                checked = disableAudioPassthrough,
+                onChanged = { disableAudioPassthrough = !disableAudioPassthrough }
             )
         }
         item {
